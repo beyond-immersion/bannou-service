@@ -20,19 +20,21 @@ public enum MessageFlags : byte
     Binary = 0x01,
 
     /// <summary>
-    /// Message payload is encrypted
+    /// Reserved for future use. Do not assign.
     /// </summary>
-    Encrypted = 0x02,
+    Reserved0x02 = 0x02,
 
     /// <summary>
-    /// Message payload is compressed (gzip)
+    /// Payload is Brotli-compressed. Client must decompress before parsing.
+    /// Only set on server-to-client messages when compression is enabled and
+    /// payload exceeds the configured size threshold.
     /// </summary>
     Compressed = 0x04,
 
     /// <summary>
-    /// Deliver at high priority, skip to front of queues
+    /// Reserved for future use. Do not assign.
     /// </summary>
-    HighPriority = 0x08,
+    Reserved0x08 = 0x08,
 
     /// <summary>
     /// Fire-and-forget message, no response expected

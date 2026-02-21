@@ -7,8 +7,11 @@ info:
     Configuration schema for State service.
     Properties are bound to environment variables with STATE_ prefix.
 
-    **Schema Rules**: AI agents MUST review docs/reference/SCHEMA-RULES.md before
-    modifying this schema. Optional reference types require `nullable: true`.
+    **SCHEMA MODIFICATION GATE**: STOP. Before modifying this schema, you MUST:
+    1. Read docs/reference/SCHEMA-RULES.md
+    2. State which section applies to your change
+    3. Only then proceed with edits
+    Edits without stating the applicable rule are FORBIDDEN.
   version: 1.0.0
 paths: {}
 
@@ -19,9 +22,20 @@ x-service-configuration:
   properties:
     UseInMemory:
       type: boolean
-      description: "Use in-memory storage instead of Redis/MySQL. Data is NOT persisted. ONLY for testing/minimal infrastructure."
+      description: "Use in-memory storage instead of Redis/MySQL. Data is NOT persisted. ONLY for testing/minimal infrastructure. Mutually exclusive with UseSqlite."
       env: STATE_USE_INMEMORY
       default: false
+    UseSqlite:
+      type: boolean
+      description: "Use SQLite file storage instead of MySQL for SQL-backed stores. Redis-configured stores use in-memory. Data IS persisted to SQLite files at SqliteDataPath. Mutually exclusive with UseInMemory. In Docker: mount a volume at SqliteDataPath for external access/backups."
+      env: STATE_USE_SQLITE
+      default: false
+    SqliteDataPath:
+      type: string
+      nullable: true  # NRT: Optional when UseSqlite=false; only used when UseSqlite=true
+      description: "Directory path for SQLite database files. Each MySQL-configured store gets its own .db file in this directory. Default: ./data/state. In Docker containers the app runs from /app, so the effective default path is /app/data/state — mount a volume there for persistence and backup access."
+      env: STATE_SQLITE_DATA_PATH
+      default: "./data/state"
     RedisConnectionString:
       type: string
       nullable: true  # NRT: Optional when UseInMemory=true; service validates at startup
@@ -36,22 +50,49 @@ x-service-configuration:
       default: "server=bannou-mysql;database=bannou;user=guest;password=guest"
     ConnectionTimeoutSeconds:
       type: integer
+      minimum: 1
+      maximum: 300
       description: Total timeout in seconds for establishing Redis/MySQL connections
       env: STATE_CONNECTION_TIMEOUT_SECONDS
       default: 60
-    DefaultConsistency:
-      type: string
-      enum: ["strong", "eventual"]
-      description: Default consistency level for state operations
-      env: STATE_DEFAULT_CONSISTENCY
-      default: "strong"
-    EnableMetrics:
+    ConnectionRetryCount:
+      type: integer
+      minimum: 0
+      maximum: 100
+      description: Maximum number of connection retry attempts for MySQL initialization
+      env: STATE_CONNECTION_RETRY_COUNT
+      default: 10
+    MinRetryDelayMs:
+      type: integer
+      minimum: 100
+      maximum: 60000
+      description: Minimum delay in milliseconds between MySQL connection retry attempts
+      env: STATE_MIN_RETRY_DELAY_MS
+      default: 1000
+    InMemoryFallbackLimit:
+      type: integer
+      minimum: 100
+      maximum: 1000000
+      description: Maximum entries for in-memory LINQ fallback before throwing InvalidOperationException. Use JsonQueryAsync for large datasets.
+      env: STATE_INMEMORY_FALLBACK_LIMIT
+      default: 10000
+    EnableErrorEventPublishing:
       type: boolean
-      description: Enable metrics collection for state operations
-      env: STATE_ENABLE_METRICS
+      nullable: true
+      description: "Enable publishing error events when state store operations fail. Null uses service default (true). Events are deduplicated within the configured window to prevent storms during infrastructure failures."
+      env: STATE_ENABLE_ERROR_EVENT_PUBLISHING
       default: true
-    EnableTracing:
-      type: boolean
-      description: Enable distributed tracing for state operations
-      env: STATE_ENABLE_TRACING
-      default: true
+    ErrorEventDeduplicationWindowSeconds:
+      type: integer
+      nullable: true
+      minimum: 1
+      maximum: 3600
+      description: "Time window in seconds for deduplicating identical error events. Events with the same store+operation+errorType are published at most once per window. Null uses service default (60)."
+      env: STATE_ERROR_EVENT_DEDUPLICATION_WINDOW_SECONDS
+      default: 60
+    # Note: DefaultConsistency was removed as dead config (IMPLEMENTATION TENETS T21).
+    # Consistency is specified per-request via StateOptions.Consistency, not as a global default.
+    # The ConsistencyLevel enum remains available in state-api.yaml for per-request use.
+    # Note: Telemetry (metrics/tracing) is controlled centrally via lib-telemetry configuration.
+    # When lib-telemetry is enabled, it automatically instruments state operations via ITelemetryProvider.
+    # When disabled or not loaded, instrumentation is skipped entirely (zero overhead).

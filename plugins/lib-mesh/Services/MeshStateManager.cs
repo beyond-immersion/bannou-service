@@ -24,8 +24,8 @@ public class MeshStateManager : IMeshStateManager
 
     // Cached stores (lazy initialization after InitializeAsync)
     private IStateStore<MeshEndpoint>? _endpointStore;
-    private IStateStore<MeshEndpoint>? _appIdIndexStore;
-    private IStateStore<MeshEndpoint>? _globalIndexStore;
+    private ICacheableStateStore<MeshEndpoint>? _appIdIndexStore;
+    private ICacheableStateStore<MeshEndpoint>? _globalIndexStore;
 
     private int _initialized; // 0 = false, 1 = true; uses Interlocked for thread safety
 
@@ -60,9 +60,9 @@ public class MeshStateManager : IMeshStateManager
             // lib-state is already initialized by StateServicePlugin
             _endpointStore = await _stateStoreFactory.GetStoreAsync<MeshEndpoint>(
                 StateStoreDefinitions.MeshEndpoints, cancellationToken);
-            _appIdIndexStore = await _stateStoreFactory.GetStoreAsync<MeshEndpoint>(
+            _appIdIndexStore = await _stateStoreFactory.GetCacheableStoreAsync<MeshEndpoint>(
                 StateStoreDefinitions.MeshAppidIndex, cancellationToken);
-            _globalIndexStore = await _stateStoreFactory.GetStoreAsync<MeshEndpoint>(
+            _globalIndexStore = await _stateStoreFactory.GetCacheableStoreAsync<MeshEndpoint>(
                 StateStoreDefinitions.MeshGlobalIndex, cancellationToken);
 
             // Verify connectivity with a simple operation
@@ -194,6 +194,7 @@ public class MeshStateManager : IMeshStateManager
         EndpointStatus status,
         float loadPercent,
         int currentConnections,
+        ICollection<string>? issues,
         int ttlSeconds)
     {
         if (_endpointStore == null || _appIdIndexStore == null)
@@ -220,6 +221,7 @@ public class MeshStateManager : IMeshStateManager
             endpoint.Status = status;
             endpoint.LoadPercent = loadPercent;
             endpoint.CurrentConnections = currentConnections;
+            endpoint.Issues = issues;
             endpoint.LastSeen = DateTimeOffset.UtcNow;
 
             // Save updated endpoint with TTL
@@ -230,8 +232,8 @@ public class MeshStateManager : IMeshStateManager
             await _appIdIndexStore.RefreshSetTtlAsync(appId, ttlSeconds);
 
             _logger.LogDebug(
-                "Updated heartbeat for {InstanceId}: {Status}, load {LoadPercent}%",
-                instanceId, status, loadPercent);
+                "Updated heartbeat for {InstanceId}: {Status}, load {LoadPercent}%, issues: {IssueCount}",
+                instanceId, status, loadPercent, issues?.Count ?? 0);
 
             return true;
         }

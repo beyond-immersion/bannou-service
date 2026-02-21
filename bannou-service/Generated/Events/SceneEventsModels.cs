@@ -106,7 +106,7 @@ public partial class SceneInstantiatedEvent : BaseServiceEvent
     public EventTransform WorldTransform { get; set; } = new EventTransform();
 
     /// <summary>
-    /// Caller-provided metadata passed through to consumers
+    /// Caller-provided metadata passed through from instantiation request. No Bannou plugin reads specific keys from this field by convention.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("metadata")]
     public object? Metadata { get; set; } = default!;
@@ -153,7 +153,7 @@ public partial class SceneDestroyedEvent : BaseServiceEvent
     public string? DestroyedBy { get; set; } = default!;
 
     /// <summary>
-    /// Caller-provided metadata
+    /// Caller-provided metadata passed through from destruction request. No Bannou plugin reads specific keys from this field by convention.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("metadata")]
     public object? Metadata { get; set; } = default!;

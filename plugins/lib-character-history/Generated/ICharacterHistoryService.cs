@@ -79,4 +79,14 @@ public partial interface ICharacterHistoryService : IBannouService
         /// </summary>
         Task<(StatusCodes, HistorySummaryResponse?)> SummarizeHistoryAsync(SummarizeHistoryRequest body, CancellationToken cancellationToken = default(CancellationToken));
 
+        /// <summary>
+        /// GetCompressData operation
+        /// </summary>
+        Task<(StatusCodes, CharacterHistoryArchive?)> GetCompressDataAsync(GetCompressDataRequest body, CancellationToken cancellationToken = default(CancellationToken));
+
+        /// <summary>
+        /// RestoreFromArchive operation
+        /// </summary>
+        Task<(StatusCodes, RestoreFromArchiveResponse?)> RestoreFromArchiveAsync(RestoreFromArchiveRequest body, CancellationToken cancellationToken = default(CancellationToken));
+
 }

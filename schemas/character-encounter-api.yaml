@@ -24,9 +24,32 @@ info:
     WebSocket routing. Path parameters are passed in request bodies instead of URLs.
     See docs/BANNOU_DESIGN.md for architectural rationale.
 
-    **Schema Rules**: AI agents MUST review docs/reference/SCHEMA-RULES.md before modifying
-    this schema. Optional reference types require `nullable: true`.
+    **SCHEMA MODIFICATION GATE**: STOP. Before modifying this schema, you MUST:
+    1. Read docs/reference/SCHEMA-RULES.md
+    2. State which section applies to your change
+    3. Only then proceed with edits
+    Edits without stating the applicable rule are FORBIDDEN.
   version: 1.0.0
+  # Resource reference tracking (see SCHEMA-RULES.md "x-references")
+  x-references:
+    - target: character
+      sourceType: character-encounter
+      field: characterId
+      onDelete: cascade
+      cleanup:
+        endpoint: /character-encounter/delete-by-character
+        payloadTemplate: '{"characterId": "{{resourceId}}"}'
+  # Compression callback for resource archival (see SCHEMA-RULES.md "x-compression-callback")
+  x-compression-callback:
+    resourceType: character
+    sourceType: character-encounter
+    compressEndpoint: /character-encounter/get-compress-data
+    compressPayloadTemplate: '{"characterId": "{{resourceId}}"}'
+    priority: 30
+    templateNamespace: encounters
+    description: Memorable interactions and relationship impacts
+    decompressEndpoint: /character-encounter/restore-from-archive
+    decompressPayloadTemplate: '{"characterId": "{{resourceId}}", "data": "{{data}}"}'
 servers:
 - url: http://localhost:5012
   description: Bannou service endpoint (internal only)
@@ -564,6 +587,65 @@ paths:
               schema:
                 $ref: '#/components/schemas/DecayMemoriesResponse'
 
+  # ===========================================================================
+  # Compression Endpoints (Resource Service Integration)
+  # ===========================================================================
+
+  /character-encounter/get-compress-data:
+    post:
+      summary: Get encounter data for compression
+      operationId: getCompressData
+      tags:
+      - Compression
+      description: |
+        Called by Resource service during character compression.
+        Returns encounters and perspectives involving this character for archival.
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetCompressDataRequest'
+      responses:
+        '200':
+          description: Compressed data returned
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CharacterEncounterArchive'
+        '404':
+          description: No encounter data for character
+
+  /character-encounter/restore-from-archive:
+    post:
+      summary: Restore encounter data from archive
+      operationId: restoreFromArchive
+      tags:
+      - Compression
+      description: |
+        Called by Resource service during character decompression.
+        Restores encounters and perspectives from archive data.
+      x-permissions:
+      - role: admin
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RestoreFromArchiveRequest'
+      responses:
+        '200':
+          description: Restoration result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RestoreFromArchiveResponse'
+        '400':
+          description: Invalid archive data
+
 components:
   schemas:
     # ==========================================================================
@@ -652,7 +734,9 @@ components:
           type: object
           additionalProperties: true
           nullable: true
-          description: Additional encounter-specific data
+          description: >-
+            Client-provided encounter-specific data.
+            No Bannou plugin reads specific keys from this field by convention.
         createdAt:
           type: string
           format: date-time
@@ -686,6 +770,12 @@ components:
           allOf:
           - $ref: '#/components/schemas/EmotionalImpact'
           description: Primary emotional response to the encounter
+        impactIntensity:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 1.0
+          description: Intensity of emotional impact (0.0-1.0). Used for kernel extraction threshold (>0.7 indicates high-impact encounter).
         sentimentShift:
           type: number
           format: float
@@ -933,7 +1023,8 @@ components:
             type: string
             format: uuid
           minItems: 2
-          description: Character IDs involved (minimum 2)
+          maxItems: 100
+          description: Character IDs involved (minimum 2, server enforces MaxParticipantsPerEncounter config limit)
         perspectives:
           type: array
           items:
@@ -944,7 +1035,9 @@ components:
           type: object
           additionalProperties: true
           nullable: true
-          description: Additional encounter data
+          description: >-
+            Client-provided encounter-specific data.
+            No Bannou plugin reads specific keys from this field by convention.
 
     PerspectiveInput:
       type: object
@@ -962,6 +1055,13 @@ components:
           allOf:
           - $ref: '#/components/schemas/EmotionalImpact'
           description: Character's emotional response to the encounter
+        impactIntensity:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 1.0
+          nullable: true
+          description: Intensity of emotional impact (0.0-1.0). Defaults based on emotionalImpact if not provided.
         sentimentShift:
           type: number
           format: float
@@ -1201,6 +1301,13 @@ components:
           $ref: '#/components/schemas/EmotionalImpact'
           nullable: true
           description: New emotional impact
+        impactIntensity:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 1.0
+          nullable: true
+          description: New impact intensity (0.0-1.0)
         sentimentShift:
           type: number
           format: float
@@ -1546,3 +1653,103 @@ components:
         dryRun:
           type: boolean
           description: Whether this was a preview run
+
+    # ==========================================================================
+    # Compression Models (Resource Service Integration)
+    # ==========================================================================
+
+    GetCompressDataRequest:
+      type: object
+      description: Request to get encounter data for compression
+      additionalProperties: false
+      required:
+      - characterId
+      properties:
+        characterId:
+          type: string
+          format: uuid
+          description: ID of the character to get compress data for
+
+    CharacterEncounterArchive:
+      type: object
+      x-archive-type: true
+      description: |
+        Complete encounter data for archive storage and storyline SDK consumption.
+        Inherits base archive properties from ResourceArchiveBase.
+        The characterId field equals resourceId for convenience.
+      allOf:
+        - $ref: './common-api.yaml#/components/schemas/ResourceArchiveBase'
+      additionalProperties: false
+      required:
+        - characterId
+        - hasEncounters
+        - encounterCount
+      properties:
+        characterId:
+          type: string
+          format: uuid
+          description: Character this data belongs to (equals resourceId)
+        hasEncounters:
+          type: boolean
+          description: Whether encounters exist for this character
+        encounterCount:
+          type: integer
+          description: Number of encounters archived
+        encounters:
+          type: array
+          items:
+            $ref: '#/components/schemas/EncounterResponse'
+          description: Encounters with perspectives (empty if hasEncounters=false)
+        aggregateSentiment:
+          type: object
+          additionalProperties:
+            type: number
+            format: float
+          description: |
+            Map of target characterId to aggregate sentiment.
+            Preserves sentiment relationships for historical reference.
+          nullable: true
+
+    RestoreFromArchiveRequest:
+      type: object
+      description: Request to restore encounter data from archive
+      additionalProperties: false
+      required:
+      - characterId
+      - data
+      properties:
+        characterId:
+          type: string
+          format: uuid
+          description: ID of the character to restore data for
+        data:
+          type: string
+          description: Base64-encoded gzipped CharacterEncounterArchive JSON
+
+    RestoreFromArchiveResponse:
+      type: object
+      description: Result of restoration from archive
+      additionalProperties: false
+      required:
+      - characterId
+      - encountersRestored
+      - perspectivesRestored
+      - success
+      properties:
+        characterId:
+          type: string
+          format: uuid
+          description: Character data was restored for
+        encountersRestored:
+          type: integer
+          description: Number of encounters restored
+        perspectivesRestored:
+          type: integer
+          description: Number of perspectives restored
+        success:
+          type: boolean
+          description: Whether restoration completed successfully
+        errorMessage:
+          type: string
+          nullable: true
+          description: Error details if restoration failed

@@ -674,6 +674,11 @@ public class MatchmakingServiceTests : ServiceTestBase<MatchmakingServiceConfigu
 
         SetupExistingQueue(TEST_QUEUE_ID, CreateTestQueue());
 
+        // DeleteTicketAsync must return true to pass the atomic idempotency gate
+        _mockTicketStore
+            .Setup(s => s.DeleteAsync(TICKET_PREFIX + ticketId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
+
         _mockPermissionClient
             .Setup(p => p.ClearSessionStateAsync(It.IsAny<BeyondImmersion.BannouService.Permission.ClearSessionStateRequest>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new BeyondImmersion.BannouService.Permission.SessionUpdateResponse());

@@ -97,7 +97,7 @@ public partial class SpeciesCreatedEvent : BaseServiceEvent
     /// Timestamp when the species was deprecated
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("deprecatedAt")]
-    public System.DateTimeOffset DeprecatedAt { get; set; } = default!;
+    public System.DateTimeOffset? DeprecatedAt { get; set; } = default!;
 
     /// <summary>
     /// Explanation for why the species was deprecated
@@ -118,7 +118,7 @@ public partial class SpeciesCreatedEvent : BaseServiceEvent
     public int MaturityAge { get; set; } = default!;
 
     /// <summary>
-    /// Modifiers applied to character traits for this species
+    /// Client-only trait modifiers. No Bannou plugin reads specific keys from this field by convention.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("traitModifiers")]
     public object TraitModifiers { get; set; } = default!;
@@ -130,10 +130,10 @@ public partial class SpeciesCreatedEvent : BaseServiceEvent
     public System.Collections.Generic.ICollection<System.Guid> RealmIds { get; set; } = default!;
 
     /// <summary>
-    /// Additional custom metadata for the species
+    /// Client-only metadata. No Bannou plugin reads specific keys from this field by convention.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("metadata")]
-    public object Metadata { get; set; } = default!;
+    public object? Metadata { get; set; } = default!;
 
     /// <summary>
     /// Timestamp when the species was created
@@ -220,7 +220,7 @@ public partial class SpeciesUpdatedEvent : BaseServiceEvent
     /// Timestamp when the species was deprecated
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("deprecatedAt")]
-    public System.DateTimeOffset DeprecatedAt { get; set; } = default!;
+    public System.DateTimeOffset? DeprecatedAt { get; set; } = default!;
 
     /// <summary>
     /// Explanation for why the species was deprecated
@@ -241,7 +241,7 @@ public partial class SpeciesUpdatedEvent : BaseServiceEvent
     public int MaturityAge { get; set; } = default!;
 
     /// <summary>
-    /// Modifiers applied to character traits for this species
+    /// Client-only trait modifiers. No Bannou plugin reads specific keys from this field by convention.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("traitModifiers")]
     public object TraitModifiers { get; set; } = default!;
@@ -253,10 +253,10 @@ public partial class SpeciesUpdatedEvent : BaseServiceEvent
     public System.Collections.Generic.ICollection<System.Guid> RealmIds { get; set; } = default!;
 
     /// <summary>
-    /// Additional custom metadata for the species
+    /// Client-only metadata. No Bannou plugin reads specific keys from this field by convention.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("metadata")]
-    public object Metadata { get; set; } = default!;
+    public object? Metadata { get; set; } = default!;
 
     /// <summary>
     /// Timestamp when the species was created
@@ -351,7 +351,7 @@ public partial class SpeciesDeletedEvent : BaseServiceEvent
     /// Timestamp when the species was deprecated
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("deprecatedAt")]
-    public System.DateTimeOffset DeprecatedAt { get; set; } = default!;
+    public System.DateTimeOffset? DeprecatedAt { get; set; } = default!;
 
     /// <summary>
     /// Explanation for why the species was deprecated
@@ -372,7 +372,7 @@ public partial class SpeciesDeletedEvent : BaseServiceEvent
     public int MaturityAge { get; set; } = default!;
 
     /// <summary>
-    /// Modifiers applied to character traits for this species
+    /// Client-only trait modifiers. No Bannou plugin reads specific keys from this field by convention.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("traitModifiers")]
     public object TraitModifiers { get; set; } = default!;
@@ -384,10 +384,10 @@ public partial class SpeciesDeletedEvent : BaseServiceEvent
     public System.Collections.Generic.ICollection<System.Guid> RealmIds { get; set; } = default!;
 
     /// <summary>
-    /// Additional custom metadata for the species
+    /// Client-only metadata. No Bannou plugin reads specific keys from this field by convention.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("metadata")]
-    public object Metadata { get; set; } = default!;
+    public object? Metadata { get; set; } = default!;
 
     /// <summary>
     /// Timestamp when the species was created

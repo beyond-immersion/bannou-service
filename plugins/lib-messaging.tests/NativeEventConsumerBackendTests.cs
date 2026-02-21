@@ -1,3 +1,4 @@
+using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Messaging.Services;
 using BeyondImmersion.BannouService.Services;
@@ -18,6 +19,7 @@ public class NativeEventConsumerBackendTests
     private readonly Mock<IEventConsumer> _mockEventConsumer;
     private readonly Mock<IServiceProvider> _mockServiceProvider;
     private readonly Mock<ILogger<NativeEventConsumerBackend>> _mockLogger;
+    private readonly Mock<ITelemetryProvider> _mockTelemetryProvider;
 
     // Use unique topic names per test to avoid static registry collisions
     private readonly string _testId = Guid.NewGuid().ToString("N")[..8];
@@ -28,6 +30,7 @@ public class NativeEventConsumerBackendTests
         _mockEventConsumer = new Mock<IEventConsumer>();
         _mockServiceProvider = new Mock<IServiceProvider>();
         _mockLogger = new Mock<ILogger<NativeEventConsumerBackend>>();
+        _mockTelemetryProvider = new Mock<ITelemetryProvider>();
     }
 
     private string UniqueTopic(string baseName) => $"{baseName}.{_testId}";
@@ -38,7 +41,8 @@ public class NativeEventConsumerBackendTests
             _mockSubscriber.Object,
             _mockEventConsumer.Object,
             _mockServiceProvider.Object,
-            _mockLogger.Object);
+            _mockLogger.Object,
+            _mockTelemetryProvider.Object);
     }
 
     #region Constructor Tests

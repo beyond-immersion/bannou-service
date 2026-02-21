@@ -1,0 +1,11 @@
+# Test fixture for unwatch action parsing
+version: "2.0"
+metadata:
+  id: test_unwatch
+
+flows:
+  main:
+    actions:
+      - unwatch:
+          resource_type: character
+          resource_id: ${self.character_id}

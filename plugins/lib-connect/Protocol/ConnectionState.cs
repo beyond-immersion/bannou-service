@@ -50,6 +50,12 @@ public class ConnectionState
     public Dictionary<ulong, PendingMessageInfo> PendingMessages { get; }
 
     /// <summary>
+    /// Timestamps of all incoming messages for rate limiting.
+    /// Uses Queue for efficient sliding window implementation.
+    /// </summary>
+    public Queue<DateTimeOffset> RateLimitTimestamps { get; }
+
+    /// <summary>
     /// Connection flags and capabilities
     /// </summary>
     public ConnectionFlags Flags { get; set; }
@@ -126,6 +132,7 @@ public class ConnectionState
         GuidMappings = new Dictionary<Guid, string>();
         ChannelSequences = new Dictionary<ushort, uint>();
         PendingMessages = new Dictionary<ulong, PendingMessageInfo>();
+        RateLimitTimestamps = new Queue<DateTimeOffset>();
         SessionShortcuts = new ConcurrentDictionary<Guid, SessionShortcutData>();
         ShortcutsByService = new ConcurrentDictionary<string, HashSet<Guid>>();
         Flags = ConnectionFlags.None;
@@ -172,6 +179,17 @@ public class ConnectionState
                 ServiceMappings[mapping.Key] = mapping.Value;
                 GuidMappings[mapping.Value] = mapping.Key;
             }
+        }
+    }
+
+    /// <summary>
+    /// Checks if a service mapping key exists (thread-safe).
+    /// </summary>
+    public bool HasServiceMapping(string endpointKey)
+    {
+        lock (_mappingsLock)
+        {
+            return ServiceMappings.ContainsKey(endpointKey);
         }
     }
 
@@ -257,6 +275,37 @@ public class ConnectionState
     {
         LastActivity = DateTimeOffset.UtcNow;
     }
+
+    #region Rate Limiting
+
+    /// <summary>
+    /// Records an incoming message timestamp for rate limiting.
+    /// Call this for every incoming message regardless of type or flags.
+    /// </summary>
+    public void RecordMessageForRateLimit()
+    {
+        RateLimitTimestamps.Enqueue(DateTimeOffset.UtcNow);
+    }
+
+    /// <summary>
+    /// Counts messages within the specified window and removes expired entries.
+    /// </summary>
+    /// <param name="windowMinutes">Sliding window duration in minutes</param>
+    /// <returns>Number of messages within the window</returns>
+    public int GetMessageCountInWindow(int windowMinutes)
+    {
+        var windowStart = DateTimeOffset.UtcNow.AddMinutes(-windowMinutes);
+
+        // Remove expired entries from front of queue
+        while (RateLimitTimestamps.Count > 0 && RateLimitTimestamps.Peek() < windowStart)
+        {
+            RateLimitTimestamps.Dequeue();
+        }
+
+        return RateLimitTimestamps.Count;
+    }
+
+    #endregion
 
     #region Reconnection Lifecycle Methods
 

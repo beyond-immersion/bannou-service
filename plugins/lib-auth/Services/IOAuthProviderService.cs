@@ -94,7 +94,7 @@ public class OAuthUserInfo
     /// <summary>
     /// The unique user ID from the provider.
     /// </summary>
-    public string ProviderId { get; set; } = string.Empty;
+    public string? ProviderId { get; set; }
 
     /// <summary>
     /// The user's email address (may be null for some providers like Steam).

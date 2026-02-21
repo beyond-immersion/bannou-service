@@ -4,6 +4,7 @@ using BeyondImmersion.BannouService.Configuration;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Messaging;
 using BeyondImmersion.BannouService.Relationship;
+using BeyondImmersion.BannouService.Resource;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State;
 using BeyondImmersion.BannouService.Testing;
@@ -25,8 +26,10 @@ public class RelationshipServiceTests : ServiceTestBase<RelationshipServiceConfi
     private readonly Mock<IStateStore<string>> _mockStringStore;
     private readonly Mock<IStateStore<List<Guid>>> _mockListStore;
     private readonly Mock<IMessageBus> _mockMessageBus;
+    private readonly Mock<IDistributedLockProvider> _mockLockProvider;
     private readonly Mock<ILogger<RelationshipService>> _mockLogger;
     private readonly Mock<IEventConsumer> _mockEventConsumer;
+    private readonly Mock<IResourceClient> _mockResourceClient;
 
     private const string STATE_STORE = "relationship-statestore";
 
@@ -37,13 +40,27 @@ public class RelationshipServiceTests : ServiceTestBase<RelationshipServiceConfi
         _mockStringStore = new Mock<IStateStore<string>>();
         _mockListStore = new Mock<IStateStore<List<Guid>>>();
         _mockMessageBus = new Mock<IMessageBus>();
+        _mockLockProvider = new Mock<IDistributedLockProvider>();
         _mockLogger = new Mock<ILogger<RelationshipService>>();
         _mockEventConsumer = new Mock<IEventConsumer>();
+        _mockResourceClient = new Mock<IResourceClient>();
 
         // Setup factory to return typed stores
         _mockStateStoreFactory.Setup(f => f.GetStore<RelationshipModel>(STATE_STORE)).Returns(_mockRelationshipStore.Object);
         _mockStateStoreFactory.Setup(f => f.GetStore<string>(STATE_STORE)).Returns(_mockStringStore.Object);
         _mockStateStoreFactory.Setup(f => f.GetStore<List<Guid>>(STATE_STORE)).Returns(_mockListStore.Object);
+
+        // Setup lock provider to always succeed
+        var mockLockResponse = new Mock<ILockResponse>();
+        mockLockResponse.Setup(l => l.Success).Returns(true);
+        _mockLockProvider
+            .Setup(l => l.LockAsync(
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<int>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(mockLockResponse.Object);
     }
 
     private RelationshipService CreateService()
@@ -53,7 +70,9 @@ public class RelationshipServiceTests : ServiceTestBase<RelationshipServiceConfi
             _mockMessageBus.Object,
             _mockLogger.Object,
             Configuration,
-            _mockEventConsumer.Object);
+            _mockLockProvider.Object,
+            _mockEventConsumer.Object,
+            _mockResourceClient.Object);
     }
 
     #region Constructor Tests
@@ -546,7 +565,7 @@ public class RelationshipServiceTests : ServiceTestBase<RelationshipServiceConfi
         Assert.NotNull(capturedEvent);
         Assert.Equal("relationship.deleted", capturedTopic);
         Assert.Equal(relationshipId, capturedEvent.RelationshipId);
-        // Note: Reason is not part of the event schema - it's only stored in the model
+        Assert.Equal("Test reason", capturedEvent.DeletedReason);
     }
 
     #endregion
@@ -635,17 +654,12 @@ public class RelationshipServiceTests : ServiceTestBase<RelationshipServiceConfi
     }
 
     [Fact]
-    public void RelationshipPermissionRegistration_CreateRegistrationEvent_ShouldGenerateValidEvent()
+    public void RelationshipPermissionRegistration_BuildPermissionMatrix_ShouldBeValid()
     {
-        // Act
-        var instanceId = Guid.NewGuid();
-        var registrationEvent = RelationshipPermissionRegistration.CreateRegistrationEvent(instanceId, "test-app");
-
-        // Assert
-        Assert.NotNull(registrationEvent);
-        Assert.Equal("relationship", registrationEvent.ServiceName);
-        Assert.Equal(instanceId, registrationEvent.ServiceId);
-        Assert.NotNull(registrationEvent.Endpoints);
+        PermissionMatrixValidator.ValidatePermissionMatrix(
+            RelationshipPermissionRegistration.ServiceId,
+            RelationshipPermissionRegistration.ServiceVersion,
+            RelationshipPermissionRegistration.BuildPermissionMatrix());
     }
 
     [Fact]
@@ -710,5 +724,9 @@ public class RelationshipConfigurationTests
 
         // Act & Assert
         Assert.NotNull(config);
+
+        // Verify merged relationship-type config properties have correct defaults
+        Assert.Equal(20, config.MaxHierarchyDepth);
+        Assert.Equal(100, config.MaxMigrationErrorsToTrack);
     }
 }

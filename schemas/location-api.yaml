@@ -31,8 +31,13 @@ info:
     1. Deprecate the location (soft delete, prevents new usage)
     2. Optionally hard-delete the deprecated location after all references are removed
 
-    **Schema Rules**: AI agents MUST review docs/reference/SCHEMA-RULES.md before modifying this schema. Optional reference types require `nullable: true`.
+    **SCHEMA MODIFICATION GATE**: STOP. Before modifying this schema, you MUST:
+    1. Read docs/reference/SCHEMA-RULES.md
+    2. State which section applies to your change
+    3. Only then proceed with edits
+    Edits without stating the applicable rule are FORBIDDEN.
   version: 1.0.0
+x-service-layer: GameFoundation
 servers:
 - url: http://localhost:5012
   description: Bannou service endpoint (internal only)
@@ -225,6 +230,38 @@ paths:
         '404':
           description: Location not found
 
+  /location/validate-territory:
+    post:
+      operationId: validateTerritory
+      tags:
+      - Location
+      summary: Validate location against territory boundaries
+      description: |
+        Checks if a proposed location falls within or outside specified territory boundaries.
+        Used by Contract service's clause type handler system for territory validation.
+
+        Territory modes:
+        - exclusive: Location must NOT be within any territory location (or descendants)
+        - inclusive: Location MUST be within at least one territory location (or descendants)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ValidateTerritoryRequest'
+      responses:
+        '200':
+          description: Territory validation result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidateTerritoryResponse'
+        '404':
+          description: Location not found
+      x-permissions:
+      - role: user
+        states: {}
+
   /location/get-descendants:
     post:
       summary: Get all descendants of a location
@@ -398,6 +435,39 @@ paths:
         '409':
           description: Cannot delete - location has children or is in use
 
+  /location/transfer-realm:
+    post:
+      summary: Transfer a location to a different realm
+      description: |
+        Moves a location from its current realm to a target realm.
+        Updates all realm-scoped indexes (code-index, realm-index, parent/root indexes).
+        The transferred location becomes a root location in the target realm (parent cleared).
+        Returns Conflict if the target realm already has a location with the same code.
+        Does NOT move children — caller is responsible for tree ordering.
+      operationId: transferLocationToRealm
+      tags:
+      - Location Admin
+      x-permissions:
+      - role: admin
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TransferLocationToRealmRequest'
+      responses:
+        '200':
+          description: Location transferred successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LocationResponse'
+        '404':
+          description: Location or target realm not found
+        '409':
+          description: Target realm already has a location with the same code
+
   /location/deprecate:
     post:
       summary: Deprecate a location
@@ -487,6 +557,34 @@ paths:
               schema:
                 $ref: '#/components/schemas/LocationExistsResponse'
 
+  /location/query/by-position:
+    post:
+      summary: Find locations containing a spatial position
+      description: |
+        Given a Position3D and realmId, returns all locations whose bounds contain
+        that position, ordered by depth descending (most specific first). Only
+        locations with spatial bounds data are considered. A position is "in" a
+        location if it falls within the location's axis-aligned bounding box.
+      operationId: queryLocationsByPosition
+      tags:
+      - Location
+      x-permissions:
+      - role: user
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/QueryLocationsByPositionRequest'
+      responses:
+        '200':
+          description: Locations containing the position
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LocationListResponse'
+
   /location/seed:
     post:
       summary: Seed locations from configuration
@@ -517,6 +615,119 @@ paths:
         '400':
           description: Invalid seed data
 
+  /location/report-entity-position:
+    post:
+      summary: Report entity presence at a location
+      description: |
+        Reports that an entity is present at a location. Creates or refreshes an ephemeral
+        presence binding with configurable TTL. Reporters must call this periodically to
+        keep the presence alive. Publishes arrival/departure events only when the entity's
+        location actually changes (pure refreshes are silent).
+
+        The optional previousLocationId provides a caller-hint optimization: if provided
+        and matches the current stored location, only a TTL refresh occurs (no GET needed).
+        If omitted, the service reads the current value to detect location changes.
+      operationId: reportEntityPosition
+      tags:
+      - Location Presence
+      x-permissions:
+      - role: developer
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReportEntityPositionRequest'
+      responses:
+        '200':
+          description: Position reported successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReportEntityPositionResponse'
+        '404':
+          description: Location not found
+
+  /location/get-entity-location:
+    post:
+      summary: Get the current location of an entity
+      description: |
+        Queries where an entity currently is. Returns the entity's location if a
+        non-expired presence binding exists.
+      operationId: getEntityLocation
+      tags:
+      - Location Presence
+      x-permissions:
+      - role: developer
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetEntityLocationRequest'
+      responses:
+        '200':
+          description: Entity location query result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetEntityLocationResponse'
+
+  /location/list-entities-at-location:
+    post:
+      summary: List entities currently at a location
+      description: |
+        Queries which entities are currently present at a location. Supports optional
+        entity type filtering and pagination. Results are hydrated from the entity
+        presence store for reporting metadata.
+      operationId: listEntitiesAtLocation
+      tags:
+      - Location Presence
+      x-permissions:
+      - role: developer
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ListEntitiesAtLocationRequest'
+      responses:
+        '200':
+          description: Entity list for the location
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListEntitiesAtLocationResponse'
+
+  /location/clear-entity-position:
+    post:
+      summary: Remove entity presence from its current location
+      description: |
+        Clears an entity's presence binding, removing it from its current location.
+        Publishes a departure event if the entity was present at a location.
+      operationId: clearEntityPosition
+      tags:
+      - Location Presence
+      x-permissions:
+      - role: developer
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ClearEntityPositionRequest'
+      responses:
+        '200':
+          description: Entity position cleared
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ClearEntityPositionResponse'
+
 components:
   schemas:
     LocationType:
@@ -533,6 +744,73 @@ components:
       - WILDERNESS
       - DUNGEON
       - OTHER
+
+    BoundsPrecision:
+      type: string
+      description: Precision level of spatial bounds for a location
+      enum:
+      - exact
+      - approximate
+      - none
+
+    CoordinateMode:
+      type: string
+      description: How this location's coordinate system relates to its parent
+      enum:
+      - inherit
+      - local
+      - portal
+
+    TerritoryMode:
+      type: string
+      description: Territory validation mode for constraint checking
+      enum:
+      - exclusive
+      - inclusive
+
+    ValidateTerritoryRequest:
+      type: object
+      description: Request to validate a location against territory boundaries
+      additionalProperties: false
+      required:
+      - locationId
+      - territoryLocationIds
+      properties:
+        locationId:
+          type: string
+          format: uuid
+          description: The location to validate
+        territoryLocationIds:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: Territory boundary location IDs
+        territoryMode:
+          allOf:
+          - $ref: '#/components/schemas/TerritoryMode'
+          nullable: true
+          description: Validation mode (exclusive or inclusive). Defaults to exclusive.
+
+    ValidateTerritoryResponse:
+      type: object
+      description: Territory validation result
+      additionalProperties: false
+      required:
+      - isValid
+      properties:
+        isValid:
+          type: boolean
+          description: True if location passes territory validation
+        violationReason:
+          type: string
+          nullable: true
+          description: Human-readable reason if validation failed
+        matchedTerritoryId:
+          type: string
+          format: uuid
+          nullable: true
+          description: The territory location that matched (for inclusive) or conflicted (for exclusive)
 
     GetLocationRequest:
       description: Request to retrieve a location by its unique identifier
@@ -781,11 +1059,33 @@ components:
           format: uuid
           nullable: true
           description: Parent location ID for hierarchy (null for root locations)
+        bounds:
+          allOf:
+          - $ref: 'common-api.yaml#/components/schemas/BoundingBox3D'
+          nullable: true
+          description: Optional spatial extent in world coordinates
+        boundsPrecision:
+          allOf:
+          - $ref: '#/components/schemas/BoundsPrecision'
+          nullable: true
+          description: Precision level of spatial bounds (defaults to none)
+        coordinateMode:
+          allOf:
+          - $ref: '#/components/schemas/CoordinateMode'
+          nullable: true
+          description: How this location's coordinate system relates to its parent (defaults to inherit)
+        localOrigin:
+          allOf:
+          - $ref: 'common-api.yaml#/components/schemas/Position3D'
+          nullable: true
+          description: Origin point for local or inherited coordinate systems
         metadata:
           type: object
           additionalProperties: true
           nullable: true
-          description: Additional metadata for the location (JSON)
+          description: >-
+            Client-provided location metadata.
+            No Bannou plugin reads specific keys from this field by convention.
 
     UpdateLocationRequest:
       description: Request to update an existing location's properties
@@ -814,11 +1114,33 @@ components:
           - $ref: '#/components/schemas/LocationType'
           nullable: true
           description: Type of location
+        bounds:
+          allOf:
+          - $ref: 'common-api.yaml#/components/schemas/BoundingBox3D'
+          nullable: true
+          description: Optional spatial extent in world coordinates
+        boundsPrecision:
+          allOf:
+          - $ref: '#/components/schemas/BoundsPrecision'
+          nullable: true
+          description: Precision level of spatial bounds
+        coordinateMode:
+          allOf:
+          - $ref: '#/components/schemas/CoordinateMode'
+          nullable: true
+          description: How this location's coordinate system relates to its parent
+        localOrigin:
+          allOf:
+          - $ref: 'common-api.yaml#/components/schemas/Position3D'
+          nullable: true
+          description: Origin point for local or inherited coordinate systems
         metadata:
           type: object
           additionalProperties: true
           nullable: true
-          description: Additional metadata
+          description: >-
+            Updated client-provided location metadata.
+            No Bannou plugin reads specific keys from this field by convention.
 
     SetLocationParentRequest:
       description: Request to set or change a location's parent in the hierarchy
@@ -860,6 +1182,23 @@ components:
           type: string
           format: uuid
           description: ID of the location to delete
+
+    TransferLocationToRealmRequest:
+      description: Request to transfer a location from its current realm to a different realm
+      type: object
+      additionalProperties: false
+      required:
+      - locationId
+      - targetRealmId
+      properties:
+        locationId:
+          type: string
+          format: uuid
+          description: ID of the location to transfer
+        targetRealmId:
+          type: string
+          format: uuid
+          description: ID of the target realm to transfer the location to
 
     DeprecateLocationRequest:
       description: Request to soft-delete a location by marking it as deprecated
@@ -974,11 +1313,65 @@ components:
           type: string
           nullable: true
           description: Code of the parent location (resolved during seeding)
+        bounds:
+          allOf:
+          - $ref: 'common-api.yaml#/components/schemas/BoundingBox3D'
+          nullable: true
+          description: Optional spatial extent in world coordinates
+        boundsPrecision:
+          allOf:
+          - $ref: '#/components/schemas/BoundsPrecision'
+          nullable: true
+          description: Precision level of spatial bounds (defaults to none)
+        coordinateMode:
+          allOf:
+          - $ref: '#/components/schemas/CoordinateMode'
+          nullable: true
+          description: How this location's coordinate system relates to its parent (defaults to inherit)
+        localOrigin:
+          allOf:
+          - $ref: 'common-api.yaml#/components/schemas/Position3D'
+          nullable: true
+          description: Origin point for local or inherited coordinate systems
         metadata:
           type: object
           additionalProperties: true
           nullable: true
-          description: Additional metadata for the location (JSON)
+          description: >-
+            Client-provided location metadata.
+            No Bannou plugin reads specific keys from this field by convention.
+
+    QueryLocationsByPositionRequest:
+      description: Request to find all locations containing a spatial position
+      type: object
+      additionalProperties: false
+      required:
+      - position
+      - realmId
+      properties:
+        position:
+          $ref: 'common-api.yaml#/components/schemas/Position3D'
+          description: Position to query in world coordinates
+        realmId:
+          type: string
+          format: uuid
+          description: Realm to search within
+        maxDepth:
+          type: integer
+          minimum: 0
+          nullable: true
+          description: Maximum hierarchy depth to search (null for all depths)
+        page:
+          type: integer
+          minimum: 1
+          default: 1
+          description: Page number for pagination (1-indexed)
+        pageSize:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 20
+          description: Number of results per page
 
     LocationResponse:
       description: Complete location data returned from API operations
@@ -1036,11 +1429,31 @@ components:
           type: string
           nullable: true
           description: Optional reason for deprecation
+        bounds:
+          allOf:
+          - $ref: 'common-api.yaml#/components/schemas/BoundingBox3D'
+          nullable: true
+          description: Optional spatial extent in world coordinates
+        boundsPrecision:
+          allOf:
+          - $ref: '#/components/schemas/BoundsPrecision'
+          description: Precision level of spatial bounds
+        coordinateMode:
+          allOf:
+          - $ref: '#/components/schemas/CoordinateMode'
+          description: How this location's coordinate system relates to its parent
+        localOrigin:
+          allOf:
+          - $ref: 'common-api.yaml#/components/schemas/Position3D'
+          nullable: true
+          description: Origin point for local or inherited coordinate systems
         metadata:
           type: object
           additionalProperties: true
           nullable: true
-          description: Additional metadata for the location (JSON)
+          description: >-
+            Client-provided location metadata.
+            No Bannou plugin reads specific keys from this field by convention.
         createdAt:
           type: string
           format: date-time
@@ -1106,3 +1519,216 @@ components:
             type: string
           description: List of error messages for locations that failed to seed
 
+    ReportEntityPositionRequest:
+      description: Request to report an entity's presence at a location
+      type: object
+      additionalProperties: false
+      required:
+      - entityType
+      - entityId
+      - locationId
+      properties:
+        entityType:
+          type: string
+          description: Type of entity (opaque string - character, actor, npc, player, etc.)
+        entityId:
+          type: string
+          format: uuid
+          description: ID of the entity being reported
+        locationId:
+          type: string
+          format: uuid
+          description: ID of the location the entity is at
+        previousLocationId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Caller hint for the entity's previous location (optimization to skip GET on refresh)
+        realmId:
+          type: string
+          format: uuid
+          nullable: true
+          description: ID of the realm the location belongs to (included in arrival events if provided)
+        reportedBy:
+          type: string
+          nullable: true
+          description: Identifier of the reporter (service name or session ID)
+
+    ReportEntityPositionResponse:
+      description: Result of reporting entity presence
+      type: object
+      additionalProperties: false
+      required:
+      - recorded
+      properties:
+        recorded:
+          type: boolean
+          description: Whether the position was successfully recorded
+        arrivedAt:
+          type: string
+          format: uuid
+          nullable: true
+          description: Location ID the entity arrived at (only set when location changed)
+        departedFrom:
+          type: string
+          format: uuid
+          nullable: true
+          description: Location ID the entity departed from (only set when location changed)
+
+    GetEntityLocationRequest:
+      description: Request to query an entity's current location
+      type: object
+      additionalProperties: false
+      required:
+      - entityType
+      - entityId
+      properties:
+        entityType:
+          type: string
+          description: Type of entity (opaque string - character, actor, npc, player, etc.)
+        entityId:
+          type: string
+          format: uuid
+          description: ID of the entity to look up
+
+    GetEntityLocationResponse:
+      description: Result of querying an entity's current location
+      type: object
+      additionalProperties: false
+      required:
+      - found
+      properties:
+        found:
+          type: boolean
+          description: Whether a non-expired presence binding exists for this entity
+        locationId:
+          type: string
+          format: uuid
+          nullable: true
+          description: ID of the location the entity is currently at
+        realmId:
+          type: string
+          format: uuid
+          nullable: true
+          description: ID of the realm the location belongs to
+        entityType:
+          type: string
+          nullable: true
+          description: Type of entity (echoed back)
+        entityId:
+          type: string
+          format: uuid
+          nullable: true
+          description: ID of the entity (echoed back)
+        reportedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When the presence was last reported
+        reportedBy:
+          type: string
+          nullable: true
+          description: Identifier of the last reporter
+
+    ListEntitiesAtLocationRequest:
+      description: Request to list entities at a specific location
+      type: object
+      additionalProperties: false
+      required:
+      - locationId
+      properties:
+        locationId:
+          type: string
+          format: uuid
+          description: ID of the location to query
+        entityType:
+          type: string
+          nullable: true
+          description: Optional filter by entity type (opaque string)
+        page:
+          type: integer
+          default: 1
+          description: Page number (1-indexed)
+        pageSize:
+          type: integer
+          default: 50
+          description: Number of entities per page
+
+    ListEntitiesAtLocationResponse:
+      description: Result of listing entities at a location
+      type: object
+      additionalProperties: false
+      required:
+      - entities
+      - totalCount
+      - locationId
+      properties:
+        entities:
+          type: array
+          items:
+            $ref: '#/components/schemas/EntityPresenceEntry'
+          description: Entities currently present at the location
+        totalCount:
+          type: integer
+          description: Total number of entities matching the query
+        locationId:
+          type: string
+          format: uuid
+          description: ID of the queried location
+
+    EntityPresenceEntry:
+      description: An entity currently present at a location
+      type: object
+      additionalProperties: false
+      required:
+      - entityType
+      - entityId
+      properties:
+        entityType:
+          type: string
+          description: Type of entity (opaque string)
+        entityId:
+          type: string
+          format: uuid
+          description: ID of the entity
+        reportedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When the presence was last reported
+        reportedBy:
+          type: string
+          nullable: true
+          description: Identifier of the last reporter
+
+    ClearEntityPositionRequest:
+      description: Request to clear an entity's presence from its current location
+      type: object
+      additionalProperties: false
+      required:
+      - entityType
+      - entityId
+      properties:
+        entityType:
+          type: string
+          description: Type of entity (opaque string - character, actor, npc, player, etc.)
+        entityId:
+          type: string
+          format: uuid
+          description: ID of the entity to clear
+
+    ClearEntityPositionResponse:
+      description: Result of clearing entity presence
+      type: object
+      additionalProperties: false
+      required:
+      - cleared
+      properties:
+        cleared:
+          type: boolean
+          description: Whether the entity had an active presence that was cleared
+        previousLocationId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Location the entity was removed from (null if entity had no active presence)

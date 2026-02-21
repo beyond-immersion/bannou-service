@@ -15,7 +15,7 @@ namespace BeyondImmersion.BannouService.Inventory;
 /// Implementation of the Inventory service.
 /// Provides container management and item placement operations for games.
 /// </summary>
-[BannouService("inventory", typeof(IInventoryService), lifetime: ServiceLifetime.Scoped)]
+[BannouService("inventory", typeof(IInventoryService), lifetime: ServiceLifetime.Scoped, layer: ServiceLayer.GameFoundation)]
 public partial class InventoryService : IInventoryService
 {
     private readonly IMessageBus _messageBus;
@@ -60,141 +60,149 @@ public partial class InventoryService : IInventoryService
         CreateContainerRequest body,
         CancellationToken cancellationToken = default)
     {
-        try
+        _logger.LogDebug("Creating container type {ContainerType} for owner {OwnerId}",
+            body.ContainerType, body.OwnerId);
+
+        // Input validation
+        if (body.MaxSlots.HasValue && body.MaxSlots.Value <= 0)
         {
-            _logger.LogDebug("Creating container type {ContainerType} for owner {OwnerId}",
-                body.ContainerType, body.OwnerId);
-
-            // Input validation
-            if (body.MaxSlots.HasValue && body.MaxSlots.Value <= 0)
-            {
-                _logger.LogDebug("MaxSlots must be positive, got {MaxSlots}", body.MaxSlots.Value);
-                return (StatusCodes.BadRequest, null);
-            }
-            if (body.MaxWeight.HasValue && body.MaxWeight.Value <= 0)
-            {
-                _logger.LogDebug("MaxWeight must be positive, got {MaxWeight}", body.MaxWeight.Value);
-                return (StatusCodes.BadRequest, null);
-            }
-            if (body.MaxVolume.HasValue && body.MaxVolume.Value <= 0)
-            {
-                _logger.LogDebug("MaxVolume must be positive, got {MaxVolume}", body.MaxVolume.Value);
-                return (StatusCodes.BadRequest, null);
-            }
-            if (body.GridWidth.HasValue && body.GridWidth.Value <= 0)
-            {
-                _logger.LogDebug("GridWidth must be positive, got {GridWidth}", body.GridWidth.Value);
-                return (StatusCodes.BadRequest, null);
-            }
-            if (body.GridHeight.HasValue && body.GridHeight.Value <= 0)
-            {
-                _logger.LogDebug("GridHeight must be positive, got {GridHeight}", body.GridHeight.Value);
-                return (StatusCodes.BadRequest, null);
-            }
-
-            var containerStore = _stateStoreFactory.GetStore<ContainerModel>(StateStoreDefinitions.InventoryContainerStore);
-
-            var containerId = Guid.NewGuid();
-            var now = DateTimeOffset.UtcNow;
-
-            // Calculate nesting depth if parent specified
-            var nestingDepth = 0;
-            if (body.ParentContainerId.HasValue)
-            {
-                var parent = await containerStore.GetAsync($"{CONT_PREFIX}{body.ParentContainerId}", cancellationToken);
-                if (parent is null)
-                {
-                    _logger.LogDebug("Parent container not found: {ParentId}", body.ParentContainerId);
-                    return (StatusCodes.BadRequest, null);
-                }
-                nestingDepth = parent.NestingDepth + 1;
-
-                var maxNesting = parent.MaxNestingDepth ?? _configuration.DefaultMaxNestingDepth;
-                if (nestingDepth > maxNesting)
-                {
-                    _logger.LogDebug("Max nesting depth exceeded for parent {ParentId}", body.ParentContainerId);
-                    return (StatusCodes.BadRequest, null);
-                }
-            }
-
-            // Resolve weight contribution: use config default if not specified (enum default is None)
-            var weightContribution = body.WeightContribution;
-            if (weightContribution == WeightContribution.None)
-            {
-                weightContribution = _defaultWeightContribution;
-            }
-
-            var model = new ContainerModel
-            {
-                ContainerId = containerId,
-                OwnerId = body.OwnerId,
-                OwnerType = body.OwnerType,
-                ContainerType = body.ContainerType,
-                ConstraintModel = body.ConstraintModel,
-                IsEquipmentSlot = body.IsEquipmentSlot,
-                EquipmentSlotName = body.EquipmentSlotName,
-                MaxSlots = body.MaxSlots ?? _configuration.DefaultMaxSlots,
-                MaxWeight = body.MaxWeight ?? _configuration.DefaultMaxWeight,
-                GridWidth = body.GridWidth,
-                GridHeight = body.GridHeight,
-                MaxVolume = body.MaxVolume,
-                ParentContainerId = body.ParentContainerId,
-                NestingDepth = nestingDepth,
-                CanContainContainers = body.CanContainContainers,
-                MaxNestingDepth = body.MaxNestingDepth ?? _configuration.DefaultMaxNestingDepth,
-                SelfWeight = body.SelfWeight,
-                WeightContribution = weightContribution,
-                SlotCost = body.SlotCost,
-                ParentGridWidth = body.ParentGridWidth,
-                ParentGridHeight = body.ParentGridHeight,
-                ParentVolume = body.ParentVolume,
-                AllowedCategories = body.AllowedCategories?.ToList(),
-                ForbiddenCategories = body.ForbiddenCategories?.ToList(),
-                AllowedTags = body.AllowedTags?.ToList(),
-                RealmId = body.RealmId,
-                Tags = body.Tags?.ToList() ?? new List<string>(),
-                Metadata = body.Metadata is not null ? BannouJson.Serialize(body.Metadata) : null,
-                ContentsWeight = 0,
-                UsedSlots = 0,
-                CurrentVolume = 0,
-                CreatedAt = now
-            };
-
-            await containerStore.SaveAsync($"{CONT_PREFIX}{containerId}", model, cancellationToken: cancellationToken);
-
-            // Update Redis cache after MySQL write
-            await UpdateContainerCacheAsync($"{CONT_PREFIX}{containerId}", model, cancellationToken);
-
-            var ownerIndexKey = BuildOwnerIndexKey(body.OwnerType, body.OwnerId);
-            await AddToListAsync(StateStoreDefinitions.InventoryContainerStore,
-                ownerIndexKey, containerId.ToString(), cancellationToken);
-            await AddToListAsync(StateStoreDefinitions.InventoryContainerStore,
-                $"{CONT_TYPE_INDEX}{body.ContainerType}", containerId.ToString(), cancellationToken);
-
-            await _messageBus.TryPublishAsync("inventory-container.created", new InventoryContainerCreatedEvent
-            {
-                EventId = Guid.NewGuid(),
-                Timestamp = now,
-                ContainerId = containerId,
-                OwnerId = body.OwnerId,
-                OwnerType = body.OwnerType,
-                ContainerType = body.ContainerType,
-                ConstraintModel = body.ConstraintModel.ToString(),
-                IsEquipmentSlot = body.IsEquipmentSlot
-            }, cancellationToken);
-
-            _logger.LogDebug("Created container {ContainerId} type={Type}", containerId, body.ContainerType);
-            return (StatusCodes.OK, MapContainerToResponse(model));
+            _logger.LogDebug("MaxSlots must be positive, got {MaxSlots}", body.MaxSlots.Value);
+            return (StatusCodes.BadRequest, null);
         }
-        catch (Exception ex)
+        if (body.MaxWeight.HasValue && body.MaxWeight.Value <= 0)
         {
-            _logger.LogError(ex, "Error creating container");
-            await _messageBus.TryPublishErrorAsync(
-                "inventory", "CreateContainer", "unexpected_exception", ex.Message,
-                dependency: null, endpoint: "post:/inventory/container/create",
-                details: null, stack: ex.StackTrace);
-            return (StatusCodes.InternalServerError, null);
+            _logger.LogDebug("MaxWeight must be positive, got {MaxWeight}", body.MaxWeight.Value);
+            return (StatusCodes.BadRequest, null);
         }
+        if (body.MaxVolume.HasValue && body.MaxVolume.Value <= 0)
+        {
+            _logger.LogDebug("MaxVolume must be positive, got {MaxVolume}", body.MaxVolume.Value);
+            return (StatusCodes.BadRequest, null);
+        }
+        if (body.GridWidth.HasValue && body.GridWidth.Value <= 0)
+        {
+            _logger.LogDebug("GridWidth must be positive, got {GridWidth}", body.GridWidth.Value);
+            return (StatusCodes.BadRequest, null);
+        }
+        if (body.GridHeight.HasValue && body.GridHeight.Value <= 0)
+        {
+            _logger.LogDebug("GridHeight must be positive, got {GridHeight}", body.GridHeight.Value);
+            return (StatusCodes.BadRequest, null);
+        }
+
+        var containerStore = _stateStoreFactory.GetStore<ContainerModel>(StateStoreDefinitions.InventoryContainerStore);
+
+        var containerId = Guid.NewGuid();
+        var now = DateTimeOffset.UtcNow;
+
+        // Calculate nesting depth if parent specified
+        var nestingDepth = 0;
+        if (body.ParentContainerId.HasValue)
+        {
+            var parent = await containerStore.GetAsync($"{CONT_PREFIX}{body.ParentContainerId}", cancellationToken);
+            if (parent is null)
+            {
+                _logger.LogDebug("Parent container not found: {ParentId}", body.ParentContainerId);
+                return (StatusCodes.BadRequest, null);
+            }
+            nestingDepth = parent.NestingDepth + 1;
+
+            var maxNesting = parent.MaxNestingDepth ?? _configuration.DefaultMaxNestingDepth;
+            if (nestingDepth > maxNesting)
+            {
+                _logger.LogDebug("Max nesting depth exceeded for parent {ParentId}", body.ParentContainerId);
+                return (StatusCodes.BadRequest, null);
+            }
+        }
+
+        // Resolve weight contribution: use config default if not specified (enum default is None)
+        var weightContribution = body.WeightContribution;
+        if (weightContribution == WeightContribution.None)
+        {
+            weightContribution = _defaultWeightContribution;
+        }
+
+        var model = new ContainerModel
+        {
+            ContainerId = containerId,
+            OwnerId = body.OwnerId,
+            OwnerType = body.OwnerType,
+            ContainerType = body.ContainerType,
+            ConstraintModel = body.ConstraintModel,
+            IsEquipmentSlot = body.IsEquipmentSlot,
+            EquipmentSlotName = body.EquipmentSlotName,
+            MaxSlots = body.MaxSlots ?? _configuration.DefaultMaxSlots,
+            MaxWeight = body.MaxWeight ?? _configuration.DefaultMaxWeight,
+            GridWidth = body.GridWidth,
+            GridHeight = body.GridHeight,
+            MaxVolume = body.MaxVolume,
+            ParentContainerId = body.ParentContainerId,
+            NestingDepth = nestingDepth,
+            CanContainContainers = body.CanContainContainers,
+            MaxNestingDepth = body.MaxNestingDepth ?? _configuration.DefaultMaxNestingDepth,
+            SelfWeight = body.SelfWeight,
+            WeightContribution = weightContribution,
+            SlotCost = body.SlotCost,
+            ParentGridWidth = body.ParentGridWidth,
+            ParentGridHeight = body.ParentGridHeight,
+            ParentVolume = body.ParentVolume,
+            AllowedCategories = body.AllowedCategories?.ToList(),
+            ForbiddenCategories = body.ForbiddenCategories?.ToList(),
+            AllowedTags = body.AllowedTags?.ToList(),
+            RealmId = body.RealmId,
+            Tags = body.Tags?.ToList() ?? new List<string>(),
+            Metadata = body.Metadata is not null ? BannouJson.Serialize(body.Metadata) : null,
+            ContentsWeight = 0,
+            UsedSlots = 0,
+            CurrentVolume = 0,
+            CreatedAt = now
+        };
+
+        await containerStore.SaveAsync($"{CONT_PREFIX}{containerId}", model, cancellationToken: cancellationToken);
+
+        // Update Redis cache after MySQL write
+        await UpdateContainerCacheAsync($"{CONT_PREFIX}{containerId}", model, cancellationToken);
+
+        var ownerIndexKey = BuildOwnerIndexKey(body.OwnerType, body.OwnerId);
+        await AddToListAsync(StateStoreDefinitions.InventoryContainerStore,
+            ownerIndexKey, containerId.ToString(), cancellationToken);
+        await AddToListAsync(StateStoreDefinitions.InventoryContainerStore,
+            $"{CONT_TYPE_INDEX}{body.ContainerType}", containerId.ToString(), cancellationToken);
+
+        await _messageBus.TryPublishAsync("inventory-container.created", new InventoryContainerCreatedEvent
+        {
+            EventId = Guid.NewGuid(),
+            Timestamp = now,
+            ContainerId = containerId,
+            OwnerId = body.OwnerId,
+            OwnerType = body.OwnerType,
+            ContainerType = body.ContainerType,
+            ConstraintModel = body.ConstraintModel,
+            IsEquipmentSlot = body.IsEquipmentSlot,
+            EquipmentSlotName = model.EquipmentSlotName,
+            MaxSlots = model.MaxSlots,
+            UsedSlots = model.UsedSlots,
+            MaxWeight = model.MaxWeight,
+            GridWidth = model.GridWidth,
+            GridHeight = model.GridHeight,
+            MaxVolume = model.MaxVolume,
+            CurrentVolume = model.CurrentVolume,
+            ParentContainerId = model.ParentContainerId,
+            NestingDepth = model.NestingDepth,
+            CanContainContainers = model.CanContainContainers,
+            MaxNestingDepth = model.MaxNestingDepth,
+            SelfWeight = model.SelfWeight,
+            WeightContribution = model.WeightContribution,
+            SlotCost = model.SlotCost,
+            ContentsWeight = model.ContentsWeight,
+            TotalWeight = model.SelfWeight + model.ContentsWeight,
+            RealmId = model.RealmId,
+            CreatedAt = model.CreatedAt,
+            ModifiedAt = model.ModifiedAt
+        }, cancellationToken);
+
+        _logger.LogDebug("Created container {ContainerId} type={Type}", containerId, body.ContainerType);
+        return (StatusCodes.OK, MapContainerToResponse(model));
     }
 
     /// <inheritdoc/>
@@ -202,60 +210,48 @@ public partial class InventoryService : IInventoryService
         GetContainerRequest body,
         CancellationToken cancellationToken = default)
     {
-        try
+        // Use cache read-through (per IMPLEMENTATION TENETS - use defined cache stores)
+        var model = await GetContainerWithCacheAsync(body.ContainerId, cancellationToken);
+
+        if (model is null)
         {
-            // Use cache read-through (per IMPLEMENTATION TENETS - use defined cache stores)
-            var model = await GetContainerWithCacheAsync(body.ContainerId, cancellationToken);
-
-            if (model is null)
-            {
-                return (StatusCodes.NotFound, null);
-            }
-
-            var response = new ContainerWithContentsResponse
-            {
-                Container = MapContainerToResponse(model),
-                Items = new List<ContainerItem>()
-            };
-
-            if (body.IncludeContents)
-            {
-                try
-                {
-                    var itemsResponse = await _itemClient.ListItemsByContainerAsync(
-                        new ListItemsByContainerRequest { ContainerId = body.ContainerId },
-                        cancellationToken);
-
-                    response.Items = itemsResponse.Items.Select(i => new ContainerItem
-                    {
-                        InstanceId = i.InstanceId,
-                        TemplateId = i.TemplateId,
-                        Quantity = i.Quantity,
-                        SlotIndex = i.SlotIndex,
-                        SlotX = i.SlotX,
-                        SlotY = i.SlotY,
-                        Rotated = i.Rotated
-                    }).ToList();
-                }
-                catch (ApiException ex)
-                {
-                    _logger.LogWarning(ex, "Failed to get items for container {ContainerId}: {StatusCode}",
-                        body.ContainerId, ex.StatusCode);
-                    // Container exists but items couldn't be fetched - return empty list
-                }
-            }
-
-            return (StatusCodes.OK, response);
+            return (StatusCodes.NotFound, null);
         }
-        catch (Exception ex)
+
+        var response = new ContainerWithContentsResponse
         {
-            _logger.LogError(ex, "Error getting container {ContainerId}", body.ContainerId);
-            await _messageBus.TryPublishErrorAsync(
-                "inventory", "GetContainer", "unexpected_exception", ex.Message,
-                dependency: null, endpoint: "post:/inventory/container/get",
-                details: null, stack: ex.StackTrace);
-            return (StatusCodes.InternalServerError, null);
+            Container = MapContainerToResponse(model),
+            Items = new List<ContainerItem>()
+        };
+
+        if (body.IncludeContents)
+        {
+            try
+            {
+                var itemsResponse = await _itemClient.ListItemsByContainerAsync(
+                    new ListItemsByContainerRequest { ContainerId = body.ContainerId },
+                    cancellationToken);
+
+                response.Items = itemsResponse.Items.Select(i => new ContainerItem
+                {
+                    InstanceId = i.InstanceId,
+                    TemplateId = i.TemplateId,
+                    Quantity = i.Quantity,
+                    SlotIndex = i.SlotIndex,
+                    SlotX = i.SlotX,
+                    SlotY = i.SlotY,
+                    Rotated = i.Rotated
+                }).ToList();
+            }
+            catch (ApiException ex)
+            {
+                _logger.LogWarning(ex, "Failed to get items for container {ContainerId}: {StatusCode}",
+                    body.ContainerId, ex.StatusCode);
+                // Container exists but items couldn't be fetched - return empty list
+            }
         }
+
+        return (StatusCodes.OK, response);
     }
 
     /// <inheritdoc/>
@@ -263,57 +259,45 @@ public partial class InventoryService : IInventoryService
         GetOrCreateContainerRequest body,
         CancellationToken cancellationToken = default)
     {
-        try
+        // Check if lazy container creation is enabled
+        if (!_configuration.EnableLazyContainerCreation)
         {
-            // Check if lazy container creation is enabled
-            if (!_configuration.EnableLazyContainerCreation)
-            {
-                _logger.LogWarning("Lazy container creation is disabled");
-                return (StatusCodes.BadRequest, null);
-            }
-
-            var containerStore = _stateStoreFactory.GetStore<ContainerModel>(StateStoreDefinitions.InventoryContainerStore);
-            var stringStore = _stateStoreFactory.GetStore<string>(StateStoreDefinitions.InventoryContainerStore);
-
-            // Look for existing container by owner + type
-            var ownerKey = BuildOwnerIndexKey(body.OwnerType, body.OwnerId);
-            var idsJson = await stringStore.GetAsync(ownerKey, cancellationToken);
-            var ids = string.IsNullOrEmpty(idsJson)
-                ? new List<string>()
-                : BannouJson.Deserialize<List<string>>(idsJson) ?? new List<string>();
-
-            foreach (var id in ids)
-            {
-                var existing = await containerStore.GetAsync($"{CONT_PREFIX}{id}", cancellationToken);
-                if (existing is not null && existing.ContainerType == body.ContainerType)
-                {
-                    return (StatusCodes.OK, MapContainerToResponse(existing));
-                }
-            }
-
-            // Container doesn't exist, create it
-            return await CreateContainerAsync(new CreateContainerRequest
-            {
-                OwnerId = body.OwnerId,
-                OwnerType = body.OwnerType,
-                ContainerType = body.ContainerType,
-                ConstraintModel = body.ConstraintModel,
-                MaxSlots = body.MaxSlots,
-                MaxWeight = body.MaxWeight,
-                GridWidth = body.GridWidth,
-                GridHeight = body.GridHeight,
-                RealmId = body.RealmId
-            }, cancellationToken);
+            _logger.LogWarning("Lazy container creation is disabled");
+            return (StatusCodes.BadRequest, null);
         }
-        catch (Exception ex)
+
+        var containerStore = _stateStoreFactory.GetStore<ContainerModel>(StateStoreDefinitions.InventoryContainerStore);
+        var stringStore = _stateStoreFactory.GetStore<string>(StateStoreDefinitions.InventoryContainerStore);
+
+        // Look for existing container by owner + type
+        var ownerKey = BuildOwnerIndexKey(body.OwnerType, body.OwnerId);
+        var idsJson = await stringStore.GetAsync(ownerKey, cancellationToken);
+        var ids = string.IsNullOrEmpty(idsJson)
+            ? new List<string>()
+            : BannouJson.Deserialize<List<string>>(idsJson) ?? new List<string>();
+
+        foreach (var id in ids)
         {
-            _logger.LogError(ex, "Error in get-or-create container");
-            await _messageBus.TryPublishErrorAsync(
-                "inventory", "GetOrCreateContainer", "unexpected_exception", ex.Message,
-                dependency: null, endpoint: "post:/inventory/container/get-or-create",
-                details: null, stack: ex.StackTrace);
-            return (StatusCodes.InternalServerError, null);
+            var existing = await containerStore.GetAsync($"{CONT_PREFIX}{id}", cancellationToken);
+            if (existing is not null && existing.ContainerType == body.ContainerType)
+            {
+                return (StatusCodes.OK, MapContainerToResponse(existing));
+            }
         }
+
+        // Container doesn't exist, create it
+        return await CreateContainerAsync(new CreateContainerRequest
+        {
+            OwnerId = body.OwnerId,
+            OwnerType = body.OwnerType,
+            ContainerType = body.ContainerType,
+            ConstraintModel = body.ConstraintModel,
+            MaxSlots = body.MaxSlots,
+            MaxWeight = body.MaxWeight,
+            GridWidth = body.GridWidth,
+            GridHeight = body.GridHeight,
+            RealmId = body.RealmId
+        }, cancellationToken);
     }
 
     /// <inheritdoc/>
@@ -321,46 +305,34 @@ public partial class InventoryService : IInventoryService
         ListContainersRequest body,
         CancellationToken cancellationToken = default)
     {
-        try
+        var containerStore = _stateStoreFactory.GetStore<ContainerModel>(StateStoreDefinitions.InventoryContainerStore);
+        var stringStore = _stateStoreFactory.GetStore<string>(StateStoreDefinitions.InventoryContainerStore);
+
+        var ownerKey = BuildOwnerIndexKey(body.OwnerType, body.OwnerId);
+        var idsJson = await stringStore.GetAsync(ownerKey, cancellationToken);
+        var ids = string.IsNullOrEmpty(idsJson)
+            ? new List<string>()
+            : BannouJson.Deserialize<List<string>>(idsJson) ?? new List<string>();
+
+        var containers = new List<ContainerResponse>();
+        foreach (var id in ids)
         {
-            var containerStore = _stateStoreFactory.GetStore<ContainerModel>(StateStoreDefinitions.InventoryContainerStore);
-            var stringStore = _stateStoreFactory.GetStore<string>(StateStoreDefinitions.InventoryContainerStore);
+            var model = await containerStore.GetAsync($"{CONT_PREFIX}{id}", cancellationToken);
+            if (model is null) continue;
 
-            var ownerKey = BuildOwnerIndexKey(body.OwnerType, body.OwnerId);
-            var idsJson = await stringStore.GetAsync(ownerKey, cancellationToken);
-            var ids = string.IsNullOrEmpty(idsJson)
-                ? new List<string>()
-                : BannouJson.Deserialize<List<string>>(idsJson) ?? new List<string>();
+            // Apply filters
+            if (!string.IsNullOrEmpty(body.ContainerType) && model.ContainerType != body.ContainerType) continue;
+            if (!body.IncludeEquipmentSlots && model.IsEquipmentSlot) continue;
+            if (body.RealmId.HasValue && model.RealmId != body.RealmId.Value) continue;
 
-            var containers = new List<ContainerResponse>();
-            foreach (var id in ids)
-            {
-                var model = await containerStore.GetAsync($"{CONT_PREFIX}{id}", cancellationToken);
-                if (model is null) continue;
-
-                // Apply filters
-                if (!string.IsNullOrEmpty(body.ContainerType) && model.ContainerType != body.ContainerType) continue;
-                if (!body.IncludeEquipmentSlots && model.IsEquipmentSlot) continue;
-                if (body.RealmId.HasValue && model.RealmId != body.RealmId.Value) continue;
-
-                containers.Add(MapContainerToResponse(model));
-            }
-
-            return (StatusCodes.OK, new ListContainersResponse
-            {
-                Containers = containers,
-                TotalCount = containers.Count
-            });
+            containers.Add(MapContainerToResponse(model));
         }
-        catch (Exception ex)
+
+        return (StatusCodes.OK, new ListContainersResponse
         {
-            _logger.LogError(ex, "Error listing containers for owner {OwnerId}", body.OwnerId);
-            await _messageBus.TryPublishErrorAsync(
-                "inventory", "ListContainers", "unexpected_exception", ex.Message,
-                dependency: null, endpoint: "post:/inventory/container/list",
-                details: null, stack: ex.StackTrace);
-            return (StatusCodes.InternalServerError, null);
-        }
+            Containers = containers,
+            TotalCount = containers.Count
+        });
     }
 
     /// <inheritdoc/>
@@ -368,94 +340,102 @@ public partial class InventoryService : IInventoryService
         UpdateContainerRequest body,
         CancellationToken cancellationToken = default)
     {
-        try
+        // Input validation
+        if (body.MaxSlots.HasValue && body.MaxSlots.Value <= 0)
         {
-            // Input validation
-            if (body.MaxSlots.HasValue && body.MaxSlots.Value <= 0)
-            {
-                return (StatusCodes.BadRequest, null);
-            }
-            if (body.MaxWeight.HasValue && body.MaxWeight.Value <= 0)
-            {
-                return (StatusCodes.BadRequest, null);
-            }
-            if (body.MaxVolume.HasValue && body.MaxVolume.Value <= 0)
-            {
-                return (StatusCodes.BadRequest, null);
-            }
-            if (body.GridWidth.HasValue && body.GridWidth.Value <= 0)
-            {
-                return (StatusCodes.BadRequest, null);
-            }
-            if (body.GridHeight.HasValue && body.GridHeight.Value <= 0)
-            {
-                return (StatusCodes.BadRequest, null);
-            }
-
-            // Acquire distributed lock for container modification (per IMPLEMENTATION TENETS)
-            var lockOwner = $"update-container-{Guid.NewGuid():N}";
-            await using var lockResponse = await _lockProvider.LockAsync(
-                StateStoreDefinitions.InventoryLock,
-                body.ContainerId.ToString(),
-                lockOwner,
-                _configuration.LockTimeoutSeconds,
-                cancellationToken);
-
-            if (!lockResponse.Success)
-            {
-                _logger.LogWarning("Failed to acquire lock for container {ContainerId}", body.ContainerId);
-                return (StatusCodes.Conflict, null);
-            }
-
-            // Use cache read-through (per IMPLEMENTATION TENETS - use defined cache stores)
-            var model = await GetContainerWithCacheAsync(body.ContainerId, cancellationToken);
-
-            if (model is null)
-            {
-                return (StatusCodes.NotFound, null);
-            }
-
-            var now = DateTimeOffset.UtcNow;
-
-            if (body.MaxSlots.HasValue) model.MaxSlots = body.MaxSlots.Value;
-            if (body.MaxWeight.HasValue) model.MaxWeight = body.MaxWeight.Value;
-            if (body.GridWidth.HasValue) model.GridWidth = body.GridWidth.Value;
-            if (body.GridHeight.HasValue) model.GridHeight = body.GridHeight.Value;
-            if (body.MaxVolume.HasValue) model.MaxVolume = body.MaxVolume.Value;
-            if (body.AllowedCategories is not null) model.AllowedCategories = body.AllowedCategories.ToList();
-            if (body.ForbiddenCategories is not null) model.ForbiddenCategories = body.ForbiddenCategories.ToList();
-            if (body.AllowedTags is not null) model.AllowedTags = body.AllowedTags.ToList();
-            if (body.Tags is not null) model.Tags = body.Tags.ToList();
-            if (body.Metadata is not null) model.Metadata = BannouJson.Serialize(body.Metadata);
-            model.ModifiedAt = now;
-
-            // Save with cache write-through
-            await SaveContainerWithCacheAsync(model, cancellationToken);
-
-            await _messageBus.TryPublishAsync("inventory-container.updated", new InventoryContainerUpdatedEvent
-            {
-                EventId = Guid.NewGuid(),
-                Timestamp = now,
-                ContainerId = body.ContainerId,
-                OwnerId = model.OwnerId,
-                OwnerType = model.OwnerType,
-                ContainerType = model.ContainerType,
-                ConstraintModel = model.ConstraintModel.ToString(),
-                IsEquipmentSlot = model.IsEquipmentSlot
-            }, cancellationToken);
-
-            _logger.LogDebug("Updated container {ContainerId}", body.ContainerId);
-            return (StatusCodes.OK, MapContainerToResponse(model));
+            return (StatusCodes.BadRequest, null);
         }
-        catch (Exception ex)
+        if (body.MaxWeight.HasValue && body.MaxWeight.Value <= 0)
         {
-            _logger.LogError(ex, "Error updating container {ContainerId}", body.ContainerId);
-            await _messageBus.TryPublishErrorAsync(
-                "inventory", "UpdateContainer", "unexpected_exception", ex.Message,
-                dependency: null, endpoint: "post:/inventory/container/update",
-                details: null, stack: ex.StackTrace);
-            return (StatusCodes.InternalServerError, null);
+            return (StatusCodes.BadRequest, null);
         }
+        if (body.MaxVolume.HasValue && body.MaxVolume.Value <= 0)
+        {
+            return (StatusCodes.BadRequest, null);
+        }
+        if (body.GridWidth.HasValue && body.GridWidth.Value <= 0)
+        {
+            return (StatusCodes.BadRequest, null);
+        }
+        if (body.GridHeight.HasValue && body.GridHeight.Value <= 0)
+        {
+            return (StatusCodes.BadRequest, null);
+        }
+
+        // Acquire distributed lock for container modification (per IMPLEMENTATION TENETS)
+        var lockOwner = $"update-container-{Guid.NewGuid():N}";
+        await using var lockResponse = await _lockProvider.LockAsync(
+            StateStoreDefinitions.InventoryLock,
+            body.ContainerId.ToString(),
+            lockOwner,
+            _configuration.LockTimeoutSeconds,
+            cancellationToken);
+
+        if (!lockResponse.Success)
+        {
+            _logger.LogWarning("Failed to acquire lock for container {ContainerId}", body.ContainerId);
+            return (StatusCodes.Conflict, null);
+        }
+
+        // Use cache read-through (per IMPLEMENTATION TENETS - use defined cache stores)
+        var model = await GetContainerWithCacheAsync(body.ContainerId, cancellationToken);
+
+        if (model is null)
+        {
+            return (StatusCodes.NotFound, null);
+        }
+
+        var now = DateTimeOffset.UtcNow;
+
+        if (body.MaxSlots.HasValue) model.MaxSlots = body.MaxSlots.Value;
+        if (body.MaxWeight.HasValue) model.MaxWeight = body.MaxWeight.Value;
+        if (body.GridWidth.HasValue) model.GridWidth = body.GridWidth.Value;
+        if (body.GridHeight.HasValue) model.GridHeight = body.GridHeight.Value;
+        if (body.MaxVolume.HasValue) model.MaxVolume = body.MaxVolume.Value;
+        if (body.AllowedCategories is not null) model.AllowedCategories = body.AllowedCategories.ToList();
+        if (body.ForbiddenCategories is not null) model.ForbiddenCategories = body.ForbiddenCategories.ToList();
+        if (body.AllowedTags is not null) model.AllowedTags = body.AllowedTags.ToList();
+        if (body.Tags is not null) model.Tags = body.Tags.ToList();
+        if (body.Metadata is not null) model.Metadata = BannouJson.Serialize(body.Metadata);
+        model.ModifiedAt = now;
+
+        // Save with cache write-through
+        await SaveContainerWithCacheAsync(model, cancellationToken);
+
+        await _messageBus.TryPublishAsync("inventory-container.updated", new InventoryContainerUpdatedEvent
+        {
+            EventId = Guid.NewGuid(),
+            Timestamp = now,
+            ContainerId = body.ContainerId,
+            OwnerId = model.OwnerId,
+            OwnerType = model.OwnerType,
+            ContainerType = model.ContainerType,
+            ConstraintModel = model.ConstraintModel,
+            IsEquipmentSlot = model.IsEquipmentSlot,
+            EquipmentSlotName = model.EquipmentSlotName,
+            MaxSlots = model.MaxSlots,
+            UsedSlots = model.UsedSlots,
+            MaxWeight = model.MaxWeight,
+            GridWidth = model.GridWidth,
+            GridHeight = model.GridHeight,
+            MaxVolume = model.MaxVolume,
+            CurrentVolume = model.CurrentVolume,
+            ParentContainerId = model.ParentContainerId,
+            NestingDepth = model.NestingDepth,
+            CanContainContainers = model.CanContainContainers,
+            MaxNestingDepth = model.MaxNestingDepth,
+            SelfWeight = model.SelfWeight,
+            WeightContribution = model.WeightContribution,
+            SlotCost = model.SlotCost,
+            ContentsWeight = model.ContentsWeight,
+            TotalWeight = model.SelfWeight + model.ContentsWeight,
+            RealmId = model.RealmId,
+            CreatedAt = model.CreatedAt,
+            ModifiedAt = model.ModifiedAt
+        }, cancellationToken);
+
+        _logger.LogDebug("Updated container {ContainerId}", body.ContainerId);
+        return (StatusCodes.OK, MapContainerToResponse(model));
     }
 
     /// <inheritdoc/>
@@ -463,138 +443,146 @@ public partial class InventoryService : IInventoryService
         DeleteContainerRequest body,
         CancellationToken cancellationToken = default)
     {
+        // Use cache read-through (per IMPLEMENTATION TENETS - use defined cache stores)
+        var model = await GetContainerWithCacheAsync(body.ContainerId, cancellationToken);
+
+        if (model is null)
+        {
+            return (StatusCodes.NotFound, null);
+        }
+
+        // Acquire distributed lock for container deletion (per IMPLEMENTATION TENETS)
+        var lockOwner = $"delete-container-{Guid.NewGuid():N}";
+        await using var lockResponse = await _lockProvider.LockAsync(
+            StateStoreDefinitions.InventoryLock,
+            body.ContainerId.ToString(),
+            lockOwner,
+            _configuration.LockTimeoutSeconds,
+            cancellationToken);
+
+        if (!lockResponse.Success)
+        {
+            _logger.LogWarning("Failed to acquire lock for container deletion {ContainerId}", body.ContainerId);
+            return (StatusCodes.Conflict, null);
+        }
+
+        // Get items in container - abort if item service is unreachable to prevent orphaning items
+        List<ItemInstanceResponse> items;
         try
         {
-            // Use cache read-through (per IMPLEMENTATION TENETS - use defined cache stores)
-            var model = await GetContainerWithCacheAsync(body.ContainerId, cancellationToken);
-
-            if (model is null)
-            {
-                return (StatusCodes.NotFound, null);
-            }
-
-            // Acquire distributed lock for container deletion (per IMPLEMENTATION TENETS)
-            var lockOwner = $"delete-container-{Guid.NewGuid():N}";
-            await using var lockResponse = await _lockProvider.LockAsync(
-                StateStoreDefinitions.InventoryLock,
-                body.ContainerId.ToString(),
-                lockOwner,
-                _configuration.LockTimeoutSeconds,
+            var itemsResponse = await _itemClient.ListItemsByContainerAsync(
+                new ListItemsByContainerRequest { ContainerId = body.ContainerId },
                 cancellationToken);
-
-            if (!lockResponse.Success)
-            {
-                _logger.LogWarning("Failed to acquire lock for container deletion {ContainerId}", body.ContainerId);
-                return (StatusCodes.Conflict, null);
-            }
-
-            // Get items in container - abort if item service is unreachable to prevent orphaning items
-            List<ItemInstanceResponse> items;
-            try
-            {
-                var itemsResponse = await _itemClient.ListItemsByContainerAsync(
-                    new ListItemsByContainerRequest { ContainerId = body.ContainerId },
-                    cancellationToken);
-                items = itemsResponse.Items.ToList();
-            }
-            catch (ApiException ex)
-            {
-                _logger.LogError(ex, "Cannot delete container {ContainerId}: unable to determine contained items (status {StatusCode})",
-                    body.ContainerId, ex.StatusCode);
-                return (StatusCodes.ServiceUnavailable, null);
-            }
-
-            var itemCount = items.Count;
-
-            if (itemCount > 0)
-            {
-                switch (body.ItemHandling)
-                {
-                    case ItemHandling.Error:
-                        _logger.LogDebug("Container {ContainerId} is not empty", body.ContainerId);
-                        return (StatusCodes.BadRequest, null);
-
-                    case ItemHandling.Destroy:
-                        foreach (var item in items)
-                        {
-                            try
-                            {
-                                await _itemClient.DestroyItemInstanceAsync(
-                                    new DestroyItemInstanceRequest
-                                    {
-                                        InstanceId = item.InstanceId,
-                                        Reason = "container_deleted"
-                                    }, cancellationToken);
-                            }
-                            catch (ApiException ex)
-                            {
-                                _logger.LogWarning(ex, "Failed to destroy item {InstanceId}", item.InstanceId);
-                            }
-                        }
-                        break;
-
-                    case ItemHandling.Transfer:
-                        if (!body.TransferToContainerId.HasValue)
-                        {
-                            _logger.LogWarning("Transfer target required when itemHandling is transfer");
-                            return (StatusCodes.BadRequest, null);
-                        }
-                        foreach (var item in items)
-                        {
-                            await MoveItemAsync(new MoveItemRequest
-                            {
-                                InstanceId = item.InstanceId,
-                                TargetContainerId = body.TransferToContainerId.Value
-                            }, cancellationToken);
-                        }
-                        break;
-                }
-            }
-
-            var now = DateTimeOffset.UtcNow;
-
-            // Remove from indexes
-            var ownerIndexKey = BuildOwnerIndexKey(model.OwnerType, model.OwnerId);
-            await RemoveFromListAsync(StateStoreDefinitions.InventoryContainerStore,
-                ownerIndexKey, body.ContainerId.ToString(), cancellationToken);
-            await RemoveFromListAsync(StateStoreDefinitions.InventoryContainerStore,
-                $"{CONT_TYPE_INDEX}{model.ContainerType}", body.ContainerId.ToString(), cancellationToken);
-
-            var containerStore = _stateStoreFactory.GetStore<ContainerModel>(StateStoreDefinitions.InventoryContainerStore);
-            await containerStore.DeleteAsync($"{CONT_PREFIX}{body.ContainerId}", cancellationToken);
-
-            // Invalidate cache after MySQL delete
-            await InvalidateContainerCacheAsync($"{CONT_PREFIX}{body.ContainerId}", cancellationToken);
-
-            await _messageBus.TryPublishAsync("inventory-container.deleted", new InventoryContainerDeletedEvent
-            {
-                EventId = Guid.NewGuid(),
-                Timestamp = now,
-                ContainerId = body.ContainerId,
-                OwnerId = model.OwnerId,
-                OwnerType = model.OwnerType,
-                ContainerType = model.ContainerType,
-                ConstraintModel = model.ConstraintModel.ToString(),
-                IsEquipmentSlot = model.IsEquipmentSlot
-            }, cancellationToken);
-
-            _logger.LogDebug("Deleted container {ContainerId}", body.ContainerId);
-            return (StatusCodes.OK, new DeleteContainerResponse
-            {
-                Deleted = true,
-                ContainerId = body.ContainerId,
-                ItemsHandled = itemCount
-            });
+            items = itemsResponse.Items.ToList();
         }
-        catch (Exception ex)
+        catch (ApiException ex)
         {
-            _logger.LogError(ex, "Error deleting container {ContainerId}", body.ContainerId);
-            await _messageBus.TryPublishErrorAsync(
-                "inventory", "DeleteContainer", "unexpected_exception", ex.Message,
-                dependency: null, endpoint: "post:/inventory/container/delete",
-                details: null, stack: ex.StackTrace);
-            return (StatusCodes.InternalServerError, null);
+            _logger.LogError(ex, "Cannot delete container {ContainerId}: unable to determine contained items (status {StatusCode})",
+                body.ContainerId, ex.StatusCode);
+            return (StatusCodes.ServiceUnavailable, null);
         }
+
+        var itemCount = items.Count;
+
+        if (itemCount > 0)
+        {
+            switch (body.ItemHandling)
+            {
+                case ItemHandling.Error:
+                    _logger.LogDebug("Container {ContainerId} is not empty", body.ContainerId);
+                    return (StatusCodes.BadRequest, null);
+
+                case ItemHandling.Destroy:
+                    foreach (var item in items)
+                    {
+                        try
+                        {
+                            await _itemClient.DestroyItemInstanceAsync(
+                                new DestroyItemInstanceRequest
+                                {
+                                    InstanceId = item.InstanceId,
+                                    Reason = "container_deleted"
+                                }, cancellationToken);
+                        }
+                        catch (ApiException ex)
+                        {
+                            _logger.LogWarning(ex, "Failed to destroy item {InstanceId}", item.InstanceId);
+                        }
+                    }
+                    break;
+
+                case ItemHandling.Transfer:
+                    if (!body.TransferToContainerId.HasValue)
+                    {
+                        _logger.LogWarning("Transfer target required when itemHandling is transfer");
+                        return (StatusCodes.BadRequest, null);
+                    }
+                    foreach (var item in items)
+                    {
+                        await MoveItemAsync(new MoveItemRequest
+                        {
+                            InstanceId = item.InstanceId,
+                            TargetContainerId = body.TransferToContainerId.Value
+                        }, cancellationToken);
+                    }
+                    break;
+            }
+        }
+
+        var now = DateTimeOffset.UtcNow;
+
+        // Remove from indexes
+        var ownerIndexKey = BuildOwnerIndexKey(model.OwnerType, model.OwnerId);
+        await RemoveFromListAsync(StateStoreDefinitions.InventoryContainerStore,
+            ownerIndexKey, body.ContainerId.ToString(), cancellationToken);
+        await RemoveFromListAsync(StateStoreDefinitions.InventoryContainerStore,
+            $"{CONT_TYPE_INDEX}{model.ContainerType}", body.ContainerId.ToString(), cancellationToken);
+
+        var containerStore = _stateStoreFactory.GetStore<ContainerModel>(StateStoreDefinitions.InventoryContainerStore);
+        await containerStore.DeleteAsync($"{CONT_PREFIX}{body.ContainerId}", cancellationToken);
+
+        // Invalidate cache after MySQL delete
+        await InvalidateContainerCacheAsync($"{CONT_PREFIX}{body.ContainerId}", cancellationToken);
+
+        await _messageBus.TryPublishAsync("inventory-container.deleted", new InventoryContainerDeletedEvent
+        {
+            EventId = Guid.NewGuid(),
+            Timestamp = now,
+            ContainerId = body.ContainerId,
+            OwnerId = model.OwnerId,
+            OwnerType = model.OwnerType,
+            ContainerType = model.ContainerType,
+            ConstraintModel = model.ConstraintModel,
+            IsEquipmentSlot = model.IsEquipmentSlot,
+            EquipmentSlotName = model.EquipmentSlotName,
+            MaxSlots = model.MaxSlots,
+            UsedSlots = model.UsedSlots,
+            MaxWeight = model.MaxWeight,
+            GridWidth = model.GridWidth,
+            GridHeight = model.GridHeight,
+            MaxVolume = model.MaxVolume,
+            CurrentVolume = model.CurrentVolume,
+            ParentContainerId = model.ParentContainerId,
+            NestingDepth = model.NestingDepth,
+            CanContainContainers = model.CanContainContainers,
+            MaxNestingDepth = model.MaxNestingDepth,
+            SelfWeight = model.SelfWeight,
+            WeightContribution = model.WeightContribution,
+            SlotCost = model.SlotCost,
+            ContentsWeight = model.ContentsWeight,
+            TotalWeight = model.SelfWeight + model.ContentsWeight,
+            RealmId = model.RealmId,
+            CreatedAt = model.CreatedAt,
+            ModifiedAt = model.ModifiedAt
+        }, cancellationToken);
+
+        _logger.LogDebug("Deleted container {ContainerId}", body.ContainerId);
+        return (StatusCodes.OK, new DeleteContainerResponse
+        {
+            Deleted = true,
+            ContainerId = body.ContainerId,
+            ItemsHandled = itemCount
+        });
     }
 
     #endregion
@@ -606,164 +594,151 @@ public partial class InventoryService : IInventoryService
         AddItemRequest body,
         CancellationToken cancellationToken = default)
     {
+        // Acquire distributed lock for container modification (per IMPLEMENTATION TENETS)
+        var lockOwner = $"add-item-{Guid.NewGuid():N}";
+        await using var lockResponse = await _lockProvider.LockAsync(
+            StateStoreDefinitions.InventoryLock,
+            body.ContainerId.ToString(),
+            lockOwner,
+            _configuration.LockTimeoutSeconds,
+            cancellationToken);
+
+        if (!lockResponse.Success)
+        {
+            _logger.LogWarning("Failed to acquire lock for container {ContainerId}", body.ContainerId);
+            return (StatusCodes.Conflict, null);
+        }
+
+        // Use cache read-through (per IMPLEMENTATION TENETS - use defined cache stores)
+        var container = await GetContainerWithCacheAsync(body.ContainerId, cancellationToken);
+
+        if (container is null)
+        {
+            return (StatusCodes.NotFound, null);
+        }
+
+        // Get item instance
+        ItemInstanceResponse item;
         try
         {
-            // Acquire distributed lock for container modification (per IMPLEMENTATION TENETS)
-            var lockOwner = $"add-item-{Guid.NewGuid():N}";
-            await using var lockResponse = await _lockProvider.LockAsync(
-                StateStoreDefinitions.InventoryLock,
-                body.ContainerId.ToString(),
-                lockOwner,
-                _configuration.LockTimeoutSeconds,
+            item = await _itemClient.GetItemInstanceAsync(
+                new GetItemInstanceRequest { InstanceId = body.InstanceId },
                 cancellationToken);
-
-            if (!lockResponse.Success)
-            {
-                _logger.LogWarning("Failed to acquire lock for container {ContainerId}", body.ContainerId);
-                return (StatusCodes.Conflict, null);
-            }
-
-            // Use cache read-through (per IMPLEMENTATION TENETS - use defined cache stores)
-            var container = await GetContainerWithCacheAsync(body.ContainerId, cancellationToken);
-
-            if (container is null)
-            {
-                return (StatusCodes.NotFound, null);
-            }
-
-            // Get item instance
-            ItemInstanceResponse item;
-            try
-            {
-                item = await _itemClient.GetItemInstanceAsync(
-                    new GetItemInstanceRequest { InstanceId = body.InstanceId },
-                    cancellationToken);
-            }
-            catch (ApiException ex)
-            {
-                _logger.LogDebug(ex, "Item not found: {InstanceId}", body.InstanceId);
-                return (MapHttpStatusCode(ex.StatusCode), null);
-            }
-
-            // Get template for constraint checking
-            ItemTemplateResponse template;
-            try
-            {
-                template = await _itemClient.GetItemTemplateAsync(
-                    new GetItemTemplateRequest { TemplateId = item.TemplateId },
-                    cancellationToken);
-            }
-            catch (ApiException ex)
-            {
-                _logger.LogError(ex, "Failed to get template for item {InstanceId}", body.InstanceId);
-                return (StatusCodes.InternalServerError, null);
-            }
-
-            // Check category constraints
-            var categoryString = template.Category.ToString();
-            if (container.AllowedCategories is not null && container.AllowedCategories.Count > 0)
-            {
-                if (!container.AllowedCategories.Any(c => string.Equals(c, categoryString, StringComparison.OrdinalIgnoreCase)))
-                {
-                    _logger.LogWarning("Category {Category} not allowed in container {ContainerId}",
-                        template.Category, body.ContainerId);
-                    return (StatusCodes.BadRequest, null);
-                }
-            }
-
-            if (container.ForbiddenCategories is not null && container.ForbiddenCategories.Count > 0)
-            {
-                if (container.ForbiddenCategories.Any(c => string.Equals(c, categoryString, StringComparison.OrdinalIgnoreCase)))
-                {
-                    _logger.LogDebug("Category {Category} forbidden in container {ContainerId}",
-                        template.Category, body.ContainerId);
-                    return (StatusCodes.BadRequest, null);
-                }
-            }
-
-            // Check capacity constraints
-            var constraintViolation = CheckConstraints(container, template, item.Quantity);
-            if (constraintViolation is not null)
-            {
-                _logger.LogWarning("Constraint violation adding to {ContainerId}: {Violation}",
-                    body.ContainerId, constraintViolation);
-                return (StatusCodes.BadRequest, null);
-            }
-
-            var now = DateTimeOffset.UtcNow;
-
-            // Update container usage stats
-            container.UsedSlots = (container.UsedSlots ?? 0) + 1;
-            if (template.Weight.HasValue)
-            {
-                container.ContentsWeight += template.Weight.Value * item.Quantity;
-            }
-            if (template.Volume.HasValue)
-            {
-                container.CurrentVolume = (container.CurrentVolume ?? 0) + template.Volume.Value * item.Quantity;
-            }
-            container.ModifiedAt = now;
-
-            // Save with cache write-through
-            await SaveContainerWithCacheAsync(container, cancellationToken);
-
-            // Update item's container reference in item service
-            try
-            {
-                await _itemClient.ModifyItemInstanceAsync(
-                    new ModifyItemInstanceRequest
-                    {
-                        InstanceId = body.InstanceId,
-                        NewContainerId = body.ContainerId,
-                        NewSlotIndex = body.SlotIndex,
-                        NewSlotX = body.SlotX,
-                        NewSlotY = body.SlotY
-                    }, cancellationToken);
-            }
-            catch (ApiException ex)
-            {
-                _logger.LogError(ex, "Failed to update item container reference for {InstanceId}", body.InstanceId);
-                return (StatusCodes.InternalServerError, null);
-            }
-
-            // Check if container is now full and emit event
-            await EmitContainerFullEventIfNeededAsync(container, now, cancellationToken);
-
-            await _messageBus.TryPublishAsync("inventory-item.placed", new InventoryItemPlacedEvent
-            {
-                EventId = Guid.NewGuid(),
-                Timestamp = now,
-                InstanceId = body.InstanceId,
-                TemplateId = item.TemplateId,
-                ContainerId = body.ContainerId,
-                OwnerId = container.OwnerId,
-                OwnerType = container.OwnerType,
-                Quantity = item.Quantity,
-                SlotIndex = body.SlotIndex,
-                SlotX = body.SlotX,
-                SlotY = body.SlotY
-            }, cancellationToken);
-
-            return (StatusCodes.OK, new AddItemResponse
-            {
-                Success = true,
-                InstanceId = body.InstanceId,
-                ContainerId = body.ContainerId,
-                SlotIndex = body.SlotIndex,
-                SlotX = body.SlotX,
-                SlotY = body.SlotY
-            });
         }
-        catch (Exception ex)
+        catch (ApiException ex)
         {
-            _logger.LogError(ex, "Error adding item {InstanceId} to container {ContainerId}",
-                body.InstanceId, body.ContainerId);
-            await _messageBus.TryPublishErrorAsync(
-                "inventory", "AddItemToContainer", "unexpected_exception", ex.Message,
-                dependency: null, endpoint: "post:/inventory/add",
-                details: null, stack: ex.StackTrace);
+            _logger.LogDebug(ex, "Item not found: {InstanceId}", body.InstanceId);
+            return (MapHttpStatusCode(ex.StatusCode), null);
+        }
+
+        // Get template for constraint checking
+        ItemTemplateResponse template;
+        try
+        {
+            template = await _itemClient.GetItemTemplateAsync(
+                new GetItemTemplateRequest { TemplateId = item.TemplateId },
+                cancellationToken);
+        }
+        catch (ApiException ex)
+        {
+            _logger.LogError(ex, "Failed to get template for item {InstanceId}", body.InstanceId);
             return (StatusCodes.InternalServerError, null);
         }
+
+        // Check category constraints
+        var categoryString = template.Category.ToString();
+        if (container.AllowedCategories is not null && container.AllowedCategories.Count > 0)
+        {
+            if (!container.AllowedCategories.Any(c => string.Equals(c, categoryString, StringComparison.OrdinalIgnoreCase)))
+            {
+                _logger.LogWarning("Category {Category} not allowed in container {ContainerId}",
+                    template.Category, body.ContainerId);
+                return (StatusCodes.BadRequest, null);
+            }
+        }
+
+        if (container.ForbiddenCategories is not null && container.ForbiddenCategories.Count > 0)
+        {
+            if (container.ForbiddenCategories.Any(c => string.Equals(c, categoryString, StringComparison.OrdinalIgnoreCase)))
+            {
+                _logger.LogDebug("Category {Category} forbidden in container {ContainerId}",
+                    template.Category, body.ContainerId);
+                return (StatusCodes.BadRequest, null);
+            }
+        }
+
+        // Check capacity constraints
+        var constraintViolation = CheckConstraints(container, template, item.Quantity);
+        if (constraintViolation is not null)
+        {
+            _logger.LogWarning("Constraint violation adding to {ContainerId}: {Violation}",
+                body.ContainerId, constraintViolation);
+            return (StatusCodes.BadRequest, null);
+        }
+
+        var now = DateTimeOffset.UtcNow;
+
+        // Update container usage stats
+        container.UsedSlots = (container.UsedSlots ?? 0) + 1;
+        if (template.Weight.HasValue)
+        {
+            container.ContentsWeight += template.Weight.Value * item.Quantity;
+        }
+        if (template.Volume.HasValue)
+        {
+            container.CurrentVolume = (container.CurrentVolume ?? 0) + template.Volume.Value * item.Quantity;
+        }
+        container.ModifiedAt = now;
+
+        // Save with cache write-through
+        await SaveContainerWithCacheAsync(container, cancellationToken);
+
+        // Update item's container reference in item service
+        try
+        {
+            await _itemClient.ModifyItemInstanceAsync(
+                new ModifyItemInstanceRequest
+                {
+                    InstanceId = body.InstanceId,
+                    NewContainerId = body.ContainerId,
+                    NewSlotIndex = body.SlotIndex,
+                    NewSlotX = body.SlotX,
+                    NewSlotY = body.SlotY
+                }, cancellationToken);
+        }
+        catch (ApiException ex)
+        {
+            _logger.LogError(ex, "Failed to update item container reference for {InstanceId}", body.InstanceId);
+            return (StatusCodes.InternalServerError, null);
+        }
+
+        // Check if container is now full and emit event
+        await EmitContainerFullEventIfNeededAsync(container, now, cancellationToken);
+
+        await _messageBus.TryPublishAsync("inventory-item.placed", new InventoryItemPlacedEvent
+        {
+            EventId = Guid.NewGuid(),
+            Timestamp = now,
+            InstanceId = body.InstanceId,
+            TemplateId = item.TemplateId,
+            ContainerId = body.ContainerId,
+            OwnerId = container.OwnerId,
+            OwnerType = container.OwnerType,
+            Quantity = item.Quantity,
+            SlotIndex = body.SlotIndex,
+            SlotX = body.SlotX,
+            SlotY = body.SlotY
+        }, cancellationToken);
+
+        return (StatusCodes.OK, new AddItemResponse
+        {
+            Success = true,
+            InstanceId = body.InstanceId,
+            ContainerId = body.ContainerId,
+            SlotIndex = body.SlotIndex,
+            SlotX = body.SlotX,
+            SlotY = body.SlotY
+        });
     }
 
     /// <inheritdoc/>
@@ -771,103 +746,106 @@ public partial class InventoryService : IInventoryService
         RemoveItemRequest body,
         CancellationToken cancellationToken = default)
     {
+        // Get item to find its container
+        ItemInstanceResponse item;
         try
         {
-            // Get item to find its container
-            ItemInstanceResponse item;
-            try
-            {
-                item = await _itemClient.GetItemInstanceAsync(
-                    new GetItemInstanceRequest { InstanceId = body.InstanceId },
-                    cancellationToken);
-            }
-            catch (ApiException ex)
-            {
-                _logger.LogDebug(ex, "Item not found: {InstanceId}", body.InstanceId);
-                return (MapHttpStatusCode(ex.StatusCode), null);
-            }
+            item = await _itemClient.GetItemInstanceAsync(
+                new GetItemInstanceRequest { InstanceId = body.InstanceId },
+                cancellationToken);
+        }
+        catch (ApiException ex)
+        {
+            _logger.LogDebug(ex, "Item not found: {InstanceId}", body.InstanceId);
+            return (MapHttpStatusCode(ex.StatusCode), null);
+        }
 
-            // Acquire distributed lock for container modification (per IMPLEMENTATION TENETS)
-            var lockOwner = $"remove-item-{Guid.NewGuid():N}";
-            await using var lockResponse = await _lockProvider.LockAsync(
-                StateStoreDefinitions.InventoryLock,
-                item.ContainerId.ToString(),
-                lockOwner,
-                _configuration.LockTimeoutSeconds,
+        // Acquire distributed lock for container modification (per IMPLEMENTATION TENETS)
+        var lockOwner = $"remove-item-{Guid.NewGuid():N}";
+        await using var lockResponse = await _lockProvider.LockAsync(
+            StateStoreDefinitions.InventoryLock,
+            item.ContainerId.ToString(),
+            lockOwner,
+            _configuration.LockTimeoutSeconds,
+            cancellationToken);
+
+        if (!lockResponse.Success)
+        {
+            _logger.LogWarning("Failed to acquire lock for container {ContainerId}", item.ContainerId);
+            return (StatusCodes.Conflict, null);
+        }
+
+        // Use cache read-through (per IMPLEMENTATION TENETS - use defined cache stores)
+        var container = await GetContainerWithCacheAsync(item.ContainerId, cancellationToken);
+
+        if (container is null)
+        {
+            return (StatusCodes.NotFound, null);
+        }
+
+        var now = DateTimeOffset.UtcNow;
+
+        // Update container usage stats
+        container.UsedSlots = Math.Max(0, (container.UsedSlots ?? 0) - 1);
+
+        // Get template for weight/volume
+        try
+        {
+            var template = await _itemClient.GetItemTemplateAsync(
+                new GetItemTemplateRequest { TemplateId = item.TemplateId },
                 cancellationToken);
 
-            if (!lockResponse.Success)
+            if (template.Weight.HasValue)
             {
-                _logger.LogWarning("Failed to acquire lock for container {ContainerId}", item.ContainerId);
-                return (StatusCodes.Conflict, null);
+                container.ContentsWeight = Math.Max(0, container.ContentsWeight - template.Weight.Value * item.Quantity);
             }
-
-            // Use cache read-through (per IMPLEMENTATION TENETS - use defined cache stores)
-            var container = await GetContainerWithCacheAsync(item.ContainerId, cancellationToken);
-
-            if (container is null)
+            if (template.Volume.HasValue)
             {
-                return (StatusCodes.NotFound, null);
+                container.CurrentVolume = Math.Max(0, (container.CurrentVolume ?? 0) - template.Volume.Value * item.Quantity);
             }
-
-            var now = DateTimeOffset.UtcNow;
-
-            // Update container usage stats
-            container.UsedSlots = Math.Max(0, (container.UsedSlots ?? 0) - 1);
-
-            // Get template for weight/volume
-            try
-            {
-                var template = await _itemClient.GetItemTemplateAsync(
-                    new GetItemTemplateRequest { TemplateId = item.TemplateId },
-                    cancellationToken);
-
-                if (template.Weight.HasValue)
-                {
-                    container.ContentsWeight = Math.Max(0, container.ContentsWeight - template.Weight.Value * item.Quantity);
-                }
-                if (template.Volume.HasValue)
-                {
-                    container.CurrentVolume = Math.Max(0, (container.CurrentVolume ?? 0) - template.Volume.Value * item.Quantity);
-                }
-            }
-            catch (ApiException ex)
-            {
-                _logger.LogWarning(ex, "Failed to get template for weight/volume update: {StatusCode}", ex.StatusCode);
-                // Continue without weight/volume update
-            }
-
-            container.ModifiedAt = now;
-            // Save with cache write-through
-            await SaveContainerWithCacheAsync(container, cancellationToken);
-
-            await _messageBus.TryPublishAsync("inventory-item.removed", new InventoryItemRemovedEvent
-            {
-                EventId = Guid.NewGuid(),
-                Timestamp = now,
-                InstanceId = body.InstanceId,
-                TemplateId = item.TemplateId,
-                ContainerId = item.ContainerId,
-                OwnerId = container.OwnerId,
-                OwnerType = container.OwnerType
-            }, cancellationToken);
-
-            return (StatusCodes.OK, new RemoveItemResponse
-            {
-                Success = true,
-                InstanceId = body.InstanceId,
-                PreviousContainerId = item.ContainerId
-            });
         }
-        catch (Exception ex)
+        catch (ApiException ex)
         {
-            _logger.LogError(ex, "Error removing item {InstanceId}", body.InstanceId);
-            await _messageBus.TryPublishErrorAsync(
-                "inventory", "RemoveItemFromContainer", "unexpected_exception", ex.Message,
-                dependency: null, endpoint: "post:/inventory/remove",
-                details: null, stack: ex.StackTrace);
-            return (StatusCodes.InternalServerError, null);
+            _logger.LogWarning(ex, "Failed to get template for weight/volume update: {StatusCode}", ex.StatusCode);
+            // Continue without weight/volume update
         }
+
+        container.ModifiedAt = now;
+        // Save with cache write-through
+        await SaveContainerWithCacheAsync(container, cancellationToken);
+
+        // Clear the item's container reference in item service (removes from container index)
+        try
+        {
+            await _itemClient.ModifyItemInstanceAsync(
+                new ModifyItemInstanceRequest
+                {
+                    InstanceId = body.InstanceId,
+                    NewContainerId = Guid.Empty
+                }, cancellationToken);
+        }
+        catch (ApiException ex)
+        {
+            _logger.LogWarning(ex, "Failed to clear item container reference for {InstanceId}", body.InstanceId);
+        }
+
+        await _messageBus.TryPublishAsync("inventory-item.removed", new InventoryItemRemovedEvent
+        {
+            EventId = Guid.NewGuid(),
+            Timestamp = now,
+            InstanceId = body.InstanceId,
+            TemplateId = item.TemplateId,
+            ContainerId = item.ContainerId,
+            OwnerId = container.OwnerId,
+            OwnerType = container.OwnerType
+        }, cancellationToken);
+
+        return (StatusCodes.OK, new RemoveItemResponse
+        {
+            Success = true,
+            InstanceId = body.InstanceId,
+            PreviousContainerId = item.ContainerId
+        });
     }
 
     /// <inheritdoc/>
@@ -875,100 +853,25 @@ public partial class InventoryService : IInventoryService
         MoveItemRequest body,
         CancellationToken cancellationToken = default)
     {
+        // Get item
+        ItemInstanceResponse item;
         try
         {
-            // Get item
-            ItemInstanceResponse item;
-            try
-            {
-                item = await _itemClient.GetItemInstanceAsync(
-                    new GetItemInstanceRequest { InstanceId = body.InstanceId },
-                    cancellationToken);
-            }
-            catch (ApiException ex)
-            {
-                _logger.LogDebug(ex, "Item not found: {InstanceId}", body.InstanceId);
-                return (MapHttpStatusCode(ex.StatusCode), null);
-            }
+            item = await _itemClient.GetItemInstanceAsync(
+                new GetItemInstanceRequest { InstanceId = body.InstanceId },
+                cancellationToken);
+        }
+        catch (ApiException ex)
+        {
+            _logger.LogDebug(ex, "Item not found: {InstanceId}", body.InstanceId);
+            return (MapHttpStatusCode(ex.StatusCode), null);
+        }
 
-            var sourceContainerId = item.ContainerId;
+        var sourceContainerId = item.ContainerId;
 
-            // If moving to same container, just update slot
-            if (sourceContainerId == body.TargetContainerId)
-            {
-                return (StatusCodes.OK, new MoveItemResponse
-                {
-                    Success = true,
-                    InstanceId = body.InstanceId,
-                    SourceContainerId = sourceContainerId,
-                    TargetContainerId = body.TargetContainerId,
-                    SlotIndex = body.TargetSlotIndex,
-                    SlotX = body.TargetSlotX,
-                    SlotY = body.TargetSlotY
-                });
-            }
-
-            // Moving to different container - check constraints
-            // Use cache read-through (per IMPLEMENTATION TENETS - use defined cache stores)
-            var targetContainer = await GetContainerWithCacheAsync(body.TargetContainerId, cancellationToken);
-
-            if (targetContainer is null)
-            {
-                return (StatusCodes.NotFound, null);
-            }
-
-            // Get template for constraint checking
-            ItemTemplateResponse template;
-            try
-            {
-                template = await _itemClient.GetItemTemplateAsync(
-                    new GetItemTemplateRequest { TemplateId = item.TemplateId },
-                    cancellationToken);
-            }
-            catch (ApiException ex)
-            {
-                _logger.LogError(ex, "Failed to get template for item {InstanceId}", body.InstanceId);
-                return (StatusCodes.InternalServerError, null);
-            }
-
-            var constraintViolation = CheckConstraints(targetContainer, template, item.Quantity);
-            if (constraintViolation is not null)
-            {
-                _logger.LogWarning("Constraint violation moving to {ContainerId}: {Violation}",
-                    body.TargetContainerId, constraintViolation);
-                return (StatusCodes.BadRequest, null);
-            }
-
-            // Remove from source
-            await RemoveItemFromContainerAsync(new RemoveItemRequest { InstanceId = body.InstanceId }, cancellationToken);
-
-            // Add to target
-            await AddItemToContainerAsync(new AddItemRequest
-            {
-                InstanceId = body.InstanceId,
-                ContainerId = body.TargetContainerId,
-                SlotIndex = body.TargetSlotIndex,
-                SlotX = body.TargetSlotX,
-                SlotY = body.TargetSlotY,
-                Rotated = body.Rotated
-            }, cancellationToken);
-
-            var now = DateTimeOffset.UtcNow;
-
-            await _messageBus.TryPublishAsync("inventory-item.moved", new InventoryItemMovedEvent
-            {
-                EventId = Guid.NewGuid(),
-                Timestamp = now,
-                InstanceId = body.InstanceId,
-                TemplateId = item.TemplateId,
-                SourceContainerId = sourceContainerId,
-                TargetContainerId = body.TargetContainerId,
-                Quantity = item.Quantity,
-                NewSlotIndex = body.TargetSlotIndex,
-                NewSlotX = body.TargetSlotX,
-                NewSlotY = body.TargetSlotY
-            }, cancellationToken);
-
+        // If moving to same container, just update slot
+        if (sourceContainerId == body.TargetContainerId)
+        {
             return (StatusCodes.OK, new MoveItemResponse
             {
                 Success = true,
@@ -980,15 +883,78 @@ public partial class InventoryService : IInventoryService
                 SlotY = body.TargetSlotY
             });
         }
-        catch (Exception ex)
+
+        // Moving to different container - check constraints
+        // Use cache read-through (per IMPLEMENTATION TENETS - use defined cache stores)
+        var targetContainer = await GetContainerWithCacheAsync(body.TargetContainerId, cancellationToken);
+
+        if (targetContainer is null)
         {
-            _logger.LogError(ex, "Error moving item {InstanceId}", body.InstanceId);
-            await _messageBus.TryPublishErrorAsync(
-                "inventory", "MoveItem", "unexpected_exception", ex.Message,
-                dependency: null, endpoint: "post:/inventory/move",
-                details: null, stack: ex.StackTrace);
+            return (StatusCodes.NotFound, null);
+        }
+
+        // Get template for constraint checking
+        ItemTemplateResponse template;
+        try
+        {
+            template = await _itemClient.GetItemTemplateAsync(
+                new GetItemTemplateRequest { TemplateId = item.TemplateId },
+                cancellationToken);
+        }
+        catch (ApiException ex)
+        {
+            _logger.LogError(ex, "Failed to get template for item {InstanceId}", body.InstanceId);
             return (StatusCodes.InternalServerError, null);
         }
+
+        var constraintViolation = CheckConstraints(targetContainer, template, item.Quantity);
+        if (constraintViolation is not null)
+        {
+            _logger.LogWarning("Constraint violation moving to {ContainerId}: {Violation}",
+                body.TargetContainerId, constraintViolation);
+            return (StatusCodes.BadRequest, null);
+        }
+
+        // Remove from source
+        await RemoveItemFromContainerAsync(new RemoveItemRequest { InstanceId = body.InstanceId }, cancellationToken);
+
+        // Add to target
+        await AddItemToContainerAsync(new AddItemRequest
+        {
+            InstanceId = body.InstanceId,
+            ContainerId = body.TargetContainerId,
+            SlotIndex = body.TargetSlotIndex,
+            SlotX = body.TargetSlotX,
+            SlotY = body.TargetSlotY,
+            Rotated = body.Rotated
+        }, cancellationToken);
+
+        var now = DateTimeOffset.UtcNow;
+
+        await _messageBus.TryPublishAsync("inventory-item.moved", new InventoryItemMovedEvent
+        {
+            EventId = Guid.NewGuid(),
+            Timestamp = now,
+            InstanceId = body.InstanceId,
+            TemplateId = item.TemplateId,
+            SourceContainerId = sourceContainerId,
+            TargetContainerId = body.TargetContainerId,
+            Quantity = item.Quantity,
+            NewSlotIndex = body.TargetSlotIndex,
+            NewSlotX = body.TargetSlotX,
+            NewSlotY = body.TargetSlotY
+        }, cancellationToken);
+
+        return (StatusCodes.OK, new MoveItemResponse
+        {
+            Success = true,
+            InstanceId = body.InstanceId,
+            SourceContainerId = sourceContainerId,
+            TargetContainerId = body.TargetContainerId,
+            SlotIndex = body.TargetSlotIndex,
+            SlotX = body.TargetSlotX,
+            SlotY = body.TargetSlotY
+        });
     }
 
     /// <inheritdoc/>
@@ -996,123 +962,141 @@ public partial class InventoryService : IInventoryService
         TransferItemRequest body,
         CancellationToken cancellationToken = default)
     {
+        // Get item
+        ItemInstanceResponse item;
         try
         {
-            // Get item
-            ItemInstanceResponse item;
-            try
-            {
-                item = await _itemClient.GetItemInstanceAsync(
-                    new GetItemInstanceRequest { InstanceId = body.InstanceId },
-                    cancellationToken);
-            }
-            catch (ApiException ex)
-            {
-                _logger.LogDebug(ex, "Item not found: {InstanceId}", body.InstanceId);
-                return (MapHttpStatusCode(ex.StatusCode), null);
-            }
-
-            // Check if item is tradeable
-            ItemTemplateResponse template;
-            try
-            {
-                template = await _itemClient.GetItemTemplateAsync(
-                    new GetItemTemplateRequest { TemplateId = item.TemplateId },
-                    cancellationToken);
-            }
-            catch (ApiException ex)
-            {
-                _logger.LogError(ex, "Failed to get template for item {InstanceId}", body.InstanceId);
-                return (StatusCodes.InternalServerError, null);
-            }
-
-            if (!template.Tradeable)
-            {
-                _logger.LogDebug("Item {InstanceId} is not tradeable", body.InstanceId);
-                return (StatusCodes.BadRequest, null);
-            }
-
-            if (item.BoundToId.HasValue)
-            {
-                _logger.LogDebug("Item {InstanceId} is bound", body.InstanceId);
-                return (StatusCodes.BadRequest, null);
-            }
-
-            var sourceContainerId = item.ContainerId;
-
-            // Acquire distributed lock on source container for transfer safety
-            var lockOwner = $"transfer-item-{Guid.NewGuid():N}";
-            await using var lockResponse = await _lockProvider.LockAsync(
-                StateStoreDefinitions.InventoryLock,
-                sourceContainerId.ToString(),
-                lockOwner,
-                _configuration.LockTimeoutSeconds,
+            item = await _itemClient.GetItemInstanceAsync(
+                new GetItemInstanceRequest { InstanceId = body.InstanceId },
                 cancellationToken);
-
-            if (!lockResponse.Success)
-            {
-                _logger.LogWarning("Failed to acquire lock for container {ContainerId} during transfer", sourceContainerId);
-                return (StatusCodes.Conflict, null);
-            }
-            var quantityToTransfer = body.Quantity ?? item.Quantity;
-
-            // Get source and target containers
-            var containerStore = _stateStoreFactory.GetStore<ContainerModel>(StateStoreDefinitions.InventoryContainerStore);
-            var sourceContainer = await containerStore.GetAsync($"{CONT_PREFIX}{sourceContainerId}", cancellationToken);
-            var targetContainer = await containerStore.GetAsync($"{CONT_PREFIX}{body.TargetContainerId}", cancellationToken);
-
-            if (sourceContainer is null || targetContainer is null)
-            {
-                return (StatusCodes.NotFound, null);
-            }
-
-            // Move the item
-            var (moveStatus, _) = await MoveItemAsync(new MoveItemRequest
-            {
-                InstanceId = body.InstanceId,
-                TargetContainerId = body.TargetContainerId
-            }, cancellationToken);
-
-            if (moveStatus != StatusCodes.OK)
-            {
-                return (moveStatus, null);
-            }
-
-            var now = DateTimeOffset.UtcNow;
-
-            await _messageBus.TryPublishAsync("inventory-item.transferred", new InventoryItemTransferredEvent
-            {
-                EventId = Guid.NewGuid(),
-                Timestamp = now,
-                InstanceId = body.InstanceId,
-                TemplateId = item.TemplateId,
-                SourceContainerId = sourceContainerId,
-                SourceOwnerId = sourceContainer.OwnerId,
-                SourceOwnerType = sourceContainer.OwnerType,
-                TargetContainerId = body.TargetContainerId,
-                TargetOwnerId = targetContainer.OwnerId,
-                TargetOwnerType = targetContainer.OwnerType,
-                QuantityTransferred = quantityToTransfer
-            }, cancellationToken);
-
-            return (StatusCodes.OK, new TransferItemResponse
-            {
-                Success = true,
-                InstanceId = body.InstanceId,
-                SourceContainerId = sourceContainerId,
-                TargetContainerId = body.TargetContainerId,
-                QuantityTransferred = quantityToTransfer
-            });
         }
-        catch (Exception ex)
+        catch (ApiException ex)
         {
-            _logger.LogError(ex, "Error transferring item {InstanceId}", body.InstanceId);
-            await _messageBus.TryPublishErrorAsync(
-                "inventory", "TransferItem", "unexpected_exception", ex.Message,
-                dependency: null, endpoint: "post:/inventory/transfer",
-                details: null, stack: ex.StackTrace);
+            _logger.LogDebug(ex, "Item not found: {InstanceId}", body.InstanceId);
+            return (MapHttpStatusCode(ex.StatusCode), null);
+        }
+
+        // Check if item is tradeable
+        ItemTemplateResponse template;
+        try
+        {
+            template = await _itemClient.GetItemTemplateAsync(
+                new GetItemTemplateRequest { TemplateId = item.TemplateId },
+                cancellationToken);
+        }
+        catch (ApiException ex)
+        {
+            _logger.LogError(ex, "Failed to get template for item {InstanceId}", body.InstanceId);
             return (StatusCodes.InternalServerError, null);
         }
+
+        if (!template.Tradeable)
+        {
+            _logger.LogDebug("Item {InstanceId} is not tradeable", body.InstanceId);
+            return (StatusCodes.BadRequest, null);
+        }
+
+        if (item.BoundToId.HasValue)
+        {
+            _logger.LogDebug("Item {InstanceId} is bound", body.InstanceId);
+            return (StatusCodes.BadRequest, null);
+        }
+
+        var sourceContainerId = item.ContainerId;
+
+        // Acquire distributed lock on source container for transfer safety
+        var lockOwner = $"transfer-item-{Guid.NewGuid():N}";
+        await using var lockResponse = await _lockProvider.LockAsync(
+            StateStoreDefinitions.InventoryLock,
+            sourceContainerId.ToString(),
+            lockOwner,
+            _configuration.LockTimeoutSeconds,
+            cancellationToken);
+
+        if (!lockResponse.Success)
+        {
+            _logger.LogWarning("Failed to acquire lock for container {ContainerId} during transfer", sourceContainerId);
+            return (StatusCodes.Conflict, null);
+        }
+
+        var quantityToTransfer = body.Quantity ?? item.Quantity;
+
+        // Validate requested quantity doesn't exceed available
+        if (body.Quantity.HasValue && body.Quantity.Value > item.Quantity)
+        {
+            _logger.LogDebug("Cannot transfer {Requested} from stack of {Available}",
+                body.Quantity.Value, item.Quantity);
+            return (StatusCodes.BadRequest, null);
+        }
+
+        // Get source and target containers
+        var containerStore = _stateStoreFactory.GetStore<ContainerModel>(StateStoreDefinitions.InventoryContainerStore);
+        var sourceContainer = await containerStore.GetAsync($"{CONT_PREFIX}{sourceContainerId}", cancellationToken);
+        var targetContainer = await containerStore.GetAsync($"{CONT_PREFIX}{body.TargetContainerId}", cancellationToken);
+
+        if (sourceContainer is null || targetContainer is null)
+        {
+            return (StatusCodes.NotFound, null);
+        }
+
+        // Determine which item to move - if partial transfer, split first
+        var instanceIdToMove = body.InstanceId;
+        if (body.Quantity.HasValue && body.Quantity.Value < item.Quantity)
+        {
+            // Partial transfer: split the stack first, then move the split portion
+            var (splitStatus, splitResponse) = await SplitStackAsync(new SplitStackRequest
+            {
+                InstanceId = body.InstanceId,
+                Quantity = body.Quantity.Value
+            }, cancellationToken);
+
+            if (splitStatus != StatusCodes.OK || splitResponse is null)
+            {
+                _logger.LogWarning("Failed to split stack for partial transfer: {Status}", splitStatus);
+                return (splitStatus, null);
+            }
+
+            // Move the newly created split item, not the original
+            instanceIdToMove = splitResponse.NewInstanceId;
+        }
+
+        // Move the item (either original for full transfer, or split item for partial)
+        var (moveStatus, _) = await MoveItemAsync(new MoveItemRequest
+        {
+            InstanceId = instanceIdToMove,
+            TargetContainerId = body.TargetContainerId
+        }, cancellationToken);
+
+        if (moveStatus != StatusCodes.OK)
+        {
+            return (moveStatus, null);
+        }
+
+        var now = DateTimeOffset.UtcNow;
+
+        await _messageBus.TryPublishAsync("inventory-item.transferred", new InventoryItemTransferredEvent
+        {
+            EventId = Guid.NewGuid(),
+            Timestamp = now,
+            InstanceId = instanceIdToMove,
+            TemplateId = item.TemplateId,
+            SourceContainerId = sourceContainerId,
+            SourceOwnerId = sourceContainer.OwnerId,
+            SourceOwnerType = sourceContainer.OwnerType,
+            TargetContainerId = body.TargetContainerId,
+            TargetOwnerId = targetContainer.OwnerId,
+            TargetOwnerType = targetContainer.OwnerType,
+            QuantityTransferred = quantityToTransfer
+        }, cancellationToken);
+
+        return (StatusCodes.OK, new TransferItemResponse
+        {
+            Success = true,
+            InstanceId = instanceIdToMove,
+            SourceContainerId = sourceContainerId,
+            TargetContainerId = body.TargetContainerId,
+            QuantityTransferred = quantityToTransfer
+        });
     }
 
     /// <inheritdoc/>
@@ -1120,159 +1104,147 @@ public partial class InventoryService : IInventoryService
         SplitStackRequest body,
         CancellationToken cancellationToken = default)
     {
+        // Get item first to determine container
+        ItemInstanceResponse item;
         try
         {
-            // Get item first to determine container
-            ItemInstanceResponse item;
-            try
-            {
-                item = await _itemClient.GetItemInstanceAsync(
-                    new GetItemInstanceRequest { InstanceId = body.InstanceId },
-                    cancellationToken);
-            }
-            catch (ApiException ex)
-            {
-                _logger.LogDebug(ex, "Item not found: {InstanceId}", body.InstanceId);
-                return (MapHttpStatusCode(ex.StatusCode), null);
-            }
-
-            if (item.Quantity <= body.Quantity)
-            {
-                _logger.LogDebug("Cannot split {Quantity} from stack of {Total}",
-                    body.Quantity, item.Quantity);
-                return (StatusCodes.BadRequest, null);
-            }
-
-            // Get template to check if stackable
-            ItemTemplateResponse template;
-            try
-            {
-                template = await _itemClient.GetItemTemplateAsync(
-                    new GetItemTemplateRequest { TemplateId = item.TemplateId },
-                    cancellationToken);
-            }
-            catch (ApiException ex)
-            {
-                _logger.LogError(ex, "Failed to get template for item {InstanceId}", body.InstanceId);
-                return (StatusCodes.InternalServerError, null);
-            }
-
-            if (template.QuantityModel == QuantityModel.Unique)
-            {
-                _logger.LogDebug("Cannot split unique items");
-                return (StatusCodes.BadRequest, null);
-            }
-
-            // Acquire distributed lock on the container for slot count consistency
-            var lockOwner = $"split-stack-{Guid.NewGuid():N}";
-            await using var lockResponse = await _lockProvider.LockAsync(
-                StateStoreDefinitions.InventoryLock,
-                item.ContainerId.ToString(),
-                lockOwner,
-                _configuration.LockTimeoutSeconds,
+            item = await _itemClient.GetItemInstanceAsync(
+                new GetItemInstanceRequest { InstanceId = body.InstanceId },
                 cancellationToken);
+        }
+        catch (ApiException ex)
+        {
+            _logger.LogDebug(ex, "Item not found: {InstanceId}", body.InstanceId);
+            return (MapHttpStatusCode(ex.StatusCode), null);
+        }
 
-            if (!lockResponse.Success)
-            {
-                _logger.LogWarning("Failed to acquire lock for container {ContainerId} during split", item.ContainerId);
-                return (StatusCodes.Conflict, null);
-            }
+        if (item.Quantity <= body.Quantity)
+        {
+            _logger.LogDebug("Cannot split {Quantity} from stack of {Total}",
+                body.Quantity, item.Quantity);
+            return (StatusCodes.BadRequest, null);
+        }
 
-            var now = DateTimeOffset.UtcNow;
-            var originalRemaining = item.Quantity - body.Quantity;
+        // Get template to check if stackable
+        ItemTemplateResponse template;
+        try
+        {
+            template = await _itemClient.GetItemTemplateAsync(
+                new GetItemTemplateRequest { TemplateId = item.TemplateId },
+                cancellationToken);
+        }
+        catch (ApiException ex)
+        {
+            _logger.LogError(ex, "Failed to get template for item {InstanceId}", body.InstanceId);
+            return (StatusCodes.InternalServerError, null);
+        }
 
-            // Update original instance quantity
+        if (template.QuantityModel == QuantityModel.Unique)
+        {
+            _logger.LogDebug("Cannot split unique items");
+            return (StatusCodes.BadRequest, null);
+        }
+
+        // Acquire distributed lock on the container for slot count consistency
+        var lockOwner = $"split-stack-{Guid.NewGuid():N}";
+        await using var lockResponse = await _lockProvider.LockAsync(
+            StateStoreDefinitions.InventoryLock,
+            item.ContainerId.ToString(),
+            lockOwner,
+            _configuration.LockTimeoutSeconds,
+            cancellationToken);
+
+        if (!lockResponse.Success)
+        {
+            _logger.LogWarning("Failed to acquire lock for container {ContainerId} during split", item.ContainerId);
+            return (StatusCodes.Conflict, null);
+        }
+
+        var now = DateTimeOffset.UtcNow;
+        var originalRemaining = item.Quantity - body.Quantity;
+
+        // Update original instance quantity
+        try
+        {
+            await _itemClient.ModifyItemInstanceAsync(
+                new ModifyItemInstanceRequest
+                {
+                    InstanceId = body.InstanceId,
+                    QuantityDelta = -body.Quantity
+                }, cancellationToken);
+        }
+        catch (ApiException ex)
+        {
+            _logger.LogError(ex, "Failed to update original quantity for split");
+            return (StatusCodes.InternalServerError, null);
+        }
+
+        // Create new instance with split quantity
+        ItemInstanceResponse newItem;
+        try
+        {
+            newItem = await _itemClient.CreateItemInstanceAsync(
+                new CreateItemInstanceRequest
+                {
+                    TemplateId = item.TemplateId,
+                    ContainerId = item.ContainerId,
+                    RealmId = item.RealmId,
+                    Quantity = body.Quantity,
+                    SlotIndex = body.TargetSlotIndex,
+                    SlotX = body.TargetSlotX,
+                    SlotY = body.TargetSlotY,
+                    OriginType = ItemOriginType.Other
+                }, cancellationToken);
+        }
+        catch (ApiException ex)
+        {
+            _logger.LogError(ex, "Failed to create new item instance for split");
+            // Attempt to restore original quantity
             try
             {
                 await _itemClient.ModifyItemInstanceAsync(
                     new ModifyItemInstanceRequest
                     {
                         InstanceId = body.InstanceId,
-                        QuantityDelta = -body.Quantity
+                        QuantityDelta = body.Quantity
                     }, cancellationToken);
             }
-            catch (ApiException ex)
+            catch (ApiException restoreEx)
             {
-                _logger.LogError(ex, "Failed to update original quantity for split");
-                return (StatusCodes.InternalServerError, null);
+                _logger.LogError(restoreEx, "Failed to restore original quantity after split failure");
             }
-
-            // Create new instance with split quantity
-            ItemInstanceResponse newItem;
-            try
-            {
-                newItem = await _itemClient.CreateItemInstanceAsync(
-                    new CreateItemInstanceRequest
-                    {
-                        TemplateId = item.TemplateId,
-                        ContainerId = item.ContainerId,
-                        RealmId = item.RealmId,
-                        Quantity = body.Quantity,
-                        SlotIndex = body.TargetSlotIndex,
-                        SlotX = body.TargetSlotX,
-                        SlotY = body.TargetSlotY,
-                        OriginType = ItemOriginType.Other
-                    }, cancellationToken);
-            }
-            catch (ApiException ex)
-            {
-                _logger.LogError(ex, "Failed to create new item instance for split");
-                // Attempt to restore original quantity
-                try
-                {
-                    await _itemClient.ModifyItemInstanceAsync(
-                        new ModifyItemInstanceRequest
-                        {
-                            InstanceId = body.InstanceId,
-                            QuantityDelta = body.Quantity
-                        }, cancellationToken);
-                }
-                catch (ApiException restoreEx)
-                {
-                    _logger.LogError(restoreEx, "Failed to restore original quantity after split failure");
-                }
-                return (StatusCodes.InternalServerError, null);
-            }
-
-            // Update container UsedSlots for the new item instance
-            var container = await GetContainerWithCacheAsync(item.ContainerId, cancellationToken);
-            if (container != null)
-            {
-                container.UsedSlots = (container.UsedSlots ?? 0) + 1;
-                container.ModifiedAt = now;
-                await SaveContainerWithCacheAsync(container, cancellationToken);
-            }
-
-            await _messageBus.TryPublishAsync("inventory-item.split", new InventoryItemSplitEvent
-            {
-                EventId = Guid.NewGuid(),
-                Timestamp = now,
-                OriginalInstanceId = body.InstanceId,
-                NewInstanceId = newItem.InstanceId,
-                TemplateId = item.TemplateId,
-                ContainerId = item.ContainerId,
-                QuantitySplit = body.Quantity,
-                OriginalRemaining = originalRemaining
-            }, cancellationToken);
-
-            return (StatusCodes.OK, new SplitStackResponse
-            {
-                Success = true,
-                OriginalInstanceId = body.InstanceId,
-                NewInstanceId = newItem.InstanceId,
-                OriginalQuantity = originalRemaining,
-                NewQuantity = body.Quantity
-            });
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error splitting stack {InstanceId}", body.InstanceId);
-            await _messageBus.TryPublishErrorAsync(
-                "inventory", "SplitStack", "unexpected_exception", ex.Message,
-                dependency: null, endpoint: "post:/inventory/split",
-                details: null, stack: ex.StackTrace);
             return (StatusCodes.InternalServerError, null);
         }
+
+        // Update container UsedSlots for the new item instance
+        var container = await GetContainerWithCacheAsync(item.ContainerId, cancellationToken);
+        if (container != null)
+        {
+            container.UsedSlots = (container.UsedSlots ?? 0) + 1;
+            container.ModifiedAt = now;
+            await SaveContainerWithCacheAsync(container, cancellationToken);
+        }
+
+        await _messageBus.TryPublishAsync("inventory-item.split", new InventoryItemSplitEvent
+        {
+            EventId = Guid.NewGuid(),
+            Timestamp = now,
+            OriginalInstanceId = body.InstanceId,
+            NewInstanceId = newItem.InstanceId,
+            TemplateId = item.TemplateId,
+            ContainerId = item.ContainerId,
+            QuantitySplit = body.Quantity,
+            OriginalRemaining = originalRemaining
+        }, cancellationToken);
+
+        return (StatusCodes.OK, new SplitStackResponse
+        {
+            Success = true,
+            OriginalInstanceId = body.InstanceId,
+            NewInstanceId = newItem.InstanceId,
+            OriginalQuantity = originalRemaining,
+            NewQuantity = body.Quantity
+        });
     }
 
     /// <inheritdoc/>
@@ -1280,81 +1252,127 @@ public partial class InventoryService : IInventoryService
         MergeStacksRequest body,
         CancellationToken cancellationToken = default)
     {
+        // Get both items
+        ItemInstanceResponse source;
+        ItemInstanceResponse target;
         try
         {
-            // Get both items
-            ItemInstanceResponse source;
-            ItemInstanceResponse target;
-            try
-            {
-                source = await _itemClient.GetItemInstanceAsync(
-                    new GetItemInstanceRequest { InstanceId = body.SourceInstanceId },
-                    cancellationToken);
-            }
-            catch (ApiException ex)
-            {
-                _logger.LogDebug(ex, "Source item not found: {InstanceId}", body.SourceInstanceId);
-                return (MapHttpStatusCode(ex.StatusCode), null);
-            }
+            source = await _itemClient.GetItemInstanceAsync(
+                new GetItemInstanceRequest { InstanceId = body.SourceInstanceId },
+                cancellationToken);
+        }
+        catch (ApiException ex)
+        {
+            _logger.LogDebug(ex, "Source item not found: {InstanceId}", body.SourceInstanceId);
+            return (MapHttpStatusCode(ex.StatusCode), null);
+        }
 
-            try
-            {
-                target = await _itemClient.GetItemInstanceAsync(
-                    new GetItemInstanceRequest { InstanceId = body.TargetInstanceId },
-                    cancellationToken);
-            }
-            catch (ApiException ex)
-            {
-                _logger.LogDebug(ex, "Target item not found: {InstanceId}", body.TargetInstanceId);
-                return (MapHttpStatusCode(ex.StatusCode), null);
-            }
+        try
+        {
+            target = await _itemClient.GetItemInstanceAsync(
+                new GetItemInstanceRequest { InstanceId = body.TargetInstanceId },
+                cancellationToken);
+        }
+        catch (ApiException ex)
+        {
+            _logger.LogDebug(ex, "Target item not found: {InstanceId}", body.TargetInstanceId);
+            return (MapHttpStatusCode(ex.StatusCode), null);
+        }
 
-            if (source.TemplateId != target.TemplateId)
-            {
-                _logger.LogDebug("Cannot merge different templates");
-                return (StatusCodes.BadRequest, null);
-            }
+        if (source.TemplateId != target.TemplateId)
+        {
+            _logger.LogDebug("Cannot merge different templates");
+            return (StatusCodes.BadRequest, null);
+        }
 
-            // Get template for max stack
-            ItemTemplateResponse template;
-            try
-            {
-                template = await _itemClient.GetItemTemplateAsync(
-                    new GetItemTemplateRequest { TemplateId = source.TemplateId },
-                    cancellationToken);
-            }
-            catch (ApiException ex)
-            {
-                _logger.LogError(ex, "Failed to get template for merge");
-                return (StatusCodes.InternalServerError, null);
-            }
+        // Get template for max stack
+        ItemTemplateResponse template;
+        try
+        {
+            template = await _itemClient.GetItemTemplateAsync(
+                new GetItemTemplateRequest { TemplateId = source.TemplateId },
+                cancellationToken);
+        }
+        catch (ApiException ex)
+        {
+            _logger.LogError(ex, "Failed to get template for merge");
+            return (StatusCodes.InternalServerError, null);
+        }
 
-            var combinedQuantity = source.Quantity + target.Quantity;
-            var quantityToAdd = source.Quantity;
-            double? overflow = null;
+        var combinedQuantity = source.Quantity + target.Quantity;
+        var quantityToAdd = source.Quantity;
+        double? overflow = null;
 
-            if (combinedQuantity > template.MaxStackSize)
+        if (combinedQuantity > template.MaxStackSize)
+        {
+            overflow = combinedQuantity - template.MaxStackSize;
+            quantityToAdd = source.Quantity - overflow.Value;
+            combinedQuantity = template.MaxStackSize;
+        }
+
+        // Acquire distributed locks for merge operation safety
+        // When items are in different containers, lock both to prevent races with
+        // concurrent operations (e.g., DeleteContainer on target while we modify target item)
+        // Use deterministic ordering (smaller GUID first) to prevent deadlocks
+        var lockOwner = $"merge-stack-{Guid.NewGuid():N}";
+        var sameContainer = source.ContainerId == target.ContainerId;
+
+        Guid firstLockId, secondLockId;
+        if (sameContainer)
+        {
+            firstLockId = source.ContainerId;
+            secondLockId = Guid.Empty; // Not used
+        }
+        else
+        {
+            // Deterministic ordering: lock smaller GUID first to prevent deadlocks
+            if (source.ContainerId.CompareTo(target.ContainerId) < 0)
             {
-                overflow = combinedQuantity - template.MaxStackSize;
-                quantityToAdd = source.Quantity - overflow.Value;
-                combinedQuantity = template.MaxStackSize;
+                firstLockId = source.ContainerId;
+                secondLockId = target.ContainerId;
             }
+            else
+            {
+                firstLockId = target.ContainerId;
+                secondLockId = source.ContainerId;
+            }
+        }
 
-            // Acquire distributed lock on source container for slot count consistency
-            var lockOwner = $"merge-stack-{Guid.NewGuid():N}";
-            await using var lockResponse = await _lockProvider.LockAsync(
+        // Acquire first lock
+        await using var firstLock = await _lockProvider.LockAsync(
+            StateStoreDefinitions.InventoryLock,
+            firstLockId.ToString(),
+            lockOwner,
+            _configuration.LockTimeoutSeconds,
+            cancellationToken);
+
+        if (!firstLock.Success)
+        {
+            _logger.LogWarning("Failed to acquire lock for container {ContainerId} during merge", firstLockId);
+            return (StatusCodes.Conflict, null);
+        }
+
+        // Acquire second lock if items are in different containers
+        IAsyncDisposable? secondLock = null;
+        if (!sameContainer)
+        {
+            var secondLockResponse = await _lockProvider.LockAsync(
                 StateStoreDefinitions.InventoryLock,
-                source.ContainerId.ToString(),
+                secondLockId.ToString(),
                 lockOwner,
                 _configuration.LockTimeoutSeconds,
                 cancellationToken);
 
-            if (!lockResponse.Success)
+            if (!secondLockResponse.Success)
             {
-                _logger.LogWarning("Failed to acquire lock for container {ContainerId} during merge", source.ContainerId);
+                _logger.LogWarning("Failed to acquire lock for container {ContainerId} during merge", secondLockId);
                 return (StatusCodes.Conflict, null);
             }
+            secondLock = secondLockResponse;
+        }
 
+        try
+        {
             var now = DateTimeOffset.UtcNow;
 
             // Update target quantity first (safer: if this fails, source is unaffected)
@@ -1439,14 +1457,13 @@ public partial class InventoryService : IInventoryService
                 OverflowQuantity = overflow
             });
         }
-        catch (Exception ex)
+        finally
         {
-            _logger.LogError(ex, "Error merging stacks");
-            await _messageBus.TryPublishErrorAsync(
-                "inventory", "MergeStacks", "unexpected_exception", ex.Message,
-                dependency: null, endpoint: "post:/inventory/merge",
-                details: null, stack: ex.StackTrace);
-            return (StatusCodes.InternalServerError, null);
+            // Dispose second lock if acquired (first lock disposed via await using)
+            if (secondLock is not null)
+            {
+                await secondLock.DisposeAsync();
+            }
         }
     }
 
@@ -1459,101 +1476,89 @@ public partial class InventoryService : IInventoryService
         QueryItemsRequest body,
         CancellationToken cancellationToken = default)
     {
-        try
-        {
-            // Get all containers for owner
-            var (containersStatus, containersResponse) = await ListContainersAsync(
-                new ListContainersRequest
-                {
-                    OwnerId = body.OwnerId,
-                    OwnerType = body.OwnerType,
-                    ContainerType = body.ContainerType,
-                    IncludeEquipmentSlots = !body.ExcludeEquipmentSlots
-                }, cancellationToken);
-
-            if (containersStatus != StatusCodes.OK || containersResponse is null)
+        // Get all containers for owner
+        var (containersStatus, containersResponse) = await ListContainersAsync(
+            new ListContainersRequest
             {
-                return (containersStatus, null);
+                OwnerId = body.OwnerId,
+                OwnerType = body.OwnerType,
+                ContainerType = body.ContainerType,
+                IncludeEquipmentSlots = !body.ExcludeEquipmentSlots
+            }, cancellationToken);
+
+        if (containersStatus != StatusCodes.OK || containersResponse is null)
+        {
+            return (containersStatus, null);
+        }
+
+        var results = new List<QueryResultItem>();
+
+        foreach (var container in containersResponse.Containers)
+        {
+            List<ItemInstanceResponse> items;
+            try
+            {
+                var itemsResponse = await _itemClient.ListItemsByContainerAsync(
+                    new ListItemsByContainerRequest { ContainerId = container.ContainerId },
+                    cancellationToken);
+                items = itemsResponse.Items.ToList();
+            }
+            catch (ApiException)
+            {
+                continue;
             }
 
-            var results = new List<QueryResultItem>();
-
-            foreach (var container in containersResponse.Containers)
+            foreach (var item in items)
             {
-                List<ItemInstanceResponse> items;
-                try
-                {
-                    var itemsResponse = await _itemClient.ListItemsByContainerAsync(
-                        new ListItemsByContainerRequest { ContainerId = container.ContainerId },
-                        cancellationToken);
-                    items = itemsResponse.Items.ToList();
-                }
-                catch (ApiException)
-                {
-                    continue;
-                }
+                // Apply filters
+                if (body.TemplateId.HasValue && item.TemplateId != body.TemplateId.Value) continue;
 
-                foreach (var item in items)
+                // Get template for category/tag filtering
+                if (!string.IsNullOrEmpty(body.Category) || (body.Tags is not null && body.Tags.Count > 0))
                 {
-                    // Apply filters
-                    if (body.TemplateId.HasValue && item.TemplateId != body.TemplateId.Value) continue;
-
-                    // Get template for category/tag filtering
-                    if (!string.IsNullOrEmpty(body.Category) || (body.Tags is not null && body.Tags.Count > 0))
+                    try
                     {
-                        try
-                        {
-                            var template = await _itemClient.GetItemTemplateAsync(
-                                new GetItemTemplateRequest { TemplateId = item.TemplateId },
-                                cancellationToken);
+                        var template = await _itemClient.GetItemTemplateAsync(
+                            new GetItemTemplateRequest { TemplateId = item.TemplateId },
+                            cancellationToken);
 
-                            if (!string.IsNullOrEmpty(body.Category)
-                                && !string.Equals(template.Category.ToString(), body.Category, StringComparison.OrdinalIgnoreCase))
-                            {
-                                continue;
-                            }
-
-                            if (body.Tags is not null && body.Tags.Count > 0)
-                            {
-                                if (!body.Tags.All(t => template.Tags.Contains(t))) continue;
-                            }
-                        }
-                        catch (ApiException)
+                        if (!string.IsNullOrEmpty(body.Category)
+                            && !string.Equals(template.Category.ToString(), body.Category, StringComparison.OrdinalIgnoreCase))
                         {
                             continue;
                         }
+
+                        if (body.Tags is not null && body.Tags.Count > 0)
+                        {
+                            if (!body.Tags.All(t => template.Tags.Contains(t))) continue;
+                        }
                     }
-
-                    results.Add(new QueryResultItem
+                    catch (ApiException)
                     {
-                        InstanceId = item.InstanceId,
-                        TemplateId = item.TemplateId,
-                        ContainerId = container.ContainerId,
-                        ContainerType = container.ContainerType,
-                        Quantity = item.Quantity,
-                        SlotIndex = item.SlotIndex
-                    });
+                        continue;
+                    }
                 }
+
+                results.Add(new QueryResultItem
+                {
+                    InstanceId = item.InstanceId,
+                    TemplateId = item.TemplateId,
+                    ContainerId = container.ContainerId,
+                    ContainerType = container.ContainerType,
+                    Quantity = item.Quantity,
+                    SlotIndex = item.SlotIndex
+                });
             }
-
-            var totalCount = results.Count;
-            var paged = results.Skip(body.Offset).Take(body.Limit).ToList();
-
-            return (StatusCodes.OK, new QueryItemsResponse
-            {
-                Items = paged,
-                TotalCount = totalCount
-            });
         }
-        catch (Exception ex)
+
+        var totalCount = results.Count;
+        var paged = results.Skip(body.Offset).Take(body.Limit).ToList();
+
+        return (StatusCodes.OK, new QueryItemsResponse
         {
-            _logger.LogError(ex, "Error querying items for owner {OwnerId}", body.OwnerId);
-            await _messageBus.TryPublishErrorAsync(
-                "inventory", "QueryItems", "unexpected_exception", ex.Message,
-                dependency: null, endpoint: "post:/inventory/query",
-                details: null, stack: ex.StackTrace);
-            return (StatusCodes.InternalServerError, null);
-        }
+            Items = paged,
+            TotalCount = totalCount
+        });
     }
 
     /// <inheritdoc/>
@@ -1561,59 +1566,47 @@ public partial class InventoryService : IInventoryService
         CountItemsRequest body,
         CancellationToken cancellationToken = default)
     {
-        try
+        // Page through all results to get accurate count
+        var allItems = new List<QueryResultItem>();
+        var offset = 0;
+        var maxItems = _configuration.MaxCountQueryLimit;
+
+        while (offset < maxItems)
         {
-            // Page through all results to get accurate count
-            var allItems = new List<QueryResultItem>();
-            var offset = 0;
-            var maxItems = _configuration.MaxCountQueryLimit;
+            var (queryStatus, queryResponse) = await QueryItemsAsync(
+                new QueryItemsRequest
+                {
+                    OwnerId = body.OwnerId,
+                    OwnerType = body.OwnerType,
+                    TemplateId = body.TemplateId,
+                    Offset = offset,
+                    Limit = _configuration.QueryPageSize
+                }, cancellationToken);
 
-            while (offset < maxItems)
+            if (queryStatus != StatusCodes.OK || queryResponse is null)
             {
-                var (queryStatus, queryResponse) = await QueryItemsAsync(
-                    new QueryItemsRequest
-                    {
-                        OwnerId = body.OwnerId,
-                        OwnerType = body.OwnerType,
-                        TemplateId = body.TemplateId,
-                        Offset = offset,
-                        Limit = _configuration.QueryPageSize
-                    }, cancellationToken);
-
-                if (queryStatus != StatusCodes.OK || queryResponse is null)
-                {
-                    return (queryStatus, null);
-                }
-
-                allItems.AddRange(queryResponse.Items);
-
-                // If we got fewer items than the page size, we've reached the end
-                if (queryResponse.Items.Count < _configuration.QueryPageSize)
-                {
-                    break;
-                }
-
-                offset += _configuration.QueryPageSize;
+                return (queryStatus, null);
             }
 
-            var totalQuantity = allItems.Sum(i => i.Quantity);
+            allItems.AddRange(queryResponse.Items);
 
-            return (StatusCodes.OK, new CountItemsResponse
+            // If we got fewer items than the page size, we've reached the end
+            if (queryResponse.Items.Count < _configuration.QueryPageSize)
             {
-                TemplateId = body.TemplateId,
-                TotalQuantity = totalQuantity,
-                StackCount = allItems.Count
-            });
+                break;
+            }
+
+            offset += _configuration.QueryPageSize;
         }
-        catch (Exception ex)
+
+        var totalQuantity = allItems.Sum(i => i.Quantity);
+
+        return (StatusCodes.OK, new CountItemsResponse
         {
-            _logger.LogError(ex, "Error counting items");
-            await _messageBus.TryPublishErrorAsync(
-                "inventory", "CountItems", "unexpected_exception", ex.Message,
-                dependency: null, endpoint: "post:/inventory/count",
-                details: null, stack: ex.StackTrace);
-            return (StatusCodes.InternalServerError, null);
-        }
+            TemplateId = body.TemplateId,
+            TotalQuantity = totalQuantity,
+            StackCount = allItems.Count
+        });
     }
 
     /// <inheritdoc/>
@@ -1621,50 +1614,38 @@ public partial class InventoryService : IInventoryService
         HasItemsRequest body,
         CancellationToken cancellationToken = default)
     {
-        try
+        var results = new List<HasItemResult>();
+        var hasAll = true;
+
+        foreach (var req in body.Requirements)
         {
-            var results = new List<HasItemResult>();
-            var hasAll = true;
-
-            foreach (var req in body.Requirements)
-            {
-                var (countStatus, countResponse) = await CountItemsAsync(
-                    new CountItemsRequest
-                    {
-                        OwnerId = body.OwnerId,
-                        OwnerType = body.OwnerType,
-                        TemplateId = req.TemplateId
-                    }, cancellationToken);
-
-                var available = countResponse?.TotalQuantity ?? 0;
-                var satisfied = available >= req.Quantity;
-
-                if (!satisfied) hasAll = false;
-
-                results.Add(new HasItemResult
+            var (countStatus, countResponse) = await CountItemsAsync(
+                new CountItemsRequest
                 {
-                    TemplateId = req.TemplateId,
-                    Required = req.Quantity,
-                    Available = available,
-                    Satisfied = satisfied
-                });
-            }
+                    OwnerId = body.OwnerId,
+                    OwnerType = body.OwnerType,
+                    TemplateId = req.TemplateId
+                }, cancellationToken);
 
-            return (StatusCodes.OK, new HasItemsResponse
+            var available = countResponse?.TotalQuantity ?? 0;
+            var satisfied = available >= req.Quantity;
+
+            if (!satisfied) hasAll = false;
+
+            results.Add(new HasItemResult
             {
-                HasAll = hasAll,
-                Results = results
+                TemplateId = req.TemplateId,
+                Required = req.Quantity,
+                Available = available,
+                Satisfied = satisfied
             });
         }
-        catch (Exception ex)
+
+        return (StatusCodes.OK, new HasItemsResponse
         {
-            _logger.LogError(ex, "Error checking items");
-            await _messageBus.TryPublishErrorAsync(
-                "inventory", "HasItems", "unexpected_exception", ex.Message,
-                dependency: null, endpoint: "post:/inventory/has",
-                details: null, stack: ex.StackTrace);
-            return (StatusCodes.InternalServerError, null);
-        }
+            HasAll = hasAll,
+            Results = results
+        });
     }
 
     /// <inheritdoc/>
@@ -1672,110 +1653,98 @@ public partial class InventoryService : IInventoryService
         FindSpaceRequest body,
         CancellationToken cancellationToken = default)
     {
+        // Get template for constraints
+        ItemTemplateResponse template;
         try
         {
-            // Get template for constraints
-            ItemTemplateResponse template;
-            try
-            {
-                template = await _itemClient.GetItemTemplateAsync(
-                    new GetItemTemplateRequest { TemplateId = body.TemplateId },
-                    cancellationToken);
-            }
-            catch (ApiException ex)
-            {
-                _logger.LogDebug(ex, "Template not found: {TemplateId}", body.TemplateId);
-                return (MapHttpStatusCode(ex.StatusCode), null);
-            }
-
-            // Get all containers for owner
-            var (containersStatus, containersResponse) = await ListContainersAsync(
-                new ListContainersRequest
-                {
-                    OwnerId = body.OwnerId,
-                    OwnerType = body.OwnerType
-                }, cancellationToken);
-
-            if (containersStatus != StatusCodes.OK || containersResponse is null)
-            {
-                return (containersStatus, null);
-            }
-
-            var candidates = new List<SpaceCandidate>();
-            var categoryString = template.Category.ToString();
-
-            foreach (var container in containersResponse.Containers)
-            {
-                // Check if item category is allowed (case-insensitive)
-                if (container.AllowedCategories is not null && container.AllowedCategories.Count > 0)
-                {
-                    if (!container.AllowedCategories.Any(c => string.Equals(c, categoryString, StringComparison.OrdinalIgnoreCase)))
-                    {
-                        continue;
-                    }
-                }
-                if (container.ForbiddenCategories is not null && container.ForbiddenCategories.Count > 0)
-                {
-                    if (container.ForbiddenCategories.Any(c => string.Equals(c, categoryString, StringComparison.OrdinalIgnoreCase)))
-                    {
-                        continue;
-                    }
-                }
-
-                // Check constraints using response fields directly
-                var violation = CheckConstraintsFromResponse(container, template, body.Quantity);
-                if (violation is not null) continue;
-
-                var candidate = new SpaceCandidate
-                {
-                    ContainerId = container.ContainerId,
-                    ContainerType = container.ContainerType,
-                    CanFitQuantity = body.Quantity
-                };
-
-                // If prefer stackable, check for existing stacks
-                if (body.PreferStackable && template.QuantityModel != QuantityModel.Unique)
-                {
-                    try
-                    {
-                        var itemsResponse = await _itemClient.ListItemsByContainerAsync(
-                            new ListItemsByContainerRequest { ContainerId = container.ContainerId },
-                            cancellationToken);
-
-                        var existingStack = itemsResponse.Items.FirstOrDefault(i =>
-                            i.TemplateId == body.TemplateId && i.Quantity < template.MaxStackSize);
-
-                        if (existingStack is not null)
-                        {
-                            candidate.ExistingStackInstanceId = existingStack.InstanceId;
-                            candidate.CanFitQuantity = Math.Min(body.Quantity,
-                                template.MaxStackSize - existingStack.Quantity);
-                        }
-                    }
-                    catch (ApiException)
-                    {
-                        // Container exists but items couldn't be fetched - skip stack check
-                    }
-                }
-
-                candidates.Add(candidate);
-            }
-
-            return (StatusCodes.OK, new FindSpaceResponse
-            {
-                HasSpace = candidates.Count > 0,
-                Candidates = candidates
-            });
+            template = await _itemClient.GetItemTemplateAsync(
+                new GetItemTemplateRequest { TemplateId = body.TemplateId },
+                cancellationToken);
         }
-        catch (Exception ex)
+        catch (ApiException ex)
         {
-            _logger.LogError(ex, "Error finding space for item");
-            await _messageBus.TryPublishErrorAsync(
-                "inventory", "FindSpace", "unexpected_exception", ex.Message,
-                dependency: null, endpoint: "post:/inventory/find-space",
-                details: null, stack: ex.StackTrace);
-            return (StatusCodes.InternalServerError, null);
+            _logger.LogDebug(ex, "Template not found: {TemplateId}", body.TemplateId);
+            return (MapHttpStatusCode(ex.StatusCode), null);
         }
+
+        // Get all containers for owner
+        var (containersStatus, containersResponse) = await ListContainersAsync(
+            new ListContainersRequest
+            {
+                OwnerId = body.OwnerId,
+                OwnerType = body.OwnerType
+            }, cancellationToken);
+
+        if (containersStatus != StatusCodes.OK || containersResponse is null)
+        {
+            return (containersStatus, null);
+        }
+
+        var candidates = new List<SpaceCandidate>();
+        var categoryString = template.Category.ToString();
+
+        foreach (var container in containersResponse.Containers)
+        {
+            // Check if item category is allowed (case-insensitive)
+            if (container.AllowedCategories is not null && container.AllowedCategories.Count > 0)
+            {
+                if (!container.AllowedCategories.Any(c => string.Equals(c, categoryString, StringComparison.OrdinalIgnoreCase)))
+                {
+                    continue;
+                }
+            }
+            if (container.ForbiddenCategories is not null && container.ForbiddenCategories.Count > 0)
+            {
+                if (container.ForbiddenCategories.Any(c => string.Equals(c, categoryString, StringComparison.OrdinalIgnoreCase)))
+                {
+                    continue;
+                }
+            }
+
+            // Check constraints using response fields directly
+            var violation = CheckConstraintsFromResponse(container, template, body.Quantity);
+            if (violation is not null) continue;
+
+            var candidate = new SpaceCandidate
+            {
+                ContainerId = container.ContainerId,
+                ContainerType = container.ContainerType,
+                CanFitQuantity = body.Quantity
+            };
+
+            // If prefer stackable, check for existing stacks
+            if (body.PreferStackable && template.QuantityModel != QuantityModel.Unique)
+            {
+                try
+                {
+                    var itemsResponse = await _itemClient.ListItemsByContainerAsync(
+                        new ListItemsByContainerRequest { ContainerId = container.ContainerId },
+                        cancellationToken);
+
+                    var existingStack = itemsResponse.Items.FirstOrDefault(i =>
+                        i.TemplateId == body.TemplateId && i.Quantity < template.MaxStackSize);
+
+                    if (existingStack is not null)
+                    {
+                        candidate.ExistingStackInstanceId = existingStack.InstanceId;
+                        candidate.CanFitQuantity = Math.Min(body.Quantity,
+                            template.MaxStackSize - existingStack.Quantity);
+                    }
+                }
+                catch (ApiException)
+                {
+                    // Container exists but items couldn't be fetched - skip stack check
+                }
+            }
+
+            candidates.Add(candidate);
+        }
+
+        return (StatusCodes.OK, new FindSpaceResponse
+        {
+            HasSpace = candidates.Count > 0,
+            Candidates = candidates
+        });
     }
 
     #endregion
@@ -2174,113 +2143,3 @@ public partial class InventoryService : IInventoryService
 
     #endregion
 }
-
-#region Internal Models
-
-/// <summary>
-/// Internal storage model for containers.
-/// Uses proper typed fields for enums and GUIDs to avoid string roundtripping.
-/// </summary>
-internal class ContainerModel
-{
-    /// <summary>Container unique identifier</summary>
-    public Guid ContainerId { get; set; }
-
-    /// <summary>Owner entity ID</summary>
-    public Guid OwnerId { get; set; }
-
-    /// <summary>Owner type</summary>
-    public ContainerOwnerType OwnerType { get; set; }
-
-    /// <summary>Game-defined container type</summary>
-    public string ContainerType { get; set; } = string.Empty;
-
-    /// <summary>Capacity constraint model</summary>
-    public ContainerConstraintModel ConstraintModel { get; set; }
-
-    /// <summary>Whether this is an equipment slot</summary>
-    public bool IsEquipmentSlot { get; set; }
-
-    /// <summary>Equipment slot name if applicable</summary>
-    public string? EquipmentSlotName { get; set; }
-
-    /// <summary>Maximum slots for slot-based containers</summary>
-    public int? MaxSlots { get; set; }
-
-    /// <summary>Current used slots</summary>
-    public int? UsedSlots { get; set; }
-
-    /// <summary>Maximum weight capacity</summary>
-    public double? MaxWeight { get; set; }
-
-    /// <summary>Internal grid width</summary>
-    public int? GridWidth { get; set; }
-
-    /// <summary>Internal grid height</summary>
-    public int? GridHeight { get; set; }
-
-    /// <summary>Maximum volume</summary>
-    public double? MaxVolume { get; set; }
-
-    /// <summary>Current volume used</summary>
-    public double? CurrentVolume { get; set; }
-
-    /// <summary>Parent container ID for nested containers</summary>
-    public Guid? ParentContainerId { get; set; }
-
-    /// <summary>Depth in container hierarchy</summary>
-    public int NestingDepth { get; set; }
-
-    /// <summary>Whether can hold other containers</summary>
-    public bool CanContainContainers { get; set; }
-
-    /// <summary>Max nesting depth</summary>
-    public int? MaxNestingDepth { get; set; }
-
-    /// <summary>Empty container weight</summary>
-    public double SelfWeight { get; set; }
-
-    /// <summary>Weight propagation mode</summary>
-    public WeightContribution WeightContribution { get; set; }
-
-    /// <summary>Slots used in parent</summary>
-    public int SlotCost { get; set; }
-
-    /// <summary>Width in parent grid</summary>
-    public int? ParentGridWidth { get; set; }
-
-    /// <summary>Height in parent grid</summary>
-    public int? ParentGridHeight { get; set; }
-
-    /// <summary>Volume in parent</summary>
-    public double? ParentVolume { get; set; }
-
-    /// <summary>Weight of direct contents</summary>
-    public double ContentsWeight { get; set; }
-
-    /// <summary>Allowed item categories</summary>
-    public List<string>? AllowedCategories { get; set; }
-
-    /// <summary>Forbidden item categories</summary>
-    public List<string>? ForbiddenCategories { get; set; }
-
-    /// <summary>Required item tags</summary>
-    public List<string>? AllowedTags { get; set; }
-
-    /// <summary>Realm this container belongs to</summary>
-    public Guid? RealmId { get; set; }
-
-    /// <summary>Container tags</summary>
-    public List<string> Tags { get; set; } = new();
-
-    /// <summary>Serialized game-specific metadata</summary>
-    public string? Metadata { get; set; }
-
-    /// <summary>Creation timestamp</summary>
-    public DateTimeOffset CreatedAt { get; set; }
-
-    /// <summary>Last modification timestamp</summary>
-    public DateTimeOffset? ModifiedAt { get; set; }
-}
-
-#endregion

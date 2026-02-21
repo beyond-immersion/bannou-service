@@ -580,6 +580,187 @@ public class PortainerOrchestrator : IContainerOrchestrator
         }
     }
 
+    /// <inheritdoc />
+    public async Task<PruneResult> PruneNetworksAsync(CancellationToken cancellationToken = default)
+    {
+        _logger.LogInformation("Pruning unused networks via Portainer");
+
+        try
+        {
+            // POST /api/endpoints/{id}/docker/networks/prune
+            var url = $"/api/endpoints/{_endpointId}/docker/networks/prune";
+            var response = await _httpClient.PostAsync(url, null, cancellationToken);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                var error = await response.Content.ReadAsStringAsync(cancellationToken);
+                return new PruneResult
+                {
+                    Success = false,
+                    Message = $"Portainer API error: {response.StatusCode} - {error}"
+                };
+            }
+
+            var result = await response.Content.ReadFromJsonAsync<PortainerNetworksPruneResponse>(
+                JsonOptions, cancellationToken);
+
+            var deletedNetworks = result?.NetworksDeleted ?? new List<string>();
+
+            _logger.LogInformation(
+                "Pruned {Count} unused networks via Portainer",
+                deletedNetworks.Count);
+
+            return new PruneResult
+            {
+                Success = true,
+                DeletedItems = deletedNetworks.ToList(),
+                DeletedCount = deletedNetworks.Count,
+                ReclaimedBytes = 0,
+                Message = deletedNetworks.Count > 0
+                    ? $"Pruned {deletedNetworks.Count} unused network(s)"
+                    : "No unused networks to prune"
+            };
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error pruning networks via Portainer");
+            return new PruneResult
+            {
+                Success = false,
+                Message = $"Error pruning networks: {ex.Message}"
+            };
+        }
+    }
+
+    /// <inheritdoc />
+    public async Task<PruneResult> PruneVolumesAsync(CancellationToken cancellationToken = default)
+    {
+        _logger.LogInformation("Pruning unused volumes via Portainer");
+
+        try
+        {
+            // POST /api/endpoints/{id}/docker/volumes/prune
+            var url = $"/api/endpoints/{_endpointId}/docker/volumes/prune";
+            var response = await _httpClient.PostAsync(url, null, cancellationToken);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                var error = await response.Content.ReadAsStringAsync(cancellationToken);
+                return new PruneResult
+                {
+                    Success = false,
+                    Message = $"Portainer API error: {response.StatusCode} - {error}"
+                };
+            }
+
+            var result = await response.Content.ReadFromJsonAsync<PortainerVolumesPruneResponse>(
+                JsonOptions, cancellationToken);
+
+            var deletedVolumes = result?.VolumesDeleted ?? new List<string>();
+            var reclaimedBytes = (long)(result?.SpaceReclaimed ?? 0);
+
+            _logger.LogInformation(
+                "Pruned {Count} unused volumes via Portainer, reclaimed {Bytes} bytes",
+                deletedVolumes.Count,
+                reclaimedBytes);
+
+            return new PruneResult
+            {
+                Success = true,
+                DeletedItems = deletedVolumes.ToList(),
+                DeletedCount = deletedVolumes.Count,
+                ReclaimedBytes = reclaimedBytes,
+                Message = deletedVolumes.Count > 0
+                    ? $"Pruned {deletedVolumes.Count} unused volume(s), reclaimed {FormatBytes(reclaimedBytes)}"
+                    : "No unused volumes to prune"
+            };
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error pruning volumes via Portainer");
+            return new PruneResult
+            {
+                Success = false,
+                Message = $"Error pruning volumes: {ex.Message}"
+            };
+        }
+    }
+
+    /// <inheritdoc />
+    public async Task<PruneResult> PruneImagesAsync(CancellationToken cancellationToken = default)
+    {
+        _logger.LogInformation("Pruning dangling images via Portainer");
+
+        try
+        {
+            // POST /api/endpoints/{id}/docker/images/prune
+            var url = $"/api/endpoints/{_endpointId}/docker/images/prune";
+            var response = await _httpClient.PostAsync(url, null, cancellationToken);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                var error = await response.Content.ReadAsStringAsync(cancellationToken);
+                return new PruneResult
+                {
+                    Success = false,
+                    Message = $"Portainer API error: {response.StatusCode} - {error}"
+                };
+            }
+
+            var result = await response.Content.ReadFromJsonAsync<PortainerImagesPruneResponse>(
+                JsonOptions, cancellationToken);
+
+            var deletedImages = result?.ImagesDeleted ?? new List<PortainerImageDeleteResponse>();
+            var reclaimedBytes = (long)(result?.SpaceReclaimed ?? 0);
+
+            var deletedIds = deletedImages
+                .Where(img => !string.IsNullOrEmpty(img.Deleted))
+                .Select(img => img.Deleted)
+                .ToList();
+
+            _logger.LogInformation(
+                "Pruned {Count} dangling images via Portainer, reclaimed {Bytes} bytes",
+                deletedIds.Count,
+                reclaimedBytes);
+
+            return new PruneResult
+            {
+                Success = true,
+                DeletedItems = deletedIds!,
+                DeletedCount = deletedIds.Count,
+                ReclaimedBytes = reclaimedBytes,
+                Message = deletedIds.Count > 0
+                    ? $"Pruned {deletedIds.Count} dangling image(s), reclaimed {FormatBytes(reclaimedBytes)}"
+                    : "No dangling images to prune"
+            };
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error pruning images via Portainer");
+            return new PruneResult
+            {
+                Success = false,
+                Message = $"Error pruning images: {ex.Message}"
+            };
+        }
+    }
+
+    /// <summary>
+    /// Formats bytes into a human-readable string.
+    /// </summary>
+    private static string FormatBytes(long bytes)
+    {
+        string[] sizes = { "B", "KB", "MB", "GB", "TB" };
+        int order = 0;
+        double len = bytes;
+        while (len >= 1024 && order < sizes.Length - 1)
+        {
+            order++;
+            len /= 1024;
+        }
+        return $"{len:0.##} {sizes[order]}";
+    }
+
     public void Dispose()
     {
         // HttpClient is managed by factory, don't dispose
@@ -610,6 +791,51 @@ internal class PortainerStatus
 
     [JsonPropertyName("InstanceID")]
     public string? InstanceId { get; set; }
+}
+
+/// <summary>
+/// Networks prune response from Portainer/Docker API.
+/// </summary>
+internal class PortainerNetworksPruneResponse
+{
+    [JsonPropertyName("NetworksDeleted")]
+    public List<string>? NetworksDeleted { get; set; }
+}
+
+/// <summary>
+/// Volumes prune response from Portainer/Docker API.
+/// </summary>
+internal class PortainerVolumesPruneResponse
+{
+    [JsonPropertyName("VolumesDeleted")]
+    public List<string>? VolumesDeleted { get; set; }
+
+    [JsonPropertyName("SpaceReclaimed")]
+    public ulong SpaceReclaimed { get; set; }
+}
+
+/// <summary>
+/// Images prune response from Portainer/Docker API.
+/// </summary>
+internal class PortainerImagesPruneResponse
+{
+    [JsonPropertyName("ImagesDeleted")]
+    public List<PortainerImageDeleteResponse>? ImagesDeleted { get; set; }
+
+    [JsonPropertyName("SpaceReclaimed")]
+    public ulong SpaceReclaimed { get; set; }
+}
+
+/// <summary>
+/// Individual image delete response from Portainer/Docker API.
+/// </summary>
+internal class PortainerImageDeleteResponse
+{
+    [JsonPropertyName("Deleted")]
+    public string? Deleted { get; set; }
+
+    [JsonPropertyName("Untagged")]
+    public string? Untagged { get; set; }
 }
 
 /// <summary>

@@ -24,9 +24,21 @@ public interface IActorRunner : IAsyncDisposable
     string Category { get; }
 
     /// <summary>
-    /// Gets the optional character ID for NPC brain actors.
+    /// Gets the character ID for NPC brain actors.
+    /// Null for unbound event-mode actors; set at spawn time or via <see cref="BindCharacterAsync"/>.
     /// </summary>
     Guid? CharacterId { get; }
+
+    /// <summary>
+    /// Gets the realm this actor operates in.
+    /// </summary>
+    Guid RealmId { get; }
+
+    /// <summary>
+    /// Gets the actor's current location, tracked from perception events.
+    /// Null if no perception events with location data have been received yet.
+    /// </summary>
+    Guid? LocationId { get; }
 
     /// <summary>
     /// Gets the current status of this actor.
@@ -69,6 +81,16 @@ public interface IActorRunner : IAsyncDisposable
     Task StopAsync(bool graceful = true, CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// Binds an unbound event-mode actor to a character, transitioning it to character-mode.
+    /// After binding, the actor subscribes to the character's perception stream and variable
+    /// providers begin loading character-specific data on subsequent ticks.
+    /// </summary>
+    /// <param name="characterId">The character to bind to.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <exception cref="InvalidOperationException">Thrown if the actor is already bound to a character or is not running.</exception>
+    Task BindCharacterAsync(Guid characterId, CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Injects a perception into the actor's perception queue.
     /// </summary>
     /// <param name="perception">The perception data to inject.</param>
@@ -108,4 +130,10 @@ public interface IActorRunner : IAsyncDisposable
     /// </summary>
     /// <returns>True if an encounter was ended, false if none was active.</returns>
     bool EndEncounter();
+
+    /// <summary>
+    /// Invalidates the cached behavior document, forcing a reload on the next tick.
+    /// Used for hot-reload when a template's BehaviorRef changes.
+    /// </summary>
+    void InvalidateCachedBehavior();
 }

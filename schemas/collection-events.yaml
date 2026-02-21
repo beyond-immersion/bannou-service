@@ -1,0 +1,301 @@
+openapi: 3.0.3
+info:
+  title: Collection Service Events
+  description: |
+    Event subscription and publication declarations for Collection service.
+    Lifecycle events (Created, Updated, Deleted) are auto-generated from x-lifecycle
+    for both CollectionEntryTemplate and Collection entities.
+    Custom events cover entry unlock outcomes, milestones, and discovery advancement.
+
+    **Event Categories**:
+    - Entry template lifecycle: created, updated, deleted (auto-generated)
+    - Collection instance lifecycle: created, deleted (auto-generated; updated omitted — collections are immutable after creation)
+    - Entry events: unlocked, grant-failed, milestone-reached, discovery-advanced
+
+    **Consumed Events**:
+    - character.deleted: Cleanup character-owned collections
+    - account.deleted: Cleanup account-owned collections
+
+    **Topic Naming**: Uses dot-separated format (collection.entry-unlocked).
+
+    **SCHEMA MODIFICATION GATE**: STOP. Before modifying this schema, you MUST:
+    1. Read docs/reference/SCHEMA-RULES.md
+    2. State which section applies to your change
+    3. Only then proceed with edits
+    Edits without stating the applicable rule are FORBIDDEN.
+  version: 1.0.0
+  x-event-subscriptions:
+    - topic: character.deleted
+      event: CharacterDeletedEvent
+      handler: HandleCharacterDeleted
+    - topic: account.deleted
+      event: AccountDeletedEvent
+      handler: HandleAccountDeleted
+  x-event-publications:
+    # Entry template lifecycle events (auto-generated from x-lifecycle)
+    - topic: collection-entry-template.created
+      event: CollectionEntryTemplateCreatedEvent
+      description: Published when a new entry template is created
+    - topic: collection-entry-template.updated
+      event: CollectionEntryTemplateUpdatedEvent
+      description: Published when an entry template is updated
+    - topic: collection-entry-template.deleted
+      event: CollectionEntryTemplateDeletedEvent
+      description: Published when an entry template is deleted
+
+    # Collection instance lifecycle events (auto-generated from x-lifecycle)
+    - topic: collection.created
+      event: CollectionCreatedEvent
+      description: Published when a collection instance is created for an owner
+    - topic: collection.deleted
+      event: CollectionDeletedEvent
+      description: Published when a collection instance is deleted
+
+    # Custom events
+    - topic: collection.entry-unlocked
+      event: CollectionEntryUnlockedEvent
+      description: Published when an entry is successfully unlocked in a collection
+    - topic: collection.entry-grant-failed
+      event: CollectionEntryGrantFailedEvent
+      description: Published when a grant attempt fails
+    - topic: collection.milestone-reached
+      event: CollectionMilestoneReachedEvent
+      description: Published when a completion milestone is reached (25%, 50%, 75%, 100%)
+    - topic: collection.discovery-advanced
+      event: CollectionDiscoveryAdvancedEvent
+      description: Published when progressive discovery level is advanced
+
+# Lifecycle events auto-generated from this definition
+# Output: schemas/Generated/collection-lifecycle-events.yaml
+x-lifecycle:
+  CollectionEntryTemplate:
+    model:
+      entryTemplateId: { type: string, format: uuid, primary: true, required: true, description: "Unique entry template identifier" }
+      code: { type: string, required: true, description: "Unique code within collection type and game service" }
+      collectionType: { $ref: 'collection-api.yaml#/components/schemas/CollectionType', required: true, description: "Type of collection this entry belongs to" }
+      gameServiceId: { type: string, format: uuid, required: true, description: "Game service this entry template is scoped to" }
+      displayName: { type: string, required: true, description: "Human-readable display name" }
+      category: { type: string, nullable: true, description: "Category within the collection type" }
+      hideWhenLocked: { type: boolean, required: true, description: "Whether this entry is hidden until unlocked" }
+      itemTemplateId: { type: string, format: uuid, required: true, description: "Item template used when granting this entry" }
+      createdAt: { type: string, format: date-time, required: true, description: "When this entry template was created" }
+      updatedAt: { type: string, format: date-time, nullable: true, description: "When this entry template was last updated" }
+    sensitive: []
+
+  Collection:
+    model:
+      collectionId: { type: string, format: uuid, primary: true, required: true, description: "Unique collection instance identifier" }
+      ownerId: { type: string, format: uuid, required: true, description: "Entity that owns this collection" }
+      ownerType: { type: string, required: true, description: "Entity type discriminator" }
+      collectionType: { $ref: 'collection-api.yaml#/components/schemas/CollectionType', required: true, description: "Type of collection" }
+      gameServiceId: { type: string, format: uuid, required: true, description: "Game service this collection is scoped to" }
+      containerId: { type: string, format: uuid, required: true, description: "Inventory container holding unlocked entry items" }
+      createdAt: { type: string, format: date-time, required: true, description: "When this collection was created" }
+    sensitive: []
+
+paths: {}  # Events don't have HTTP paths
+
+# Note: CollectionEntryTemplateCreatedEvent, CollectionEntryTemplateUpdatedEvent, CollectionEntryTemplateDeletedEvent,
+# CollectionCreatedEvent, CollectionDeletedEvent
+# are auto-generated from x-lifecycle. See: schemas/Generated/collection-lifecycle-events.yaml
+
+components:
+  schemas:
+    # =========================================================================
+    # Custom Published Events (non-lifecycle)
+    # =========================================================================
+
+    CollectionEntryUnlockedEvent:
+      type: object
+      additionalProperties: false
+      description: Published when an entry is successfully unlocked in a collection
+      required:
+      - eventId
+      - timestamp
+      - collectionId
+      - ownerId
+      - ownerType
+      - gameServiceId
+      - collectionType
+      - entryCode
+      - displayName
+      - category
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique event identifier
+        timestamp:
+          type: string
+          format: date-time
+          description: When the unlock occurred
+        collectionId:
+          type: string
+          format: uuid
+          description: Collection the entry was unlocked in
+        ownerId:
+          type: string
+          format: uuid
+          description: Entity that owns the collection
+        ownerType:
+          type: string
+          description: Entity type discriminator
+        gameServiceId:
+          type: string
+          format: uuid
+          description: Game service scope
+        collectionType:
+          $ref: 'collection-api.yaml#/components/schemas/CollectionType'
+          description: Type of collection
+        entryCode:
+          type: string
+          description: Entry template code that was unlocked
+        displayName:
+          type: string
+          description: Display name of the unlocked entry
+        category:
+          type: string
+          nullable: true
+          description: Category of the unlocked entry
+        tags:
+          type: array
+          nullable: true
+          items:
+            type: string
+          description: Tags from the entry template for downstream consumer matching (e.g., seed growth domain mapping)
+        isFirstGlobal:
+          type: boolean
+          description: Whether this is the first time any owner has unlocked this entry
+
+    CollectionEntryGrantFailedEvent:
+      type: object
+      additionalProperties: false
+      description: Published when a grant attempt fails
+      required:
+      - eventId
+      - timestamp
+      - ownerId
+      - ownerType
+      - entryCode
+      - reason
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique event identifier
+        timestamp:
+          type: string
+          format: date-time
+          description: When the failure occurred
+        collectionId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Collection the grant was attempted on (null if collection not found)
+        ownerId:
+          type: string
+          format: uuid
+          description: Entity that owns the collection
+        ownerType:
+          type: string
+          description: Entity type discriminator
+        entryCode:
+          type: string
+          description: Entry code that failed to grant
+        reason:
+          $ref: 'collection-api.yaml#/components/schemas/GrantFailureReason'
+          description: Why the grant attempt failed
+
+    CollectionMilestoneReachedEvent:
+      type: object
+      additionalProperties: false
+      description: Published when a completion milestone is reached (25%, 50%, 75%, 100%)
+      required:
+      - eventId
+      - timestamp
+      - collectionId
+      - ownerId
+      - ownerType
+      - collectionType
+      - gameServiceId
+      - milestone
+      - completionPercentage
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique event identifier
+        timestamp:
+          type: string
+          format: date-time
+          description: When the milestone was reached
+        collectionId:
+          type: string
+          format: uuid
+          description: Collection that reached the milestone
+        ownerId:
+          type: string
+          format: uuid
+          description: Entity that owns the collection
+        ownerType:
+          type: string
+          description: Entity type discriminator
+        collectionType:
+          $ref: 'collection-api.yaml#/components/schemas/CollectionType'
+          description: Type of collection
+        gameServiceId:
+          type: string
+          format: uuid
+          description: Game service scope
+        milestone:
+          type: string
+          description: Milestone label (e.g., 25%, 50%, 75%, 100%)
+        completionPercentage:
+          type: number
+          format: double
+          description: Actual completion percentage when milestone was reached
+
+    CollectionDiscoveryAdvancedEvent:
+      type: object
+      additionalProperties: false
+      description: Published when progressive discovery level is advanced
+      required:
+      - eventId
+      - timestamp
+      - collectionId
+      - ownerId
+      - ownerType
+      - entryCode
+      - newLevel
+      - reveals
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique event identifier
+        timestamp:
+          type: string
+          format: date-time
+          description: When the discovery was advanced
+        collectionId:
+          type: string
+          format: uuid
+          description: Collection containing the entry
+        ownerId:
+          type: string
+          format: uuid
+          description: Entity that owns the collection
+        ownerType:
+          type: string
+          description: Entity type discriminator
+        entryCode:
+          type: string
+          description: Entry code whose discovery was advanced
+        newLevel:
+          type: integer
+          description: New discovery level after advancement
+        reveals:
+          type: array
+          items:
+            type: string
+          description: Information keys revealed at the new level

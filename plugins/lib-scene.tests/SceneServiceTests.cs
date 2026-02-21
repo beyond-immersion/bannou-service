@@ -34,7 +34,6 @@ public class SceneServiceTests
 
         // Assert
         Assert.NotNull(config);
-        Assert.Equal("scenes", config.AssetBucket);
         Assert.Equal(60, config.DefaultCheckoutTtlMinutes);
         Assert.Equal(10000, config.MaxNodeCount);
     }
@@ -46,7 +45,6 @@ public class SceneServiceTests
         var config = new SceneServiceConfiguration();
 
         // Assert - verify all configuration defaults
-        Assert.Equal("application/x-bannou-scene+yaml", config.AssetContentType);
         Assert.Equal(10, config.MaxCheckoutExtensions);
         Assert.Equal(3, config.DefaultMaxReferenceDepth);
         Assert.Equal(10, config.MaxReferenceDepthLimit);
@@ -58,10 +56,10 @@ public class SceneServiceTests
     }
 
     [Fact]
-    public void SceneServiceConfiguration_AssetBucket_DefaultsToScenes()
+    public void SceneServiceConfiguration_CheckoutTtlBuffer_DefaultsTo5()
     {
         var config = new SceneServiceConfiguration();
-        Assert.Equal("scenes", config.AssetBucket);
+        Assert.Equal(5, config.CheckoutTtlBufferMinutes);
     }
 
     [Fact]
@@ -194,34 +192,12 @@ public class SceneServiceTests
     }
 
     [Fact]
-    public void ScenePermissionRegistration_CreateRegistrationEvent_ShouldGenerateValidEvent()
+    public void ScenePermissionRegistration_BuildPermissionMatrix_ShouldBeValid()
     {
-        // Arrange
-        var instanceId = Guid.NewGuid();
-
-        // Act
-        var registrationEvent = ScenePermissionRegistration.CreateRegistrationEvent(instanceId, "test-app");
-
-        // Assert
-        Assert.NotNull(registrationEvent);
-        Assert.Equal("scene", registrationEvent.ServiceName);
-        Assert.Equal(instanceId, registrationEvent.ServiceId);
-        Assert.NotNull(registrationEvent.Endpoints);
-        Assert.NotEmpty(registrationEvent.Endpoints);
-    }
-
-    [Fact]
-    public void ScenePermissionRegistration_CreateRegistrationEvent_EndpointsMatchGetEndpoints()
-    {
-        // Arrange
-        var instanceId = Guid.NewGuid();
-
-        // Act
-        var registrationEvent = ScenePermissionRegistration.CreateRegistrationEvent(instanceId, "test-app");
-        var directEndpoints = ScenePermissionRegistration.GetEndpoints();
-
-        // Assert
-        Assert.Equal(directEndpoints.Count, registrationEvent.Endpoints.Count);
+        PermissionMatrixValidator.ValidatePermissionMatrix(
+            ScenePermissionRegistration.ServiceId,
+            ScenePermissionRegistration.ServiceVersion,
+            ScenePermissionRegistration.BuildPermissionMatrix());
     }
 
     #endregion

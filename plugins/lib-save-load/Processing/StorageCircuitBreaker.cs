@@ -249,7 +249,7 @@ public class StorageCircuitBreaker
             };
 
             await _messageBus.TryPublishAsync(
-                "save-load.circuit-breaker.state-changed",
+                "save.circuit-breaker-changed",
                 stateChangeEvent,
                 cancellationToken: cancellationToken);
         }

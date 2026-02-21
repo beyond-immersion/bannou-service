@@ -291,7 +291,7 @@ For better discoverability via IntelliSense, use service-grouped subscriptions:
 
 ```csharp
 // Organized by service - discoverable via client.Events.{Service}.On{Event}()
-using var chatSub = client.Events.GameSession.OnChatMessageReceived(evt =>
+using var chatSub = client.Events.GameSession.OnSessionChatReceived(evt =>
 {
     Console.WriteLine($"[{evt.SenderId}]: {evt.Message}");
 });

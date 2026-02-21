@@ -79,4 +79,22 @@ export class CharacterHistoryProxy {
       timeout
     );
   }
+
+  /**
+   * Get history data for compression
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async getCompressDataAsync(
+    request: Schemas['GetCompressDataRequest'],
+    channel: number = 0,
+    timeout?: number
+  ): Promise<ApiResponse<Schemas['CharacterHistoryArchive']>> {
+    return this.client.invokeAsync<
+      Schemas['GetCompressDataRequest'],
+      Schemas['CharacterHistoryArchive']
+    >('/character-history/get-compress-data', request, channel, timeout);
+  }
 }

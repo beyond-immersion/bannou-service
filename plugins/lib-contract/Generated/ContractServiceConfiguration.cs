@@ -12,7 +12,7 @@
 //
 //     IMPLEMENTATION TENETS - Configuration-First:
 //     - Access configuration via dependency injection, never Environment.GetEnvironmentVariable.
-//     - ALL properties below MUST be referenced in ContractService.cs (no dead config).
+//     - ALL properties below MUST be referenced somewhere in the plugin (no dead config).
 //     - Any hardcoded tunable (limit, timeout, threshold, capacity) in service code means
 //       a configuration property is MISSING - add it to the configuration schema.
 //     - If a property is unused, remove it from the configuration schema.
@@ -40,7 +40,7 @@ namespace BeyondImmersion.BannouService.Contract;
 /// <para>
 /// <b>IMPLEMENTATION TENETS - Configuration-First:</b> Access configuration via dependency injection.
 /// Never use <c>Environment.GetEnvironmentVariable()</c> directly in service code.
-/// ALL properties in this class MUST be referenced in the service implementation.
+/// ALL properties in this class MUST be referenced somewhere in the plugin.
 /// If a property is unused, remove it from the configuration schema.
 /// </para>
 /// <para>
@@ -102,12 +102,6 @@ public class ContractServiceConfiguration : IServiceConfiguration
     public int PreboundApiTimeoutMs { get; set; } = 30000;
 
     /// <summary>
-    /// Staleness threshold in seconds for cached clause validation results before revalidation
-    /// Environment variable: CONTRACT_CLAUSE_VALIDATION_CACHE_STALENESS_SECONDS
-    /// </summary>
-    public int ClauseValidationCacheStalenessSeconds { get; set; } = 15;
-
-    /// <summary>
     /// Lock timeout in seconds for contract-level distributed locks
     /// Environment variable: CONTRACT_LOCK_TIMEOUT_SECONDS
     /// </summary>
@@ -120,9 +114,40 @@ public class ContractServiceConfiguration : IServiceConfiguration
     public int IndexLockTimeoutSeconds { get; set; } = 15;
 
     /// <summary>
+    /// Behavior when index lock acquisition fails (warn=continue, fail=throw)
+    /// Environment variable: CONTRACT_INDEX_LOCK_FAILURE_MODE
+    /// </summary>
+    public IndexLockFailureMode IndexLockFailureMode { get; set; } = IndexLockFailureMode.Warn;
+
+    /// <summary>
+    /// How instance terms merge with template terms (shallow=replace by key, deep=recursive merge)
+    /// Environment variable: CONTRACT_TERMS_MERGE_MODE
+    /// </summary>
+    public TermsMergeMode TermsMergeMode { get; set; } = TermsMergeMode.Shallow;
+
+    /// <summary>
     /// TTL in seconds for idempotency key storage (default 24 hours)
     /// Environment variable: CONTRACT_IDEMPOTENCY_TTL_SECONDS
     /// </summary>
     public int IdempotencyTtlSeconds { get; set; } = 86400;
+
+    /// <summary>
+    /// Interval between milestone deadline checks in seconds (default 5 minutes)
+    /// Environment variable: CONTRACT_MILESTONE_DEADLINE_CHECK_INTERVAL_SECONDS
+    /// </summary>
+    public int MilestoneDeadlineCheckIntervalSeconds { get; set; } = 300;
+
+    /// <summary>
+    /// Startup delay before first milestone deadline check in seconds
+    /// Environment variable: CONTRACT_MILESTONE_DEADLINE_STARTUP_DELAY_SECONDS
+    /// </summary>
+    public int MilestoneDeadlineStartupDelaySeconds { get; set; } = 30;
+
+    /// <summary>
+    /// Default page size for paginated endpoints when not specified in request
+    /// Environment variable: CONTRACT_DEFAULT_PAGE_SIZE
+    /// </summary>
+    [ConfigRange(Minimum = 1, Maximum = 100)]
+    public int DefaultPageSize { get; set; } = 20;
 
 }

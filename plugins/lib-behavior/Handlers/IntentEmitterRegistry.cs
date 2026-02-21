@@ -3,6 +3,7 @@
 // Thread-safe registry for mapping ABML actions to Intent Channel emissions.
 // =============================================================================
 
+using BeyondImmersion.Bannou.BehaviorCompiler.Archetypes;
 using BeyondImmersion.BannouService.Behavior;
 using Microsoft.Extensions.Logging;
 using System.Collections.Concurrent;
@@ -24,6 +25,19 @@ public sealed class IntentEmitterRegistry : IIntentEmitterRegistry
     private readonly ILogger<IntentEmitterRegistry>? _logger;
 
     /// <summary>
+    /// Action names that are forbidden for security reasons.
+    /// These will be rejected at registration and lookup time as defense-in-depth.
+    /// </summary>
+    private static readonly string[] ForbiddenActionNames =
+    {
+        "service_call",
+        "api_call",
+        "http_call",
+        "mesh_call",
+        "invoke_service"
+    };
+
+    /// <summary>
     /// Creates a new intent emitter registry.
     /// </summary>
     /// <param name="logger">Optional logger for diagnostic output.</param>
@@ -33,13 +47,29 @@ public sealed class IntentEmitterRegistry : IIntentEmitterRegistry
         _emittersByAction = new ConcurrentDictionary<string, List<IIntentEmitter>>(StringComparer.OrdinalIgnoreCase);
     }
 
+    /// <summary>
+    /// Checks if an action name is forbidden for security reasons.
+    /// </summary>
+    private static bool IsForbiddenAction(string actionName)
+    {
+        return ForbiddenActionNames.Any(f =>
+            string.Equals(f, actionName, StringComparison.OrdinalIgnoreCase));
+    }
+
     /// <inheritdoc/>
     public void Register(IIntentEmitter emitter)
     {
-
         if (string.IsNullOrEmpty(emitter.ActionName))
         {
             throw new ArgumentException("Emitter action name cannot be null or empty", nameof(emitter));
+        }
+
+        if (IsForbiddenAction(emitter.ActionName))
+        {
+            throw new ArgumentException(
+                $"Cannot register emitter for forbidden action '{emitter.ActionName}'. " +
+                "Generic service call actions are prohibited for security reasons.",
+                nameof(emitter));
         }
 
         var emitters = _emittersByAction.GetOrAdd(emitter.ActionName, _ => new List<IIntentEmitter>());
@@ -62,6 +92,14 @@ public sealed class IntentEmitterRegistry : IIntentEmitterRegistry
     {
         if (string.IsNullOrEmpty(actionName))
         {
+            return null;
+        }
+
+        if (IsForbiddenAction(actionName))
+        {
+            _logger?.LogWarning(
+                "Attempted to get emitter for forbidden action {ActionName}",
+                actionName);
             return null;
         }
 
@@ -95,6 +133,11 @@ public sealed class IntentEmitterRegistry : IIntentEmitterRegistry
     public bool HasEmitter(string actionName)
     {
         if (string.IsNullOrEmpty(actionName))
+        {
+            return false;
+        }
+
+        if (IsForbiddenAction(actionName))
         {
             return false;
         }

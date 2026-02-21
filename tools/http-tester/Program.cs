@@ -1,5 +1,6 @@
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Attributes;
+using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.HttpTester.Tests;
 using BeyondImmersion.BannouService.Mesh;
 using BeyondImmersion.BannouService.Mesh.Services;
@@ -174,17 +175,46 @@ public class Program
             };
             serviceCollection.AddSingleton(messagingConfig);
 
-            // Register shared connection manager
+            // Register shared connection manager as both concrete type and interface
             serviceCollection.AddSingleton<RabbitMQConnectionManager>();
+            serviceCollection.AddSingleton<IChannelManager>(sp => sp.GetRequiredService<RabbitMQConnectionManager>());
 
-            // Register retry buffer for handling transient publish failures
-            serviceCollection.AddSingleton<MessageRetryBuffer>();
+            // Register retry buffer using factory to break circular dependency:
+            // IMessageBus → RabbitMQMessageBus → IRetryBuffer → MessageRetryBuffer → IMessageBus?
+            // Explicitly pass null for IMessageBus to prevent DI from trying to resolve the
+            // singleton that's currently mid-construction, which causes a same-thread deadlock.
+            serviceCollection.AddSingleton<MessageRetryBuffer>(sp =>
+            {
+                var channelManager = sp.GetRequiredService<IChannelManager>();
+                var msgConfig = sp.GetRequiredService<MessagingServiceConfiguration>();
+                var logger = sp.GetRequiredService<ILogger<MessageRetryBuffer>>();
+                // IMessageBus explicitly null - breaks circular dependency
+                return new MessageRetryBuffer(channelManager, msgConfig, logger);
+            });
+            serviceCollection.AddSingleton<IRetryBuffer>(sp => sp.GetRequiredService<MessageRetryBuffer>());
 
-            // Register IMessageBus for event publishing
-            serviceCollection.AddSingleton<IMessageBus, RabbitMQMessageBus>();
+            // Register IMessageBus using factory pattern (same as MessagingServicePlugin)
+            serviceCollection.AddSingleton<IMessageBus>(sp =>
+            {
+                var channelManager = sp.GetRequiredService<IChannelManager>();
+                var retryBuffer = sp.GetRequiredService<IRetryBuffer>();
+                var appConfig = sp.GetRequiredService<BeyondImmersion.BannouService.Configuration.AppConfiguration>();
+                var msgConfig = sp.GetRequiredService<MessagingServiceConfiguration>();
+                var logger = sp.GetRequiredService<ILogger<RabbitMQMessageBus>>();
+                var telemetryProvider = sp.GetRequiredService<ITelemetryProvider>();
+                return new RabbitMQMessageBus(channelManager, retryBuffer, appConfig, msgConfig, logger, telemetryProvider);
+            });
 
-            // Register IMessageSubscriber for event subscriptions
-            serviceCollection.AddSingleton<IMessageSubscriber, RabbitMQMessageSubscriber>();
+            // Register IMessageSubscriber using factory pattern (same as MessagingServicePlugin)
+            serviceCollection.AddSingleton<IMessageSubscriber>(sp =>
+            {
+                var channelManager = sp.GetRequiredService<IChannelManager>();
+                var logger = sp.GetRequiredService<ILogger<RabbitMQMessageSubscriber>>();
+                var msgConfig = sp.GetRequiredService<MessagingServiceConfiguration>();
+                var telemetryProvider = sp.GetRequiredService<ITelemetryProvider>();
+                var messageBus = sp.GetRequiredService<IMessageBus>();
+                return new RabbitMQMessageSubscriber(channelManager, logger, msgConfig, telemetryProvider, messageBus);
+            });
 
             // Register IMessageTap for event forwarding/tapping
             serviceCollection.AddSingleton<IMessageTap, RabbitMQMessageTap>();
@@ -223,8 +253,17 @@ public class Program
             }
             serviceCollection.AddSingleton(factoryConfig);
 
-            // Register IStateStoreFactory
-            serviceCollection.AddSingleton<IStateStoreFactory, StateStoreFactory>();
+            // Register IStateStoreFactory using factory pattern (same as StateServicePlugin)
+            // Uses sp.GetService (not GetRequiredService) for IMessageBus to handle
+            // scenarios where messaging may not be fully initialized yet
+            serviceCollection.AddSingleton<IStateStoreFactory>(sp =>
+            {
+                var config = sp.GetRequiredService<StateStoreFactoryConfiguration>();
+                var loggerFactory = sp.GetRequiredService<ILoggerFactory>();
+                var telemetryProvider = sp.GetRequiredService<ITelemetryProvider>();
+                var messageBus = sp.GetService<IMessageBus>();
+                return new StateStoreFactory(config, loggerFactory, telemetryProvider, messageBus);
+            });
 
             // =====================================================================
             // MESH INFRASTRUCTURE - Service discovery via lib-state
@@ -240,29 +279,42 @@ public class Program
             // Register MeshStateManager (uses IStateStoreFactory for Redis)
             serviceCollection.AddSingleton<IMeshStateManager, MeshStateManager>();
 
+            // Register NullTelemetryProvider (http-tester doesn't need telemetry)
+            serviceCollection.AddSingleton<ITelemetryProvider, NullTelemetryProvider>();
+
             // Register MeshInvocationClient using factory pattern (same as MeshServicePlugin)
             serviceCollection.AddSingleton<IMeshInvocationClient>(sp =>
             {
                 var stateManager = sp.GetRequiredService<IMeshStateManager>();
+                var stateStoreFactory = sp.GetRequiredService<IStateStoreFactory>();
+                var messageBus = sp.GetRequiredService<IMessageBus>();
+                var messageSubscriber = sp.GetRequiredService<IMessageSubscriber>();
                 var config = sp.GetRequiredService<MeshServiceConfiguration>();
                 var logger = sp.GetRequiredService<ILogger<MeshInvocationClient>>();
-                return new MeshInvocationClient(stateManager, config, logger);
+                var telemetryProvider = sp.GetRequiredService<ITelemetryProvider>();
+                return new MeshInvocationClient(stateManager, stateStoreFactory, messageBus, messageSubscriber, config, logger, telemetryProvider);
             });
 
             // Add Bannou service client infrastructure (IServiceAppMappingResolver, IEventConsumer)
+            Console.WriteLine("🔗 Registering Bannou service client infrastructure...");
             serviceCollection.AddBannouServiceClients();
 
             // Auto-register all clients from bannou-service assembly
             // All generated clients are in bannou-service/Generated/Clients/
             // Note: TestingTestHandler uses direct HTTP calls, not a generated client
+            Console.WriteLine("🔗 Auto-registering all service clients...");
             var bannouServiceAssembly = typeof(BeyondImmersion.BannouService.Auth.AuthClient).Assembly;
             serviceCollection.AddAllBannouServiceClients(new[] { bannouServiceAssembly });
 
             // Build the service provider
+            Console.WriteLine("🔗 Building service provider...");
             ServiceProvider = serviceCollection.BuildServiceProvider();
+            Console.WriteLine("🔗 Service provider built successfully.");
 
             // Initialize state store factory first (required by mesh)
+            Console.WriteLine("🔗 Resolving IStateStoreFactory...");
             var stateStoreFactory = ServiceProvider.GetRequiredService<IStateStoreFactory>();
+            Console.WriteLine("🔗 IStateStoreFactory resolved.");
             if (!await WaitForStateReadiness(stateStoreFactory))
             {
                 Console.WriteLine("❌ State store factory initialization failed.");
@@ -294,6 +346,9 @@ public class Program
 
             Console.WriteLine("✅ Service provider setup completed successfully");
             Console.WriteLine("✅ RabbitMQ connectivity verified");
+
+            // Subscribe to service.error events for visibility into service-side failures
+            await SubscribeToServiceErrorEventsAsync();
 
             // Wait for services to register their permissions (signals service readiness)
             // This is more reliable than fixed delays since services only register after startup complete
@@ -451,6 +506,60 @@ public class Program
 
         Console.WriteLine($"❌ Messaging readiness check timed out after {timeout.TotalSeconds}s.");
         return false;
+    }
+
+    /// <summary>
+    /// Subscribes to service.error events from all services via RabbitMQ.
+    /// Logs received error events to provide visibility into service-side failures
+    /// without needing to inspect the service container logs directly.
+    /// </summary>
+    private static async Task SubscribeToServiceErrorEventsAsync()
+    {
+        if (ServiceProvider == null) return;
+
+        try
+        {
+            var messageSubscriber = ServiceProvider.GetRequiredService<IMessageSubscriber>();
+            await messageSubscriber.SubscribeAsync<ServiceErrorEvent>(
+                "service.error",
+                async (errorEvent, ct) =>
+                {
+                    var severityPrefix = errorEvent.Severity switch
+                    {
+                        ServiceErrorEventSeverity.Critical => "CRITICAL",
+                        ServiceErrorEventSeverity.Error => "ERROR",
+                        ServiceErrorEventSeverity.Warning => "WARN",
+                        _ => "INFO"
+                    };
+
+                    Console.WriteLine($"[SERVICE {severityPrefix}] [{errorEvent.ServiceName}] {errorEvent.Operation}: {errorEvent.ErrorType} - {errorEvent.Message}");
+
+                    if (errorEvent.Dependency != null)
+                        Console.WriteLine($"  Dependency: {errorEvent.Dependency}");
+
+                    if (errorEvent.Endpoint != null)
+                        Console.WriteLine($"  Endpoint: {errorEvent.Endpoint}");
+
+                    if (errorEvent.Stack != null)
+                    {
+                        // Print first 3 lines of stack trace to avoid flooding output
+                        var stackLines = errorEvent.Stack.Split('\n');
+                        var preview = string.Join("\n", stackLines.Take(3));
+                        Console.WriteLine($"  Stack: {preview}");
+                        if (stackLines.Length > 3)
+                            Console.WriteLine($"  ... ({stackLines.Length - 3} more lines)");
+                    }
+
+                    await Task.CompletedTask;
+                });
+
+            Console.WriteLine("✅ Subscribed to service.error events for error visibility");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"⚠️ Failed to subscribe to service.error events: {ex.Message}");
+            // Non-fatal - tests can still run without error event visibility
+        }
     }
 
     /// <summary>

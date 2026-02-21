@@ -56,6 +56,7 @@ public partial class RealmController
                 "name",
                 "gameServiceId",
                 "isActive",
+                "isSystemType",
                 "isDeprecated",
                 "createdAt",
                 "updatedAt"
@@ -93,6 +94,10 @@ public partial class RealmController
                     "type": "boolean",
                     "description": "Whether the realm is currently active for gameplay"
                 },
+                "isSystemType": {
+                    "type": "boolean",
+                    "description": "Whether this realm is a system infrastructure realm (e.g., VOID). System realms cannot be merged as source."
+                },
                 "isDeprecated": {
                     "type": "boolean",
                     "description": "Whether this realm is deprecated and cannot be used for new entities"
@@ -112,7 +117,7 @@ public partial class RealmController
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Additional custom metadata for the realm"
+                    "description": "Client-only metadata. No Bannou plugin reads specific keys from this field by convention."
                 },
                 "createdAt": {
                     "type": "string",
@@ -227,6 +232,7 @@ public partial class RealmController
                 "name",
                 "gameServiceId",
                 "isActive",
+                "isSystemType",
                 "isDeprecated",
                 "createdAt",
                 "updatedAt"
@@ -264,6 +270,10 @@ public partial class RealmController
                     "type": "boolean",
                     "description": "Whether the realm is currently active for gameplay"
                 },
+                "isSystemType": {
+                    "type": "boolean",
+                    "description": "Whether this realm is a system infrastructure realm (e.g., VOID). System realms cannot be merged as source."
+                },
                 "isDeprecated": {
                     "type": "boolean",
                     "description": "Whether this realm is deprecated and cannot be used for new entities"
@@ -283,7 +293,7 @@ public partial class RealmController
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Additional custom metadata for the realm"
+                    "description": "Client-only metadata. No Bannou plugin reads specific keys from this field by convention."
                 },
                 "createdAt": {
                     "type": "string",
@@ -456,6 +466,7 @@ public partial class RealmController
                 "name",
                 "gameServiceId",
                 "isActive",
+                "isSystemType",
                 "isDeprecated",
                 "createdAt",
                 "updatedAt"
@@ -493,6 +504,10 @@ public partial class RealmController
                     "type": "boolean",
                     "description": "Whether the realm is currently active for gameplay"
                 },
+                "isSystemType": {
+                    "type": "boolean",
+                    "description": "Whether this realm is a system infrastructure realm (e.g., VOID). System realms cannot be merged as source."
+                },
                 "isDeprecated": {
                     "type": "boolean",
                     "description": "Whether this realm is deprecated and cannot be used for new entities"
@@ -512,7 +527,7 @@ public partial class RealmController
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Additional custom metadata for the realm"
+                    "description": "Client-only metadata. No Bannou plugin reads specific keys from this field by convention."
                 },
                 "createdAt": {
                     "type": "string",
@@ -636,11 +651,16 @@ public partial class RealmController
                     "default": true,
                     "description": "Whether the realm is currently active for gameplay"
                 },
+                "isSystemType": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Whether this realm is a system infrastructure realm (e.g., VOID). System realms cannot be merged as source."
+                },
                 "metadata": {
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Additional metadata for the realm (JSON)"
+                    "description": "Client-only metadata. No Bannou plugin reads specific keys from this field by convention."
                 }
             }
         }
@@ -663,6 +683,7 @@ public partial class RealmController
                 "name",
                 "gameServiceId",
                 "isActive",
+                "isSystemType",
                 "isDeprecated",
                 "createdAt",
                 "updatedAt"
@@ -700,6 +721,10 @@ public partial class RealmController
                     "type": "boolean",
                     "description": "Whether the realm is currently active for gameplay"
                 },
+                "isSystemType": {
+                    "type": "boolean",
+                    "description": "Whether this realm is a system infrastructure realm (e.g., VOID). System realms cannot be merged as source."
+                },
                 "isDeprecated": {
                     "type": "boolean",
                     "description": "Whether this realm is deprecated and cannot be used for new entities"
@@ -719,7 +744,7 @@ public partial class RealmController
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Additional custom metadata for the realm"
+                    "description": "Client-only metadata. No Bannou plugin reads specific keys from this field by convention."
                 },
                 "createdAt": {
                     "type": "string",
@@ -841,11 +866,16 @@ public partial class RealmController
                     "nullable": true,
                     "description": "Whether the realm is currently active"
                 },
+                "isSystemType": {
+                    "type": "boolean",
+                    "nullable": true,
+                    "description": "Whether this realm is a system infrastructure realm (e.g., VOID). System realms cannot be merged as source."
+                },
                 "metadata": {
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Additional metadata"
+                    "description": "Client-only metadata. No Bannou plugin reads specific keys from this field by convention."
                 }
             }
         }
@@ -868,6 +898,7 @@ public partial class RealmController
                 "name",
                 "gameServiceId",
                 "isActive",
+                "isSystemType",
                 "isDeprecated",
                 "createdAt",
                 "updatedAt"
@@ -905,6 +936,10 @@ public partial class RealmController
                     "type": "boolean",
                     "description": "Whether the realm is currently active for gameplay"
                 },
+                "isSystemType": {
+                    "type": "boolean",
+                    "description": "Whether this realm is a system infrastructure realm (e.g., VOID). System realms cannot be merged as source."
+                },
                 "isDeprecated": {
                     "type": "boolean",
                     "description": "Whether this realm is deprecated and cannot be used for new entities"
@@ -924,7 +959,7 @@ public partial class RealmController
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Additional custom metadata for the realm"
+                    "description": "Client-only metadata. No Bannou plugin reads specific keys from this field by convention."
                 },
                 "createdAt": {
                     "type": "string",
@@ -1127,6 +1162,7 @@ public partial class RealmController
                 "name",
                 "gameServiceId",
                 "isActive",
+                "isSystemType",
                 "isDeprecated",
                 "createdAt",
                 "updatedAt"
@@ -1164,6 +1200,10 @@ public partial class RealmController
                     "type": "boolean",
                     "description": "Whether the realm is currently active for gameplay"
                 },
+                "isSystemType": {
+                    "type": "boolean",
+                    "description": "Whether this realm is a system infrastructure realm (e.g., VOID). System realms cannot be merged as source."
+                },
                 "isDeprecated": {
                     "type": "boolean",
                     "description": "Whether this realm is deprecated and cannot be used for new entities"
@@ -1183,7 +1223,7 @@ public partial class RealmController
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Additional custom metadata for the realm"
+                    "description": "Client-only metadata. No Bannou plugin reads specific keys from this field by convention."
                 },
                 "createdAt": {
                     "type": "string",
@@ -1296,6 +1336,7 @@ public partial class RealmController
                 "name",
                 "gameServiceId",
                 "isActive",
+                "isSystemType",
                 "isDeprecated",
                 "createdAt",
                 "updatedAt"
@@ -1333,6 +1374,10 @@ public partial class RealmController
                     "type": "boolean",
                     "description": "Whether the realm is currently active for gameplay"
                 },
+                "isSystemType": {
+                    "type": "boolean",
+                    "description": "Whether this realm is a system infrastructure realm (e.g., VOID). System realms cannot be merged as source."
+                },
                 "isDeprecated": {
                     "type": "boolean",
                     "description": "Whether this realm is deprecated and cannot be used for new entities"
@@ -1352,7 +1397,7 @@ public partial class RealmController
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Additional custom metadata for the realm"
+                    "description": "Client-only metadata. No Bannou plugin reads specific keys from this field by convention."
                 },
                 "createdAt": {
                     "type": "string",
@@ -1421,6 +1466,162 @@ public partial class RealmController
             _UndeprecateRealm_Info,
             _UndeprecateRealm_RequestSchema,
             _UndeprecateRealm_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for MergeRealms
+
+    private static readonly string _MergeRealms_RequestSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/MergeRealmsRequest",
+    "$defs": {
+        "MergeRealmsRequest": {
+            "description": "Request to migrate all entities from a deprecated realm into a target realm",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "sourceRealmId",
+                "targetRealmId"
+            ],
+            "properties": {
+                "sourceRealmId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "ID of the deprecated realm to merge from (must be deprecated)"
+                },
+                "targetRealmId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "ID of the realm to merge into (must exist)"
+                },
+                "deleteAfterMerge": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "If true, hard-delete the source realm after successful merge (skipped if any failures)"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _MergeRealms_ResponseSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/MergeRealmsResponse",
+    "$defs": {
+        "MergeRealmsResponse": {
+            "description": "Result of a realm merge operation including per-entity-type migration statistics",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "sourceRealmId",
+                "targetRealmId",
+                "speciesMigrated",
+                "speciesFailed",
+                "locationsMigrated",
+                "locationsFailed",
+                "charactersMigrated",
+                "charactersFailed",
+                "sourceDeleted"
+            ],
+            "properties": {
+                "sourceRealmId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "ID of the source realm that was merged from"
+                },
+                "targetRealmId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "ID of the target realm that entities were merged into"
+                },
+                "speciesMigrated": {
+                    "type": "integer",
+                    "description": "Number of species successfully added to target realm and removed from source"
+                },
+                "speciesFailed": {
+                    "type": "integer",
+                    "description": "Number of species that failed to migrate"
+                },
+                "locationsMigrated": {
+                    "type": "integer",
+                    "description": "Number of locations successfully transferred to target realm"
+                },
+                "locationsFailed": {
+                    "type": "integer",
+                    "description": "Number of locations that failed to transfer"
+                },
+                "charactersMigrated": {
+                    "type": "integer",
+                    "description": "Number of characters successfully transferred to target realm"
+                },
+                "charactersFailed": {
+                    "type": "integer",
+                    "description": "Number of characters that failed to transfer"
+                },
+                "sourceDeleted": {
+                    "type": "boolean",
+                    "description": "Whether the source realm was hard-deleted after merge"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _MergeRealms_Info = """
+{
+    "summary": "Merge a deprecated realm into another realm",
+    "description": "Migrates all entities (species, locations, characters) from a deprecated\nsource realm into a target realm. Migration order: species first (add target\nrealm association), then locations (root-first tree moves), then characters\n(bulk transfer). Continues on individual failures, reporting per-entity-type\ncounts. Optionally deletes the source realm after successful migration\n(skipped if any failures occurred).\n\nMerge from VOID realm is blocked (VOID is system infrastructure).\nMerge into VOID realm is allowed (intentionally orphaning entities).\n",
+    "tags": [
+        "Realm Admin"
+    ],
+    "deprecated": false,
+    "operationId": "mergeRealms"
+}
+""";
+
+    /// <summary>Returns endpoint information for MergeRealms</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/realm/merge/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> MergeRealms_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Realm",
+            "POST",
+            "/realm/merge",
+            _MergeRealms_Info));
+
+    /// <summary>Returns request schema for MergeRealms</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/realm/merge/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> MergeRealms_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Realm",
+            "POST",
+            "/realm/merge",
+            "request-schema",
+            _MergeRealms_RequestSchema));
+
+    /// <summary>Returns response schema for MergeRealms</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/realm/merge/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> MergeRealms_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Realm",
+            "POST",
+            "/realm/merge",
+            "response-schema",
+            _MergeRealms_ResponseSchema));
+
+    /// <summary>Returns full schema for MergeRealms</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/realm/merge/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> MergeRealms_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Realm",
+            "POST",
+            "/realm/merge",
+            _MergeRealms_Info,
+            _MergeRealms_RequestSchema,
+            _MergeRealms_ResponseSchema));
 
     #endregion
 
@@ -1538,6 +1739,168 @@ public partial class RealmController
 
     #endregion
 
+    #region Meta Endpoints for RealmsExistBatch
+
+    private static readonly string _RealmsExistBatch_RequestSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/RealmsExistBatchRequest",
+    "$defs": {
+        "RealmsExistBatchRequest": {
+            "description": "Request to check if multiple realms exist and are available for use",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "realmIds"
+            ],
+            "properties": {
+                "realmIds": {
+                    "type": "array",
+                    "items": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "minItems": 1,
+                    "maxItems": 100,
+                    "description": "List of realm IDs to validate (max 100)"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _RealmsExistBatch_ResponseSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/RealmsExistBatchResponse",
+    "$defs": {
+        "RealmsExistBatchResponse": {
+            "description": "Batch validation results for multiple realms",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "results",
+                "allExist",
+                "allActive"
+            ],
+            "properties": {
+                "results": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/RealmExistsResponse"
+                    },
+                    "description": "Validation result for each requested realm ID (in same order as request)"
+                },
+                "allExist": {
+                    "type": "boolean",
+                    "description": "True if all requested realms exist"
+                },
+                "allActive": {
+                    "type": "boolean",
+                    "description": "True if all requested realms exist AND are active (not deprecated)"
+                },
+                "invalidRealmIds": {
+                    "type": "array",
+                    "items": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "description": "List of realm IDs that do not exist (empty if all exist)"
+                },
+                "deprecatedRealmIds": {
+                    "type": "array",
+                    "items": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "description": "List of realm IDs that exist but are deprecated (empty if none deprecated)"
+                }
+            }
+        },
+        "RealmExistsResponse": {
+            "description": "Response indicating whether a realm exists and its active status",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "exists",
+                "isActive"
+            ],
+            "properties": {
+                "exists": {
+                    "type": "boolean",
+                    "description": "Whether the realm exists"
+                },
+                "isActive": {
+                    "type": "boolean",
+                    "description": "Whether the realm is active (false if deprecated or not found)"
+                },
+                "realmId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "The realm ID if found"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _RealmsExistBatch_Info = """
+{
+    "summary": "Check if multiple realms exist and are active",
+    "description": "Batch validation endpoint for services creating multi-realm entities.\nReturns validation results for each realm ID in a single call, avoiding\nN+1 API calls when validating multiple realms.\n",
+    "tags": [
+        "Realm"
+    ],
+    "deprecated": false,
+    "operationId": "realmsExistBatch"
+}
+""";
+
+    /// <summary>Returns endpoint information for RealmsExistBatch</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/realm/exists-batch/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> RealmsExistBatch_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Realm",
+            "POST",
+            "/realm/exists-batch",
+            _RealmsExistBatch_Info));
+
+    /// <summary>Returns request schema for RealmsExistBatch</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/realm/exists-batch/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> RealmsExistBatch_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Realm",
+            "POST",
+            "/realm/exists-batch",
+            "request-schema",
+            _RealmsExistBatch_RequestSchema));
+
+    /// <summary>Returns response schema for RealmsExistBatch</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/realm/exists-batch/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> RealmsExistBatch_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Realm",
+            "POST",
+            "/realm/exists-batch",
+            "response-schema",
+            _RealmsExistBatch_ResponseSchema));
+
+    /// <summary>Returns full schema for RealmsExistBatch</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/realm/exists-batch/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> RealmsExistBatch_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Realm",
+            "POST",
+            "/realm/exists-batch",
+            _RealmsExistBatch_Info,
+            _RealmsExistBatch_RequestSchema,
+            _RealmsExistBatch_ResponseSchema));
+
+    #endregion
+
     #region Meta Endpoints for SeedRealms
 
     private static readonly string _SeedRealms_RequestSchema = """
@@ -1605,11 +1968,16 @@ public partial class RealmController
                     "default": true,
                     "description": "Whether the realm is currently active for gameplay"
                 },
+                "isSystemType": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Whether this realm is a system infrastructure realm (e.g., VOID). System realms cannot be merged as source."
+                },
                 "metadata": {
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Additional custom metadata for the realm (JSON)"
+                    "description": "Client-only metadata. No Bannou plugin reads specific keys from this field by convention."
                 }
             }
         }

@@ -96,6 +96,21 @@ public class AnalyticsServiceTests
                 It.IsAny<Guid?>(),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(true);
+
+        // Mock JSON queryable store for entity summary queries
+        var mockJsonQueryStore = new Mock<IJsonQueryableStateStore<EntitySummaryData>>();
+        mockJsonQueryStore
+            .Setup(s => s.JsonQueryPagedAsync(
+                It.IsAny<IReadOnlyList<QueryCondition>?>(),
+                It.IsAny<int>(),
+                It.IsAny<int>(),
+                It.IsAny<JsonSortSpec?>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new JsonPagedResult<EntitySummaryData>(
+                new List<JsonQueryResult<EntitySummaryData>>(), 0, 0, 10));
+        _mockStateStoreFactory
+            .Setup(f => f.GetJsonQueryableStore<EntitySummaryData>(It.IsAny<string>()))
+            .Returns(mockJsonQueryStore.Object);
     }
 
     private AnalyticsService CreateService()

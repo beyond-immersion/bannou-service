@@ -24,6 +24,28 @@ public sealed class VoiceEventSubscriptions
     }
 
     /// <summary>
+    /// Subscribe to <see cref="VoiceBroadcastConsentRequestEvent"/> events.
+    /// Sent to all room participants when someone requests broadcast consent. Each participant should respond via /voice/room/broadcast/consent.
+    /// </summary>
+    /// <param name="handler">Handler invoked when the event is received.</param>
+    /// <returns>Subscription handle. Dispose to unsubscribe.</returns>
+    public IEventSubscription OnVoiceBroadcastConsentRequest(Action<VoiceBroadcastConsentRequestEvent> handler)
+    {
+        return _client.OnEvent<VoiceBroadcastConsentRequestEvent>(handler);
+    }
+
+    /// <summary>
+    /// Subscribe to <see cref="VoiceBroadcastConsentUpdateEvent"/> events.
+    /// Sent to all room participants when the broadcast consent state changes (someone consented, someone declined, broadcast started, broadcast stopped).
+    /// </summary>
+    /// <param name="handler">Handler invoked when the event is received.</param>
+    /// <returns>Subscription handle. Dispose to unsubscribe.</returns>
+    public IEventSubscription OnVoiceBroadcastConsentUpdate(Action<VoiceBroadcastConsentUpdateEvent> handler)
+    {
+        return _client.OnEvent<VoiceBroadcastConsentUpdateEvent>(handler);
+    }
+
+    /// <summary>
     /// Subscribe to <see cref="VoicePeerJoinedEvent"/> events.
     /// Sent to existing room participants when a new peer joins.
     /// </summary>

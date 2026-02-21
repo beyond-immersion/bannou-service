@@ -11,11 +11,16 @@ public class StateServiceTests
     private readonly Mock<ILogger<StateService>> _mockLogger = new();
     private readonly StateServiceConfiguration _configuration = new();
     private readonly Mock<IMessageBus> _mockMessageBus = new();
+    private readonly Mock<IServiceProvider> _mockServiceProvider = new();
     private readonly Mock<IStateStoreFactory> _mockStateStoreFactory = new();
     private readonly Mock<IStateStore<object>> _mockStateStore = new();
 
     public StateServiceTests()
     {
+        // Setup service provider to return message bus when requested
+        _mockServiceProvider
+            .Setup(sp => sp.GetService(typeof(IMessageBus)))
+            .Returns(_mockMessageBus.Object);
     }
 
     private StateService CreateService()
@@ -23,7 +28,7 @@ public class StateServiceTests
         return new StateService(
             _mockLogger.Object,
             _configuration,
-            _mockMessageBus.Object,
+            _mockServiceProvider.Object,
             _mockStateStoreFactory.Object);
     }
 
@@ -108,7 +113,7 @@ public class StateServiceTests
     }
 
     [Fact]
-    public async Task GetStateAsync_WhenExceptionThrown_ReturnsInternalServerErrorAndEmitsErrorEvent()
+    public async Task GetStateAsync_WhenExceptionThrown_ShouldThrow()
     {
         // Arrange
         var service = CreateService();
@@ -118,22 +123,9 @@ public class StateServiceTests
         _mockStateStoreFactory.Setup(f => f.GetStore<object>("test-store")).Returns(_mockStateStore.Object);
         _mockStateStore.Setup(s => s.GetWithETagAsync("test-key", It.IsAny<CancellationToken>()))
             .ThrowsAsync(new Exception("Redis connection failed"));
-        _mockMessageBus.Setup(m => m.TryPublishErrorAsync(
-            It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(),
-            It.IsAny<string?>(), It.IsAny<string?>(), It.IsAny<ServiceErrorEventSeverity>(),
-            It.IsAny<object?>(), It.IsAny<string?>(), It.IsAny<Guid?>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(true);
 
-        // Act
-        var (status, response) = await service.GetStateAsync(request, CancellationToken.None);
-
-        // Assert
-        Assert.Equal(StatusCodes.InternalServerError, status);
-        Assert.Null(response);
-        _mockMessageBus.Verify(m => m.TryPublishErrorAsync(
-            "state", "GetState", "Exception", "Redis connection failed",
-            "test-store", "post:/state/get", It.IsAny<ServiceErrorEventSeverity>(),
-            It.IsAny<object?>(), It.IsAny<string?>(), It.IsAny<Guid?>(), It.IsAny<CancellationToken>()), Times.Once);
+        // Act & Assert - exceptions propagate to generated controller for error handling
+        await Assert.ThrowsAsync<Exception>(() => service.GetStateAsync(request, CancellationToken.None));
     }
 
     #endregion
@@ -254,8 +246,7 @@ public class StateServiceTests
             Value = new { Name = "Test" },
             Options = new BeyondImmersion.BannouService.State.StateOptions
             {
-                Ttl = 300, // 5 minutes
-                Consistency = StateOptionsConsistency.Eventual
+                Ttl = 300 // 5 minutes
             }
         };
 
@@ -272,11 +263,10 @@ public class StateServiceTests
         // Assert
         Assert.NotNull(capturedOptions);
         Assert.Equal(300, capturedOptions.Ttl);
-        Assert.Equal(StateOptionsConsistency.Eventual, capturedOptions.Consistency);
     }
 
     [Fact]
-    public async Task SaveStateAsync_WhenExceptionThrown_ReturnsInternalServerErrorAndEmitsErrorEvent()
+    public async Task SaveStateAsync_WhenExceptionThrown_ShouldThrow()
     {
         // Arrange
         var service = CreateService();
@@ -291,22 +281,9 @@ public class StateServiceTests
         _mockStateStoreFactory.Setup(f => f.GetStore<object>("test-store")).Returns(_mockStateStore.Object);
         _mockStateStore.Setup(s => s.SaveAsync("test-key", It.IsAny<object>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ThrowsAsync(new Exception("Save failed"));
-        _mockMessageBus.Setup(m => m.TryPublishErrorAsync(
-            It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(),
-            It.IsAny<string?>(), It.IsAny<string?>(), It.IsAny<ServiceErrorEventSeverity>(),
-            It.IsAny<object?>(), It.IsAny<string?>(), It.IsAny<Guid?>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(true);
 
-        // Act
-        var (status, response) = await service.SaveStateAsync(request, CancellationToken.None);
-
-        // Assert
-        Assert.Equal(StatusCodes.InternalServerError, status);
-        Assert.Null(response);
-        _mockMessageBus.Verify(m => m.TryPublishErrorAsync(
-            "state", "SaveState", "Exception", "Save failed",
-            "test-store", "post:/state/save", It.IsAny<ServiceErrorEventSeverity>(),
-            It.IsAny<object?>(), It.IsAny<string?>(), It.IsAny<Guid?>(), It.IsAny<CancellationToken>()), Times.Once);
+        // Act & Assert - exceptions propagate to generated controller for error handling
+        await Assert.ThrowsAsync<Exception>(() => service.SaveStateAsync(request, CancellationToken.None));
     }
 
     #endregion
@@ -373,7 +350,7 @@ public class StateServiceTests
     }
 
     [Fact]
-    public async Task DeleteStateAsync_WhenExceptionThrown_ReturnsInternalServerErrorAndEmitsErrorEvent()
+    public async Task DeleteStateAsync_WhenExceptionThrown_ShouldThrow()
     {
         // Arrange
         var service = CreateService();
@@ -383,22 +360,9 @@ public class StateServiceTests
         _mockStateStoreFactory.Setup(f => f.GetStore<object>("test-store")).Returns(_mockStateStore.Object);
         _mockStateStore.Setup(s => s.DeleteAsync("test-key", It.IsAny<CancellationToken>()))
             .ThrowsAsync(new Exception("Delete failed"));
-        _mockMessageBus.Setup(m => m.TryPublishErrorAsync(
-            It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(),
-            It.IsAny<string?>(), It.IsAny<string?>(), It.IsAny<ServiceErrorEventSeverity>(),
-            It.IsAny<object?>(), It.IsAny<string?>(), It.IsAny<Guid?>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(true);
 
-        // Act
-        var (status, response) = await service.DeleteStateAsync(request, CancellationToken.None);
-
-        // Assert
-        Assert.Equal(StatusCodes.InternalServerError, status);
-        Assert.Null(response);
-        _mockMessageBus.Verify(m => m.TryPublishErrorAsync(
-            "state", "DeleteState", "Exception", "Delete failed",
-            "test-store", "post:/state/delete", It.IsAny<ServiceErrorEventSeverity>(),
-            It.IsAny<object?>(), It.IsAny<string?>(), It.IsAny<Guid?>(), It.IsAny<CancellationToken>()), Times.Once);
+        // Act & Assert - exceptions propagate to generated controller for error handling
+        await Assert.ThrowsAsync<Exception>(() => service.DeleteStateAsync(request, CancellationToken.None));
     }
 
     #endregion
@@ -738,7 +702,7 @@ public class StateServiceTests
     }
 
     [Fact]
-    public async Task QueryStateAsync_WhenExceptionThrown_ReturnsInternalServerErrorAndEmitsErrorEvent()
+    public async Task QueryStateAsync_WhenExceptionThrown_ShouldThrow()
     {
         // Arrange
         var service = CreateService();
@@ -747,22 +711,9 @@ public class StateServiceTests
         _mockStateStoreFactory.Setup(f => f.HasStore("test-store")).Returns(true);
         _mockStateStoreFactory.Setup(f => f.GetBackendType("test-store"))
             .Throws(new Exception("Backend check failed"));
-        _mockMessageBus.Setup(m => m.TryPublishErrorAsync(
-            It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(),
-            It.IsAny<string?>(), It.IsAny<string?>(), It.IsAny<ServiceErrorEventSeverity>(),
-            It.IsAny<object?>(), It.IsAny<string?>(), It.IsAny<Guid?>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(true);
 
-        // Act
-        var (status, response) = await service.QueryStateAsync(request, CancellationToken.None);
-
-        // Assert
-        Assert.Equal(StatusCodes.InternalServerError, status);
-        Assert.Null(response);
-        _mockMessageBus.Verify(m => m.TryPublishErrorAsync(
-            "state", "QueryState", "Exception", "Backend check failed",
-            "test-store", "post:/state/query", It.IsAny<ServiceErrorEventSeverity>(),
-            It.IsAny<object?>(), It.IsAny<string?>(), It.IsAny<Guid?>(), It.IsAny<CancellationToken>()), Times.Once);
+        // Act & Assert - exceptions propagate to generated controller for error handling
+        await Assert.ThrowsAsync<Exception>(() => service.QueryStateAsync(request, CancellationToken.None));
     }
 
     #endregion
@@ -853,7 +804,7 @@ public class StateServiceTests
     }
 
     [Fact]
-    public async Task BulkGetStateAsync_WhenExceptionThrown_ReturnsInternalServerErrorAndEmitsErrorEvent()
+    public async Task BulkGetStateAsync_WhenExceptionThrown_ShouldThrow()
     {
         // Arrange
         var service = CreateService();
@@ -867,22 +818,9 @@ public class StateServiceTests
         _mockStateStoreFactory.Setup(f => f.GetStore<object>("test-store")).Returns(_mockStateStore.Object);
         _mockStateStore.Setup(s => s.GetBulkAsync(It.IsAny<IEnumerable<string>>(), It.IsAny<CancellationToken>()))
             .ThrowsAsync(new Exception("Bulk get failed"));
-        _mockMessageBus.Setup(m => m.TryPublishErrorAsync(
-            It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(),
-            It.IsAny<string?>(), It.IsAny<string?>(), It.IsAny<ServiceErrorEventSeverity>(),
-            It.IsAny<object?>(), It.IsAny<string?>(), It.IsAny<Guid?>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(true);
 
-        // Act
-        var (status, response) = await service.BulkGetStateAsync(request, CancellationToken.None);
-
-        // Assert
-        Assert.Equal(StatusCodes.InternalServerError, status);
-        Assert.Null(response);
-        _mockMessageBus.Verify(m => m.TryPublishErrorAsync(
-            "state", "BulkGetState", "Exception", "Bulk get failed",
-            "test-store", "post:/state/bulk-get", It.IsAny<ServiceErrorEventSeverity>(),
-            It.IsAny<object?>(), It.IsAny<string?>(), It.IsAny<Guid?>(), It.IsAny<CancellationToken>()), Times.Once);
+        // Act & Assert - exceptions propagate to generated controller for error handling
+        await Assert.ThrowsAsync<Exception>(() => service.BulkGetStateAsync(request, CancellationToken.None));
     }
 
     #endregion
@@ -973,29 +911,16 @@ public class StateServiceTests
     }
 
     [Fact]
-    public async Task ListStoresAsync_WhenExceptionThrown_ReturnsInternalServerErrorAndEmitsErrorEvent()
+    public async Task ListStoresAsync_WhenExceptionThrown_ShouldThrow()
     {
         // Arrange
         var service = CreateService();
 
         _mockStateStoreFactory.Setup(f => f.GetStoreNames())
             .Throws(new Exception("Failed to list stores"));
-        _mockMessageBus.Setup(m => m.TryPublishErrorAsync(
-            It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(),
-            It.IsAny<string?>(), It.IsAny<string?>(), It.IsAny<ServiceErrorEventSeverity>(),
-            It.IsAny<object?>(), It.IsAny<string?>(), It.IsAny<Guid?>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(true);
 
-        // Act
-        var (status, response) = await service.ListStoresAsync(null, CancellationToken.None);
-
-        // Assert
-        Assert.Equal(StatusCodes.InternalServerError, status);
-        Assert.Null(response);
-        _mockMessageBus.Verify(m => m.TryPublishErrorAsync(
-            "state", "ListStores", "Exception", "Failed to list stores",
-            "state-factory", "post:/state/list-stores", It.IsAny<ServiceErrorEventSeverity>(),
-            It.IsAny<object?>(), It.IsAny<string?>(), It.IsAny<Guid?>(), It.IsAny<CancellationToken>()), Times.Once);
+        // Act & Assert - exceptions propagate to generated controller for error handling
+        await Assert.ThrowsAsync<Exception>(() => service.ListStoresAsync(null, CancellationToken.None));
     }
 
     #endregion

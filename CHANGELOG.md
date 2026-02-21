@@ -9,6 +9,224 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.14.0] - 2026-02-21
+
+### Added
+
+#### New Services (15 plugins, 271 new endpoints)
+
+- **Telemetry Service** (`lib-telemetry`, L0 Infrastructure): Unified observability via OpenTelemetry (2 endpoints)
+  - `ITelemetryProvider` abstraction for lib-state, lib-messaging, lib-mesh instrumentation
+  - `NullTelemetryProvider` fallback when disabled; loads first in plugin ordering
+- **Chat Service** (`lib-chat`, L1 AppFoundation): Universal typed message channel primitives (28 endpoints)
+  - Room types determine valid message formats (text, sentiment, emoji, custom-validated)
+  - Optional Contract governance for room lifecycle
+  - Ephemeral (Redis TTL) and persistent (MySQL) message storage
+  - Participant moderation (kick/ban/mute), atomic Redis rate limiting, idle room cleanup
+- **Resource Service** (`lib-resource`, L1 AppFoundation): Reference tracking, lifecycle management, and hierarchical compression (17 endpoints)
+  - Enables safe L2 resource deletion by tracking L3/L4 references without hierarchy violations
+  - CASCADE/RESTRICT/DETACH cleanup policies with coordinated callbacks
+  - Unified MySQL-backed archive compression for resources and dependents
+  - Integrated by lib-character, lib-actor, lib-character-encounter, lib-character-history, lib-character-personality, lib-realm-history
+- **Quest Service** (`lib-quest`, L2 GameFoundation): Objective-based progression as thin orchestration over lib-contract (17 endpoints)
+  - Quest semantics (objectives, rewards, quest givers) translated to Contract milestones and prebound APIs
+  - Agnostic to prerequisite sources via `IPrerequisiteProviderFactory` DI pattern
+  - `${quest.*}` ABML variable namespace for Actor behavior expressions
+- **Seed Service** (`lib-seed`, L2 GameFoundation): Generic progressive growth primitive (24 endpoints)
+  - Seeds accumulate metadata across named domains, gaining capabilities at configurable thresholds
+  - Polymorphic ownership (accounts, actors, realms, characters, relationships)
+  - Growth decay with per-type/per-domain configuration
+  - Cross-seed growth sharing, bond mechanics, phase transition events
+  - Seed types are string codes allowing new types without schema changes
+  - `ISeedEvolutionListener` DI pattern for phase transition notifications
+- **Collection Service** (`lib-collection`, L2 GameFoundation): Universal content unlock and archive system (20 endpoints)
+  - "Items in inventories" pattern: entry templates, collection instances, granted entries
+  - Dynamic content selection based on unlocked entries and area theme configs
+  - `ICollectionUnlockListener` DI pattern for Seed growth pipeline integration
+  - Collection types are opaque strings (not enums)
+- **Worldstate Service** (`lib-worldstate`, L2 GameFoundation): Per-realm game time authority and calendar system (18 endpoints)
+  - Real-to-game time mapping with configurable per-realm ratios
+  - Calendar templates (configurable days, months, seasons, years) and day-period cycles
+  - Boundary event publishing at game-time transitions
+  - `${world.*}` ABML variable namespace via Variable Provider Factory
+  - Time-elapsed query API for lazy evaluation patterns
+- **Puppetmaster Service** (`lib-puppetmaster`, L4 GameFeatures): Dynamic behavior orchestration and regional watchers (6 endpoints)
+  - Bridges Actor (L2) and Asset (L3) for runtime ABML behavior loading
+  - `IBehaviorDocumentProvider` implementation for actor provider chain
+  - Regional watcher lifecycle management and resource snapshot caching
+- **Divine Service** (`lib-divine`, L4 GameFeatures): Pantheon management, divinity economy, blessing orchestration (22 endpoints)
+  - Thin orchestration layer composing Currency, Seed, Relationship, Collection, Status, Puppetmaster
+  - God-actors as character brains bound to divine system realm characters
+  - Avatar manifestation with divinity economy cost scaling
+  - Blessing tiers: Minor/Standard (temporary via Status) and Greater/Supreme (permanent via Collection)
+- **Faction Service** (`lib-faction`, L4 GameFeatures): Seed-based living factions (31 endpoints)
+  - Capabilities emerge from seed growth phases (nascent, established, influential, dominant)
+  - Norm definition, enforcement tiers, territory claiming, trade regulation
+  - Guild memberships with role hierarchy, parent/child organizational structure
+  - Inter-faction political connections modeled as seed bonds
+- **Gardener Service** (`lib-gardener`, L4 GameFeatures): Player experience orchestration (24 endpoints)
+  - Player-side counterpart to Puppetmaster: manages abstract "garden" spaces
+  - Gameplay context, entity associations, and event routing for divine actor manipulation
+  - Currently implements void/discovery garden type
+- **License Service** (`lib-license`, L4 GameFeatures): Grid-based progression boards (20 endpoints)
+  - Inspired by FF12 License Board: skill trees, tech trees via Inventory + Items + Contracts
+  - Polymorphic ownership via `ownerType` + `ownerId` (characters, accounts, guilds, locations)
+  - Board cloning for NPC progression
+- **Obligation Service** (`lib-obligation`, L4 GameFeatures): Contract-aware NPC cognition (11 endpoints)
+  - "Second thoughts" before violating obligations via GOAP action cost modifiers
+  - Three-layer enrichment: raw contract penalties, personality-weighted, belief-filtered
+  - `${obligations.*}` ABML variable namespace
+- **Status Service** (`lib-status`, L4 GameFeatures): Unified entity effects query layer (16 endpoints)
+  - Aggregates temporary contract-managed statuses and passive seed-derived capabilities
+  - "Items in inventories" pattern for combat buffs, death penalties, divine blessings
+  - Optional Contract integration for complex lifecycle per-template
+- **Storyline Service** (`lib-storyline`, L4 GameFeatures): Seeded narrative generation from compressed archives (15 endpoints)
+  - Wraps `storyline-theory` and `storyline-storyteller` SDKs
+  - Plans describe narrative arcs with phases, actions, entity requirements
+
+#### DI Inversion Patterns (Provider/Listener Interfaces)
+
+- **`IVariableProviderFactory`** / **`IVariableProvider`**: L4 services provide typed variable namespaces to Actor (L2) behavior execution without hierarchy violations
+  - `${personality.*}` and `${combat.*}` from lib-character-personality
+  - `${encounters.*}` from lib-character-encounter
+  - `${backstory.*}` from lib-character-history
+  - `${location.*}` from lib-location
+  - `${world.*}` from lib-worldstate
+  - `${quest.*}` from lib-quest
+  - `${obligations.*}` from lib-obligation
+- **`IPrerequisiteProviderFactory`**: L4 services provide prerequisite validation to Quest (L2)
+- **`IBehaviorDocumentProvider`** / **`IBehaviorDocumentLoader`**: Puppetmaster (L4) supplies runtime-loaded behaviors to Actor (L2)
+- **`ICollectionUnlockListener`**: Collection (L2) notifies L4 services of unlocks (e.g., Seed growth pipeline)
+- **`ISeedEvolutionListener`**: Seed (L2) notifies L4 services of phase transitions
+- **`ISeededResourceProvider`**: L4 services provide seeded resource definitions to Resource (L1)
+- **`IEntitySessionRegistry`**: Connect provides entity-to-session mapping for "find which session owns this character"
+
+#### Infrastructure Hardening
+
+- **lib-state**: SQLite backend (`SqliteStateStore`), Redis atomic operations via Lua scripts (`TryCreate.lua`, `TryUpdate.lua`), expanded `ICacheableStateStore` for Redis sets/sorted sets, `IRedisOperations` for Lua scripts and atomic operations, `IQueryableStateStore` for MySQL LINQ queries
+- **lib-mesh**: Distributed circuit breaker backed by Redis Lua scripts, request-level timeouts, endpoint degradation events for monitoring, proactive health checking with automatic deregistration
+- **lib-messaging**: Channel pooling, aggressive retry buffering, crash-fast philosophy for unrecoverable failures, new `IChannelManager`/`IRetryBuffer` interfaces
+- **Auth**: TOTP-based MFA (`IMfaService`), edge token revocation with pluggable providers (Cloudflare, OpenResty), built-in email providers (Console, SMTP, SendGrid, AWS SES)
+- **Connect**: Automatic configurable payload compression for WebSocket messages, entity session registry
+- **Contract**: Background milestone expiration worker, escrow integration overhaul
+- **Escrow**: Two new background workers (confirmation timeout enforcement, TTL expiration)
+- **Voice**: Participant TTL enforcement via background eviction worker
+- **Location**: Entity presence tracking, presence cleanup worker, data caching layer
+
+#### Observability Stack
+
+- Complete local observability infrastructure: Grafana + Prometheus + OpenTelemetry Collector + Tempo
+- Bannou overview dashboard (`provisioning/dashboards/bannou-overview.json`)
+- OpenResty JWT revocation checking at the reverse proxy layer (`validate_jwt_revocation.lua`)
+
+#### Documentation (105 new files)
+
+- **VISION.md** and **PLAYER-VISION.md**: High-level architectural north-star documents
+- **SERVICE-HIERARCHY.md** (v2.7): Authoritative 6-layer service dependency hierarchy with enforcement rules
+- **ORCHESTRATION-PATTERNS.md**: How decomposed services form living gameplay loops via god-actors
+- **27 FAQ documents** (`docs/faqs/`): Architectural decision explanations for developer onboarding
+- **36 plugin deep dives** (`docs/plugins/`): Comprehensive service documentation including aspirational services
+- **10 new guides**: Behavior System, Behavioral Bootstrap, Character Communication, Economy System, Meta Endpoints, Morality System, Scene System, SDK Overview, Seed System, Story System
+- **13 planning documents**: Cinematic System (4-phase plan), Actor-Bound Entities, Death and Plot Armor, Dungeon Extensions, Self-Hosted Deployment, and more
+- **PLAN-EXAMPLE.md**: Preserved real implementation plan (Seed service) as a template
+- **COMPRESSION-CHARTS.md**: Resource compression flow documentation
+- **DEEP-DIVE-TEMPLATE.md**: Standardized template for plugin documentation
+
+#### Testing
+
+- **ServiceHierarchyValidator**: Reflection-based automated enforcement of service layer dependencies
+- **PermissionMatrixValidator**: Automated permission matrix registration validation
+- 6 new HTTP integration test handlers (CharacterEncounter, CharacterPersonality, Escrow, Item, Scene, Telemetry)
+- State HTTP test coverage (+604 lines)
+- SQLite test support for lib-state
+- Edge tester `BinaryMessageHelper` for improved binary protocol testing
+- Assembly inspector `ConstructorCommand` for external library inspection
+
+#### Schema & Code Generation
+
+- `x-compression-callback` schema extension with automated code generation
+- `x-event-template` schema extension for automated event template registration
+- `x-resource-mapping` schema extension for lifecycle events
+- `x-clause-provider` schema extension for automated context resolver generation
+- Lifecycle events auto-generation from `x-lifecycle` in event schemas
+- DTO model container generation pipeline
+- 86 new state store definitions across all new and existing services
+- 16 new event schemas, 15 new configuration schemas
+
+#### TENETS v8.0 (4 new tenets)
+
+- **T27**: Cross-Service Communication Discipline (direct API for higher-to-lower; DI interfaces for lower-to-higher; events for broadcast only)
+- **T28**: Resource-Managed Cleanup (dependent data cleanup via lib-resource only; never subscribe to lifecycle events for destruction)
+- **T29**: No Metadata Bag Contracts (`additionalProperties: true` is never a data contract between services)
+- **T30**: Telemetry Span Instrumentation (all async methods get `StartActivity` spans)
+
+### Changed
+
+- **Behavior Service decomposition**: Cognition pipeline moved to shared code (`bannou-service/Abml/Cognition/`); compiler, runtime, GOAP system relocated to Actor (L2) runtime; lib-behavior now focused on ABML compilation and document merging (~13,000 lines restructured)
+- **Relationship consolidation**: `lib-relationship-type` absorbed into `lib-relationship` -- single plugin now manages both entity-to-entity relationships and the hierarchical relationship type taxonomy
+- **Actor moved to L2**: Actor service reclassified from L4 GameFeatures to L2 GameFoundation with Variable Provider Factory pattern for receiving L4 data without hierarchy violations
+- **Collection moved to L2**: Collection service reclassified from L4 to L2 with `ICollectionUnlockListener` DI pattern
+- **Service Hierarchy enforcement**: Layer-based plugin loading (PluginLoader sorts by `ServiceLayer` attribute), constructor injection now standard for L0/L1/L2 dependencies, `GetService<T>()` with null checks for L3/L4 soft dependencies
+- **Orchestrator pluggable backends**: Four implementations (Docker Compose, Docker Swarm, Kubernetes, Portainer) via `IContainerOrchestrator` interface
+- **Permission system**: Migrated from event-based registration to DI Provider interfaces; removed dead permission registration artifacts
+- **Cross-service cleanup**: Migrated from lifecycle event subscriptions to lib-resource callbacks (character-encounter, character-history, character-personality, realm-history, relationship)
+- **Seed/Resource growth**: Migrated from inverted event subscriptions to direct API calls
+- **`*ServiceModels.cs` standardization**: Nearly every plugin gained a dedicated internal models file, separating internal data models from service logic
+- **SDK regeneration**: Full Unreal SDK regeneration (+33,598 lines in `BannouTypes.h`) and TypeScript SDK regeneration reflecting all 15 new services
+- **`.env.example`**: Expanded by ~736 lines to cover all new service configurations
+- **Solution file**: +670 lines reflecting all new plugin projects
+- **`make list` command**: Added for easier grepping of Makefile targets
+- **CLAUDE.md**: Expanded with generation script selection guide, testing workflow clarifications, additional constraints (+214 lines)
+
+### Fixed
+
+- `additionalProperties: true` misuse audit and systematic correction across multiple schemas
+- CustomTerms type fixes to use proper types instead of strings
+- AWS/MinIO configuration fixes for S3 SDK integration
+- Contract: `ClauseValidationCacheStalenessSeconds` dead config removed (T21 violation)
+- Contract: `MaxActiveContractsPerEntity` now actually counts active contracts
+- Contract: `ParseClauseAmount` fails on missing `base_amount` instead of silently returning 0
+- Escrow: Fixed unreachable `Releasing` state in state machine
+- Escrow: Fixed 3 critical state machine bugs
+- Connect: Fixed subsumed connection publishing spurious `session.disconnected` events
+- Connect: Removed dead session mappings and unused Redis persistence
+- Character-Encounter: Fixed N+1 query pattern in all query operations
+- Character-History: `AddBackstoryElement` event now distinguishes element added vs updated
+- Realm-History: Added configurable lore element count limit
+- Mesh: `ServiceNavigator.RawApi` now uses `IMeshInvocationClient` instead of direct `HttpClient`
+- Mesh: Removed hardcoded values from hierarchy validator
+- State: `MySqlStateStore.QueryAsync` no longer loads all entries into memory
+- State: `StateMetadata` now properly populated in `GetStateResponse`
+- Naming case enforcement for realms and actor types
+- Over-generation of instruction comments in service implementations
+- Silent failure patterns across multiple plugins (systematic audit and fix)
+- Multiple flaky actor test stabilization attempts
+- Sentinel value removal from `x-lifecycle` event publishing
+
+### Removed
+
+- `lib-relationship-type` plugin (consolidated into `lib-relationship`)
+- Permission registration event system (replaced by DI Provider interfaces)
+- Actor L4 event subscriptions for cache invalidation (belongs to provider owners)
+- Auth subscription management endpoints (moved to dedicated Subscription service)
+- Dead configuration properties across multiple services (T21 compliance)
+- ABML merger test fixtures relocated from `bannou-service/Abml/fixtures/`
+- `.claude/settings.json`
+
+### Resolved Issues
+
+131 GitHub issues closed in this release (22 additional closed as "won't do"). Key categories:
+
+- **Architecture decisions** (14): Resource lifecycle management (#259), Actor provider pattern dependency inversion (#287), Actor/Puppetmaster L2/L4 split (#288), Quest to L2 with provider factory (#320), Collection-Seed-Status cross-pollination pipeline (#375)
+- **Architecture migrations** (7): Relationship-type consolidation (#331, #333), Seed/Resource/Permission migration from events to direct APIs (#376-#380), Actor L4 event subscription removal (#380)
+- **Schema extensions** (6): Compression callbacks (#302), event templates (#303), resource mapping (#304), resource template codegen (#305), clause provider (#321), lifecycle event audit (#163)
+- **Infrastructure production readiness** (12): lib-state fixes (#177, #251, #255, #325-#329), lib-mesh circuit breaker and timeouts (#219, #322-#324), lib-messaging 100K NPC scale (#328)
+- **New features** (4): Itemize Anything (#280, #330), lib-license (#281), lib-collection (#286)
+- **Service hardening** (30+): Account production hardening (#332), Auth production hardening (#334), Contract lifecycle fixes (#221, #241-#245), Escrow state machine (#210, #214), and more
+- **ABML actions** (8): Snapshot loading (#291-#294), actor communication (#297), watcher orchestration (#298), event publishing (#299), resource watching (#301)
+
+---
+
 ## [0.13.0] - 2026-01-29
 
 ### Added
@@ -161,7 +379,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Certbot webroot integration with OpenResty
   - Production quickstart guide (`docs/guides/PRODUCTION-QUICKSTART.md`)
 - **Release Management**: `scripts/prepare-release.sh` for semantic version releases
-- **Releasing Guide** (`docs/guides/RELEASING.md`): Complete release workflow documentation
+- **Releasing Guide** (`docs/operations/RELEASING.md`): Complete release workflow documentation
 - **Permission Registration Tests**: Verify all plugins register permissions correctly
 - **TestConfigurationHelper**: Shared test utilities for configuration testing
 
@@ -334,7 +552,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-[Unreleased]: https://github.com/beyond-immersion/bannou-service/compare/v0.13.0...HEAD
+[Unreleased]: https://github.com/beyond-immersion/bannou-service/compare/v0.14.0...HEAD
+[0.14.0]: https://github.com/beyond-immersion/bannou-service/compare/v0.13.0...v0.14.0
 [0.13.0]: https://github.com/beyond-immersion/bannou-service/compare/v0.12.0...v0.13.0
 [0.12.0]: https://github.com/beyond-immersion/bannou-service/compare/v0.11.0...v0.12.0
 [0.11.0]: https://github.com/beyond-immersion/bannou-service/compare/v0.10.0...v0.11.0

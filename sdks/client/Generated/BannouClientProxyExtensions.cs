@@ -25,35 +25,49 @@ public partial class BannouClient
     private CharacterEncounterProxy? _characterEncounter;
     private CharacterHistoryProxy? _characterHistory;
     private CharacterPersonalityProxy? _characterPersonality;
+    private ChatProxy? _chat;
+    private CollectionProxy? _collection;
     private ConnectProxy? _connect;
     private ContractProxy? _contract;
     private CurrencyProxy? _currency;
+    private DivineProxy? _divine;
     private DocumentationProxy? _documentation;
     private EscrowProxy? _escrow;
+    private FactionProxy? _faction;
     private GameServiceProxy? _gameService;
     private GameSessionProxy? _gameSession;
+    private GardenerProxy? _gardener;
     private InventoryProxy? _inventory;
     private ItemProxy? _item;
     private LeaderboardProxy? _leaderboard;
+    private LicenseProxy? _license;
     private LocationProxy? _location;
     private MappingProxy? _mapping;
     private MatchmakingProxy? _matchmaking;
     private MeshProxy? _mesh;
     private MessagingProxy? _messaging;
     private MusicProxy? _music;
+    private ObligationProxy? _obligation;
     private OrchestratorProxy? _orchestrator;
     private PermissionProxy? _permission;
+    private PuppetmasterProxy? _puppetmaster;
+    private QuestProxy? _quest;
     private RealmProxy? _realm;
     private RealmHistoryProxy? _realmHistory;
     private RelationshipProxy? _relationship;
-    private RelationshipTypeProxy? _relationshipType;
+    private ResourceProxy? _resource;
     private SaveLoadProxy? _saveLoad;
     private SceneProxy? _scene;
+    private SeedProxy? _seed;
     private SpeciesProxy? _species;
     private StateProxy? _state;
+    private StatusProxy? _status;
+    private StorylineProxy? _storyline;
     private SubscriptionProxy? _subscription;
+    private TelemetryProxy? _telemetry;
     private VoiceProxy? _voice;
     private WebsiteProxy? _website;
+    private WorldstateProxy? _worldstate;
 
     /// <summary>
     /// Gets the typed proxy for Bannou Account Service API operations.
@@ -122,6 +136,18 @@ public partial class BannouClient
         _characterPersonality ??= new CharacterPersonalityProxy(this);
 
     /// <summary>
+    /// Gets the typed proxy for Chat Service API operations.
+    /// </summary>
+    public ChatProxy Chat =>
+        _chat ??= new ChatProxy(this);
+
+    /// <summary>
+    /// Gets the typed proxy for Collection Service API operations.
+    /// </summary>
+    public CollectionProxy Collection =>
+        _collection ??= new CollectionProxy(this);
+
+    /// <summary>
     /// Gets the typed proxy for Bannou Connect API operations.
     /// </summary>
     public ConnectProxy Connect =>
@@ -140,6 +166,12 @@ public partial class BannouClient
         _currency ??= new CurrencyProxy(this);
 
     /// <summary>
+    /// Gets the typed proxy for Bannou Divine Service API operations.
+    /// </summary>
+    public DivineProxy Divine =>
+        _divine ??= new DivineProxy(this);
+
+    /// <summary>
     /// Gets the typed proxy for Bannou Documentation API operations.
     /// </summary>
     public DocumentationProxy Documentation =>
@@ -152,6 +184,12 @@ public partial class BannouClient
         _escrow ??= new EscrowProxy(this);
 
     /// <summary>
+    /// Gets the typed proxy for Bannou Faction Service API operations.
+    /// </summary>
+    public FactionProxy Faction =>
+        _faction ??= new FactionProxy(this);
+
+    /// <summary>
     /// Gets the typed proxy for Bannou Game Service API operations.
     /// </summary>
     public GameServiceProxy GameService =>
@@ -162,6 +200,12 @@ public partial class BannouClient
     /// </summary>
     public GameSessionProxy GameSession =>
         _gameSession ??= new GameSessionProxy(this);
+
+    /// <summary>
+    /// Gets the typed proxy for Bannou Gardener Service API operations.
+    /// </summary>
+    public GardenerProxy Gardener =>
+        _gardener ??= new GardenerProxy(this);
 
     /// <summary>
     /// Gets the typed proxy for Inventory Service API operations.
@@ -180,6 +224,12 @@ public partial class BannouClient
     /// </summary>
     public LeaderboardProxy Leaderboard =>
         _leaderboard ??= new LeaderboardProxy(this);
+
+    /// <summary>
+    /// Gets the typed proxy for License Service API operations.
+    /// </summary>
+    public LicenseProxy License =>
+        _license ??= new LicenseProxy(this);
 
     /// <summary>
     /// Gets the typed proxy for Bannou Location Service API operations.
@@ -218,6 +268,12 @@ public partial class BannouClient
         _music ??= new MusicProxy(this);
 
     /// <summary>
+    /// Gets the typed proxy for Bannou Obligation Service API operations.
+    /// </summary>
+    public ObligationProxy Obligation =>
+        _obligation ??= new ObligationProxy(this);
+
+    /// <summary>
     /// Gets the typed proxy for Orchestrator API operations.
     /// </summary>
     public OrchestratorProxy Orchestrator =>
@@ -228,6 +284,18 @@ public partial class BannouClient
     /// </summary>
     public PermissionProxy Permission =>
         _permission ??= new PermissionProxy(this);
+
+    /// <summary>
+    /// Gets the typed proxy for Bannou Puppetmaster Service API operations.
+    /// </summary>
+    public PuppetmasterProxy Puppetmaster =>
+        _puppetmaster ??= new PuppetmasterProxy(this);
+
+    /// <summary>
+    /// Gets the typed proxy for Bannou Quest Service API operations.
+    /// </summary>
+    public QuestProxy Quest =>
+        _quest ??= new QuestProxy(this);
 
     /// <summary>
     /// Gets the typed proxy for Bannou Realm Service API operations.
@@ -248,10 +316,10 @@ public partial class BannouClient
         _relationship ??= new RelationshipProxy(this);
 
     /// <summary>
-    /// Gets the typed proxy for Bannou RelationshipType Service API operations.
+    /// Gets the typed proxy for Resource Lifecycle API operations.
     /// </summary>
-    public RelationshipTypeProxy RelationshipType =>
-        _relationshipType ??= new RelationshipTypeProxy(this);
+    public ResourceProxy Resource =>
+        _resource ??= new ResourceProxy(this);
 
     /// <summary>
     /// Gets the typed proxy for Save-Load Service API operations.
@@ -266,6 +334,12 @@ public partial class BannouClient
         _scene ??= new SceneProxy(this);
 
     /// <summary>
+    /// Gets the typed proxy for Seed Service API operations.
+    /// </summary>
+    public SeedProxy Seed =>
+        _seed ??= new SeedProxy(this);
+
+    /// <summary>
     /// Gets the typed proxy for Bannou Species Service API operations.
     /// </summary>
     public SpeciesProxy Species =>
@@ -278,10 +352,28 @@ public partial class BannouClient
         _state ??= new StateProxy(this);
 
     /// <summary>
+    /// Gets the typed proxy for Status Service API operations.
+    /// </summary>
+    public StatusProxy Status =>
+        _status ??= new StatusProxy(this);
+
+    /// <summary>
+    /// Gets the typed proxy for Storyline Composer API operations.
+    /// </summary>
+    public StorylineProxy Storyline =>
+        _storyline ??= new StorylineProxy(this);
+
+    /// <summary>
     /// Gets the typed proxy for Bannou Subscription Service API operations.
     /// </summary>
     public SubscriptionProxy Subscription =>
         _subscription ??= new SubscriptionProxy(this);
+
+    /// <summary>
+    /// Gets the typed proxy for Bannou Telemetry Service API operations.
+    /// </summary>
+    public TelemetryProxy Telemetry =>
+        _telemetry ??= new TelemetryProxy(this);
 
     /// <summary>
     /// Gets the typed proxy for Bannou Voice Service API operations.
@@ -294,5 +386,11 @@ public partial class BannouClient
     /// </summary>
     public WebsiteProxy Website =>
         _website ??= new WebsiteProxy(this);
+
+    /// <summary>
+    /// Gets the typed proxy for Worldstate Service API operations.
+    /// </summary>
+    public WorldstateProxy Worldstate =>
+        _worldstate ??= new WorldstateProxy(this);
 
 }

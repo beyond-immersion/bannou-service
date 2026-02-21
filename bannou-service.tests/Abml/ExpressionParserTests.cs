@@ -2,9 +2,11 @@
 // ABML Expression Parser Tests
 // ═══════════════════════════════════════════════════════════════════════════
 
-using BeyondImmersion.BannouService.Abml.Compiler;
-using BeyondImmersion.BannouService.Abml.Compiler.Ast;
-using BeyondImmersion.BannouService.Abml.Exceptions;
+using BeyondImmersion.Bannou.BehaviorCompiler.Compiler;
+using BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Ast;
+using BeyondImmersion.Bannou.BehaviorCompiler.Exceptions;
+using BeyondImmersion.Bannou.BehaviorExpressions.Compiler;
+using BeyondImmersion.Bannou.BehaviorExpressions.Exceptions;
 using Xunit;
 
 namespace BeyondImmersion.BannouService.Tests.Abml;

@@ -3,13 +3,14 @@
 > **Plugin**: lib-currency
 > **Schema**: schemas/currency-api.yaml
 > **Version**: 1.0.0
+> **Layer**: GameFoundation
 > **State Stores**: currency-definitions (MySQL), currency-wallets (MySQL), currency-balances (MySQL), currency-transactions (MySQL), currency-holds (MySQL), currency-balance-cache (Redis), currency-holds-cache (Redis), currency-idempotency (Redis)
 
 ---
 
 ## Overview
 
-Multi-currency management service for game economies. Handles the full lifecycle of currency definitions (CRUD with scope/realm restrictions, precision, caps, autogain, expiration, item linkage, exchange rates), wallet management (create, get-or-create, freeze, unfreeze, close with balance transfer), balance operations (credit with earn/wallet cap enforcement, debit with negative-balance control, transfer with deterministic deadlock-free locking, batch credit), authorization holds (reserve/capture/release pattern for pre-auth scenarios), currency conversion via exchange-rate-to-base pivot, escrow integration (deposit/release/refund as thin wrappers around debit/credit with earn-cap bypass), transaction history with retention enforcement, and analytics stubs (global supply, wealth distribution). Features idempotency-key deduplication on all mutating balance operations, Redis cache layers for balances and holds, and a configurable CurrencyAutogainTaskService background worker that proactively applies passive income to all eligible wallets. The service uses distributed locks throughout for multi-instance safety and ETag-based optimistic concurrency for wallet/hold state transitions.
+Multi-currency management service (L2 GameFoundation) for game economies. Handles currency definitions with scope/realm restrictions, wallet lifecycle management, balance operations (credit/debit/transfer with idempotency-key deduplication), authorization holds (reserve/capture/release), currency conversion via exchange-rate-to-base pivot, and escrow integration (deposit/release/refund endpoints consumed by lib-escrow). Features a background autogain worker for passive income and transaction history with configurable retention. All mutating balance operations use distributed locks for multi-instance safety.
 
 ---
 
@@ -20,6 +21,7 @@ Multi-currency management service for game economies. Handles the full lifecycle
 | lib-state (`IStateStoreFactory`) | MySQL persistence for definitions, wallets, balances, transactions, holds; Redis caching for balances and holds; Redis idempotency store |
 | lib-state (`IDistributedLockProvider`) | Balance-level locks for atomic credit/debit/transfer/hold-creation; hold-level locks for capture serialization; wallet-level locks for close operations; index-level locks for list operations; autogain locks to prevent concurrent modification |
 | lib-messaging (`IMessageBus`) | Publishing all currency events (balance, wallet lifecycle, autogain, cap, hold, exchange rate); error event publishing via TryPublishErrorAsync |
+| lib-worldstate (`IWorldstateClient`, L2, **required future migration**) | Autogain worker MUST transition from real-time intervals to game-time via Worldstate's `GetElapsedGameTime` API. At the default 24:1 time ratio, real-time autogain dramatically under-credits compared to game-time. This affects the living economy: NPC passive income must track the simulated world's time, not server time. Migration requires adding an `AutogainTimeSource` config property (enum: `RealTime`, `GameTime`; default `GameTime` once Worldstate is implemented). |
 
 ---
 
@@ -82,9 +84,9 @@ Multi-currency management service for game economies. Handles the full lifecycle
 | `currency-definition.created` | `CurrencyDefinitionCreatedEvent` | New currency definition created |
 | `currency-definition.updated` | `CurrencyDefinitionUpdatedEvent` | Currency definition updated |
 | `currency-wallet.created` | `CurrencyWalletCreatedEvent` | New wallet created |
-| `currency.wallet.frozen` | `CurrencyWalletFrozenEvent` | Wallet frozen |
-| `currency.wallet.unfrozen` | `CurrencyWalletUnfrozenEvent` | Wallet unfrozen |
-| `currency.wallet.closed` | `CurrencyWalletClosedEvent` | Wallet permanently closed |
+| `currency-wallet.frozen` | `CurrencyWalletFrozenEvent` | Wallet frozen |
+| `currency-wallet.unfrozen` | `CurrencyWalletUnfrozenEvent` | Wallet unfrozen |
+| `currency-wallet.closed` | `CurrencyWalletClosedEvent` | Wallet permanently closed |
 | `currency.hold.created` | `CurrencyHoldCreatedEvent` | Authorization hold created |
 | `currency.hold.captured` | `CurrencyHoldCapturedEvent` | Hold captured (funds debited) |
 | `currency.hold.released` | `CurrencyHoldReleasedEvent` | Hold released (funds available again) |
@@ -401,12 +403,17 @@ Escrow Integration Flow
 ## Stubs & Unimplemented Features
 
 1. **Global supply analytics**: `GetGlobalSupply` returns all zeros. Comment indicates production would use pre-computed aggregates from balance data. No aggregation logic exists.
+<!-- AUDIT:NEEDS_DESIGN:2026-01-31:https://github.com/beyond-immersion/bannou-service/issues/211 -->
 2. **Wallet distribution analytics**: `GetWalletDistribution` returns all zeros for wallet count, averages, percentiles, and Gini coefficient. No statistical computation is implemented.
 3. **Currency expiration**: The `CurrencyExpiredEvent` is defined in the events schema and the definition model has `Expires`, `ExpirationPolicy`, `ExpirationDate`, `ExpirationDuration`, and `SeasonId` fields, but no background task or lazy check implements expiration logic.
+<!-- AUDIT:NEEDS_DESIGN:2026-02-01:https://github.com/beyond-immersion/bannou-service/issues/222 -->
 4. **Hold expiration**: The `CurrencyHoldExpiredEvent` is defined in the events schema but no mechanism (background task or lazy check) auto-releases expired holds. Expired holds remain Active and continue to reduce effective balance.
+<!-- AUDIT:NEEDS_DESIGN:2026-02-01:https://github.com/beyond-immersion/bannou-service/issues/222 -->
 5. **Global supply cap enforcement**: `GlobalSupplyCap` is stored on currency definitions but never checked during credit operations. There is no aggregate tracking of total minted supply.
 6. **Item linkage**: `LinkedToItem`, `LinkedItemTemplateId`, and `LinkageMode` fields are stored on definitions but no logic enforces item-currency linkage (e.g., requiring item ownership for currency access).
 7. **EarnCapResetTime**: The field is stored on definitions but not used in earn cap reset logic. Resets always happen at midnight UTC (daily) and Monday UTC (weekly), ignoring any custom reset time.
+8. **Transaction retention cleanup**: `TransactionRetentionDays` config exists but old transactions are only filtered at query time, never actually deleted. Transactions accumulate indefinitely.
+<!-- AUDIT:NEEDS_DESIGN:2026-02-01:https://github.com/beyond-immersion/bannou-service/issues/222 -->
 
 ---
 
@@ -420,6 +427,8 @@ Escrow Integration Flow
 6. **Configurable earn cap reset times**: Use EarnCapResetTime field from definition to calculate reset points instead of hardcoded midnight/Monday.
 7. **Transaction pruning background task**: Delete transactions older than TransactionRetentionDays to prevent unbounded state growth. Currently retention is only enforced at query time (filtered out of results).
 8. **Batch debit operations**: Symmetric to BatchCredit but for debits (e.g., batch shop purchases).
+9. **Universal value anchoring**: Add `UniversalValue` field to currency definitions representing intrinsic worth (relative to a 1.0 baseline). Exchange rates can then be computed dynamically from universal values plus location-scoped modifiers (tariff, war, festival, shortage) rather than requiring manual `ExchangeRateToBase` updates. Universal values shift in response to game events (gold discoveries lower gold's value, wartime increases weapon-currency values). See [Economy System Guide](../guides/ECONOMY-SYSTEM.md#8-exchange-rate-extensions).
+10. **Location-scoped exchange rates**: Extend exchange rates to vary by scope (global, realm, location). A frontier outpost might offer worse rates than a capital city. Support modifier stacking with source tracking and expiry. Add buy/sell spread fields for NPC money changer profit margins. Enables arbitrage opportunities and regional economic variation.
 
 ---
 
@@ -427,9 +436,7 @@ Escrow Integration Flow
 
 ### Bugs
 
-*T25 enum-as-string violations have been moved to `docs/plugins/DEEP_DIVE_CLEANUP.md` for tracking.*
-
-No other bugs identified.
+No bugs identified. All enum types are stored as proper enums in models; string conversions occur only for composite state store key construction (which is acceptable per IMPLEMENTATION TENETS).
 
 ### Intentional Quirks
 
@@ -456,3 +463,16 @@ No other bugs identified.
 7. **Transaction retention only enforced at query time**: Transactions beyond `TransactionRetentionDays` are filtered out of history queries but remain in the MySQL store indefinitely. No background cleanup task exists to actually delete old transactions.
 
 8. **BatchCredit non-atomicity has confusing retry semantics**: If a batch credit is partially completed and the process crashes, the batch-level idempotency key is not yet recorded (line 1225: recorded after all ops). On retry, individual sub-operation keys return Conflict status, which is recorded as `Success=false` in the results. The caller receives a response showing "failures" for already-completed operations, which may be misinterpreted as actual failures.
+
+9. **Autogain uses real-time, should use game-time**: The autogain background worker (`CurrencyAutogainTaskService`) uses `DateTimeOffset.UtcNow` and real-time `Task.Delay` intervals. In a living world with a 24:1 game-time ratio, NPCs earning passive income in real-time receive 24x less income than they should per game-day. When Worldstate (L2) is implemented, the autogain worker must call `GetElapsedGameTime` to compute game-time elapsed since last accrual, then apply the autogain rate against game-time rather than real-time. This ensures the NPC-driven economy scales correctly with the world's simulated time. Both `Lazy` mode (on-demand calculation) and `Task` mode (background worker) need this transition.
+
+---
+
+## Work Tracking
+
+This section tracks active development work on items from the quirks/bugs lists above. Items here are managed by the `/audit-plugin` workflow and should not be manually edited except to add new tracking markers.
+
+### Pending Design
+
+- **Global supply analytics** - Needs design decisions on aggregation strategy, minted/burned semantics, and escrow integration. Issue: https://github.com/beyond-immersion/bannou-service/issues/211
+- [#433](https://github.com/beyond-immersion/bannou-service/issues/433) - Currency autogain must transition from real-time to game-time via Worldstate (blocked by Worldstate implementation)

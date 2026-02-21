@@ -8,9 +8,14 @@ info:
     WebSocket routing. Path parameters are passed in request bodies instead of URLs.
     See docs/BANNOU_DESIGN.md for architectural rationale.
 
-    **Schema Rules**: AI agents MUST review docs/reference/SCHEMA-RULES.md before modifying this schema. Optional reference types require `nullable: true`.
+    **SCHEMA MODIFICATION GATE**: STOP. Before modifying this schema, you MUST:
+    1. Read docs/reference/SCHEMA-RULES.md
+    2. State which section applies to your change
+    3. Only then proceed with edits
+    Edits without stating the applicable rule are FORBIDDEN.
   version: 2.0.0
   # NOTE: Event subscriptions moved to game-session-events.yaml (x-event-subscriptions)
+x-service-layer: GameFoundation
 servers:
 - url: http://localhost:5012
   description: Bannou service endpoint (internal only)
@@ -404,7 +409,9 @@ components:
           type: object
           additionalProperties: true
           nullable: true
-          description: Game-specific configuration settings (null to use defaults)
+          description: >-
+            Game-specific configuration settings.
+            No Bannou plugin reads specific keys from this field by convention.
         sessionType:
           $ref: '#/components/schemas/SessionType'
           description: Type of session - lobby (persistent) or matchmade (time-limited with reservations). Defaults to 
@@ -478,7 +485,9 @@ components:
           additionalProperties: true
           # NRT: Optional object MUST be nullable (Rule 2)
           nullable: true
-          description: Game-specific configuration settings
+          description: >-
+            Game-specific configuration settings.
+            No Bannou plugin reads specific keys from this field by convention.
         reservations:
           type: array
           items:
@@ -535,7 +544,9 @@ components:
           type: object
           additionalProperties: true
           nullable: true
-          description: Game-specific character data (null if no character data)
+          description: >-
+            Game-specific character data.
+            No Bannou plugin reads specific keys from this field by convention.
         voiceEndpoint:
           $ref: '#/components/schemas/VoiceSipEndpoint'
           nullable: true
@@ -559,7 +570,9 @@ components:
         gameData:
           type: object
           additionalProperties: true
-          description: Initial game state data
+          description: >-
+            Game-specific initial state data.
+            No Bannou plugin reads specific keys from this field by convention.
         newPermissions:
           type: array
           items:
@@ -604,7 +617,9 @@ components:
           type: object
           additionalProperties: true
           nullable: true
-          description: Game-specific character data for this player (null if none provided)
+          description: >-
+            Game-specific character data for this player.
+            No Bannou plugin reads specific keys from this field by convention.
         voiceSessionId:
           type: string
           format: uuid
@@ -702,7 +717,9 @@ components:
           additionalProperties: true
           # NRT: Optional object MUST be nullable (Rule 2)
           nullable: true
-          description: Action-specific data
+          description: >-
+            Game-specific action data.
+            No Bannou plugin reads specific keys from this field by convention.
         targetId:
           type: string
           format: uuid
@@ -726,13 +743,17 @@ components:
           additionalProperties: true
           # NRT: Optional object MUST be nullable (Rule 2)
           nullable: true
-          description: Action result data
+          description: >-
+            Game-specific action result data.
+            No Bannou plugin reads specific keys from this field by convention.
         newGameState:
           type: object
           additionalProperties: true
           # NRT: Optional object MUST be nullable (Rule 2)
           nullable: true
-          description: Updated game state (if applicable)
+          description: >-
+            Updated game state (if applicable).
+            No Bannou plugin reads specific keys from this field by convention.
 
     # ============================================
     # Voice Integration Types
@@ -884,7 +905,9 @@ components:
           type: object
           additionalProperties: true
           nullable: true
-          description: Game-specific character data (null if no character data)
+          description: >-
+            Game-specific character data.
+            No Bannou plugin reads specific keys from this field by convention.
         voiceEndpoint:
           $ref: '#/components/schemas/VoiceSipEndpoint'
           nullable: true
@@ -945,14 +968,17 @@ components:
       description: Request to leave a specific game session by ID
       additionalProperties: false
       required:
-      - webSocketSessionId
       - accountId
       - gameSessionId
       properties:
         webSocketSessionId:
           type: string
           format: uuid
-          description: WebSocket session ID of the client leaving.
+          nullable: true
+          description: >-
+            WebSocket session ID of the client leaving. Null for server-side
+            cleanup operations (e.g., scenario lifecycle worker) where no real
+            WebSocket session exists.
         accountId:
           type: string
           format: uuid

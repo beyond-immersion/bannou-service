@@ -3,10 +3,10 @@
 // Cooperative scheduling for multi-channel execution.
 // ═══════════════════════════════════════════════════════════════════════════
 
-using BeyondImmersion.BannouService.Abml.Documents;
-using BeyondImmersion.BannouService.Abml.Documents.Actions;
-using BeyondImmersion.BannouService.Abml.Expressions;
-using BeyondImmersion.BannouService.Abml.Runtime;
+using BeyondImmersion.Bannou.BehaviorCompiler.Documents;
+using BeyondImmersion.Bannou.BehaviorCompiler.Documents.Actions;
+using BeyondImmersion.Bannou.BehaviorExpressions.Expressions;
+using BeyondImmersion.Bannou.BehaviorExpressions.Runtime;
 using System.Collections.Concurrent;
 
 namespace BeyondImmersion.BannouService.Abml.Execution.Channel;

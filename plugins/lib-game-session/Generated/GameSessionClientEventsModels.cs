@@ -247,7 +247,7 @@ public partial class PlayerKickedEvent : BaseClientEvent
 /// <br/>
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class ChatMessageReceivedEvent : BaseClientEvent
+public partial class SessionChatReceivedEvent : BaseClientEvent
 {
 
     /// <summary>

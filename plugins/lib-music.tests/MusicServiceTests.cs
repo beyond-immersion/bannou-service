@@ -103,6 +103,38 @@ public class MusicServiceTests
         Assert.NotNull(config);
     }
 
+    [Fact]
+    public void MusicServiceConfiguration_HasCorrectDefaults()
+    {
+        // Arrange & Act
+        var config = new MusicServiceConfiguration();
+
+        // Assert - verify defaults match schema
+        Assert.Equal(86400, config.CompositionCacheTtlSeconds);
+        Assert.Equal(480, config.DefaultTicksPerBeat);
+        Assert.Equal(1, config.DefaultChordsPerBar);
+        Assert.Equal(4, config.DefaultVoiceCount);
+        Assert.Equal(4.0, config.DefaultBeatsPerChord);
+        Assert.Equal(0.2, config.DefaultMelodySyncopation);
+        Assert.Equal(0.7, config.DefaultMelodyDensity);
+
+        // Emotional defaults
+        Assert.Equal(0.2, config.DefaultEmotionalTension);
+        Assert.Equal(0.5, config.DefaultEmotionalBrightness);
+        Assert.Equal(0.5, config.DefaultEmotionalEnergy);
+        Assert.Equal(0.5, config.DefaultEmotionalWarmth);
+        Assert.Equal(0.8, config.DefaultEmotionalStability);
+        Assert.Equal(0.5, config.DefaultEmotionalValence);
+
+        // Contour detection defaults (T21 compliant)
+        Assert.Equal(0.2, config.ContourTensionThreshold);
+        Assert.Equal(0.5, config.ContourDefaultTension);
+
+        // Density calculation defaults (T21 compliant)
+        Assert.Equal(0.4, config.DensityMinimum);
+        Assert.Equal(0.5, config.DensityEnergyMultiplier);
+    }
+
     #endregion
 }
 

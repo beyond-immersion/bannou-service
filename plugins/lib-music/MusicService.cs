@@ -59,155 +59,137 @@ public partial class MusicService : IMusicService
         _logger.LogDebug("Generating composition with style {StyleId}", body.StyleId);
         var stopwatch = Stopwatch.StartNew();
 
-        try
+        // Get the style definition
+        var style = GetStyleDefinition(body.StyleId);
+        if (style == null)
         {
-            // Get the style definition
-            var style = GetStyleDefinition(body.StyleId);
-            if (style == null)
+            return (StatusCodes.NotFound, null);
+        }
+
+        // Check cache for deterministic requests (explicit seed provided)
+        var cacheKey = body.Seed.HasValue ? BuildCompositionCacheKey(body) : null;
+        if (cacheKey != null)
+        {
+            var cached = await TryGetCachedCompositionAsync(cacheKey, cancellationToken);
+            if (cached != null)
             {
-                return (StatusCodes.NotFound, null);
+                _logger.LogDebug("Cache hit for composition {CacheKey}", cacheKey);
+                stopwatch.Stop();
+                // Update generation time to reflect cache hit
+                cached.GenerationTimeMs = (int)stopwatch.ElapsedMilliseconds;
+                return (StatusCodes.OK, cached);
             }
+        }
 
-            // Check cache for deterministic requests (explicit seed provided)
-            var cacheKey = body.Seed.HasValue ? BuildCompositionCacheKey(body) : null;
-            if (cacheKey != null)
+        // Set up random generator
+        var seed = body.Seed ?? Environment.TickCount;
+        var random = new Random(seed);
+
+        // Determine key signature (PitchClass has x-sdk-type, no conversion needed)
+        var key = body.Key != null
+            ? new Scale(body.Key.Tonic, ToModeType(body.Key.Mode))
+            : new Scale(
+                (PitchClass)random.Next(12),
+                style.ModeDistribution.Select(random));
+
+        // Determine tempo
+        var tempo = body.Tempo > 0 ? body.Tempo : style.DefaultTempo;
+
+        // Get meter from tune type or style default
+        var meter = style.DefaultMeter;
+        if (!string.IsNullOrEmpty(body.TuneType))
+        {
+            var tuneType = style.GetTuneType(body.TuneType);
+            if (tuneType != null)
             {
-                var cached = await TryGetCachedCompositionAsync(cacheKey, cancellationToken);
-                if (cached != null)
-                {
-                    _logger.LogDebug("Cache hit for composition {CacheKey}", cacheKey);
-                    stopwatch.Stop();
-                    // Update generation time to reflect cache hit
-                    cached.GenerationTimeMs = (int)stopwatch.ElapsedMilliseconds;
-                    return (StatusCodes.OK, cached);
-                }
+                meter = tuneType.Meter;
             }
+        }
 
-            // Set up random generator
-            var seed = body.Seed ?? Environment.TickCount;
-            var random = new Random(seed);
+        // Calculate ticks (use configuration for MIDI resolution)
+        var ticksPerBeat = _configuration.DefaultTicksPerBeat;
+        var totalBars = body.DurationBars;
 
-            // Determine key signature (PitchClass has x-sdk-type, no conversion needed)
-            var key = body.Key != null
-                ? new Scale(body.Key.Tonic, ToModeType(body.Key.Mode))
-                : new Scale(
-                    (PitchClass)random.Next(12),
-                    style.ModeDistribution.Select(random));
+        // Use Storyteller for narrative-driven composition
+        var storyteller = new Storyteller();
+        var compositionRequest = BuildStorytellerRequest(body, totalBars);
+        var storyResult = storyteller.Compose(compositionRequest);
 
-            // Determine tempo
-            var tempo = body.Tempo > 0 ? body.Tempo : style.DefaultTempo;
+        _logger.LogDebug(
+            "Storyteller generated {IntentCount} intents across {SectionCount} sections using template {TemplateId}",
+            storyResult.TotalIntents,
+            storyResult.Sections.Count,
+            storyResult.Narrative.Id);
 
-            // Get meter from tune type or style default
-            var meter = style.DefaultMeter;
-            if (!string.IsNullOrEmpty(body.TuneType))
+        // Generate chord progression guided by Storyteller intents
+        var progressionGenerator = new ProgressionGenerator(seed);
+        var chordsPerBar = _configuration.DefaultChordsPerBar;
+        var progression = progressionGenerator.Generate(key, totalBars * chordsPerBar);
+
+        // Voice the chords
+        var voiceLeader = new VoiceLeader();
+        var (voicings, _) = voiceLeader.Voice(
+            progression.Select(p => p.Chord).ToList(),
+            voiceCount: _configuration.DefaultVoiceCount);
+
+        // Generate melody over the harmony with Storyteller-guided contour
+        var melodyOptions = new MelodyOptions
+        {
+            Range = PitchRange.Vocal.Soprano,
+            Contour = GetContourFromStoryResult(storyResult),
+            IntervalPreferences = style.IntervalPreferences,
+            Density = GetDensityFromStoryResult(storyResult),
+            Syncopation = _configuration.DefaultMelodySyncopation,
+            TicksPerBeat = ticksPerBeat
+        };
+
+        var melodyGenerator = new MelodyGenerator(seed);
+        var melody = melodyGenerator.Generate(progression, key, melodyOptions);
+
+        // Render to MIDI-JSON
+        var midiJson = MidiJsonRenderer.RenderComposition(
+            melody,
+            voicings,
+            tempo,
+            meter,
+            key,
+            ticksPerBeat,
+            $"Generated {style.Name} Composition");
+
+        stopwatch.Stop();
+
+        // Build response with narrative metadata
+        var compositionId = Guid.NewGuid();
+        var response = new GenerateCompositionResponse
+        {
+            CompositionId = compositionId.ToString(),
+            MidiJson = midiJson,
+            GenerationTimeMs = (int)stopwatch.ElapsedMilliseconds,
+            Metadata = new CompositionMetadata
             {
-                var tuneType = style.GetTuneType(body.TuneType);
-                if (tuneType != null)
+                StyleId = body.StyleId,
+                Key = new KeySignature
                 {
-                    meter = tuneType.Meter;
-                }
-            }
-
-            // Calculate ticks
-            var ticksPerBeat = 480;
-            var totalBars = body.DurationBars;
-
-            // Use Storyteller for narrative-driven composition
-            var storyteller = new Storyteller();
-            var compositionRequest = BuildStorytellerRequest(body, totalBars);
-            var storyResult = storyteller.Compose(compositionRequest);
-
-            _logger.LogDebug(
-                "Storyteller generated {IntentCount} intents across {SectionCount} sections using template {TemplateId}",
-                storyResult.TotalIntents,
-                storyResult.Sections.Count,
-                storyResult.Narrative.Id);
-
-            // Generate chord progression guided by Storyteller intents
-            var progressionGenerator = new ProgressionGenerator(seed);
-            var chordsPerBar = 1;
-            var progression = progressionGenerator.Generate(key, totalBars * chordsPerBar);
-
-            // Voice the chords
-            var voiceLeader = new VoiceLeader();
-            var (voicings, _) = voiceLeader.Voice(
-                progression.Select(p => p.Chord).ToList(),
-                voiceCount: 4);
-
-            // Generate melody over the harmony with Storyteller-guided contour
-            var melodyOptions = new MelodyOptions
-            {
-                Range = PitchRange.Vocal.Soprano,
-                Contour = GetContourFromStoryResult(storyResult),
-                IntervalPreferences = style.IntervalPreferences,
-                Density = GetDensityFromStoryResult(storyResult),
-                Syncopation = 0.2,
-                TicksPerBeat = ticksPerBeat
-            };
-
-            var melodyGenerator = new MelodyGenerator(seed);
-            var melody = melodyGenerator.Generate(progression, key, melodyOptions);
-
-            // Render to MIDI-JSON
-            var midiJson = MidiJsonRenderer.RenderComposition(
-                melody,
-                voicings,
-                tempo,
-                meter,
-                key,
-                ticksPerBeat,
-                $"Generated {style.Name} Composition");
-
-            stopwatch.Stop();
-
-            // Build response with narrative metadata
-            var compositionId = Guid.NewGuid();
-            var response = new GenerateCompositionResponse
-            {
-                CompositionId = compositionId.ToString(),
-                MidiJson = midiJson,
-                GenerationTimeMs = (int)stopwatch.ElapsedMilliseconds,
-                Metadata = new CompositionMetadata
-                {
-                    StyleId = body.StyleId,
-                    Key = new KeySignature
-                    {
-                        Tonic = key.Root,
-                        Mode = ToApiMode(key.Mode)
-                    },
-                    Tempo = tempo,
-                    Bars = totalBars,
-                    TuneType = body.TuneType,
-                    Seed = seed
+                    Tonic = key.Root,
+                    Mode = ToApiMode(key.Mode)
                 },
-                NarrativeUsed = storyResult.Narrative.Id,
-                EmotionalJourney = BuildEmotionalJourney(storyResult),
-                TensionCurve = BuildTensionCurve(storyResult, totalBars)
-            };
+                Tempo = tempo,
+                Bars = totalBars,
+                TuneType = body.TuneType,
+                Seed = seed
+            },
+            NarrativeUsed = storyResult.Narrative.Id,
+            EmotionalJourney = BuildEmotionalJourney(storyResult),
+            TensionCurve = BuildTensionCurve(storyResult, totalBars)
+        };
 
-            // Cache deterministic compositions (explicit seed provided)
-            if (cacheKey != null)
-            {
-                await CacheCompositionAsync(cacheKey, response, cancellationToken);
-            }
-
-            return (StatusCodes.OK, response);
-        }
-        catch (Exception ex)
+        // Cache deterministic compositions (explicit seed provided)
+        if (cacheKey != null)
         {
-            _logger.LogError(ex, "Error generating composition");
-            await _messageBus.TryPublishErrorAsync(
-                "music",
-                "GenerateComposition",
-                "generation_failed",
-                ex.Message,
-                dependency: null,
-                endpoint: "post:/music/generate",
-                details: null,
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
+            await CacheCompositionAsync(cacheKey, response, cancellationToken);
         }
+
+        return (StatusCodes.OK, response);
     }
 
     /// <summary>
@@ -219,122 +201,104 @@ public partial class MusicService : IMusicService
     {
         _logger.LogDebug("Validating MIDI-JSON structure");
 
-        try
+        var errors = new List<ValidationError>();
+        var warnings = new List<string>();
+
+        // Validate tracks exist
+        if (body.MidiJson.Tracks == null || body.MidiJson.Tracks.Count == 0)
         {
-            var errors = new List<ValidationError>();
-            var warnings = new List<string>();
-
-            // Validate tracks exist
-            if (body.MidiJson.Tracks == null || body.MidiJson.Tracks.Count == 0)
+            errors.Add(new ValidationError
             {
-                errors.Add(new ValidationError
-                {
-                    Type = ValidationErrorType.Structure,
-                    Message = "MIDI-JSON must contain at least one track",
-                    Path = "tracks"
-                });
-            }
+                Type = ValidationErrorType.Structure,
+                Message = "MIDI-JSON must contain at least one track",
+                Path = "tracks"
+            });
+        }
 
-            // Validate ticks per beat
-            if (body.MidiJson.TicksPerBeat < 24 || body.MidiJson.TicksPerBeat > 960)
+        // Validate ticks per beat
+        if (body.MidiJson.TicksPerBeat < 24 || body.MidiJson.TicksPerBeat > 960)
+        {
+            errors.Add(new ValidationError
+            {
+                Type = ValidationErrorType.Range,
+                Message = "ticksPerBeat must be between 24 and 960",
+                Path = "ticksPerBeat"
+            });
+        }
+
+        // Validate each track
+        var trackIndex = 0;
+        foreach (var track in body.MidiJson.Tracks ?? [])
+        {
+            // Validate channel
+            if (track.Channel < 0 || track.Channel > 15)
             {
                 errors.Add(new ValidationError
                 {
                     Type = ValidationErrorType.Range,
-                    Message = "ticksPerBeat must be between 24 and 960",
-                    Path = "ticksPerBeat"
+                    Message = $"Track {trackIndex} channel must be 0-15",
+                    Path = $"tracks[{trackIndex}].channel"
                 });
             }
 
-            // Validate each track
-            var trackIndex = 0;
-            foreach (var track in body.MidiJson.Tracks ?? [])
+            // Validate events
+            var eventIndex = 0;
+            foreach (var evt in track.Events ?? [])
             {
-                // Validate channel
-                if (track.Channel < 0 || track.Channel > 15)
+                // Validate tick is non-negative
+                if (evt.Tick < 0)
+                {
+                    errors.Add(new ValidationError
+                    {
+                        Type = ValidationErrorType.Timing,
+                        Message = "Event tick cannot be negative",
+                        Path = $"tracks[{trackIndex}].events[{eventIndex}].tick"
+                    });
+                }
+
+                // Validate note range
+                if (evt.Note.HasValue && (evt.Note < 0 || evt.Note > 127))
                 {
                     errors.Add(new ValidationError
                     {
                         Type = ValidationErrorType.Range,
-                        Message = $"Track {trackIndex} channel must be 0-15",
-                        Path = $"tracks[{trackIndex}].channel"
+                        Message = "MIDI note must be 0-127",
+                        Path = $"tracks[{trackIndex}].events[{eventIndex}].note"
                     });
                 }
 
-                // Validate events
-                var eventIndex = 0;
-                foreach (var evt in track.Events ?? [])
+                // Validate velocity range
+                if (evt.Velocity.HasValue && (evt.Velocity < 0 || evt.Velocity > 127))
                 {
-                    // Validate tick is non-negative
-                    if (evt.Tick < 0)
+                    errors.Add(new ValidationError
                     {
-                        errors.Add(new ValidationError
-                        {
-                            Type = ValidationErrorType.Timing,
-                            Message = "Event tick cannot be negative",
-                            Path = $"tracks[{trackIndex}].events[{eventIndex}].tick"
-                        });
-                    }
-
-                    // Validate note range
-                    if (evt.Note.HasValue && (evt.Note < 0 || evt.Note > 127))
-                    {
-                        errors.Add(new ValidationError
-                        {
-                            Type = ValidationErrorType.Range,
-                            Message = "MIDI note must be 0-127",
-                            Path = $"tracks[{trackIndex}].events[{eventIndex}].note"
-                        });
-                    }
-
-                    // Validate velocity range
-                    if (evt.Velocity.HasValue && (evt.Velocity < 0 || evt.Velocity > 127))
-                    {
-                        errors.Add(new ValidationError
-                        {
-                            Type = ValidationErrorType.Range,
-                            Message = "Velocity must be 0-127",
-                            Path = $"tracks[{trackIndex}].events[{eventIndex}].velocity"
-                        });
-                    }
-
-                    // Strict mode: warn about missing duration for noteOn
-                    if (body.StrictMode && evt.Type == MidiEventType.NoteOn && !evt.Duration.HasValue)
-                    {
-                        warnings.Add($"Track {trackIndex}, event {eventIndex}: noteOn without duration (implicit noteOff required)");
-                    }
-
-                    eventIndex++;
+                        Type = ValidationErrorType.Range,
+                        Message = "Velocity must be 0-127",
+                        Path = $"tracks[{trackIndex}].events[{eventIndex}].velocity"
+                    });
                 }
 
-                trackIndex++;
+                // Strict mode: warn about missing duration for noteOn
+                if (body.StrictMode && evt.Type == MidiEventType.NoteOn && !evt.Duration.HasValue)
+                {
+                    warnings.Add($"Track {trackIndex}, event {eventIndex}: noteOn without duration (implicit noteOff required)");
+                }
+
+                eventIndex++;
             }
 
-            var response = new ValidateMidiJsonResponse
-            {
-                IsValid = errors.Count == 0,
-                Errors = errors.Count > 0 ? errors : null,
-                Warnings = warnings.Count > 0 ? warnings : null
-            };
+            trackIndex++;
+        }
 
-            await Task.CompletedTask;
-            return (StatusCodes.OK, response);
-        }
-        catch (Exception ex)
+        var response = new ValidateMidiJsonResponse
         {
-            _logger.LogError(ex, "Error validating MIDI-JSON");
-            await _messageBus.TryPublishErrorAsync(
-                "music",
-                "ValidateMidiJson",
-                "validation_failed",
-                ex.Message,
-                dependency: null,
-                endpoint: "post:/music/validate",
-                details: null,
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
+            IsValid = errors.Count == 0,
+            Errors = errors.Count > 0 ? errors : null,
+            Warnings = warnings.Count > 0 ? warnings : null
+        };
+
+        await Task.CompletedTask;
+        return (StatusCodes.OK, response);
     }
 
     /// <summary>
@@ -346,44 +310,26 @@ public partial class MusicService : IMusicService
     {
         _logger.LogDebug("Getting style {StyleId} / {StyleName}", body.StyleId, body.StyleName);
 
-        try
+        StyleDefinition? style = null;
+
+        if (!string.IsNullOrEmpty(body.StyleId))
         {
-            StyleDefinition? style = null;
-
-            if (!string.IsNullOrEmpty(body.StyleId))
-            {
-                style = BuiltInStyles.GetById(body.StyleId);
-            }
-            else if (!string.IsNullOrEmpty(body.StyleName))
-            {
-                style = BuiltInStyles.All.FirstOrDefault(s =>
-                    s.Name.Equals(body.StyleName, StringComparison.OrdinalIgnoreCase));
-            }
-
-            if (style == null)
-            {
-                return (StatusCodes.NotFound, null);
-            }
-
-            var response = ConvertToStyleResponse(style);
-            await Task.CompletedTask;
-            return (StatusCodes.OK, response);
+            style = BuiltInStyles.GetById(body.StyleId);
         }
-        catch (Exception ex)
+        else if (!string.IsNullOrEmpty(body.StyleName))
         {
-            _logger.LogError(ex, "Error getting style");
-            await _messageBus.TryPublishErrorAsync(
-                "music",
-                "GetStyle",
-                "style_lookup_failed",
-                ex.Message,
-                dependency: null,
-                endpoint: "post:/music/style/get",
-                details: null,
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
+            style = BuiltInStyles.All.FirstOrDefault(s =>
+                s.Name.Equals(body.StyleName, StringComparison.OrdinalIgnoreCase));
         }
+
+        if (style == null)
+        {
+            return (StatusCodes.NotFound, null);
+        }
+
+        var response = ConvertToStyleResponse(style);
+        await Task.CompletedTask;
+        return (StatusCodes.OK, response);
     }
 
     /// <summary>
@@ -395,57 +341,39 @@ public partial class MusicService : IMusicService
     {
         _logger.LogDebug("Listing styles with category filter {Category}", body.Category);
 
-        try
+        var styles = BuiltInStyles.All.AsEnumerable();
+
+        // Filter by category if specified
+        if (!string.IsNullOrEmpty(body.Category))
         {
-            var styles = BuiltInStyles.All.AsEnumerable();
-
-            // Filter by category if specified
-            if (!string.IsNullOrEmpty(body.Category))
-            {
-                styles = styles.Where(s =>
-                    s.Category.Equals(body.Category, StringComparison.OrdinalIgnoreCase));
-            }
-
-            var styleList = styles.ToList();
-            var total = styleList.Count;
-
-            // Apply pagination
-            var pagedStyles = styleList
-                .Skip(body.Offset)
-                .Take(body.Limit)
-                .Select(s => new StyleSummary
-                {
-                    StyleId = s.Id,
-                    Name = s.Name,
-                    Category = s.Category,
-                    Description = s.Description
-                })
-                .ToList();
-
-            var response = new ListStylesResponse
-            {
-                Styles = pagedStyles,
-                Total = total
-            };
-
-            await Task.CompletedTask;
-            return (StatusCodes.OK, response);
+            styles = styles.Where(s =>
+                s.Category.Equals(body.Category, StringComparison.OrdinalIgnoreCase));
         }
-        catch (Exception ex)
+
+        var styleList = styles.ToList();
+        var total = styleList.Count;
+
+        // Apply pagination
+        var pagedStyles = styleList
+            .Skip(body.Offset)
+            .Take(body.Limit)
+            .Select(s => new StyleSummary
+            {
+                StyleId = s.Id,
+                Name = s.Name,
+                Category = s.Category,
+                Description = s.Description
+            })
+            .ToList();
+
+        var response = new ListStylesResponse
         {
-            _logger.LogError(ex, "Error listing styles");
-            await _messageBus.TryPublishErrorAsync(
-                "music",
-                "ListStyles",
-                "list_styles_failed",
-                ex.Message,
-                dependency: null,
-                endpoint: "post:/music/style/list",
-                details: null,
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
+            Styles = pagedStyles,
+            Total = total
+        };
+
+        await Task.CompletedTask;
+        return (StatusCodes.OK, response);
     }
 
     /// <summary>
@@ -457,42 +385,24 @@ public partial class MusicService : IMusicService
     {
         _logger.LogDebug("Creating style {Name}", body.Name);
 
-        try
+        // For now, return the style definition as if it was created
+        // In production, this would persist to state store
+        var response = new StyleDefinitionResponse
         {
-            // For now, return the style definition as if it was created
-            // In production, this would persist to state store
-            var response = new StyleDefinitionResponse
-            {
-                StyleId = body.Name.ToLowerInvariant().Replace(" ", "-"),
-                Name = body.Name,
-                Category = body.Category,
-                Description = body.Description,
-                ModeDistribution = body.ModeDistribution,
-                IntervalPreferences = body.IntervalPreferences,
-                FormTemplates = body.FormTemplates?.ToList(),
-                TuneTypes = body.TuneTypes?.ToList(),
-                DefaultTempo = body.DefaultTempo,
-                HarmonyStyle = body.HarmonyStyle
-            };
+            StyleId = body.Name.ToLowerInvariant().Replace(" ", "-"),
+            Name = body.Name,
+            Category = body.Category,
+            Description = body.Description,
+            ModeDistribution = body.ModeDistribution,
+            IntervalPreferences = body.IntervalPreferences,
+            FormTemplates = body.FormTemplates?.ToList(),
+            TuneTypes = body.TuneTypes?.ToList(),
+            DefaultTempo = body.DefaultTempo,
+            HarmonyStyle = body.HarmonyStyle
+        };
 
-            await Task.CompletedTask;
-            return (StatusCodes.OK, response);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error creating style");
-            await _messageBus.TryPublishErrorAsync(
-                "music",
-                "CreateStyle",
-                "create_style_failed",
-                ex.Message,
-                dependency: null,
-                endpoint: "post:/music/style/create",
-                details: null,
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
+        await Task.CompletedTask;
+        return (StatusCodes.OK, response);
     }
 
     /// <summary>
@@ -504,70 +414,52 @@ public partial class MusicService : IMusicService
     {
         _logger.LogDebug("Generating progression in {Tonic} {Mode}", body.Key.Tonic, body.Key.Mode);
 
-        try
+        var seed = body.Seed ?? Environment.TickCount;
+        var scale = new Scale(body.Key.Tonic, ToModeType(body.Key.Mode));
+        var generator = new ProgressionGenerator(seed);
+
+        var length = body.Length > 0 ? body.Length : 8;
+        var progression = generator.Generate(scale, length);
+
+        // Convert to API response
+        var ticksPerBeat = _configuration.DefaultTicksPerBeat;
+        var beatsPerChord = _configuration.DefaultBeatsPerChord;
+        var currentTick = 0;
+
+        var chordEvents = new List<ChordEvent>();
+        foreach (var chord in progression)
         {
-            var seed = body.Seed ?? Environment.TickCount;
-            var scale = new Scale(body.Key.Tonic, ToModeType(body.Key.Mode));
-            var generator = new ProgressionGenerator(seed);
-
-            var length = body.Length > 0 ? body.Length : 8;
-            var progression = generator.Generate(scale, length);
-
-            // Convert to API response
-            var ticksPerBeat = 480;
-            var beatsPerChord = 4.0;
-            var currentTick = 0;
-
-            var chordEvents = new List<ChordEvent>();
-            foreach (var chord in progression)
+            var durationTicks = (int)(beatsPerChord * ticksPerBeat);
+            chordEvents.Add(new ChordEvent
             {
-                var durationTicks = (int)(beatsPerChord * ticksPerBeat);
-                chordEvents.Add(new ChordEvent
+                Chord = new ChordSymbol
                 {
-                    Chord = new ChordSymbol
-                    {
-                        Root = chord.Chord.Root,
-                        Quality = ToApiChordQuality(chord.Chord.Quality),
-                        Bass = chord.Chord.Bass
-                    },
-                    StartTick = currentTick,
-                    DurationTicks = durationTicks,
-                    RomanNumeral = chord.RomanNumeral
-                });
-                currentTick += durationTicks;
-            }
-
-            // Build analysis
-            var analysis = new ProgressionAnalysis
-            {
-                RomanNumerals = progression.Select(p => p.RomanNumeral).ToList(),
-                FunctionalAnalysis = progression.Select(p => GetFunctionalAnalysis(p.Degree)).ToList()
-            };
-
-            var response = new GenerateProgressionResponse
-            {
-                Chords = chordEvents,
-                Analysis = analysis
-            };
-
-            await Task.CompletedTask;
-            return (StatusCodes.OK, response);
+                    Root = chord.Chord.Root,
+                    Quality = ToApiChordQuality(chord.Chord.Quality),
+                    Bass = chord.Chord.Bass
+                },
+                StartTick = currentTick,
+                DurationTicks = durationTicks,
+                RomanNumeral = chord.RomanNumeral
+            });
+            currentTick += durationTicks;
         }
-        catch (Exception ex)
+
+        // Build analysis
+        var analysis = new ProgressionAnalysis
         {
-            _logger.LogError(ex, "Error generating progression");
-            await _messageBus.TryPublishErrorAsync(
-                "music",
-                "GenerateProgression",
-                "progression_generation_failed",
-                ex.Message,
-                dependency: null,
-                endpoint: "post:/music/theory/progression",
-                details: null,
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
+            RomanNumerals = progression.Select(p => p.RomanNumeral).ToList(),
+            FunctionalAnalysis = progression.Select(p => GetFunctionalAnalysis(p.Degree)).ToList()
+        };
+
+        var response = new GenerateProgressionResponse
+        {
+            Chords = chordEvents,
+            Analysis = analysis
+        };
+
+        await Task.CompletedTask;
+        return (StatusCodes.OK, response);
     }
 
     /// <summary>
@@ -579,100 +471,82 @@ public partial class MusicService : IMusicService
     {
         _logger.LogDebug("Generating melody over {ChordCount} chords", body.Harmony?.Count ?? 0);
 
-        try
+        var seed = body.Seed ?? Environment.TickCount;
+
+        // Infer key from first chord (or default to C major)
+        var firstChord = body.Harmony?.FirstOrDefault();
+        var root = firstChord?.Chord.Root ?? PitchClass.C;
+        var mode = ModeType.Major;
+        var scale = new Scale(root, mode);
+
+        // Convert harmony to SDK progression (PitchClass has x-sdk-type, no conversion needed)
+        var progression = body.Harmony?.Select((ce, i) => new ProgressionChord(
+            new Chord(ce.Chord.Root, ToChordQuality(ce.Chord.Quality)),
+            ce.RomanNumeral ?? GetRomanNumeral(i),
+            i + 1,
+            ce.DurationTicks / 480.0
+        )).ToList() ?? [];
+
+        // Set up melody options (Pitch and PitchRange have x-sdk-type, no conversion needed)
+        var range = body.Range != null
+            ? new PitchRange(
+                new Pitch(body.Range.Value.Low.PitchClass, body.Range.Value.Low.Octave),
+                new Pitch(body.Range.Value.High.PitchClass, body.Range.Value.High.Octave))
+            : PitchRange.Vocal.Soprano;
+
+        var contour = body.Contour.HasValue
+            ? ToContourShape(body.Contour.Value)
+            : ContourShape.Arch;
+
+        var options = new MelodyOptions
         {
-            var seed = body.Seed ?? Environment.TickCount;
+            Range = range,
+            Contour = contour,
+            Density = body.RhythmDensity ?? _configuration.DefaultMelodyDensity,
+            Syncopation = body.Syncopation ?? _configuration.DefaultMelodySyncopation,
+            TicksPerBeat = _configuration.DefaultTicksPerBeat
+        };
 
-            // Infer key from first chord (or default to C major)
-            var firstChord = body.Harmony?.FirstOrDefault();
-            var root = firstChord?.Chord.Root ?? PitchClass.C;
-            var mode = ModeType.Major;
-            var scale = new Scale(root, mode);
+        var generator = new MelodyGenerator(seed);
+        var melody = generator.Generate(progression, scale, options);
 
-            // Convert harmony to SDK progression (PitchClass has x-sdk-type, no conversion needed)
-            var progression = body.Harmony?.Select((ce, i) => new ProgressionChord(
-                new Chord(ce.Chord.Root, ToChordQuality(ce.Chord.Quality)),
-                ce.RomanNumeral ?? GetRomanNumeral(i),
-                i + 1,
-                ce.DurationTicks / 480.0
-            )).ToList() ?? [];
+        // Convert to API response (Pitch is SDK type via x-sdk-type)
+        var notes = melody.Select(n => new NoteEvent
+        {
+            Pitch = n.Pitch,
+            StartTick = n.StartTick,
+            DurationTicks = n.DurationTicks,
+            Velocity = n.Velocity
+        }).ToList();
 
-            // Set up melody options (Pitch and PitchRange have x-sdk-type, no conversion needed)
-            var range = body.Range != null
-                ? new PitchRange(
-                    new Pitch(body.Range.Value.Low.PitchClass, body.Range.Value.Low.Octave),
-                    new Pitch(body.Range.Value.High.PitchClass, body.Range.Value.High.Octave))
-                : PitchRange.Vocal.Soprano;
+        // Build analysis
+        var analysis = new MelodyAnalysis
+        {
+            NoteCount = notes.Count,
+            Contour = contour.ToString().ToLowerInvariant(),
+            AverageNoteDuration = notes.Count > 0
+                ? (float)notes.Average(n => n.DurationTicks)
+                : 0
+        };
 
-            var contour = body.Contour.HasValue
-                ? ToContourShape(body.Contour.Value)
-                : ContourShape.Arch;
-
-            var options = new MelodyOptions
+        if (notes.Count > 0)
+        {
+            var minPitch = notes.MinBy(n => n.Pitch.MidiNumber);
+            var maxPitch = notes.MaxBy(n => n.Pitch.MidiNumber);
+            if (minPitch != null && maxPitch != null)
             {
-                Range = range,
-                Contour = contour,
-                Density = body.RhythmDensity ?? 0.7,
-                Syncopation = body.Syncopation ?? 0.2,
-                TicksPerBeat = 480
-            };
-
-            var generator = new MelodyGenerator(seed);
-            var melody = generator.Generate(progression, scale, options);
-
-            // Convert to API response (Pitch is SDK type via x-sdk-type)
-            var notes = melody.Select(n => new NoteEvent
-            {
-                Pitch = n.Pitch,
-                StartTick = n.StartTick,
-                DurationTicks = n.DurationTicks,
-                Velocity = n.Velocity
-            }).ToList();
-
-            // Build analysis
-            var analysis = new MelodyAnalysis
-            {
-                NoteCount = notes.Count,
-                Contour = contour.ToString().ToLowerInvariant(),
-                AverageNoteDuration = notes.Count > 0
-                    ? (float)notes.Average(n => n.DurationTicks)
-                    : 0
-            };
-
-            if (notes.Count > 0)
-            {
-                var minPitch = notes.MinBy(n => n.Pitch.MidiNumber);
-                var maxPitch = notes.MaxBy(n => n.Pitch.MidiNumber);
-                if (minPitch != null && maxPitch != null)
-                {
-                    analysis.Range = new PitchRange(minPitch.Pitch, maxPitch.Pitch);
-                }
+                analysis.Range = new PitchRange(minPitch.Pitch, maxPitch.Pitch);
             }
-
-            var response = new GenerateMelodyResponse
-            {
-                Notes = notes,
-                Analysis = analysis
-            };
-
-            await Task.CompletedTask;
-            return (StatusCodes.OK, response);
         }
-        catch (Exception ex)
+
+        var response = new GenerateMelodyResponse
         {
-            _logger.LogError(ex, "Error generating melody");
-            await _messageBus.TryPublishErrorAsync(
-                "music",
-                "GenerateMelody",
-                "melody_generation_failed",
-                ex.Message,
-                dependency: null,
-                endpoint: "post:/music/theory/melody",
-                details: null,
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
+            Notes = notes,
+            Analysis = analysis
+        };
+
+        await Task.CompletedTask;
+        return (StatusCodes.OK, response);
     }
 
     /// <summary>
@@ -684,68 +558,50 @@ public partial class MusicService : IMusicService
     {
         _logger.LogDebug("Applying voice leading to {ChordCount} chords", body.Chords?.Count ?? 0);
 
-        try
+        // Convert API chords to SDK chords (PitchClass has x-sdk-type, no conversion needed)
+        var chords = body.Chords?.Select(cs =>
+            new Chord(cs.Root, ToChordQuality(cs.Quality), cs.Bass)
+        ).ToList() ?? [];
+
+        // Set up voice leading rules
+        var rules = new VoiceLeadingRules
         {
-            // Convert API chords to SDK chords (PitchClass has x-sdk-type, no conversion needed)
-            var chords = body.Chords?.Select(cs =>
-                new Chord(cs.Root, ToChordQuality(cs.Quality), cs.Bass)
-            ).ToList() ?? [];
+            AvoidParallelFifths = body.Rules?.AvoidParallelFifths ?? true,
+            AvoidParallelOctaves = body.Rules?.AvoidParallelOctaves ?? true,
+            PreferStepwiseMotion = body.Rules?.PreferStepwiseMotion ?? true,
+            AvoidVoiceCrossing = body.Rules?.AvoidVoiceCrossing ?? true,
+            MaxLeap = body.Rules?.MaxLeap ?? 7
+        };
 
-            // Set up voice leading rules
-            var rules = new VoiceLeadingRules
-            {
-                AvoidParallelFifths = body.Rules?.AvoidParallelFifths ?? true,
-                AvoidParallelOctaves = body.Rules?.AvoidParallelOctaves ?? true,
-                PreferStepwiseMotion = body.Rules?.PreferStepwiseMotion ?? true,
-                AvoidVoiceCrossing = body.Rules?.AvoidVoiceCrossing ?? true,
-                MaxLeap = body.Rules?.MaxLeap ?? 7
-            };
+        var voiceLeader = new VoiceLeader(rules);
 
-            var voiceLeader = new VoiceLeader(rules);
+        // Voice the chords (returns voicings and violations together)
+        var (voicings, sdkViolations) = voiceLeader.Voice(chords, voiceCount: _configuration.DefaultVoiceCount);
 
-            // Voice the chords (returns voicings and violations together)
-            var (voicings, sdkViolations) = voiceLeader.Voice(chords, voiceCount: 4);
+        // VoiceLeadingViolation and Pitch have x-sdk-type, so SDK types are used directly
 
-            // VoiceLeadingViolation and Pitch have x-sdk-type, so SDK types are used directly
-
-            // Convert voicings to API response
-            var voicedChords = new List<VoicedChord>();
-            for (int i = 0; i < voicings.Count && i < (body.Chords?.Count ?? 0); i++)
-            {
-                var original = body.Chords?.ElementAt(i);
-                if (original == null) continue;
-
-                voicedChords.Add(new VoicedChord
-                {
-                    Symbol = original,
-                    Pitches = voicings[i].Pitches.ToList()
-                });
-            }
-
-            var response = new VoiceLeadResponse
-            {
-                Voicings = voicedChords,
-                Violations = sdkViolations.Count > 0 ? sdkViolations.ToList() : null
-            };
-
-            await Task.CompletedTask;
-            return (StatusCodes.OK, response);
-        }
-        catch (Exception ex)
+        // Convert voicings to API response
+        var voicedChords = new List<VoicedChord>();
+        for (int i = 0; i < voicings.Count && i < (body.Chords?.Count ?? 0); i++)
         {
-            _logger.LogError(ex, "Error applying voice leading");
-            await _messageBus.TryPublishErrorAsync(
-                "music",
-                "ApplyVoiceLeading",
-                "voice_leading_failed",
-                ex.Message,
-                dependency: null,
-                endpoint: "post:/music/theory/voice-lead",
-                details: null,
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
+            var original = body.Chords?.ElementAt(i);
+            if (original == null) continue;
+
+            voicedChords.Add(new VoicedChord
+            {
+                Symbol = original,
+                Pitches = voicings[i].Pitches.ToList()
+            });
         }
+
+        var response = new VoiceLeadResponse
+        {
+            Voicings = voicedChords,
+            Violations = sdkViolations.Count > 0 ? sdkViolations.ToList() : null
+        };
+
+        await Task.CompletedTask;
+        return (StatusCodes.OK, response);
     }
 
     #region Private Helpers
@@ -759,7 +615,7 @@ public partial class MusicService : IMusicService
     /// Builds a Storyteller CompositionRequest from the API request.
     /// Maps mood to narrative template and emotional preset per design spec.
     /// </summary>
-    private static CompositionRequest BuildStorytellerRequest(
+    private CompositionRequest BuildStorytellerRequest(
         GenerateCompositionRequest body,
         int totalBars)
     {
@@ -831,38 +687,43 @@ public partial class MusicService : IMusicService
     }
 
     /// <summary>
-    /// Converts API EmotionalStateInput to SDK EmotionalState.
+    /// Converts API EmotionalStateInput to SDK EmotionalState using configuration defaults.
     /// </summary>
-    private static EmotionalState ToSdkEmotionalState(EmotionalStateInput input)
+    private EmotionalState ToSdkEmotionalState(EmotionalStateInput input)
     {
         return new EmotionalState(
-            input.Tension ?? 0.2,
-            input.Brightness ?? 0.5,
-            input.Energy ?? 0.5,
-            input.Warmth ?? 0.5,
-            input.Stability ?? 0.8,
-            input.Valence ?? 0.5);
+            input.Tension ?? _configuration.DefaultEmotionalTension,
+            input.Brightness ?? _configuration.DefaultEmotionalBrightness,
+            input.Energy ?? _configuration.DefaultEmotionalEnergy,
+            input.Warmth ?? _configuration.DefaultEmotionalWarmth,
+            input.Stability ?? _configuration.DefaultEmotionalStability,
+            input.Valence ?? _configuration.DefaultEmotionalValence);
     }
 
     /// <summary>
     /// Determines melody contour from Storyteller result.
     /// Maps narrative arc to contour shape.
+    /// Uses configuration for thresholds per IMPLEMENTATION TENETS (no hardcoded magic numbers).
     /// </summary>
-    private static ContourShape GetContourFromStoryResult(CompositionResult result)
+    private ContourShape GetContourFromStoryResult(CompositionResult result)
     {
         // Use the emotional trajectory to determine contour
         var finalTension = result.FinalState.Emotional.Tension;
         var initialTension = result.Sections.FirstOrDefault()?.Plan.Goal.TargetState
             .Get<double>(WorldState.Keys.Tension);
 
+        // Use configuration values for thresholds (T21 compliant)
+        var defaultTension = _configuration.ContourDefaultTension;
+        var tensionThreshold = _configuration.ContourTensionThreshold;
+
         // If tension generally increases, use ascending contour
-        if (finalTension > (initialTension ?? 0.5) + 0.2)
+        if (finalTension > (initialTension ?? defaultTension) + tensionThreshold)
         {
             return ContourShape.Ascending;
         }
 
         // If tension generally decreases, use descending contour
-        if (finalTension < (initialTension ?? 0.5) - 0.2)
+        if (finalTension < (initialTension ?? defaultTension) - tensionThreshold)
         {
             return ContourShape.Descending;
         }
@@ -886,17 +747,18 @@ public partial class MusicService : IMusicService
     /// <summary>
     /// Determines melody density from Storyteller result.
     /// Higher energy phases get denser melodies.
+    /// Uses configuration for scaling per IMPLEMENTATION TENETS (no hardcoded magic numbers).
     /// </summary>
-    private static double GetDensityFromStoryResult(CompositionResult result)
+    private double GetDensityFromStoryResult(CompositionResult result)
     {
         // Average energy across all phases
         var avgEnergy = result.Sections.Count > 0
             ? result.Sections.Average(s =>
                 s.Plan.Goal.TargetState.Get<double>(WorldState.Keys.Energy))
-            : 0.5;
+            : _configuration.DefaultEmotionalEnergy;
 
-        // Map energy (0-1) to density (0.4-0.9)
-        return 0.4 + avgEnergy * 0.5;
+        // Map energy to density using configuration (T21 compliant)
+        return _configuration.DensityMinimum + avgEnergy * _configuration.DensityEnergyMultiplier;
     }
 
     /// <summary>

@@ -100,7 +100,7 @@ public partial class MessagingController
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Custom headers to include with the message"
+                    "description": "Caller-provided custom headers included with the message. No Bannou plugin reads specific keys from this field by convention."
                 }
             }
         }
@@ -235,8 +235,8 @@ public partial class MessagingController
                 },
                 "autoAck": {
                     "type": "boolean",
-                    "default": false,
-                    "description": "Whether messages should be auto-acknowledged"
+                    "nullable": true,
+                    "description": "Whether messages should be auto-acknowledged (null uses DefaultAutoAck config)"
                 },
                 "prefetchCount": {
                     "type": "integer",

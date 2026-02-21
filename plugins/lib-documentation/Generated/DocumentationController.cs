@@ -387,10 +387,12 @@ public interface IDocumentationController : BeyondImmersion.BannouService.Contro
 public partial class DocumentationController : Microsoft.AspNetCore.Mvc.ControllerBase
 {
     private IDocumentationService _implementation;
+    private BeyondImmersion.BannouService.Services.ITelemetryProvider _telemetryProvider;
 
-    public DocumentationController(IDocumentationService implementation)
+    public DocumentationController(IDocumentationService implementation, BeyondImmersion.BannouService.Services.ITelemetryProvider telemetryProvider)
     {
         _implementation = implementation;
+        _telemetryProvider = telemetryProvider;
     }
 
     /// <summary>
@@ -448,8 +450,40 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<QueryDocumentationResponse>> QueryDocumentation([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] QueryDocumentationRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
-        var (statusCode, result) = await _implementation.QueryDocumentationAsync(body, cancellationToken);
-        return ConvertToActionResult(statusCode, result);
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.documentation",
+            "DocumentationController.QueryDocumentation",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "documentation/query");
+        try
+        {
+
+            var (statusCode, result) = await _implementation.QueryDocumentationAsync(body, cancellationToken);
+            return ConvertToActionResult(statusCode, result);
+        }
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<DocumentationController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:documentation/query");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
+            return StatusCode(503);
+        }
+        catch (System.Exception ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<DocumentationController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogError(logger_, ex_, "Unexpected error in {Endpoint}", "post:documentation/query");
+            var messageBus_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<BeyondImmersion.BannouService.Services.IMessageBus>(HttpContext.RequestServices);
+            await messageBus_.TryPublishErrorAsync(
+                "documentation",
+                "QueryDocumentation",
+                "unexpected_exception",
+                ex_.Message,
+                endpoint: "post:documentation/query",
+                stack: ex_.StackTrace,
+                cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
+            return StatusCode(500);
+        }
     }
 
     /// <summary>
@@ -465,8 +499,40 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<GetDocumentResponse>> GetDocument([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] GetDocumentRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
-        var (statusCode, result) = await _implementation.GetDocumentAsync(body, cancellationToken);
-        return ConvertToActionResult(statusCode, result);
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.documentation",
+            "DocumentationController.GetDocument",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "documentation/get");
+        try
+        {
+
+            var (statusCode, result) = await _implementation.GetDocumentAsync(body, cancellationToken);
+            return ConvertToActionResult(statusCode, result);
+        }
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<DocumentationController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:documentation/get");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
+            return StatusCode(503);
+        }
+        catch (System.Exception ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<DocumentationController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogError(logger_, ex_, "Unexpected error in {Endpoint}", "post:documentation/get");
+            var messageBus_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<BeyondImmersion.BannouService.Services.IMessageBus>(HttpContext.RequestServices);
+            await messageBus_.TryPublishErrorAsync(
+                "documentation",
+                "GetDocument",
+                "unexpected_exception",
+                ex_.Message,
+                endpoint: "post:documentation/get",
+                stack: ex_.StackTrace,
+                cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
+            return StatusCode(500);
+        }
     }
 
     /// <summary>
@@ -482,8 +548,40 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SearchDocumentationResponse>> SearchDocumentation([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] SearchDocumentationRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
-        var (statusCode, result) = await _implementation.SearchDocumentationAsync(body, cancellationToken);
-        return ConvertToActionResult(statusCode, result);
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.documentation",
+            "DocumentationController.SearchDocumentation",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "documentation/search");
+        try
+        {
+
+            var (statusCode, result) = await _implementation.SearchDocumentationAsync(body, cancellationToken);
+            return ConvertToActionResult(statusCode, result);
+        }
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<DocumentationController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:documentation/search");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
+            return StatusCode(503);
+        }
+        catch (System.Exception ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<DocumentationController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogError(logger_, ex_, "Unexpected error in {Endpoint}", "post:documentation/search");
+            var messageBus_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<BeyondImmersion.BannouService.Services.IMessageBus>(HttpContext.RequestServices);
+            await messageBus_.TryPublishErrorAsync(
+                "documentation",
+                "SearchDocumentation",
+                "unexpected_exception",
+                ex_.Message,
+                endpoint: "post:documentation/search",
+                stack: ex_.StackTrace,
+                cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
+            return StatusCode(500);
+        }
     }
 
     /// <summary>
@@ -499,8 +597,40 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ListDocumentsResponse>> ListDocuments([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] ListDocumentsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
-        var (statusCode, result) = await _implementation.ListDocumentsAsync(body, cancellationToken);
-        return ConvertToActionResult(statusCode, result);
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.documentation",
+            "DocumentationController.ListDocuments",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "documentation/list");
+        try
+        {
+
+            var (statusCode, result) = await _implementation.ListDocumentsAsync(body, cancellationToken);
+            return ConvertToActionResult(statusCode, result);
+        }
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<DocumentationController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:documentation/list");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
+            return StatusCode(503);
+        }
+        catch (System.Exception ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<DocumentationController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogError(logger_, ex_, "Unexpected error in {Endpoint}", "post:documentation/list");
+            var messageBus_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<BeyondImmersion.BannouService.Services.IMessageBus>(HttpContext.RequestServices);
+            await messageBus_.TryPublishErrorAsync(
+                "documentation",
+                "ListDocuments",
+                "unexpected_exception",
+                ex_.Message,
+                endpoint: "post:documentation/list",
+                stack: ex_.StackTrace,
+                cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
+            return StatusCode(500);
+        }
     }
 
     /// <summary>
@@ -516,8 +646,40 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SuggestRelatedResponse>> SuggestRelatedTopics([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] SuggestRelatedRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
-        var (statusCode, result) = await _implementation.SuggestRelatedTopicsAsync(body, cancellationToken);
-        return ConvertToActionResult(statusCode, result);
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.documentation",
+            "DocumentationController.SuggestRelatedTopics",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "documentation/suggest");
+        try
+        {
+
+            var (statusCode, result) = await _implementation.SuggestRelatedTopicsAsync(body, cancellationToken);
+            return ConvertToActionResult(statusCode, result);
+        }
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<DocumentationController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:documentation/suggest");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
+            return StatusCode(503);
+        }
+        catch (System.Exception ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<DocumentationController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogError(logger_, ex_, "Unexpected error in {Endpoint}", "post:documentation/suggest");
+            var messageBus_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<BeyondImmersion.BannouService.Services.IMessageBus>(HttpContext.RequestServices);
+            await messageBus_.TryPublishErrorAsync(
+                "documentation",
+                "SuggestRelatedTopics",
+                "unexpected_exception",
+                ex_.Message,
+                endpoint: "post:documentation/suggest",
+                stack: ex_.StackTrace,
+                cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
+            return StatusCode(500);
+        }
     }
 
     /// <summary>
@@ -529,8 +691,40 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CreateDocumentResponse>> CreateDocument([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] CreateDocumentRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
-        var (statusCode, result) = await _implementation.CreateDocumentAsync(body, cancellationToken);
-        return ConvertToActionResult(statusCode, result);
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.documentation",
+            "DocumentationController.CreateDocument",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "documentation/create");
+        try
+        {
+
+            var (statusCode, result) = await _implementation.CreateDocumentAsync(body, cancellationToken);
+            return ConvertToActionResult(statusCode, result);
+        }
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<DocumentationController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:documentation/create");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
+            return StatusCode(503);
+        }
+        catch (System.Exception ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<DocumentationController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogError(logger_, ex_, "Unexpected error in {Endpoint}", "post:documentation/create");
+            var messageBus_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<BeyondImmersion.BannouService.Services.IMessageBus>(HttpContext.RequestServices);
+            await messageBus_.TryPublishErrorAsync(
+                "documentation",
+                "CreateDocument",
+                "unexpected_exception",
+                ex_.Message,
+                endpoint: "post:documentation/create",
+                stack: ex_.StackTrace,
+                cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
+            return StatusCode(500);
+        }
     }
 
     /// <summary>
@@ -542,8 +736,40 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<UpdateDocumentResponse>> UpdateDocument([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] UpdateDocumentRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
-        var (statusCode, result) = await _implementation.UpdateDocumentAsync(body, cancellationToken);
-        return ConvertToActionResult(statusCode, result);
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.documentation",
+            "DocumentationController.UpdateDocument",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "documentation/update");
+        try
+        {
+
+            var (statusCode, result) = await _implementation.UpdateDocumentAsync(body, cancellationToken);
+            return ConvertToActionResult(statusCode, result);
+        }
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<DocumentationController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:documentation/update");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
+            return StatusCode(503);
+        }
+        catch (System.Exception ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<DocumentationController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogError(logger_, ex_, "Unexpected error in {Endpoint}", "post:documentation/update");
+            var messageBus_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<BeyondImmersion.BannouService.Services.IMessageBus>(HttpContext.RequestServices);
+            await messageBus_.TryPublishErrorAsync(
+                "documentation",
+                "UpdateDocument",
+                "unexpected_exception",
+                ex_.Message,
+                endpoint: "post:documentation/update",
+                stack: ex_.StackTrace,
+                cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
+            return StatusCode(500);
+        }
     }
 
     /// <summary>
@@ -559,8 +785,40 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<DeleteDocumentResponse>> DeleteDocument([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] DeleteDocumentRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
-        var (statusCode, result) = await _implementation.DeleteDocumentAsync(body, cancellationToken);
-        return ConvertToActionResult(statusCode, result);
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.documentation",
+            "DocumentationController.DeleteDocument",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "documentation/delete");
+        try
+        {
+
+            var (statusCode, result) = await _implementation.DeleteDocumentAsync(body, cancellationToken);
+            return ConvertToActionResult(statusCode, result);
+        }
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<DocumentationController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:documentation/delete");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
+            return StatusCode(503);
+        }
+        catch (System.Exception ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<DocumentationController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogError(logger_, ex_, "Unexpected error in {Endpoint}", "post:documentation/delete");
+            var messageBus_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<BeyondImmersion.BannouService.Services.IMessageBus>(HttpContext.RequestServices);
+            await messageBus_.TryPublishErrorAsync(
+                "documentation",
+                "DeleteDocument",
+                "unexpected_exception",
+                ex_.Message,
+                endpoint: "post:documentation/delete",
+                stack: ex_.StackTrace,
+                cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
+            return StatusCode(500);
+        }
     }
 
     /// <summary>
@@ -576,8 +834,40 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RecoverDocumentResponse>> RecoverDocument([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] RecoverDocumentRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
-        var (statusCode, result) = await _implementation.RecoverDocumentAsync(body, cancellationToken);
-        return ConvertToActionResult(statusCode, result);
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.documentation",
+            "DocumentationController.RecoverDocument",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "documentation/recover");
+        try
+        {
+
+            var (statusCode, result) = await _implementation.RecoverDocumentAsync(body, cancellationToken);
+            return ConvertToActionResult(statusCode, result);
+        }
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<DocumentationController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:documentation/recover");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
+            return StatusCode(503);
+        }
+        catch (System.Exception ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<DocumentationController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogError(logger_, ex_, "Unexpected error in {Endpoint}", "post:documentation/recover");
+            var messageBus_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<BeyondImmersion.BannouService.Services.IMessageBus>(HttpContext.RequestServices);
+            await messageBus_.TryPublishErrorAsync(
+                "documentation",
+                "RecoverDocument",
+                "unexpected_exception",
+                ex_.Message,
+                endpoint: "post:documentation/recover",
+                stack: ex_.StackTrace,
+                cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
+            return StatusCode(500);
+        }
     }
 
     /// <summary>
@@ -593,8 +883,40 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<BulkUpdateResponse>> BulkUpdateDocuments([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] BulkUpdateRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
-        var (statusCode, result) = await _implementation.BulkUpdateDocumentsAsync(body, cancellationToken);
-        return ConvertToActionResult(statusCode, result);
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.documentation",
+            "DocumentationController.BulkUpdateDocuments",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "documentation/bulk-update");
+        try
+        {
+
+            var (statusCode, result) = await _implementation.BulkUpdateDocumentsAsync(body, cancellationToken);
+            return ConvertToActionResult(statusCode, result);
+        }
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<DocumentationController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:documentation/bulk-update");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
+            return StatusCode(503);
+        }
+        catch (System.Exception ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<DocumentationController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogError(logger_, ex_, "Unexpected error in {Endpoint}", "post:documentation/bulk-update");
+            var messageBus_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<BeyondImmersion.BannouService.Services.IMessageBus>(HttpContext.RequestServices);
+            await messageBus_.TryPublishErrorAsync(
+                "documentation",
+                "BulkUpdateDocuments",
+                "unexpected_exception",
+                ex_.Message,
+                endpoint: "post:documentation/bulk-update",
+                stack: ex_.StackTrace,
+                cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
+            return StatusCode(500);
+        }
     }
 
     /// <summary>
@@ -610,8 +932,40 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<BulkDeleteResponse>> BulkDeleteDocuments([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] BulkDeleteRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
-        var (statusCode, result) = await _implementation.BulkDeleteDocumentsAsync(body, cancellationToken);
-        return ConvertToActionResult(statusCode, result);
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.documentation",
+            "DocumentationController.BulkDeleteDocuments",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "documentation/bulk-delete");
+        try
+        {
+
+            var (statusCode, result) = await _implementation.BulkDeleteDocumentsAsync(body, cancellationToken);
+            return ConvertToActionResult(statusCode, result);
+        }
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<DocumentationController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:documentation/bulk-delete");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
+            return StatusCode(503);
+        }
+        catch (System.Exception ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<DocumentationController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogError(logger_, ex_, "Unexpected error in {Endpoint}", "post:documentation/bulk-delete");
+            var messageBus_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<BeyondImmersion.BannouService.Services.IMessageBus>(HttpContext.RequestServices);
+            await messageBus_.TryPublishErrorAsync(
+                "documentation",
+                "BulkDeleteDocuments",
+                "unexpected_exception",
+                ex_.Message,
+                endpoint: "post:documentation/bulk-delete",
+                stack: ex_.StackTrace,
+                cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
+            return StatusCode(500);
+        }
     }
 
     /// <summary>
@@ -627,8 +981,40 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ImportDocumentationResponse>> ImportDocumentation([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] ImportDocumentationRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
-        var (statusCode, result) = await _implementation.ImportDocumentationAsync(body, cancellationToken);
-        return ConvertToActionResult(statusCode, result);
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.documentation",
+            "DocumentationController.ImportDocumentation",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "documentation/import");
+        try
+        {
+
+            var (statusCode, result) = await _implementation.ImportDocumentationAsync(body, cancellationToken);
+            return ConvertToActionResult(statusCode, result);
+        }
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<DocumentationController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:documentation/import");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
+            return StatusCode(503);
+        }
+        catch (System.Exception ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<DocumentationController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogError(logger_, ex_, "Unexpected error in {Endpoint}", "post:documentation/import");
+            var messageBus_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<BeyondImmersion.BannouService.Services.IMessageBus>(HttpContext.RequestServices);
+            await messageBus_.TryPublishErrorAsync(
+                "documentation",
+                "ImportDocumentation",
+                "unexpected_exception",
+                ex_.Message,
+                endpoint: "post:documentation/import",
+                stack: ex_.StackTrace,
+                cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
+            return StatusCode(500);
+        }
     }
 
     /// <summary>
@@ -644,8 +1030,40 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ListTrashcanResponse>> ListTrashcan([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] ListTrashcanRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
-        var (statusCode, result) = await _implementation.ListTrashcanAsync(body, cancellationToken);
-        return ConvertToActionResult(statusCode, result);
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.documentation",
+            "DocumentationController.ListTrashcan",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "documentation/trashcan");
+        try
+        {
+
+            var (statusCode, result) = await _implementation.ListTrashcanAsync(body, cancellationToken);
+            return ConvertToActionResult(statusCode, result);
+        }
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<DocumentationController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:documentation/trashcan");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
+            return StatusCode(503);
+        }
+        catch (System.Exception ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<DocumentationController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogError(logger_, ex_, "Unexpected error in {Endpoint}", "post:documentation/trashcan");
+            var messageBus_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<BeyondImmersion.BannouService.Services.IMessageBus>(HttpContext.RequestServices);
+            await messageBus_.TryPublishErrorAsync(
+                "documentation",
+                "ListTrashcan",
+                "unexpected_exception",
+                ex_.Message,
+                endpoint: "post:documentation/trashcan",
+                stack: ex_.StackTrace,
+                cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
+            return StatusCode(500);
+        }
     }
 
     /// <summary>
@@ -661,8 +1079,40 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<PurgeTrashcanResponse>> PurgeTrashcan([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] PurgeTrashcanRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
-        var (statusCode, result) = await _implementation.PurgeTrashcanAsync(body, cancellationToken);
-        return ConvertToActionResult(statusCode, result);
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.documentation",
+            "DocumentationController.PurgeTrashcan",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "documentation/purge");
+        try
+        {
+
+            var (statusCode, result) = await _implementation.PurgeTrashcanAsync(body, cancellationToken);
+            return ConvertToActionResult(statusCode, result);
+        }
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<DocumentationController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:documentation/purge");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
+            return StatusCode(503);
+        }
+        catch (System.Exception ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<DocumentationController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogError(logger_, ex_, "Unexpected error in {Endpoint}", "post:documentation/purge");
+            var messageBus_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<BeyondImmersion.BannouService.Services.IMessageBus>(HttpContext.RequestServices);
+            await messageBus_.TryPublishErrorAsync(
+                "documentation",
+                "PurgeTrashcan",
+                "unexpected_exception",
+                ex_.Message,
+                endpoint: "post:documentation/purge",
+                stack: ex_.StackTrace,
+                cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
+            return StatusCode(500);
+        }
     }
 
     /// <summary>
@@ -678,8 +1128,40 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<NamespaceStatsResponse>> GetNamespaceStats([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] GetNamespaceStatsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
-        var (statusCode, result) = await _implementation.GetNamespaceStatsAsync(body, cancellationToken);
-        return ConvertToActionResult(statusCode, result);
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.documentation",
+            "DocumentationController.GetNamespaceStats",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "documentation/stats");
+        try
+        {
+
+            var (statusCode, result) = await _implementation.GetNamespaceStatsAsync(body, cancellationToken);
+            return ConvertToActionResult(statusCode, result);
+        }
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<DocumentationController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:documentation/stats");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
+            return StatusCode(503);
+        }
+        catch (System.Exception ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<DocumentationController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogError(logger_, ex_, "Unexpected error in {Endpoint}", "post:documentation/stats");
+            var messageBus_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<BeyondImmersion.BannouService.Services.IMessageBus>(HttpContext.RequestServices);
+            await messageBus_.TryPublishErrorAsync(
+                "documentation",
+                "GetNamespaceStats",
+                "unexpected_exception",
+                ex_.Message,
+                endpoint: "post:documentation/stats",
+                stack: ex_.StackTrace,
+                cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
+            return StatusCode(500);
+        }
     }
 
     /// <summary>
@@ -696,8 +1178,40 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<BindRepositoryResponse>> BindRepository([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] BindRepositoryRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
-        var (statusCode, result) = await _implementation.BindRepositoryAsync(body, cancellationToken);
-        return ConvertToActionResult(statusCode, result);
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.documentation",
+            "DocumentationController.BindRepository",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "documentation/repo/bind");
+        try
+        {
+
+            var (statusCode, result) = await _implementation.BindRepositoryAsync(body, cancellationToken);
+            return ConvertToActionResult(statusCode, result);
+        }
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<DocumentationController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:documentation/repo/bind");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
+            return StatusCode(503);
+        }
+        catch (System.Exception ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<DocumentationController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogError(logger_, ex_, "Unexpected error in {Endpoint}", "post:documentation/repo/bind");
+            var messageBus_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<BeyondImmersion.BannouService.Services.IMessageBus>(HttpContext.RequestServices);
+            await messageBus_.TryPublishErrorAsync(
+                "documentation",
+                "BindRepository",
+                "unexpected_exception",
+                ex_.Message,
+                endpoint: "post:documentation/repo/bind",
+                stack: ex_.StackTrace,
+                cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
+            return StatusCode(500);
+        }
     }
 
     /// <summary>
@@ -713,8 +1227,40 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<UnbindRepositoryResponse>> UnbindRepository([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] UnbindRepositoryRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
-        var (statusCode, result) = await _implementation.UnbindRepositoryAsync(body, cancellationToken);
-        return ConvertToActionResult(statusCode, result);
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.documentation",
+            "DocumentationController.UnbindRepository",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "documentation/repo/unbind");
+        try
+        {
+
+            var (statusCode, result) = await _implementation.UnbindRepositoryAsync(body, cancellationToken);
+            return ConvertToActionResult(statusCode, result);
+        }
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<DocumentationController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:documentation/repo/unbind");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
+            return StatusCode(503);
+        }
+        catch (System.Exception ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<DocumentationController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogError(logger_, ex_, "Unexpected error in {Endpoint}", "post:documentation/repo/unbind");
+            var messageBus_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<BeyondImmersion.BannouService.Services.IMessageBus>(HttpContext.RequestServices);
+            await messageBus_.TryPublishErrorAsync(
+                "documentation",
+                "UnbindRepository",
+                "unexpected_exception",
+                ex_.Message,
+                endpoint: "post:documentation/repo/unbind",
+                stack: ex_.StackTrace,
+                cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
+            return StatusCode(500);
+        }
     }
 
     /// <summary>
@@ -730,8 +1276,40 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SyncRepositoryResponse>> SyncRepository([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] SyncRepositoryRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
-        var (statusCode, result) = await _implementation.SyncRepositoryAsync(body, cancellationToken);
-        return ConvertToActionResult(statusCode, result);
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.documentation",
+            "DocumentationController.SyncRepository",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "documentation/repo/sync");
+        try
+        {
+
+            var (statusCode, result) = await _implementation.SyncRepositoryAsync(body, cancellationToken);
+            return ConvertToActionResult(statusCode, result);
+        }
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<DocumentationController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:documentation/repo/sync");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
+            return StatusCode(503);
+        }
+        catch (System.Exception ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<DocumentationController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogError(logger_, ex_, "Unexpected error in {Endpoint}", "post:documentation/repo/sync");
+            var messageBus_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<BeyondImmersion.BannouService.Services.IMessageBus>(HttpContext.RequestServices);
+            await messageBus_.TryPublishErrorAsync(
+                "documentation",
+                "SyncRepository",
+                "unexpected_exception",
+                ex_.Message,
+                endpoint: "post:documentation/repo/sync",
+                stack: ex_.StackTrace,
+                cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
+            return StatusCode(500);
+        }
     }
 
     /// <summary>
@@ -746,8 +1324,40 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RepositoryStatusResponse>> GetRepositoryStatus([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] RepositoryStatusRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
-        var (statusCode, result) = await _implementation.GetRepositoryStatusAsync(body, cancellationToken);
-        return ConvertToActionResult(statusCode, result);
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.documentation",
+            "DocumentationController.GetRepositoryStatus",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "documentation/repo/status");
+        try
+        {
+
+            var (statusCode, result) = await _implementation.GetRepositoryStatusAsync(body, cancellationToken);
+            return ConvertToActionResult(statusCode, result);
+        }
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<DocumentationController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:documentation/repo/status");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
+            return StatusCode(503);
+        }
+        catch (System.Exception ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<DocumentationController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogError(logger_, ex_, "Unexpected error in {Endpoint}", "post:documentation/repo/status");
+            var messageBus_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<BeyondImmersion.BannouService.Services.IMessageBus>(HttpContext.RequestServices);
+            await messageBus_.TryPublishErrorAsync(
+                "documentation",
+                "GetRepositoryStatus",
+                "unexpected_exception",
+                ex_.Message,
+                endpoint: "post:documentation/repo/status",
+                stack: ex_.StackTrace,
+                cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
+            return StatusCode(500);
+        }
     }
 
     /// <summary>
@@ -762,8 +1372,40 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ListRepositoryBindingsResponse>> ListRepositoryBindings([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] ListRepositoryBindingsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
-        var (statusCode, result) = await _implementation.ListRepositoryBindingsAsync(body, cancellationToken);
-        return ConvertToActionResult(statusCode, result);
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.documentation",
+            "DocumentationController.ListRepositoryBindings",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "documentation/repo/list");
+        try
+        {
+
+            var (statusCode, result) = await _implementation.ListRepositoryBindingsAsync(body, cancellationToken);
+            return ConvertToActionResult(statusCode, result);
+        }
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<DocumentationController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:documentation/repo/list");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
+            return StatusCode(503);
+        }
+        catch (System.Exception ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<DocumentationController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogError(logger_, ex_, "Unexpected error in {Endpoint}", "post:documentation/repo/list");
+            var messageBus_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<BeyondImmersion.BannouService.Services.IMessageBus>(HttpContext.RequestServices);
+            await messageBus_.TryPublishErrorAsync(
+                "documentation",
+                "ListRepositoryBindings",
+                "unexpected_exception",
+                ex_.Message,
+                endpoint: "post:documentation/repo/list",
+                stack: ex_.StackTrace,
+                cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
+            return StatusCode(500);
+        }
     }
 
     /// <summary>
@@ -778,8 +1420,40 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<UpdateRepositoryBindingResponse>> UpdateRepositoryBinding([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] UpdateRepositoryBindingRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
-        var (statusCode, result) = await _implementation.UpdateRepositoryBindingAsync(body, cancellationToken);
-        return ConvertToActionResult(statusCode, result);
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.documentation",
+            "DocumentationController.UpdateRepositoryBinding",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "documentation/repo/update");
+        try
+        {
+
+            var (statusCode, result) = await _implementation.UpdateRepositoryBindingAsync(body, cancellationToken);
+            return ConvertToActionResult(statusCode, result);
+        }
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<DocumentationController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:documentation/repo/update");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
+            return StatusCode(503);
+        }
+        catch (System.Exception ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<DocumentationController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogError(logger_, ex_, "Unexpected error in {Endpoint}", "post:documentation/repo/update");
+            var messageBus_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<BeyondImmersion.BannouService.Services.IMessageBus>(HttpContext.RequestServices);
+            await messageBus_.TryPublishErrorAsync(
+                "documentation",
+                "UpdateRepositoryBinding",
+                "unexpected_exception",
+                ex_.Message,
+                endpoint: "post:documentation/repo/update",
+                stack: ex_.StackTrace,
+                cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
+            return StatusCode(500);
+        }
     }
 
     /// <summary>
@@ -795,8 +1469,40 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CreateArchiveResponse>> CreateDocumentationArchive([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] CreateArchiveRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
-        var (statusCode, result) = await _implementation.CreateDocumentationArchiveAsync(body, cancellationToken);
-        return ConvertToActionResult(statusCode, result);
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.documentation",
+            "DocumentationController.CreateDocumentationArchive",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "documentation/repo/archive/create");
+        try
+        {
+
+            var (statusCode, result) = await _implementation.CreateDocumentationArchiveAsync(body, cancellationToken);
+            return ConvertToActionResult(statusCode, result);
+        }
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<DocumentationController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:documentation/repo/archive/create");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
+            return StatusCode(503);
+        }
+        catch (System.Exception ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<DocumentationController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogError(logger_, ex_, "Unexpected error in {Endpoint}", "post:documentation/repo/archive/create");
+            var messageBus_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<BeyondImmersion.BannouService.Services.IMessageBus>(HttpContext.RequestServices);
+            await messageBus_.TryPublishErrorAsync(
+                "documentation",
+                "CreateDocumentationArchive",
+                "unexpected_exception",
+                ex_.Message,
+                endpoint: "post:documentation/repo/archive/create",
+                stack: ex_.StackTrace,
+                cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
+            return StatusCode(500);
+        }
     }
 
     /// <summary>
@@ -811,8 +1517,40 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ListArchivesResponse>> ListDocumentationArchives([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] ListArchivesRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
-        var (statusCode, result) = await _implementation.ListDocumentationArchivesAsync(body, cancellationToken);
-        return ConvertToActionResult(statusCode, result);
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.documentation",
+            "DocumentationController.ListDocumentationArchives",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "documentation/repo/archive/list");
+        try
+        {
+
+            var (statusCode, result) = await _implementation.ListDocumentationArchivesAsync(body, cancellationToken);
+            return ConvertToActionResult(statusCode, result);
+        }
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<DocumentationController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:documentation/repo/archive/list");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
+            return StatusCode(503);
+        }
+        catch (System.Exception ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<DocumentationController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogError(logger_, ex_, "Unexpected error in {Endpoint}", "post:documentation/repo/archive/list");
+            var messageBus_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<BeyondImmersion.BannouService.Services.IMessageBus>(HttpContext.RequestServices);
+            await messageBus_.TryPublishErrorAsync(
+                "documentation",
+                "ListDocumentationArchives",
+                "unexpected_exception",
+                ex_.Message,
+                endpoint: "post:documentation/repo/archive/list",
+                stack: ex_.StackTrace,
+                cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
+            return StatusCode(500);
+        }
     }
 
     /// <summary>
@@ -828,8 +1566,40 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RestoreArchiveResponse>> RestoreDocumentationArchive([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] RestoreArchiveRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
-        var (statusCode, result) = await _implementation.RestoreDocumentationArchiveAsync(body, cancellationToken);
-        return ConvertToActionResult(statusCode, result);
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.documentation",
+            "DocumentationController.RestoreDocumentationArchive",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "documentation/repo/archive/restore");
+        try
+        {
+
+            var (statusCode, result) = await _implementation.RestoreDocumentationArchiveAsync(body, cancellationToken);
+            return ConvertToActionResult(statusCode, result);
+        }
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<DocumentationController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:documentation/repo/archive/restore");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
+            return StatusCode(503);
+        }
+        catch (System.Exception ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<DocumentationController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogError(logger_, ex_, "Unexpected error in {Endpoint}", "post:documentation/repo/archive/restore");
+            var messageBus_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<BeyondImmersion.BannouService.Services.IMessageBus>(HttpContext.RequestServices);
+            await messageBus_.TryPublishErrorAsync(
+                "documentation",
+                "RestoreDocumentationArchive",
+                "unexpected_exception",
+                ex_.Message,
+                endpoint: "post:documentation/repo/archive/restore",
+                stack: ex_.StackTrace,
+                cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
+            return StatusCode(500);
+        }
     }
 
     /// <summary>
@@ -844,8 +1614,40 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<DeleteArchiveResponse>> DeleteDocumentationArchive([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] DeleteArchiveRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
-        var (statusCode, result) = await _implementation.DeleteDocumentationArchiveAsync(body, cancellationToken);
-        return ConvertToActionResult(statusCode, result);
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.documentation",
+            "DocumentationController.DeleteDocumentationArchive",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "documentation/repo/archive/delete");
+        try
+        {
+
+            var (statusCode, result) = await _implementation.DeleteDocumentationArchiveAsync(body, cancellationToken);
+            return ConvertToActionResult(statusCode, result);
+        }
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<DocumentationController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:documentation/repo/archive/delete");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
+            return StatusCode(503);
+        }
+        catch (System.Exception ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<DocumentationController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogError(logger_, ex_, "Unexpected error in {Endpoint}", "post:documentation/repo/archive/delete");
+            var messageBus_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<BeyondImmersion.BannouService.Services.IMessageBus>(HttpContext.RequestServices);
+            await messageBus_.TryPublishErrorAsync(
+                "documentation",
+                "DeleteDocumentationArchive",
+                "unexpected_exception",
+                ex_.Message,
+                endpoint: "post:documentation/repo/archive/delete",
+                stack: ex_.StackTrace,
+                cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
+            return StatusCode(500);
+        }
     }
 
 }

@@ -75,14 +75,39 @@ Server responses use a compact 16-byte binary header. The Service GUID is omitte
 
 Response codes are protocol-level codes (not HTTP codes). The client SDK maps these to HTTP status codes.
 
+**Protocol-level codes (0-49):**
+
 | Protocol Code | Name | HTTP Equivalent | Description |
 |---------------|------|-----------------|-------------|
 | 0 | OK | 200 | Success - payload contains response data |
+| 10 | RequestError | 400 | Malformed message or invalid format |
+| 11 | RequestTooLarge | 413 | Payload exceeds maximum allowed size |
+| 12 | TooManyRequests | 429 | Rate limit exceeded |
+| 13 | InvalidRequestChannel | 400 | Invalid channel number in request |
+| 14 | TextProtocolNotSupported | 400 | Text WebSocket frame received; binary protocol required |
+| 20 | Unauthorized | 401 | Authentication required or session invalid |
+| 30 | ServiceNotFound | 404 | Service GUID not in capability manifest |
+| 31 | ClientNotFound | 404 | Target peer not connected (P2P routing) |
+| 32 | MessageNotFound | 404 | Referenced message ID not found |
+| 40 | BroadcastNotAllowed | 403 | Broadcast attempted in External mode |
+
+**Service-level codes (50-69):**
+
+| Protocol Code | Name | HTTP Equivalent | Description |
+|---------------|------|-----------------|-------------|
 | 50 | Service_BadRequest | 400 | Invalid request format or parameters |
 | 51 | Service_NotFound | 404 | Requested resource not found |
 | 52 | Service_Unauthorized | 401 | Authentication required or failed |
 | 53 | Service_Conflict | 409 | Resource conflict (e.g., duplicate) |
 | 60 | Service_InternalServerError | 500 | Server-side error |
+
+**Shortcut-specific codes (70+):**
+
+| Protocol Code | Name | HTTP Equivalent | Description |
+|---------------|------|-----------------|-------------|
+| 70 | ShortcutExpired | 410 | Session shortcut TTL exceeded |
+| 71 | ShortcutTargetNotFound | 404 | Shortcut target endpoint unavailable |
+| 72 | ShortcutRevoked | 410 | Session shortcut was explicitly revoked |
 
 **Error Response Behavior**: For non-zero response codes, the payload is **empty**. The response code in byte 15 tells the complete story. This keeps error responses minimal (16 bytes total).
 
@@ -100,9 +125,9 @@ Bit 7  Bit 6  Bit 5  Bit 4  Bit 3  Bit 2  Bit 1  Bit 0
 |------|-----|-------------|
 | None | 0x00 | Default: JSON payload, service request, expects response |
 | Binary | 0x01 | Payload is binary data (not UTF-8 JSON) |
-| Encrypted | 0x02 | Payload is encrypted (reserved for future use) |
-| Compressed | 0x04 | Payload is gzip compressed (reserved for future use) |
-| HighPriority | 0x08 | Skip to front of processing queues |
+| Reserved | 0x02 | Reserved for future use |
+| Compressed | 0x04 | Payload is Brotli-compressed. Client must decompress before parsing. Only set on server-to-client messages when compression is enabled (`CONNECT_COMPRESSION_ENABLED=true`) and payload exceeds the configured threshold (`CONNECT_COMPRESSION_THRESHOLD_BYTES`, default 1024) |
+| Reserved | 0x08 | Reserved for future use |
 | Event | 0x10 | Fire-and-forget, no response expected |
 | Client | 0x20 | Route to another WebSocket client (P2P) |
 | Response | 0x40 | This is a response (uses 16-byte header format) |
@@ -157,6 +182,12 @@ AUTH <jwt_token>
 ```
 
 The Connect service validates the JWT and establishes the session.
+
+**Important: Text Messages After Authentication**
+
+The `AUTH` command is the **only** valid text WebSocket message. After authentication, all messages **must** use the binary protocol with the 31-byte header. Text WebSocket frames sent after authentication will receive a `TextProtocolNotSupported` (14) error response.
+
+This design enables zero-copy routing - the Connect service extracts the 16-byte service GUID from the binary header without parsing the payload. Text-based protocols cannot support this routing model because they lack the fixed-position GUID field required for routing decisions.
 
 ### 3. Capability Manifest
 

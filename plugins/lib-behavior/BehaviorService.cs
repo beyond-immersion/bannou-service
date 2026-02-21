@@ -1,11 +1,12 @@
-using BeyondImmersion.Bannou.Behavior.Cognition;
-using BeyondImmersion.Bannou.Behavior.Compiler;
-using BeyondImmersion.Bannou.Behavior.Goap;
+using BeyondImmersion.Bannou.BehaviorCompiler.Compiler;
+using BeyondImmersion.Bannou.BehaviorCompiler.Goap;
+using BeyondImmersion.Bannou.BehaviorCompiler.Parser;
 using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.BannouService;
-using BeyondImmersion.BannouService.Abml.Parser;
+using BeyondImmersion.BannouService.Abml.Cognition;
 using BeyondImmersion.BannouService.Asset;
 using BeyondImmersion.BannouService.Attributes;
+using BeyondImmersion.BannouService.Behavior.Goap;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Services;
 using Microsoft.AspNetCore.Mvc;
@@ -16,8 +17,8 @@ using System.Net.Http.Headers;
 using System.Security.Cryptography;
 using System.Threading;
 using System.Threading.Tasks;
-using InternalCompilationOptions = BeyondImmersion.Bannou.Behavior.Compiler.CompilationOptions;
-using InternalGoapGoal = BeyondImmersion.Bannou.Behavior.Goap.GoapGoal;
+using InternalCompilationOptions = BeyondImmersion.Bannou.BehaviorCompiler.Compiler.CompilationOptions;
+using InternalGoapGoal = BeyondImmersion.Bannou.BehaviorCompiler.Goap.GoapGoal;
 
 namespace BeyondImmersion.BannouService.Behavior;
 
@@ -85,7 +86,7 @@ public partial class BehaviorService : IBehaviorService
 
         // Initialize cognition constants from configuration (idempotent - first call wins)
         // IMPLEMENTATION TENETS - Configuration-First
-        CognitionConstants.Initialize(configuration);
+        CognitionConstants.Initialize(configuration.ToCognitionConfiguration());
 
         // Register event handlers via partial class (BehaviorServiceEvents.cs)
         ((IBannouService)this).RegisterEventConsumers(eventConsumer);
@@ -102,144 +103,129 @@ public partial class BehaviorService : IBehaviorService
     {
         var stopwatch = Stopwatch.StartNew();
 
-        try
+        if (string.IsNullOrWhiteSpace(body.AbmlContent))
         {
-            if (string.IsNullOrWhiteSpace(body.AbmlContent))
+            _logger.LogWarning("ABML compilation rejected: content is empty or whitespace");
+            return (StatusCodes.BadRequest, null);
+        }
+
+        _logger.LogDebug("Compiling ABML behavior ({ContentLength} bytes)", body.AbmlContent.Length);
+
+        // Map API compilation options to internal options
+        var options = MapCompilationOptions(body.CompilationOptions);
+
+        // Compile the ABML YAML to bytecode
+        var result = _compiler.CompileYaml(body.AbmlContent, options);
+
+        if (!result.Success || result.Bytecode == null)
+        {
+            _logger.LogWarning("ABML compilation failed with {ErrorCount} errors: {Errors}",
+                result.Errors.Count,
+                string.Join("; ", result.Errors.Select(e => e.Message)));
+
+            // Publish compilation failed event for monitoring (contains error details for debugging)
+            await _messageBus.TryPublishAsync(COMPILATION_FAILED_TOPIC, new BehaviorCompilationFailedEvent
             {
-                _logger.LogWarning("ABML compilation rejected: content is empty or whitespace");
-                return (StatusCodes.BadRequest, null);
+                EventId = Guid.NewGuid(),
+                Timestamp = DateTimeOffset.UtcNow,
+                BehaviorName = body.BehaviorName,
+                ErrorCount = result.Errors.Count,
+                Errors = result.Errors.Select(e => e.Message).ToList()
+            }, cancellationToken: cancellationToken);
+
+            return (StatusCodes.BadRequest, null);
+        }
+
+        // Generate a deterministic behavior ID from content hash
+        var bytecode = result.Bytecode;
+        var behaviorId = GenerateBehaviorId(bytecode);
+
+        // Determine behavior name (from request, or generate from ID)
+        var behaviorName = !string.IsNullOrWhiteSpace(body.BehaviorName)
+            ? body.BehaviorName
+            : behaviorId;
+
+        // Map category to string (BehaviorCategory is nullable - use null-conditional)
+        var category = body.BehaviorCategory?.ToString().ToLowerInvariant();
+
+        // Store the compiled model as an asset if caching is enabled
+        string? assetId = null;
+        bool isUpdate = false;
+        var cachingEnabled = body.CompilationOptions?.CacheCompiledResult != false;
+        if (cachingEnabled)
+        {
+            assetId = await StoreCompiledModelAsync(behaviorId, bytecode, cancellationToken);
+
+            // If caching was enabled but storage failed, the behavior is inaccessible - this is an error
+            if (assetId == null)
+            {
+                _logger.LogError("Failed to store compiled behavior {BehaviorId} - storage returned null", behaviorId);
+                await _messageBus.TryPublishErrorAsync(
+                    serviceName: "behavior",
+                    operation: "CompileAbmlBehavior",
+                    errorType: "StorageFailure",
+                    message: "Failed to store compiled behavior in asset service",
+                    details: new { behaviorId },
+                    cancellationToken: cancellationToken);
+                return (StatusCodes.InternalServerError, null);
             }
 
-            _logger.LogDebug("Compiling ABML behavior ({ContentLength} bytes)", body.AbmlContent.Length);
-
-            // Map API compilation options to internal options
-            var options = MapCompilationOptions(body.CompilationOptions);
-
-            // Compile the ABML YAML to bytecode
-            var result = _compiler.CompileYaml(body.AbmlContent, options);
-
-            if (!result.Success || result.Bytecode == null)
+            // Record in bundle manager and determine if this is new or update
+            var metadata = new BehaviorMetadata
             {
-                _logger.LogWarning("ABML compilation failed with {ErrorCount} errors: {Errors}",
-                    result.Errors.Count,
-                    string.Join("; ", result.Errors.Select(e => e.Message)));
-
-                // Publish compilation failed event for monitoring (contains error details for debugging)
-                await _messageBus.TryPublishAsync(COMPILATION_FAILED_TOPIC, new BehaviorCompilationFailedEvent
-                {
-                    EventId = Guid.NewGuid(),
-                    Timestamp = DateTimeOffset.UtcNow,
-                    BehaviorName = body.BehaviorName,
-                    ErrorCount = result.Errors.Count,
-                    Errors = result.Errors.Select(e => e.Message).ToList()
-                }, cancellationToken: cancellationToken);
-
-                return (StatusCodes.BadRequest, null);
-            }
-
-            // Generate a deterministic behavior ID from content hash
-            var bytecode = result.Bytecode;
-            var behaviorId = GenerateBehaviorId(bytecode);
-
-            // Determine behavior name (from request, or generate from ID)
-            var behaviorName = !string.IsNullOrWhiteSpace(body.BehaviorName)
-                ? body.BehaviorName
-                : behaviorId;
-
-            // Map category to string (BehaviorCategory is nullable - use null-conditional)
-            var category = body.BehaviorCategory?.ToString().ToLowerInvariant();
-
-            // Store the compiled model as an asset if caching is enabled
-            string? assetId = null;
-            bool isUpdate = false;
-            var cachingEnabled = body.CompilationOptions?.CacheCompiledResult != false;
-            if (cachingEnabled)
-            {
-                assetId = await StoreCompiledModelAsync(behaviorId, bytecode, cancellationToken);
-
-                // If caching was enabled but storage failed, the behavior is inaccessible - this is an error
-                if (assetId == null)
-                {
-                    _logger.LogError("Failed to store compiled behavior {BehaviorId} - storage returned null", behaviorId);
-                    await _messageBus.TryPublishErrorAsync(
-                        serviceName: "behavior",
-                        operation: "CompileAbmlBehavior",
-                        errorType: "StorageFailure",
-                        message: "Failed to store compiled behavior in asset service",
-                        details: new { behaviorId },
-                        cancellationToken: cancellationToken);
-                    return (StatusCodes.InternalServerError, null);
-                }
-
-                // Record in bundle manager and determine if this is new or update
-                var metadata = new BehaviorMetadata
-                {
-                    Name = behaviorName,
-                    Category = category,
-                    BundleId = body.BundleId,
-                    BytecodeSize = bytecode.Length,
-                    SchemaVersion = AbmlSchemaVersion
-                };
-
-                isUpdate = !await _bundleManager.RecordBehaviorAsync(
-                    behaviorId,
-                    assetId,
-                    body.BundleId,
-                    metadata,
-                    cancellationToken);
-
-                // Extract and cache GOAP metadata if present
-                await ExtractAndCacheGoapMetadataAsync(behaviorId, body.AbmlContent, cancellationToken);
-
-                // Publish lifecycle event
-                await PublishBehaviorEventAsync(
-                    behaviorId,
-                    behaviorName,
-                    category,
-                    body.BundleId,
-                    assetId,
-                    bytecode.Length,
-                    isUpdate,
-                    cancellationToken);
-            }
-
-            stopwatch.Stop();
-            _logger.LogInformation(
-                "ABML compilation successful: {BehaviorId} ({BytecodeSize} bytes, {ElapsedMs}ms, isUpdate={IsUpdate})",
-                behaviorId,
-                bytecode.Length,
-                stopwatch.ElapsedMilliseconds,
-                isUpdate);
-
-            return (StatusCodes.OK, new CompileBehaviorResponse
-            {
-                BehaviorId = behaviorId,
-                BehaviorName = behaviorName,
-                CompiledBehavior = new CompiledBehavior
-                {
-                    BehaviorTree = new BehaviorTreeData { BytecodeSize = bytecode.Length },
-                    ContextSchema = new ContextSchemaData()
-                },
-                CompilationTimeMs = (int)stopwatch.ElapsedMilliseconds,
-                // assetId is null only when caching is explicitly disabled; otherwise storage failure returns error above
-                AssetId = assetId,
+                Name = behaviorName,
+                Category = category,
                 BundleId = body.BundleId,
-                IsUpdate = isUpdate,
-                Warnings = new List<string>()
-            });
+                BytecodeSize = bytecode.Length,
+                SchemaVersion = AbmlSchemaVersion
+            };
+
+            isUpdate = !await _bundleManager.RecordBehaviorAsync(
+                behaviorId,
+                assetId,
+                body.BundleId,
+                metadata,
+                cancellationToken);
+
+            // Extract and cache GOAP metadata if present
+            await ExtractAndCacheGoapMetadataAsync(behaviorId, body.AbmlContent, cancellationToken);
+
+            // Publish lifecycle event
+            await PublishBehaviorEventAsync(
+                behaviorId,
+                behaviorName,
+                category,
+                body.BundleId,
+                assetId,
+                bytecode.Length,
+                isUpdate,
+                cancellationToken);
         }
-        catch (Exception ex)
+
+        stopwatch.Stop();
+        _logger.LogInformation(
+            "ABML compilation successful: {BehaviorId} ({BytecodeSize} bytes, {ElapsedMs}ms, isUpdate={IsUpdate})",
+            behaviorId,
+            bytecode.Length,
+            stopwatch.ElapsedMilliseconds,
+            isUpdate);
+
+        return (StatusCodes.OK, new CompileBehaviorResponse
         {
-            _logger.LogError(ex, "Error compiling ABML behavior");
-            await _messageBus.TryPublishErrorAsync(
-                serviceName: "behavior",
-                operation: "CompileAbmlBehavior",
-                errorType: ex.GetType().Name,
-                message: ex.Message,
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
+            BehaviorId = behaviorId,
+            BehaviorName = behaviorName,
+            CompiledBehavior = new CompiledBehavior
+            {
+                BehaviorTree = new BehaviorTreeData { BytecodeSize = bytecode.Length },
+                ContextSchema = new ContextSchemaData()
+            },
+            CompilationTimeMs = (int)stopwatch.ElapsedMilliseconds,
+            // assetId is null only when caching is explicitly disabled; otherwise storage failure returns error above
+            AssetId = assetId,
+            BundleId = body.BundleId,
+            IsUpdate = isUpdate,
+            Warnings = new List<string>()
+        });
     }
 
     /// <summary>
@@ -491,58 +477,43 @@ public partial class BehaviorService : IBehaviorService
     /// <param name="body">The validation request containing ABML YAML content.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>Validation result with errors and warnings.</returns>
-    public async Task<(StatusCodes, ValidateAbmlResponse?)> ValidateAbmlAsync(ValidateAbmlRequest body, CancellationToken cancellationToken = default)
+    public Task<(StatusCodes, ValidateAbmlResponse?)> ValidateAbmlAsync(ValidateAbmlRequest body, CancellationToken cancellationToken = default)
     {
-        try
+        if (string.IsNullOrWhiteSpace(body.AbmlContent))
         {
-            if (string.IsNullOrWhiteSpace(body.AbmlContent))
-            {
-                _logger.LogWarning("ABML validation rejected: content is empty or whitespace");
-                return (StatusCodes.BadRequest, null);
-            }
-
-            _logger.LogDebug("Validating ABML ({ContentLength} bytes)", body.AbmlContent.Length);
-
-            var options = new InternalCompilationOptions
-            {
-                SkipSemanticAnalysis = !body.StrictMode,
-                MaxConstants = _configuration.CompilerMaxConstants,
-                MaxStrings = _configuration.CompilerMaxStrings
-            };
-
-            // Use the compiler's validation path
-            var result = _compiler.CompileYaml(body.AbmlContent, options);
-
-            // Convert compilation errors to validation errors
-            var validationErrors = result.Errors
-                .Select(e => new ValidationError
-                {
-                    Type = ValidationErrorType.Semantic,
-                    Message = e.Message,
-                    LineNumber = e.Line ?? 0
-                })
-                .ToList();
-
-            return (StatusCodes.OK, new ValidateAbmlResponse
-            {
-                IsValid = result.Success,
-                ValidationErrors = validationErrors,
-                SemanticWarnings = result.Warnings.Select(w => w.Message).ToList(),
-                SchemaVersion = "1.0"
-            });
+            _logger.LogWarning("ABML validation rejected: content is empty or whitespace");
+            return Task.FromResult<(StatusCodes, ValidateAbmlResponse?)>((StatusCodes.BadRequest, null));
         }
-        catch (Exception ex)
+
+        _logger.LogDebug("Validating ABML ({ContentLength} bytes)", body.AbmlContent.Length);
+
+        var options = new InternalCompilationOptions
         {
-            _logger.LogError(ex, "Error validating ABML");
-            await _messageBus.TryPublishErrorAsync(
-                serviceName: "behavior",
-                operation: "ValidateAbml",
-                errorType: ex.GetType().Name,
-                message: ex.Message,
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
+            SkipSemanticAnalysis = !body.StrictMode,
+            MaxConstants = _configuration.CompilerMaxConstants,
+            MaxStrings = _configuration.CompilerMaxStrings
+        };
+
+        // Use the compiler's validation path
+        var result = _compiler.CompileYaml(body.AbmlContent, options);
+
+        // Convert compilation errors to validation errors
+        var validationErrors = result.Errors
+            .Select(e => new ValidationError
+            {
+                Type = ValidationErrorType.Semantic,
+                Message = e.Message,
+                LineNumber = e.Line ?? 0
+            })
+            .ToList();
+
+        return Task.FromResult<(StatusCodes, ValidateAbmlResponse?)>((StatusCodes.OK, new ValidateAbmlResponse
+        {
+            IsValid = result.Success,
+            ValidationErrors = validationErrors,
+            SemanticWarnings = result.Warnings.Select(w => w.Message).ToList(),
+            SchemaVersion = "1.0"
+        }));
     }
 
     /// <summary>
@@ -553,98 +524,82 @@ public partial class BehaviorService : IBehaviorService
     /// <returns>The cached behavior with download URL for the compiled bytecode.</returns>
     public async Task<(StatusCodes, CachedBehaviorResponse?)> GetCachedBehaviorAsync(GetCachedBehaviorRequest body, CancellationToken cancellationToken = default)
     {
+        if (string.IsNullOrWhiteSpace(body.BehaviorId))
+        {
+            return (StatusCodes.BadRequest, null);
+        }
+
+        _logger.LogDebug("Retrieving cached behavior: {BehaviorId}", body.BehaviorId);
+
+        // Retrieve the asset from lib-asset
+        var assetRequest = new GetAssetRequest
+        {
+            AssetId = body.BehaviorId,
+            Version = "latest"
+        };
+
+        AssetWithDownloadUrl asset;
         try
         {
-            if (string.IsNullOrWhiteSpace(body.BehaviorId))
-            {
-                return (StatusCodes.BadRequest, null);
-            }
-
-            _logger.LogDebug("Retrieving cached behavior: {BehaviorId}", body.BehaviorId);
-
-            // Retrieve the asset from lib-asset
-            var assetRequest = new GetAssetRequest
-            {
-                AssetId = body.BehaviorId,
-                Version = "latest"
-            };
-
-            AssetWithDownloadUrl asset;
-            try
-            {
-                asset = await _assetClient.GetAssetAsync(assetRequest, cancellationToken);
-            }
-            catch (ApiException ex) when (ex.StatusCode == 404)
-            {
-                _logger.LogDebug("Behavior {BehaviorId} not found in cache", body.BehaviorId);
-                return (StatusCodes.NotFound, null);
-            }
-
-            // Validate that we have a download URL - it's required for accessing the behavior
-            if (asset.DownloadUrl == null)
-            {
-                _logger.LogError("Asset {AssetId} for behavior {BehaviorId} has no download URL", body.BehaviorId, body.BehaviorId);
-                await _messageBus.TryPublishErrorAsync(
-                    serviceName: "behavior",
-                    operation: "GetCachedBehavior",
-                    errorType: "MissingDownloadUrl",
-                    message: "Asset has no download URL - behavior is inaccessible",
-                    details: new { BehaviorId = body.BehaviorId },
-                    cancellationToken: cancellationToken);
-                return (StatusCodes.InternalServerError, null);
-            }
-
-            // Download the bytecode to include in response
-            byte[]? bytecode = null;
-            try
-            {
-                using var httpClient = _httpClientFactory.CreateClient();
-                bytecode = await httpClient.GetByteArrayAsync(asset.DownloadUrl, cancellationToken);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogWarning(ex, "Failed to download behavior bytecode for {BehaviorId}", body.BehaviorId);
-                // Continue without bytecode - caller can use download_url directly
-            }
-
-            var behaviorTreeData = bytecode != null
-                ? new BehaviorTreeData
-                {
-                    Bytecode = Convert.ToBase64String(bytecode),
-                    BytecodeSize = bytecode.Length
-                }
-                : new BehaviorTreeData
-                {
-                    // DownloadUrl is validated above - this won't be null
-                    DownloadUrl = asset.DownloadUrl.ToString(),
-                    BytecodeSize = 0 // Unknown size when using download URL
-                };
-
-            return (StatusCodes.OK, new CachedBehaviorResponse
-            {
-                BehaviorId = body.BehaviorId,
-                CompiledBehavior = new CompiledBehavior
-                {
-                    BehaviorTree = behaviorTreeData,
-                    ContextSchema = new ContextSchemaData()
-                },
-                CacheTimestamp = DateTimeOffset.UtcNow, // Asset service doesn't provide timestamp
-                CacheHit = true
-            });
+            asset = await _assetClient.GetAssetAsync(assetRequest, cancellationToken);
         }
-        catch (Exception ex)
+        catch (ApiException ex) when (ex.StatusCode == 404)
         {
-            _logger.LogError(ex, "Error retrieving cached behavior: {BehaviorId}", body.BehaviorId);
+            _logger.LogDebug("Behavior {BehaviorId} not found in cache", body.BehaviorId);
+            return (StatusCodes.NotFound, null);
+        }
+
+        // Validate that we have a download URL - it's required for accessing the behavior
+        if (asset.DownloadUrl == null)
+        {
+            _logger.LogError("Asset {AssetId} for behavior {BehaviorId} has no download URL", body.BehaviorId, body.BehaviorId);
             await _messageBus.TryPublishErrorAsync(
                 serviceName: "behavior",
                 operation: "GetCachedBehavior",
-                errorType: ex.GetType().Name,
-                message: ex.Message,
+                errorType: "MissingDownloadUrl",
+                message: "Asset has no download URL - behavior is inaccessible",
                 details: new { BehaviorId = body.BehaviorId },
-                stack: ex.StackTrace,
                 cancellationToken: cancellationToken);
             return (StatusCodes.InternalServerError, null);
         }
+
+        // Download the bytecode to include in response
+        byte[]? bytecode = null;
+        try
+        {
+            using var httpClient = _httpClientFactory.CreateClient();
+            bytecode = await httpClient.GetByteArrayAsync(asset.DownloadUrl, cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Failed to download behavior bytecode for {BehaviorId}", body.BehaviorId);
+            // Continue without bytecode - caller can use download_url directly
+        }
+
+        var behaviorTreeData = bytecode != null
+            ? new BehaviorTreeData
+            {
+                Bytecode = Convert.ToBase64String(bytecode),
+                BytecodeSize = bytecode.Length
+            }
+            : new BehaviorTreeData
+            {
+                // DownloadUrl is validated above - this won't be null
+                DownloadUrl = asset.DownloadUrl.ToString(),
+                BytecodeSize = 0 // Unknown size when using download URL
+            };
+
+        return (StatusCodes.OK, new CachedBehaviorResponse
+        {
+            BehaviorId = body.BehaviorId,
+            CompiledBehavior = new CompiledBehavior
+            {
+                BehaviorTree = behaviorTreeData,
+                ContextSchema = new ContextSchemaData()
+            },
+            CacheTimestamp = DateTimeOffset.UtcNow, // Asset service doesn't provide timestamp
+            CacheHit = true
+        });
     }
 
     // NOTE: ResolveContextVariablesAsync removed - see docs/guides/ABML.md for rationale
@@ -658,89 +613,73 @@ public partial class BehaviorService : IBehaviorService
     /// <returns>OK if behavior was deleted, NotFound if not in cache.</returns>
     public async Task<StatusCodes> InvalidateCachedBehaviorAsync(InvalidateCacheRequest body, CancellationToken cancellationToken = default)
     {
-        try
+        if (string.IsNullOrWhiteSpace(body.BehaviorId))
         {
-            if (string.IsNullOrWhiteSpace(body.BehaviorId))
+            _logger.LogWarning("InvalidateCachedBehavior called with missing BehaviorId");
+            return StatusCodes.BadRequest;
+        }
+
+        _logger.LogDebug("Invalidating cached behavior: {BehaviorId}", body.BehaviorId);
+
+        // Try to get metadata from bundle manager first
+        var metadata = await _bundleManager.GetMetadataAsync(body.BehaviorId, cancellationToken);
+        if (metadata == null)
+        {
+            // Fall back to checking asset service directly
+            var assetRequest = new GetAssetRequest
             {
-                _logger.LogWarning("InvalidateCachedBehavior called with missing BehaviorId");
-                return StatusCodes.BadRequest;
-            }
-
-            _logger.LogDebug("Invalidating cached behavior: {BehaviorId}", body.BehaviorId);
-
-            // Try to get metadata from bundle manager first
-            var metadata = await _bundleManager.GetMetadataAsync(body.BehaviorId, cancellationToken);
-            if (metadata == null)
-            {
-                // Fall back to checking asset service directly
-                var assetRequest = new GetAssetRequest
-                {
-                    AssetId = body.BehaviorId,
-                    Version = "latest"
-                };
-
-                try
-                {
-                    await _assetClient.GetAssetAsync(assetRequest, cancellationToken);
-                }
-                catch (ApiException ex) when (ex.StatusCode == 404)
-                {
-                    _logger.LogDebug("Behavior {BehaviorId} not found in cache", body.BehaviorId);
-                    return StatusCodes.NotFound;
-                }
-            }
-
-            // Remove from bundle manager (this also removes bundle membership)
-            var removedMetadata = await _bundleManager.RemoveBehaviorAsync(body.BehaviorId, cancellationToken);
-
-            // Also remove cached GOAP metadata if present
-            await _bundleManager.RemoveGoapMetadataAsync(body.BehaviorId, cancellationToken);
-
-            // Publish deleted event
-            if (removedMetadata != null || metadata != null)
-            {
-                var effectiveMetadata = removedMetadata ?? metadata;
-                if (effectiveMetadata != null)
-                {
-                    await PublishBehaviorDeletedEventAsync(effectiveMetadata, cancellationToken);
-                }
-            }
-
-            // Delete the asset from storage
-            var deleteRequest = new DeleteAssetRequest
-            {
-                AssetId = body.BehaviorId
+                AssetId = body.BehaviorId,
+                Version = "latest"
             };
 
             try
             {
-                await _assetClient.DeleteAssetAsync(deleteRequest, cancellationToken);
-                _logger.LogInformation(
-                    "Behavior {BehaviorId} deleted from asset storage",
-                    body.BehaviorId);
+                await _assetClient.GetAssetAsync(assetRequest, cancellationToken);
             }
             catch (ApiException ex) when (ex.StatusCode == 404)
             {
-                _logger.LogDebug(
-                    "Behavior {BehaviorId} not found in asset storage (may have been deleted already)",
-                    body.BehaviorId);
+                _logger.LogDebug("Behavior {BehaviorId} not found in cache", body.BehaviorId);
+                return StatusCodes.NotFound;
             }
+        }
 
-            return StatusCodes.OK;
-        }
-        catch (Exception ex)
+        // Remove from bundle manager (this also removes bundle membership)
+        var removedMetadata = await _bundleManager.RemoveBehaviorAsync(body.BehaviorId, cancellationToken);
+
+        // Also remove cached GOAP metadata if present
+        await _bundleManager.RemoveGoapMetadataAsync(body.BehaviorId, cancellationToken);
+
+        // Publish deleted event
+        if (removedMetadata != null || metadata != null)
         {
-            _logger.LogError(ex, "Error invalidating cached behavior: {BehaviorId}", body.BehaviorId);
-            await _messageBus.TryPublishErrorAsync(
-                serviceName: "behavior",
-                operation: "InvalidateCachedBehavior",
-                errorType: ex.GetType().Name,
-                message: ex.Message,
-                details: new { BehaviorId = body.BehaviorId },
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return StatusCodes.InternalServerError;
+            var effectiveMetadata = removedMetadata ?? metadata;
+            if (effectiveMetadata != null)
+            {
+                await PublishBehaviorDeletedEventAsync(effectiveMetadata, cancellationToken);
+            }
         }
+
+        // Delete the asset from storage
+        var deleteRequest = new DeleteAssetRequest
+        {
+            AssetId = body.BehaviorId
+        };
+
+        try
+        {
+            await _assetClient.DeleteAssetAsync(deleteRequest, cancellationToken);
+            _logger.LogInformation(
+                "Behavior {BehaviorId} deleted from asset storage",
+                body.BehaviorId);
+        }
+        catch (ApiException ex) when (ex.StatusCode == 404)
+        {
+            _logger.LogDebug(
+                "Behavior {BehaviorId} not found in asset storage (may have been deleted already)",
+                body.BehaviorId);
+        }
+
+        return StatusCodes.OK;
     }
 
     /// <summary>
@@ -782,142 +721,126 @@ public partial class BehaviorService : IBehaviorService
     /// <returns>The planning result with actions or failure reason.</returns>
     public async Task<(StatusCodes, GoapPlanResponse?)> GenerateGoapPlanAsync(GoapPlanRequest body, CancellationToken cancellationToken = default)
     {
-        try
+        _logger.LogDebug(
+            "Generating GOAP plan for agent {AgentId}, goal {GoalName}",
+            body.AgentId,
+            body.Goal.Name);
+
+        // Validate behavior_id is required
+        if (string.IsNullOrEmpty(body.BehaviorId))
         {
-            _logger.LogDebug(
-                "Generating GOAP plan for agent {AgentId}, goal {GoalName}",
-                body.AgentId,
-                body.Goal.Name);
+            _logger.LogWarning("GOAP planning rejected: behavior_id is required");
+            return (StatusCodes.BadRequest, null);
+        }
 
-            // Validate behavior_id is required
-            if (string.IsNullOrEmpty(body.BehaviorId))
-            {
-                _logger.LogWarning("GOAP planning rejected: behavior_id is required");
-                return (StatusCodes.BadRequest, null);
-            }
+        // Retrieve cached GOAP metadata from compiled behavior
+        var cachedMetadata = await _bundleManager.GetGoapMetadataAsync(body.BehaviorId, cancellationToken);
+        if (cachedMetadata == null)
+        {
+            _logger.LogDebug("No GOAP metadata found for behavior {BehaviorId}", body.BehaviorId);
+            return (StatusCodes.NotFound, null);
+        }
 
-            // Retrieve cached GOAP metadata from compiled behavior
-            var cachedMetadata = await _bundleManager.GetGoapMetadataAsync(body.BehaviorId, cancellationToken);
-            if (cachedMetadata == null)
-            {
-                _logger.LogDebug("No GOAP metadata found for behavior {BehaviorId}", body.BehaviorId);
-                return (StatusCodes.NotFound, null);
-            }
+        // Convert API world state to internal WorldState
+        var worldState = ConvertToWorldState(body.WorldState);
 
-            // Convert API world state to internal WorldState
-            var worldState = ConvertToWorldState(body.WorldState);
+        // Convert API goal to internal GoapGoal
+        var goal = ConvertToGoapGoal(body.Goal);
 
-            // Convert API goal to internal GoapGoal
-            var goal = ConvertToGoapGoal(body.Goal);
+        // Convert cached actions to internal GoapAction objects
+        var availableActions = new List<GoapAction>();
+        foreach (var cachedAction in cachedMetadata.Actions)
+        {
+            var action = GoapAction.FromMetadata(
+                cachedAction.FlowName,
+                cachedAction.Preconditions,
+                cachedAction.Effects,
+                cachedAction.Cost);
+            availableActions.Add(action);
+        }
 
-            // Convert cached actions to internal GoapAction objects
-            var availableActions = new List<GoapAction>();
-            foreach (var cachedAction in cachedMetadata.Actions)
-            {
-                var action = GoapAction.FromMetadata(
-                    cachedAction.FlowName,
-                    cachedAction.Preconditions,
-                    cachedAction.Effects,
-                    cachedAction.Cost);
-                availableActions.Add(action);
-            }
-
-            if (availableActions.Count == 0)
-            {
-                return (StatusCodes.OK, new GoapPlanResponse
-                {
-                    FailureReason = "No GOAP actions available in the compiled behavior",
-                    PlanningTimeMs = 0,
-                    NodesExpanded = 0
-                });
-            }
-
-            // Convert planning options (use defaults if not provided)
-            var planningOptions = body.Options != null
-                ? new PlanningOptions
-                {
-                    MaxDepth = body.Options.MaxDepth,
-                    MaxNodesExpanded = body.Options.MaxNodes,
-                    TimeoutMs = body.Options.TimeoutMs
-                }
-                : PlanningOptions.Default;
-
-            _logger.LogDebug(
-                "Planning with {ActionCount} actions, options: {Options}",
-                availableActions.Count,
-                planningOptions);
-
-            // Run the A* planner
-            var plan = await _goapPlanner.PlanAsync(
-                worldState,
-                goal,
-                availableActions,
-                planningOptions,
-                cancellationToken);
-
-            // Convert result to API response
-            if (plan == null)
-            {
-                return (StatusCodes.OK, new GoapPlanResponse
-                {
-                    FailureReason = "No valid plan found - goal may be unreachable from current state",
-                    PlanningTimeMs = 0,
-                    NodesExpanded = 0
-                });
-            }
-
-            // Build successful response
-            var planResult = new GoapPlanResult
-            {
-                GoalId = goal.Id,
-                TotalCost = plan.TotalCost,
-                Actions = plan.Actions.Select(a => new PlannedActionResponse
-                {
-                    ActionId = a.Action.Id,
-                    Index = a.Index,
-                    Cost = a.Action.Cost
-                }).ToList()
-            };
-
-            _logger.LogInformation(
-                "Generated GOAP plan for agent {AgentId}: {ActionCount} actions, cost {TotalCost}, {NodesExpanded} nodes in {PlanningTimeMs}ms",
-                body.AgentId,
-                plan.ActionCount,
-                plan.TotalCost,
-                plan.NodesExpanded,
-                plan.PlanningTimeMs);
-
-            // Publish plan generated event for monitoring/analytics
-            await _messageBus.TryPublishAsync(GOAP_PLAN_GENERATED_TOPIC, new GoapPlanGeneratedEvent
-            {
-                EventId = Guid.NewGuid(),
-                Timestamp = DateTimeOffset.UtcNow,
-                ActorId = body.AgentId,
-                GoalId = body.Goal.Name,
-                PlanStepCount = plan.ActionCount,
-                PlanningTimeMs = (int)plan.PlanningTimeMs
-            }, cancellationToken: cancellationToken);
-
+        if (availableActions.Count == 0)
+        {
             return (StatusCodes.OK, new GoapPlanResponse
             {
-                Plan = planResult,
-                PlanningTimeMs = (int)plan.PlanningTimeMs,
-                NodesExpanded = plan.NodesExpanded
+                FailureReason = "No GOAP actions available in the compiled behavior",
+                PlanningTimeMs = 0,
+                NodesExpanded = 0
             });
         }
-        catch (Exception ex)
+
+        // Convert planning options (use defaults if not provided)
+        var planningOptions = body.Options != null
+            ? new PlanningOptions
+            {
+                MaxDepth = body.Options.MaxDepth,
+                MaxNodesExpanded = body.Options.MaxNodes,
+                TimeoutMs = body.Options.TimeoutMs
+            }
+            : PlanningOptions.Default;
+
+        _logger.LogDebug(
+            "Planning with {ActionCount} actions, options: {Options}",
+            availableActions.Count,
+            planningOptions);
+
+        // Run the A* planner
+        var plan = await _goapPlanner.PlanAsync(
+            worldState,
+            goal,
+            availableActions,
+            planningOptions,
+            cancellationToken);
+
+        // Convert result to API response
+        if (plan == null)
         {
-            _logger.LogError(ex, "Error generating GOAP plan for agent {AgentId}", body.AgentId);
-            await _messageBus.TryPublishErrorAsync(
-                serviceName: "behavior",
-                operation: "GenerateGoapPlan",
-                errorType: ex.GetType().Name,
-                message: ex.Message,
-                details: new { AgentId = body.AgentId, GoalName = body.Goal.Name },
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
+            return (StatusCodes.OK, new GoapPlanResponse
+            {
+                FailureReason = "No valid plan found - goal may be unreachable from current state",
+                PlanningTimeMs = 0,
+                NodesExpanded = 0
+            });
         }
+
+        // Build successful response
+        var planResult = new GoapPlanResult
+        {
+            GoalId = goal.Id,
+            TotalCost = plan.TotalCost,
+            Actions = plan.Actions.Select(a => new PlannedActionResponse
+            {
+                ActionId = a.Action.Id,
+                Index = a.Index,
+                Cost = a.Action.Cost
+            }).ToList()
+        };
+
+        _logger.LogInformation(
+            "Generated GOAP plan for agent {AgentId}: {ActionCount} actions, cost {TotalCost}, {NodesExpanded} nodes in {PlanningTimeMs}ms",
+            body.AgentId,
+            plan.ActionCount,
+            plan.TotalCost,
+            plan.NodesExpanded,
+            plan.PlanningTimeMs);
+
+        // Publish plan generated event for monitoring/analytics
+        await _messageBus.TryPublishAsync(GOAP_PLAN_GENERATED_TOPIC, new GoapPlanGeneratedEvent
+        {
+            EventId = Guid.NewGuid(),
+            Timestamp = DateTimeOffset.UtcNow,
+            ActorId = body.AgentId,
+            GoalId = body.Goal.Name,
+            PlanStepCount = plan.ActionCount,
+            PlanningTimeMs = (int)plan.PlanningTimeMs
+        }, cancellationToken: cancellationToken);
+
+        return (StatusCodes.OK, new GoapPlanResponse
+        {
+            Plan = planResult,
+            PlanningTimeMs = (int)plan.PlanningTimeMs,
+            NodesExpanded = plan.NodesExpanded
+        });
     }
 
     /// <summary>
@@ -928,57 +851,41 @@ public partial class BehaviorService : IBehaviorService
     /// <returns>The validation result with suggested action.</returns>
     public async Task<(StatusCodes, ValidateGoapPlanResponse?)> ValidateGoapPlanAsync(ValidateGoapPlanRequest body, CancellationToken cancellationToken = default)
     {
-        try
+        _logger.LogDebug(
+            "Validating GOAP plan for goal {GoalId}, current action index {ActionIndex}",
+            body.Plan.GoalId,
+            body.CurrentActionIndex);
+
+        // Convert API world state to internal WorldState
+        var worldState = ConvertToWorldState(body.WorldState);
+
+        // Convert API plan to internal format for validation
+        var plan = ConvertToGoapPlan(body.Plan);
+
+        // Convert active goals if provided
+        var activeGoals = body.ActiveGoals?.Select(ConvertToGoapGoal).ToList()
+            ?? new List<InternalGoapGoal>();
+
+        // Validate the plan
+        var result = await _goapPlanner.ValidatePlanAsync(
+            plan,
+            body.CurrentActionIndex,
+            worldState,
+            activeGoals,
+            cancellationToken);
+
+        // Convert internal result to API response
+        var response = new ValidateGoapPlanResponse
         {
-            _logger.LogDebug(
-                "Validating GOAP plan for goal {GoalId}, current action index {ActionIndex}",
-                body.Plan.GoalId,
-                body.CurrentActionIndex);
+            IsValid = result.IsValid,
+            Reason = ConvertToApiReplanReason(result.Reason),
+            SuggestedAction = ConvertToApiSuggestion(result.Suggestion),
+            InvalidatedAtIndex = result.InvalidatedAtIndex,
+            // Message is nullable - null means no additional context needed
+            Message = result.Message
+        };
 
-            // Convert API world state to internal WorldState
-            var worldState = ConvertToWorldState(body.WorldState);
-
-            // Convert API plan to internal format for validation
-            var plan = ConvertToGoapPlan(body.Plan);
-
-            // Convert active goals if provided
-            var activeGoals = body.ActiveGoals?.Select(ConvertToGoapGoal).ToList()
-                ?? new List<InternalGoapGoal>();
-
-            // Validate the plan
-            var result = await _goapPlanner.ValidatePlanAsync(
-                plan,
-                body.CurrentActionIndex,
-                worldState,
-                activeGoals,
-                cancellationToken);
-
-            // Convert internal result to API response
-            var response = new ValidateGoapPlanResponse
-            {
-                IsValid = result.IsValid,
-                Reason = ConvertToApiReplanReason(result.Reason),
-                SuggestedAction = ConvertToApiSuggestion(result.Suggestion),
-                InvalidatedAtIndex = result.InvalidatedAtIndex,
-                // Message is nullable - null means no additional context needed
-                Message = result.Message
-            };
-
-            return (StatusCodes.OK, response);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error validating GOAP plan for goal {GoalId}", body.Plan.GoalId);
-            await _messageBus.TryPublishErrorAsync(
-                serviceName: "behavior",
-                operation: "ValidateGoapPlan",
-                errorType: ex.GetType().Name,
-                message: ex.Message,
-                details: new { GoalId = body.Plan.GoalId },
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
+        return (StatusCodes.OK, response);
     }
 
     #region GOAP Type Conversions
@@ -1139,16 +1046,6 @@ public partial class BehaviorService : IBehaviorService
     #endregion
 
     #region Permission Registration
-
-    /// <summary>
-    /// Registers this service's API permissions with the Permission service on startup.
-    /// Overrides the default IBannouService implementation to use generated permission data.
-    /// </summary>
-    public async Task RegisterServicePermissionsAsync(string appId)
-    {
-        _logger.LogInformation("Registering Behavior service permissions...");
-        await BehaviorPermissionRegistration.RegisterViaEventAsync(_messageBus, appId, _logger);
-    }
 
     #endregion
 }

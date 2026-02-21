@@ -15,7 +15,7 @@ namespace BeyondImmersion.BannouService.Mesh;
 /// Uses lib-state via IMeshStateManager (NOT via mesh) to avoid circular dependencies.
 /// Service mappings are managed via IServiceAppMappingResolver (shared across all services).
 /// </summary>
-[BannouService("mesh", typeof(IMeshService), lifetime: ServiceLifetime.Scoped)]
+[BannouService("mesh", typeof(IMeshService), lifetime: ServiceLifetime.Scoped, layer: ServiceLayer.Infrastructure)]
 public partial class MeshService : IMeshService
 {
     private readonly IMessageBus _messageBus;
@@ -25,7 +25,12 @@ public partial class MeshService : IMeshService
     private readonly IServiceAppMappingResolver _mappingResolver;
 
     // Round-robin counter for load balancing (per app-id)
-    private static readonly ConcurrentDictionary<string, int> _roundRobinCounters = new();
+    // Uses RoundRobinCounter from MeshServiceModels.cs for thread-safe atomic increments
+    private static readonly ConcurrentDictionary<string, RoundRobinCounter> _roundRobinCounters = new();
+
+    // Weighted round-robin current weights (key: "appId:instanceId" -> currentWeight)
+    // Uses smooth weighted round-robin algorithm (nginx-style)
+    private static readonly ConcurrentDictionary<string, double> _weightedRoundRobinCurrentWeights = new();
 
     // Track service start time for uptime
     private static readonly DateTimeOffset _serviceStartTime = DateTimeOffset.UtcNow;
@@ -68,42 +73,27 @@ public partial class MeshService : IMeshService
     {
         _logger.LogDebug("Getting endpoints for app {AppId}", body.AppId);
 
-        try
+        var endpoints = await _stateManager.GetEndpointsForAppIdAsync(
+            body.AppId,
+            body.IncludeUnhealthy);
+
+        // Filter by service name if specified
+        if (!string.IsNullOrEmpty(body.ServiceName))
         {
-            var endpoints = await _stateManager.GetEndpointsForAppIdAsync(
-                body.AppId,
-                body.IncludeUnhealthy);
-
-            // Filter by service name if specified
-            if (!string.IsNullOrEmpty(body.ServiceName))
-            {
-                endpoints = endpoints
-                    .Where(e => e.Services?.Contains(body.ServiceName) == true)
-                    .ToList();
-            }
-
-            var response = new GetEndpointsResponse
-            {
-                AppId = body.AppId,
-                Endpoints = endpoints,
-                HealthyCount = endpoints.Count(e => e.Status == EndpointStatus.Healthy),
-                TotalCount = endpoints.Count
-            };
-
-            return (StatusCodes.OK, response);
+            endpoints = endpoints
+                .Where(e => e.Services?.Contains(body.ServiceName) == true)
+                .ToList();
         }
-        catch (Exception ex)
+
+        var response = new GetEndpointsResponse
         {
-            _logger.LogError(ex, "Error getting endpoints for app {AppId}", body.AppId);
-            await _messageBus.TryPublishErrorAsync(
-                "mesh",
-                "GetEndpoints",
-                ex.GetType().Name,
-                ex.Message,
-                dependency: "redis",
-                stack: ex.StackTrace);
-            return (StatusCodes.InternalServerError, null);
-        }
+            AppId = body.AppId,
+            Endpoints = endpoints,
+            HealthyCount = endpoints.Count(e => e.Status == EndpointStatus.Healthy),
+            TotalCount = endpoints.Count
+        };
+
+        return (StatusCodes.OK, response);
     }
 
     /// <summary>
@@ -114,43 +104,36 @@ public partial class MeshService : IMeshService
         ListEndpointsRequest body,
         CancellationToken cancellationToken)
     {
-        _logger.LogDebug("Listing all endpoints, filter: {Filter}", body.AppIdFilter);
+        _logger.LogDebug(
+            "Listing all endpoints, appIdFilter: {AppIdFilter}, statusFilter: {StatusFilter}",
+            body.AppIdFilter, body.StatusFilter);
 
-        try
+        var endpoints = await _stateManager.GetAllEndpointsAsync(body.AppIdFilter);
+
+        // Apply status filter if specified
+        if (body.StatusFilter.HasValue)
         {
-            var endpoints = await _stateManager.GetAllEndpointsAsync(body.AppIdFilter);
+            endpoints = endpoints.Where(e => e.Status == body.StatusFilter.Value).ToList();
+        }
 
-            // Group by status for summary
-            var byStatus = endpoints.GroupBy(e => e.Status)
-                .ToDictionary(g => g.Key, g => g.Count());
+        // Group by status for summary
+        var byStatus = endpoints.GroupBy(e => e.Status)
+            .ToDictionary(g => g.Key, g => g.Count());
 
-            var response = new ListEndpointsResponse
+        var response = new ListEndpointsResponse
+        {
+            Endpoints = endpoints,
+            Summary = new EndpointSummary
             {
-                Endpoints = endpoints,
-                Summary = new EndpointSummary
-                {
-                    TotalEndpoints = endpoints.Count,
-                    HealthyCount = byStatus.GetValueOrDefault(EndpointStatus.Healthy, 0),
-                    DegradedCount = byStatus.GetValueOrDefault(EndpointStatus.Degraded, 0),
-                    UnavailableCount = byStatus.GetValueOrDefault(EndpointStatus.Unavailable, 0),
-                    UniqueAppIds = endpoints.Select(e => e.AppId).Distinct().Count()
-                }
-            };
+                TotalEndpoints = endpoints.Count,
+                HealthyCount = byStatus.GetValueOrDefault(EndpointStatus.Healthy, 0),
+                DegradedCount = byStatus.GetValueOrDefault(EndpointStatus.Degraded, 0),
+                UnavailableCount = byStatus.GetValueOrDefault(EndpointStatus.Unavailable, 0),
+                UniqueAppIds = endpoints.Select(e => e.AppId).Distinct().Count()
+            }
+        };
 
-            return (StatusCodes.OK, response);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error listing endpoints");
-            await _messageBus.TryPublishErrorAsync(
-                "mesh",
-                "ListEndpoints",
-                ex.GetType().Name,
-                ex.Message,
-                dependency: "redis",
-                stack: ex.StackTrace);
-            return (StatusCodes.InternalServerError, null);
-        }
+        return (StatusCodes.OK, response);
     }
 
     /// <summary>
@@ -165,57 +148,42 @@ public partial class MeshService : IMeshService
             "Registering endpoint for app {AppId} at {Host}:{Port}",
             body.AppId, body.Host, body.Port);
 
-        try
+        var instanceId = body.InstanceId != Guid.Empty ? body.InstanceId : Guid.NewGuid();
+        var now = DateTimeOffset.UtcNow;
+
+        var endpoint = new MeshEndpoint
         {
-            var instanceId = body.InstanceId != Guid.Empty ? body.InstanceId : Guid.NewGuid();
-            var now = DateTimeOffset.UtcNow;
+            InstanceId = instanceId,
+            AppId = body.AppId,
+            Host = body.Host,
+            Port = body.Port,
+            Status = EndpointStatus.Healthy,
+            Services = body.Services ?? new List<string>(),
+            MaxConnections = body.MaxConnections,
+            CurrentConnections = 0,
+            LoadPercent = 0,
+            RegisteredAt = now,
+            LastSeen = now
+        };
 
-            var endpoint = new MeshEndpoint
-            {
-                InstanceId = instanceId,
-                AppId = body.AppId,
-                Host = body.Host,
-                Port = body.Port,
-                Status = EndpointStatus.Healthy,
-                Services = body.Services ?? new List<string>(),
-                MaxConnections = body.MaxConnections,
-                CurrentConnections = 0,
-                LoadPercent = 0,
-                RegisteredAt = now,
-                LastSeen = now
-            };
+        var success = await _stateManager.RegisterEndpointAsync(endpoint, _configuration.EndpointTtlSeconds);
 
-            var success = await _stateManager.RegisterEndpointAsync(endpoint, _configuration.EndpointTtlSeconds);
-
-            if (!success)
-            {
-                _logger.LogWarning("Failed to register endpoint {InstanceId}", instanceId);
-                return (StatusCodes.InternalServerError, null);
-            }
-
-            // Publish registration event
-            await PublishEndpointRegisteredEventAsync(endpoint, cancellationToken);
-
-            var response = new RegisterEndpointResponse
-            {
-                Endpoint = endpoint,
-                TtlSeconds = _configuration.EndpointTtlSeconds
-            };
-
-            return (StatusCodes.OK, response);
-        }
-        catch (Exception ex)
+        if (!success)
         {
-            _logger.LogError(ex, "Error registering endpoint for app {AppId}", body.AppId);
-            await _messageBus.TryPublishErrorAsync(
-                "mesh",
-                "RegisterEndpoint",
-                ex.GetType().Name,
-                ex.Message,
-                dependency: "redis",
-                stack: ex.StackTrace);
+            _logger.LogWarning("Failed to register endpoint {InstanceId}", instanceId);
             return (StatusCodes.InternalServerError, null);
         }
+
+        // Publish registration event
+        await PublishEndpointRegisteredEventAsync(endpoint, cancellationToken);
+
+        var response = new RegisterEndpointResponse
+        {
+            Endpoint = endpoint,
+            TtlSeconds = _configuration.EndpointTtlSeconds
+        };
+
+        return (StatusCodes.OK, response);
     }
 
     /// <summary>
@@ -228,45 +196,30 @@ public partial class MeshService : IMeshService
     {
         _logger.LogInformation("Deregistering endpoint {InstanceId}", body.InstanceId);
 
-        try
+        // Look up the endpoint to get appId for deregistration
+        var endpoint = await _stateManager.GetEndpointByInstanceIdAsync(body.InstanceId);
+        if (endpoint == null)
         {
-            // Look up the endpoint to get appId for deregistration
-            var endpoint = await _stateManager.GetEndpointByInstanceIdAsync(body.InstanceId);
-            if (endpoint == null)
-            {
-                _logger.LogWarning("Endpoint {InstanceId} not found for deregistration", body.InstanceId);
-                return StatusCodes.NotFound;
-            }
-
-            var success = await _stateManager.DeregisterEndpointAsync(body.InstanceId, endpoint.AppId);
-
-            if (!success)
-            {
-                _logger.LogWarning("Failed to deregister endpoint {InstanceId}", body.InstanceId);
-                return StatusCodes.NotFound;
-            }
-
-            // Publish deregistration event
-            await PublishEndpointDeregisteredEventAsync(
-                body.InstanceId,
-                endpoint.AppId,
-                MeshEndpointDeregisteredEventReason.Graceful,
-                cancellationToken);
-
-            return StatusCodes.OK;
+            _logger.LogWarning("Endpoint {InstanceId} not found for deregistration", body.InstanceId);
+            return StatusCodes.NotFound;
         }
-        catch (Exception ex)
+
+        var success = await _stateManager.DeregisterEndpointAsync(body.InstanceId, endpoint.AppId);
+
+        if (!success)
         {
-            _logger.LogError(ex, "Error deregistering endpoint {InstanceId}", body.InstanceId);
-            await _messageBus.TryPublishErrorAsync(
-                "mesh",
-                "DeregisterEndpoint",
-                ex.GetType().Name,
-                ex.Message,
-                dependency: "redis",
-                stack: ex.StackTrace);
-            return StatusCodes.InternalServerError;
+            _logger.LogWarning("Failed to deregister endpoint {InstanceId}", body.InstanceId);
+            return StatusCodes.NotFound;
         }
+
+        // Publish deregistration event
+        await PublishEndpointDeregisteredEventAsync(
+            body.InstanceId,
+            endpoint.AppId,
+            MeshEndpointDeregisteredEventReason.Graceful,
+            cancellationToken);
+
+        return StatusCodes.OK;
     }
 
     /// <summary>
@@ -281,54 +234,47 @@ public partial class MeshService : IMeshService
             "Heartbeat from {InstanceId}, status: {Status}, load: {Load}%",
             body.InstanceId, body.Status, body.LoadPercent);
 
-        try
+        // Look up the endpoint to get appId
+        var endpoint = await _stateManager.GetEndpointByInstanceIdAsync(body.InstanceId);
+        if (endpoint == null)
         {
-            // Look up the endpoint to get appId
-            var endpoint = await _stateManager.GetEndpointByInstanceIdAsync(body.InstanceId);
-            if (endpoint == null)
-            {
-                _logger.LogWarning(
-                    "Heartbeat rejected for unknown endpoint {InstanceId}",
-                    body.InstanceId);
-                return (StatusCodes.NotFound, null);
-            }
-
-            var success = await _stateManager.UpdateHeartbeatAsync(
-                body.InstanceId,
-                endpoint.AppId,
-                body.Status ?? EndpointStatus.Healthy,
-                body.LoadPercent ?? 0,
-                body.CurrentConnections ?? 0,
-                _configuration.EndpointTtlSeconds);
-
-            if (!success)
-            {
-                _logger.LogWarning(
-                    "Heartbeat update failed for endpoint {InstanceId}",
-                    body.InstanceId);
-                return (StatusCodes.NotFound, null);
-            }
-
-            var response = new HeartbeatResponse
-            {
-                NextHeartbeatSeconds = _configuration.HeartbeatIntervalSeconds,
-                TtlSeconds = _configuration.EndpointTtlSeconds
-            };
-
-            return (StatusCodes.OK, response);
+            _logger.LogWarning(
+                "Heartbeat rejected for unknown endpoint {InstanceId}",
+                body.InstanceId);
+            return (StatusCodes.NotFound, null);
         }
-        catch (Exception ex)
+
+        if (body.Issues != null && body.Issues.Count > 0)
         {
-            _logger.LogError(ex, "Error processing heartbeat for {InstanceId}", body.InstanceId);
-            await _messageBus.TryPublishErrorAsync(
-                "mesh",
-                "Heartbeat",
-                ex.GetType().Name,
-                ex.Message,
-                dependency: "redis",
-                stack: ex.StackTrace);
-            return (StatusCodes.InternalServerError, null);
+            _logger.LogDebug(
+                "Endpoint {InstanceId} reporting {IssueCount} issue(s): {Issues}",
+                body.InstanceId, body.Issues.Count, string.Join(", ", body.Issues));
         }
+
+        var success = await _stateManager.UpdateHeartbeatAsync(
+            body.InstanceId,
+            endpoint.AppId,
+            body.Status ?? EndpointStatus.Healthy,
+            body.LoadPercent ?? 0,
+            body.CurrentConnections ?? 0,
+            body.Issues,
+            _configuration.EndpointTtlSeconds);
+
+        if (!success)
+        {
+            _logger.LogWarning(
+                "Heartbeat update failed for endpoint {InstanceId}",
+                body.InstanceId);
+            return (StatusCodes.NotFound, null);
+        }
+
+        var response = new HeartbeatResponse
+        {
+            NextHeartbeatSeconds = _configuration.HeartbeatIntervalSeconds,
+            TtlSeconds = _configuration.EndpointTtlSeconds
+        };
+
+        return (StatusCodes.OK, response);
     }
 
     /// <summary>
@@ -341,93 +287,73 @@ public partial class MeshService : IMeshService
     {
         _logger.LogDebug("Getting route for app {AppId}", body.AppId);
 
-        try
+        var endpoints = await _stateManager.GetEndpointsForAppIdAsync(body.AppId, false);
+
+        if (endpoints.Count == 0)
         {
-            var endpoints = await _stateManager.GetEndpointsForAppIdAsync(body.AppId, false);
+            _logger.LogWarning("No healthy endpoints found for app {AppId}", body.AppId);
+            return (StatusCodes.NotFound, null);
+        }
+
+        // Filter by service name if specified
+        if (!string.IsNullOrEmpty(body.ServiceName))
+        {
+            endpoints = endpoints
+                .Where(e => e.Services?.Contains(body.ServiceName) == true)
+                .ToList();
 
             if (endpoints.Count == 0)
             {
-                _logger.LogWarning("No healthy endpoints found for app {AppId}", body.AppId);
+                _logger.LogWarning(
+                    "No endpoints found for service {ServiceName} on app {AppId}",
+                    body.ServiceName, body.AppId);
                 return (StatusCodes.NotFound, null);
             }
-
-            // Filter by service name if specified
-            if (!string.IsNullOrEmpty(body.ServiceName))
-            {
-                endpoints = endpoints
-                    .Where(e => e.Services?.Contains(body.ServiceName) == true)
-                    .ToList();
-
-                if (endpoints.Count == 0)
-                {
-                    _logger.LogWarning(
-                        "No endpoints found for service {ServiceName} on app {AppId}",
-                        body.ServiceName, body.AppId);
-                    return (StatusCodes.NotFound, null);
-                }
-            }
-
-            // Filter out degraded endpoints (stale heartbeat)
-            var degradationThreshold = DateTimeOffset.UtcNow.AddSeconds(-_configuration.DegradationThresholdSeconds);
-            var healthyEndpoints = endpoints
-                .Where(e => e.LastSeen >= degradationThreshold)
-                .ToList();
-
-            // Filter out overloaded endpoints (above load threshold)
-            if (healthyEndpoints.Count > 1)
-            {
-                var underThreshold = healthyEndpoints
-                    .Where(e => e.LoadPercent <= _configuration.LoadThresholdPercent)
-                    .ToList();
-                if (underThreshold.Count > 0)
-                {
-                    healthyEndpoints = underThreshold;
-                }
-            }
-
-            // Fall back to all endpoints if filtering removed everything
-            if (healthyEndpoints.Count == 0)
-            {
-                healthyEndpoints = endpoints;
-            }
-
-            // Determine effective algorithm (use configured default when request uses default value)
-            var effectiveAlgorithm = body.Algorithm;
-            if (effectiveAlgorithm == default)
-            {
-                // Cast config enum to API enum (both have same values in same order)
-                effectiveAlgorithm = (LoadBalancerAlgorithm)_configuration.DefaultLoadBalancer;
-            }
-
-            // Apply load balancing algorithm
-            var selectedEndpoint = SelectEndpoint(healthyEndpoints, body.AppId, effectiveAlgorithm);
-
-            // Get alternates (other healthy endpoints)
-            var alternates = healthyEndpoints
-                .Where(e => e.InstanceId != selectedEndpoint.InstanceId)
-                .Take(_configuration.MaxTopEndpointsReturned)
-                .ToList();
-
-            var response = new GetRouteResponse
-            {
-                Endpoint = selectedEndpoint,
-                Alternates = alternates
-            };
-
-            return (StatusCodes.OK, response);
         }
-        catch (Exception ex)
+
+        // Filter out degraded endpoints (stale heartbeat)
+        var degradationThreshold = DateTimeOffset.UtcNow.AddSeconds(-_configuration.DegradationThresholdSeconds);
+        var healthyEndpoints = endpoints
+            .Where(e => e.LastSeen >= degradationThreshold)
+            .ToList();
+
+        // Filter out overloaded endpoints (above load threshold)
+        if (healthyEndpoints.Count > 1)
         {
-            _logger.LogError(ex, "Error getting route for app {AppId}", body.AppId);
-            await _messageBus.TryPublishErrorAsync(
-                "mesh",
-                "GetRoute",
-                ex.GetType().Name,
-                ex.Message,
-                dependency: "redis",
-                stack: ex.StackTrace);
-            return (StatusCodes.InternalServerError, null);
+            var underThreshold = healthyEndpoints
+                .Where(e => e.LoadPercent <= _configuration.LoadThresholdPercent)
+                .ToList();
+            if (underThreshold.Count > 0)
+            {
+                healthyEndpoints = underThreshold;
+            }
         }
+
+        // Fall back to all endpoints if filtering removed everything
+        if (healthyEndpoints.Count == 0)
+        {
+            healthyEndpoints = endpoints;
+        }
+
+        // Determine effective algorithm (use configured default when null or not specified)
+        var effectiveAlgorithm = body.Algorithm ?? (LoadBalancerAlgorithm)_configuration.DefaultLoadBalancer;
+
+        // Apply load balancing algorithm
+        var selectedEndpoint = SelectEndpoint(healthyEndpoints, body.AppId, effectiveAlgorithm);
+
+        // Get alternates (other healthy endpoints)
+        var alternates = healthyEndpoints
+            .Where(e => e.InstanceId != selectedEndpoint.InstanceId)
+            .Take(_configuration.MaxTopEndpointsReturned)
+            .ToList();
+
+        var response = new GetRouteResponse
+        {
+            Endpoint = selectedEndpoint,
+            Alternates = alternates
+        };
+
+        return (StatusCodes.OK, response);
     }
 
     /// <summary>
@@ -479,71 +405,56 @@ public partial class MeshService : IMeshService
     {
         _logger.LogDebug("Getting mesh health status");
 
-        try
+        var (isHealthy, _, _) = await _stateManager.CheckHealthAsync();
+
+        // Get overall mesh statistics
+        var endpoints = await _stateManager.GetAllEndpointsAsync();
+        var healthyCount = endpoints.Count(e => e.Status == EndpointStatus.Healthy);
+        var degradedCount = endpoints.Count(e => e.Status == EndpointStatus.Degraded);
+        var unavailableCount = endpoints.Count(e => e.Status == EndpointStatus.Unavailable);
+
+        // Determine overall status
+        EndpointStatus overallStatus;
+        if (!isHealthy || unavailableCount > healthyCount)
         {
-            var (isHealthy, _, _) = await _stateManager.CheckHealthAsync();
-
-            // Get overall mesh statistics
-            var endpoints = await _stateManager.GetAllEndpointsAsync();
-            var healthyCount = endpoints.Count(e => e.Status == EndpointStatus.Healthy);
-            var degradedCount = endpoints.Count(e => e.Status == EndpointStatus.Degraded);
-            var unavailableCount = endpoints.Count(e => e.Status == EndpointStatus.Unavailable);
-
-            // Determine overall status
-            EndpointStatus overallStatus;
-            if (!isHealthy || unavailableCount > healthyCount)
-            {
-                overallStatus = EndpointStatus.Unavailable;
-            }
-            else if (degradedCount > 0 || unavailableCount > 0)
-            {
-                overallStatus = EndpointStatus.Degraded;
-            }
-            else
-            {
-                overallStatus = EndpointStatus.Healthy;
-            }
-
-            // Calculate uptime
-            var uptime = DateTimeOffset.UtcNow - _serviceStartTime;
-            var uptimeString = FormatUptime(uptime);
-
-            var response = new MeshHealthResponse
-            {
-                Status = overallStatus,
-                Summary = new EndpointSummary
-                {
-                    TotalEndpoints = endpoints.Count,
-                    HealthyCount = healthyCount,
-                    DegradedCount = degradedCount,
-                    UnavailableCount = unavailableCount,
-                    UniqueAppIds = endpoints.Select(e => e.AppId).Distinct().Count()
-                },
-                RedisConnected = isHealthy,
-                LastUpdateTime = DateTimeOffset.UtcNow,
-                Uptime = uptimeString
-            };
-
-            // Include endpoints if requested
-            if (body.IncludeEndpoints)
-            {
-                response.Endpoints = endpoints;
-            }
-
-            return (StatusCodes.OK, response);
+            overallStatus = EndpointStatus.Unavailable;
         }
-        catch (Exception ex)
+        else if (degradedCount > 0 || unavailableCount > 0)
         {
-            _logger.LogError(ex, "Error getting mesh health");
-            await _messageBus.TryPublishErrorAsync(
-                "mesh",
-                "GetHealth",
-                ex.GetType().Name,
-                ex.Message,
-                dependency: "redis",
-                stack: ex.StackTrace);
-            return (StatusCodes.InternalServerError, null);
+            overallStatus = EndpointStatus.Degraded;
         }
+        else
+        {
+            overallStatus = EndpointStatus.Healthy;
+        }
+
+        // Calculate uptime
+        var uptime = DateTimeOffset.UtcNow - _serviceStartTime;
+        var uptimeString = FormatUptime(uptime);
+
+        var response = new MeshHealthResponse
+        {
+            Status = overallStatus,
+            Summary = new EndpointSummary
+            {
+                TotalEndpoints = endpoints.Count,
+                HealthyCount = healthyCount,
+                DegradedCount = degradedCount,
+                UnavailableCount = unavailableCount,
+                UniqueAppIds = endpoints.Select(e => e.AppId).Distinct().Count()
+            },
+            RedisConnected = isHealthy,
+            LastUpdateTime = DateTimeOffset.UtcNow,
+            Uptime = uptimeString
+        };
+
+        // Include endpoints if requested
+        if (body.IncludeEndpoints)
+        {
+            response.Endpoints = endpoints;
+        }
+
+        return (StatusCodes.OK, response);
     }
 
     #region Load Balancing
@@ -561,6 +472,7 @@ public partial class MeshService : IMeshService
             LoadBalancerAlgorithm.RoundRobin => SelectRoundRobin(endpoints, appId),
             LoadBalancerAlgorithm.LeastConnections => SelectLeastConnections(endpoints),
             LoadBalancerAlgorithm.Weighted => SelectWeighted(endpoints),
+            LoadBalancerAlgorithm.WeightedRoundRobin => SelectWeightedRoundRobin(endpoints, appId),
             LoadBalancerAlgorithm.Random => SelectRandom(endpoints),
             _ => SelectRoundRobin(endpoints, appId)
         };
@@ -568,12 +480,23 @@ public partial class MeshService : IMeshService
 
     private MeshEndpoint SelectRoundRobin(List<MeshEndpoint> endpoints, string appId)
     {
-        var counter = _roundRobinCounters.AddOrUpdate(
-            appId,
-            0,
-            (_, current) => (current + 1) % endpoints.Count);
+        // Enforce cache size limit if configured (0 means unlimited)
+        if (_configuration.LoadBalancingStateMaxAppIds > 0 &&
+            _roundRobinCounters.Count >= _configuration.LoadBalancingStateMaxAppIds &&
+            !_roundRobinCounters.ContainsKey(appId))
+        {
+            // Evict oldest entry (FIFO approximation - ConcurrentDictionary doesn't track order,
+            // so we evict an arbitrary entry which provides eventual fairness)
+            var keyToRemove = _roundRobinCounters.Keys.FirstOrDefault();
+            if (keyToRemove != null)
+            {
+                _roundRobinCounters.TryRemove(keyToRemove, out _);
+            }
+        }
 
-        return endpoints[counter % endpoints.Count];
+        var counter = _roundRobinCounters.GetOrAdd(appId, _ => new RoundRobinCounter());
+        var index = counter.GetNext() % endpoints.Count;
+        return endpoints[index];
     }
 
     private static MeshEndpoint SelectLeastConnections(List<MeshEndpoint> endpoints)
@@ -602,6 +525,87 @@ public partial class MeshService : IMeshService
         }
 
         return endpoints[0];
+    }
+
+    /// <summary>
+    /// Smooth weighted round-robin algorithm (nginx-style).
+    /// Combines predictable round-robin ordering with load-based weighting.
+    /// Less loaded endpoints receive proportionally more requests while
+    /// maintaining a deterministic distribution pattern.
+    /// </summary>
+    private MeshEndpoint SelectWeightedRoundRobin(List<MeshEndpoint> endpoints, string appId)
+    {
+        // Calculate effective weights based on inverse of load (less loaded = higher weight)
+        var weighted = endpoints
+            .Select(e => (
+                Endpoint: e,
+                Key: $"{appId}:{e.InstanceId}",
+                EffectiveWeight: Math.Max(100 - e.LoadPercent, 1)))
+            .ToList();
+
+        var totalEffectiveWeight = weighted.Sum(w => w.EffectiveWeight);
+
+        // Enforce cache size limit if configured (0 means unlimited)
+        // Note: This is a soft limit - we evict before adding new keys, but the dictionary
+        // uses endpoint keys which are more granular than appId keys
+        if (_configuration.LoadBalancingStateMaxAppIds > 0)
+        {
+            var currentUniqueAppIds = _weightedRoundRobinCurrentWeights.Keys
+                .Select(k => k.Split(':')[0])
+                .Distinct()
+                .Count();
+
+            if (currentUniqueAppIds >= _configuration.LoadBalancingStateMaxAppIds &&
+                !_weightedRoundRobinCurrentWeights.Keys.Any(k => k.StartsWith($"{appId}:")))
+            {
+                // Evict all entries for an arbitrary app-id to make room
+                var appIdToRemove = _weightedRoundRobinCurrentWeights.Keys
+                    .Select(k => k.Split(':')[0])
+                    .FirstOrDefault();
+
+                if (appIdToRemove != null)
+                {
+                    foreach (var key in _weightedRoundRobinCurrentWeights.Keys
+                        .Where(k => k.StartsWith($"{appIdToRemove}:"))
+                        .ToList())
+                    {
+                        _weightedRoundRobinCurrentWeights.TryRemove(key, out _);
+                    }
+                }
+            }
+        }
+
+        // Update current weights and find the endpoint with highest current weight
+        MeshEndpoint? selected = null;
+        string? selectedKey = null;
+        double highestCurrentWeight = double.MinValue;
+
+        foreach (var (endpoint, key, effectiveWeight) in weighted)
+        {
+            // Increment current weight by effective weight
+            var currentWeight = _weightedRoundRobinCurrentWeights.AddOrUpdate(
+                key,
+                effectiveWeight,
+                (_, current) => current + effectiveWeight);
+
+            if (currentWeight > highestCurrentWeight)
+            {
+                highestCurrentWeight = currentWeight;
+                selected = endpoint;
+                selectedKey = key;
+            }
+        }
+
+        // Reduce selected endpoint's current weight by total effective weight
+        if (selectedKey != null)
+        {
+            _weightedRoundRobinCurrentWeights.AddOrUpdate(
+                selectedKey,
+                0,
+                (_, current) => current - totalEffectiveWeight);
+        }
+
+        return selected ?? endpoints[0];
     }
 
     private static MeshEndpoint SelectRandom(List<MeshEndpoint> endpoints)
@@ -680,12 +684,13 @@ public partial class MeshService : IMeshService
     #region Test Helpers
 
     /// <summary>
-    /// Reset the static round-robin counters for test isolation. For testing purposes only.
+    /// Reset the static load balancing state for test isolation. For testing purposes only.
     /// Service mappings are managed by IServiceAppMappingResolver (use ClearAllMappingsForTests there).
     /// </summary>
-    internal static void ResetRoundRobinForTesting()
+    internal static void ResetLoadBalancingStateForTesting()
     {
         _roundRobinCounters.Clear();
+        _weightedRoundRobinCurrentWeights.Clear();
     }
 
     #endregion
@@ -708,16 +713,6 @@ public partial class MeshService : IMeshService
     #endregion
 
     #region Permission Registration
-
-    /// <summary>
-    /// Registers this service's API permissions with the Permission service on startup.
-    /// Overrides the default IBannouService implementation to use generated permission data.
-    /// </summary>
-    public async Task RegisterServicePermissionsAsync(string appId)
-    {
-        _logger.LogInformation("Registering Mesh service permissions...");
-        await MeshPermissionRegistration.RegisterViaEventAsync(_messageBus, appId, _logger);
-    }
 
     #endregion
 }

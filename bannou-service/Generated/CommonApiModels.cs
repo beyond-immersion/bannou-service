@@ -83,6 +83,278 @@ public enum EntityType
 }
 #pragma warning restore CS1591
 
+/// <summary>
+/// Standardized sentiment categories for anonymous audience and reaction data. Used by lib-chat for sentiment room messages and lib-stream for platform audience processing. Designed for privacy-safe communication where text content is inappropriate or unnecessary.
+/// <br/>
+/// </summary>
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public enum SentimentCategory
+{
+
+    [System.Runtime.Serialization.EnumMember(Value = @"Excited")]
+    Excited = 0,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"Supportive")]
+    Supportive = 1,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"Critical")]
+    Critical = 2,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"Curious")]
+    Curious = 3,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"Surprised")]
+    Surprised = 4,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"Amused")]
+    Amused = 5,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"Bored")]
+    Bored = 6,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"Hostile")]
+    Hostile = 7,
+
+}
+#pragma warning restore CS1591
+
+/// <summary>
+/// Individual API endpoint with permission requirements.
+/// <br/>Extracted from OpenAPI schema x-permissions sections.
+/// <br/>
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class ServiceEndpoint
+{
+
+    /// <summary>
+    /// API endpoint path (e.g., "/account/{id}")
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("path")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    public string Path { get; set; } = default!;
+
+    /// <summary>
+    /// HTTP method for this endpoint
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("method")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public ServiceEndpointMethod Method { get; set; } = default!;
+
+    /// <summary>
+    /// Permission requirements for this endpoint
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("permissions")]
+    [System.ComponentModel.DataAnnotations.Required]
+    public System.Collections.Generic.ICollection<PermissionRequirement> Permissions { get; set; } = new System.Collections.ObjectModel.Collection<PermissionRequirement>();
+
+    /// <summary>
+    /// Human-readable endpoint description
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("description")]
+    public string? Description { get; set; } = default!;
+
+    /// <summary>
+    /// API category (auth, account, game, social, etc.)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("category")]
+    public string? Category { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Permission requirement mapping role and state to endpoint access.
+/// <br/>Defines which roles can access an endpoint in which states.
+/// <br/>
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class PermissionRequirement
+{
+
+    /// <summary>
+    /// Role that can access this endpoint (e.g., "user", "admin", "npc")
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("role")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    public string Role { get; set; } = default!;
+
+    /// <summary>
+    /// Map of service states required for access.
+    /// <br/>Key: service_id, Value: required_state
+    /// <br/>Example: {"game-session": "in_game", "character": "selected"}
+    /// <br/>
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("requiredStates")]
+    [System.ComponentModel.DataAnnotations.Required]
+    public System.Collections.Generic.IDictionary<string, string> RequiredStates { get; set; } = new System.Collections.Generic.Dictionary<string, string>();
+
+    /// <summary>
+    /// Optional human-readable permission description
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("description")]
+    public string? Description { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Position in world coordinates (meters, Y-up, right-handed)
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class Position3D
+{
+
+    /// <summary>
+    /// X coordinate in world space (meters)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("x")]
+    public float X { get; set; } = default!;
+
+    /// <summary>
+    /// Y coordinate (up axis) in world space (meters)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("y")]
+    public float Y { get; set; } = default!;
+
+    /// <summary>
+    /// Z coordinate in world space (meters)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("z")]
+    public float Z { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Axis-aligned bounding box in world coordinates (meters, Y-up, right-handed)
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class BoundingBox3D
+{
+
+    /// <summary>
+    /// Minimum X bound in world space
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("minX")]
+    public float MinX { get; set; } = default!;
+
+    /// <summary>
+    /// Minimum Y bound in world space
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("minY")]
+    public float MinY { get; set; } = default!;
+
+    /// <summary>
+    /// Minimum Z bound in world space
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("minZ")]
+    public float MinZ { get; set; } = default!;
+
+    /// <summary>
+    /// Maximum X bound in world space
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("maxX")]
+    public float MaxX { get; set; } = default!;
+
+    /// <summary>
+    /// Maximum Y bound in world space
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("maxY")]
+    public float MaxY { get; set; } = default!;
+
+    /// <summary>
+    /// Maximum Z bound in world space
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("maxZ")]
+    public float MaxZ { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Base schema for all resource archives that can be stored in
+/// <br/>the resource service's archive bundles and consumed by the
+/// <br/>storyline SDK's ArchiveExtractor.
+/// <br/>
+/// <br/>Archives implementing this base schema are marked with
+/// <br/>x-archive-type: true and are automatically collected by
+/// <br/>the archive generation script for SDK model generation.
+/// <br/>
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class ResourceArchiveBase
+{
+
+    /// <summary>
+    /// Unique identifier of the archived resource
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("resourceId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    public System.Guid ResourceId { get; set; } = default!;
+
+    /// <summary>
+    /// Type identifier (e.g., "character", "character-personality", "realm-history")
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("resourceType")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    public string ResourceType { get; set; } = default!;
+
+    /// <summary>
+    /// When this archive was created
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("archivedAt")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    public System.DateTimeOffset ArchivedAt { get; set; } = default!;
+
+    /// <summary>
+    /// Schema version for forward compatibility migration
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("schemaVersion")]
+    [System.ComponentModel.DataAnnotations.Range(1, int.MaxValue)]
+    public int SchemaVersion { get; set; } = default!;
+
+    /// <summary>
+    /// Child archives from dependent resources (populated by lib-resource compression)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("nestedArchives")]
+    public System.Collections.Generic.ICollection<ResourceArchiveBase> NestedArchives { get; set; } = default!;
+
+    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
+
+    /// <summary>
+    /// Gets or sets additional properties not defined in the schema.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonExtensionData]
+    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
+    {
+        get => _additionalProperties;
+        set { _additionalProperties = value; }
+    }
+
+}
+
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public enum ServiceEndpointMethod
+{
+
+    [System.Runtime.Serialization.EnumMember(Value = @"GET")]
+    GET = 0,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"POST")]
+    POST = 1,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"PUT")]
+    PUT = 2,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"DELETE")]
+    DELETE = 3,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"PATCH")]
+    PATCH = 4,
+
+}
+#pragma warning restore CS1591
+
 
 
 #pragma warning restore  108

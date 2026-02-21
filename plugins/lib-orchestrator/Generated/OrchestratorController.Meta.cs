@@ -110,7 +110,7 @@ public partial class OrchestratorController
                 "metrics": {
                     "type": "object",
                     "additionalProperties": true,
-                    "description": "Component-specific metrics (e.g., ping time)"
+                    "description": "Component-specific metrics reported by the service. No Bannou plugin reads specific keys from this field by convention."
                 }
             }
         }
@@ -309,7 +309,7 @@ public partial class OrchestratorController
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Additional service metadata (null if not provided)"
+                    "description": "Client-provided service metadata. No Bannou plugin reads specific keys from this field by convention."
                 }
             }
         },
@@ -2376,7 +2376,7 @@ public partial class OrchestratorController
                 "metrics": {
                     "type": "object",
                     "additionalProperties": true,
-                    "description": "Component-specific metrics (e.g., ping time)"
+                    "description": "Component-specific metrics reported by the service. No Bannou plugin reads specific keys from this field by convention."
                 }
             }
         },
@@ -4106,7 +4106,7 @@ public partial class OrchestratorController
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Optional metadata about the processing job (null if not needed)"
+                    "description": "Client-provided processing job metadata. No Bannou plugin reads specific keys from this field by convention."
                 }
             }
         }
@@ -4234,7 +4234,7 @@ public partial class OrchestratorController
                 "metrics": {
                     "type": "object",
                     "additionalProperties": true,
-                    "description": "Optional processing metrics (duration, items processed, etc.)"
+                    "description": "Client-provided processing metrics (duration, items processed, etc.). No Bannou plugin reads specific keys from this field by convention."
                 }
             }
         }

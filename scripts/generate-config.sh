@@ -1,5 +1,20 @@
 #!/bin/bash
 
+# ⛔⛔⛔ AGENT MODIFICATION PROHIBITED ⛔⛔⛔
+# This script is part of Bannou's code generation pipeline.
+# DO NOT MODIFY without EXPLICIT user instructions to change code generation.
+#
+# Changes to generation scripts silently break builds across ALL 48 services.
+# An agent once changed namespace strings across 4 scripts in a single commit,
+# breaking every service. If you believe a change is needed:
+#   1. STOP and explain what you think is wrong
+#   2. Show the EXACT diff you propose
+#   3. Wait for EXPLICIT approval before touching ANY generation script
+#
+# This applies to: namespace strings, output paths, exclusion logic,
+# NSwag parameters, post-processing steps, and file naming conventions.
+# ⛔⛔⛔ AGENT MODIFICATION PROHIBITED ⛔⛔⛔
+
 # Generate service configuration class from configuration schema
 # Usage: ./generate-config.sh <service-name> [schema-file]
 
@@ -56,6 +71,18 @@ def to_pascal_case(name):
     else:
         return name[0].upper() + name[1:] if name else name
 
+def escape_xml_description(desc):
+    '''Escape a description for use in XML doc comments.
+    Handles multi-line descriptions by converting newlines to proper XML comment continuation.'''
+    if not desc:
+        return desc
+    # Replace newlines with XML comment line continuation
+    lines = desc.strip().split('\\n')
+    if len(lines) == 1:
+        return lines[0]
+    # For multi-line descriptions, join with proper XML comment formatting
+    return '\\n    /// '.join(line.strip() for line in lines if line.strip())
+
 def to_property_name(name):
     # Convert environment variable style to property name
     # e.g., 'MAX_CONNECTIONS' -> 'MaxConnections', 'JwtSecret' -> 'JwtSecret'
@@ -78,6 +105,7 @@ try:
     # Look for enums in the corresponding API schema and generated models
     api_schema_path = f'../schemas/{service_name}-api.yaml'
     existing_api_enums = set()
+    api_schema = None
     try:
         with open(api_schema_path, 'r') as api_f:
             api_schema = yaml.safe_load(api_f)
@@ -91,6 +119,9 @@ try:
 
     # Track enum types to generate
     enum_types = []
+
+    # Track SDK namespaces needed for x-sdk-type references
+    sdk_namespaces = set()
 
     # Extract configuration from x-service-configuration section
     config_properties = []
@@ -133,6 +164,18 @@ try:
                 # Mark as enum for default value handling
                 prop_enum = True  # Signal that this is an enum type
                 print(f'# NOTE: Using \$ref enum {ref_type_name} from {prop_ref}', file=sys.stderr)
+
+                # Check if the referenced type has x-sdk-type (use SDK type directly)
+                if api_schema and 'components' in api_schema and 'schemas' in api_schema['components']:
+                    ref_schema = api_schema['components']['schemas'].get(ref_type_name)
+                    if ref_schema and 'x-sdk-type' in ref_schema:
+                        sdk_type = ref_schema['x-sdk-type']
+                        # Extract namespace (everything before the last dot)
+                        last_dot = sdk_type.rfind('.')
+                        if last_dot > 0:
+                            sdk_namespace = sdk_type[:last_dot]
+                            sdk_namespaces.add(sdk_namespace)
+                            print(f'# NOTE: Adding SDK namespace {sdk_namespace} for x-sdk-type {sdk_type}', file=sys.stderr)
             # Check if this is an inline enum property
             elif prop_enum and prop_type == 'string':
                 # Generate enum type name from property name
@@ -234,7 +277,7 @@ try:
 //
 //     IMPLEMENTATION TENETS - Configuration-First:
 //     - Access configuration via dependency injection, never Environment.GetEnvironmentVariable.
-//     - ALL properties below MUST be referenced in {service_pascal}Service.cs (no dead config).
+//     - ALL properties below MUST be referenced somewhere in the plugin (no dead config).
 //     - Any hardcoded tunable (limit, timeout, threshold, capacity) in service code means
 //       a configuration property is MISSING - add it to the configuration schema.
 //     - If a property is unused, remove it from the configuration schema.
@@ -248,8 +291,13 @@ try:
 using System.ComponentModel.DataAnnotations;
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Attributes;
-using BeyondImmersion.BannouService.Configuration;
+using BeyondImmersion.BannouService.Configuration;''')
 
+    # Add SDK namespace usings for x-sdk-type references
+    for ns in sorted(sdk_namespaces):
+        print(f'using {ns};')
+
+    print(f'''
 #nullable enable
 
 namespace BeyondImmersion.BannouService.{service_pascal};
@@ -258,10 +306,11 @@ namespace BeyondImmersion.BannouService.{service_pascal};
     # Generate enum types if any
     for enum_type in enum_types:
         # Suppress CS1591 for enum members (they don't need individual docs)
+        escaped_desc = escape_xml_description(enum_type['description'])
         print(f'''
 #pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
 /// <summary>
-/// {enum_type['description']}
+/// {escaped_desc}
 /// </summary>
 public enum {enum_type['name']}
 {{''')
@@ -281,7 +330,7 @@ public enum {enum_type['name']}
 /// <para>
 /// <b>IMPLEMENTATION TENETS - Configuration-First:</b> Access configuration via dependency injection.
 /// Never use <c>Environment.GetEnvironmentVariable()</c> directly in service code.
-/// ALL properties in this class MUST be referenced in the service implementation.
+/// ALL properties in this class MUST be referenced somewhere in the plugin.
 /// If a property is unused, remove it from the configuration schema.
 /// </para>
 /// <para>
@@ -345,8 +394,9 @@ public class {service_pascal}ServiceConfiguration : IServiceConfiguration
         if prop_multiple_of is not None:
             multiple_of_attr = '    [ConfigMultipleOf(' + str(prop_multiple_of) + ')]\\n'
 
+        escaped_prop_desc = escape_xml_description(prop['description'])
         print(f'''    /// <summary>
-    /// {prop['description']}
+    /// {escaped_prop_desc}
     /// Environment variable: {prop['env_var']}
     /// </summary>
 {required_attr}{range_attr}{string_length_attr}{pattern_attr}{multiple_of_attr}    public {prop['type']} {prop['name']} {{ get; set; }}{prop['default']}

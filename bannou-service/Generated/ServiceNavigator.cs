@@ -20,35 +20,49 @@ using BeyondImmersion.BannouService.Character;
 using BeyondImmersion.BannouService.CharacterEncounter;
 using BeyondImmersion.BannouService.CharacterHistory;
 using BeyondImmersion.BannouService.CharacterPersonality;
+using BeyondImmersion.BannouService.Chat;
+using BeyondImmersion.BannouService.Collection;
 using BeyondImmersion.BannouService.Connect;
 using BeyondImmersion.BannouService.Contract;
 using BeyondImmersion.BannouService.Currency;
+using BeyondImmersion.BannouService.Divine;
 using BeyondImmersion.BannouService.Documentation;
 using BeyondImmersion.BannouService.Escrow;
+using BeyondImmersion.BannouService.Faction;
 using BeyondImmersion.BannouService.GameService;
 using BeyondImmersion.BannouService.GameSession;
+using BeyondImmersion.BannouService.Gardener;
 using BeyondImmersion.BannouService.Inventory;
 using BeyondImmersion.BannouService.Item;
 using BeyondImmersion.BannouService.Leaderboard;
+using BeyondImmersion.BannouService.License;
 using BeyondImmersion.BannouService.Location;
 using BeyondImmersion.BannouService.Mapping;
 using BeyondImmersion.BannouService.Matchmaking;
 using BeyondImmersion.BannouService.Mesh;
 using BeyondImmersion.BannouService.Messaging;
 using BeyondImmersion.BannouService.Music;
+using BeyondImmersion.BannouService.Obligation;
 using BeyondImmersion.BannouService.Orchestrator;
 using BeyondImmersion.BannouService.Permission;
+using BeyondImmersion.BannouService.Puppetmaster;
+using BeyondImmersion.BannouService.Quest;
 using BeyondImmersion.BannouService.Realm;
 using BeyondImmersion.BannouService.RealmHistory;
 using BeyondImmersion.BannouService.Relationship;
-using BeyondImmersion.BannouService.RelationshipType;
+using BeyondImmersion.BannouService.Resource;
 using BeyondImmersion.BannouService.SaveLoad;
 using BeyondImmersion.BannouService.Scene;
+using BeyondImmersion.BannouService.Seed;
 using BeyondImmersion.BannouService.Species;
 using BeyondImmersion.BannouService.State;
+using BeyondImmersion.BannouService.Status;
+using BeyondImmersion.BannouService.Storyline;
 using BeyondImmersion.BannouService.Subscription;
+using BeyondImmersion.BannouService.Telemetry;
 using BeyondImmersion.BannouService.Voice;
 using BeyondImmersion.BannouService.Website;
+using BeyondImmersion.BannouService.Worldstate;
 
 namespace BeyondImmersion.BannouService.ServiceClients;
 
@@ -71,6 +85,7 @@ public partial class ServiceNavigator : IServiceNavigator
     private readonly IClientEventPublisher _clientEventPublisher;
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly IServiceAppMappingResolver _appMappingResolver;
+    private readonly IMeshInvocationClient _meshInvocationClient;
     private readonly AppConfiguration _configuration;
 
     private readonly IAccountClient _account;
@@ -84,35 +99,49 @@ public partial class ServiceNavigator : IServiceNavigator
     private readonly ICharacterEncounterClient _characterEncounter;
     private readonly ICharacterHistoryClient _characterHistory;
     private readonly ICharacterPersonalityClient _characterPersonality;
+    private readonly IChatClient _chat;
+    private readonly ICollectionClient _collection;
     private readonly IConnectClient _connect;
     private readonly IContractClient _contract;
     private readonly ICurrencyClient _currency;
+    private readonly IDivineClient _divine;
     private readonly IDocumentationClient _documentation;
     private readonly IEscrowClient _escrow;
+    private readonly IFactionClient _faction;
     private readonly IGameServiceClient _gameService;
     private readonly IGameSessionClient _gameSession;
+    private readonly IGardenerClient _gardener;
     private readonly IInventoryClient _inventory;
     private readonly IItemClient _item;
     private readonly ILeaderboardClient _leaderboard;
+    private readonly ILicenseClient _license;
     private readonly ILocationClient _location;
     private readonly IMappingClient _mapping;
     private readonly IMatchmakingClient _matchmaking;
     private readonly IMeshClient _mesh;
     private readonly IMessagingClient _messaging;
     private readonly IMusicClient _music;
+    private readonly IObligationClient _obligation;
     private readonly IOrchestratorClient _orchestrator;
     private readonly IPermissionClient _permission;
+    private readonly IPuppetmasterClient _puppetmaster;
+    private readonly IQuestClient _quest;
     private readonly IRealmClient _realm;
     private readonly IRealmHistoryClient _realmHistory;
     private readonly IRelationshipClient _relationship;
-    private readonly IRelationshipTypeClient _relationshipType;
+    private readonly IResourceClient _resource;
     private readonly ISaveLoadClient _saveLoad;
     private readonly ISceneClient _scene;
+    private readonly ISeedClient _seed;
     private readonly ISpeciesClient _species;
     private readonly IStateClient _state;
+    private readonly IStatusClient _status;
+    private readonly IStorylineClient _storyline;
     private readonly ISubscriptionClient _subscription;
+    private readonly ITelemetryClient _telemetry;
     private readonly IVoiceClient _voice;
     private readonly IWebsiteClient _website;
+    private readonly IWorldstateClient _worldstate;
 
     /// <summary>
     /// Creates a new ServiceNavigator with all service client dependencies.
@@ -121,6 +150,7 @@ public partial class ServiceNavigator : IServiceNavigator
         IClientEventPublisher clientEventPublisher,
         IHttpClientFactory httpClientFactory,
         IServiceAppMappingResolver appMappingResolver,
+        IMeshInvocationClient meshInvocationClient,
         AppConfiguration configuration,
         IAccountClient account,
         IAchievementClient achievement,
@@ -133,39 +163,54 @@ public partial class ServiceNavigator : IServiceNavigator
         ICharacterEncounterClient characterEncounter,
         ICharacterHistoryClient characterHistory,
         ICharacterPersonalityClient characterPersonality,
+        IChatClient chat,
+        ICollectionClient collection,
         IConnectClient connect,
         IContractClient contract,
         ICurrencyClient currency,
+        IDivineClient divine,
         IDocumentationClient documentation,
         IEscrowClient escrow,
+        IFactionClient faction,
         IGameServiceClient gameService,
         IGameSessionClient gameSession,
+        IGardenerClient gardener,
         IInventoryClient inventory,
         IItemClient item,
         ILeaderboardClient leaderboard,
+        ILicenseClient license,
         ILocationClient location,
         IMappingClient mapping,
         IMatchmakingClient matchmaking,
         IMeshClient mesh,
         IMessagingClient messaging,
         IMusicClient music,
+        IObligationClient obligation,
         IOrchestratorClient orchestrator,
         IPermissionClient permission,
+        IPuppetmasterClient puppetmaster,
+        IQuestClient quest,
         IRealmClient realm,
         IRealmHistoryClient realmHistory,
         IRelationshipClient relationship,
-        IRelationshipTypeClient relationshipType,
+        IResourceClient resource,
         ISaveLoadClient saveLoad,
         ISceneClient scene,
+        ISeedClient seed,
         ISpeciesClient species,
         IStateClient state,
+        IStatusClient status,
+        IStorylineClient storyline,
         ISubscriptionClient subscription,
+        ITelemetryClient telemetry,
         IVoiceClient voice,
-        IWebsiteClient website)
+        IWebsiteClient website,
+        IWorldstateClient worldstate)
     {
         _clientEventPublisher = clientEventPublisher;
         _httpClientFactory = httpClientFactory;
         _appMappingResolver = appMappingResolver;
+        _meshInvocationClient = meshInvocationClient;
         _configuration = configuration;
         _account = account;
         _achievement = achievement;
@@ -178,35 +223,49 @@ public partial class ServiceNavigator : IServiceNavigator
         _characterEncounter = characterEncounter;
         _characterHistory = characterHistory;
         _characterPersonality = characterPersonality;
+        _chat = chat;
+        _collection = collection;
         _connect = connect;
         _contract = contract;
         _currency = currency;
+        _divine = divine;
         _documentation = documentation;
         _escrow = escrow;
+        _faction = faction;
         _gameService = gameService;
         _gameSession = gameSession;
+        _gardener = gardener;
         _inventory = inventory;
         _item = item;
         _leaderboard = leaderboard;
+        _license = license;
         _location = location;
         _mapping = mapping;
         _matchmaking = matchmaking;
         _mesh = mesh;
         _messaging = messaging;
         _music = music;
+        _obligation = obligation;
         _orchestrator = orchestrator;
         _permission = permission;
+        _puppetmaster = puppetmaster;
+        _quest = quest;
         _realm = realm;
         _realmHistory = realmHistory;
         _relationship = relationship;
-        _relationshipType = relationshipType;
+        _resource = resource;
         _saveLoad = saveLoad;
         _scene = scene;
+        _seed = seed;
         _species = species;
         _state = state;
+        _status = status;
+        _storyline = storyline;
         _subscription = subscription;
+        _telemetry = telemetry;
         _voice = voice;
         _website = website;
+        _worldstate = worldstate;
     }
 
     // ═══════════════════════════════════════════════════════════════════════════
@@ -287,6 +346,12 @@ public partial class ServiceNavigator : IServiceNavigator
     public ICharacterPersonalityClient CharacterPersonality => _characterPersonality;
 
     /// <inheritdoc />
+    public IChatClient Chat => _chat;
+
+    /// <inheritdoc />
+    public ICollectionClient Collection => _collection;
+
+    /// <inheritdoc />
     public IConnectClient Connect => _connect;
 
     /// <inheritdoc />
@@ -296,16 +361,25 @@ public partial class ServiceNavigator : IServiceNavigator
     public ICurrencyClient Currency => _currency;
 
     /// <inheritdoc />
+    public IDivineClient Divine => _divine;
+
+    /// <inheritdoc />
     public IDocumentationClient Documentation => _documentation;
 
     /// <inheritdoc />
     public IEscrowClient Escrow => _escrow;
 
     /// <inheritdoc />
+    public IFactionClient Faction => _faction;
+
+    /// <inheritdoc />
     public IGameServiceClient GameService => _gameService;
 
     /// <inheritdoc />
     public IGameSessionClient GameSession => _gameSession;
+
+    /// <inheritdoc />
+    public IGardenerClient Gardener => _gardener;
 
     /// <inheritdoc />
     public IInventoryClient Inventory => _inventory;
@@ -315,6 +389,9 @@ public partial class ServiceNavigator : IServiceNavigator
 
     /// <inheritdoc />
     public ILeaderboardClient Leaderboard => _leaderboard;
+
+    /// <inheritdoc />
+    public ILicenseClient License => _license;
 
     /// <inheritdoc />
     public ILocationClient Location => _location;
@@ -335,10 +412,19 @@ public partial class ServiceNavigator : IServiceNavigator
     public IMusicClient Music => _music;
 
     /// <inheritdoc />
+    public IObligationClient Obligation => _obligation;
+
+    /// <inheritdoc />
     public IOrchestratorClient Orchestrator => _orchestrator;
 
     /// <inheritdoc />
     public IPermissionClient Permission => _permission;
+
+    /// <inheritdoc />
+    public IPuppetmasterClient Puppetmaster => _puppetmaster;
+
+    /// <inheritdoc />
+    public IQuestClient Quest => _quest;
 
     /// <inheritdoc />
     public IRealmClient Realm => _realm;
@@ -350,7 +436,7 @@ public partial class ServiceNavigator : IServiceNavigator
     public IRelationshipClient Relationship => _relationship;
 
     /// <inheritdoc />
-    public IRelationshipTypeClient RelationshipType => _relationshipType;
+    public IResourceClient Resource => _resource;
 
     /// <inheritdoc />
     public ISaveLoadClient SaveLoad => _saveLoad;
@@ -359,18 +445,33 @@ public partial class ServiceNavigator : IServiceNavigator
     public ISceneClient Scene => _scene;
 
     /// <inheritdoc />
+    public ISeedClient Seed => _seed;
+
+    /// <inheritdoc />
     public ISpeciesClient Species => _species;
 
     /// <inheritdoc />
     public IStateClient State => _state;
 
     /// <inheritdoc />
+    public IStatusClient Status => _status;
+
+    /// <inheritdoc />
+    public IStorylineClient Storyline => _storyline;
+
+    /// <inheritdoc />
     public ISubscriptionClient Subscription => _subscription;
+
+    /// <inheritdoc />
+    public ITelemetryClient Telemetry => _telemetry;
 
     /// <inheritdoc />
     public IVoiceClient Voice => _voice;
 
     /// <inheritdoc />
     public IWebsiteClient Website => _website;
+
+    /// <inheritdoc />
+    public IWorldstateClient Worldstate => _worldstate;
 
 }

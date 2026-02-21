@@ -28,7 +28,7 @@ namespace BeyondImmersion.BannouService.Messaging.Services;
 /// </remarks>
 public sealed class RabbitMQMessageTap : IMessageTap, IAsyncDisposable
 {
-    private readonly RabbitMQConnectionManager _connectionManager;
+    private readonly IChannelManager _channelManager;
     private readonly ILogger<RabbitMQMessageTap> _logger;
     private readonly MessagingServiceConfiguration _configuration;
     private readonly ConcurrentDictionary<Guid, TapHandleImpl> _activeTaps = new();
@@ -39,12 +39,15 @@ public sealed class RabbitMQMessageTap : IMessageTap, IAsyncDisposable
     /// <summary>
     /// Creates a new RabbitMQMessageTap instance.
     /// </summary>
+    /// <param name="channelManager">Channel manager for RabbitMQ operations.</param>
+    /// <param name="logger">Logger instance.</param>
+    /// <param name="configuration">Messaging service configuration.</param>
     public RabbitMQMessageTap(
-        RabbitMQConnectionManager connectionManager,
+        IChannelManager channelManager,
         ILogger<RabbitMQMessageTap> logger,
         MessagingServiceConfiguration configuration)
     {
-        _connectionManager = connectionManager;
+        _channelManager = channelManager;
         _logger = logger;
         _configuration = configuration;
     }
@@ -76,7 +79,7 @@ public sealed class RabbitMQMessageTap : IMessageTap, IAsyncDisposable
         try
         {
             // Create a dedicated channel for this tap
-            var channel = await _connectionManager.CreateConsumerChannelAsync(cancellationToken);
+            var channel = await _channelManager.CreateConsumerChannelAsync(cancellationToken);
 
             // Ensure source exchange exists (topic for service events - routes by routing key)
             await EnsureExchangeAsync(channel, effectiveSourceExchange, ExchangeType.Topic, cancellationToken);
@@ -202,7 +205,7 @@ public sealed class RabbitMQMessageTap : IMessageTap, IAsyncDisposable
         DateTimeOffset tapCreatedAt,
         CancellationToken cancellationToken)
     {
-        Guid eventId = Guid.Empty;
+        Guid? eventId = null;
         string? eventName = null;
         DateTimeOffset timestamp = DateTimeOffset.UtcNow;
 
@@ -242,7 +245,7 @@ public sealed class RabbitMQMessageTap : IMessageTap, IAsyncDisposable
                 tapId);
         }
 
-        if (eventId == Guid.Empty)
+        if (!eventId.HasValue)
         {
             // Try to parse MessageId as Guid, otherwise generate new
             if (basicProperties.MessageId != null && Guid.TryParse(basicProperties.MessageId, out var msgId))
@@ -256,9 +259,10 @@ public sealed class RabbitMQMessageTap : IMessageTap, IAsyncDisposable
         }
 
         // Create tapped envelope with the raw JSON as payload
+        // Note: eventId is guaranteed to have a value by this point (assigned in fallback above)
         var tappedEnvelope = new TappedMessageEnvelope
         {
-            EventId = eventId,
+            EventId = eventId.Value,
             EventName = eventName ?? $"tap.{sourceTopic}",
             Timestamp = timestamp,
             Topic = sourceTopic,

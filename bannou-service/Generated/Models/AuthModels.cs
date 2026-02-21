@@ -54,6 +54,29 @@ public enum Provider
 #pragma warning restore CS1591
 
 /// <summary>
+/// Email delivery provider type (none=console logging, sendgrid=SendGrid API, smtp=SMTP via MailKit, ses=AWS SES v2)
+/// </summary>
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public enum EmailProvider
+{
+
+    [System.Runtime.Serialization.EnumMember(Value = @"none")]
+    None = 0,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"sendgrid")]
+    Sendgrid = 1,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"smtp")]
+    Smtp = 2,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"ses")]
+    Ses = 3,
+
+}
+#pragma warning restore CS1591
+
+/// <summary>
 /// Response containing the OAuth authorization URL for redirect
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
@@ -100,6 +123,7 @@ public partial class LoginRequest
     [System.Text.Json.Serialization.JsonPropertyName("email")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(254)]
     public string Email { get; set; } = default!;
 
     /// <summary>
@@ -250,12 +274,6 @@ public partial class AuthResponse
     [System.Text.Json.Serialization.JsonPropertyName("roles")]
     public System.Collections.Generic.ICollection<string>? Roles { get; set; } = default!;
 
-    /// <summary>
-    /// Whether the user needs to complete two-factor authentication
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("requiresTwoFactor")]
-    public bool RequiresTwoFactor { get; set; } = false;
-
 }
 
 /// <summary>
@@ -303,8 +321,10 @@ public partial class SteamVerifyRequest
     /// <br/>
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("ticket")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(int.MaxValue, MinimumLength = 16)]
+    [System.ComponentModel.DataAnnotations.RegularExpression(@"^[0-9A-Fa-f]+$")]
     public string Ticket { get; set; } = default!;
 
     /// <summary>
@@ -354,12 +374,12 @@ public partial class ValidateTokenResponse
     public System.Guid AccountId { get; set; } = default!;
 
     /// <summary>
-    /// Session identifier for WebSocket connections and service routing
+    /// Internal session key used by Connect service for WebSocket connection tracking and service routing
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("sessionId")]
+    [System.Text.Json.Serialization.JsonPropertyName("sessionKey")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid SessionId { get; set; } = default!;
+    public System.Guid SessionKey { get; set; } = default!;
 
     /// <summary>
     /// List of roles assigned to the authenticated user
@@ -513,6 +533,7 @@ public partial class PasswordResetRequest
     [System.Text.Json.Serialization.JsonPropertyName("email")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(254)]
     public string Email { get; set; } = default!;
 
 }
@@ -540,6 +561,202 @@ public partial class PasswordResetConfirmRequest
     [System.Text.Json.Serialization.JsonRequired]
     [System.ComponentModel.DataAnnotations.StringLength(int.MaxValue, MinimumLength = 8)]
     public string NewPassword { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Response from email/password login. May contain full tokens (no MFA) or a challenge token (MFA required).
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class LoginResponse
+{
+
+    /// <summary>
+    /// Account ID (always present regardless of MFA status)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("accountId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid AccountId { get; set; } = default!;
+
+    /// <summary>
+    /// If true, client must complete MFA via /auth/mfa/verify before receiving tokens
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("requiresMfa")]
+    public bool RequiresMfa { get; set; } = default!;
+
+    /// <summary>
+    /// Short-lived challenge token for /auth/mfa/verify (only present when requiresMfa is true)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("mfaChallengeToken")]
+    public string? MfaChallengeToken { get; set; } = default!;
+
+    /// <summary>
+    /// JWT access token (only present when requiresMfa is false)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("accessToken")]
+    public string? AccessToken { get; set; } = default!;
+
+    /// <summary>
+    /// Refresh token (only present when requiresMfa is false)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("refreshToken")]
+    public string? RefreshToken { get; set; } = default!;
+
+    /// <summary>
+    /// Seconds until access token expires (only present when requiresMfa is false)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("expiresIn")]
+    public int? ExpiresIn { get; set; } = default!;
+
+    /// <summary>
+    /// WebSocket connect URL (only present when requiresMfa is false)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("connectUrl")]
+    public System.Uri? ConnectUrl { get; set; } = default!;
+
+    /// <summary>
+    /// Account roles (only present when requiresMfa is false)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("roles")]
+    public System.Collections.Generic.ICollection<string>? Roles { get; set; } = default!;
+
+}
+
+/// <summary>
+/// MFA setup data containing TOTP URI for QR code and recovery codes
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class MfaSetupResponse
+{
+
+    /// <summary>
+    /// Token to pass to /auth/mfa/enable to confirm setup
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("setupToken")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string SetupToken { get; set; } = default!;
+
+    /// <summary>
+    /// otpauth:// URI for authenticator app QR code scanning
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("totpUri")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string TotpUri { get; set; } = default!;
+
+    /// <summary>
+    /// 10 single-use recovery codes (shown only once, user must save them)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("recoveryCodes")]
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Collections.Generic.ICollection<string> RecoveryCodes { get; set; } = new System.Collections.ObjectModel.Collection<string>();
+
+}
+
+/// <summary>
+/// Request to confirm MFA setup with a valid TOTP code proving authenticator is configured
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class MfaEnableRequest
+{
+
+    /// <summary>
+    /// Setup token from /auth/mfa/setup response
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("setupToken")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string SetupToken { get; set; } = default!;
+
+    /// <summary>
+    /// 6-digit TOTP code from authenticator app
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("totpCode")]
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(6, MinimumLength = 6)]
+    [System.ComponentModel.DataAnnotations.RegularExpression(@"^\d{6}$")]
+    public string TotpCode { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Request to disable MFA. Exactly one of totpCode or recoveryCode must be provided.
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class MfaDisableRequest
+{
+
+    /// <summary>
+    /// Current 6-digit TOTP code from authenticator app
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("totpCode")]
+    [System.ComponentModel.DataAnnotations.StringLength(6, MinimumLength = 6)]
+    [System.ComponentModel.DataAnnotations.RegularExpression(@"^\d{6}$")]
+    public string? TotpCode { get; set; } = default!;
+
+    /// <summary>
+    /// Single-use recovery code (format xxxx-xxxx)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("recoveryCode")]
+    public string? RecoveryCode { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Admin request to forcefully disable MFA for a user account
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class AdminDisableMfaRequest
+{
+
+    /// <summary>
+    /// Account ID to disable MFA for
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("accountId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid AccountId { get; set; } = default!;
+
+    /// <summary>
+    /// Administrative reason for disabling MFA (stored in audit event)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("reason")]
+    public string? Reason { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Request to verify MFA during login. Exactly one of totpCode or recoveryCode must be provided.
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class MfaVerifyRequest
+{
+
+    /// <summary>
+    /// Challenge token from LoginResponse when requiresMfa was true
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("challengeToken")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string ChallengeToken { get; set; } = default!;
+
+    /// <summary>
+    /// 6-digit TOTP code from authenticator app
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("totpCode")]
+    [System.ComponentModel.DataAnnotations.StringLength(6, MinimumLength = 6)]
+    [System.ComponentModel.DataAnnotations.RegularExpression(@"^\d{6}$")]
+    public string? TotpCode { get; set; } = default!;
+
+    /// <summary>
+    /// Single-use recovery code (format xxxx-xxxx)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("recoveryCode")]
+    public string? RecoveryCode { get; set; } = default!;
 
 }
 
@@ -597,6 +814,161 @@ public partial class ProviderInfo
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("authUrl")]
     public System.Uri? AuthUrl { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Request to get current revocation list for edge provider synchronization or admin monitoring
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class GetRevocationListRequest
+{
+
+    /// <summary>
+    /// Include token-level revocations (by JTI)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("includeTokens")]
+    public bool IncludeTokens { get; set; } = true;
+
+    /// <summary>
+    /// Include account-level revocations (all tokens before timestamp)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("includeAccounts")]
+    public bool IncludeAccounts { get; set; } = true;
+
+    /// <summary>
+    /// Maximum entries to return per category
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("limit")]
+    [System.ComponentModel.DataAnnotations.Range(1, 1000)]
+    public int Limit { get; set; } = 100;
+
+}
+
+/// <summary>
+/// Current revocation list with token and account level entries
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class RevocationListResponse
+{
+
+    /// <summary>
+    /// Token-level revocations (individual JTIs)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("revokedTokens")]
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Collections.Generic.ICollection<RevokedTokenEntry> RevokedTokens { get; set; } = new System.Collections.ObjectModel.Collection<RevokedTokenEntry>();
+
+    /// <summary>
+    /// Account-level revocations (all tokens before timestamp)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("revokedAccounts")]
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Collections.Generic.ICollection<RevokedAccountEntry> RevokedAccounts { get; set; } = new System.Collections.ObjectModel.Collection<RevokedAccountEntry>();
+
+    /// <summary>
+    /// Number of pending failed pushes awaiting retry
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("failedPushCount")]
+    public int FailedPushCount { get; set; } = default!;
+
+    /// <summary>
+    /// Total revoked tokens in store (may be null if count unavailable)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("totalTokenCount")]
+    public int? TotalTokenCount { get; set; } = default!;
+
+}
+
+/// <summary>
+/// A single revoked token entry with expiration tracking
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class RevokedTokenEntry
+{
+
+    /// <summary>
+    /// JWT unique identifier (jti claim)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("jti")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string Jti { get; set; } = default!;
+
+    /// <summary>
+    /// Account that owned the token
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("accountId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid AccountId { get; set; } = default!;
+
+    /// <summary>
+    /// When the token was revoked
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("revokedAt")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset RevokedAt { get; set; } = default!;
+
+    /// <summary>
+    /// When the revocation entry expires (matches original JWT expiry)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("expiresAt")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset ExpiresAt { get; set; } = default!;
+
+    /// <summary>
+    /// Revocation reason for audit trail
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("reason")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string Reason { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Account-level revocation entry that invalidates all tokens issued before a timestamp
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class RevokedAccountEntry
+{
+
+    /// <summary>
+    /// Account ID whose tokens are revoked
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("accountId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid AccountId { get; set; } = default!;
+
+    /// <summary>
+    /// Reject tokens issued before this timestamp
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("issuedBefore")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset IssuedBefore { get; set; } = default!;
+
+    /// <summary>
+    /// When the revocation was created
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("revokedAt")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset RevokedAt { get; set; } = default!;
+
+    /// <summary>
+    /// Revocation reason for audit trail
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("reason")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string Reason { get; set; } = default!;
 
 }
 

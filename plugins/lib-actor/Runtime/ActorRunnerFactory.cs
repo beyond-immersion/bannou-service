@@ -1,7 +1,9 @@
-using BeyondImmersion.BannouService.Abml.Runtime;
-using BeyondImmersion.BannouService.Actor.Caching;
+using BeyondImmersion.Bannou.BehaviorExpressions.Runtime;
 using BeyondImmersion.BannouService.Actor.Execution;
+using BeyondImmersion.BannouService.Actor.Providers;
+using BeyondImmersion.BannouService.Behavior;
 using BeyondImmersion.BannouService.Messaging;
+using BeyondImmersion.BannouService.Providers;
 using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.Logging;
 
@@ -18,11 +20,11 @@ public class ActorRunnerFactory : IActorRunnerFactory
     private readonly ActorServiceConfiguration _config;
     private readonly ILoggerFactory _loggerFactory;
     private readonly IStateStoreFactory _stateStoreFactory;
-    private readonly IBehaviorDocumentCache _behaviorCache;
-    private readonly IPersonalityCache _personalityCache;
-    private readonly IEncounterCache _encounterCache;
+    private readonly IBehaviorDocumentLoader _behaviorLoader;
+    private readonly IEnumerable<IVariableProviderFactory> _providerFactories;
     private readonly IDocumentExecutorFactory _executorFactory;
     private readonly IExpressionEvaluator _expressionEvaluator;
+    private readonly ICognitionBuilder _cognitionBuilder;
 
     /// <summary>
     /// Creates a new actor runner factory.
@@ -33,11 +35,11 @@ public class ActorRunnerFactory : IActorRunnerFactory
     /// <param name="config">Service configuration.</param>
     /// <param name="loggerFactory">Logger factory for creating loggers.</param>
     /// <param name="stateStoreFactory">State store factory for actor persistence.</param>
-    /// <param name="behaviorCache">Behavior document cache for loading ABML.</param>
-    /// <param name="personalityCache">Personality cache for character traits.</param>
-    /// <param name="encounterCache">Encounter cache for character encounter data.</param>
+    /// <param name="behaviorLoader">Behavior document loader for loading ABML.</param>
+    /// <param name="providerFactories">Variable provider factories for ABML expressions (discovered via DI).</param>
     /// <param name="executorFactory">Document executor factory for behavior execution.</param>
     /// <param name="expressionEvaluator">Expression evaluator for options evaluation.</param>
+    /// <param name="cognitionBuilder">Cognition pipeline builder for template-driven cognition.</param>
     public ActorRunnerFactory(
         IMessageBus messageBus,
         IMessageSubscriber messageSubscriber,
@@ -45,11 +47,11 @@ public class ActorRunnerFactory : IActorRunnerFactory
         ActorServiceConfiguration config,
         ILoggerFactory loggerFactory,
         IStateStoreFactory stateStoreFactory,
-        IBehaviorDocumentCache behaviorCache,
-        IPersonalityCache personalityCache,
-        IEncounterCache encounterCache,
+        IBehaviorDocumentLoader behaviorLoader,
+        IEnumerable<IVariableProviderFactory> providerFactories,
         IDocumentExecutorFactory executorFactory,
-        IExpressionEvaluator expressionEvaluator)
+        IExpressionEvaluator expressionEvaluator,
+        ICognitionBuilder cognitionBuilder)
     {
         _messageBus = messageBus;
         _messageSubscriber = messageSubscriber;
@@ -57,18 +59,19 @@ public class ActorRunnerFactory : IActorRunnerFactory
         _config = config;
         _loggerFactory = loggerFactory;
         _stateStoreFactory = stateStoreFactory;
-        _behaviorCache = behaviorCache;
-        _personalityCache = personalityCache;
-        _encounterCache = encounterCache;
+        _behaviorLoader = behaviorLoader;
+        _providerFactories = providerFactories;
         _executorFactory = executorFactory;
         _expressionEvaluator = expressionEvaluator;
+        _cognitionBuilder = cognitionBuilder;
     }
 
     /// <inheritdoc/>
     public IActorRunner Create(
         string actorId,
         ActorTemplateData template,
-        Guid? characterId = null,
+        Guid? characterId,
+        Guid realmId,
         object? configurationOverrides = null,
         object? initialState = null)
     {
@@ -92,16 +95,17 @@ public class ActorRunnerFactory : IActorRunnerFactory
             actorId,
             effectiveTemplate,
             characterId,
+            realmId,
             _config,
             _messageBus,
             _messageSubscriber,
             _meshClient,
             stateStore,
-            _behaviorCache,
-            _personalityCache,
-            _encounterCache,
+            _behaviorLoader,
+            _providerFactories,
             executor,
             _expressionEvaluator,
+            _cognitionBuilder,
             logger,
             initialState);
     }
@@ -135,6 +139,8 @@ public class ActorRunnerFactory : IActorRunnerFactory
             TickIntervalMs = template.TickIntervalMs,
             AutoSaveIntervalSeconds = template.AutoSaveIntervalSeconds,
             MaxInstancesPerNode = template.MaxInstancesPerNode,
+            CognitionTemplateId = template.CognitionTemplateId,
+            CognitionOverrides = template.CognitionOverrides,
             CreatedAt = template.CreatedAt,
             UpdatedAt = template.UpdatedAt
         };

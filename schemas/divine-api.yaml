@@ -1,0 +1,1623 @@
+openapi: 3.0.0
+info:
+  title: Bannou Divine Service API
+  description: |
+    Pantheon management service (L4 GameFeatures) for deity entities, divinity economy,
+    and blessing orchestration. A thin orchestration layer (like Quest over Contract,
+    Escrow over Currency/Item) that composes existing Bannou primitives to deliver
+    divine game mechanics.
+
+    **Composability**: God identity is owned here. God behavior is Actor (event brain)
+    via Puppetmaster. Domain power is Seed. Divinity resource is Currency. Greater
+    Blessings are Collection. Minor Blessings are Status Inventory. Follower bonds
+    are Relationship. lib-divine orchestrates the ceremony connecting these primitives.
+
+    **Critical architectural insight**: Gods influence characters through the character's
+    own Actor, not directly. A god's Actor (regional watcher) monitors event streams
+    and makes decisions; the character's Actor receives the consequences. Blessings
+    are entity-agnostic -- characters, accounts, deities, or any entity type can
+    receive them, since the backing storage (lib-collection, lib-status) is also
+    entity-agnostic.
+
+    **Zero Arcadia-specific content**: lib-divine is a generic pantheon management
+    service. Arcadia's 18 Old Gods are configured through behaviors and templates
+    at deployment time, not baked into lib-divine.
+
+    **Domain codes are opaque strings**: Different games define different domains
+    (War, Knowledge, Nature, etc.). Domain codes follow the same extensibility pattern
+    as seed type codes, collection type codes, and relationship type codes.
+
+    **POST-Only API Pattern**: This API uses POST for all operations to support zero-copy
+    WebSocket routing. Path parameters are passed in request bodies instead of URLs.
+    See docs/BANNOU_DESIGN.md for architectural rationale.
+
+    **SCHEMA MODIFICATION GATE**: STOP. Before modifying this schema, you MUST:
+    1. Read docs/reference/SCHEMA-RULES.md
+    2. State which section applies to your change
+    3. Only then proceed with edits
+    Edits without stating the applicable rule are FORBIDDEN.
+  version: 1.0.0
+  # Resource reference tracking (see SCHEMA-RULES.md "x-references")
+  x-references:
+    - target: character
+      sourceType: divine
+      field: characterId
+      onDelete: cascade
+      cleanup:
+        endpoint: /divine/cleanup-by-character
+        payloadTemplate: '{"characterId": "{{resourceId}}"}'
+    - target: game-service
+      sourceType: divine
+      field: gameServiceId
+      onDelete: cascade
+      cleanup:
+        endpoint: /divine/cleanup-by-game-service
+        payloadTemplate: '{"gameServiceId": "{{resourceId}}"}'
+x-service-layer: GameFeatures
+
+servers:
+- url: http://localhost:5012
+  description: Bannou service endpoint (internal only)
+
+paths:
+  # =========================================================================
+  # Deity Management (8 endpoints)
+  # =========================================================================
+
+  /divine/deity/create:
+    post:
+      summary: Create a new deity
+      description: |
+        Creates a deity entity with domain influences and personality traits.
+        Provisions a divinity currency wallet, a domain power seed, and optionally
+        starts a deity watcher actor via Puppetmaster.
+      operationId: createDeity
+      tags:
+      - Deity Management
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateDeityRequest'
+      responses:
+        '200':
+          description: Deity created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeityResponse'
+        '404':
+          description: Game service not found
+        '409':
+          description: Deity with this code already exists for this game service
+
+  /divine/deity/get:
+    post:
+      summary: Get a deity by ID
+      description: Returns a single deity entity by its unique identifier.
+      operationId: getDeity
+      tags:
+      - Deity Management
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetDeityRequest'
+      responses:
+        '200':
+          description: Deity found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeityResponse'
+        '404':
+          description: Deity not found
+
+  /divine/deity/get-by-code:
+    post:
+      summary: Get a deity by code within a game service
+      description: Looks up a deity by its unique code within a game service scope.
+      operationId: getDeityByCode
+      tags:
+      - Deity Management
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetDeityByCodeRequest'
+      responses:
+        '200':
+          description: Deity found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeityResponse'
+        '404':
+          description: Deity not found for this game service and code
+
+  /divine/deity/list:
+    post:
+      summary: List deities with optional filters
+      description: |
+        Returns a paginated list of deities for a game service, optionally
+        filtered by domain code and status.
+      operationId: listDeities
+      tags:
+      - Deity Management
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ListDeitiesRequest'
+      responses:
+        '200':
+          description: Deities listed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListDeitiesResponse'
+
+  /divine/deity/update:
+    post:
+      summary: Update deity properties
+      description: |
+        Partial update of deity properties. Only non-null fields are applied.
+        Requires a distributed lock on the deity.
+      operationId: updateDeity
+      tags:
+      - Deity Management
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateDeityRequest'
+      responses:
+        '200':
+          description: Deity updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeityResponse'
+        '404':
+          description: Deity not found
+        '409':
+          description: Concurrent modification conflict
+
+  /divine/deity/activate:
+    post:
+      summary: Activate a dormant deity
+      description: |
+        Sets the deity status to Active. If Puppetmaster is available and no
+        watcher actor exists, starts one. Publishes a deity activated event.
+      operationId: activateDeity
+      tags:
+      - Deity Management
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ActivateDeityRequest'
+      responses:
+        '200':
+          description: Deity activated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeityResponse'
+        '400':
+          description: Deity is already active
+        '404':
+          description: Deity not found
+
+  /divine/deity/deactivate:
+    post:
+      summary: Deactivate an active deity
+      description: |
+        Sets the deity status to Dormant. Stops the watcher actor if Puppetmaster
+        is available. Clears all attention slots. Publishes a deity dormant event.
+      operationId: deactivateDeity
+      tags:
+      - Deity Management
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeactivateDeityRequest'
+      responses:
+        '200':
+          description: Deity deactivated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeityResponse'
+        '400':
+          description: Deity is already dormant or archived
+        '404':
+          description: Deity not found
+
+  /divine/deity/delete:
+    post:
+      summary: Delete a deity
+      description: |
+        Permanently deletes a deity and all dependent data. Deactivates the deity
+        if active, revokes all blessings, removes all follower relationships, deletes
+        attention slots, and coordinates cleanup via lib-resource. Publishes a
+        lifecycle deleted event.
+      operationId: deleteDeity
+      tags:
+      - Deity Management
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeleteDeityRequest'
+      responses:
+        '200':
+          description: Deity deleted
+        '404':
+          description: Deity not found
+
+  # =========================================================================
+  # Divinity Economy (4 endpoints)
+  # =========================================================================
+
+  /divine/divinity/get-balance:
+    post:
+      summary: Get a deity's divinity balance
+      description: Returns the current divinity balance for a deity by querying its currency wallet.
+      operationId: getDivinityBalance
+      tags:
+      - Divinity Economy
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetDivinityBalanceRequest'
+      responses:
+        '200':
+          description: Balance retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DivinityBalanceResponse'
+        '404':
+          description: Deity not found
+
+  /divine/divinity/credit:
+    post:
+      summary: Credit divinity to a deity
+      description: |
+        Credits divinity to a deity's currency wallet. Used for mortal actions
+        in the deity's domain, direct grants, or other divinity generation sources.
+      operationId: creditDivinity
+      tags:
+      - Divinity Economy
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreditDivinityRequest'
+      responses:
+        '200':
+          description: Divinity credited
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DivinityBalanceResponse'
+        '404':
+          description: Deity not found
+
+  /divine/divinity/debit:
+    post:
+      summary: Debit divinity from a deity
+      description: |
+        Debits divinity from a deity's currency wallet. Used for blessing grants,
+        miracles, or other divinity expenditures. Validates sufficient balance
+        before debiting.
+      operationId: debitDivinity
+      tags:
+      - Divinity Economy
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DebitDivinityRequest'
+      responses:
+        '200':
+          description: Divinity debited
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DivinityBalanceResponse'
+        '400':
+          description: Insufficient divinity balance
+        '404':
+          description: Deity not found
+
+  /divine/divinity/get-history:
+    post:
+      summary: Get divinity transaction history
+      description: Returns paginated transaction history for a deity's divinity wallet.
+      operationId: getDivinityHistory
+      tags:
+      - Divinity Economy
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetDivinityHistoryRequest'
+      responses:
+        '200':
+          description: History retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DivinityHistoryResponse'
+        '404':
+          description: Deity not found
+
+  # =========================================================================
+  # Blessing Orchestration (5 endpoints)
+  # =========================================================================
+
+  /divine/blessing/grant:
+    post:
+      summary: Grant a blessing from a deity to an entity
+      description: |
+        Orchestrates the full blessing ceremony: validates deity is active, validates
+        target entity exists, checks blessing capacity, calculates divinity cost from tier,
+        debits divinity, grants the blessing via lib-collection (Greater/Supreme) or
+        Status Inventory (Minor/Standard), and records the blessing. Blessings are
+        entity-agnostic -- characters, accounts, deities, or any entity type can receive them.
+      operationId: grantBlessing
+      tags:
+      - Blessing Orchestration
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GrantBlessingRequest'
+      responses:
+        '200':
+          description: Blessing granted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BlessingResponse'
+        '400':
+          description: Deity is not active or insufficient divinity
+        '404':
+          description: Deity or target entity not found
+        '409':
+          description: Entity has reached maximum active blessings
+
+  /divine/blessing/revoke:
+    post:
+      summary: Revoke an active blessing
+      description: |
+        Revokes a blessing. For status-type blessings (Minor/Standard), removes
+        the status item. For permanent blessings (Greater/Supreme), marks as
+        revoked in collection. Updates the blessing record with revocation timestamp.
+      operationId: revokeBlessing
+      tags:
+      - Blessing Orchestration
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RevokeBlessingRequest'
+      responses:
+        '200':
+          description: Blessing revoked
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BlessingResponse'
+        '400':
+          description: Blessing is already revoked
+        '404':
+          description: Blessing not found
+
+  /divine/blessing/list-by-entity:
+    post:
+      summary: List blessings for an entity
+      description: Returns paginated blessings granted to a specific entity.
+      operationId: listBlessingsByEntity
+      tags:
+      - Blessing Orchestration
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ListBlessingsByEntityRequest'
+      responses:
+        '200':
+          description: Blessings listed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListBlessingsResponse'
+
+  /divine/blessing/list-by-deity:
+    post:
+      summary: List blessings granted by a deity
+      description: Returns paginated blessings granted by a specific deity, optionally filtered by tier.
+      operationId: listBlessingsByDeity
+      tags:
+      - Blessing Orchestration
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ListBlessingsByDeityRequest'
+      responses:
+        '200':
+          description: Blessings listed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListBlessingsResponse'
+
+  /divine/blessing/get:
+    post:
+      summary: Get a blessing by ID
+      description: Returns a single blessing record by its unique identifier.
+      operationId: getBlessing
+      tags:
+      - Blessing Orchestration
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetBlessingRequest'
+      responses:
+        '200':
+          description: Blessing found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BlessingResponse'
+        '404':
+          description: Blessing not found
+
+  # =========================================================================
+  # Follower Management (3 endpoints)
+  # =========================================================================
+
+  /divine/follower/register:
+    post:
+      summary: Register a character as a follower of a deity
+      description: |
+        Creates a deity-character follower relationship via lib-relationship,
+        increments the deity's follower count, and adds the character to the
+        deity's attention slots if capacity is available.
+      operationId: registerFollower
+      tags:
+      - Follower Management
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterFollowerRequest'
+      responses:
+        '200':
+          description: Follower registered
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FollowerResponse'
+        '404':
+          description: Deity or character not found
+        '409':
+          description: Character is already a follower of this deity
+
+  /divine/follower/unregister:
+    post:
+      summary: Unregister a character as a follower
+      description: |
+        Removes the deity-character follower relationship, decrements the
+        deity's follower count, and removes the character from attention slots.
+      operationId: unregisterFollower
+      tags:
+      - Follower Management
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UnregisterFollowerRequest'
+      responses:
+        '200':
+          description: Follower unregistered
+        '404':
+          description: Deity, character, or follower relationship not found
+
+  /divine/follower/get-followers:
+    post:
+      summary: Get followers of a deity
+      description: Returns paginated follower list for a deity by querying relationships.
+      operationId: getFollowers
+      tags:
+      - Follower Management
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetFollowersRequest'
+      responses:
+        '200':
+          description: Followers listed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListFollowersResponse'
+        '404':
+          description: Deity not found
+
+  # =========================================================================
+  # Resource Cleanup (2 endpoints) - Called by lib-resource (T28)
+  # =========================================================================
+
+  /divine/cleanup-by-character:
+    post:
+      summary: Cleanup divine data for a deleted character
+      description: |
+        Called by lib-resource when a character is deleted. Revokes all active
+        blessings targeting this character (entityType=character), removes follower
+        relationships from all deities, updates follower counts, and clears
+        attention slots.
+      operationId: cleanupByCharacter
+      tags:
+      - Resource Cleanup
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CleanupByCharacterRequest'
+      responses:
+        '200':
+          description: Cleanup completed
+
+  /divine/cleanup-by-game-service:
+    post:
+      summary: Cleanup divine data for a deleted game service
+      description: |
+        Called by lib-resource when a game service is deleted. Deletes all deities
+        for this game service along with their blessings, followers, attention
+        slots, and associated resources.
+      operationId: cleanupByGameService
+      tags:
+      - Resource Cleanup
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CleanupByGameServiceRequest'
+      responses:
+        '200':
+          description: Cleanup completed
+
+components:
+  schemas:
+    # =========================================================================
+    # Enums
+    # =========================================================================
+
+    DeityStatus:
+      type: string
+      description: Lifecycle status of a deity entity
+      enum:
+        - active
+        - dormant
+        - archived
+
+    BlessingTier:
+      type: string
+      description: Tier of a blessing determining its power, cost, and storage mechanism
+      enum:
+        - minor
+        - standard
+        - greater
+        - supreme
+
+    BlessingStatus:
+      type: string
+      description: Current status of a granted blessing
+      enum:
+        - active
+        - revoked
+
+    AttentionPriority:
+      type: string
+      description: Priority level for a deity's attention toward a character
+      enum:
+        - low
+        - medium
+        - high
+        - critical
+
+    # =========================================================================
+    # Shared Sub-Types
+    # =========================================================================
+
+    DomainInfluence:
+      type: object
+      additionalProperties: false
+      description: A deity's influence in a specific domain with a weight representing strength
+      required:
+        - domain
+        - weight
+      properties:
+        domain:
+          type: string
+          description: Opaque domain code (e.g., war, knowledge, nature). Game-defined, not an enum.
+        weight:
+          type: number
+          format: double
+          minimum: 0.0
+          maximum: 1.0
+          description: Strength of influence in this domain (0.0-1.0)
+
+    DeityPersonalityTraits:
+      type: object
+      additionalProperties: false
+      description: Machine-readable personality traits influencing deity behavior decisions
+      required:
+        - temperament
+        - attentionBias
+        - generosity
+        - jealousy
+      properties:
+        temperament:
+          type: string
+          description: Primary temperament descriptor (e.g., wrathful, benevolent, capricious)
+        attentionBias:
+          type: string
+          description: What type of mortal actions draw this deity's attention (e.g., combat, devotion, craft)
+        generosity:
+          type: number
+          format: double
+          minimum: 0.0
+          maximum: 1.0
+          description: How freely the deity grants blessings (0.0 miserly, 1.0 lavish)
+        jealousy:
+          type: number
+          format: double
+          minimum: 0.0
+          maximum: 1.0
+          description: How possessive the deity is of followers (0.0 tolerant, 1.0 vengeful)
+
+    BlessingSummary:
+      type: object
+      additionalProperties: false
+      description: Compact blessing record for list responses
+      required:
+        - blessingId
+        - deityId
+        - entityId
+        - entityType
+        - tier
+        - itemInstanceId
+        - grantedAt
+        - status
+      properties:
+        blessingId:
+          type: string
+          format: uuid
+          description: Unique identifier for this blessing
+        deityId:
+          type: string
+          format: uuid
+          description: Deity that granted this blessing
+        entityId:
+          type: string
+          format: uuid
+          description: Entity that received this blessing
+        entityType:
+          type: string
+          description: Type of entity that received this blessing
+        tier:
+          $ref: '#/components/schemas/BlessingTier'
+          description: Tier of the blessing
+        itemInstanceId:
+          type: string
+          format: uuid
+          description: Item or collection entry instance backing this blessing
+        grantedAt:
+          type: string
+          format: date-time
+          description: When the blessing was granted
+        status:
+          $ref: '#/components/schemas/BlessingStatus'
+          description: Current status of the blessing
+
+    DivinityTransaction:
+      type: object
+      additionalProperties: false
+      description: A single divinity transaction record from the currency wallet history
+      required:
+        - transactionId
+        - walletId
+        - amount
+        - transactionType
+        - createdAt
+      properties:
+        transactionId:
+          type: string
+          format: uuid
+          description: Unique transaction identifier
+        walletId:
+          type: string
+          format: uuid
+          description: Wallet the transaction belongs to
+        amount:
+          type: number
+          format: double
+          description: Transaction amount (positive for credits, negative for debits)
+        transactionType:
+          type: string
+          description: Type of transaction (e.g., mortal_action, blessing_grant, manual_credit)
+        targetType:
+          type: string
+          nullable: true
+          description: Type of entity involved in this transaction (e.g., character, deity)
+        targetId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Entity ID involved in this transaction (e.g., the blessed character, the rival deity)
+        createdAt:
+          type: string
+          format: date-time
+          description: When the transaction was recorded
+
+    # =========================================================================
+    # Request Models - Deity Management
+    # =========================================================================
+
+    CreateDeityRequest:
+      type: object
+      additionalProperties: false
+      description: Request to create a new deity entity
+      required:
+        - gameServiceId
+        - code
+        - displayName
+        - description
+        - domains
+        - personalityTraits
+      properties:
+        gameServiceId:
+          type: string
+          format: uuid
+          description: Game service this deity belongs to
+        code:
+          type: string
+          description: Unique code for this deity within the game service (e.g., mnemosyne, nexius)
+        displayName:
+          type: string
+          description: Human-readable display name
+        description:
+          type: string
+          description: Description of the deity's nature and role
+        domains:
+          type: array
+          minItems: 1
+          items:
+            $ref: '#/components/schemas/DomainInfluence'
+          description: Domain influences (at least one required)
+        personalityTraits:
+          $ref: '#/components/schemas/DeityPersonalityTraits'
+          description: Personality traits influencing behavior decisions
+        maxAttentionSlots:
+          type: integer
+          minimum: 1
+          default: 10
+          description: Maximum characters this deity can actively monitor simultaneously
+        realmId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Home realm for this deity (null if not realm-bound)
+
+    GetDeityRequest:
+      type: object
+      additionalProperties: false
+      description: Request to retrieve a deity by ID
+      required:
+        - deityId
+      properties:
+        deityId:
+          type: string
+          format: uuid
+          description: Unique identifier of the deity to retrieve
+
+    GetDeityByCodeRequest:
+      type: object
+      additionalProperties: false
+      description: Request to retrieve a deity by code within a game service
+      required:
+        - gameServiceId
+        - code
+      properties:
+        gameServiceId:
+          type: string
+          format: uuid
+          description: Game service to search within
+        code:
+          type: string
+          description: Deity code to look up
+
+    ListDeitiesRequest:
+      type: object
+      additionalProperties: false
+      description: Request to list deities with optional filters
+      required:
+        - gameServiceId
+      properties:
+        gameServiceId:
+          type: string
+          format: uuid
+          description: Game service to list deities for
+        domainCode:
+          type: string
+          nullable: true
+          description: Filter by domain code (returns deities with this domain in their influences)
+        status:
+          $ref: '#/components/schemas/DeityStatus'
+          nullable: true
+          description: Filter by deity status
+        page:
+          type: integer
+          minimum: 1
+          default: 1
+          description: Page number for pagination
+        pageSize:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 50
+          description: Number of results per page
+
+    UpdateDeityRequest:
+      type: object
+      additionalProperties: false
+      description: Request to update deity properties (partial update, only non-null fields applied)
+      required:
+        - deityId
+      properties:
+        deityId:
+          type: string
+          format: uuid
+          description: Deity to update
+        displayName:
+          type: string
+          nullable: true
+          description: Updated display name
+        description:
+          type: string
+          nullable: true
+          description: Updated description
+        domains:
+          type: array
+          nullable: true
+          items:
+            $ref: '#/components/schemas/DomainInfluence'
+          description: Updated domain influences (replaces entire list)
+        personalityTraits:
+          nullable: true
+          description: Updated personality traits
+          allOf:
+            - $ref: '#/components/schemas/DeityPersonalityTraits'
+        maxAttentionSlots:
+          type: integer
+          nullable: true
+          minimum: 1
+          description: Updated maximum attention slots
+
+    ActivateDeityRequest:
+      type: object
+      additionalProperties: false
+      description: Request to activate a dormant deity
+      required:
+        - deityId
+      properties:
+        deityId:
+          type: string
+          format: uuid
+          description: Deity to activate
+
+    DeactivateDeityRequest:
+      type: object
+      additionalProperties: false
+      description: Request to deactivate an active deity
+      required:
+        - deityId
+      properties:
+        deityId:
+          type: string
+          format: uuid
+          description: Deity to deactivate
+
+    DeleteDeityRequest:
+      type: object
+      additionalProperties: false
+      description: Request to permanently delete a deity and all dependent data
+      required:
+        - deityId
+      properties:
+        deityId:
+          type: string
+          format: uuid
+          description: Deity to delete
+
+    # =========================================================================
+    # Request Models - Divinity Economy
+    # =========================================================================
+
+    GetDivinityBalanceRequest:
+      type: object
+      additionalProperties: false
+      description: Request to get a deity's divinity balance
+      required:
+        - deityId
+      properties:
+        deityId:
+          type: string
+          format: uuid
+          description: Deity whose balance to retrieve
+
+    CreditDivinityRequest:
+      type: object
+      additionalProperties: false
+      description: Request to credit divinity to a deity's wallet
+      required:
+        - deityId
+        - amount
+        - source
+      properties:
+        deityId:
+          type: string
+          format: uuid
+          description: Deity to credit
+        amount:
+          type: number
+          format: double
+          minimum: 0.0
+          exclusiveMinimum: true
+          description: Amount of divinity to credit (must be positive)
+        source:
+          type: string
+          description: Source of the divinity gain (e.g., mortal_action, domain_event, manual)
+        sourceEventId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Triggering event identifier if applicable
+        description:
+          type: string
+          nullable: true
+          description: Human-readable description of the credit reason
+
+    DebitDivinityRequest:
+      type: object
+      additionalProperties: false
+      description: Request to debit divinity from a deity's wallet
+      required:
+        - deityId
+        - amount
+        - purpose
+      properties:
+        deityId:
+          type: string
+          format: uuid
+          description: Deity to debit
+        amount:
+          type: number
+          format: double
+          minimum: 0.0
+          exclusiveMinimum: true
+          description: Amount of divinity to debit (must be positive)
+        purpose:
+          type: string
+          description: Purpose of the expenditure (e.g., blessing_grant, miracle, intervention)
+        targetCharacterId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Target character if the expenditure is blessing-related
+        description:
+          type: string
+          nullable: true
+          description: Human-readable description of the debit reason
+
+    GetDivinityHistoryRequest:
+      type: object
+      additionalProperties: false
+      description: Request to get divinity transaction history
+      required:
+        - deityId
+      properties:
+        deityId:
+          type: string
+          format: uuid
+          description: Deity whose history to retrieve
+        page:
+          type: integer
+          minimum: 1
+          default: 1
+          description: Page number for pagination
+        pageSize:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 50
+          description: Number of results per page
+
+    # =========================================================================
+    # Request Models - Blessing Orchestration
+    # =========================================================================
+
+    GrantBlessingRequest:
+      type: object
+      additionalProperties: false
+      description: Request to grant a blessing from a deity to an entity
+      required:
+        - deityId
+        - entityId
+        - entityType
+        - tier
+        - itemTemplateCode
+        - reason
+      properties:
+        deityId:
+          type: string
+          format: uuid
+          description: Deity granting the blessing
+        entityId:
+          type: string
+          format: uuid
+          description: Entity receiving the blessing
+        entityType:
+          type: string
+          description: Type of entity receiving the blessing (e.g., character, account, deity)
+        tier:
+          $ref: '#/components/schemas/BlessingTier'
+          description: Tier of the blessing (determines cost and storage mechanism)
+        itemTemplateCode:
+          type: string
+          description: Item template code for the blessing effect
+        reason:
+          type: string
+          description: Why the deity is granting this blessing
+
+    RevokeBlessingRequest:
+      type: object
+      additionalProperties: false
+      description: Request to revoke an active blessing
+      required:
+        - blessingId
+        - reason
+      properties:
+        blessingId:
+          type: string
+          format: uuid
+          description: Blessing to revoke
+        reason:
+          type: string
+          description: Why the blessing is being revoked
+
+    ListBlessingsByEntityRequest:
+      type: object
+      additionalProperties: false
+      description: Request to list blessings for an entity
+      required:
+        - entityId
+        - entityType
+      properties:
+        entityId:
+          type: string
+          format: uuid
+          description: Entity whose blessings to list
+        entityType:
+          type: string
+          description: Type of entity (e.g., character, account, deity)
+        page:
+          type: integer
+          minimum: 1
+          default: 1
+          description: Page number for pagination
+        pageSize:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 50
+          description: Number of results per page
+
+    ListBlessingsByDeityRequest:
+      type: object
+      additionalProperties: false
+      description: Request to list blessings granted by a deity
+      required:
+        - deityId
+      properties:
+        deityId:
+          type: string
+          format: uuid
+          description: Deity whose granted blessings to list
+        tier:
+          $ref: '#/components/schemas/BlessingTier'
+          nullable: true
+          description: Optional tier filter
+        page:
+          type: integer
+          minimum: 1
+          default: 1
+          description: Page number for pagination
+        pageSize:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 50
+          description: Number of results per page
+
+    GetBlessingRequest:
+      type: object
+      additionalProperties: false
+      description: Request to get a blessing by ID
+      required:
+        - blessingId
+      properties:
+        blessingId:
+          type: string
+          format: uuid
+          description: Blessing to retrieve
+
+    # =========================================================================
+    # Request Models - Follower Management
+    # =========================================================================
+
+    RegisterFollowerRequest:
+      type: object
+      additionalProperties: false
+      description: Request to register a character as a deity follower
+      required:
+        - deityId
+        - characterId
+      properties:
+        deityId:
+          type: string
+          format: uuid
+          description: Deity to follow
+        characterId:
+          type: string
+          format: uuid
+          description: Character becoming a follower
+
+    UnregisterFollowerRequest:
+      type: object
+      additionalProperties: false
+      description: Request to unregister a character as a deity follower
+      required:
+        - deityId
+        - characterId
+      properties:
+        deityId:
+          type: string
+          format: uuid
+          description: Deity to unfollow
+        characterId:
+          type: string
+          format: uuid
+          description: Character to remove as follower
+
+    GetFollowersRequest:
+      type: object
+      additionalProperties: false
+      description: Request to get followers of a deity
+      required:
+        - deityId
+      properties:
+        deityId:
+          type: string
+          format: uuid
+          description: Deity whose followers to list
+        page:
+          type: integer
+          minimum: 1
+          default: 1
+          description: Page number for pagination
+        pageSize:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 50
+          description: Number of results per page
+
+    # =========================================================================
+    # Request Models - Resource Cleanup
+    # =========================================================================
+
+    CleanupByCharacterRequest:
+      type: object
+      additionalProperties: false
+      description: Request to cleanup divine data for a deleted character (called by lib-resource)
+      required:
+        - characterId
+      properties:
+        characterId:
+          type: string
+          format: uuid
+          description: Character whose divine data to clean up
+
+    CleanupByGameServiceRequest:
+      type: object
+      additionalProperties: false
+      description: Request to cleanup divine data for a deleted game service (called by lib-resource)
+      required:
+        - gameServiceId
+      properties:
+        gameServiceId:
+          type: string
+          format: uuid
+          description: Game service whose divine data to clean up
+
+    # =========================================================================
+    # Response Models
+    # =========================================================================
+
+    DeityResponse:
+      type: object
+      additionalProperties: false
+      description: Full deity entity response
+      required:
+        - deityId
+        - gameServiceId
+        - code
+        - displayName
+        - description
+        - domains
+        - personalityTraits
+        - maxAttentionSlots
+        - status
+        - followerCount
+        - createdAt
+        - updatedAt
+      properties:
+        deityId:
+          type: string
+          format: uuid
+          description: Unique deity identifier
+        gameServiceId:
+          type: string
+          format: uuid
+          description: Game service this deity belongs to
+        code:
+          type: string
+          description: Unique code within the game service
+        displayName:
+          type: string
+          description: Human-readable display name
+        description:
+          type: string
+          description: Description of the deity
+        domains:
+          type: array
+          items:
+            $ref: '#/components/schemas/DomainInfluence'
+          description: Domain influences
+        personalityTraits:
+          $ref: '#/components/schemas/DeityPersonalityTraits'
+          description: Personality traits
+        maxAttentionSlots:
+          type: integer
+          description: Maximum characters the deity can actively monitor
+        actorId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Associated actor ID for the deity watcher brain (null if no watcher started)
+        seedId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Domain power seed ID (null if seed creation failed or pending)
+        currencyWalletId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Divinity currency wallet ID (null if wallet creation failed or pending)
+        realmId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Home realm for this deity (null if not realm-bound)
+        status:
+          $ref: '#/components/schemas/DeityStatus'
+          description: Current lifecycle status
+        followerCount:
+          type: integer
+          description: Number of active followers
+        createdAt:
+          type: string
+          format: date-time
+          description: When the deity was created
+        updatedAt:
+          type: string
+          format: date-time
+          description: When the deity was last updated
+
+    ListDeitiesResponse:
+      type: object
+      additionalProperties: false
+      description: Paginated list of deities
+      required:
+        - deities
+        - totalCount
+        - page
+        - pageSize
+      properties:
+        deities:
+          type: array
+          items:
+            $ref: '#/components/schemas/DeityResponse'
+          description: Deities in the current page
+        totalCount:
+          type: integer
+          description: Total number of matching deities
+        page:
+          type: integer
+          description: Current page number
+        pageSize:
+          type: integer
+          description: Number of results per page
+
+    DivinityBalanceResponse:
+      type: object
+      additionalProperties: false
+      description: Current divinity balance for a deity
+      required:
+        - deityId
+        - balance
+        - currencyCode
+        - walletId
+      properties:
+        deityId:
+          type: string
+          format: uuid
+          description: Deity this balance belongs to
+        balance:
+          type: number
+          format: double
+          description: Current divinity balance
+        currencyCode:
+          type: string
+          description: Currency code for the divinity type
+        walletId:
+          type: string
+          format: uuid
+          description: Currency wallet ID
+
+    DivinityHistoryResponse:
+      type: object
+      additionalProperties: false
+      description: Paginated divinity transaction history
+      required:
+        - transactions
+        - totalCount
+        - page
+        - pageSize
+      properties:
+        transactions:
+          type: array
+          items:
+            $ref: '#/components/schemas/DivinityTransaction'
+          description: Transactions in the current page
+        totalCount:
+          type: integer
+          description: Total number of transactions
+        page:
+          type: integer
+          description: Current page number
+        pageSize:
+          type: integer
+          description: Number of results per page
+
+    BlessingResponse:
+      type: object
+      additionalProperties: false
+      description: Full blessing record response
+      required:
+        - blessingId
+        - deityId
+        - entityId
+        - entityType
+        - tier
+        - itemTemplateCode
+        - itemInstanceId
+        - reason
+        - grantedAt
+        - status
+      properties:
+        blessingId:
+          type: string
+          format: uuid
+          description: Unique blessing identifier
+        deityId:
+          type: string
+          format: uuid
+          description: Deity that granted this blessing
+        entityId:
+          type: string
+          format: uuid
+          description: Entity that received this blessing
+        entityType:
+          type: string
+          description: Type of entity that received this blessing
+        tier:
+          $ref: '#/components/schemas/BlessingTier'
+          description: Tier of the blessing
+        itemTemplateCode:
+          type: string
+          description: Item template code for the blessing effect
+        itemInstanceId:
+          type: string
+          format: uuid
+          description: Item or collection entry instance backing this blessing
+        reason:
+          type: string
+          description: Why the blessing was granted
+        grantedAt:
+          type: string
+          format: date-time
+          description: When the blessing was granted
+        revokedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When the blessing was revoked (null if still active)
+        status:
+          $ref: '#/components/schemas/BlessingStatus'
+          description: Current status of the blessing
+
+    ListBlessingsResponse:
+      type: object
+      additionalProperties: false
+      description: Paginated list of blessings
+      required:
+        - blessings
+        - totalCount
+        - page
+        - pageSize
+      properties:
+        blessings:
+          type: array
+          items:
+            $ref: '#/components/schemas/BlessingSummary'
+          description: Blessings in the current page
+        totalCount:
+          type: integer
+          description: Total number of matching blessings
+        page:
+          type: integer
+          description: Current page number
+        pageSize:
+          type: integer
+          description: Number of results per page
+
+    FollowerResponse:
+      type: object
+      additionalProperties: false
+      description: Follower record linking a character to a deity
+      required:
+        - characterId
+        - deityId
+        - registeredAt
+        - relationshipId
+      properties:
+        characterId:
+          type: string
+          format: uuid
+          description: Follower character ID
+        deityId:
+          type: string
+          format: uuid
+          description: Deity being followed
+        registeredAt:
+          type: string
+          format: date-time
+          description: When the follower relationship was created
+        relationshipId:
+          type: string
+          format: uuid
+          description: Underlying relationship record ID from lib-relationship
+
+    ListFollowersResponse:
+      type: object
+      additionalProperties: false
+      description: Paginated list of deity followers
+      required:
+        - followers
+        - totalCount
+        - page
+        - pageSize
+      properties:
+        followers:
+          type: array
+          items:
+            $ref: '#/components/schemas/FollowerResponse'
+          description: Followers in the current page
+        totalCount:
+          type: integer
+          description: Total number of followers
+        page:
+          type: integer
+          description: Current page number
+        pageSize:
+          type: integer
+          description: Number of results per page

@@ -206,7 +206,9 @@ public sealed class AssetLoader : IAsyncDisposable
                 {
                     return BundleLoadResult.Failed(bundleId, $"Local file not found: {filePath}");
                 }
-#pragma warning disable CA2000 // Ownership transferred to BannouBundleReader which disposes stream
+                // CA2000: Stream ownership is transferred to BannouBundleReader below (line ~218),
+                // and the finally block disposes bundleStream if transfer fails
+#pragma warning disable CA2000
                 bundleStream = File.OpenRead(filePath);
 #pragma warning restore CA2000
                 fromCache = true;

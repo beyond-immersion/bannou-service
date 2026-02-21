@@ -35,24 +35,16 @@ using System = global::System;
 /// Published when a new save version is created
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class SaveCreatedEvent
+public partial class SaveCreatedEvent : BaseServiceEvent
 {
 
     /// <summary>
-    /// Unique event identifier
+    /// Event type identifier
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("eventId")]
+    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid EventId { get; set; } = default!;
-
-    /// <summary>
-    /// Event timestamp
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("timestamp")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.DateTimeOffset Timestamp { get; set; } = default!;
+    public override string EventName { get; set; } = "save.created";
 
     /// <summary>
     /// Slot identifier
@@ -66,7 +58,7 @@ public partial class SaveCreatedEvent
     /// Slot name
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("slotName")]
-    public string SlotName { get; set; } = default!;
+    public string? SlotName { get; set; } = default!;
 
     /// <summary>
     /// New version number
@@ -114,7 +106,7 @@ public partial class SaveCreatedEvent
     /// Whether version is pinned
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("pinned")]
-    public bool Pinned { get; set; } = default!;
+    public bool Pinned { get; set; } = false;
 
     /// <summary>
     /// Checkpoint name if pinned
@@ -122,42 +114,22 @@ public partial class SaveCreatedEvent
     [System.Text.Json.Serialization.JsonPropertyName("checkpointName")]
     public string? CheckpointName { get; set; } = default!;
 
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    /// <summary>
-    /// Gets or sets additional properties not defined in the schema.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
-    {
-        get => _additionalProperties;
-        set { _additionalProperties = value; }
-    }
-
 }
 
 /// <summary>
 /// Published when a save is loaded
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class SaveLoadedEvent
+public partial class SaveLoadedEvent : BaseServiceEvent
 {
 
     /// <summary>
-    /// Unique event identifier
+    /// Event type identifier
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("eventId")]
+    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid EventId { get; set; } = default!;
-
-    /// <summary>
-    /// Event timestamp
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("timestamp")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.DateTimeOffset Timestamp { get; set; } = default!;
+    public override string EventName { get; set; } = "save.loaded";
 
     /// <summary>
     /// Slot identifier
@@ -171,7 +143,7 @@ public partial class SaveLoadedEvent
     /// Slot name
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("slotName")]
-    public string SlotName { get; set; } = default!;
+    public string? SlotName { get; set; } = default!;
 
     /// <summary>
     /// Loaded version number
@@ -196,42 +168,22 @@ public partial class SaveLoadedEvent
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public OwnerType OwnerType { get; set; } = default!;
 
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    /// <summary>
-    /// Gets or sets additional properties not defined in the schema.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
-    {
-        get => _additionalProperties;
-        set { _additionalProperties = value; }
-    }
-
 }
 
 /// <summary>
 /// Published when a save is migrated to a new schema version
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class SaveMigratedEvent
+public partial class SaveMigratedEvent : BaseServiceEvent
 {
 
     /// <summary>
-    /// Unique event identifier
+    /// Event type identifier
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("eventId")]
+    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid EventId { get; set; } = default!;
-
-    /// <summary>
-    /// Event timestamp
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("timestamp")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.DateTimeOffset Timestamp { get; set; } = default!;
+    public override string EventName { get; set; } = "save.migrated";
 
     /// <summary>
     /// Slot identifier
@@ -245,19 +197,19 @@ public partial class SaveMigratedEvent
     /// Slot name
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("slotName")]
-    public string SlotName { get; set; } = default!;
+    public string? SlotName { get; set; } = default!;
 
     /// <summary>
     /// Original version that was migrated
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("originalVersionNumber")]
-    public int OriginalVersionNumber { get; set; } = default!;
+    public int? OriginalVersionNumber { get; set; } = default!;
 
     /// <summary>
     /// New version with migrated data
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("newVersionNumber")]
-    public int NewVersionNumber { get; set; } = default!;
+    public int? NewVersionNumber { get; set; } = default!;
 
     /// <summary>
     /// Original schema version
@@ -279,7 +231,7 @@ public partial class SaveMigratedEvent
     /// Owner entity ID
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("ownerId")]
-    public System.Guid OwnerId { get; set; } = default!;
+    public System.Guid? OwnerId { get; set; } = default!;
 
     /// <summary>
     /// Owner entity type
@@ -288,42 +240,22 @@ public partial class SaveMigratedEvent
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public OwnerType OwnerType { get; set; } = default!;
 
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    /// <summary>
-    /// Gets or sets additional properties not defined in the schema.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
-    {
-        get => _additionalProperties;
-        set { _additionalProperties = value; }
-    }
-
 }
 
 /// <summary>
 /// Published when a version is pinned as checkpoint
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class VersionPinnedEvent
+public partial class VersionPinnedEvent : BaseServiceEvent
 {
 
     /// <summary>
-    /// Unique event identifier
+    /// Event type identifier
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("eventId")]
+    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid EventId { get; set; } = default!;
-
-    /// <summary>
-    /// Event timestamp
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("timestamp")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.DateTimeOffset Timestamp { get; set; } = default!;
+    public override string EventName { get; set; } = "save.version-pinned";
 
     /// <summary>
     /// Slot identifier
@@ -337,7 +269,7 @@ public partial class VersionPinnedEvent
     /// Slot name
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("slotName")]
-    public string SlotName { get; set; } = default!;
+    public string? SlotName { get; set; } = default!;
 
     /// <summary>
     /// Pinned version number
@@ -355,7 +287,7 @@ public partial class VersionPinnedEvent
     /// Owner entity ID
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("ownerId")]
-    public System.Guid OwnerId { get; set; } = default!;
+    public System.Guid? OwnerId { get; set; } = default!;
 
     /// <summary>
     /// Owner entity type
@@ -364,42 +296,22 @@ public partial class VersionPinnedEvent
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public OwnerType OwnerType { get; set; } = default!;
 
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    /// <summary>
-    /// Gets or sets additional properties not defined in the schema.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
-    {
-        get => _additionalProperties;
-        set { _additionalProperties = value; }
-    }
-
 }
 
 /// <summary>
 /// Published when a version is unpinned
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class VersionUnpinnedEvent
+public partial class VersionUnpinnedEvent : BaseServiceEvent
 {
 
     /// <summary>
-    /// Unique event identifier
+    /// Event type identifier
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("eventId")]
+    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid EventId { get; set; } = default!;
-
-    /// <summary>
-    /// Event timestamp
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("timestamp")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.DateTimeOffset Timestamp { get; set; } = default!;
+    public override string EventName { get; set; } = "save.version-unpinned";
 
     /// <summary>
     /// Slot identifier
@@ -413,7 +325,7 @@ public partial class VersionUnpinnedEvent
     /// Slot name
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("slotName")]
-    public string SlotName { get; set; } = default!;
+    public string? SlotName { get; set; } = default!;
 
     /// <summary>
     /// Unpinned version number
@@ -431,7 +343,7 @@ public partial class VersionUnpinnedEvent
     /// Owner entity ID
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("ownerId")]
-    public System.Guid OwnerId { get; set; } = default!;
+    public System.Guid? OwnerId { get; set; } = default!;
 
     /// <summary>
     /// Owner entity type
@@ -440,42 +352,22 @@ public partial class VersionUnpinnedEvent
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public OwnerType OwnerType { get; set; } = default!;
 
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    /// <summary>
-    /// Gets or sets additional properties not defined in the schema.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
-    {
-        get => _additionalProperties;
-        set { _additionalProperties = value; }
-    }
-
 }
 
 /// <summary>
 /// Published when a version is deleted
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class VersionDeletedEvent
+public partial class VersionDeletedEvent : BaseServiceEvent
 {
 
     /// <summary>
-    /// Unique event identifier
+    /// Event type identifier
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("eventId")]
+    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid EventId { get; set; } = default!;
-
-    /// <summary>
-    /// Event timestamp
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("timestamp")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.DateTimeOffset Timestamp { get; set; } = default!;
+    public override string EventName { get; set; } = "save.version-deleted";
 
     /// <summary>
     /// Slot identifier
@@ -489,7 +381,7 @@ public partial class VersionDeletedEvent
     /// Slot name
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("slotName")]
-    public string SlotName { get; set; } = default!;
+    public string? SlotName { get; set; } = default!;
 
     /// <summary>
     /// Deleted version number
@@ -507,7 +399,7 @@ public partial class VersionDeletedEvent
     /// Owner entity ID
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("ownerId")]
-    public System.Guid OwnerId { get; set; } = default!;
+    public System.Guid? OwnerId { get; set; } = default!;
 
     /// <summary>
     /// Owner entity type
@@ -516,42 +408,22 @@ public partial class VersionDeletedEvent
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public OwnerType OwnerType { get; set; } = default!;
 
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    /// <summary>
-    /// Gets or sets additional properties not defined in the schema.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
-    {
-        get => _additionalProperties;
-        set { _additionalProperties = value; }
-    }
-
 }
 
 /// <summary>
 /// Published when automatic cleanup completes
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class CleanupCompletedEvent
+public partial class CleanupCompletedEvent : BaseServiceEvent
 {
 
     /// <summary>
-    /// Unique event identifier
+    /// Event type identifier
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("eventId")]
+    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid EventId { get; set; } = default!;
-
-    /// <summary>
-    /// Event timestamp
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("timestamp")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.DateTimeOffset Timestamp { get; set; } = default!;
+    public override string EventName { get; set; } = "save.cleanup-completed";
 
     /// <summary>
     /// Number of versions cleaned up
@@ -563,7 +435,7 @@ public partial class CleanupCompletedEvent
     /// Number of empty slots removed
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("slotsDeleted")]
-    public int SlotsDeleted { get; set; } = default!;
+    public int? SlotsDeleted { get; set; } = default!;
 
     /// <summary>
     /// Storage freed in bytes
@@ -575,19 +447,7 @@ public partial class CleanupCompletedEvent
     /// Cleanup duration in milliseconds
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("durationMs")]
-    public int DurationMs { get; set; } = default!;
-
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    /// <summary>
-    /// Gets or sets additional properties not defined in the schema.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
-    {
-        get => _additionalProperties;
-        set { _additionalProperties = value; }
-    }
+    public int? DurationMs { get; set; } = default!;
 
 }
 
@@ -597,24 +457,16 @@ public partial class CleanupCompletedEvent
 /// <br/>
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class SaveQueuedEvent
+public partial class SaveQueuedEvent : BaseServiceEvent
 {
 
     /// <summary>
-    /// Unique event identifier
+    /// Event type identifier
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("eventId")]
+    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid EventId { get; set; } = default!;
-
-    /// <summary>
-    /// Event timestamp
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("timestamp")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.DateTimeOffset Timestamp { get; set; } = default!;
+    public override string EventName { get; set; } = "save.queued";
 
     /// <summary>
     /// Save slot identifier
@@ -628,7 +480,7 @@ public partial class SaveQueuedEvent
     /// Human-readable slot name
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("slotName")]
-    public string SlotName { get; set; } = default!;
+    public string? SlotName { get; set; } = default!;
 
     /// <summary>
     /// Version number that was queued
@@ -657,25 +509,13 @@ public partial class SaveQueuedEvent
     /// Size of the queued save data in bytes
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("sizeBytes")]
-    public long SizeBytes { get; set; } = default!;
+    public long? SizeBytes { get; set; } = default!;
 
     /// <summary>
     /// Current number of pending uploads in queue
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("queueDepth")]
-    public int QueueDepth { get; set; } = default!;
-
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    /// <summary>
-    /// Gets or sets additional properties not defined in the schema.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
-    {
-        get => _additionalProperties;
-        set { _additionalProperties = value; }
-    }
+    public int? QueueDepth { get; set; } = default!;
 
 }
 
@@ -683,24 +523,16 @@ public partial class SaveQueuedEvent
 /// Published when async upload to MinIO completes successfully
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class SaveUploadCompletedEvent
+public partial class SaveUploadCompletedEvent : BaseServiceEvent
 {
 
     /// <summary>
-    /// Unique event identifier
+    /// Event type identifier
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("eventId")]
+    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid EventId { get; set; } = default!;
-
-    /// <summary>
-    /// Event timestamp
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("timestamp")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.DateTimeOffset Timestamp { get; set; } = default!;
+    public override string EventName { get; set; } = "save.upload-completed";
 
     /// <summary>
     /// Save slot identifier
@@ -714,7 +546,7 @@ public partial class SaveUploadCompletedEvent
     /// Human-readable slot name
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("slotName")]
-    public string SlotName { get; set; } = default!;
+    public string? SlotName { get; set; } = default!;
 
     /// <summary>
     /// Version number that was uploaded
@@ -734,25 +566,13 @@ public partial class SaveUploadCompletedEvent
     /// Time from queue to upload completion
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("uploadDurationMs")]
-    public int UploadDurationMs { get; set; } = default!;
+    public int? UploadDurationMs { get; set; } = default!;
 
     /// <summary>
     /// Time spent waiting in queue
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("queueWaitMs")]
-    public int QueueWaitMs { get; set; } = default!;
-
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    /// <summary>
-    /// Gets or sets additional properties not defined in the schema.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
-    {
-        get => _additionalProperties;
-        set { _additionalProperties = value; }
-    }
+    public int? QueueWaitMs { get; set; } = default!;
 
 }
 
@@ -762,24 +582,16 @@ public partial class SaveUploadCompletedEvent
 /// <br/>
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class SaveUploadFailedEvent
+public partial class SaveUploadFailedEvent : BaseServiceEvent
 {
 
     /// <summary>
-    /// Unique event identifier
+    /// Event type identifier
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("eventId")]
+    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid EventId { get; set; } = default!;
-
-    /// <summary>
-    /// Event timestamp
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("timestamp")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.DateTimeOffset Timestamp { get; set; } = default!;
+    public override string EventName { get; set; } = "save.upload-failed";
 
     /// <summary>
     /// Save slot identifier
@@ -793,7 +605,7 @@ public partial class SaveUploadFailedEvent
     /// Human-readable slot name
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("slotName")]
-    public string SlotName { get; set; } = default!;
+    public string? SlotName { get; set; } = default!;
 
     /// <summary>
     /// Version number that failed to upload
@@ -805,7 +617,7 @@ public partial class SaveUploadFailedEvent
     /// Owner entity ID
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("ownerId")]
-    public System.Guid OwnerId { get; set; } = default!;
+    public System.Guid? OwnerId { get; set; } = default!;
 
     /// <summary>
     /// Type of entity that owns this save
@@ -832,19 +644,7 @@ public partial class SaveUploadFailedEvent
     /// Whether more retries will be attempted
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("willRetry")]
-    public bool WillRetry { get; set; } = default!;
-
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    /// <summary>
-    /// Gets or sets additional properties not defined in the schema.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
-    {
-        get => _additionalProperties;
-        set { _additionalProperties = value; }
-    }
+    public bool WillRetry { get; set; } = false;
 
 }
 
@@ -852,24 +652,16 @@ public partial class SaveUploadFailedEvent
 /// Published when storage circuit breaker changes state
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class CircuitBreakerStateChangedEvent
+public partial class CircuitBreakerStateChangedEvent : BaseServiceEvent
 {
 
     /// <summary>
-    /// Unique event identifier
+    /// Event type identifier
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("eventId")]
+    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid EventId { get; set; } = default!;
-
-    /// <summary>
-    /// Event timestamp
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("timestamp")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.DateTimeOffset Timestamp { get; set; } = default!;
+    public override string EventName { get; set; } = "save.circuit-breaker-changed";
 
     /// <summary>
     /// Previous circuit breaker state before the transition
@@ -893,31 +685,19 @@ public partial class CircuitBreakerStateChangedEvent
     /// Consecutive failures (when opening)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("failureCount")]
-    public int FailureCount { get; set; } = default!;
+    public int? FailureCount { get; set; } = default!;
 
     /// <summary>
     /// Successful probes (when closing from half-open)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("successCount")]
-    public int SuccessCount { get; set; } = default!;
+    public int? SuccessCount { get; set; } = default!;
 
     /// <summary>
     /// Current queue depth when state changed
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("pendingUploads")]
-    public int PendingUploads { get; set; } = default!;
-
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    /// <summary>
-    /// Gets or sets additional properties not defined in the schema.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
-    {
-        get => _additionalProperties;
-        set { _additionalProperties = value; }
-    }
+    public int? PendingUploads { get; set; } = default!;
 
 }
 

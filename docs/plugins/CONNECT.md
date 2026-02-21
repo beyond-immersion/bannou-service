@@ -3,13 +3,14 @@
 > **Plugin**: lib-connect
 > **Schema**: schemas/connect-api.yaml
 > **Version**: 2.0.0
+> **Layer**: AppFoundation
 > **State Stores**: connect-statestore (Redis)
 
 ---
 
 ## Overview
 
-WebSocket-first edge gateway service providing zero-copy binary message routing between game clients and backend Bannou services. Manages persistent WebSocket connections with a 31-byte binary protocol header for request routing and a 16-byte response header. Implements client-salted GUID generation (SHA256-based, version 5/6/7 UUIDs) to prevent cross-session security exploits. Supports three connection modes (external, relayed, internal) with per-mode behavior differences for broadcast, auth, and capability handling. Features session shortcuts (pre-bound payload routing for game-specific flows), reconnection windows with token-based session restoration, per-session RabbitMQ subscriptions for server-to-client event delivery, rate limiting, meta endpoint introspection, peer-to-peer client routing, broadcast messaging, internal proxy for stateless HTTP forwarding, and admin notification forwarding for service error events. Registered as Singleton lifetime (unusual for Bannou services) because it maintains in-memory WebSocket connection state across all requests.
+WebSocket-first edge gateway (L1 AppFoundation) providing zero-copy binary message routing between game clients and backend services. Manages persistent connections with client-salted GUID generation for cross-session security, three connection modes (external, relayed, internal), session shortcuts for game-specific flows, reconnection windows, and per-session RabbitMQ subscriptions for server-to-client event delivery. Internet-facing (the primary client entry point alongside Auth). Registered as Singleton (unusual for Bannou) because it maintains in-memory connection state.
 
 ---
 
@@ -25,9 +26,10 @@ WebSocket-first edge gateway service providing zero-copy binary message routing 
 | Permission service (via events) | Receives `SessionCapabilitiesEvent` containing permissions; no direct API call |
 | Auth service (via events) | Receives `session.invalidated` events to force-disconnect sessions |
 | `IServiceAppMappingResolver` | Dynamic app-id resolution for distributed service routing |
-| `IHttpClientFactory` | Named HTTP client ("ConnectMeshProxy") for internal proxy requests |
+| ~~`IHttpClientFactory`~~ | REMOVED - was dead code; `CreateClient` never called in service code |
 | `IServiceScopeFactory` | Creates scoped DI containers for per-request ServiceNavigator resolution |
 | `ICapabilityManifestBuilder` | Builds capability manifest JSON from service mappings for client delivery |
+| `IEntitySessionRegistry` | Entity-to-session mapping for client event push routing; cleaned up on disconnect |
 
 ---
 
@@ -36,10 +38,10 @@ WebSocket-first edge gateway service providing zero-copy binary message routing 
 | Dependent | Relationship |
 |-----------|-------------|
 | lib-auth | Publishes `session.invalidated` events consumed by Connect to disconnect clients |
-| lib-permission | Pushes `SessionCapabilitiesEvent` via per-session RabbitMQ queue to update client capabilities |
-| lib-game-session | Publishes session shortcuts and subscribes to `session.connected`/`session.disconnected` |
-| lib-actor | Subscribes to `session.connected`/`session.disconnected` events for actor lifecycle |
-| lib-matchmaking | Subscribes to `session.connected`/`session.disconnected` events for queue management |
+| lib-permission | Subscribes to `session.connected`/`session.disconnected`; pushes `SessionCapabilitiesEvent` via per-session RabbitMQ queue to update client capabilities |
+| lib-game-session | Publishes session shortcuts and subscribes to `session.connected`/`session.disconnected`/`session.reconnected` |
+| lib-actor | Subscribes to `session.disconnected` events for actor lifecycle |
+| lib-matchmaking | Subscribes to `session.connected`/`session.disconnected`/`session.reconnected` events for queue management |
 | All services (via IClientEventPublisher) | Send server-to-client events through per-session RabbitMQ queues consumed by Connect |
 
 ---
@@ -51,10 +53,11 @@ WebSocket-first edge gateway service providing zero-copy binary message routing 
 | Key Pattern | Data Type | Purpose |
 |-------------|-----------|---------|
 | `ws-session:{sessionId}` | `ConnectionStateData` | Full connection state (account, timestamps, reconnection info, roles, authorizations) |
-| `ws-mappings:{sessionId}` | `Dictionary<string, Guid>` | Service endpoint to client-salted GUID mappings |
 | `heartbeat:{sessionId}` | `SessionHeartbeat` | Connection liveness tracking (instance ID, last seen, connection count) |
 | `reconnect:{token}` | `string` (sessionId) | Reconnection token to session ID mapping (TTL = reconnection window) |
-| `account-sessions:{accountId:N}` | `HashSet<string>` | All active session IDs for an account (for GetAccountSessions endpoint) |
+| `account-sessions:{accountId:N}` | Redis Set of `string` | All active session IDs for an account (atomic SADD/SREM via `ICacheableStateStore<string>`) |
+| `entity-sessions:{entityType}:{entityId:N}` | Redis Set of `string` | Forward index: all session IDs interested in an entity (atomic SADD/SREM via `ICacheableStateStore<string>`) |
+| `session-entities:{sessionId}` | Redis Set of `string` | Reverse index: all entity bindings for a session, values are `"{entityType}:{entityId:N}"` (enables O(n) cleanup on disconnect) |
 
 ---
 
@@ -68,7 +71,6 @@ WebSocket-first edge gateway service providing zero-copy binary message routing 
 | `session.disconnected` | `SessionDisconnectedEvent` | WebSocket client disconnects (graceful or unexpected) |
 | `session.reconnected` | `SessionReconnectedEvent` | Client reconnects within grace period using reconnection token |
 | `connect.session-events` | `SessionEvent` | Internal session lifecycle events for cross-instance communication |
-| `bannou.permission-recompile` | `PermissionRecompileEvent` | Triggered when a new service registers (notifies Permission to recompile) |
 | `service.error` | (via `TryPublishErrorAsync`) | Published on internal failures (state access, routing, WebSocket errors) |
 | `{pendingRPC.ResponseChannel}` | `ClientRPCResponseEvent` | Forwards client RPC responses back to originating service |
 
@@ -80,7 +82,6 @@ WebSocket-first edge gateway service providing zero-copy binary message routing 
 | `service.error` | `ServiceErrorEvent` | `HandleServiceErrorAsync` - Forwards error events to connected admin WebSocket clients as binary messages |
 | Per-session queue (`CONNECT_SESSION_{sessionId}`) | Raw bytes | `HandleClientEventAsync` - Routes client events from RabbitMQ to WebSocket; handles internal events (capabilities, shortcuts) |
 | `/events/auth-events` (HTTP) | `AuthEvent` | `ProcessAuthEventAsync` - Handles login/logout/token refresh from Auth service |
-| `/events/service-registered` (HTTP) | `ServiceRegistrationEvent` | `ProcessServiceRegistrationAsync` - Triggers permission recompilation on new service |
 | `/events/client-messages` (HTTP) | `ClientMessageEvent` | `ProcessClientMessageEventAsync` - Server-to-client push messaging |
 | `/events/client-rpc` (HTTP) | `ClientRPCEvent` | `ProcessClientRPCEventAsync` - Bidirectional RPC (service calls client, expects response) |
 
@@ -92,7 +93,6 @@ WebSocket-first edge gateway service providing zero-copy binary message routing 
 |----------|---------|---------|---------|
 | `MaxConcurrentConnections` | `CONNECT_MAX_CONCURRENT_CONNECTIONS` | `10000` | Maximum concurrent WebSocket connections |
 | `HeartbeatIntervalSeconds` | `CONNECT_HEARTBEAT_INTERVAL_SECONDS` | `30` | Interval between heartbeat messages |
-| `MessageQueueSize` | `CONNECT_MESSAGE_QUEUE_SIZE` | `1000` | Maximum queued messages per connection |
 | `BufferSize` | `CONNECT_BUFFER_SIZE` | `65536` | Size of message receive buffers (bytes) |
 | `EnableClientToClientRouting` | `CONNECT_ENABLE_CLIENT_TO_CLIENT_ROUTING` | `true` | Enable peer-to-peer message routing |
 | `MaxMessagesPerMinute` | `CONNECT_MAX_MESSAGES_PER_MINUTE` | `1000` | Rate limit per client per window |
@@ -104,7 +104,6 @@ WebSocket-first edge gateway service providing zero-copy binary message routing 
 | `SessionTtlSeconds` | `CONNECT_SESSION_TTL_SECONDS` | `86400` | Session TTL in Redis (24 hours) |
 | `HeartbeatTtlSeconds` | `CONNECT_HEARTBEAT_TTL_SECONDS` | `300` | Heartbeat data TTL (5 minutes) |
 | `ReconnectionWindowSeconds` | `CONNECT_RECONNECTION_WINDOW_SECONDS` | `300` | Reconnection grace period (5 minutes) |
-| `HttpClientTimeoutSeconds` | `CONNECT_HTTP_CLIENT_TIMEOUT_SECONDS` | `120` | HTTP client timeout for backend service calls |
 | `RpcCleanupIntervalSeconds` | `CONNECT_RPC_CLEANUP_INTERVAL_SECONDS` | `30` | Interval between pending RPC cleanup runs |
 | `DefaultRpcTimeoutSeconds` | `CONNECT_DEFAULT_RPC_TIMEOUT_SECONDS` | `30` | Default timeout for RPC calls when not specified |
 | `ConnectionCleanupIntervalSeconds` | `CONNECT_CONNECTION_CLEANUP_INTERVAL_SECONDS` | `30` | Interval between connection cleanup runs |
@@ -123,15 +122,16 @@ WebSocket-first edge gateway service providing zero-copy binary message routing 
 | `IMeshInvocationClient` | Singleton | HTTP request creation and service invocation |
 | `IMessageBus` | Scoped | Event publishing (session lifecycle, error, permission recompile) |
 | `IMessageSubscriber` | Singleton | Per-session dynamic RabbitMQ subscription management |
-| `IHttpClientFactory` | Singleton | Named HTTP client for internal proxy |
+| ~~`IHttpClientFactory`~~ | ~~Singleton~~ | REMOVED - was dead code; all HTTP routing uses `IMeshInvocationClient` |
 | `IServiceAppMappingResolver` | Singleton | Dynamic app-id resolution for distributed routing |
 | `IServiceScopeFactory` | Singleton | Creates scoped DI containers for ServiceNavigator |
-| `ConnectServiceConfiguration` | Singleton | All 22 configuration properties |
+| `ConnectServiceConfiguration` | Singleton | All configuration properties (21 + ForceServiceId) |
 | `ILogger<ConnectService>` | Singleton | Structured logging |
 | `ILoggerFactory` | Singleton | Logger creation for child components |
 | `IEventConsumer` | Singleton | Event consumer registration for pub/sub handlers |
 | `ISessionManager` (`BannouSessionManager`) | Singleton | Distributed session state management (Redis-backed) |
 | `ICapabilityManifestBuilder` (`CapabilityManifestBuilder`) | Singleton | Builds API lists and shortcut lists for capability manifests |
+| `IEntitySessionRegistry` (`EntitySessionRegistry`) | Singleton | Redis-backed dual-index entity-to-session mapping for client event push routing |
 | `WebSocketConnectionManager` | Owned (internal) | In-memory WebSocket connection tracking, send operations, peer GUID registry |
 
 Service lifetime is **Singleton** (unique among Bannou services). This is required because the service maintains in-memory WebSocket connection state (`ConcurrentDictionary` of active connections, session mappings, pending RPCs) that must persist across HTTP requests.
@@ -142,7 +142,7 @@ Service lifetime is **Singleton** (unique among Bannou services). This is requir
 
 ### WebSocket Connection (2 endpoints)
 
-- **ConnectWebSocket** (`GET /connect`): Accepts WebSocket upgrade. Validates token via `IAuthClient`. Generates session ID. Creates `ConnectionState` with peer GUID. Stores `ConnectionStateData` in Redis. Adds session to account index. Creates per-session RabbitMQ subscription (`CONNECT_SESSION_{sessionId}` on `bannou-client-events` exchange). Publishes `session.connected` event with roles/authorizations. Sends initial capability manifest (empty for new sessions - capabilities arrive via event from Permission). Enters message receive loop. On disconnect: initiates reconnection window (generates token, stores in Redis), unsubscribes RabbitMQ queue, publishes `session.disconnected`, removes from connection manager.
+- **ConnectWebSocket** (`GET /connect`): Accepts WebSocket upgrade. Validates token via `IAuthClient` (in controller). Generates session ID. Creates `ConnectionState` with peer GUID. Stores `ConnectionStateData` in Redis. Creates per-session RabbitMQ subscription (`CONNECT_SESSION_{sessionId}` on `bannou-client-events` exchange) with deterministic queue name (`session.events.{sessionId}`) and TTL matching reconnection window. Publishes `session.connected` event with roles/authorizations AFTER RabbitMQ subscription (prevents race condition). Adds session to account index. Does NOT send initial capability manifest - capabilities arrive asynchronously via `SessionCapabilitiesEvent` from Permission. Enters message receive loop. On disconnect: publishes `session.disconnected`, removes from account index, cancels RabbitMQ consumer (queue persists to buffer messages), then either initiates reconnection window (non-forced) or removes session from Redis (forced).
 - **ConnectWebSocketPost** (`POST /connect`): POST variant of the WebSocket endpoint for clients that cannot use GET for WebSocket upgrade. Identical implementation to GET variant.
 
 ### Client Capabilities (1 endpoint)
@@ -155,7 +155,7 @@ Service lifetime is **Singleton** (unique among Bannou services). This is requir
 
 ### Internal Proxy (1 endpoint)
 
-- **ProxyInternalRequest** (`POST /internal/proxy`): Stateless HTTP proxy for internal service-to-service calls through Connect. Validates session has access via local capability mappings (checks `_sessionServiceMappings`). Resolves app-id via `IServiceAppMappingResolver`. Builds HTTP request with path/query parameters. Routes through `IMeshInvocationClient`. Supports GET/POST/PUT/DELETE/PATCH. Returns raw response body and status code.
+- **ProxyInternalRequest** (`POST /internal/proxy`): Stateless HTTP proxy for internal service-to-service calls through Connect. Validates session has access via connection state capability mappings (`ConnectionState.ServiceMappings`, populated by Permission service). Returns `NotFound` if session not connected, `Forbidden` if endpoint not in capability manifest. Resolves app-id via `IServiceAppMappingResolver`. Builds HTTP request with path/query parameters. Routes through `IMeshInvocationClient`. Supports GET/POST/PUT/DELETE/PATCH. Returns raw response body and status code.
 
 ---
 
@@ -234,12 +234,12 @@ WebSocket Connection Lifecycle
     │                            ├──Subscribe RabbitMQ (CONNECT_SESSION_X) │
     │                            ├──Publish session.connected─────────────►│
     │                            │                            │            │
-    │◄──Capability Manifest──────┤ (empty initially)          │            │
+    │                            │  (no manifest sent yet)    │            │
     │                            │                            │            │
     │                            │◄──SessionCapabilitiesEvent──────────────┤
     │                            │   (permissions dict)       │            │
     │                            ├──Generate client-salted GUIDs           │
-    │◄──Updated Manifest─────────┤ (with all available APIs)  │            │
+    │◄──Capability Manifest──────┤ (with all available APIs)  │            │
     │                            │                            │            │
     │──Binary Message (GUID)────►│                            │            │
     │                            ├──Lookup GUID in mappings                │
@@ -247,9 +247,12 @@ WebSocket Connection Lifecycle
     │◄──Binary Response──────────┤                            │            │
     │                            │                            │            │
     │──Disconnect────────────────│                            │            │
+    │                            ├──Publish session.disconnected           │
+    │                            ├──Remove from account index              │
+    │                            ├──Cancel RabbitMQ consumer               │
     │                            ├──Generate reconnection token            │
     │                            ├──Store token in Redis (5 min TTL)       │
-    │                            ├──Publish session.disconnected           │
+    │◄──disconnect_notification──┤ (with reconnection token)  │            │
     │                            │                            │            │
 
 
@@ -301,14 +304,17 @@ Reconnection Window Flow
 
   Client disconnects (unexpected):
        │
+       ├── Publish session.disconnected (Reconnectable=true)
+       ├── Remove session from account index
+       ├── Clean up entity session bindings (IEntitySessionRegistry)
+       ├── Remove connection from manager (subsume-safe check)
+       ├── Cancel RabbitMQ consumer (queue persists, buffers messages)
        ├── Generate reconnection token (GUID)
        ├── Store in Redis: reconnect:{token} -> sessionId (TTL=300s)
-       ├── Update ConnectionStateData with:
-       │      DisconnectedAt, ReconnectionExpiresAt, ReconnectionToken, UserRoles
-       ├── Keep service mappings alive in Redis (extended TTL)
-       ├── Publish session.disconnected (with reconnectionToken)
+       ├── InitiateReconnectionWindowAsync (preserve ConnectionStateData)
+       ├── Send disconnect_notification to client (with reconnectionToken)
        │
-       └── RabbitMQ messages queue up (session subscription still active)
+       └── Close WebSocket gracefully
 
   Client reconnects within window:
        │
@@ -388,7 +394,7 @@ Connection Mode Behavior Matrix
   │ Capabilities    │ Full flow │ Full flow │ Minimal (no manifest)     │
   │ Client events   │ Full      │ Full      │ Binary protocol only      │
   │ Message loop    │ Full      │ Full      │ Simplified (binary only)  │
-  │ Text messages   │ Echo      │ Echo      │ Ignored                   │
+  │ Text messages   │ Error(14) │ Error(14) │ Ignored                   │
   │ Reconnection    │ Full      │ Full      │ No reconnection window    │
   └─────────────────┴───────────┴───────────┴───────────────────────────┘
 ```
@@ -397,37 +403,20 @@ Connection Mode Behavior Matrix
 
 ## Stubs & Unimplemented Features
 
-1. **Encrypted flag (0x02)**: The `MessageFlags.Encrypted` bit is defined but no encryption/decryption logic exists. Messages with this flag are processed as-is without any payload transformation.
+1. ~~**Encrypted flag (0x02)**~~: **RESOLVED** (2026-02-08) - Closed as not planned ([#171](https://github.com/beyond-immersion/bannou-service/issues/171)). Implementing encryption at the protocol layer violates zero-copy routing. TLS handles transport encryption; E2E encryption is a client SDK concern.
 
-2. **Compressed flag (0x04)**: The `MessageFlags.Compressed` bit is defined but no gzip decompression is performed. Compressed payloads are forwarded raw to backend services.
+2. ~~**Compressed flag (0x04)**~~: **RESOLVED** (2026-02-08) - Closed as not planned ([#172](https://github.com/beyond-immersion/bannou-service/issues/172)). Implementing compression at the protocol layer violates zero-copy routing. WSS permessage-deflate handles transport compression.
 
-3. **Text message handling**: The `HandleTextMessageFallbackAsync` method simply echoes text messages back. No meaningful text protocol exists - it is a placeholder for clients not yet using binary protocol.
+3. ~~**Heartbeat sending**~~: **RESOLVED** (2026-02-08) - Closed as completed ([#175](https://github.com/beyond-immersion/bannou-service/issues/175)). Already handled by `KeepAliveInterval` (30s RFC 6455 pings) configured in Program.cs. `HeartbeatIntervalSeconds` correctly controls Redis liveness tracking only.
 
-4. **Heartbeat sending**: `HeartbeatIntervalSeconds` is configured but no server-to-client heartbeat sending loop is implemented. The `UpdateSessionHeartbeatAsync` method exists for recording liveness but no periodic invocation mechanism is present.
-
-5. **Rate limit window enforcement**: `RateLimitWindowMinutes` is configured but the actual sliding window implementation in `MessageRouter.CheckRateLimit` is simplified - the window tracking in `ConnectionState` may not precisely enforce the configured window.
-
-6. **HighPriority flag (0x08)**: Defined but no priority queue or ordering is implemented. High-priority messages are routed the same as standard messages.
-
-7. **DefaultServices/AuthenticatedServices config**: These arrays are defined in configuration but capability determination is entirely event-driven from Permission service. The config values are not used in the current implementation.
+4. ~~**HighPriority flag (0x08)**~~: **RESOLVED** (2026-02-08) - Closed as not planned ([#178](https://github.com/beyond-immersion/bannou-service/issues/178)). Dead code with no queue, no consumers, no use case. Speculative flag that was never needed.
 
 ---
 
 ## Potential Extensions
 
-1. **Connection count enforcement**: Add a semaphore or gate to `WebSocketConnectionManager` that rejects connections when `MaxConcurrentConnections` is reached, returning a 503 Service Unavailable.
-
-2. **Server-initiated heartbeats**: Implement a background timer that sends periodic binary ping messages to clients, using `HeartbeatIntervalSeconds` configuration. Detect dead connections via missed pong responses.
-
-3. **Payload encryption**: Implement AES-GCM encryption/decryption when `MessageFlags.Encrypted` is set. Key exchange could use per-session ephemeral keys established during WebSocket handshake.
-
-4. **Payload compression**: Implement gzip decompression when `MessageFlags.Compressed` is set, decompress before routing to backend. Compress responses when client indicates support.
-
-5. **Multi-instance broadcast**: Current broadcast only reaches clients connected to the same Connect instance. Extend via RabbitMQ fanout exchange to broadcast across all Connect instances.
-
-6. **Pending RPC timeout cleanup**: The `_pendingRPCs` dictionary grows without cleanup. Add a background timer that removes expired entries (where `TimeoutAt` has passed).
-
-7. **Graceful shutdown**: On application shutdown, send close frames to all connected clients with a "server_shutting_down" reason, wait for `ConnectionShutdownTimeoutSeconds`, then force-close remaining connections.
+1. **Multi-instance broadcast**: Current broadcast only reaches clients connected to the same Connect instance. Extend via RabbitMQ fanout exchange to broadcast across all Connect instances.
+<!-- AUDIT:NEEDS_DESIGN:2026-01-31:https://github.com/beyond-immersion/bannou-service/issues/181 -->
 
 ---
 
@@ -435,7 +424,9 @@ Connection Mode Behavior Matrix
 
 ### Bugs (Fix Immediately)
 
-No bugs identified.
+1. ~~**Admin error forwarding broken for non-reconnected sessions**~~: FIXED - Added `connectionState.UserRoles = userRoles` after `ConnectionState` creation in `HandleWebSocketCommunicationAsync`.
+
+2. ~~**`IHttpClientFactory` injected but `CreateClient` never called**~~: FIXED - Removed dead `_httpClientFactory` field, constructor parameter, `HttpClientName` constant, static header fields, named client registration from plugin, and `HttpClientTimeoutSeconds` config property from schema.
 
 ### Intentional Quirks
 
@@ -447,30 +438,43 @@ No bugs identified.
 
 4. **Meta requests always routed as GET**: When the Meta flag is set, the request is transformed to `GET {path}/meta/{suffix}` regardless of the original endpoint's HTTP method.
 
+5. **All text WebSocket frames rejected**: Authentication happens via the HTTP `Authorization` header during WebSocket upgrade, not via text messages. Once the WebSocket is established, ALL text frames return a `TextProtocolNotSupported` (14) binary error response. The binary protocol is required for all API messages because zero-copy routing depends on the 16-byte service GUID in the binary header. See `docs/WEBSOCKET-PROTOCOL.md` for protocol details.
+
+6. **RabbitMQ queue persistence and consumer lifecycle**: Per-session RabbitMQ queues are created with `x-expires` set to `ReconnectionWindowSeconds` (default 300s). On disconnect (both forced and normal), only the consumer is cancelled — the queue itself persists and buffers messages. For normal disconnects, this enables seamless message delivery on reconnect (new consumer attaches to same queue). For forced disconnects, the queue persists until RabbitMQ's `x-expires` auto-deletes it (5 min max). Application code only manages consumers, not queues — RabbitMQ handles queue lifecycle via native TTL mechanisms. If a Connect instance crashes, orphaned queues self-clean the same way.
+
+7. **ServerSalt shared requirement (enforced)**: All Connect instances MUST use the same `CONNECT_SERVER_SALT` value for distributed deployments. The constructor enforces this with a fail-fast check — startup aborts with `InvalidOperationException` if ServerSalt is null/empty. Different salts across instances would cause GUID validation failures and broken session shortcuts. All three GUID generation methods (`GenerateServiceGuid`, `GenerateClientGuid`, `GenerateSessionShortcutGuid`) also validate the salt parameter.
+
+8. **Non-deterministic instance ID**: `_instanceId` is generated as `Guid.NewGuid()` on each service start. This is intentional: it tracks the runtime process, not the physical machine. When a Connect instance restarts, the new process gets a new ID, correctly distinguishing it from the crashed instance. Old heartbeats expire via TTL (5 minutes), and Redis-persisted session state enables seamless takeover by the new instance.
+
+9. **Disconnect event published before account index removal**: In the finally block, `session.disconnected` is published before `RemoveSessionFromAccountAsync` is called. This means consumers receiving the event could theoretically still see the session in `GetAccountSessions`. In practice this is safe: no consumer of `session.disconnected` calls `GetAccountSessions`, and heartbeat-based liveness filtering in `GetSessionsForAccountAsync` filters out disconnected sessions.
+
+10. **Internal mode minimal initialization**: Internal mode connections skip service mapping, capability manifest, RabbitMQ subscription, session state persistence, heartbeat tracking, and reconnection windows. They receive only a minimal response (sessionId + peerGuid) and enter a simplified binary-only message loop (`HandleInternalModeMessageLoopAsync`). This is intentional design for server-to-server WebSocket communication using specialized authentication (ServiceToken or NetworkTrust).
+
+11. **Subsume-safe disconnect**: When a new connection replaces an existing one for the same session (subsume), the old connection's finally block uses `RemoveConnectionIfMatch` (WebSocket reference equality) to detect the subsume. If subsumed, the entire disconnect path is skipped: no `session.disconnected` event, no account index removal, no RabbitMQ unsubscription, no reconnection window. This prevents state churn across all consumers (Permission, GameSession, Actor, Matchmaking) that would otherwise rebuild on a false disconnect/reconnect cycle.
+
 ### Design Considerations (Requires Planning)
 
 1. **Single-instance limitation for P2P**: Peer-to-peer routing (`RouteToClientAsync`) only works when both clients are connected to the same Connect instance. The `_connectionManager.TryGetSessionIdByPeerGuid()` lookup is in-memory only. Distributed P2P requires cross-instance peer registry.
+<!-- AUDIT:NEEDS_DESIGN:2026-02-08:https://github.com/beyond-immersion/bannou-service/issues/346 -->
 
-2. **Session mappings dual storage**: Service mappings are stored both in-memory (`_sessionServiceMappings` ConcurrentDictionary) and in Redis (via `ISessionManager`). These can drift if Redis writes fail silently or if multiple instances serve the same session.
 
-3. **No backpressure on message queue**: The `MessageQueueSize` config exists but there is no explicit backpressure mechanism. If a client is slow to consume messages, the WebSocket send buffer grows unbounded.
+---
 
-4. **RabbitMQ subscription lifecycle**: Per-session RabbitMQ subscriptions are created on connect and should be cleaned up on disconnect. If the Connect instance crashes, orphaned queues remain in RabbitMQ until they TTL-expire.
+## Work Tracking
 
-5. **Account session index staleness**: The `account-sessions:{accountId}` HashSet is updated on connect/disconnect but uses the session TTL. If a session crashes without cleanup, the index contains stale session IDs until Redis TTL expires.
+This section tracks active development work on items from the quirks/bugs lists above. Items here are managed by the `/audit-plugin` workflow and should not be manually edited except to add new tracking markers.
 
-6. **ServerSalt shared requirement**: All Connect instances MUST use the same `CONNECT_SERVER_SALT` value. If different instances use different salts, session shortcuts and GUID validation will fail across instances. This is enforced by a fail-fast check in the constructor.
+### Pending Design Review
+- **Multi-instance broadcast** - [Issue #181](https://github.com/beyond-immersion/bannou-service/issues/181) - Requires design decisions on message deduplication, acknowledgment semantics, mode enforcement, and performance trade-offs (2026-01-31)
+- **Single-instance P2P limitation** - [Issue #346](https://github.com/beyond-immersion/bannou-service/issues/346) - Requires design decisions on cross-instance delivery mechanism, peer GUID stability, and Redis latency impact; no production consumers yet (2026-02-08)
 
-7. **Instance ID non-deterministic**: `_instanceId` is generated as `MachineName-{random8chars}`. This means the same physical machine generates different instance IDs on restart, which could affect heartbeat tracking in distributed scenarios.
+### Closed (Not Planned)
+- **Encrypted flag (0x02)** - [Issue #171](https://github.com/beyond-immersion/bannou-service/issues/171) - CLOSED: violates zero-copy routing; TLS handles transport; E2E encryption is client SDK concern (2026-02-08)
+- **Compressed flag (0x04)** - [Issue #172](https://github.com/beyond-immersion/bannou-service/issues/172) - CLOSED: violates zero-copy routing; WSS has permessage-deflate for transport compression (2026-02-08)
+- **Heartbeat sending** - [Issue #175](https://github.com/beyond-immersion/bannou-service/issues/175) - CLOSED: already handled by KeepAliveInterval (30s RFC 6455 pings) configured in Program.cs (2026-02-08)
+- **HighPriority flag (0x08)** - [Issue #178](https://github.com/beyond-immersion/bannou-service/issues/178) - CLOSED: dead code with no queue, no consumers, no use case; speculative flag (2026-02-08)
+- **Trace context propagation** - [Issue #184](https://github.com/beyond-immersion/bannou-service/issues/184) - CLOSED: SessionID already serves as correlation key; returned via CapabilityManifestEvent, propagated through mesh via X-Bannou-Session-Id header; no protocol change needed (2026-02-09)
 
-8. **No graceful shutdown**: When the application shuts down, WebSocket connections are abruptly terminated. There is no mechanism to send close frames or drain pending messages before exit (only `ConnectionShutdownTimeoutSeconds` for the WebSocketConnectionManager's internal cleanup).
+### Completed
 
-9. **Session subsumed skips account index removal**: Lines 866-870 - when a session is "subsumed" by a new connection (same session ID), the old connection's cleanup skips RemoveSessionFromAccountAsync. This is intentional (session is still active) but means account index removal only happens once per unique session lifecycle.
-
-10. **Disconnect event published before account index removal**: Lines 816-846 - the `session.disconnected` event is published before the session is removed from the account index. Race condition: consumers receiving the event might still see the session in GetAccountSessions.
-
-11. **RabbitMQ subscription retained during reconnection window**: Lines 871-889 - for non-forced disconnects, the RabbitMQ subscription is NOT immediately unsubscribed. Messages queue up during the reconnection window. Only forced disconnects unsubscribe immediately.
-
-12. **Internal mode skips capability initialization entirely**: Lines 603-652 - internal mode connections skip all service mapping, capability manifest, and RabbitMQ subscription setup. They only get peer routing capability.
-
-13. **Connection state created before auth validation**: Lines 590-591 - a new ConnectionState is allocated before checking connection limits. On high load, rejected connections still allocate and GC these objects.
+- **2026-02-17**: Issue [#426](https://github.com/beyond-immersion/bannou-service/issues/426) - Entity Session Registry: Redis-backed dual-index (entity→sessions, session→entities) mapping for client event push routing, with heartbeat-based stale session filtering and disconnect cleanup

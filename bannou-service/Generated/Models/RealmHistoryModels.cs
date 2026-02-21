@@ -215,7 +215,7 @@ public partial class RealmHistoricalParticipation
     public float Impact { get; set; } = 0.5F;
 
     /// <summary>
-    /// Event-specific details for behavior decisions
+    /// Client-provided event-specific details. No Bannou plugin reads specific keys from this field by convention.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("metadata")]
     public object? Metadata { get; set; } = default!;
@@ -394,7 +394,7 @@ public partial class RecordRealmParticipationRequest
     public float Impact { get; set; } = 0.5F;
 
     /// <summary>
-    /// Optional event-specific details
+    /// Client-provided event-specific details. No Bannou plugin reads specific keys from this field by convention.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("metadata")]
     public object? Metadata { get; set; } = default!;
@@ -766,6 +766,139 @@ public partial class RealmHistorySummaryResponse
     [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
     public System.Collections.Generic.ICollection<string> MajorHistoricalEvents { get; set; } = new System.Collections.ObjectModel.Collection<string>();
+
+}
+
+/// <summary>
+/// Request to get realm history data for compression
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class GetCompressDataRequest
+{
+
+    /// <summary>
+    /// ID of the realm to get compress data for
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("realmId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid RealmId { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Compressed realm lore and history for archive storage and storyline SDK consumption.
+/// <br/>Inherits base archive properties from ResourceArchiveBase.
+/// <br/>The realmId field equals resourceId for convenience.
+/// <br/>
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class RealmHistoryArchive : ResourceArchiveBase
+{
+
+    /// <summary>
+    /// Realm this data belongs to (equals resourceId)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("realmId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid RealmId { get; set; } = default!;
+
+    /// <summary>
+    /// Whether lore elements exist
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("hasLore")]
+    public bool HasLore { get; set; } = default!;
+
+    /// <summary>
+    /// Lore elements (empty if hasLore=false)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("loreElements")]
+    public System.Collections.Generic.ICollection<RealmLoreResponse> LoreElements { get; set; } = default!;
+
+    /// <summary>
+    /// Whether event participations exist
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("hasParticipations")]
+    public bool HasParticipations { get; set; } = default!;
+
+    /// <summary>
+    /// Event participations (empty if hasParticipations=false)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("participations")]
+    public System.Collections.Generic.ICollection<RealmHistoricalParticipation> Participations { get; set; } = default!;
+
+    /// <summary>
+    /// Text summaries for reference
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("summaries")]
+    public RealmHistorySummaryResponse? Summaries { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Request to restore realm history data from archive
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class RestoreFromArchiveRequest
+{
+
+    /// <summary>
+    /// ID of the realm to restore data for
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("realmId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid RealmId { get; set; } = default!;
+
+    /// <summary>
+    /// Base64-encoded gzipped RealmHistoryArchive JSON
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("data")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string Data { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Result of restoration from archive
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class RestoreFromArchiveResponse
+{
+
+    /// <summary>
+    /// Realm data was restored for
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("realmId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid RealmId { get; set; } = default!;
+
+    /// <summary>
+    /// Number of lore elements restored
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("loreRestored")]
+    public int LoreRestored { get; set; } = default!;
+
+    /// <summary>
+    /// Number of participation records restored
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("participationsRestored")]
+    public int ParticipationsRestored { get; set; } = default!;
+
+    /// <summary>
+    /// Whether restoration completed successfully
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("success")]
+    public bool Success { get; set; } = default!;
+
+    /// <summary>
+    /// Error details if restoration failed
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("errorMessage")]
+    public string? ErrorMessage { get; set; } = default!;
 
 }
 

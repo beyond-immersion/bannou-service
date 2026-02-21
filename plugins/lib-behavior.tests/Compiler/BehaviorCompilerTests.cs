@@ -3,9 +3,11 @@
 // Tests for the ABML to bytecode compiler.
 // =============================================================================
 
-using BeyondImmersion.Bannou.Behavior.Compiler;
+using BeyondImmersion.Bannou.BehaviorCompiler.Compiler;
+using BeyondImmersion.Bannou.BehaviorCompiler.Runtime;
 using BeyondImmersion.BannouService.Behavior.Runtime;
 using Xunit;
+using AbmlCompiler = BeyondImmersion.Bannou.BehaviorCompiler.Compiler.BehaviorCompiler;
 
 namespace BeyondImmersion.Bannou.Behavior.Tests.Compiler;
 
@@ -14,7 +16,7 @@ namespace BeyondImmersion.Bannou.Behavior.Tests.Compiler;
 /// </summary>
 public class BehaviorCompilerTests
 {
-    private readonly BehaviorCompiler _compiler = new();
+    private readonly AbmlCompiler _compiler = new();
 
     // =========================================================================
     // BASIC COMPILATION TESTS
@@ -504,5 +506,57 @@ public class BehaviorCompilerTests
         // Re-requesting the same name returns the existing index without consuming a slot
         var index = context.GetOrAllocateLocal("existing");
         Assert.Equal((byte)0, index);
+    }
+
+    // =========================================================================
+    // WATCH/UNWATCH ACTION TESTS
+    // =========================================================================
+
+    [Fact]
+    public void CompileYaml_WatchAction_ParsesSuccessfully()
+    {
+        var yaml = TestFixtures.Load("compiler_watch");
+
+        var result = _compiler.CompileYaml(yaml);
+
+        // Output diagnostic info if test fails
+        if (!result.Success)
+        {
+            var errorMessages = string.Join("; ", result.Errors.Select(e => e.Message));
+            Assert.Fail($"Compilation failed with errors: {errorMessages}");
+        }
+        Assert.NotNull(result.Bytecode);
+    }
+
+    [Fact]
+    public void CompileYaml_UnwatchAction_ParsesSuccessfully()
+    {
+        var yaml = TestFixtures.Load("compiler_unwatch");
+
+        var result = _compiler.CompileYaml(yaml);
+
+        // Output diagnostic info if test fails
+        if (!result.Success)
+        {
+            var errorMessages = string.Join("; ", result.Errors.Select(e => e.Message));
+            Assert.Fail($"Compilation failed with errors: {errorMessages}");
+        }
+        Assert.NotNull(result.Bytecode);
+    }
+
+    [Fact]
+    public void CompileYaml_WatchWithOnChange_ParsesSuccessfully()
+    {
+        var yaml = TestFixtures.Load("compiler_watch_on_change");
+
+        var result = _compiler.CompileYaml(yaml);
+
+        // Output diagnostic info if test fails
+        if (!result.Success)
+        {
+            var errorMessages = string.Join("; ", result.Errors.Select(e => e.Message));
+            Assert.Fail($"Compilation failed with errors: {errorMessages}");
+        }
+        Assert.NotNull(result.Bytecode);
     }
 }

@@ -1,6 +1,7 @@
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.Logging;
+using System.Collections.Concurrent;
 
 namespace BeyondImmersion.BannouService.Mesh;
 
@@ -11,6 +12,13 @@ namespace BeyondImmersion.BannouService.Mesh;
 public partial class MeshService
 {
     /// <summary>
+    /// Cache for degradation event deduplication.
+    /// Key = "{instanceId}:{reason}", Value = last publish time.
+    /// Static because MeshService is scoped but we want dedup across requests.
+    /// Follows lib-state deduplication pattern per IMPLEMENTATION TENETS.
+    /// </summary>
+    private static readonly ConcurrentDictionary<string, DateTimeOffset> _degradationEventDeduplicationCache = new();
+    /// <summary>
     /// Register event consumers for mesh service.
     /// Called from constructor after all dependencies are initialized.
     /// </summary>
@@ -18,7 +26,7 @@ public partial class MeshService
     protected void RegisterEventConsumers(IEventConsumer eventConsumer)
     {
         eventConsumer.RegisterHandler<IMeshService, ServiceHeartbeatEvent>(
-            "bannou.service-heartbeats",
+            "bannou.service-heartbeat",
             async (svc, evt) => await ((MeshService)svc).HandleServiceHeartbeatAsync(evt));
 
         if (_configuration.EnableServiceMappingSync)
@@ -49,14 +57,31 @@ public partial class MeshService
             if (existingEndpoint != null)
             {
                 // Update heartbeat for existing endpoint
-                var status = MapHeartbeatStatus(evt.Status);
+                // Preserve existing issues - event-based heartbeats don't report issues
+                var newStatus = MapHeartbeatStatus(evt.Status);
+                var previousStatus = existingEndpoint.Status;
+
                 await _stateManager.UpdateHeartbeatAsync(
                     existingEndpoint.InstanceId,
                     evt.AppId,
-                    status,
+                    newStatus,
                     evt.Capacity?.CpuUsage ?? 0,
                     evt.Capacity?.CurrentConnections ?? 0,
+                    existingEndpoint.Issues,
                     _configuration.EndpointTtlSeconds);
+
+                // Detect and publish degradation transition
+                if (newStatus == EndpointStatus.Degraded && previousStatus != EndpointStatus.Degraded)
+                {
+                    var reason = DetermineDegradationReason(evt, existingEndpoint);
+                    await TryPublishDegradationEventAsync(
+                        existingEndpoint,
+                        previousStatus,
+                        newStatus,
+                        reason,
+                        loadPercent: evt.Capacity?.CpuUsage,
+                        lastHeartbeatAt: existingEndpoint.LastSeen);
+                }
 
                 _logger.LogDebug(
                     "Updated heartbeat for existing endpoint {InstanceId}",
@@ -94,7 +119,7 @@ public partial class MeshService
             _logger.LogError(ex, "Error processing service heartbeat from {AppId}", evt.AppId);
             await _messageBus.TryPublishErrorAsync(
                 "mesh", "HandleServiceHeartbeat", "unexpected_exception", ex.Message,
-                dependency: "state", endpoint: "event:bannou.service-heartbeats",
+                dependency: "state", endpoint: "event:bannou.service-heartbeat",
                 details: new { AppId = evt.AppId }, stack: ex.StackTrace, cancellationToken: CancellationToken.None);
         }
     }
@@ -189,5 +214,94 @@ public partial class MeshService
             ServiceHeartbeatEventStatus.Shutting_down => EndpointStatus.ShuttingDown,
             _ => EndpointStatus.Healthy
         };
+    }
+
+    /// <summary>
+    /// Determines the reason for degradation based on heartbeat data.
+    /// </summary>
+    private MeshEndpointDegradedEventReason DetermineDegradationReason(
+        ServiceHeartbeatEvent evt,
+        MeshEndpoint existingEndpoint)
+    {
+        // Check for high load first (most specific)
+        if (evt.Capacity?.CpuUsage >= _configuration.LoadThresholdPercent)
+        {
+            return MeshEndpointDegradedEventReason.HighLoad;
+        }
+
+        // Check for high connection count
+        if (evt.Capacity?.CurrentConnections >= existingEndpoint.MaxConnections)
+        {
+            return MeshEndpointDegradedEventReason.HighConnectionCount;
+        }
+
+        // Default to missed heartbeat (status came from heartbeat status field)
+        return MeshEndpointDegradedEventReason.MissedHeartbeat;
+    }
+
+    /// <summary>
+    /// Publishes a degradation event if transitioning TO Degraded from non-Degraded status.
+    /// Follows lib-state deduplication pattern per IMPLEMENTATION TENETS.
+    /// </summary>
+    private async Task TryPublishDegradationEventAsync(
+        MeshEndpoint endpoint,
+        EndpointStatus previousStatus,
+        EndpointStatus newStatus,
+        MeshEndpointDegradedEventReason reason,
+        float? loadPercent,
+        DateTimeOffset? lastHeartbeatAt)
+    {
+        // Only publish on transition TO Degraded from non-Degraded
+        if (newStatus != EndpointStatus.Degraded || previousStatus == EndpointStatus.Degraded)
+        {
+            return;
+        }
+
+        var dedupKey = $"{endpoint.InstanceId}:{reason}";
+        var windowSeconds = _configuration.DegradationEventDeduplicationWindowSeconds;
+        var now = DateTimeOffset.UtcNow;
+
+        // Check dedup cache - skip if we published this event recently
+        if (_degradationEventDeduplicationCache.TryGetValue(dedupKey, out var lastPublished))
+        {
+            if (now - lastPublished < TimeSpan.FromSeconds(windowSeconds))
+            {
+                _logger.LogDebug(
+                    "Skipping duplicate degradation event for endpoint {InstanceId} reason {Reason} (last published {Seconds:F1}s ago)",
+                    endpoint.InstanceId, reason, (now - lastPublished).TotalSeconds);
+                return;
+            }
+        }
+
+        // Update cache before publishing to prevent races
+        _degradationEventDeduplicationCache[dedupKey] = now;
+
+        try
+        {
+            var evt = new MeshEndpointDegradedEvent
+            {
+                EventName = "mesh.endpoint_degraded",
+                EventId = Guid.NewGuid(),
+                Timestamp = now,
+                InstanceId = endpoint.InstanceId,
+                AppId = endpoint.AppId,
+                Reason = reason,
+                LoadPercent = loadPercent,
+                LastHeartbeatAt = lastHeartbeatAt
+            };
+
+            await _messageBus.TryPublishAsync(
+                "mesh.endpoint.degraded",
+                evt,
+                cancellationToken: CancellationToken.None);
+
+            _logger.LogInformation(
+                "Published degradation event for endpoint {InstanceId} reason {Reason}",
+                endpoint.InstanceId, reason);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Failed to publish degradation event for endpoint {InstanceId}", endpoint.InstanceId);
+        }
     }
 }

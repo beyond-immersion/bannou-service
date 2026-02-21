@@ -1,10 +1,12 @@
 namespace BeyondImmersion.BannouService.Tools.Inspect.Services;
 
 using System.Reflection;
+using SysConstructorInfo = System.Reflection.ConstructorInfo;
 using SysMethodInfo = System.Reflection.MethodInfo;
 using SysPropertyInfo = System.Reflection.PropertyInfo;
 using SysEventInfo = System.Reflection.EventInfo;
 using SysParameterInfo = System.Reflection.ParameterInfo;
+using ModelConstructorInfo = BeyondImmersion.BannouService.Tools.Inspect.Models.ConstructorInfo;
 using ModelMethodInfo = BeyondImmersion.BannouService.Tools.Inspect.Models.MethodInfo;
 using ModelPropertyInfo = BeyondImmersion.BannouService.Tools.Inspect.Models.PropertyInfo;
 using ModelEventInfo = BeyondImmersion.BannouService.Tools.Inspect.Models.EventInfo;
@@ -88,12 +90,29 @@ public sealed class TypeInspector : IDisposable
             Interfaces = type.GetInterfaces().Select(i => i.FullName ?? i.Name).ToList(),
             Summary = typeComments?.Summary,
             Remarks = typeComments?.Remarks,
+            Constructors = GetPublicConstructors(type),
             Methods = GetPublicMethods(type),
             Properties = GetPublicProperties(type),
             Events = GetPublicEvents(type),
             GenericParameters = type.GetGenericArguments().Select(t => t.Name).ToList(),
             AssemblyName = _assembly.GetName().Name ?? "Unknown"
         };
+    }
+
+    /// <summary>
+    /// Inspects constructors of a type.
+    /// </summary>
+    /// <param name="typeName">The full or simple type name.</param>
+    /// <returns>Constructor information, or empty if type not found.</returns>
+    public IReadOnlyList<ModelConstructorInfo> InspectConstructors(string typeName)
+    {
+        var type = FindType(typeName);
+        if (type is null)
+        {
+            return [];
+        }
+
+        return GetPublicConstructors(type);
     }
 
     /// <summary>
@@ -141,6 +160,27 @@ public sealed class TypeInspector : IDisposable
         if (type.IsValueType) return "struct";
         if (type.BaseType?.FullName == "System.MulticastDelegate") return "delegate";
         return type.IsAbstract && type.IsSealed ? "static class" : "class";
+    }
+
+    private IReadOnlyList<ModelConstructorInfo> GetPublicConstructors(Type type)
+    {
+        return type.GetConstructors(BindingFlags.Public | BindingFlags.Instance | BindingFlags.Static | BindingFlags.DeclaredOnly)
+            .Select(c => CreateConstructorInfo(c, type))
+            .ToList();
+    }
+
+    private ModelConstructorInfo CreateConstructorInfo(SysConstructorInfo ctor, Type declaringType)
+    {
+        var methodComments = GetMethodComments(ctor);
+
+        return new ModelConstructorInfo
+        {
+            TypeName = declaringType.Name.Split('`')[0],
+            Parameters = ctor.GetParameters().Select(p => CreateParameterInfo(p, methodComments)).ToList(),
+            Summary = methodComments?.Summary,
+            Exceptions = GetExceptionsFromComments(methodComments),
+            IsStatic = ctor.IsStatic
+        };
     }
 
     private IReadOnlyList<ModelMethodInfo> GetPublicMethods(Type type)
@@ -270,7 +310,7 @@ public sealed class TypeInspector : IDisposable
         }
     }
 
-    private MethodComments? GetMethodComments(SysMethodInfo method)
+    private MethodComments? GetMethodComments(MethodBase method)
     {
         if (_docReader is null) return null;
         try

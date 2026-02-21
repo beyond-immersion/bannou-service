@@ -133,15 +133,19 @@ public class EscrowServiceTests : ServiceTestBase<EscrowServiceConfiguration>
         Assert.Equal("P7D", config.DefaultTimeout);
         Assert.Equal("P30D", config.MaxTimeout);
         Assert.Equal("PT1H", config.ExpirationGracePeriod);
-        Assert.Equal("hmac_sha256", config.TokenAlgorithm);
         Assert.Equal(32, config.TokenLength);
-        Assert.Null(config.TokenSecret);
         Assert.Equal("PT1M", config.ExpirationCheckInterval);
         Assert.Equal(100, config.ExpirationBatchSize);
         Assert.Equal("PT5M", config.ValidationCheckInterval);
         Assert.Equal(10, config.MaxParties);
         Assert.Equal(50, config.MaxAssetsPerDeposit);
         Assert.Equal(100, config.MaxPendingPerParty);
+        Assert.Equal(ReleaseMode.ServiceOnly, config.DefaultReleaseMode);
+        Assert.Equal(RefundMode.Immediate, config.DefaultRefundMode);
+        Assert.Equal(300, config.ConfirmationTimeoutSeconds);
+        Assert.Equal("auto_confirm", config.ConfirmationTimeoutBehavior);
+        Assert.Equal(30, config.ConfirmationTimeoutCheckIntervalSeconds);
+        Assert.Equal(100, config.ConfirmationTimeoutBatchSize);
     }
 
     #endregion

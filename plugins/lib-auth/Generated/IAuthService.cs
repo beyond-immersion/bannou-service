@@ -32,7 +32,7 @@ public partial interface IAuthService : IBannouService
         /// <summary>
         /// Login operation
         /// </summary>
-        Task<(StatusCodes, AuthResponse?)> LoginAsync(LoginRequest body, CancellationToken cancellationToken = default(CancellationToken));
+        Task<(StatusCodes, LoginResponse?)> LoginAsync(LoginRequest body, CancellationToken cancellationToken = default(CancellationToken));
 
         /// <summary>
         /// Register operation
@@ -75,6 +75,11 @@ public partial interface IAuthService : IBannouService
         Task<StatusCodes> TerminateSessionAsync(string jwt, TerminateSessionRequest body, CancellationToken cancellationToken = default(CancellationToken));
 
         /// <summary>
+        /// GetRevocationList operation
+        /// </summary>
+        Task<(StatusCodes, RevocationListResponse?)> GetRevocationListAsync(GetRevocationListRequest body, CancellationToken cancellationToken = default(CancellationToken));
+
+        /// <summary>
         /// RequestPasswordReset operation
         /// </summary>
         Task<StatusCodes> RequestPasswordResetAsync(PasswordResetRequest body, CancellationToken cancellationToken = default(CancellationToken));
@@ -88,5 +93,30 @@ public partial interface IAuthService : IBannouService
         /// ListProviders operation
         /// </summary>
         Task<(StatusCodes, ProvidersResponse?)> ListProvidersAsync(CancellationToken cancellationToken = default(CancellationToken));
+
+        /// <summary>
+        /// SetupMfa operation
+        /// </summary>
+        Task<(StatusCodes, MfaSetupResponse?)> SetupMfaAsync(string jwt, CancellationToken cancellationToken = default(CancellationToken));
+
+        /// <summary>
+        /// EnableMfa operation
+        /// </summary>
+        Task<StatusCodes> EnableMfaAsync(string jwt, MfaEnableRequest body, CancellationToken cancellationToken = default(CancellationToken));
+
+        /// <summary>
+        /// DisableMfa operation
+        /// </summary>
+        Task<StatusCodes> DisableMfaAsync(string jwt, MfaDisableRequest body, CancellationToken cancellationToken = default(CancellationToken));
+
+        /// <summary>
+        /// AdminDisableMfa operation
+        /// </summary>
+        Task<StatusCodes> AdminDisableMfaAsync(AdminDisableMfaRequest body, CancellationToken cancellationToken = default(CancellationToken));
+
+        /// <summary>
+        /// VerifyMfa operation
+        /// </summary>
+        Task<(StatusCodes, AuthResponse?)> VerifyMfaAsync(MfaVerifyRequest body, CancellationToken cancellationToken = default(CancellationToken));
 
 }

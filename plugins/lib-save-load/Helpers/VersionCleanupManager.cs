@@ -1,7 +1,11 @@
 using BeyondImmersion.BannouService.Asset;
 using BeyondImmersion.BannouService.Events;
+using BeyondImmersion.BannouService.SaveLoad.Compression;
+using BeyondImmersion.BannouService.SaveLoad.Hashing;
 using BeyondImmersion.BannouService.SaveLoad.Models;
+using BeyondImmersion.BannouService.SaveLoad.Processing;
 using BeyondImmersion.BannouService.Services;
+using BeyondImmersion.BannouService.State;
 using Microsoft.Extensions.Logging;
 
 namespace BeyondImmersion.BannouService.SaveLoad.Helpers;
@@ -16,6 +20,7 @@ public sealed class VersionCleanupManager : IVersionCleanupManager
     private readonly SaveLoadServiceConfiguration _configuration;
     private readonly IAssetClient _assetClient;
     private readonly IMessageBus _messageBus;
+    private readonly IVersionDataLoader _versionDataLoader;
     private readonly ILogger<VersionCleanupManager> _logger;
 
     /// <summary>
@@ -26,12 +31,14 @@ public sealed class VersionCleanupManager : IVersionCleanupManager
         SaveLoadServiceConfiguration configuration,
         IAssetClient assetClient,
         IMessageBus messageBus,
+        IVersionDataLoader versionDataLoader,
         ILogger<VersionCleanupManager> logger)
     {
         _stateStoreFactory = stateStoreFactory;
         _configuration = configuration;
         _assetClient = assetClient;
         _messageBus = messageBus;
+        _versionDataLoader = versionDataLoader;
         _logger = logger;
     }
 
@@ -189,8 +196,197 @@ public sealed class VersionCleanupManager : IVersionCleanupManager
             BytesFreed = bytesFreed
         };
         await _messageBus.TryPublishAsync(
-            "save-load.cleanup.completed",
+            "save.cleanup-completed",
             cleanupEvent,
             cancellationToken: cancellationToken);
+    }
+
+    /// <inheritdoc />
+    public async Task<int> CollapseExcessiveDeltaChainsAsync(
+        SaveSlotMetadata slot,
+        IReadOnlyList<SaveVersionManifest> deltaVersions,
+        int maxChainLength,
+        CancellationToken cancellationToken)
+    {
+        if (deltaVersions.Count == 0)
+        {
+            return 0;
+        }
+
+        var versionStore = _stateStoreFactory.GetStore<SaveVersionManifest>(StateStoreDefinitions.SaveLoadVersions);
+        var hotCacheStore = _stateStoreFactory.GetStore<HotSaveEntry>(StateStoreDefinitions.SaveLoadCache);
+        var pendingStore = _stateStoreFactory.GetCacheableStore<PendingUploadEntry>(StateStoreDefinitions.SaveLoadPending);
+        var slotIdString = slot.SlotId.ToString();
+
+        var collapsedCount = 0;
+
+        // Find delta versions that are at the end of chains exceeding maxChainLength
+        foreach (var deltaVersion in deltaVersions)
+        {
+            try
+            {
+                // Calculate chain length by walking back to base
+                var chainLength = await CalculateChainLengthAsync(slotIdString, deltaVersion, versionStore, cancellationToken);
+
+                if (chainLength <= maxChainLength)
+                {
+                    continue;
+                }
+
+                _logger.LogInformation(
+                    "Collapsing delta chain for slot {SlotId} version {Version} (chain length {Length} exceeds max {Max})",
+                    slot.SlotId, deltaVersion.VersionNumber, chainLength, maxChainLength);
+
+                // Reconstruct full data from delta chain
+                var reconstructedData = await _versionDataLoader.ReconstructFromDeltaChainAsync(
+                    slotIdString, deltaVersion, versionStore, cancellationToken);
+
+                if (reconstructedData == null)
+                {
+                    _logger.LogWarning(
+                        "Failed to reconstruct delta chain for slot {SlotId} version {Version} during auto-collapse",
+                        slot.SlotId, deltaVersion.VersionNumber);
+                    continue;
+                }
+
+                // Get the version with ETag for optimistic concurrency
+                var versionKey = SaveVersionManifest.GetStateKey(slotIdString, deltaVersion.VersionNumber);
+                var (currentVersion, versionEtag) = await versionStore.GetWithETagAsync(versionKey, cancellationToken);
+
+                if (currentVersion == null || !currentVersion.IsDelta)
+                {
+                    // Version was already collapsed or deleted by another process
+                    continue;
+                }
+
+                // Compress the reconstructed data
+                var compressionType = _configuration.DefaultCompressionType;
+                var compressionLevel = compressionType == CompressionType.BROTLI
+                    ? _configuration.BrotliCompressionLevel
+                    : compressionType == CompressionType.GZIP
+                        ? _configuration.GzipCompressionLevel
+                        : (int?)null;
+                var compressedData = CompressionHelper.Compress(reconstructedData, compressionType, compressionLevel);
+
+                // Update the version to be a full snapshot
+                var contentHash = ContentHasher.ComputeHash(reconstructedData);
+                currentVersion.IsDelta = false;
+                currentVersion.BaseVersionNumber = null;
+                currentVersion.DeltaAlgorithm = null;
+                currentVersion.SizeBytes = reconstructedData.Length;
+                currentVersion.CompressedSizeBytes = compressedData.Length;
+                currentVersion.CompressionType = compressionType;
+                currentVersion.ContentHash = contentHash;
+                currentVersion.UploadStatus = _configuration.AsyncUploadEnabled ? UploadStatus.PENDING : UploadStatus.COMPLETE;
+
+                // Save updated manifest with optimistic concurrency
+                var newEtag = await versionStore.TrySaveAsync(versionKey, currentVersion, versionEtag ?? string.Empty, cancellationToken);
+                if (newEtag == null)
+                {
+                    _logger.LogDebug(
+                        "Concurrent modification during auto-collapse for slot {SlotId} version {Version}",
+                        slot.SlotId, deltaVersion.VersionNumber);
+                    continue;
+                }
+
+                // Store in hot cache
+                var hotEntry = new HotSaveEntry
+                {
+                    SlotId = slot.SlotId,
+                    VersionNumber = currentVersion.VersionNumber,
+                    Data = Convert.ToBase64String(compressedData),
+                    ContentHash = contentHash,
+                    IsCompressed = compressionType != CompressionType.NONE,
+                    CompressionType = compressionType,
+                    SizeBytes = reconstructedData.Length,
+                    CachedAt = DateTimeOffset.UtcNow,
+                    IsDelta = false
+                };
+                var hotCacheTtl = (int)TimeSpan.FromMinutes(_configuration.HotCacheTtlMinutes).TotalSeconds;
+                await hotCacheStore.SaveAsync(
+                    hotEntry.GetStateKey(),
+                    hotEntry,
+                    new StateOptions { Ttl = hotCacheTtl },
+                    cancellationToken);
+
+                // Queue for async upload if enabled
+                if (_configuration.AsyncUploadEnabled)
+                {
+                    var uploadId = Guid.NewGuid();
+                    var pendingEntry = new PendingUploadEntry
+                    {
+                        UploadId = uploadId,
+                        SlotId = slot.SlotId,
+                        VersionNumber = currentVersion.VersionNumber,
+                        GameId = slot.GameId,
+                        OwnerId = slot.OwnerId,
+                        OwnerType = slot.OwnerType,
+                        Data = Convert.ToBase64String(compressedData),
+                        ContentHash = contentHash,
+                        CompressionType = compressionType,
+                        SizeBytes = reconstructedData.Length,
+                        CompressedSizeBytes = compressedData.Length,
+                        AttemptCount = 0,
+                        QueuedAt = DateTimeOffset.UtcNow
+                    };
+                    var pendingKey = PendingUploadEntry.GetStateKey(uploadId.ToString());
+                    var pendingTtl = (int)TimeSpan.FromMinutes(_configuration.PendingUploadTtlMinutes).TotalSeconds;
+                    await pendingStore.SaveAsync(pendingKey, pendingEntry, new StateOptions { Ttl = pendingTtl }, cancellationToken);
+
+                    // Add to tracking set for Redis-based queue processing
+                    await pendingStore.AddToSetAsync(SaveUploadWorker.PendingUploadIdsSetKey, uploadId.ToString(), cancellationToken: cancellationToken);
+                }
+
+                collapsedCount++;
+                _logger.LogDebug(
+                    "Successfully collapsed delta chain for slot {SlotId} version {Version}",
+                    slot.SlotId, deltaVersion.VersionNumber);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(
+                    ex,
+                    "Error during auto-collapse for slot {SlotId} version {Version}",
+                    slot.SlotId, deltaVersion.VersionNumber);
+                // Continue with next delta version
+            }
+        }
+
+        if (collapsedCount > 0)
+        {
+            _logger.LogInformation(
+                "Auto-collapse completed for slot {SlotId}: {Count} delta chains collapsed",
+                slot.SlotId, collapsedCount);
+        }
+
+        return collapsedCount;
+    }
+
+    /// <summary>
+    /// Calculates the length of a delta chain by walking back to the base snapshot.
+    /// </summary>
+    private async Task<int> CalculateChainLengthAsync(
+        string slotId,
+        SaveVersionManifest deltaVersion,
+        IStateStore<SaveVersionManifest> versionStore,
+        CancellationToken cancellationToken)
+    {
+        var chainLength = 0;
+        var current = deltaVersion;
+
+        while (current.IsDelta && current.BaseVersionNumber.HasValue)
+        {
+            chainLength++;
+            var baseKey = SaveVersionManifest.GetStateKey(slotId, current.BaseVersionNumber.Value);
+            current = await versionStore.GetAsync(baseKey, cancellationToken);
+
+            if (current == null)
+            {
+                // Broken chain - return current length
+                break;
+            }
+        }
+
+        return chainLength;
     }
 }

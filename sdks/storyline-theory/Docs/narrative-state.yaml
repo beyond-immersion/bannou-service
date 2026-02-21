@@ -1,0 +1,1029 @@
+# Narrative State Schema
+# Based on Story Grid's Life Value Spectrums (Four Core Framework)
+#
+# Sources (in order of authority):
+#   - docs/research/STORY-GRID-PRIMARY-SOURCE.md (comprehensive extraction, 2026-02-04)
+#   - Shawn Coyne, "The Story Grid: What Good Editors Know" (Story Grid Publishing, 2015)
+#   - docs/research/FOUR-CORE-FRAMEWORK.md (technical summary - contains some errors, see PRIMARY-SOURCE)
+#   - docs/research/STORY-GRID-GENRES.md (genre specifications)
+#
+# Corrections applied (2026-02-04) per PRIMARY-SOURCE:
+#   - life_death core_need: "Survival" → "Safety" (all three genres share Safety)
+#   - Added genre_overrides: Horror="Fear", Thriller="Anxiety/Dread"
+#   - Added four-stage spectrum model (Positive → Contrary → Negative → Negation)
+#   - love_hate: Added Indifference as separate stage between Desire and Hate
+#   - Performance genre remapped from respect_shame to success_failure
+#   - wisdom_ignorance retained for Worldview (overlaps with "meaning/meaninglessness")
+#
+# NOT based on STORYLINE_COMPOSER.md's 6-dimension model, which was derived
+# by analogy from music-storyteller SDK without proper citation. Musical
+# perception dimensions (brightness, warmth, energy) do not apply to
+# literary narrative structure.
+
+version: "1.2"  # 2026-02-04: All corrections complete per primary source + decisions
+source: "Shawn Coyne, Story Grid (2015-2020) via docs/research/STORY-GRID-PRIMARY-SOURCE.md"
+
+# =============================================================================
+# CORE CONCEPT
+# =============================================================================
+
+concept:
+  description: |
+    Every story genre is defined by movement along a Life Value spectrum.
+    The spectrum has FOUR points (per primary source - Story Grid):
+      - Positive pole: The ideal state (life, love, justice, etc.)
+      - Contrary: A less-than-ideal but not terrible state (unconsciousness, unfairness, desire)
+      - Negative pole: The feared state (death, hate, injustice, etc.)
+      - Negation of negation: A fate WORSE than the negative pole
+
+    The four-stage model enables more nuanced storytelling:
+      - Positive (1.0) → Contrary (0.66) → Negative (0.33) → Negation (-0.5)
+      - Most scenes move between adjacent stages
+      - Jumping stages creates dramatic impact (positive → negative = shocking reversal)
+
+    The negation of negation is critical for tragedy and complex stories.
+    It represents not just failure, but failure disguised as success -
+    the most insidious form of the negative value.
+
+  grounding: |
+    Based on Maslow's hierarchy of needs. Each spectrum corresponds to a
+    fundamental human need, which is why stories resonate universally.
+    When we watch a character's position on a spectrum change, we feel
+    the corresponding emotional response because we recognize the need.
+
+  usage: |
+    - Each story genre has a PRIMARY spectrum (the main stakes)
+    - ANY spectrum can be secondary - determined by genre layering, not genre-specific rules
+    - Stories layer genres: Action/Love = life_death primary + love_hate secondary
+    - Reagan's emotional arcs describe the SHAPE of movement on the primary spectrum
+    - GOAP actions shift position on one or more spectrums
+    - See story_combinations section for common pairings with real media examples
+
+# =============================================================================
+# THE TEN LIFE VALUE SPECTRUMS
+# =============================================================================
+
+spectrums:
+  # ---------------------------------------------------------------------------
+  # SURVIVAL DOMAIN (Maslow Level 1: Physiological)
+  # ---------------------------------------------------------------------------
+
+  life_death:
+    id: 1
+    code: "LIFE_DEATH"
+    name: "Life vs Death"
+    domain: "survival"
+    maslow_level: 1
+
+    poles:
+      positive:
+        value: 1.0
+        label: "Life"
+        description: "Physical existence preserved, thriving"
+      contrary:
+        value: 0.66
+        label: "Unconsciousness"
+        description: "Life threatened but not ended - knocked out, near-death, coma"
+        # Per primary source: "A less-than-ideal state (but not terrible)"
+      negative:
+        value: 0.0
+        label: "Death"
+        description: "Physical existence ended or immediately threatened"
+      negation_of_negation:
+        value: -1.0  # Below zero indicates worse-than-death
+        label: "Damnation"
+        description: "A fate worse than death - eternal suffering, undeath, corruption"
+        examples:
+          - "Becoming the monster you fought"
+          - "Eternal imprisonment without death's release"
+          - "Living death (zombie, vampire against will)"
+
+    core_need: "Safety"  # CORRECTED per primary source - all life_death genres share Safety need
+    core_emotion: "Excitement"  # Default; Horror and Thriller override this
+
+    genres:
+      primary: ["action", "thriller", "horror"]
+
+    question: "Will the protagonist survive?"
+
+  # ---------------------------------------------------------------------------
+  # SAFETY DOMAIN (Maslow Level 2: Safety/Security)
+  # ---------------------------------------------------------------------------
+
+  honor_dishonor:
+    id: 2
+    code: "HONOR_DISHONOR"
+    name: "Honor vs Dishonor"
+    domain: "safety"
+    maslow_level: 2
+
+    poles:
+      positive:
+        value: 1.0
+        label: "Honor with Victory"
+        description: "Integrity maintained while achieving collective goal"
+      contrary:
+        value: 0.66
+        label: "Honor without Victory"
+        description: "Integrity maintained but mission failed; noble defeat"
+        # Inferred: the 'less than ideal' state is keeping honor but losing the battle
+      negative:
+        value: 0.0
+        label: "Dishonor"
+        description: "Integrity compromised, shame before the group"
+      negation_of_negation:
+        value: -1.0
+        label: "Victory with Dishonor Masquerading as Honor"
+        description: "Winning through dishonorable means while being celebrated as honorable"
+        examples:
+          - "War hero whose victory came from atrocities covered up"
+          - "Leader praised while secretly corrupt"
+          - "Glory built on others' unacknowledged sacrifice"
+
+    core_need: "Safety (collective)"
+    core_emotion: "Intrigue"
+
+    genres:
+      primary: ["war"]
+
+    question: "Will the protagonist maintain integrity while serving the group?"
+
+  justice_injustice:
+    id: 3
+    code: "JUSTICE_INJUSTICE"
+    name: "Justice vs Injustice"
+    domain: "safety"
+    maslow_level: 2
+
+    poles:
+      positive:
+        value: 1.0
+        label: "Justice"
+        description: "Wrongdoers held accountable, victims vindicated"
+      contrary:
+        value: 0.66
+        label: "Unfairness"
+        description: "Minor wrongs unpunished, technicalities exploited - not ideal but tolerable"
+        # Per primary source table (line 249)
+      negative:
+        value: 0.0
+        label: "Injustice"
+        description: "Wrongdoers escape accountability, victims unvindicated"
+      negation_of_negation:
+        value: -1.0
+        label: "Tyranny"
+        description: "The system of justice itself becomes the instrument of oppression"
+        examples:
+          - "Courts that punish the innocent and protect the guilty"
+          - "Laws designed to perpetuate injustice"
+          - "Justice system captured by criminals"
+
+    core_need: "Safety (societal)"
+    core_emotion: "Intrigue"
+
+    genres:
+      primary: ["crime"]
+
+    question: "Will the criminal be exposed and held accountable?"
+
+  freedom_subjugation:
+    id: 4
+    code: "FREEDOM_SUBJUGATION"
+    name: "Freedom vs Subjugation"
+    domain: "safety"
+    maslow_level: 2
+
+    poles:
+      positive:
+        value: 1.0
+        label: "Freedom"
+        description: "Individual autonomy and self-determination preserved"
+      contrary:
+        value: 0.66
+        label: "Restriction"
+        description: "Some freedoms curtailed but core autonomy intact; compromise with society"
+        # Inferred: constrained but not subjugated - laws, obligations, duties
+      negative:
+        value: 0.0
+        label: "Subjugation"
+        description: "Autonomy stripped, controlled by external force"
+      negation_of_negation:
+        value: -1.0
+        label: "Slavery with Illusion of Freedom"
+        description: "Controlled while believing oneself free"
+        examples:
+          - "Propaganda state where citizens police themselves"
+          - "Cult member who believes they chose their servitude"
+          - "Debt bondage disguised as opportunity"
+
+    core_need: "Individual Sovereignty"
+    core_emotion: "Intrigue"
+
+    genres:
+      primary: ["western"]
+
+    question: "Will the protagonist gain or preserve their autonomy?"
+
+  # ---------------------------------------------------------------------------
+  # CONNECTION DOMAIN (Maslow Level 3: Love/Belonging)
+  # ---------------------------------------------------------------------------
+
+  love_hate:
+    id: 5
+    code: "LOVE_HATE"
+    name: "Love vs Hate"
+    domain: "connection"
+    maslow_level: 3
+
+    poles:
+      positive:
+        value: 1.0
+        label: "Love"
+        description: "Genuine intimate connection, mutual vulnerability"
+      contrary:
+        value: 0.66
+        label: "Desire"
+        description: "Attraction without commitment, infatuation, lust"
+        # Per primary source table (line 250): Love → Desire → Indifference → Hate
+      negative:
+        value: 0.33
+        label: "Indifference"
+        description: "Emotional disconnection, apathy toward the other"
+        # Note: Primary source puts Indifference as negative, Hate as negation
+      negation_of_negation:
+        value: -1.0
+        label: "Hate / Self-Hatred"
+        description: "Active rejection, desire to harm; or toxic attachment disguised as love"
+        examples:
+          - "Obsessive stalking framed as devotion"
+          - "Abusive relationship justified as passionate"
+          - "Codependency mistaken for connection"
+
+    core_need: "Connection"
+    core_emotion: "Romance"
+
+    genres:
+      primary: ["love"]
+
+    question: "Will the lovers achieve genuine intimacy?"
+
+  # ---------------------------------------------------------------------------
+  # ESTEEM DOMAIN (Maslow Level 4: Esteem)
+  # ---------------------------------------------------------------------------
+
+  respect_shame:
+    id: 6
+    code: "RESPECT_SHAME"
+    name: "Respect vs Shame"
+    domain: "esteem"
+    maslow_level: 4
+
+    poles:
+      positive:
+        value: 1.0
+        label: "Respect"
+        description: "Recognition of worth by self and others"
+      contrary:
+        value: 0.66
+        label: "Obscurity"
+        description: "Neither respected nor shamed; anonymous, unnoticed, irrelevant"
+        # Inferred: the 'less than ideal' state is being ignored rather than recognized
+      negative:
+        value: 0.0
+        label: "Shame"
+        description: "Public humiliation, loss of face"
+      negation_of_negation:
+        value: -1.0
+        label: "Hollow Praise / False Respect"
+        description: "Being respected for the wrong reasons, or respect that rings hollow"
+        examples:
+          - "Praised for achievements that were stolen or faked"
+          - "Awarded for something you know you don't deserve"
+          - "Respected by people whose opinions you despise"
+
+    core_need: "Esteem"
+    core_emotion: "Triumph"
+
+    genres:
+      primary: ["performance"]
+
+    question: "Will the protagonist earn genuine recognition?"
+
+  power_impotence:
+    id: 7
+    code: "POWER_IMPOTENCE"
+    name: "Power vs Impotence"
+    domain: "esteem"
+    maslow_level: 4
+
+    poles:
+      positive:
+        value: 1.0
+        label: "Power"
+        description: "Agency to affect change, influence over circumstances"
+      contrary:
+        value: 0.66
+        label: "Limited Influence"
+        description: "Some agency but constrained; can affect small things, not the system"
+        # Inferred: partial power - enough to matter locally, not enough to change everything
+      negative:
+        value: 0.0
+        label: "Impotence"
+        description: "Helplessness, inability to affect outcomes"
+      negation_of_negation:
+        value: -1.0
+        label: "Power through Co-option"
+        description: "Power that comes from becoming what you fought against"
+        examples:
+          - "Revolutionary becomes tyrant"
+          - "Reformer becomes corrupt insider"
+          - "Survivor becomes perpetrator"
+
+    core_need: "Recognition"
+    core_emotion: "Intrigue / Triumph / Righteous Indignation"
+
+    genres:
+      primary: ["society"]
+
+    question: "Will the protagonist gain agency without corruption?"
+
+  success_failure:
+    id: 8
+    code: "SUCCESS_FAILURE"
+    name: "Success vs Failure"
+    domain: "esteem"
+    maslow_level: 4
+
+    poles:
+      positive:
+        value: 1.0
+        label: "Success"
+        description: "Achievement of external goal, social advancement"
+      contrary:
+        value: 0.66
+        label: "Compromise"
+        description: "Partial achievement, trading off some goals for others"
+        # Per primary source (line 252): Success → Compromise → Failure → Selling out
+      negative:
+        value: 0.0
+        label: "Failure"
+        description: "Inability to achieve goal, social decline"
+      negation_of_negation:
+        value: -1.0
+        label: "Selling Out"
+        description: "Success achieved by abandoning core values"
+        examples:
+          - "Artist who sacrifices vision for commercial success"
+          - "Politician who wins by becoming what they opposed"
+          - "Entrepreneur who succeeds by exploiting others"
+
+    core_need: "Respect"
+    core_emotion: "Admiration / Pity"
+
+    genres:
+      primary: ["status"]
+
+    question: "Will the protagonist succeed without compromising themselves?"
+
+  # ---------------------------------------------------------------------------
+  # SELF-ACTUALIZATION DOMAIN (Maslow Level 5)
+  # ---------------------------------------------------------------------------
+
+  altruism_selfishness:
+    id: 9
+    code: "ALTRUISM_SELFISHNESS"
+    name: "Altruism vs Selfishness"
+    domain: "self_transcendence"
+    maslow_level: 5
+
+    poles:
+      positive:
+        value: 1.0
+        label: "Good / Altruism"
+        description: "Action for others' benefit at cost to self"
+      contrary:
+        value: 0.66
+        label: "Wavering / Temptation"
+        description: "Moral uncertainty, considering selfish action, internal conflict"
+        # Per primary source (line 252): Good → Wavering → Indifference → Evil
+      negative:
+        value: 0.33
+        label: "Indifference"
+        description: "Neither helping nor harming, moral disengagement"
+      negation_of_negation:
+        value: -1.0
+        label: "Evil / Selfishness Disguised as Altruism"
+        description: "Self-serving action wrapped in moral justification; active harm to others"
+        examples:
+          - "Charity for tax benefits and social status"
+          - "'Helping' that creates dependency for ego gratification"
+          - "Moral crusade driven by personal vengeance"
+
+    core_need: "Self-Transcendence"
+    core_emotion: "Satisfaction / Contempt"
+
+    genres:
+      primary: ["morality"]
+
+    question: "Will the protagonist choose others over self?"
+
+  wisdom_ignorance:
+    id: 10
+    code: "WISDOM_IGNORANCE"
+    name: "Wisdom vs Ignorance"
+    domain: "self_actualization"
+    maslow_level: 5
+
+    # NOTE: Primary source uses "Meaning vs Meaninglessness" for Worldview.
+    # We retain "Wisdom vs Ignorance" as the spectrum name (2026-02-04 decision).
+    # The concepts overlap: wisdom enables meaning; ignorance leads to meaninglessness.
+    # Labels include both terms for clarity.
+
+    poles:
+      positive:
+        value: 1.0
+        label: "Wisdom / Meaning"
+        description: "Understanding of how the world truly works; life has purpose"
+      contrary:
+        value: 0.66
+        label: "Doubt / Confusion"
+        description: "Questioning beliefs, uncertain but seeking; existential uncertainty"
+        # Per primary source (lines 168-174, 253): Doubt/Confusion is the contrary stage
+      negative:
+        value: 0.0
+        label: "Ignorance / Meaninglessness"
+        description: "Lack of understanding, naive worldview; life feels purposeless"
+      negation_of_negation:
+        value: -1.0
+        label: "Willful Denial / Nihilism"
+        description: "Actively rejecting truth; embracing destruction of meaning itself"
+        examples:
+          - "Knowing the truth but choosing to believe the lie"
+          - "Denying evidence to protect ego or worldview"
+          - "Sophistry - using intelligence to defend foolishness"
+          - "Active destruction of meaning systems (nihilism)"
+
+    core_need: "Self-Actualization"
+    core_emotion: "Satisfaction / Pity"
+
+    genres:
+      primary: ["worldview"]
+
+    question: "Will the protagonist achieve genuine understanding?"
+
+# =============================================================================
+# GENRE TO PRIMARY SPECTRUM MAPPING
+# =============================================================================
+
+genre_spectrum_mapping:
+  # External genres (physical conflict)
+  action:
+    primary: "life_death"
+    core_event: "Hero at Mercy of Villain"
+
+  war:
+    primary: "honor_dishonor"
+    core_event: "Big Battle"
+
+  horror:
+    primary: "life_death"
+    core_event: "Victim at Mercy of Monster"
+
+  crime:
+    primary: "justice_injustice"
+    core_event: "Exposure of Criminal"
+
+  thriller:
+    primary: "life_death"
+    core_event: "Hero at Mercy of Villain"
+
+  western:
+    primary: "freedom_subjugation"
+    core_event: "Big Showdown"
+
+  # Internal genres (psychological/relational conflict)
+  love:
+    primary: "love_hate"
+    core_event: "Proof of Love"
+
+  performance:
+    primary: "respect_shame"
+    core_event: "Big Performance"
+
+  society:
+    primary: "power_impotence"
+    core_event: "Revolution"
+
+  status:
+    primary: "success_failure"
+    core_event: "Big Choice"
+
+  morality:
+    primary: "altruism_selfishness"
+    core_event: "Big Choice"
+
+  worldview:
+    primary: "wisdom_ignorance"
+    core_event: "Cognitive Growth or Degeneration"
+
+# =============================================================================
+# GENRE OVERRIDES
+# =============================================================================
+# Per primary source (STORY-GRID-PRIMARY-SOURCE.md), some genres sharing a
+# spectrum have different core emotions or other properties.
+# These overrides take precedence over spectrum defaults.
+
+genre_overrides:
+  horror:
+    # Horror shares life_death spectrum with Action, but evokes different emotion
+    core_emotion: "Fear"  # Overrides spectrum default "Excitement"
+    # Core need remains "Safety" (same as spectrum default)
+
+  thriller:
+    # Thriller shares life_death spectrum with Action, but evokes different emotion
+    core_emotion: "Anxiety/Dread"  # Overrides spectrum default "Excitement"
+    # Core need remains "Safety" (same as spectrum default)
+
+  # Note: Action uses spectrum defaults (core_emotion: "Excitement", core_need: "Safety")
+  # No override entry needed
+
+# =============================================================================
+# GENRE COMBINATIONS (LAYERED STORIES)
+# =============================================================================
+
+story_combinations:
+  description: |
+    Most compelling stories layer multiple genres, each contributing its spectrum.
+    The PRIMARY genre determines the primary spectrum (the main stakes).
+    SECONDARY genres add additional spectrums that enrich the story.
+
+    ANY spectrum can be secondary - the choice depends on the story being told,
+    not on genre-specific restrictions. The examples below show common pairings
+    from popular media.
+
+  # -------------------------------------------------------------------------
+  # External Genre Primary + Internal Genre Secondary
+  # -------------------------------------------------------------------------
+
+  action_love:
+    primary_genre: "action"
+    primary_spectrum: "life_death"
+    secondary_genres: ["love"]
+    secondary_spectrums: ["love_hate"]
+    description: "Action story with romantic subplot"
+    examples:
+      - title: "Die Hard"
+        year: 1988
+        analysis: |
+          Primary: John McClane must survive (life/death)
+          Secondary: He's fighting to save his marriage (love/hate)
+          The terrorists are the external threat; his estranged wife is the emotional core.
+
+      - title: "True Lies"
+        year: 1994
+        analysis: |
+          Primary: Harry must stop nuclear terrorists (life/death)
+          Secondary: His marriage is falling apart from his lies (love/hate)
+          Both spectrums reach climax simultaneously.
+
+      - title: "Mr. & Mrs. Smith"
+        year: 2005
+        analysis: |
+          Primary: Married assassins must survive each other (life/death)
+          Secondary: Can their marriage survive the truth? (love/hate)
+
+  thriller_worldview:
+    primary_genre: "thriller"
+    primary_spectrum: "life_death"
+    secondary_genres: ["worldview"]
+    secondary_spectrums: ["wisdom_ignorance"]
+    description: "Thriller with philosophical depth"
+    examples:
+      - title: "The Silence of the Lambs"
+        year: 1991
+        analysis: |
+          Primary: Clarice must survive Hannibal and catch Buffalo Bill (life/death)
+          Secondary: She must understand the criminal mind to succeed (wisdom/ignorance)
+          Hannibal teaches her to see, but the knowledge has a cost.
+
+      - title: "Se7en"
+        year: 1995
+        analysis: |
+          Primary: Detectives hunting a serial killer (life/death)
+          Secondary: Somerset's cynical worldview vs Mills' naive idealism (wisdom/ignorance)
+          The ending destroys Mills' innocence.
+
+  horror_morality:
+    primary_genre: "horror"
+    primary_spectrum: "life_death"
+    secondary_genres: ["morality"]
+    secondary_spectrums: ["altruism_selfishness"]
+    description: "Horror that tests moral character"
+    examples:
+      - title: "Get Out"
+        year: 2017
+        analysis: |
+          Primary: Chris must survive the Armitage family (life/death)
+          Secondary: The film interrogates liberal racism vs genuine care (altruism/selfishness)
+
+      - title: "The Cabin in the Woods"
+        year: 2012
+        analysis: |
+          Primary: Teens must survive horror monsters (life/death)
+          Secondary: The ending poses the ultimate altruism question (save humanity or yourself?)
+
+  crime_society:
+    primary_genre: "crime"
+    primary_spectrum: "justice_injustice"
+    secondary_genres: ["society"]
+    secondary_spectrums: ["power_impotence"]
+    description: "Crime story exploring systemic power"
+    examples:
+      - title: "The Wire"
+        year: 2002
+        analysis: |
+          Primary: Can drug criminals be brought to justice? (justice/injustice)
+          Secondary: Are institutions capable of reform? (power/impotence)
+          The show argues institutions perpetuate dysfunction.
+
+      - title: "Chinatown"
+        year: 1974
+        analysis: |
+          Primary: Jake Gittes investigates murder and corruption (justice/injustice)
+          Secondary: He's powerless against the wealthy and connected (power/impotence)
+          "Forget it Jake, it's Chinatown."
+
+  # -------------------------------------------------------------------------
+  # Internal Genre Primary + External Genre Secondary
+  # -------------------------------------------------------------------------
+
+  love_thriller:
+    primary_genre: "love"
+    primary_spectrum: "love_hate"
+    secondary_genres: ["thriller"]
+    secondary_spectrums: ["life_death"]
+    description: "Romance under mortal threat"
+    examples:
+      - title: "Titanic"
+        year: 1997
+        analysis: |
+          Primary: Rose and Jack's forbidden love (love/hate)
+          Secondary: Will they survive the sinking ship? (life/death)
+          The love story is primary; the disaster is backdrop.
+
+      - title: "The Bodyguard"
+        year: 1992
+        analysis: |
+          Primary: Can Frank and Rachel overcome their differences? (love/hate)
+          Secondary: Will the stalker kill her? (life/death)
+
+  worldview_horror:
+    primary_genre: "worldview"
+    primary_spectrum: "wisdom_ignorance"
+    secondary_genres: ["horror"]
+    secondary_spectrums: ["life_death"]
+    description: "Cosmic horror / philosophical horror"
+    examples:
+      - title: "Arrival"
+        year: 2016
+        analysis: |
+          Primary: Louise learns to perceive time non-linearly (wisdom/ignorance)
+          Secondary: Humanity fears the aliens may be a threat (life/death)
+          The horror elements are mostly perceived threat; the real story is epistemological.
+
+      - title: "Annihilation"
+        year: 2018
+        analysis: |
+          Primary: What is the Shimmer? Can it be understood? (wisdom/ignorance)
+          Secondary: Will the team survive? (life/death)
+          Understanding destroys the self.
+
+  performance_action:
+    primary_genre: "performance"
+    primary_spectrum: "respect_shame"
+    secondary_genres: ["action"]
+    secondary_spectrums: ["life_death"]
+    description: "Competition with life-or-death stakes"
+    examples:
+      - title: "Rocky IV"
+        year: 1985
+        analysis: |
+          Primary: Rocky must prove American boxing spirit (respect/shame)
+          Secondary: Drago literally killed Apollo; Rocky might die (life/death)
+
+      - title: "Warrior"
+        year: 2011
+        analysis: |
+          Primary: Both brothers need to prove themselves (respect/shame)
+          Secondary: The fighting is brutal, career-ending (life/death stakes)
+
+  # -------------------------------------------------------------------------
+  # Multiple Secondary Spectrums
+  # -------------------------------------------------------------------------
+
+  action_love_worldview:
+    primary_genre: "action"
+    primary_spectrum: "life_death"
+    secondary_genres: ["love", "worldview"]
+    secondary_spectrums: ["love_hate", "wisdom_ignorance"]
+    description: "Complex action with romance and philosophy"
+    examples:
+      - title: "The Matrix"
+        year: 1999
+        analysis: |
+          Primary: Neo must survive against the Machines (life/death)
+          Secondary 1: Neo and Trinity's love (love/hate)
+          Secondary 2: "What is real?" - Neo's awakening (wisdom/ignorance)
+          All three spectrums reach climax together.
+
+      - title: "Inception"
+        year: 2010
+        analysis: |
+          Primary: The team must survive the dream heist (life/death)
+          Secondary 1: Cobb's guilt over Mal (love/hate)
+          Secondary 2: What is reality? Does it matter? (wisdom/ignorance)
+
+  crime_morality_society:
+    primary_genre: "crime"
+    primary_spectrum: "justice_injustice"
+    secondary_genres: ["morality", "society"]
+    secondary_spectrums: ["altruism_selfishness", "power_impotence"]
+    description: "Crime drama with moral and systemic complexity"
+    examples:
+      - title: "The Dark Knight"
+        year: 2008
+        analysis: |
+          Primary: Can the Joker be brought to justice? (justice/injustice)
+          Secondary 1: Will Batman break his one rule? (altruism/selfishness)
+          Secondary 2: Can Gotham's institutions be saved? (power/impotence)
+          Harvey Dent's fall represents all three spectrums collapsing.
+
+  # -------------------------------------------------------------------------
+  # Unusual Combinations
+  # -------------------------------------------------------------------------
+
+  western_love:
+    primary_genre: "western"
+    primary_spectrum: "freedom_subjugation"
+    secondary_genres: ["love"]
+    secondary_spectrums: ["love_hate"]
+    description: "Western with romantic core"
+    examples:
+      - title: "Brokeback Mountain"
+        year: 2005
+        analysis: |
+          Primary: Can Ennis live freely as himself? (freedom/subjugation)
+          Secondary: His love for Jack (love/hate)
+          Societal subjugation prevents the love from flourishing.
+
+  status_horror:
+    primary_genre: "status"
+    primary_spectrum: "success_failure"
+    secondary_genres: ["horror"]
+    secondary_spectrums: ["life_death"]
+    description: "Ambition with horrific consequences"
+    examples:
+      - title: "Black Swan"
+        year: 2010
+        analysis: |
+          Primary: Nina must achieve perfection to succeed (success/failure)
+          Secondary: Her pursuit is literally destroying her (life/death)
+          The horror is psychological but the death is real.
+
+      - title: "Whiplash"
+        year: 2014
+        analysis: |
+          Primary: Andrew must become a great drummer (success/failure)
+          Secondary: Fletcher's abuse and the car crash (life/death stakes implied)
+
+  note_on_combinations: |
+    These examples show common patterns, but ANY spectrum can be secondary.
+    The creative choice depends on what the story needs to explore.
+
+    Guidelines for combining spectrums:
+    1. The primary spectrum carries the main dramatic question
+    2. Secondary spectrums should create meaningful tension with the primary
+    3. The best combinations make the spectrums interact - success on one
+       spectrum should cost progress on another
+    4. Resolution can occur at different points (one spectrum resolved while
+       another remains in tension)
+
+# =============================================================================
+# PRESET STATES
+# =============================================================================
+
+presets:
+  description: |
+    Common narrative state configurations. Each preset specifies which
+    spectrums are active and their current values. Inactive spectrums
+    are not tracked (value: null).
+
+    In most stories, only 1-3 spectrums are actively tracked. The primary
+    spectrum is determined by genre; secondary spectrums add complexity.
+
+  # General presets (applicable to any genre)
+  equilibrium:
+    description: "Ordinary world, before the story disrupts it"
+    active_spectrums:
+      primary: 0.6  # Slightly positive, room to fall
+    tension_level: "low"
+
+  rising_action:
+    description: "Conflict escalating, stakes increasing"
+    active_spectrums:
+      primary: 0.4  # Trending negative
+    tension_level: "medium"
+
+  midpoint_false_victory:
+    description: "Protagonist seems to have won, but hasn't"
+    active_spectrums:
+      primary: 0.8  # Appears positive
+    tension_level: "medium"  # Audience senses something wrong
+
+  midpoint_false_defeat:
+    description: "Protagonist seems to have lost, but hasn't"
+    active_spectrums:
+      primary: 0.2  # Appears negative
+    tension_level: "high"
+
+  all_is_lost:
+    description: "Lowest point - something 'dies'"
+    active_spectrums:
+      primary: 0.1  # Near negative pole
+    tension_level: "maximum"
+
+  climax:
+    description: "Final confrontation, maximum stakes"
+    active_spectrums:
+      primary: 0.5  # Could go either way
+    tension_level: "maximum"
+
+  resolution_positive:
+    description: "Protagonist reaches positive pole"
+    active_spectrums:
+      primary: 0.9  # Near positive pole
+    tension_level: "released"
+
+  resolution_negative:
+    description: "Protagonist reaches negative pole (tragedy)"
+    active_spectrums:
+      primary: 0.1  # Near negative pole
+    tension_level: "released"
+
+  resolution_negation:
+    description: "Protagonist reaches negation of negation (darkest tragedy)"
+    active_spectrums:
+      primary: -0.5  # Below zero - worse than negative
+    tension_level: "released"
+
+# =============================================================================
+# REAGAN ARC INTEGRATION
+# =============================================================================
+
+arc_integration:
+  description: |
+    Reagan's six emotional arcs describe the SHAPE of how a value spectrum
+    changes over the course of a story. The arc is applied to the PRIMARY
+    spectrum for the genre.
+
+    Arc shape + Genre primary spectrum = Complete emotional trajectory
+
+    Example: "Man in Hole" arc + Crime genre
+      = Justice starts neutral (0.5)
+      → falls as criminal seems to escape (0.2)
+      → rises as detective closes in (0.9)
+      = Satisfying crime story
+
+    Example: "Tragedy" arc + Love genre
+      = Love starts positive (0.7)
+      → falls as relationship deteriorates (0.1)
+      = Tragic love story
+
+  arc_to_trajectory:
+    rags_to_riches:
+      shape: "↗"
+      start_range: [0.2, 0.4]
+      end_range: [0.8, 1.0]
+      description: "Primary spectrum rises steadily"
+
+    tragedy:
+      shape: "↘"
+      start_range: [0.6, 0.8]
+      end_range: [0.0, 0.2]
+      description: "Primary spectrum falls steadily"
+
+    man_in_hole:
+      shape: "↘↗"
+      start_range: [0.5, 0.7]
+      low_point_range: [0.1, 0.3]
+      end_range: [0.7, 0.9]
+      description: "Primary spectrum falls then rises (most common)"
+
+    icarus:
+      shape: "↗↘"
+      start_range: [0.3, 0.5]
+      high_point_range: [0.7, 0.9]
+      end_range: [0.1, 0.3]
+      description: "Primary spectrum rises then falls"
+
+    cinderella:
+      shape: "↗↘↗"
+      start_range: [0.2, 0.4]
+      first_peak_range: [0.6, 0.8]
+      valley_range: [0.2, 0.4]
+      end_range: [0.8, 1.0]
+      description: "Rise, fall, rise again"
+
+    oedipus:
+      shape: "↘↗↘"
+      start_range: [0.6, 0.8]
+      first_valley_range: [0.2, 0.4]
+      peak_range: [0.5, 0.7]
+      end_range: [0.0, 0.2]
+      description: "Fall, rise, fall again (complex tragedy)"
+
+# =============================================================================
+# IMPLEMENTATION NOTES
+# =============================================================================
+
+implementation:
+  data_structure: |
+    public sealed class NarrativeState
+    {
+        // Active spectrum values (null if not tracked)
+        public double? LifeDeath { get; set; }
+        public double? HonorDishonor { get; set; }
+        public double? JusticeInjustice { get; set; }
+        public double? FreedomSubjugation { get; set; }
+        public double? LoveHate { get; set; }
+        public double? RespectShame { get; set; }
+        public double? PowerImpotence { get; set; }
+        public double? SuccessFailure { get; set; }
+        public double? AltruismSelfishness { get; set; }
+        public double? WisdomIgnorance { get; set; }
+
+        // Which spectrum is primary (determined by genre)
+        public SpectrumType PrimarySpectrum { get; set; }
+
+        // Helper: Get the primary spectrum's current value
+        public double GetPrimaryValue() => PrimarySpectrum switch
+        {
+            SpectrumType.LifeDeath => LifeDeath ?? 0.5,
+            SpectrumType.HonorDishonor => HonorDishonor ?? 0.5,
+            // ... etc
+        };
+
+        // Distance for GOAP heuristics
+        public double DistanceTo(NarrativeState target)
+        {
+            // Only compare active spectrums
+            double sum = 0;
+            int count = 0;
+
+            if (LifeDeath.HasValue && target.LifeDeath.HasValue)
+            {
+                sum += Math.Abs(LifeDeath.Value - target.LifeDeath.Value);
+                count++;
+            }
+            // ... etc for each spectrum
+
+            return count > 0 ? sum / count : 0;
+        }
+    }
+
+  goap_integration: |
+    Story actions modify spectrum values:
+
+    public class IntroduceAntagonist : IStoryAction
+    {
+        public NarrativeStateDelta Effects => new()
+        {
+            LifeDeath = -0.1,  // Threat introduced
+            // Other spectrums unchanged
+        };
+
+        public double Cost => 2.0;
+    }
+
+    GOAP planner finds sequence of actions to move from current
+    NarrativeState to target NarrativeState (e.g., from equilibrium
+    to climax on the primary spectrum).
+
+  reagan_arc_application: |
+    To apply a Reagan arc to a genre:
+
+    1. Identify genre's primary spectrum (e.g., Crime → JusticeInjustice)
+    2. Select arc shape (e.g., "man_in_hole")
+    3. Divide story into 200 time points (Reagan standard)
+    4. For each time point, calculate target spectrum value from arc curve
+    5. GOAP planner finds actions to move toward each target
+
+    var arcCurve = ReaganArcs.ManInHole.GetCurve();  // 200-point array
+    var genrePrimary = GenreMapping.Crime.PrimarySpectrum;  // JusticeInjustice
+
+    for (int t = 0; t < 200; t++)
+    {
+        var targetValue = arcCurve[t];  // 0.0 to 1.0
+        var goal = new NarrativeState { [genrePrimary] = targetValue };
+        var actions = planner.FindPath(currentState, goal);
+    }

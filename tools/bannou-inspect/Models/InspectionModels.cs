@@ -23,6 +23,9 @@ public record TypeInfo
     /// <summary>Gets or sets the XML documentation remarks.</summary>
     public string? Remarks { get; init; }
 
+    /// <summary>Gets or sets the public constructors.</summary>
+    public required IReadOnlyList<ConstructorInfo> Constructors { get; init; }
+
     /// <summary>Gets or sets the public methods.</summary>
     public required IReadOnlyList<MethodInfo> Methods { get; init; }
 
@@ -37,6 +40,27 @@ public record TypeInfo
 
     /// <summary>Gets or sets the source assembly name.</summary>
     public required string AssemblyName { get; init; }
+}
+
+/// <summary>
+/// Represents inspected constructor information.
+/// </summary>
+public record ConstructorInfo
+{
+    /// <summary>Gets or sets the declaring type name.</summary>
+    public required string TypeName { get; init; }
+
+    /// <summary>Gets or sets the constructor parameters.</summary>
+    public required IReadOnlyList<ParameterInfo> Parameters { get; init; }
+
+    /// <summary>Gets or sets the XML documentation summary.</summary>
+    public string? Summary { get; init; }
+
+    /// <summary>Gets or sets the documented exceptions.</summary>
+    public required IReadOnlyList<ExceptionInfo> Exceptions { get; init; }
+
+    /// <summary>Gets or sets whether this is a static constructor.</summary>
+    public bool IsStatic { get; init; }
 }
 
 /// <summary>

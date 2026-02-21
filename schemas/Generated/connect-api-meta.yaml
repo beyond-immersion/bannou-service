@@ -30,7 +30,12 @@ info:
     - **Bi-directional RPC**: Services can make RPC calls back to connected clients
     - **Reconnection Support**: Clients can reconnect to existing sessions within a configurable time window
 
-    **Schema Rules**: AI agents MUST review docs/reference/SCHEMA-RULES.md before modifying this schema. Optional reference types require `nullable: true`.
+    **SCHEMA MODIFICATION GATE**: STOP. Before modifying this schema, you MUST:
+    1. Read docs/reference/SCHEMA-RULES.md
+    2. State which section applies to your change
+    3. Only then proceed with edits
+    Edits without stating the applicable rule are FORBIDDEN.
+x-service-layer: AppFoundation
 servers:
 - url: http://localhost:5012
   description: Bannou service endpoint (internal only)
@@ -380,6 +385,77 @@ paths:
         \"Alternative POST method for establishing WebSocket connections.\\nFunctionally identical to the GET method but supports
         clients that\\nrequire POST for WebSocket upgrades.\\n\",\n    \"tags\": [\n        \"WebSocket Connection\"\n   \
         \ ],\n    \"deprecated\": false,\n    \"operationId\": \"ConnectWebSocketPost\"\n}"
+  /connect/get-endpoint-meta:
+    post:
+      summary: Permission-gated proxy for endpoint metadata
+      operationId: GetEndpointMeta
+      tags:
+      - Meta Proxy
+      description: |
+        Accepts a full meta endpoint path (e.g., "/account/get/meta/info"),
+        validates the caller's JWT, looks up their active WebSocket session
+        via the JWT's sessionKey, checks the session's capability mappings
+        for the underlying endpoint, and proxies the internal meta GET
+        request if authorized. Returns the meta endpoint response directly.
+
+        Requires an active WebSocket connection -- the session's compiled
+        capability mappings in Connect's in-memory connection state are the
+        permission source, exactly as for WebSocket meta requests.
+      x-permissions: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetEndpointMetaRequest'
+      responses:
+        '200':
+          description: Meta endpoint response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetEndpointMetaResponse'
+        '401':
+          description: Invalid or missing JWT, or no active WebSocket session
+        '403':
+          description: Session lacks permission for the underlying endpoint
+        '404':
+          description: Endpoint or meta type not found
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/GetEndpointMetaRequest\"\
+        ,\n    \"$defs\": {\n        \"GetEndpointMetaRequest\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"Request to proxy a meta endpoint call with permission validation\",\n            \"additionalProperties\": false,\n\
+        \            \"required\": [\n                \"path\"\n            ],\n            \"properties\": {\n          \
+        \      \"path\": {\n                    \"type\": \"string\",\n                    \"description\": \"Full meta endpoint
+        path including meta type suffix (e.g., \\\"/account/get/meta/info\\\" or \\\"/character/create/meta/request-schema\\\
+        \"). Connect parses the service name, base endpoint, and meta type from this path.\"\n                }\n        \
+        \    }\n        }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/GetEndpointMetaResponse\"\
+        ,\n    \"$defs\": {\n        \"GetEndpointMetaResponse\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"Meta endpoint response mirroring the internal MetaResponse structure\",\n            \"additionalProperties\"\
+        : false,\n            \"required\": [\n                \"metaType\",\n                \"serviceName\",\n         \
+        \       \"method\",\n                \"path\",\n                \"data\",\n                \"generatedAt\",\n    \
+        \            \"schemaVersion\"\n            ],\n            \"properties\": {\n                \"metaType\": {\n \
+        \                   \"type\": \"string\",\n                    \"description\": \"Type of metadata returned (endpoint-info,
+        request-schema, response-schema, full-schema)\"\n                },\n                \"serviceName\": {\n        \
+        \            \"type\": \"string\",\n                    \"description\": \"Service name that owns this endpoint (e.g.,
+        \\\"Account\\\")\"\n                },\n                \"method\": {\n                    \"type\": \"string\",\n\
+        \                    \"description\": \"HTTP method for the endpoint (e.g., \\\"POST\\\")\"\n                },\n\
+        \                \"path\": {\n                    \"type\": \"string\",\n                    \"description\": \"Endpoint
+        path (e.g., \\\"/account/get\\\")\"\n                },\n                \"data\": {\n                    \"type\"\
+        : \"object\",\n                    \"additionalProperties\": true,\n                    \"description\": \"Metadata
+        payload whose structure varies by metaType (endpoint-info returns summary/tags/operationId, request-schema and response-schema
+        return JSON Schema objects, full-schema returns all three combined)\"\n                },\n                \"generatedAt\"\
+        : {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                 \
+        \   \"description\": \"When this response was generated (UTC)\"\n                },\n                \"schemaVersion\"\
+        : {\n                    \"type\": \"string\",\n                    \"description\": \"Schema version (assembly version)
+        for cache invalidation\"\n                }\n            }\n        }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Permission-gated proxy for endpoint metadata\",\n    \"description\": \"\
+        Accepts a full meta endpoint path (e.g., \\\"/account/get/meta/info\\\"),\\nvalidates the caller's JWT, looks up their
+        active WebSocket session\\nvia the JWT's sessionKey, checks the session's capability mappings\\nfor the underlying
+        endpoint, and proxies the internal meta GET\\nrequest if authorized. Returns the meta endpoint response directly.\\
+        n\\nRequires an active WebSocket connection -- the session's compiled\\ncapability mappings in Connect's in-memory
+        connection state are the\\npermission source, exactly as for WebSocket meta requests.\\n\",\n    \"tags\": [\n   \
+        \     \"Meta Proxy\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"GetEndpointMeta\"\n}"
   /connect/get-account-sessions:
     post:
       summary: Get all active WebSocket sessions for an account
@@ -449,6 +525,56 @@ paths:
         getAccountSessions\"\n}"
 components:
   schemas:
+    GetEndpointMetaRequest:
+      type: object
+      description: Request to proxy a meta endpoint call with permission validation
+      additionalProperties: false
+      required:
+      - path
+      properties:
+        path:
+          type: string
+          description: Full meta endpoint path including meta type suffix (e.g., "/account/get/meta/info" or 
+            "/character/create/meta/request-schema"). Connect parses the service name, base endpoint, and meta type from
+            this path.
+    GetEndpointMetaResponse:
+      type: object
+      description: Meta endpoint response mirroring the internal MetaResponse structure
+      additionalProperties: false
+      required:
+      - metaType
+      - serviceName
+      - method
+      - path
+      - data
+      - generatedAt
+      - schemaVersion
+      properties:
+        metaType:
+          type: string
+          description: Type of metadata returned (endpoint-info, request-schema, response-schema, full-schema)
+        serviceName:
+          type: string
+          description: Service name that owns this endpoint (e.g., "Account")
+        method:
+          type: string
+          description: HTTP method for the endpoint (e.g., "POST")
+        path:
+          type: string
+          description: Endpoint path (e.g., "/account/get")
+        data:
+          type: object
+          additionalProperties: true
+          description: Metadata payload whose structure varies by metaType (endpoint-info returns 
+            summary/tags/operationId, request-schema and response-schema return JSON Schema objects, full-schema returns
+            all three combined)
+        generatedAt:
+          type: string
+          format: date-time
+          description: When this response was generated (UTC)
+        schemaVersion:
+          type: string
+          description: Schema version (assembly version) for cache invalidation
     GetAccountSessionsRequest:
       type: object
       description: Request to get all active WebSocket sessions for an account
@@ -749,6 +875,7 @@ components:
       - 11
       - 12
       - 13
+      - 14
       - 20
       - 30
       - 31
@@ -768,6 +895,7 @@ components:
       - "RequestTooLarge"
       - "TooManyRequests"
       - "InvalidRequestChannel"
+      - "TextProtocolNotSupported"
       - "Unauthorized"
       - "ServiceNotFound"
       - "ClientNotFound"
@@ -784,6 +912,13 @@ components:
       description: |
         Response codes used in the binary protocol for success/error indication.
         Provides fine-grained error reporting for different failure scenarios.
+
+        **Request error codes (10-19):**
+        - 10 (RequestError): Generic malformed request
+        - 11 (RequestTooLarge): Payload exceeds maximum size
+        - 12 (TooManyRequests): Rate limit exceeded
+        - 13 (InvalidRequestChannel): Invalid channel number
+        - 14 (TextProtocolNotSupported): Text WebSocket frames are not supported; use binary protocol
 
         **Broadcast error codes (40-49):**
         - 40 (BroadcastNotAllowed): Broadcast attempted in External mode where it is forbidden
@@ -1058,41 +1193,14 @@ components:
           format: date-time
           nullable: true
           description: When the response was received
-    PermissionRecompileEvent:
-      type: object
-      description: |
-        Event to trigger permission recompilation for all sessions.
-        Published when services register new APIs or permission rules change.
-      additionalProperties: false
-      required:
-      - eventId
-      - timestamp
-      - reason
-      properties:
-        eventId:
-          type: string
-          description: Unique identifier for this recompilation event
-        timestamp:
-          type: string
-          format: date-time
-          description: When the recompilation was triggered
-        reason:
-          type: string
-          enum:
-          - service_registered
-          - permission_rules_changed
-          - role_definitions_updated
-          - manual_trigger
-          description: Reason for triggering permission recompilation
-        serviceId:
-          type: string
-          nullable: true
-          description: Service ID that triggered the recompilation (if applicable)
-        metadata:
-          type: object
-          additionalProperties: true
-          nullable: true
-          description: Additional context for the recompilation
+    CompanionRoomMode:
+      type: string
+      description: How Connect manages companion chat rooms for WebSocket sessions
+      enum:
+      - Disabled
+      - AutoJoinLazy
+      - AutoJoin
+      - Manual
   securitySchemes:
     BearerAuth:
       type: http

@@ -108,54 +108,42 @@ public partial class MatchmakingService : IMatchmakingService
         ListQueuesRequest body,
         CancellationToken cancellationToken)
     {
-        try
+        _logger.LogDebug("Listing matchmaking queues - GameId: {GameId}, IncludeDisabled: {IncludeDisabled}",
+            body.GameId, body.IncludeDisabled);
+
+        var queueIds = await GetQueueIdsAsync(cancellationToken);
+        var queues = new List<QueueSummary>();
+
+        foreach (var queueId in queueIds)
         {
-            _logger.LogDebug("Listing matchmaking queues - GameId: {GameId}, IncludeDisabled: {IncludeDisabled}",
-                body.GameId, body.IncludeDisabled);
+            var queue = await LoadQueueAsync(queueId, cancellationToken);
+            if (queue == null) continue;
 
-            var queueIds = await GetQueueIdsAsync(cancellationToken);
-            var queues = new List<QueueSummary>();
+            // Filter by game ID if provided
+            if (!string.IsNullOrEmpty(body.GameId) && queue.GameId != body.GameId)
+                continue;
 
-            foreach (var queueId in queueIds)
+            // Filter disabled queues unless requested
+            if (!queue.Enabled && body.IncludeDisabled != true)
+                continue;
+
+            // Get current ticket count
+            var ticketCount = await GetQueueTicketCountAsync(queueId, cancellationToken);
+
+            queues.Add(new QueueSummary
             {
-                var queue = await LoadQueueAsync(queueId, cancellationToken);
-                if (queue == null) continue;
-
-                // Filter by game ID if provided
-                if (!string.IsNullOrEmpty(body.GameId) && queue.GameId != body.GameId)
-                    continue;
-
-                // Filter disabled queues unless requested
-                if (!queue.Enabled && body.IncludeDisabled != true)
-                    continue;
-
-                // Get current ticket count
-                var ticketCount = await GetQueueTicketCountAsync(queueId, cancellationToken);
-
-                queues.Add(new QueueSummary
-                {
-                    QueueId = queue.QueueId,
-                    GameId = queue.GameId,
-                    DisplayName = queue.DisplayName,
-                    Enabled = queue.Enabled,
-                    MinCount = queue.MinCount,
-                    MaxCount = queue.MaxCount,
-                    CurrentTickets = ticketCount,
-                    AverageWaitSeconds = queue.AverageWaitSeconds
-                });
-            }
-
-            return (StatusCodes.OK, new ListQueuesResponse { Queues = queues });
+                QueueId = queue.QueueId,
+                GameId = queue.GameId,
+                DisplayName = queue.DisplayName,
+                Enabled = queue.Enabled,
+                MinCount = queue.MinCount,
+                MaxCount = queue.MaxCount,
+                CurrentTickets = ticketCount,
+                AverageWaitSeconds = queue.AverageWaitSeconds
+            });
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Failed to list matchmaking queues");
-            await _messageBus.TryPublishErrorAsync(
-                "matchmaking", "ListQueues", "unexpected_exception", ex.Message,
-                dependency: "state", endpoint: "post:/matchmaking/queue/list",
-                details: null, stack: ex.StackTrace, cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
+
+        return (StatusCodes.OK, new ListQueuesResponse { Queues = queues });
     }
 
     /// <summary>
@@ -165,27 +153,15 @@ public partial class MatchmakingService : IMatchmakingService
         GetQueueRequest body,
         CancellationToken cancellationToken)
     {
-        try
-        {
-            _logger.LogDebug("Getting queue {QueueId}", body.QueueId);
+        _logger.LogDebug("Getting queue {QueueId}", body.QueueId);
 
-            var queue = await LoadQueueAsync(body.QueueId, cancellationToken);
-            if (queue == null)
-            {
-                return (StatusCodes.NotFound, null);
-            }
-
-            return (StatusCodes.OK, MapQueueModelToResponse(queue));
-        }
-        catch (Exception ex)
+        var queue = await LoadQueueAsync(body.QueueId, cancellationToken);
+        if (queue == null)
         {
-            _logger.LogError(ex, "Failed to get queue {QueueId}", body.QueueId);
-            await _messageBus.TryPublishErrorAsync(
-                "matchmaking", "GetQueue", "unexpected_exception", ex.Message,
-                dependency: "state", endpoint: "post:/matchmaking/queue/get",
-                details: new { QueueId = body.QueueId }, stack: ex.StackTrace, cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
+            return (StatusCodes.NotFound, null);
         }
+
+        return (StatusCodes.OK, MapQueueModelToResponse(queue));
     }
 
     /// <summary>
@@ -195,84 +171,72 @@ public partial class MatchmakingService : IMatchmakingService
         CreateQueueRequest body,
         CancellationToken cancellationToken)
     {
-        try
+        _logger.LogDebug("Creating queue {QueueId} for game {GameId}", body.QueueId, body.GameId);
+
+        // Check if queue already exists
+        var existing = await LoadQueueAsync(body.QueueId, cancellationToken);
+        if (existing != null)
         {
-            _logger.LogDebug("Creating queue {QueueId} for game {GameId}", body.QueueId, body.GameId);
-
-            // Check if queue already exists
-            var existing = await LoadQueueAsync(body.QueueId, cancellationToken);
-            if (existing != null)
-            {
-                _logger.LogWarning("Queue {QueueId} already exists", body.QueueId);
-                return (StatusCodes.Conflict, null);
-            }
-
-            var queue = new QueueModel
-            {
-                QueueId = body.QueueId,
-                GameId = body.GameId,
-                SessionGameType = body.SessionGameType ?? "generic",
-                DisplayName = body.DisplayName,
-                Description = body.Description,
-                Enabled = true,
-                MinCount = body.MinCount,
-                MaxCount = body.MaxCount,
-                CountMultiple = body.CountMultiple > 0 ? body.CountMultiple : 1,
-                IntervalSeconds = body.IntervalSeconds > 0 ? body.IntervalSeconds : _configuration.ProcessingIntervalSeconds,
-                MaxIntervals = body.MaxIntervals > 0 ? body.MaxIntervals : _configuration.DefaultMaxIntervals,
-                SkillExpansion = body.SkillExpansion?.Select(s => new SkillExpansionStepModel
-                {
-                    Intervals = s.Intervals,
-                    Range = s.Range
-                }).ToList(),
-                PartySkillAggregation = body.PartySkillAggregation,
-                PartySkillWeights = body.PartySkillWeights?.ToList(),
-                PartyMaxSize = body.PartyMaxSize,
-                AllowConcurrent = body.AllowConcurrent,
-                ExclusiveGroup = body.ExclusiveGroup,
-                UseSkillRating = body.UseSkillRating,
-                RatingCategory = body.RatingCategory,
-                StartWhenMinimumReached = body.StartWhenMinimumReached,
-                RequiresRegistration = body.RequiresRegistration,
-                TournamentIdRequired = body.TournamentIdRequired,
-                MatchAcceptTimeoutSeconds = body.MatchAcceptTimeoutSeconds > 0
-                    ? body.MatchAcceptTimeoutSeconds
-                    : _configuration.DefaultMatchAcceptTimeoutSeconds,
-                CreatedAt = DateTimeOffset.UtcNow
-            };
-
-            // Save queue
-            await SaveQueueAsync(queue, cancellationToken);
-
-            // Add to queue list
-            await AddToQueueListAsync(queue.QueueId, cancellationToken);
-
-            // Publish event
-            await _messageBus.TryPublishAsync("matchmaking.queue-created", new MatchmakingQueueCreatedEvent
-            {
-                EventId = Guid.NewGuid(),
-                Timestamp = DateTimeOffset.UtcNow,
-                QueueId = queue.QueueId,
-                GameId = queue.GameId,
-                DisplayName = queue.DisplayName,
-                Enabled = queue.Enabled,
-                MinCount = queue.MinCount,
-                MaxCount = queue.MaxCount,
-                CreatedAt = queue.CreatedAt
-            }, cancellationToken: cancellationToken);
-
-            _logger.LogInformation("Queue {QueueId} created successfully", queue.QueueId);
-            return (StatusCodes.OK, MapQueueModelToResponse(queue));
+            _logger.LogWarning("Queue {QueueId} already exists", body.QueueId);
+            return (StatusCodes.Conflict, null);
         }
-        catch (Exception ex)
+
+        var queue = new QueueModel
         {
-            _logger.LogError(ex, "Failed to create queue {QueueId}", body.QueueId);
-            await _messageBus.TryPublishErrorAsync(
-                "matchmaking", "CreateQueue", "unexpected_exception", ex.Message,
-                dependency: "state", endpoint: "post:/matchmaking/queue/create",
-                details: new { QueueId = body.QueueId }, stack: ex.StackTrace, cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
+            QueueId = body.QueueId,
+            GameId = body.GameId,
+            SessionGameType = body.SessionGameType ?? "generic",
+            DisplayName = body.DisplayName,
+            Description = body.Description,
+            Enabled = true,
+            MinCount = body.MinCount,
+            MaxCount = body.MaxCount,
+            CountMultiple = body.CountMultiple > 0 ? body.CountMultiple : 1,
+            IntervalSeconds = body.IntervalSeconds > 0 ? body.IntervalSeconds : _configuration.ProcessingIntervalSeconds,
+            MaxIntervals = body.MaxIntervals > 0 ? body.MaxIntervals : _configuration.DefaultMaxIntervals,
+            SkillExpansion = body.SkillExpansion?.Select(s => new SkillExpansionStepModel
+            {
+                Intervals = s.Intervals,
+                Range = s.Range
+            }).ToList(),
+            PartySkillAggregation = body.PartySkillAggregation,
+            PartySkillWeights = body.PartySkillWeights?.ToList(),
+            PartyMaxSize = body.PartyMaxSize,
+            AllowConcurrent = body.AllowConcurrent,
+            ExclusiveGroup = body.ExclusiveGroup,
+            UseSkillRating = body.UseSkillRating,
+            RatingCategory = body.RatingCategory,
+            StartWhenMinimumReached = body.StartWhenMinimumReached,
+            RequiresRegistration = body.RequiresRegistration,
+            TournamentIdRequired = body.TournamentIdRequired,
+            MatchAcceptTimeoutSeconds = body.MatchAcceptTimeoutSeconds > 0
+                ? body.MatchAcceptTimeoutSeconds
+                : _configuration.DefaultMatchAcceptTimeoutSeconds,
+            CreatedAt = DateTimeOffset.UtcNow
+        };
+
+        // Save queue
+        await SaveQueueAsync(queue, cancellationToken);
+
+        // Add to queue list
+        await AddToQueueListAsync(queue.QueueId, cancellationToken);
+
+        // Publish event
+        await _messageBus.TryPublishAsync("matchmaking.queue-created", new MatchmakingQueueCreatedEvent
+        {
+            EventId = Guid.NewGuid(),
+            Timestamp = DateTimeOffset.UtcNow,
+            QueueId = queue.QueueId,
+            GameId = queue.GameId,
+            DisplayName = queue.DisplayName,
+            Enabled = queue.Enabled,
+            MinCount = queue.MinCount,
+            MaxCount = queue.MaxCount,
+            CreatedAt = queue.CreatedAt
+        }, cancellationToken: cancellationToken);
+
+        _logger.LogInformation("Queue {QueueId} created successfully", queue.QueueId);
+        return (StatusCodes.OK, MapQueueModelToResponse(queue));
     }
 
     /// <summary>
@@ -282,76 +246,64 @@ public partial class MatchmakingService : IMatchmakingService
         UpdateQueueRequest body,
         CancellationToken cancellationToken)
     {
-        try
+        _logger.LogDebug("Updating queue {QueueId}", body.QueueId);
+
+        var queueStore = _stateStoreFactory.GetStore<QueueModel>(StateStoreDefinitions.Matchmaking);
+        var queueKey = QUEUE_KEY_PREFIX + body.QueueId;
+        var (queue, etag) = await queueStore.GetWithETagAsync(queueKey, cancellationToken);
+        if (queue == null)
         {
-            _logger.LogDebug("Updating queue {QueueId}", body.QueueId);
-
-            var queueStore = _stateStoreFactory.GetStore<QueueModel>(StateStoreDefinitions.Matchmaking);
-            var queueKey = QUEUE_KEY_PREFIX + body.QueueId;
-            var (queue, etag) = await queueStore.GetWithETagAsync(queueKey, cancellationToken);
-            if (queue == null)
-            {
-                return (StatusCodes.NotFound, null);
-            }
-
-            // Apply updates
-            if (!string.IsNullOrEmpty(body.DisplayName)) queue.DisplayName = body.DisplayName;
-            if (body.Description != null) queue.Description = body.Description;
-            if (body.Enabled.HasValue) queue.Enabled = body.Enabled.Value;
-            if (body.MinCount.HasValue) queue.MinCount = body.MinCount.Value;
-            if (body.MaxCount.HasValue) queue.MaxCount = body.MaxCount.Value;
-            if (body.CountMultiple.HasValue) queue.CountMultiple = body.CountMultiple.Value;
-            if (body.IntervalSeconds.HasValue) queue.IntervalSeconds = body.IntervalSeconds.Value;
-            if (body.MaxIntervals.HasValue) queue.MaxIntervals = body.MaxIntervals.Value;
-            if (body.SkillExpansion != null)
-            {
-                queue.SkillExpansion = body.SkillExpansion.Select(s => new SkillExpansionStepModel
-                {
-                    Intervals = s.Intervals,
-                    Range = s.Range
-                }).ToList();
-            }
-            if (body.PartySkillAggregation.HasValue) queue.PartySkillAggregation = body.PartySkillAggregation.Value;
-            if (body.PartyMaxSize.HasValue) queue.PartyMaxSize = body.PartyMaxSize.Value;
-            if (body.MatchAcceptTimeoutSeconds.HasValue) queue.MatchAcceptTimeoutSeconds = body.MatchAcceptTimeoutSeconds.Value;
-
-            queue.UpdatedAt = DateTimeOffset.UtcNow;
-
-            // Save queue with ETag - etag is non-null when queue was successfully loaded above;
-            // null-coalesce satisfies compiler nullable analysis (will never execute)
-            var newEtag = await queueStore.TrySaveAsync(queueKey, queue, etag ?? string.Empty, cancellationToken);
-            if (newEtag == null)
-            {
-                _logger.LogWarning("Concurrent modification detected for queue {QueueId}", body.QueueId);
-                return (StatusCodes.Conflict, null);
-            }
-
-            // Publish event
-            await _messageBus.TryPublishAsync("matchmaking.queue-updated", new MatchmakingQueueUpdatedEvent
-            {
-                EventId = Guid.NewGuid(),
-                Timestamp = DateTimeOffset.UtcNow,
-                QueueId = queue.QueueId,
-                GameId = queue.GameId,
-                DisplayName = queue.DisplayName,
-                Enabled = queue.Enabled,
-                MinCount = queue.MinCount,
-                MaxCount = queue.MaxCount,
-                CreatedAt = queue.CreatedAt
-            }, cancellationToken: cancellationToken);
-
-            _logger.LogInformation("Queue {QueueId} updated successfully", queue.QueueId);
-            return (StatusCodes.OK, MapQueueModelToResponse(queue));
+            return (StatusCodes.NotFound, null);
         }
-        catch (Exception ex)
+
+        // Apply updates
+        if (!string.IsNullOrEmpty(body.DisplayName)) queue.DisplayName = body.DisplayName;
+        if (body.Description != null) queue.Description = body.Description;
+        if (body.Enabled.HasValue) queue.Enabled = body.Enabled.Value;
+        if (body.MinCount.HasValue) queue.MinCount = body.MinCount.Value;
+        if (body.MaxCount.HasValue) queue.MaxCount = body.MaxCount.Value;
+        if (body.CountMultiple.HasValue) queue.CountMultiple = body.CountMultiple.Value;
+        if (body.IntervalSeconds.HasValue) queue.IntervalSeconds = body.IntervalSeconds.Value;
+        if (body.MaxIntervals.HasValue) queue.MaxIntervals = body.MaxIntervals.Value;
+        if (body.SkillExpansion != null)
         {
-            _logger.LogError(ex, "Failed to update queue {QueueId}", body.QueueId);
-            await _messageBus.TryPublishErrorAsync(
-                "matchmaking", "UpdateQueue", "unexpected_exception", ex.Message,
-                dependency: "state", endpoint: "post:/matchmaking/queue/update",
-                details: new { QueueId = body.QueueId }, stack: ex.StackTrace, cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
+            queue.SkillExpansion = body.SkillExpansion.Select(s => new SkillExpansionStepModel
+            {
+                Intervals = s.Intervals,
+                Range = s.Range
+            }).ToList();
         }
+        if (body.PartySkillAggregation.HasValue) queue.PartySkillAggregation = body.PartySkillAggregation.Value;
+        if (body.PartyMaxSize.HasValue) queue.PartyMaxSize = body.PartyMaxSize.Value;
+        if (body.MatchAcceptTimeoutSeconds.HasValue) queue.MatchAcceptTimeoutSeconds = body.MatchAcceptTimeoutSeconds.Value;
+
+        queue.UpdatedAt = DateTimeOffset.UtcNow;
+
+        // Save queue with ETag - etag is non-null when queue was successfully loaded above;
+        // null-coalesce satisfies compiler nullable analysis (will never execute)
+        var newEtag = await queueStore.TrySaveAsync(queueKey, queue, etag ?? string.Empty, cancellationToken);
+        if (newEtag == null)
+        {
+            _logger.LogWarning("Concurrent modification detected for queue {QueueId}", body.QueueId);
+            return (StatusCodes.Conflict, null);
+        }
+
+        // Publish event
+        await _messageBus.TryPublishAsync("matchmaking.queue-updated", new MatchmakingQueueUpdatedEvent
+        {
+            EventId = Guid.NewGuid(),
+            Timestamp = DateTimeOffset.UtcNow,
+            QueueId = queue.QueueId,
+            GameId = queue.GameId,
+            DisplayName = queue.DisplayName,
+            Enabled = queue.Enabled,
+            MinCount = queue.MinCount,
+            MaxCount = queue.MaxCount,
+            CreatedAt = queue.CreatedAt
+        }, cancellationToken: cancellationToken);
+
+        _logger.LogInformation("Queue {QueueId} updated successfully", queue.QueueId);
+        return (StatusCodes.OK, MapQueueModelToResponse(queue));
     }
 
     /// <summary>
@@ -361,56 +313,44 @@ public partial class MatchmakingService : IMatchmakingService
         DeleteQueueRequest body,
         CancellationToken cancellationToken)
     {
-        try
+        _logger.LogDebug("Deleting queue {QueueId}", body.QueueId);
+
+        var queue = await LoadQueueAsync(body.QueueId, cancellationToken);
+        if (queue == null)
         {
-            _logger.LogDebug("Deleting queue {QueueId}", body.QueueId);
-
-            var queue = await LoadQueueAsync(body.QueueId, cancellationToken);
-            if (queue == null)
-            {
-                return StatusCodes.NotFound;
-            }
-
-            // Cancel all tickets in the queue
-            var ticketIds = await GetQueueTicketIdsAsync(body.QueueId, cancellationToken);
-            foreach (var ticketId in ticketIds)
-            {
-                await CancelTicketInternalAsync(ticketId, CancelReason.QueueDisabled, cancellationToken);
-            }
-
-            // Delete queue
-            await _stateStoreFactory.GetStore<QueueModel>(StateStoreDefinitions.Matchmaking)
-                .DeleteAsync(QUEUE_KEY_PREFIX + body.QueueId, cancellationToken);
-
-            // Remove from queue list
-            await RemoveFromQueueListAsync(body.QueueId, cancellationToken);
-
-            // Publish event
-            await _messageBus.TryPublishAsync("matchmaking.queue-deleted", new MatchmakingQueueDeletedEvent
-            {
-                EventId = Guid.NewGuid(),
-                Timestamp = DateTimeOffset.UtcNow,
-                QueueId = queue.QueueId,
-                GameId = queue.GameId,
-                DisplayName = queue.DisplayName,
-                Enabled = queue.Enabled,
-                MinCount = queue.MinCount,
-                MaxCount = queue.MaxCount,
-                CreatedAt = queue.CreatedAt
-            }, cancellationToken: cancellationToken);
-
-            _logger.LogInformation("Queue {QueueId} deleted successfully", body.QueueId);
-            return StatusCodes.OK;
+            return StatusCodes.NotFound;
         }
-        catch (Exception ex)
+
+        // Cancel all tickets in the queue
+        var ticketIds = await GetQueueTicketIdsAsync(body.QueueId, cancellationToken);
+        foreach (var ticketId in ticketIds)
         {
-            _logger.LogError(ex, "Failed to delete queue {QueueId}", body.QueueId);
-            await _messageBus.TryPublishErrorAsync(
-                "matchmaking", "DeleteQueue", "unexpected_exception", ex.Message,
-                dependency: "state", endpoint: "post:/matchmaking/queue/delete",
-                details: new { QueueId = body.QueueId }, stack: ex.StackTrace, cancellationToken: cancellationToken);
-            return StatusCodes.InternalServerError;
+            await CancelTicketInternalAsync(ticketId, CancelReason.QueueDisabled, cancellationToken);
         }
+
+        // Delete queue
+        await _stateStoreFactory.GetStore<QueueModel>(StateStoreDefinitions.Matchmaking)
+            .DeleteAsync(QUEUE_KEY_PREFIX + body.QueueId, cancellationToken);
+
+        // Remove from queue list
+        await RemoveFromQueueListAsync(body.QueueId, cancellationToken);
+
+        // Publish event
+        await _messageBus.TryPublishAsync("matchmaking.queue-deleted", new MatchmakingQueueDeletedEvent
+        {
+            EventId = Guid.NewGuid(),
+            Timestamp = DateTimeOffset.UtcNow,
+            QueueId = queue.QueueId,
+            GameId = queue.GameId,
+            DisplayName = queue.DisplayName,
+            Enabled = queue.Enabled,
+            MinCount = queue.MinCount,
+            MaxCount = queue.MaxCount,
+            CreatedAt = queue.CreatedAt
+        }, cancellationToken: cancellationToken);
+
+        _logger.LogInformation("Queue {QueueId} deleted successfully", body.QueueId);
+        return StatusCodes.OK;
     }
 
     #endregion
@@ -424,207 +364,195 @@ public partial class MatchmakingService : IMatchmakingService
         JoinMatchmakingRequest body,
         CancellationToken cancellationToken)
     {
-        try
+        var sessionId = body.WebSocketSessionId;
+        var accountId = body.AccountId;
+        var queueId = body.QueueId;
+
+        _logger.LogDebug("Player {AccountId} joining queue {QueueId}", accountId, queueId);
+
+        // Load queue
+        var queue = await LoadQueueAsync(queueId, cancellationToken);
+        if (queue == null)
         {
-            var sessionId = body.WebSocketSessionId;
-            var accountId = body.AccountId;
-            var queueId = body.QueueId;
+            _logger.LogWarning("Queue {QueueId} not found", queueId);
+            return (StatusCodes.NotFound, null);
+        }
 
-            _logger.LogDebug("Player {AccountId} joining queue {QueueId}", accountId, queueId);
+        if (!queue.Enabled)
+        {
+            _logger.LogWarning("Queue {QueueId} is disabled", queueId);
+            return (StatusCodes.Conflict, null);
+        }
 
-            // Load queue
-            var queue = await LoadQueueAsync(queueId, cancellationToken);
-            if (queue == null)
-            {
-                _logger.LogWarning("Queue {QueueId} not found", queueId);
-                return (StatusCodes.NotFound, null);
-            }
+        // Check concurrent ticket limits
+        var playerTickets = await GetPlayerTicketsAsync(accountId, cancellationToken);
+        if (playerTickets.Count >= _configuration.MaxConcurrentTicketsPerPlayer)
+        {
+            _logger.LogWarning("Player {AccountId} has reached max concurrent tickets ({Max})",
+                accountId, _configuration.MaxConcurrentTicketsPerPlayer);
+            return (StatusCodes.Conflict, null);
+        }
 
-            if (!queue.Enabled)
-            {
-                _logger.LogWarning("Queue {QueueId} is disabled", queueId);
-                return (StatusCodes.Conflict, null);
-            }
-
-            // Check concurrent ticket limits
-            var playerTickets = await GetPlayerTicketsAsync(accountId, cancellationToken);
-            if (playerTickets.Count >= _configuration.MaxConcurrentTicketsPerPlayer)
-            {
-                _logger.LogWarning("Player {AccountId} has reached max concurrent tickets ({Max})",
-                    accountId, _configuration.MaxConcurrentTicketsPerPlayer);
-                return (StatusCodes.Conflict, null);
-            }
-
-            // Check exclusive group conflicts
-            if (!string.IsNullOrEmpty(queue.ExclusiveGroup))
-            {
-                foreach (var existingTicketId in playerTickets)
-                {
-                    var existingTicket = await LoadTicketAsync(existingTicketId, cancellationToken);
-                    if (existingTicket != null)
-                    {
-                        var existingQueue = await LoadQueueAsync(existingTicket.QueueId, cancellationToken);
-                        if (existingQueue?.ExclusiveGroup == queue.ExclusiveGroup)
-                        {
-                            _logger.LogWarning("Player {AccountId} already in queue with exclusive group {Group}",
-                                accountId, queue.ExclusiveGroup);
-                            return (StatusCodes.Conflict, null);
-                        }
-                    }
-                }
-            }
-
-            // Check if already in this queue
+        // Check exclusive group conflicts
+        if (!string.IsNullOrEmpty(queue.ExclusiveGroup))
+        {
             foreach (var existingTicketId in playerTickets)
             {
                 var existingTicket = await LoadTicketAsync(existingTicketId, cancellationToken);
-                if (existingTicket?.QueueId == queueId)
+                if (existingTicket != null)
                 {
-                    _logger.LogWarning("Player {AccountId} already in queue {QueueId}", accountId, queueId);
-                    return (StatusCodes.Conflict, null);
-                }
-            }
-
-            // Create ticket
-            var ticketId = Guid.NewGuid();
-            var ticket = new TicketModel
-            {
-                TicketId = ticketId,
-                QueueId = queueId,
-                AccountId = accountId,
-                WebSocketSessionId = sessionId,
-                PartyId = body.PartyId,
-                PartyMembers = body.PartyMembers?.Select(m => new PartyMemberModel
-                {
-                    AccountId = m.AccountId,
-                    WebSocketSessionId = m.WebSocketSessionId,
-                    SkillRating = m.SkillRating
-                }).ToList(),
-                StringProperties = body.StringProperties?.ToDictionary(kvp => kvp.Key, kvp => kvp.Value) ?? new Dictionary<string, string>(),
-                NumericProperties = body.NumericProperties?.ToDictionary(kvp => kvp.Key, kvp => kvp.Value) ?? new Dictionary<string, double>(),
-                Query = body.Query,
-                TournamentId = body.TournamentId,
-                Status = TicketStatus.Searching,
-                CreatedAt = DateTimeOffset.UtcNow,
-                IntervalsElapsed = 0
-            };
-
-            // Calculate effective skill rating (for skill-based queues)
-            if (queue.UseSkillRating)
-            {
-                // Use party skill aggregation when party members are present
-                if (ticket.PartyMembers?.Count > 0)
-                {
-                    var ratings = ticket.PartyMembers
-                        .Where(m => m.SkillRating.HasValue)
-                        .Select(m => m.SkillRating.GetValueOrDefault())
-                        .ToList();
-
-                    if (ratings.Count > 0)
+                    var existingQueue = await LoadQueueAsync(existingTicket.QueueId, cancellationToken);
+                    if (existingQueue?.ExclusiveGroup == queue.ExclusiveGroup)
                     {
-                        ticket.SkillRating = queue.PartySkillAggregation switch
-                        {
-                            PartySkillAggregation.Highest => ratings.Max(),
-                            PartySkillAggregation.Average => ratings.Average(),
-                            PartySkillAggregation.Weighted when queue.PartySkillWeights?.Count >= ratings.Count =>
-                                ratings.Zip(queue.PartySkillWeights, (r, w) => r * w).Sum() / queue.PartySkillWeights.Sum(),
-                            _ => ratings.Average()
-                        };
+                        _logger.LogWarning("Player {AccountId} already in queue with exclusive group {Group}",
+                            accountId, queue.ExclusiveGroup);
+                        return (StatusCodes.Conflict, null);
                     }
                 }
             }
+        }
 
-            // Save ticket
-            await SaveTicketAsync(ticket, cancellationToken);
-
-            // Add to player tickets
-            await AddToPlayerTicketsAsync(accountId, ticketId, cancellationToken);
-
-            // Add to queue tickets
-            await AddToQueueTicketsAsync(queueId, ticketId, cancellationToken);
-
-            // Update session state for shortcuts
-            try
+        // Check if already in this queue
+        foreach (var existingTicketId in playerTickets)
+        {
+            var existingTicket = await LoadTicketAsync(existingTicketId, cancellationToken);
+            if (existingTicket?.QueueId == queueId)
             {
-                await _permissionClient.UpdateSessionStateAsync(new SessionStateUpdate
+                _logger.LogWarning("Player {AccountId} already in queue {QueueId}", accountId, queueId);
+                return (StatusCodes.Conflict, null);
+            }
+        }
+
+        // Create ticket
+        var ticketId = Guid.NewGuid();
+        var ticket = new TicketModel
+        {
+            TicketId = ticketId,
+            QueueId = queueId,
+            AccountId = accountId,
+            WebSocketSessionId = sessionId,
+            PartyId = body.PartyId,
+            PartyMembers = body.PartyMembers?.Select(m => new PartyMemberModel
+            {
+                AccountId = m.AccountId,
+                WebSocketSessionId = m.WebSocketSessionId,
+                SkillRating = m.SkillRating
+            }).ToList(),
+            StringProperties = body.StringProperties?.ToDictionary(kvp => kvp.Key, kvp => kvp.Value) ?? new Dictionary<string, string>(),
+            NumericProperties = body.NumericProperties?.ToDictionary(kvp => kvp.Key, kvp => kvp.Value) ?? new Dictionary<string, double>(),
+            Query = body.Query,
+            TournamentId = body.TournamentId,
+            Status = TicketStatus.Searching,
+            CreatedAt = DateTimeOffset.UtcNow,
+            IntervalsElapsed = 0
+        };
+
+        // Calculate effective skill rating (for skill-based queues)
+        if (queue.UseSkillRating)
+        {
+            // Use party skill aggregation when party members are present
+            if (ticket.PartyMembers?.Count > 0)
+            {
+                var ratings = ticket.PartyMembers
+                    .Where(m => m.SkillRating.HasValue)
+                    .Select(m => m.SkillRating.GetValueOrDefault())
+                    .ToList();
+
+                if (ratings.Count > 0)
                 {
-                    SessionId = body.WebSocketSessionId,
-                    ServiceId = "matchmaking",
-                    NewState = "in_queue"
-                }, cancellationToken);
+                    ticket.SkillRating = queue.PartySkillAggregation switch
+                    {
+                        PartySkillAggregation.Highest => ratings.Max(),
+                        PartySkillAggregation.Average => ratings.Average(),
+                        PartySkillAggregation.Weighted when queue.PartySkillWeights?.Count >= ratings.Count =>
+                            ratings.Zip(queue.PartySkillWeights, (r, w) => r * w).Sum() / queue.PartySkillWeights.Sum(),
+                        _ => ratings.Average()
+                    };
+                }
             }
-            catch (ApiException apiEx)
-            {
-                _logger.LogWarning(apiEx, "Permission service error setting matchmaking state for session {SessionId}: {Status}",
-                    sessionId, apiEx.StatusCode);
-                // Rollback
-                await DeleteTicketAsync(ticketId, cancellationToken);
-                await RemoveFromPlayerTicketsAsync(accountId, ticketId, cancellationToken);
-                await RemoveFromQueueTicketsAsync(queueId, ticketId, cancellationToken);
-                return ((StatusCodes)apiEx.StatusCode, null);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Failed to set matchmaking state for session {SessionId}", sessionId);
-                // Rollback
-                await DeleteTicketAsync(ticketId, cancellationToken);
-                await RemoveFromPlayerTicketsAsync(accountId, ticketId, cancellationToken);
-                await RemoveFromQueueTicketsAsync(queueId, ticketId, cancellationToken);
-                return (StatusCodes.InternalServerError, null);
-            }
+        }
 
-            // Publish shortcuts for leave/status endpoints
-            await PublishMatchmakingShortcutsAsync(sessionId, accountId, ticketId, cancellationToken);
+        // Save ticket
+        await SaveTicketAsync(ticket, cancellationToken);
 
-            // Publish event
-            await _messageBus.TryPublishAsync(TICKET_CREATED_TOPIC, new MatchmakingTicketCreatedEvent
-            {
-                EventId = Guid.NewGuid(),
-                Timestamp = DateTimeOffset.UtcNow,
-                TicketId = ticketId,
-                QueueId = queueId,
-                AccountId = accountId,
-                PartyId = ticket.PartyId,
-                PartySize = ticket.PartyMembers?.Count,
-                SkillRating = ticket.SkillRating
-            }, cancellationToken: cancellationToken);
+        // Add to player tickets
+        await AddToPlayerTicketsAsync(accountId, ticketId, cancellationToken);
 
-            // Send client event
-            await _clientEventPublisher.PublishToSessionAsync(sessionId.ToString(), new QueueJoinedEvent
+        // Add to queue tickets
+        await AddToQueueTicketsAsync(queueId, ticketId, cancellationToken);
+
+        // Update session state for shortcuts
+        try
+        {
+            await _permissionClient.UpdateSessionStateAsync(new SessionStateUpdate
             {
-                EventId = Guid.NewGuid(),
-                Timestamp = DateTimeOffset.UtcNow,
-                TicketId = ticketId,
-                QueueId = queueId,
-                QueueDisplayName = queue.DisplayName,
-                EstimatedWaitSeconds = queue.AverageWaitSeconds > 0 ? (int?)queue.AverageWaitSeconds : null
+                SessionId = body.WebSocketSessionId,
+                ServiceId = "matchmaking",
+                NewState = "in_queue"
             }, cancellationToken);
-
-            // Try immediate match if enabled
-            if (_configuration.ImmediateMatchCheckEnabled)
-            {
-                await TryImmediateMatchAsync(ticket, queue, cancellationToken);
-            }
-
-            _logger.LogInformation("Player {AccountId} joined queue {QueueId} with ticket {TicketId}",
-                accountId, queueId, ticketId);
-
-            return (StatusCodes.OK, new JoinMatchmakingResponse
-            {
-                TicketId = ticketId,
-                QueueId = queueId,
-                EstimatedWaitSeconds = queue.AverageWaitSeconds > 0 ? (int?)queue.AverageWaitSeconds : null
-            });
+        }
+        catch (ApiException apiEx)
+        {
+            _logger.LogWarning(apiEx, "Permission service error setting matchmaking state for session {SessionId}: {Status}",
+                sessionId, apiEx.StatusCode);
+            // Rollback
+            await DeleteTicketAsync(ticketId, cancellationToken);
+            await RemoveFromPlayerTicketsAsync(accountId, ticketId, cancellationToken);
+            await RemoveFromQueueTicketsAsync(queueId, ticketId, cancellationToken);
+            return ((StatusCodes)apiEx.StatusCode, null);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to join queue {QueueId}", body.QueueId);
-            await _messageBus.TryPublishErrorAsync(
-                "matchmaking", "JoinMatchmaking", "unexpected_exception", ex.Message,
-                dependency: "state", endpoint: "post:/matchmaking/join",
-                details: new { QueueId = body.QueueId }, stack: ex.StackTrace, cancellationToken: cancellationToken);
+            _logger.LogError(ex, "Failed to set matchmaking state for session {SessionId}", sessionId);
+            // Rollback
+            await DeleteTicketAsync(ticketId, cancellationToken);
+            await RemoveFromPlayerTicketsAsync(accountId, ticketId, cancellationToken);
+            await RemoveFromQueueTicketsAsync(queueId, ticketId, cancellationToken);
             return (StatusCodes.InternalServerError, null);
         }
+
+        // Publish shortcuts for leave/status endpoints
+        await PublishMatchmakingShortcutsAsync(sessionId, accountId, ticketId, cancellationToken);
+
+        // Publish event
+        await _messageBus.TryPublishAsync(TICKET_CREATED_TOPIC, new MatchmakingTicketCreatedEvent
+        {
+            EventId = Guid.NewGuid(),
+            Timestamp = DateTimeOffset.UtcNow,
+            TicketId = ticketId,
+            QueueId = queueId,
+            AccountId = accountId,
+            PartyId = ticket.PartyId,
+            PartySize = ticket.PartyMembers?.Count,
+            SkillRating = ticket.SkillRating
+        }, cancellationToken: cancellationToken);
+
+        // Send client event
+        await _clientEventPublisher.PublishToSessionAsync(sessionId.ToString(), new QueueJoinedEvent
+        {
+            EventId = Guid.NewGuid(),
+            Timestamp = DateTimeOffset.UtcNow,
+            TicketId = ticketId,
+            QueueId = queueId,
+            QueueDisplayName = queue.DisplayName,
+            EstimatedWaitSeconds = queue.AverageWaitSeconds > 0 ? (int?)queue.AverageWaitSeconds : null
+        }, cancellationToken);
+
+        // Try immediate match if enabled
+        if (_configuration.ImmediateMatchCheckEnabled)
+        {
+            await TryImmediateMatchAsync(ticket, queue, cancellationToken);
+        }
+
+        _logger.LogInformation("Player {AccountId} joined queue {QueueId} with ticket {TicketId}",
+            accountId, queueId, ticketId);
+
+        return (StatusCodes.OK, new JoinMatchmakingResponse
+        {
+            TicketId = ticketId,
+            QueueId = queueId,
+            EstimatedWaitSeconds = queue.AverageWaitSeconds > 0 ? (int?)queue.AverageWaitSeconds : null
+        });
     }
 
     /// <summary>
@@ -634,40 +562,28 @@ public partial class MatchmakingService : IMatchmakingService
         LeaveMatchmakingRequest body,
         CancellationToken cancellationToken)
     {
-        try
+        var ticketId = body.TicketId;
+        var accountId = body.AccountId;
+
+        _logger.LogDebug("Player {AccountId} leaving matchmaking with ticket {TicketId}",
+            accountId, ticketId);
+
+        var ticket = await LoadTicketAsync(ticketId, cancellationToken);
+        if (ticket == null)
         {
-            var ticketId = body.TicketId;
-            var accountId = body.AccountId;
-
-            _logger.LogDebug("Player {AccountId} leaving matchmaking with ticket {TicketId}",
-                accountId, ticketId);
-
-            var ticket = await LoadTicketAsync(ticketId, cancellationToken);
-            if (ticket == null)
-            {
-                return StatusCodes.NotFound;
-            }
-
-            if (ticket.AccountId != accountId)
-            {
-                _logger.LogWarning("Ticket {TicketId} does not belong to account {AccountId}",
-                    ticketId, accountId);
-                return StatusCodes.Forbidden;
-            }
-
-            await CancelTicketInternalAsync(ticketId, CancelReason.CancelledByUser, cancellationToken);
-
-            return StatusCodes.OK;
+            return StatusCodes.NotFound;
         }
-        catch (Exception ex)
+
+        if (ticket.AccountId != accountId)
         {
-            _logger.LogError(ex, "Failed to leave matchmaking with ticket {TicketId}", body.TicketId);
-            await _messageBus.TryPublishErrorAsync(
-                "matchmaking", "LeaveMatchmaking", "unexpected_exception", ex.Message,
-                dependency: "state", endpoint: "post:/matchmaking/leave",
-                details: new { TicketId = body.TicketId }, stack: ex.StackTrace, cancellationToken: cancellationToken);
-            return StatusCodes.InternalServerError;
+            _logger.LogWarning("Ticket {TicketId} does not belong to account {AccountId}",
+                ticketId, accountId);
+            return StatusCodes.Forbidden;
         }
+
+        await CancelTicketInternalAsync(ticketId, CancelReason.CancelledByUser, cancellationToken);
+
+        return StatusCodes.OK;
     }
 
     /// <summary>
@@ -677,43 +593,31 @@ public partial class MatchmakingService : IMatchmakingService
         GetMatchmakingStatusRequest body,
         CancellationToken cancellationToken)
     {
-        try
+        var ticket = await LoadTicketAsync(body.TicketId, cancellationToken);
+        if (ticket == null)
         {
-            var ticket = await LoadTicketAsync(body.TicketId, cancellationToken);
-            if (ticket == null)
-            {
-                return (StatusCodes.NotFound, null);
-            }
-
-            if (ticket.AccountId != body.AccountId)
-            {
-                return (StatusCodes.Forbidden, null);
-            }
-
-            var queue = await LoadQueueAsync(ticket.QueueId, cancellationToken);
-            var currentSkillRange = _algorithm.GetCurrentSkillRange(queue, ticket.IntervalsElapsed);
-
-            return (StatusCodes.OK, new MatchmakingStatusResponse
-            {
-                TicketId = ticket.TicketId,
-                QueueId = ticket.QueueId,
-                Status = ticket.Status,
-                IntervalsElapsed = ticket.IntervalsElapsed,
-                CurrentSkillRange = currentSkillRange,
-                EstimatedWaitSeconds = queue?.AverageWaitSeconds > 0 ? (int?)queue.AverageWaitSeconds : null,
-                CreatedAt = ticket.CreatedAt,
-                MatchId = ticket.MatchId
-            });
+            return (StatusCodes.NotFound, null);
         }
-        catch (Exception ex)
+
+        if (ticket.AccountId != body.AccountId)
         {
-            _logger.LogError(ex, "Failed to get matchmaking status for ticket {TicketId}", body.TicketId);
-            await _messageBus.TryPublishErrorAsync(
-                "matchmaking", "GetMatchmakingStatus", "unexpected_exception", ex.Message,
-                dependency: "state", endpoint: "post:/matchmaking/status",
-                details: new { TicketId = body.TicketId }, stack: ex.StackTrace, cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
+            return (StatusCodes.Forbidden, null);
         }
+
+        var queue = await LoadQueueAsync(ticket.QueueId, cancellationToken);
+        var currentSkillRange = _algorithm.GetCurrentSkillRange(queue, ticket.IntervalsElapsed);
+
+        return (StatusCodes.OK, new MatchmakingStatusResponse
+        {
+            TicketId = ticket.TicketId,
+            QueueId = ticket.QueueId,
+            Status = ticket.Status,
+            IntervalsElapsed = ticket.IntervalsElapsed,
+            CurrentSkillRange = currentSkillRange,
+            EstimatedWaitSeconds = queue?.AverageWaitSeconds > 0 ? (int?)queue.AverageWaitSeconds : null,
+            CreatedAt = ticket.CreatedAt,
+            MatchId = ticket.MatchId
+        });
     }
 
     /// <summary>
@@ -723,99 +627,87 @@ public partial class MatchmakingService : IMatchmakingService
         AcceptMatchRequest body,
         CancellationToken cancellationToken)
     {
-        try
+        var matchId = body.MatchId;
+        var accountId = body.AccountId;
+        var sessionId = body.WebSocketSessionId;
+
+        _logger.LogDebug("Player {AccountId} accepting match {MatchId}", accountId, matchId);
+
+        // Acquire lock on match (multiple players accept concurrently)
+        await using var matchLock = await _lockProvider.LockAsync(
+            "matchmaking-match", matchId.ToString(), Guid.NewGuid().ToString(), 30, cancellationToken);
+        if (!matchLock.Success)
         {
-            var matchId = body.MatchId;
-            var accountId = body.AccountId;
-            var sessionId = body.WebSocketSessionId;
+            _logger.LogWarning("Could not acquire match lock for {MatchId}", matchId);
+            return (StatusCodes.Conflict, null);
+        }
 
-            _logger.LogDebug("Player {AccountId} accepting match {MatchId}", accountId, matchId);
+        var match = await LoadMatchAsync(matchId, cancellationToken);
+        if (match == null)
+        {
+            return (StatusCodes.NotFound, null);
+        }
 
-            // Acquire lock on match (multiple players accept concurrently)
-            await using var matchLock = await _lockProvider.LockAsync(
-                "matchmaking-match", matchId.ToString(), Guid.NewGuid().ToString(), 30, cancellationToken);
-            if (!matchLock.Success)
+        // Check if player is in this match
+        var playerTicket = match.MatchedTickets.FirstOrDefault(t => t.AccountId == accountId);
+        if (playerTicket == null)
+        {
+            _logger.LogWarning("Player {AccountId} not in match {MatchId}", accountId, matchId);
+            return (StatusCodes.Forbidden, null);
+        }
+
+        // Check deadline
+        if (DateTimeOffset.UtcNow > match.AcceptDeadline)
+        {
+            _logger.LogWarning("Match {MatchId} acceptance deadline passed", matchId);
+            return (StatusCodes.Conflict, null);
+        }
+
+        // Mark as accepted
+        if (!match.AcceptedPlayers.Contains(accountId))
+        {
+            match.AcceptedPlayers.Add(accountId);
+            await SaveMatchAsync(match, cancellationToken);
+        }
+
+        // Notify all players of acceptance progress
+        foreach (var ticket in match.MatchedTickets)
+        {
+            await _clientEventPublisher.PublishToSessionAsync(ticket.WebSocketSessionId.ToString(), new MatchPlayerAcceptedEvent
             {
-                _logger.LogWarning("Could not acquire match lock for {MatchId}", matchId);
-                return (StatusCodes.Conflict, null);
-            }
+                EventId = Guid.NewGuid(),
+                Timestamp = DateTimeOffset.UtcNow,
+                MatchId = matchId,
+                AcceptedCount = match.AcceptedPlayers.Count,
+                TotalCount = match.MatchedTickets.Count,
+                AllAccepted = match.AcceptedPlayers.Count == match.MatchedTickets.Count
+            }, cancellationToken);
+        }
 
-            var match = await LoadMatchAsync(matchId, cancellationToken);
-            if (match == null)
-            {
-                return (StatusCodes.NotFound, null);
-            }
-
-            // Check if player is in this match
-            var playerTicket = match.MatchedTickets.FirstOrDefault(t => t.AccountId == accountId);
-            if (playerTicket == null)
-            {
-                _logger.LogWarning("Player {AccountId} not in match {MatchId}", accountId, matchId);
-                return (StatusCodes.Forbidden, null);
-            }
-
-            // Check deadline
-            if (DateTimeOffset.UtcNow > match.AcceptDeadline)
-            {
-                _logger.LogWarning("Match {MatchId} acceptance deadline passed", matchId);
-                return (StatusCodes.Conflict, null);
-            }
-
-            // Mark as accepted
-            if (!match.AcceptedPlayers.Contains(accountId))
-            {
-                match.AcceptedPlayers.Add(accountId);
-                await SaveMatchAsync(match, cancellationToken);
-            }
-
-            // Notify all players of acceptance progress
-            foreach (var ticket in match.MatchedTickets)
-            {
-                await _clientEventPublisher.PublishToSessionAsync(ticket.WebSocketSessionId.ToString(), new MatchPlayerAcceptedEvent
-                {
-                    EventId = Guid.NewGuid(),
-                    Timestamp = DateTimeOffset.UtcNow,
-                    MatchId = matchId,
-                    AcceptedCount = match.AcceptedPlayers.Count,
-                    TotalCount = match.MatchedTickets.Count,
-                    AllAccepted = match.AcceptedPlayers.Count == match.MatchedTickets.Count
-                }, cancellationToken);
-            }
-
-            // Check if all players accepted
-            if (match.AcceptedPlayers.Count == match.MatchedTickets.Count)
-            {
-                match.Status = MatchStatus.Accepted;
-                await SaveMatchAsync(match, cancellationToken);
-                await FinalizeMatchAsync(match, cancellationToken);
-
-                return (StatusCodes.OK, new AcceptMatchResponse
-                {
-                    MatchId = matchId,
-                    AllAccepted = true,
-                    AcceptedCount = match.AcceptedPlayers.Count,
-                    TotalCount = match.MatchedTickets.Count,
-                    GameSessionId = match.GameSessionId
-                });
-            }
+        // Check if all players accepted
+        if (match.AcceptedPlayers.Count == match.MatchedTickets.Count)
+        {
+            match.Status = MatchStatus.Accepted;
+            await SaveMatchAsync(match, cancellationToken);
+            await FinalizeMatchAsync(match, cancellationToken);
 
             return (StatusCodes.OK, new AcceptMatchResponse
             {
                 MatchId = matchId,
-                AllAccepted = false,
+                AllAccepted = true,
                 AcceptedCount = match.AcceptedPlayers.Count,
-                TotalCount = match.MatchedTickets.Count
+                TotalCount = match.MatchedTickets.Count,
+                GameSessionId = match.GameSessionId
             });
         }
-        catch (Exception ex)
+
+        return (StatusCodes.OK, new AcceptMatchResponse
         {
-            _logger.LogError(ex, "Failed to accept match {MatchId}", body.MatchId);
-            await _messageBus.TryPublishErrorAsync(
-                "matchmaking", "AcceptMatch", "unexpected_exception", ex.Message,
-                dependency: "state", endpoint: "post:/matchmaking/accept",
-                details: new { MatchId = body.MatchId }, stack: ex.StackTrace, cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
+            MatchId = matchId,
+            AllAccepted = false,
+            AcceptedCount = match.AcceptedPlayers.Count,
+            TotalCount = match.MatchedTickets.Count
+        });
     }
 
     /// <summary>
@@ -825,39 +717,27 @@ public partial class MatchmakingService : IMatchmakingService
         DeclineMatchRequest body,
         CancellationToken cancellationToken)
     {
-        try
+        var matchId = body.MatchId;
+        var accountId = body.AccountId;
+
+        _logger.LogDebug("Player {AccountId} declining match {MatchId}", accountId, matchId);
+
+        var match = await LoadMatchAsync(matchId, cancellationToken);
+        if (match == null)
         {
-            var matchId = body.MatchId;
-            var accountId = body.AccountId;
-
-            _logger.LogDebug("Player {AccountId} declining match {MatchId}", accountId, matchId);
-
-            var match = await LoadMatchAsync(matchId, cancellationToken);
-            if (match == null)
-            {
-                return StatusCodes.NotFound;
-            }
-
-            // Check if player is in this match
-            if (!match.MatchedTickets.Any(t => t.AccountId == accountId))
-            {
-                return StatusCodes.Forbidden;
-            }
-
-            // Cancel the match
-            await CancelMatchAsync(match, accountId, cancellationToken);
-
-            return StatusCodes.OK;
+            return StatusCodes.NotFound;
         }
-        catch (Exception ex)
+
+        // Check if player is in this match
+        if (!match.MatchedTickets.Any(t => t.AccountId == accountId))
         {
-            _logger.LogError(ex, "Failed to decline match {MatchId}", body.MatchId);
-            await _messageBus.TryPublishErrorAsync(
-                "matchmaking", "DeclineMatch", "unexpected_exception", ex.Message,
-                dependency: "state", endpoint: "post:/matchmaking/decline",
-                details: new { MatchId = body.MatchId }, stack: ex.StackTrace, cancellationToken: cancellationToken);
-            return StatusCodes.InternalServerError;
+            return StatusCodes.Forbidden;
         }
+
+        // Cancel the match
+        await CancelMatchAsync(match, accountId, cancellationToken);
+
+        return StatusCodes.OK;
     }
 
     /// <summary>
@@ -867,53 +747,41 @@ public partial class MatchmakingService : IMatchmakingService
         GetMatchmakingStatsRequest body,
         CancellationToken cancellationToken)
     {
-        try
+        var queueIds = await GetQueueIdsAsync(cancellationToken);
+        var stats = new List<QueueStats>();
+
+        foreach (var queueId in queueIds)
         {
-            var queueIds = await GetQueueIdsAsync(cancellationToken);
-            var stats = new List<QueueStats>();
+            // Filter by specific queue if requested
+            if (!string.IsNullOrEmpty(body.QueueId) && queueId != body.QueueId)
+                continue;
 
-            foreach (var queueId in queueIds)
+            var queue = await LoadQueueAsync(queueId, cancellationToken);
+            if (queue == null) continue;
+
+            // Filter by game ID if requested
+            if (!string.IsNullOrEmpty(body.GameId) && queue.GameId != body.GameId)
+                continue;
+
+            var ticketCount = await GetQueueTicketCountAsync(queueId, cancellationToken);
+
+            stats.Add(new QueueStats
             {
-                // Filter by specific queue if requested
-                if (!string.IsNullOrEmpty(body.QueueId) && queueId != body.QueueId)
-                    continue;
-
-                var queue = await LoadQueueAsync(queueId, cancellationToken);
-                if (queue == null) continue;
-
-                // Filter by game ID if requested
-                if (!string.IsNullOrEmpty(body.GameId) && queue.GameId != body.GameId)
-                    continue;
-
-                var ticketCount = await GetQueueTicketCountAsync(queueId, cancellationToken);
-
-                stats.Add(new QueueStats
-                {
-                    QueueId = queueId,
-                    CurrentTickets = ticketCount,
-                    MatchesFormedLastHour = queue.MatchesFormedLastHour,
-                    AverageWaitSeconds = queue.AverageWaitSeconds,
-                    MedianWaitSeconds = queue.MedianWaitSeconds,
-                    TimeoutRatePercent = queue.TimeoutRatePercent,
-                    CancelRatePercent = queue.CancelRatePercent
-                });
-            }
-
-            return (StatusCodes.OK, new MatchmakingStatsResponse
-            {
-                Timestamp = DateTimeOffset.UtcNow,
-                QueueStats = stats
+                QueueId = queueId,
+                CurrentTickets = ticketCount,
+                MatchesFormedLastHour = queue.MatchesFormedLastHour,
+                AverageWaitSeconds = queue.AverageWaitSeconds,
+                MedianWaitSeconds = queue.MedianWaitSeconds,
+                TimeoutRatePercent = queue.TimeoutRatePercent,
+                CancelRatePercent = queue.CancelRatePercent
             });
         }
-        catch (Exception ex)
+
+        return (StatusCodes.OK, new MatchmakingStatsResponse
         {
-            _logger.LogError(ex, "Failed to get matchmaking stats");
-            await _messageBus.TryPublishErrorAsync(
-                "matchmaking", "GetMatchmakingStats", "unexpected_exception", ex.Message,
-                dependency: "state", endpoint: "post:/matchmaking/stats",
-                details: null, stack: ex.StackTrace, cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
+            Timestamp = DateTimeOffset.UtcNow,
+            QueueStats = stats
+        });
     }
 
     #endregion
@@ -1286,11 +1154,27 @@ public partial class MatchmakingService : IMatchmakingService
 
     /// <summary>
     /// Cancels a ticket internally with reason.
+    /// Uses atomic delete as an idempotency gate to prevent concurrent cancellations
+    /// of the same ticket from blocking the event dispatch pipeline.
     /// </summary>
     private async Task CancelTicketInternalAsync(Guid ticketId, CancelReason reason, CancellationToken cancellationToken)
     {
         var ticket = await LoadTicketAsync(ticketId, cancellationToken);
         if (ticket == null) return;
+
+        // Atomic idempotency gate: delete the ticket first. Only the thread that
+        // successfully deletes it proceeds with the expensive cleanup operations
+        // (client event publish, permission HTTP call, service event publish).
+        // This prevents concurrent cancellations from the API thread and event
+        // handler thread from both running the full cancellation path.
+        var wasDeleted = await DeleteTicketAsync(ticketId, cancellationToken);
+        if (!wasDeleted)
+        {
+            _logger.LogDebug(
+                "Ticket {TicketId} already cancelled by another thread, skipping duplicate cancellation with reason {Reason}",
+                ticketId, reason);
+            return;
+        }
 
         var waitTime = (DateTimeOffset.UtcNow - ticket.CreatedAt).TotalSeconds;
 
@@ -1322,8 +1206,9 @@ public partial class MatchmakingService : IMatchmakingService
             _logger.LogDebug(ex, "Failed to clear permission state for session {SessionId}", ticket.WebSocketSessionId);
         }
 
-        // Clean up ticket
-        await CleanupTicketAsync(ticketId, ticket.AccountId, ticket.QueueId, cancellationToken);
+        // Clean up remaining ticket references (ticket itself already deleted above)
+        await RemoveFromPlayerTicketsAsync(ticket.AccountId, ticketId, cancellationToken);
+        await RemoveFromQueueTicketsAsync(ticket.QueueId, ticketId, cancellationToken);
 
         // Publish service event (cast from client events enum to API enum - identical values)
         await _messageBus.TryPublishAsync(TICKET_CANCELLED_TOPIC, new MatchmakingTicketCancelledEvent
@@ -1586,9 +1471,9 @@ public partial class MatchmakingService : IMatchmakingService
             .SaveAsync(TICKET_KEY_PREFIX + ticket.TicketId, ticket, cancellationToken: cancellationToken);
     }
 
-    private async Task DeleteTicketAsync(Guid ticketId, CancellationToken cancellationToken)
+    private async Task<bool> DeleteTicketAsync(Guid ticketId, CancellationToken cancellationToken)
     {
-        await _stateStoreFactory.GetStore<TicketModel>(StateStoreDefinitions.Matchmaking)
+        return await _stateStoreFactory.GetStore<TicketModel>(StateStoreDefinitions.Matchmaking)
             .DeleteAsync(TICKET_KEY_PREFIX + ticketId, cancellationToken);
     }
 
@@ -1950,139 +1835,5 @@ public partial class MatchmakingService : IMatchmakingService
 
     #region Permission Registration
 
-    /// <summary>
-    /// Registers service permissions with the Permission service.
-    /// </summary>
-    public async Task RegisterServicePermissionsAsync(string appId)
-    {
-        _logger.LogInformation("Registering Matchmaking service permissions...");
-        await MatchmakingPermissionRegistration.RegisterViaEventAsync(_messageBus, appId, _logger);
-    }
-
     #endregion
 }
-
-#region Internal Models
-
-/// <summary>
-/// Internal model for queue storage.
-/// </summary>
-internal class QueueModel
-{
-    public string QueueId { get; set; } = string.Empty;
-    public string GameId { get; set; } = string.Empty;
-    public string SessionGameType { get; set; } = "generic";
-    public string DisplayName { get; set; } = string.Empty;
-    public string? Description { get; set; }
-    public bool Enabled { get; set; } = true;
-    public int MinCount { get; set; }
-    public int MaxCount { get; set; }
-    public int CountMultiple { get; set; } = 1;
-    public int IntervalSeconds { get; set; } = 15;
-    public int MaxIntervals { get; set; } = 6;
-    public List<SkillExpansionStepModel>? SkillExpansion { get; set; }
-    public PartySkillAggregation PartySkillAggregation { get; set; } = PartySkillAggregation.Average;
-    public List<double>? PartySkillWeights { get; set; }
-    public int? PartyMaxSize { get; set; }
-    public bool AllowConcurrent { get; set; } = true;
-    public string? ExclusiveGroup { get; set; }
-    public bool UseSkillRating { get; set; } = true;
-    public string? RatingCategory { get; set; }
-    public bool StartWhenMinimumReached { get; set; }
-    public bool RequiresRegistration { get; set; }
-    public bool TournamentIdRequired { get; set; }
-    public int MatchAcceptTimeoutSeconds { get; set; } = 30;
-    public DateTimeOffset CreatedAt { get; set; }
-    public DateTimeOffset? UpdatedAt { get; set; }
-
-    // Stats
-    public double AverageWaitSeconds { get; set; }
-    public double? MedianWaitSeconds { get; set; }
-    public int MatchesFormedLastHour { get; set; }
-    public double? TimeoutRatePercent { get; set; }
-    public double? CancelRatePercent { get; set; }
-}
-
-internal class SkillExpansionStepModel
-{
-    public int Intervals { get; set; }
-    public int? Range { get; set; }
-}
-
-/// <summary>
-/// Internal model for ticket storage.
-/// </summary>
-internal class TicketModel
-{
-    public Guid TicketId { get; set; }
-    public string QueueId { get; set; } = string.Empty;
-    public Guid AccountId { get; set; }
-    public Guid WebSocketSessionId { get; set; }
-    public Guid? PartyId { get; set; }
-    public List<PartyMemberModel>? PartyMembers { get; set; }
-    public Dictionary<string, string> StringProperties { get; set; } = new();
-    public Dictionary<string, double> NumericProperties { get; set; } = new();
-    public string? Query { get; set; }
-    public Guid? TournamentId { get; set; }
-    public double? SkillRating { get; set; }
-    public TicketStatus Status { get; set; } = TicketStatus.Searching;
-    public DateTimeOffset CreatedAt { get; set; }
-    public int IntervalsElapsed { get; set; }
-    public Guid? MatchId { get; set; }
-}
-
-internal class PartyMemberModel
-{
-    public Guid AccountId { get; set; }
-    public Guid WebSocketSessionId { get; set; }
-    public double? SkillRating { get; set; }
-}
-
-/// <summary>
-/// Internal model for match storage.
-/// </summary>
-internal class MatchModel
-{
-    public Guid MatchId { get; set; }
-    public string QueueId { get; set; } = string.Empty;
-    public List<MatchedTicketModel> MatchedTickets { get; set; } = new();
-    public int PlayerCount { get; set; }
-    public double? AverageSkillRating { get; set; }
-    public double? SkillRatingSpread { get; set; }
-    public DateTimeOffset AcceptDeadline { get; set; }
-    public List<Guid> AcceptedPlayers { get; set; } = new();
-    public DateTimeOffset CreatedAt { get; set; }
-    public Guid? GameSessionId { get; set; }
-    public MatchStatus Status { get; set; } = MatchStatus.Pending;
-}
-
-/// <summary>
-/// Match lifecycle status.
-/// </summary>
-internal enum MatchStatus
-{
-    Pending,
-    Accepted,
-    Cancelled,
-    Completed
-}
-
-internal class MatchedTicketModel
-{
-    public Guid TicketId { get; set; }
-    public Guid AccountId { get; set; }
-    public Guid WebSocketSessionId { get; set; }
-    public Guid? PartyId { get; set; }
-    public double? SkillRating { get; set; }
-    public double WaitTimeSeconds { get; set; }
-}
-
-/// <summary>
-/// Wrapper for pending match storage (value types can't be stored directly).
-/// </summary>
-internal class PendingMatchWrapper
-{
-    public Guid MatchId { get; set; }
-}
-
-#endregion

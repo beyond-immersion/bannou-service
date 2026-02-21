@@ -267,6 +267,12 @@ public class SipEndpointRegistry : ISipEndpointRegistry
         return removed;
     }
 
+    /// <inheritdoc />
+    public IReadOnlyCollection<Guid> GetAllTrackedRoomIds()
+    {
+        return _localCache.Keys.ToList().AsReadOnly();
+    }
+
     /// <summary>
     /// Persists room participants to state store.
     /// </summary>

@@ -237,6 +237,22 @@ public sealed class AccountProxy
     }
 
     /// <summary>
+    /// Update MFA settings for an account
+    /// </summary>
+    /// <param name="request">The request payload.</param>
+    /// <param name="channel">Message channel for ordering (default 0).</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Task that completes when the event is sent.</returns>
+    public Task UpdateMfaEventAsync(
+        UpdateMfaRequest request,
+        ushort channel = 0,
+        CancellationToken cancellationToken = default)
+    {
+        return _client.SendEventAsync<UpdateMfaRequest>(
+            "/account/mfa/update", request, channel, cancellationToken);
+    }
+
+    /// <summary>
     /// Get multiple accounts by ID
     /// </summary>
     /// <param name="request">The request payload.</param>
@@ -304,5 +320,23 @@ public sealed class AccountProxy
     {
         return _client.SendEventAsync<UpdateVerificationRequest>(
             "/account/verification/update", request, channel, cancellationToken);
+    }
+
+    /// <summary>
+    /// Update account email address
+    /// </summary>
+    /// <param name="request">The request payload.</param>
+    /// <param name="channel">Message channel for ordering (default 0).</param>
+    /// <param name="timeout">Request timeout.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>ApiResponse containing AccountResponse on success.</returns>
+    public Task<ApiResponse<AccountResponse>> UpdateEmailAsync(
+        UpdateEmailRequest request,
+        ushort channel = 0,
+        TimeSpan? timeout = null,
+        CancellationToken cancellationToken = default)
+    {
+        return _client.InvokeAsync<UpdateEmailRequest, AccountResponse>(
+            "/account/email/update", request, channel, timeout, cancellationToken);
     }
 }

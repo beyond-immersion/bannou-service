@@ -254,7 +254,6 @@ public partial class MappingService : IMappingService
     {
         _logger.LogDebug("Creating channel for region {RegionId}, kind {Kind}", body.RegionId, body.Kind);
 
-        try
         {
             // Generate channel ID from region + kind (deterministic)
             var channelId = GenerateChannelId(body.RegionId, body.Kind);
@@ -373,15 +372,6 @@ public partial class MappingService : IMappingService
                 Kind = body.Kind
             });
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error creating channel for region {RegionId}", body.RegionId);
-            await _messageBus.TryPublishErrorAsync(
-                "mapping", "CreateChannel", "unexpected_exception", ex.Message,
-                dependency: "state", endpoint: "post:/mapping/create-channel",
-                details: null, stack: ex.StackTrace, cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <inheritdoc />
@@ -389,7 +379,6 @@ public partial class MappingService : IMappingService
     {
         _logger.LogDebug("Releasing authority for channel {ChannelId}", body.ChannelId);
 
-        try
         {
             var (valid, tokenChannelId, _) = ParseAuthorityToken(body.AuthorityToken);
             if (!valid || tokenChannelId != body.ChannelId)
@@ -435,15 +424,6 @@ public partial class MappingService : IMappingService
             _logger.LogInformation("Released authority for channel {ChannelId}", body.ChannelId);
             return (StatusCodes.OK, new ReleaseAuthorityResponse { Released = true });
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error releasing authority for channel {ChannelId}", body.ChannelId);
-            await _messageBus.TryPublishErrorAsync(
-                "mapping", "ReleaseAuthority", "unexpected_exception", ex.Message,
-                dependency: "state", endpoint: "post:/mapping/release-authority",
-                details: null, stack: ex.StackTrace, cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <inheritdoc />
@@ -451,7 +431,6 @@ public partial class MappingService : IMappingService
     {
         _logger.LogDebug("Processing heartbeat for channel {ChannelId}", body.ChannelId);
 
-        try
         {
             var (valid, tokenChannelId, _) = ParseAuthorityToken(body.AuthorityToken);
             if (!valid || tokenChannelId != body.ChannelId)
@@ -499,15 +478,6 @@ public partial class MappingService : IMappingService
                 Warning = warning
             });
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error processing heartbeat for channel {ChannelId}", body.ChannelId);
-            await _messageBus.TryPublishErrorAsync(
-                "mapping", "AuthorityHeartbeat", "unexpected_exception", ex.Message,
-                dependency: "state", endpoint: "post:/mapping/authority-heartbeat",
-                details: null, stack: ex.StackTrace, cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     #endregion
@@ -519,55 +489,43 @@ public partial class MappingService : IMappingService
     {
         _logger.LogDebug("Publishing map update to channel {ChannelId}", body.ChannelId);
 
-        try
+        // Check payload size limit (MVP: reject large payloads; full impl would use lib-asset)
+        var payloadSize = BannouJson.Serialize(body.Payload).Length;
+        if (payloadSize > _configuration.InlinePayloadMaxBytes)
         {
-            // Check payload size limit (MVP: reject large payloads; full impl would use lib-asset)
-            var payloadSize = BannouJson.Serialize(body.Payload).Length;
-            if (payloadSize > _configuration.InlinePayloadMaxBytes)
-            {
-                _logger.LogWarning("Payload size {Size} exceeds limit {Limit} for channel {ChannelId}",
-                    payloadSize, _configuration.InlinePayloadMaxBytes, body.ChannelId);
-                return (StatusCodes.BadRequest, null);
-            }
-
-            // Validate authority
-            var (isValid, channel, authorityAppId, warning) = await ValidateAuthorityAsync(body.ChannelId, body.AuthorityToken, cancellationToken);
-
-            if (!isValid && channel != null)
-            {
-                // Handle non-authority publish based on channel config
-                return await HandleNonAuthorityPublishAsync(channel, body.Payload, body.SourceAppId, warning, cancellationToken);
-            }
-
-            if (!isValid || channel == null)
-            {
-                _logger.LogWarning("Authority validation failed for channel {ChannelId}: {Warning}", body.ChannelId, warning);
-                return (StatusCodes.Unauthorized, null);
-            }
-
-            // Process the payload
-            var payloads = new List<MapPayload> { body.Payload };
-            var version = await ProcessPayloadsAsync(channel.ChannelId, channel.RegionId, channel.Kind, payloads, cancellationToken);
-
-            // Publish update event with authority's app-id as source
-            await PublishMapUpdatedEventAsync(channel, body.Bounds, version, body.DeltaType, body.Payload, authorityAppId, cancellationToken);
-
-            return (StatusCodes.OK, new PublishMapUpdateResponse
-            {
-                Accepted = true,
-                Version = version,
-                Warning = null
-            });
+            _logger.LogWarning("Payload size {Size} exceeds limit {Limit} for channel {ChannelId}",
+                payloadSize, _configuration.InlinePayloadMaxBytes, body.ChannelId);
+            return (StatusCodes.BadRequest, null);
         }
-        catch (Exception ex)
+
+        // Validate authority
+        var (isValid, channel, authorityAppId, warning) = await ValidateAuthorityAsync(body.ChannelId, body.AuthorityToken, cancellationToken);
+
+        if (!isValid && channel != null)
         {
-            _logger.LogError(ex, "Error publishing map update to channel {ChannelId}", body.ChannelId);
-            await _messageBus.TryPublishErrorAsync(
-                "mapping", "PublishMapUpdate", "unexpected_exception", ex.Message,
-                dependency: "state", endpoint: "post:/mapping/publish",
-                details: null, stack: ex.StackTrace, cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
+            // Handle non-authority publish based on channel config
+            return await HandleNonAuthorityPublishAsync(channel, body.Payload, body.SourceAppId, warning, cancellationToken);
         }
+
+        if (!isValid || channel == null)
+        {
+            _logger.LogWarning("Authority validation failed for channel {ChannelId}: {Warning}", body.ChannelId, warning);
+            return (StatusCodes.Unauthorized, null);
+        }
+
+        // Process the payload
+        var payloads = new List<MapPayload> { body.Payload };
+        var version = await ProcessPayloadsAsync(channel.ChannelId, channel.RegionId, channel.Kind, payloads, cancellationToken);
+
+        // Publish update event with authority's app-id as source
+        await PublishMapUpdatedEventAsync(channel, body.Bounds, version, body.DeltaType, body.Payload, authorityAppId, cancellationToken);
+
+        return (StatusCodes.OK, new PublishMapUpdateResponse
+        {
+            Accepted = true,
+            Version = version,
+            Warning = null
+        });
     }
 
     /// <inheritdoc />
@@ -575,35 +533,23 @@ public partial class MappingService : IMappingService
     {
         _logger.LogDebug("Publishing {Count} object changes to channel {ChannelId}", body.Changes.Count, body.ChannelId);
 
-        try
+        // Validate authority
+        var (isValid, channel, authorityAppId, warning) = await ValidateAuthorityAsync(body.ChannelId, body.AuthorityToken, cancellationToken);
+
+        if (!isValid && channel != null)
         {
-            // Validate authority
-            var (isValid, channel, authorityAppId, warning) = await ValidateAuthorityAsync(body.ChannelId, body.AuthorityToken, cancellationToken);
-
-            if (!isValid && channel != null)
-            {
-                // Authority invalid but channel exists - apply NonAuthorityHandlingMode
-                return await HandleNonAuthorityObjectChangesAsync(channel, body.Changes, warning, cancellationToken);
-            }
-
-            if (channel == null)
-            {
-                _logger.LogDebug("Channel {ChannelId} not found for object changes", body.ChannelId);
-                return (StatusCodes.NotFound, null);
-            }
-
-            // Authority is valid - process changes normally
-            return await ProcessAuthorizedObjectChangesAsync(channel, body.Changes, authorityAppId, cancellationToken);
+            // Authority invalid but channel exists - apply NonAuthorityHandlingMode
+            return await HandleNonAuthorityObjectChangesAsync(channel, body.Changes, warning, cancellationToken);
         }
-        catch (Exception ex)
+
+        if (channel == null)
         {
-            _logger.LogError(ex, "Error publishing object changes to channel {ChannelId}", body.ChannelId);
-            await _messageBus.TryPublishErrorAsync(
-                "mapping", "PublishObjectChanges", "unexpected_exception", ex.Message,
-                dependency: "state", endpoint: "post:/mapping/publish-objects",
-                details: null, stack: ex.StackTrace, cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
+            _logger.LogDebug("Channel {ChannelId} not found for object changes", body.ChannelId);
+            return (StatusCodes.NotFound, null);
         }
+
+        // Authority is valid - process changes normally
+        return await ProcessAuthorizedObjectChangesAsync(channel, body.Changes, authorityAppId, cancellationToken);
     }
 
     private async Task<(StatusCodes, PublishObjectChangesResponse?)> ProcessAuthorizedObjectChangesAsync(
@@ -738,7 +684,6 @@ public partial class MappingService : IMappingService
     {
         _logger.LogDebug("Requesting snapshot for region {RegionId}", body.RegionId);
 
-        try
         {
             var objects = new List<MapObject>();
             var kindsToQuery = body.Kinds ?? Enum.GetValues<MapKind>().ToList();
@@ -809,15 +754,6 @@ public partial class MappingService : IMappingService
                 Version = maxVersion
             });
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error requesting snapshot for region {RegionId}", body.RegionId);
-            await _messageBus.TryPublishErrorAsync(
-                "mapping", "RequestSnapshot", "unexpected_exception", ex.Message,
-                dependency: "state", endpoint: "post:/mapping/request-snapshot",
-                details: null, stack: ex.StackTrace, cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     #endregion
@@ -830,76 +766,64 @@ public partial class MappingService : IMappingService
         _logger.LogDebug("Querying point at ({X}, {Y}, {Z}) in region {RegionId}",
             body.Position.X, body.Position.Y, body.Position.Z, body.RegionId);
 
-        try
+        var objects = new List<MapObject>();
+        var radius = body.Radius ?? _configuration.DefaultSpatialCellSize;
+        var kindsToQuery = body.Kinds ?? Enum.GetValues<MapKind>().ToList();
+
+        // Calculate cells to query based on position and radius
+        var bounds = new Bounds
         {
-            var objects = new List<MapObject>();
-            var radius = body.Radius ?? _configuration.DefaultSpatialCellSize;
-            var kindsToQuery = body.Kinds ?? Enum.GetValues<MapKind>().ToList();
-
-            // Calculate cells to query based on position and radius
-            var bounds = new Bounds
+            Min = new Position3D
             {
-                Min = new Position3D
-                {
-                    X = body.Position.X - radius,
-                    Y = body.Position.Y - radius,
-                    Z = body.Position.Z - radius
-                },
-                Max = new Position3D
-                {
-                    X = body.Position.X + radius,
-                    Y = body.Position.Y + radius,
-                    Z = body.Position.Z + radius
-                }
-            };
-
-            foreach (var kind in kindsToQuery)
+                X = body.Position.X - radius,
+                Y = body.Position.Y - radius,
+                Z = body.Position.Z - radius
+            },
+            Max = new Position3D
             {
-                var kindObjects = await QueryObjectsInBoundsAsync(body.RegionId, kind, bounds, _configuration.MaxObjectsPerQuery, cancellationToken);
+                X = body.Position.X + radius,
+                Y = body.Position.Y + radius,
+                Z = body.Position.Z + radius
+            }
+        };
 
-                // Filter by actual distance
-                foreach (var obj in kindObjects)
+        foreach (var kind in kindsToQuery)
+        {
+            var kindObjects = await QueryObjectsInBoundsAsync(body.RegionId, kind, bounds, _configuration.MaxObjectsPerQuery, cancellationToken);
+
+            // Filter by actual distance
+            foreach (var obj in kindObjects)
+            {
+                if (obj.Position != null)
                 {
-                    if (obj.Position != null)
+                    var distance = Math.Sqrt(
+                        Math.Pow(obj.Position.X - body.Position.X, 2) +
+                        Math.Pow(obj.Position.Y - body.Position.Y, 2) +
+                        Math.Pow(obj.Position.Z - body.Position.Z, 2)
+                    );
+                    if (distance <= radius)
                     {
-                        var distance = Math.Sqrt(
-                            Math.Pow(obj.Position.X - body.Position.X, 2) +
-                            Math.Pow(obj.Position.Y - body.Position.Y, 2) +
-                            Math.Pow(obj.Position.Z - body.Position.Z, 2)
-                        );
-                        if (distance <= radius)
-                        {
-                            objects.Add(obj);
-                        }
+                        objects.Add(obj);
                     }
-                    else if (obj.Bounds != null)
+                }
+                else if (obj.Bounds != null)
+                {
+                    // Check if point is within bounds or bounds intersect radius
+                    if (BoundsContainsPoint(obj.Bounds, body.Position) ||
+                        BoundsIntersectsRadius(obj.Bounds, body.Position, radius))
                     {
-                        // Check if point is within bounds or bounds intersect radius
-                        if (BoundsContainsPoint(obj.Bounds, body.Position) ||
-                            BoundsIntersectsRadius(obj.Bounds, body.Position, radius))
-                        {
-                            objects.Add(obj);
-                        }
+                        objects.Add(obj);
                     }
                 }
             }
+        }
 
-            return (StatusCodes.OK, new QueryPointResponse
-            {
-                Objects = objects,
-                Position = body.Position,
-                Radius = radius
-            });
-        }
-        catch (Exception ex)
+        return (StatusCodes.OK, new QueryPointResponse
         {
-            _logger.LogError(ex, "Error querying point in region {RegionId}", body.RegionId);
-            await _messageBus.TryPublishErrorAsync(
-                "mapping", "QueryPoint", "unexpected_exception", ex.Message,
-                dependency: "state", endpoint: "post:/mapping/query/point",
-                details: null, stack: ex.StackTrace, cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
+            Objects = objects,
+            Position = body.Position,
+            Radius = radius
+        });
     }
 
     /// <inheritdoc />
@@ -907,47 +831,35 @@ public partial class MappingService : IMappingService
     {
         _logger.LogDebug("Querying bounds in region {RegionId}", body.RegionId);
 
-        try
+        var objects = new List<MapObject>();
+        var kindsToQuery = body.Kinds ?? Enum.GetValues<MapKind>().ToList();
+        var maxObjects = body.MaxObjects;
+        var truncated = false;
+
+        foreach (var kind in kindsToQuery)
         {
-            var objects = new List<MapObject>();
-            var kindsToQuery = body.Kinds ?? Enum.GetValues<MapKind>().ToList();
-            var maxObjects = body.MaxObjects;
-            var truncated = false;
-
-            foreach (var kind in kindsToQuery)
+            if (objects.Count >= maxObjects)
             {
-                if (objects.Count >= maxObjects)
-                {
-                    truncated = true;
-                    break;
-                }
-
-                var remaining = maxObjects - objects.Count;
-                var kindObjects = await QueryObjectsInBoundsAsync(body.RegionId, kind, body.Bounds, remaining, cancellationToken);
-                objects.AddRange(kindObjects);
-
-                if (kindObjects.Count >= remaining)
-                {
-                    truncated = true;
-                }
+                truncated = true;
+                break;
             }
 
-            return (StatusCodes.OK, new QueryBoundsResponse
+            var remaining = maxObjects - objects.Count;
+            var kindObjects = await QueryObjectsInBoundsAsync(body.RegionId, kind, body.Bounds, remaining, cancellationToken);
+            objects.AddRange(kindObjects);
+
+            if (kindObjects.Count >= remaining)
             {
-                Objects = objects,
-                Bounds = body.Bounds,
-                Truncated = truncated
-            });
+                truncated = true;
+            }
         }
-        catch (Exception ex)
+
+        return (StatusCodes.OK, new QueryBoundsResponse
         {
-            _logger.LogError(ex, "Error querying bounds in region {RegionId}", body.RegionId);
-            await _messageBus.TryPublishErrorAsync(
-                "mapping", "QueryBounds", "unexpected_exception", ex.Message,
-                dependency: "state", endpoint: "post:/mapping/query/bounds",
-                details: null, stack: ex.StackTrace, cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
+            Objects = objects,
+            Bounds = body.Bounds,
+            Truncated = truncated
+        });
     }
 
     /// <inheritdoc />
@@ -955,61 +867,49 @@ public partial class MappingService : IMappingService
     {
         _logger.LogDebug("Querying objects of type {ObjectType} in region {RegionId}", body.ObjectType, body.RegionId);
 
-        try
+        var typeIndexKey = BuildTypeIndexKey(body.RegionId, body.ObjectType);
+        var objectIds = await _stateStoreFactory.GetStore<List<Guid>>(StateStoreDefinitions.Mapping)
+            .GetAsync(typeIndexKey, cancellationToken) ?? new List<Guid>();
+
+        var objects = new List<MapObject>();
+        var truncated = false;
+
+        foreach (var objectId in objectIds)
         {
-            var typeIndexKey = BuildTypeIndexKey(body.RegionId, body.ObjectType);
-            var objectIds = await _stateStoreFactory.GetStore<List<Guid>>(StateStoreDefinitions.Mapping)
-                .GetAsync(typeIndexKey, cancellationToken) ?? new List<Guid>();
-
-            var objects = new List<MapObject>();
-            var truncated = false;
-
-            foreach (var objectId in objectIds)
+            if (objects.Count >= body.MaxObjects)
             {
-                if (objects.Count >= body.MaxObjects)
-                {
-                    truncated = true;
-                    break;
-                }
-
-                var objectKey = BuildObjectKey(body.RegionId, objectId);
-                var obj = await _stateStoreFactory.GetStore<MapObject>(StateStoreDefinitions.Mapping)
-                    .GetAsync(objectKey, cancellationToken);
-
-                if (obj != null)
-                {
-                    // Apply bounds filter if specified
-                    if (body.Bounds != null)
-                    {
-                        if (obj.Position != null && !BoundsContainsPoint(body.Bounds, obj.Position))
-                        {
-                            continue;
-                        }
-                        if (obj.Bounds != null && !BoundsIntersect(body.Bounds, obj.Bounds))
-                        {
-                            continue;
-                        }
-                    }
-                    objects.Add(obj);
-                }
+                truncated = true;
+                break;
             }
 
-            return (StatusCodes.OK, new QueryObjectsByTypeResponse
+            var objectKey = BuildObjectKey(body.RegionId, objectId);
+            var obj = await _stateStoreFactory.GetStore<MapObject>(StateStoreDefinitions.Mapping)
+                .GetAsync(objectKey, cancellationToken);
+
+            if (obj != null)
             {
-                Objects = objects,
-                ObjectType = body.ObjectType,
-                Truncated = truncated
-            });
+                // Apply bounds filter if specified
+                if (body.Bounds != null)
+                {
+                    if (obj.Position != null && !BoundsContainsPoint(body.Bounds, obj.Position))
+                    {
+                        continue;
+                    }
+                    if (obj.Bounds != null && !BoundsIntersect(body.Bounds, obj.Bounds))
+                    {
+                        continue;
+                    }
+                }
+                objects.Add(obj);
+            }
         }
-        catch (Exception ex)
+
+        return (StatusCodes.OK, new QueryObjectsByTypeResponse
         {
-            _logger.LogError(ex, "Error querying objects by type in region {RegionId}", body.RegionId);
-            await _messageBus.TryPublishErrorAsync(
-                "mapping", "QueryObjectsByType", "unexpected_exception", ex.Message,
-                dependency: "state", endpoint: "post:/mapping/query/objects-by-type",
-                details: null, stack: ex.StackTrace, cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
+            Objects = objects,
+            ObjectType = body.ObjectType,
+            Truncated = truncated
+        });
     }
 
     /// <inheritdoc />
@@ -1018,125 +918,113 @@ public partial class MappingService : IMappingService
         _logger.LogDebug("Querying affordance {AffordanceType} in region {RegionId}", body.AffordanceType, body.RegionId);
         var stopwatch = Stopwatch.StartNew();
 
-        try
+        // Check cache if freshness allows
+        if (body.Freshness != AffordanceFreshness.Fresh)
         {
-            // Check cache if freshness allows
-            if (body.Freshness != AffordanceFreshness.Fresh)
+            var cachedResult = await TryGetCachedAffordanceAsync(body, cancellationToken);
+            if (cachedResult != null)
             {
-                var cachedResult = await TryGetCachedAffordanceAsync(body, cancellationToken);
-                if (cachedResult != null)
+                stopwatch.Stop();
+                // Preserve original query stats from cached result, update cache-specific fields
+                if (cachedResult.QueryMetadata != null)
                 {
-                    stopwatch.Stop();
-                    // Preserve original query stats from cached result, update cache-specific fields
-                    if (cachedResult.QueryMetadata != null)
-                    {
-                        cachedResult.QueryMetadata.SearchDurationMs = (int)stopwatch.ElapsedMilliseconds;
-                        cachedResult.QueryMetadata.CacheHit = true;
-                    }
-                    else
-                    {
-                        cachedResult.QueryMetadata = new AffordanceQueryMetadata
-                        {
-                            KindsSearched = new List<string>(),
-                            ObjectsEvaluated = 0,
-                            CandidatesGenerated = 0,
-                            SearchDurationMs = (int)stopwatch.ElapsedMilliseconds,
-                            CacheHit = true
-                        };
-                    }
-                    return (StatusCodes.OK, cachedResult);
+                    cachedResult.QueryMetadata.SearchDurationMs = (int)stopwatch.ElapsedMilliseconds;
+                    cachedResult.QueryMetadata.CacheHit = true;
                 }
-            }
-
-            // Determine which map kinds to search based on affordance type
-            var kindsToSearch = _affordanceScorer.GetKindsForAffordanceType(body.AffordanceType);
-            var objectsEvaluated = 0;
-            var candidatesGenerated = 0;
-
-            // Gather candidate objects
-            var candidates = new List<MapObject>();
-            foreach (var kind in kindsToSearch)
-            {
-                var objects = await QueryObjectsInRegionAsync(body.RegionId, kind, body.Bounds,
-                    _configuration.MaxAffordanceCandidates, cancellationToken);
-                candidates.AddRange(objects);
-                objectsEvaluated += objects.Count;
-            }
-
-            // Score candidates based on affordance type
-            var scoredLocations = new List<AffordanceLocation>();
-
-            foreach (var candidate in candidates)
-            {
-                candidatesGenerated++;
-
-                // Skip excluded positions
-                if (body.ExcludePositions != null && candidate.Position != null)
+                else
                 {
-                    var tolerance = _configuration.AffordanceExclusionToleranceUnits;
-                    var excluded = body.ExcludePositions.Any(p =>
-                        Math.Abs(p.X - candidate.Position.X) < tolerance &&
-                        Math.Abs(p.Y - candidate.Position.Y) < tolerance &&
-                        Math.Abs(p.Z - candidate.Position.Z) < tolerance);
-                    if (excluded)
+                    cachedResult.QueryMetadata = new AffordanceQueryMetadata
                     {
-                        continue;
-                    }
+                        KindsSearched = new List<string>(),
+                        ObjectsEvaluated = 0,
+                        CandidatesGenerated = 0,
+                        SearchDurationMs = (int)stopwatch.ElapsedMilliseconds,
+                        CacheHit = true
+                    };
                 }
-
-                var score = _affordanceScorer.ScoreAffordance(candidate, body.AffordanceType, body.CustomAffordance, body.ActorCapabilities);
-
-                if (score >= body.MinScore)
-                {
-                    scoredLocations.Add(new AffordanceLocation
-                    {
-                        Position = candidate.Position ?? new Position3D { X = 0, Y = 0, Z = 0 },
-                        Bounds = candidate.Bounds,
-                        Score = score,
-                        Features = _affordanceScorer.ExtractFeatures(candidate, body.AffordanceType),
-                        ObjectIds = new List<Guid> { candidate.ObjectId }
-                    });
-                }
+                return (StatusCodes.OK, cachedResult);
             }
-
-            // Sort by score descending and take top results
-            var results = scoredLocations
-                .OrderByDescending(l => l.Score)
-                .Take(body.MaxResults)
-                .ToList();
-
-            stopwatch.Stop();
-
-            var response = new AffordanceQueryResponse
-            {
-                Locations = results,
-                QueryMetadata = new AffordanceQueryMetadata
-                {
-                    KindsSearched = kindsToSearch.Select(k => k.ToString()).ToList(),
-                    ObjectsEvaluated = objectsEvaluated,
-                    CandidatesGenerated = candidatesGenerated,
-                    SearchDurationMs = (int)stopwatch.ElapsedMilliseconds,
-                    CacheHit = false
-                }
-            };
-
-            // Cache result if allowed
-            if (body.Freshness != AffordanceFreshness.Fresh)
-            {
-                await CacheAffordanceResultAsync(body, response, cancellationToken);
-            }
-
-            return (StatusCodes.OK, response);
         }
-        catch (Exception ex)
+
+        // Determine which map kinds to search based on affordance type
+        var kindsToSearch = _affordanceScorer.GetKindsForAffordanceType(body.AffordanceType);
+        var objectsEvaluated = 0;
+        var candidatesGenerated = 0;
+
+        // Gather candidate objects
+        var candidates = new List<MapObject>();
+        foreach (var kind in kindsToSearch)
         {
-            _logger.LogError(ex, "Error querying affordance in region {RegionId}", body.RegionId);
-            await _messageBus.TryPublishErrorAsync(
-                "mapping", "QueryAffordance", "unexpected_exception", ex.Message,
-                dependency: "state", endpoint: "post:/mapping/query/affordance",
-                details: null, stack: ex.StackTrace, cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
+            var objects = await QueryObjectsInRegionAsync(body.RegionId, kind, body.Bounds,
+                _configuration.MaxAffordanceCandidates, cancellationToken);
+            candidates.AddRange(objects);
+            objectsEvaluated += objects.Count;
         }
+
+        // Score candidates based on affordance type
+        var scoredLocations = new List<AffordanceLocation>();
+
+        foreach (var candidate in candidates)
+        {
+            candidatesGenerated++;
+
+            // Skip excluded positions
+            if (body.ExcludePositions != null && candidate.Position != null)
+            {
+                var tolerance = _configuration.AffordanceExclusionToleranceUnits;
+                var excluded = body.ExcludePositions.Any(p =>
+                    Math.Abs(p.X - candidate.Position.X) < tolerance &&
+                    Math.Abs(p.Y - candidate.Position.Y) < tolerance &&
+                    Math.Abs(p.Z - candidate.Position.Z) < tolerance);
+                if (excluded)
+                {
+                    continue;
+                }
+            }
+
+            var score = _affordanceScorer.ScoreAffordance(candidate, body.AffordanceType, body.CustomAffordance, body.ActorCapabilities);
+
+            if (score >= body.MinScore)
+            {
+                scoredLocations.Add(new AffordanceLocation
+                {
+                    Position = candidate.Position ?? new Position3D { X = 0, Y = 0, Z = 0 },
+                    Bounds = candidate.Bounds,
+                    Score = score,
+                    Features = _affordanceScorer.ExtractFeatures(candidate, body.AffordanceType),
+                    ObjectIds = new List<Guid> { candidate.ObjectId }
+                });
+            }
+        }
+
+        // Sort by score descending and take top results
+        var results = scoredLocations
+            .OrderByDescending(l => l.Score)
+            .Take(body.MaxResults)
+            .ToList();
+
+        stopwatch.Stop();
+
+        var response = new AffordanceQueryResponse
+        {
+            Locations = results,
+            QueryMetadata = new AffordanceQueryMetadata
+            {
+                KindsSearched = kindsToSearch.Select(k => k.ToString()).ToList(),
+                ObjectsEvaluated = objectsEvaluated,
+                CandidatesGenerated = candidatesGenerated,
+                SearchDurationMs = (int)stopwatch.ElapsedMilliseconds,
+                CacheHit = false
+            }
+        };
+
+        // Cache result if allowed
+        if (body.Freshness != AffordanceFreshness.Fresh)
+        {
+            await CacheAffordanceResultAsync(body, response, cancellationToken);
+        }
+
+        return (StatusCodes.OK, response);
     }
 
     #endregion
@@ -1149,63 +1037,51 @@ public partial class MappingService : IMappingService
         _logger.LogDebug("Checkout for authoring - region {RegionId}, kind {Kind}, editor {EditorId}",
             body.RegionId, body.Kind, body.EditorId);
 
-        try
-        {
-            var checkoutKey = BuildCheckoutKey(body.RegionId, body.Kind);
-            var existingCheckout = await _stateStoreFactory.GetStore<CheckoutRecord>(StateStoreDefinitions.Mapping)
-                .GetAsync(checkoutKey, cancellationToken);
+        var checkoutKey = BuildCheckoutKey(body.RegionId, body.Kind);
+        var existingCheckout = await _stateStoreFactory.GetStore<CheckoutRecord>(StateStoreDefinitions.Mapping)
+            .GetAsync(checkoutKey, cancellationToken);
 
-            // Check if already locked
-            if (existingCheckout != null)
+        // Check if already locked
+        if (existingCheckout != null)
+        {
+            // Check if lock has expired
+            if (existingCheckout.ExpiresAt > DateTimeOffset.UtcNow)
             {
-                // Check if lock has expired
-                if (existingCheckout.ExpiresAt > DateTimeOffset.UtcNow)
-                {
-                    _logger.LogDebug("Region {RegionId} kind {Kind} already locked by {EditorId}",
-                        body.RegionId, body.Kind, existingCheckout.EditorId);
-                    return (StatusCodes.Conflict, null);
-                }
-                // Lock expired, we can take it
+                _logger.LogDebug("Region {RegionId} kind {Kind} already locked by {EditorId}",
+                    body.RegionId, body.Kind, existingCheckout.EditorId);
+                return (StatusCodes.Conflict, null);
             }
-
-            var now = DateTimeOffset.UtcNow;
-            var expiresAt = now.AddSeconds(_configuration.MaxCheckoutDurationSeconds);
-            var channelId = GenerateChannelId(body.RegionId, body.Kind);
-            var authorityToken = GenerateAuthorityToken(channelId, expiresAt);
-
-            var checkout = new CheckoutRecord
-            {
-                RegionId = body.RegionId,
-                Kind = body.Kind,
-                EditorId = body.EditorId,
-                AuthorityToken = authorityToken,
-                ExpiresAt = expiresAt,
-                CreatedAt = now
-            };
-
-            await _stateStoreFactory.GetStore<CheckoutRecord>(StateStoreDefinitions.Mapping)
-                .SaveAsync(checkoutKey, checkout, cancellationToken: cancellationToken);
-
-            _logger.LogInformation("Checkout acquired for region {RegionId}, kind {Kind} by editor {EditorId}",
-                body.RegionId, body.Kind, body.EditorId);
-
-            return (StatusCodes.OK, new AuthoringCheckoutResponse
-            {
-                AuthorityToken = authorityToken,
-                ExpiresAt = expiresAt,
-                LockedBy = null,
-                LockedAt = null
-            });
+            // Lock expired, we can take it
         }
-        catch (Exception ex)
+
+        var now = DateTimeOffset.UtcNow;
+        var expiresAt = now.AddSeconds(_configuration.MaxCheckoutDurationSeconds);
+        var channelId = GenerateChannelId(body.RegionId, body.Kind);
+        var authorityToken = GenerateAuthorityToken(channelId, expiresAt);
+
+        var checkout = new CheckoutRecord
         {
-            _logger.LogError(ex, "Error checking out for authoring");
-            await _messageBus.TryPublishErrorAsync(
-                "mapping", "CheckoutForAuthoring", "unexpected_exception", ex.Message,
-                dependency: "state", endpoint: "post:/mapping/authoring/checkout",
-                details: null, stack: ex.StackTrace, cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
+            RegionId = body.RegionId,
+            Kind = body.Kind,
+            EditorId = body.EditorId,
+            AuthorityToken = authorityToken,
+            ExpiresAt = expiresAt,
+            CreatedAt = now
+        };
+
+        await _stateStoreFactory.GetStore<CheckoutRecord>(StateStoreDefinitions.Mapping)
+            .SaveAsync(checkoutKey, checkout, cancellationToken: cancellationToken);
+
+        _logger.LogInformation("Checkout acquired for region {RegionId}, kind {Kind} by editor {EditorId}",
+            body.RegionId, body.Kind, body.EditorId);
+
+        return (StatusCodes.OK, new AuthoringCheckoutResponse
+        {
+            AuthorityToken = authorityToken,
+            ExpiresAt = expiresAt,
+            LockedBy = null,
+            LockedAt = null
+        });
     }
 
     /// <inheritdoc />
@@ -1213,43 +1089,31 @@ public partial class MappingService : IMappingService
     {
         _logger.LogDebug("Committing authoring changes - region {RegionId}, kind {Kind}", body.RegionId, body.Kind);
 
-        try
+        var checkoutKey = BuildCheckoutKey(body.RegionId, body.Kind);
+        var checkout = await _stateStoreFactory.GetStore<CheckoutRecord>(StateStoreDefinitions.Mapping)
+            .GetAsync(checkoutKey, cancellationToken);
+
+        if (checkout == null || checkout.AuthorityToken != body.AuthorityToken)
         {
-            var checkoutKey = BuildCheckoutKey(body.RegionId, body.Kind);
-            var checkout = await _stateStoreFactory.GetStore<CheckoutRecord>(StateStoreDefinitions.Mapping)
-                .GetAsync(checkoutKey, cancellationToken);
-
-            if (checkout == null || checkout.AuthorityToken != body.AuthorityToken)
-            {
-                _logger.LogWarning("Invalid authority token for authoring commit on region {RegionId}", body.RegionId);
-                return (StatusCodes.Unauthorized, null);
-            }
-
-            // Increment version and release lock
-            var channelId = GenerateChannelId(body.RegionId, body.Kind);
-            var version = await IncrementVersionAsync(channelId, cancellationToken);
-
-            // Release the checkout
-            await _stateStoreFactory.GetStore<CheckoutRecord>(StateStoreDefinitions.Mapping)
-                .DeleteAsync(checkoutKey, cancellationToken);
-
-            _logger.LogInformation("Committed authoring changes for region {RegionId}, kind {Kind}, version {Version}",
-                body.RegionId, body.Kind, version);
-
-            return (StatusCodes.OK, new AuthoringCommitResponse
-            {
-                Version = version
-            });
+            _logger.LogWarning("Invalid authority token for authoring commit on region {RegionId}", body.RegionId);
+            return (StatusCodes.Unauthorized, null);
         }
-        catch (Exception ex)
+
+        // Increment version and release lock
+        var channelId = GenerateChannelId(body.RegionId, body.Kind);
+        var version = await IncrementVersionAsync(channelId, cancellationToken);
+
+        // Release the checkout
+        await _stateStoreFactory.GetStore<CheckoutRecord>(StateStoreDefinitions.Mapping)
+            .DeleteAsync(checkoutKey, cancellationToken);
+
+        _logger.LogInformation("Committed authoring changes for region {RegionId}, kind {Kind}, version {Version}",
+            body.RegionId, body.Kind, version);
+
+        return (StatusCodes.OK, new AuthoringCommitResponse
         {
-            _logger.LogError(ex, "Error committing authoring changes");
-            await _messageBus.TryPublishErrorAsync(
-                "mapping", "CommitAuthoring", "unexpected_exception", ex.Message,
-                dependency: "state", endpoint: "post:/mapping/authoring/commit",
-                details: null, stack: ex.StackTrace, cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
+            Version = version
+        });
     }
 
     /// <inheritdoc />
@@ -1257,35 +1121,23 @@ public partial class MappingService : IMappingService
     {
         _logger.LogDebug("Releasing authoring checkout - region {RegionId}, kind {Kind}", body.RegionId, body.Kind);
 
-        try
+        var checkoutKey = BuildCheckoutKey(body.RegionId, body.Kind);
+        var checkout = await _stateStoreFactory.GetStore<CheckoutRecord>(StateStoreDefinitions.Mapping)
+            .GetAsync(checkoutKey, cancellationToken);
+
+        if (checkout == null || checkout.AuthorityToken != body.AuthorityToken)
         {
-            var checkoutKey = BuildCheckoutKey(body.RegionId, body.Kind);
-            var checkout = await _stateStoreFactory.GetStore<CheckoutRecord>(StateStoreDefinitions.Mapping)
-                .GetAsync(checkoutKey, cancellationToken);
-
-            if (checkout == null || checkout.AuthorityToken != body.AuthorityToken)
-            {
-                _logger.LogWarning("Invalid authority token for authoring release on region {RegionId}", body.RegionId);
-                return (StatusCodes.Unauthorized, null);
-            }
-
-            await _stateStoreFactory.GetStore<CheckoutRecord>(StateStoreDefinitions.Mapping)
-                .DeleteAsync(checkoutKey, cancellationToken);
-
-            _logger.LogInformation("Released authoring checkout for region {RegionId}, kind {Kind}",
-                body.RegionId, body.Kind);
-
-            return (StatusCodes.OK, new AuthoringReleaseResponse { Released = true });
+            _logger.LogWarning("Invalid authority token for authoring release on region {RegionId}", body.RegionId);
+            return (StatusCodes.Unauthorized, null);
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error releasing authoring checkout");
-            await _messageBus.TryPublishErrorAsync(
-                "mapping", "ReleaseAuthoring", "unexpected_exception", ex.Message,
-                dependency: "state", endpoint: "post:/mapping/authoring/release",
-                details: null, stack: ex.StackTrace, cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
+
+        await _stateStoreFactory.GetStore<CheckoutRecord>(StateStoreDefinitions.Mapping)
+            .DeleteAsync(checkoutKey, cancellationToken);
+
+        _logger.LogInformation("Released authoring checkout for region {RegionId}, kind {Kind}",
+            body.RegionId, body.Kind);
+
+        return (StatusCodes.OK, new AuthoringReleaseResponse { Released = true });
     }
 
     #endregion
@@ -1297,63 +1149,51 @@ public partial class MappingService : IMappingService
     {
         _logger.LogDebug("Creating map definition: {Name}", body.Name);
 
-        try
-        {
-            // Check for duplicate name by scanning existing definitions
-            var indexStore = _stateStoreFactory.GetStore<DefinitionIndexEntry>(StateStoreDefinitions.Mapping);
-            var existingIndex = await indexStore.GetAsync(DEFINITION_INDEX_KEY, cancellationToken);
+        // Check for duplicate name by scanning existing definitions
+        var indexStore = _stateStoreFactory.GetStore<DefinitionIndexEntry>(StateStoreDefinitions.Mapping);
+        var existingIndex = await indexStore.GetAsync(DEFINITION_INDEX_KEY, cancellationToken);
 
-            if (existingIndex != null && existingIndex.DefinitionIds.Any())
+        if (existingIndex != null && existingIndex.DefinitionIds.Any())
+        {
+            var definitionStore = _stateStoreFactory.GetStore<DefinitionRecord>(StateStoreDefinitions.Mapping);
+            foreach (var id in existingIndex.DefinitionIds)
             {
-                var definitionStore = _stateStoreFactory.GetStore<DefinitionRecord>(StateStoreDefinitions.Mapping);
-                foreach (var id in existingIndex.DefinitionIds)
+                var existing = await definitionStore.GetAsync(BuildDefinitionKey(id), cancellationToken);
+                if (existing != null && existing.Name.Equals(body.Name, StringComparison.OrdinalIgnoreCase))
                 {
-                    var existing = await definitionStore.GetAsync(BuildDefinitionKey(id), cancellationToken);
-                    if (existing != null && existing.Name.Equals(body.Name, StringComparison.OrdinalIgnoreCase))
-                    {
-                        _logger.LogWarning("Definition with name {Name} already exists", body.Name);
-                        return (StatusCodes.Conflict, null);
-                    }
+                    _logger.LogWarning("Definition with name {Name} already exists", body.Name);
+                    return (StatusCodes.Conflict, null);
                 }
             }
-
-            var now = DateTimeOffset.UtcNow;
-            var definitionId = Guid.NewGuid();
-
-            var record = new DefinitionRecord
-            {
-                DefinitionId = definitionId,
-                Name = body.Name,
-                Description = body.Description,
-                Layers = body.Layers,
-                DefaultBounds = body.DefaultBounds,
-                Metadata = body.Metadata,
-                CreatedAt = now,
-                UpdatedAt = null
-            };
-
-            var key = BuildDefinitionKey(definitionId);
-            await _stateStoreFactory.GetStore<DefinitionRecord>(StateStoreDefinitions.Mapping)
-                .SaveAsync(key, record, cancellationToken: cancellationToken);
-
-            // Update index
-            var newIndex = existingIndex ?? new DefinitionIndexEntry { DefinitionIds = new List<Guid>() };
-            newIndex.DefinitionIds.Add(definitionId);
-            await indexStore.SaveAsync(DEFINITION_INDEX_KEY, newIndex, cancellationToken: cancellationToken);
-
-            _logger.LogInformation("Created map definition {DefinitionId} ({Name})", definitionId, body.Name);
-
-            return (StatusCodes.OK, MapRecordToDefinition(record));
         }
-        catch (Exception ex)
+
+        var now = DateTimeOffset.UtcNow;
+        var definitionId = Guid.NewGuid();
+
+        var record = new DefinitionRecord
         {
-            _logger.LogError(ex, "Error creating map definition");
-            await _messageBus.TryPublishErrorAsync(
-                "mapping", "CreateDefinition", "unexpected_exception", ex.Message,
-                dependency: "state", endpoint: "post:/mapping/definition/create",
-                details: null, stack: ex.StackTrace, cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
+            DefinitionId = definitionId,
+            Name = body.Name,
+            Description = body.Description,
+            Layers = body.Layers,
+            DefaultBounds = body.DefaultBounds,
+            Metadata = body.Metadata,
+            CreatedAt = now,
+            UpdatedAt = null
+        };
+
+        var key = BuildDefinitionKey(definitionId);
+        await _stateStoreFactory.GetStore<DefinitionRecord>(StateStoreDefinitions.Mapping)
+            .SaveAsync(key, record, cancellationToken: cancellationToken);
+
+        // Update index
+        var newIndex = existingIndex ?? new DefinitionIndexEntry { DefinitionIds = new List<Guid>() };
+        newIndex.DefinitionIds.Add(definitionId);
+        await indexStore.SaveAsync(DEFINITION_INDEX_KEY, newIndex, cancellationToken: cancellationToken);
+
+        _logger.LogInformation("Created map definition {DefinitionId} ({Name})", definitionId, body.Name);
+
+        return (StatusCodes.OK, MapRecordToDefinition(record));
     }
 
     /// <inheritdoc />
@@ -1361,28 +1201,16 @@ public partial class MappingService : IMappingService
     {
         _logger.LogDebug("Getting map definition: {DefinitionId}", body.DefinitionId);
 
-        try
-        {
-            var key = BuildDefinitionKey(body.DefinitionId);
-            var record = await _stateStoreFactory.GetStore<DefinitionRecord>(StateStoreDefinitions.Mapping)
-                .GetAsync(key, cancellationToken);
+        var key = BuildDefinitionKey(body.DefinitionId);
+        var record = await _stateStoreFactory.GetStore<DefinitionRecord>(StateStoreDefinitions.Mapping)
+            .GetAsync(key, cancellationToken);
 
-            if (record == null)
-            {
-                return (StatusCodes.NotFound, null);
-            }
-
-            return (StatusCodes.OK, MapRecordToDefinition(record));
-        }
-        catch (Exception ex)
+        if (record == null)
         {
-            _logger.LogError(ex, "Error getting map definition {DefinitionId}", body.DefinitionId);
-            await _messageBus.TryPublishErrorAsync(
-                "mapping", "GetDefinition", "unexpected_exception", ex.Message,
-                dependency: "state", endpoint: "post:/mapping/definition/get",
-                details: null, stack: ex.StackTrace, cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
+            return (StatusCodes.NotFound, null);
         }
+
+        return (StatusCodes.OK, MapRecordToDefinition(record));
     }
 
     /// <inheritdoc />
@@ -1390,63 +1218,51 @@ public partial class MappingService : IMappingService
     {
         _logger.LogDebug("Listing map definitions with filter: {Filter}", body.NameFilter);
 
-        try
+        var indexStore = _stateStoreFactory.GetStore<DefinitionIndexEntry>(StateStoreDefinitions.Mapping);
+        var index = await indexStore.GetAsync(DEFINITION_INDEX_KEY, cancellationToken);
+
+        var definitions = new List<MapDefinition>();
+        var total = 0;
+
+        if (index != null && index.DefinitionIds.Any())
         {
-            var indexStore = _stateStoreFactory.GetStore<DefinitionIndexEntry>(StateStoreDefinitions.Mapping);
-            var index = await indexStore.GetAsync(DEFINITION_INDEX_KEY, cancellationToken);
+            var definitionStore = _stateStoreFactory.GetStore<DefinitionRecord>(StateStoreDefinitions.Mapping);
+            var allRecords = new List<DefinitionRecord>();
 
-            var definitions = new List<MapDefinition>();
-            var total = 0;
-
-            if (index != null && index.DefinitionIds.Any())
+            foreach (var id in index.DefinitionIds)
             {
-                var definitionStore = _stateStoreFactory.GetStore<DefinitionRecord>(StateStoreDefinitions.Mapping);
-                var allRecords = new List<DefinitionRecord>();
-
-                foreach (var id in index.DefinitionIds)
+                var record = await definitionStore.GetAsync(BuildDefinitionKey(id), cancellationToken);
+                if (record != null)
                 {
-                    var record = await definitionStore.GetAsync(BuildDefinitionKey(id), cancellationToken);
-                    if (record != null)
+                    // Apply name filter
+                    if (string.IsNullOrEmpty(body.NameFilter) ||
+                        record.Name.Contains(body.NameFilter, StringComparison.OrdinalIgnoreCase))
                     {
-                        // Apply name filter
-                        if (string.IsNullOrEmpty(body.NameFilter) ||
-                            record.Name.Contains(body.NameFilter, StringComparison.OrdinalIgnoreCase))
-                        {
-                            allRecords.Add(record);
-                        }
+                        allRecords.Add(record);
                     }
                 }
-
-                total = allRecords.Count;
-
-                // Apply pagination
-                var offset = body.Offset;
-                var limit = body.Limit;
-                definitions = allRecords
-                    .OrderBy(r => r.Name)
-                    .Skip(offset)
-                    .Take(limit)
-                    .Select(MapRecordToDefinition)
-                    .ToList();
             }
 
-            return (StatusCodes.OK, new ListDefinitionsResponse
-            {
-                Definitions = definitions,
-                Total = total,
-                Offset = body.Offset,
-                Limit = body.Limit
-            });
+            total = allRecords.Count;
+
+            // Apply pagination
+            var offset = body.Offset;
+            var limit = body.Limit;
+            definitions = allRecords
+                .OrderBy(r => r.Name)
+                .Skip(offset)
+                .Take(limit)
+                .Select(MapRecordToDefinition)
+                .ToList();
         }
-        catch (Exception ex)
+
+        return (StatusCodes.OK, new ListDefinitionsResponse
         {
-            _logger.LogError(ex, "Error listing map definitions");
-            await _messageBus.TryPublishErrorAsync(
-                "mapping", "ListDefinitions", "unexpected_exception", ex.Message,
-                dependency: "state", endpoint: "post:/mapping/definition/list",
-                details: null, stack: ex.StackTrace, cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
+            Definitions = definitions,
+            Total = total,
+            Offset = body.Offset,
+            Limit = body.Limit
+        });
     }
 
     /// <inheritdoc />
@@ -1454,56 +1270,44 @@ public partial class MappingService : IMappingService
     {
         _logger.LogDebug("Updating map definition: {DefinitionId}", body.DefinitionId);
 
-        try
+        var key = BuildDefinitionKey(body.DefinitionId);
+        var record = await _stateStoreFactory.GetStore<DefinitionRecord>(StateStoreDefinitions.Mapping)
+            .GetAsync(key, cancellationToken);
+
+        if (record == null)
         {
-            var key = BuildDefinitionKey(body.DefinitionId);
-            var record = await _stateStoreFactory.GetStore<DefinitionRecord>(StateStoreDefinitions.Mapping)
-                .GetAsync(key, cancellationToken);
-
-            if (record == null)
-            {
-                return (StatusCodes.NotFound, null);
-            }
-
-            // Update fields if provided
-            if (!string.IsNullOrEmpty(body.Name))
-            {
-                record.Name = body.Name;
-            }
-            if (body.Description != null)
-            {
-                record.Description = body.Description;
-            }
-            if (body.Layers != null)
-            {
-                record.Layers = body.Layers;
-            }
-            if (body.DefaultBounds != null)
-            {
-                record.DefaultBounds = body.DefaultBounds;
-            }
-            if (body.Metadata != null)
-            {
-                record.Metadata = body.Metadata;
-            }
-            record.UpdatedAt = DateTimeOffset.UtcNow;
-
-            await _stateStoreFactory.GetStore<DefinitionRecord>(StateStoreDefinitions.Mapping)
-                .SaveAsync(key, record, cancellationToken: cancellationToken);
-
-            _logger.LogInformation("Updated map definition {DefinitionId}", body.DefinitionId);
-
-            return (StatusCodes.OK, MapRecordToDefinition(record));
+            return (StatusCodes.NotFound, null);
         }
-        catch (Exception ex)
+
+        // Update fields if provided
+        if (!string.IsNullOrEmpty(body.Name))
         {
-            _logger.LogError(ex, "Error updating map definition {DefinitionId}", body.DefinitionId);
-            await _messageBus.TryPublishErrorAsync(
-                "mapping", "UpdateDefinition", "unexpected_exception", ex.Message,
-                dependency: "state", endpoint: "post:/mapping/definition/update",
-                details: null, stack: ex.StackTrace, cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
+            record.Name = body.Name;
         }
+        if (body.Description != null)
+        {
+            record.Description = body.Description;
+        }
+        if (body.Layers != null)
+        {
+            record.Layers = body.Layers;
+        }
+        if (body.DefaultBounds != null)
+        {
+            record.DefaultBounds = body.DefaultBounds;
+        }
+        if (body.Metadata != null)
+        {
+            record.Metadata = body.Metadata;
+        }
+        record.UpdatedAt = DateTimeOffset.UtcNow;
+
+        await _stateStoreFactory.GetStore<DefinitionRecord>(StateStoreDefinitions.Mapping)
+            .SaveAsync(key, record, cancellationToken: cancellationToken);
+
+        _logger.LogInformation("Updated map definition {DefinitionId}", body.DefinitionId);
+
+        return (StatusCodes.OK, MapRecordToDefinition(record));
     }
 
     /// <inheritdoc />
@@ -1511,43 +1315,31 @@ public partial class MappingService : IMappingService
     {
         _logger.LogDebug("Deleting map definition: {DefinitionId}", body.DefinitionId);
 
-        try
+        var key = BuildDefinitionKey(body.DefinitionId);
+        var definitionStore = _stateStoreFactory.GetStore<DefinitionRecord>(StateStoreDefinitions.Mapping);
+        var record = await definitionStore.GetAsync(key, cancellationToken);
+
+        if (record == null)
         {
-            var key = BuildDefinitionKey(body.DefinitionId);
-            var definitionStore = _stateStoreFactory.GetStore<DefinitionRecord>(StateStoreDefinitions.Mapping);
-            var record = await definitionStore.GetAsync(key, cancellationToken);
-
-            if (record == null)
-            {
-                _logger.LogDebug("Map definition {DefinitionId} not found for deletion", body.DefinitionId);
-                return (StatusCodes.NotFound, null);
-            }
-
-            // Delete the definition
-            await definitionStore.DeleteAsync(key, cancellationToken);
-
-            // Update index
-            var indexStore = _stateStoreFactory.GetStore<DefinitionIndexEntry>(StateStoreDefinitions.Mapping);
-            var index = await indexStore.GetAsync(DEFINITION_INDEX_KEY, cancellationToken);
-            if (index != null)
-            {
-                index.DefinitionIds.Remove(body.DefinitionId);
-                await indexStore.SaveAsync(DEFINITION_INDEX_KEY, index, cancellationToken: cancellationToken);
-            }
-
-            _logger.LogInformation("Deleted map definition {DefinitionId}", body.DefinitionId);
-
-            return (StatusCodes.OK, new DeleteDefinitionResponse { Deleted = true });
+            _logger.LogDebug("Map definition {DefinitionId} not found for deletion", body.DefinitionId);
+            return (StatusCodes.NotFound, null);
         }
-        catch (Exception ex)
+
+        // Delete the definition
+        await definitionStore.DeleteAsync(key, cancellationToken);
+
+        // Update index
+        var indexStore = _stateStoreFactory.GetStore<DefinitionIndexEntry>(StateStoreDefinitions.Mapping);
+        var index = await indexStore.GetAsync(DEFINITION_INDEX_KEY, cancellationToken);
+        if (index != null)
         {
-            _logger.LogError(ex, "Error deleting map definition {DefinitionId}", body.DefinitionId);
-            await _messageBus.TryPublishErrorAsync(
-                "mapping", "DeleteDefinition", "unexpected_exception", ex.Message,
-                dependency: "state", endpoint: "post:/mapping/definition/delete",
-                details: null, stack: ex.StackTrace, cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
+            index.DefinitionIds.Remove(body.DefinitionId);
+            await indexStore.SaveAsync(DEFINITION_INDEX_KEY, index, cancellationToken: cancellationToken);
         }
+
+        _logger.LogInformation("Deleted map definition {DefinitionId}", body.DefinitionId);
+
+        return (StatusCodes.OK, new DeleteDefinitionResponse { Deleted = true });
     }
 
     private static MapDefinition MapRecordToDefinition(DefinitionRecord record)
@@ -2072,11 +1864,32 @@ public partial class MappingService : IMappingService
 
         _logger.LogDebug("Clearing {Count} objects from channel {ChannelId}", objectIds.Count, channelId);
 
-        // Delete all objects
+        // Delete all objects and their index entries
         var objectStore = _stateStoreFactory.GetStore<MapObject>(StateStoreDefinitions.Mapping);
         foreach (var objectId in objectIds)
         {
             var objectKey = BuildObjectKey(regionId, objectId);
+            var obj = await objectStore.GetAsync(objectKey, cancellationToken);
+
+            if (obj != null)
+            {
+                // Clean up spatial indexes
+                if (obj.Position != null)
+                {
+                    await RemoveFromSpatialIndexAsync(regionId, kind, objectId, obj.Position, cancellationToken);
+                }
+                if (obj.Bounds != null)
+                {
+                    await RemoveFromSpatialIndexForBoundsAsync(regionId, kind, objectId, obj.Bounds, cancellationToken);
+                }
+
+                // Clean up type index
+                if (!string.IsNullOrEmpty(obj.ObjectType))
+                {
+                    await RemoveFromTypeIndexAsync(regionId, obj.ObjectType, objectId, cancellationToken);
+                }
+            }
+
             await objectStore.DeleteAsync(objectKey, cancellationToken);
         }
 
@@ -2088,10 +1901,6 @@ public partial class MappingService : IMappingService
         var versionKey = BuildVersionKey(channelId);
         await _stateStoreFactory.GetStore<LongWrapper>(StateStoreDefinitions.Mapping)
             .SaveAsync(versionKey, new LongWrapper { Value = 0L }, cancellationToken: cancellationToken);
-
-        // Note: Spatial and type indexes are per-object and will be orphaned.
-        // They'll be cleaned up on next access or could be garbage collected.
-        // For a production implementation, we'd need to track all index keys.
     }
 
     private async Task<long> IncrementVersionAsync(Guid channelId, CancellationToken cancellationToken)
@@ -2319,11 +2128,13 @@ public partial class MappingService : IMappingService
         }
 
         // Aggregation enabled - buffer the changes
+        var maxRetries = _configuration.MaxBufferFlushRetries;
         var buffer = EventAggregationBuffers.GetOrAdd(
             channel.ChannelId,
             _ => new EventAggregationBuffer(
                 channel.ChannelId,
                 windowMs,
+                maxRetries,
                 async (channelId, bufferedChanges, bufferedVersion, bufferedSourceAppId, ct) =>
                 {
                     // Retrieve channel record for publishing (may have been updated)
@@ -2336,7 +2147,17 @@ public partial class MappingService : IMappingService
                         await PublishMapObjectsChangedEventDirectAsync(currentChannel, bufferedVersion, bufferedChanges, bufferedSourceAppId, ct);
                     }
                 },
-                cId => { EventAggregationBuffers.TryRemove(cId, out EventAggregationBuffer? _); }));
+                cId => { EventAggregationBuffers.TryRemove(cId, out EventAggregationBuffer? _); },
+                async (channelId, discardedCount, ex) =>
+                {
+                    _logger.LogError(ex, "Failed to flush {DiscardedCount} spatial changes for channel {ChannelId} after {MaxRetries} retries, changes discarded",
+                        discardedCount, channelId, maxRetries);
+                    await _messageBus.TryPublishErrorAsync(
+                        "mapping", "EventAggregationBuffer", "flush_failed", ex.Message,
+                        dependency: "messaging", endpoint: "internal:buffer-flush",
+                        details: $"ChannelId={channelId}, DiscardedChanges={discardedCount}, MaxRetries={maxRetries}",
+                        stack: ex.StackTrace);
+                }));
 
         buffer.AddChanges(changes, version, sourceAppId);
     }
@@ -2657,16 +2478,6 @@ public partial class MappingService : IMappingService
 
     #region Permission Registration
 
-    /// <summary>
-    /// Registers this service's API permissions with the Permission service on startup.
-    /// Uses generated permission data from x-permissions sections in the OpenAPI schema.
-    /// </summary>
-    public async Task RegisterServicePermissionsAsync(string appId)
-    {
-        _logger.LogInformation("Registering Mapping service permissions...");
-        await MappingPermissionRegistration.RegisterViaEventAsync(_messageBus, appId, _logger);
-    }
-
     #endregion
 
     #region Internal Records
@@ -2738,6 +2549,7 @@ public partial class MappingService : IMappingService
     /// <summary>
     /// Buffer for aggregating events within a time window before publishing.
     /// Uses a timer to flush events after the configured window expires.
+    /// Retries on flush failure with exponential backoff before discarding changes.
     /// </summary>
     internal sealed class EventAggregationBuffer : IDisposable
     {
@@ -2746,23 +2558,41 @@ public partial class MappingService : IMappingService
         private readonly Guid _channelId;
         private readonly Func<Guid, List<ObjectChangeEvent>, long, string?, CancellationToken, Task> _flushCallback;
         private readonly Action<Guid> _removeCallback;
+        private readonly Func<Guid, int, Exception, Task> _errorCallback;
+        private readonly int _maxRetries;
         private List<ObjectChangeEvent> _pendingChanges = new();
         private long _latestVersion;
         private string? _sourceAppId;
         private bool _disposed;
 
+        /// <summary>
+        /// Creates a new EventAggregationBuffer with retry support.
+        /// </summary>
+        /// <param name="channelId">Channel ID for this buffer.</param>
+        /// <param name="windowMs">Aggregation window in milliseconds before flushing.</param>
+        /// <param name="maxRetries">Maximum flush retry attempts before discarding changes.</param>
+        /// <param name="flushCallback">Callback to publish aggregated changes.</param>
+        /// <param name="removeCallback">Callback to remove this buffer from the global dictionary.</param>
+        /// <param name="errorCallback">Callback to report flush failures (channelId, discardedChangeCount, exception).</param>
         public EventAggregationBuffer(
             Guid channelId,
             int windowMs,
+            int maxRetries,
             Func<Guid, List<ObjectChangeEvent>, long, string?, CancellationToken, Task> flushCallback,
-            Action<Guid> removeCallback)
+            Action<Guid> removeCallback,
+            Func<Guid, int, Exception, Task> errorCallback)
         {
             _channelId = channelId;
+            _maxRetries = maxRetries;
             _flushCallback = flushCallback;
             _removeCallback = removeCallback;
+            _errorCallback = errorCallback;
             _flushTimer = new Timer(OnTimerElapsed, null, windowMs, Timeout.Infinite);
         }
 
+        /// <summary>
+        /// Adds changes to the pending buffer for aggregation.
+        /// </summary>
         public void AddChanges(List<ObjectChangeEvent> changes, long version, string? sourceAppId)
         {
             lock (_lock)
@@ -2789,21 +2619,50 @@ public partial class MappingService : IMappingService
                 sourceAppId = _sourceAppId;
             }
 
-            // Fire and forget - we're in a timer callback, can't await
+            // Fire and forget with retry — timer callback cannot await directly
             _ = Task.Run(async () =>
             {
-                try
+                var attempts = 0;
+                while (attempts <= _maxRetries)
                 {
-                    await _flushCallback(_channelId, changesToPublish, version, sourceAppId, CancellationToken.None);
-                }
-                finally
-                {
-                    _removeCallback(_channelId);
-                    Dispose();
+                    try
+                    {
+                        await _flushCallback(_channelId, changesToPublish, version, sourceAppId, CancellationToken.None);
+                        _removeCallback(_channelId);
+                        Dispose();
+                        return;
+                    }
+                    catch (Exception ex)
+                    {
+                        attempts++;
+                        if (attempts > _maxRetries)
+                        {
+                            // All retries exhausted — report error and discard changes
+                            try
+                            {
+                                await _errorCallback(_channelId, changesToPublish.Count, ex);
+                            }
+                            catch
+                            {
+                                // Error callback itself failed (e.g., message bus down) — nothing more we can do
+                            }
+
+                            _removeCallback(_channelId);
+                            Dispose();
+                            return;
+                        }
+
+                        // Exponential backoff: 100ms, 200ms, 400ms, ...
+                        var delayMs = 100 * (1 << (attempts - 1));
+                        await Task.Delay(delayMs);
+                    }
                 }
             });
         }
 
+        /// <summary>
+        /// Disposes the buffer and its flush timer.
+        /// </summary>
         public void Dispose()
         {
             lock (_lock)

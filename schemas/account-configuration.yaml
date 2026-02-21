@@ -5,8 +5,11 @@ info:
     Configuration schema for Account service.
     Properties are bound to environment variables with BANNOU_ prefix.
 
-    **Schema Rules**: AI agents MUST review docs/reference/SCHEMA-RULES.md before
-    modifying this schema. Optional reference types require `nullable: true`.
+    **SCHEMA MODIFICATION GATE**: STOP. Before modifying this schema, you MUST:
+    1. Read docs/reference/SCHEMA-RULES.md
+    2. State which section applies to your change
+    3. Only then proceed with edits
+    Edits without stating the applicable rule are FORBIDDEN.
   version: 1.0.0
 paths: {}
 x-service-configuration:
@@ -43,6 +46,33 @@ x-service-configuration:
       description: Number of accounts to process per batch in list operations
       env: ACCOUNT_LIST_BATCH_SIZE
       default: 100
+
+    # Distributed Lock Configuration
+    CreateLockExpirySeconds:
+      type: integer
+      env: ACCOUNT_CREATE_LOCK_EXPIRY_SECONDS
+      default: 10
+      minimum: 1
+      maximum: 60
+      description: Lock expiry in seconds for account creation email uniqueness check
+
+    # Email Change Lock Configuration
+    EmailChangeLockExpirySeconds:
+      type: integer
+      env: ACCOUNT_EMAIL_CHANGE_LOCK_EXPIRY_SECONDS
+      default: 10
+      minimum: 1
+      maximum: 60
+      description: Lock expiry in seconds for email uniqueness check during email change
+
+    # Provider Filter Configuration
+    ProviderFilterMaxScanSize:
+      type: integer
+      env: ACCOUNT_PROVIDER_FILTER_MAX_SCAN_SIZE
+      default: 10000
+      minimum: 100
+      maximum: 100000
+      description: Maximum number of accounts to scan when filtering by provider (admin-only endpoint)
 
     # Role Management Configuration
     AutoManageAnonymousRole:

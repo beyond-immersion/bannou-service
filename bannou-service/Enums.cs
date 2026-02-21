@@ -71,11 +71,19 @@ public enum HttpMethodTypes
 /// </para>
 /// <para>
 /// <b>WARNING - DO NOT ADD NEW STATUS CODES WITHOUT EXPLICIT APPROVAL.</b>
-/// These codes are hand-chosen per TENET T8 to minimize client complexity.
-/// Adding new codes requires updating: Controller.liquid template, ErrorResponses.cs,
-/// client SDK ResponseCodes, and all consuming code. If you think you need a new
-/// status code, the answer is almost always "use an existing code with appropriate
-/// payload content to indicate the specific condition."
+/// This enum is intentionally minimal. Adding new codes requires updating: Controller.liquid
+/// template, ErrorResponses.cs, client SDK ResponseCodes, and all consuming code. If you think
+/// you need a new status code, choose the most contextually appropriate existing code instead.
+/// </para>
+/// <para>
+/// <b>Common mappings for HTTP codes not in this enum:</b>
+/// <list type="bullet">
+/// <item>429 (TooManyRequests): Use <c>BadRequest</c> if it's a client-specific rate limit
+/// (e.g., too many login attempts from one email), or <c>ServiceUnavailable</c> if it's
+/// server-wide overload affecting all clients.</item>
+/// <item>422 (UnprocessableEntity): Use <c>BadRequest</c>.</item>
+/// <item>204 (NoContent): Use <c>OK</c> with null payload.</item>
+/// </list>
 /// </para>
 /// </remarks>
 public enum StatusCodes
@@ -118,4 +126,69 @@ public enum StatusCodes
     /// Used when a required dependency or subsystem is not available.
     /// </summary>
     ServiceUnavailable = 503
+}
+
+/// <summary>
+/// Defines the service hierarchy layers per SERVICE-HIERARCHY.md.
+/// Lower values load first. Dependencies may only flow to lower layers.
+/// </summary>
+/// <remarks>
+/// <para>
+/// The service hierarchy enables:
+/// <list type="bullet">
+///   <item>Deterministic plugin load ordering based on dependency layers</item>
+///   <item>Safe constructor injection for services depending on lower layers</item>
+///   <item>Compile-time and runtime validation of dependency rules</item>
+///   <item>Optional deployment configurations (L3/L4 can be disabled)</item>
+/// </list>
+/// </para>
+/// <para>
+/// <b>SCHEMA-FIRST:</b> Set via <c>x-service-layer</c> in the service's API schema.
+/// The code generation scripts read this value and apply it to the generated
+/// <see cref="Attributes.BannouServiceAttribute"/>.
+/// </para>
+/// </remarks>
+public enum ServiceLayer
+{
+    /// <summary>
+    /// L0: Infrastructure plugins (state, messaging, mesh, telemetry).
+    /// Loaded first. No service-layer dependencies.
+    /// Required for any deployment (except telemetry which is optional).
+    /// </summary>
+    Infrastructure = 0,
+
+    /// <summary>
+    /// L1: App Foundation services (account, auth, connect, permission, contract, resource).
+    /// Required for ANY deployment. Depends only on L0.
+    /// Missing L1 service = startup failure.
+    /// </summary>
+    AppFoundation = 100,
+
+    /// <summary>
+    /// L2: Game Foundation services (realm, character, species, location, currency, item, inventory, etc.).
+    /// Required for game deployments. Depends on L0 and L1.
+    /// Missing L2 service when L4 is enabled = startup failure.
+    /// </summary>
+    GameFoundation = 200,
+
+    /// <summary>
+    /// L3: App Features (asset, orchestrator, documentation, website).
+    /// Optional non-game capabilities. Depends on L0, L1, and other L3 (with graceful degradation).
+    /// Missing L3 service = graceful degradation, not crash.
+    /// </summary>
+    AppFeatures = 300,
+
+    /// <summary>
+    /// L4: Game Features (actor, behavior, matchmaking, analytics, achievement, etc.).
+    /// Optional game-specific capabilities. Depends on L0, L1, L2, L3*, L4* (* = graceful degradation).
+    /// Missing L4 service = graceful degradation for L4 consumers.
+    /// </summary>
+    GameFeatures = 400,
+
+    /// <summary>
+    /// L5: Extensions (third-party plugins, internal meta-services).
+    /// Loaded last. Can depend on all core layers (L0-L4).
+    /// Use for plugins that need the full Bannou stack available.
+    /// </summary>
+    Extensions = 500
 }

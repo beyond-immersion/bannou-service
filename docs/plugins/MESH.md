@@ -3,13 +3,14 @@
 > **Plugin**: lib-mesh
 > **Schema**: schemas/mesh-api.yaml
 > **Version**: 1.0.0
-> **State Stores**: mesh-endpoints, mesh-appid-index, mesh-global-index (all Redis)
+> **Layer**: Infrastructure
+> **State Stores**: mesh-endpoints, mesh-appid-index, mesh-global-index (all Redis), + raw Redis for circuit breaker (`mesh:cb:{appId}`)
 
 ---
 
 ## Overview
 
-Native service mesh providing YARP-based HTTP routing and Redis-backed service discovery. Replaces Dapr-style sidecar invocation with direct in-process service-to-service calls. Provides endpoint registration with TTL-based health tracking, four load balancing algorithms (RoundRobin, LeastConnections, Weighted, Random), a per-appId circuit breaker, and configurable retry logic with exponential backoff. Includes a background health check service for proactive failure detection. Event-driven auto-registration from service heartbeats enables zero-configuration discovery.
+Native service mesh (L0 Infrastructure) providing direct in-process service-to-service calls with YARP-based HTTP routing and Redis-backed service discovery. Provides endpoint registration with TTL-based health tracking, configurable load balancing, a distributed per-appId circuit breaker, and retry logic with exponential backoff. Includes proactive health checking with automatic deregistration and event-driven auto-registration from Orchestrator heartbeats for zero-configuration discovery.
 
 ---
 
@@ -17,9 +18,11 @@ Native service mesh providing YARP-based HTTP routing and Redis-backed service d
 
 | Dependency | Usage |
 |------------|-------|
-| lib-state (`IStateStoreFactory`) | Redis persistence for endpoint registry, app-id indexes, and global index |
-| lib-messaging (`IMessageBus`) | Publishing endpoint lifecycle events; error event publishing |
-| lib-messaging (`IEventConsumer`) | Subscribing to `bannou.service-heartbeats` and `bannou.full-service-mappings` |
+| lib-state (`IStateStoreFactory`) | Redis persistence for endpoint registry, app-id indexes, global index, and circuit breaker state |
+| lib-state (`IRedisOperations`) | Lua script execution for atomic circuit breaker state transitions |
+| lib-messaging (`IMessageBus`) | Publishing endpoint lifecycle events, circuit state change events, and error events |
+| lib-messaging (`IMessageSubscriber`) | Subscribing to `mesh.circuit.changed` for cross-instance circuit breaker sync |
+| lib-messaging (`IEventConsumer`) | Subscribing to `bannou.service-heartbeat` and `bannou.full-service-mappings` |
 
 ---
 
@@ -35,18 +38,20 @@ Native service mesh providing YARP-based HTTP routing and Redis-backed service d
 
 ## State Storage
 
-**Stores**: 3 Redis stores (via lib-state `IStateStoreFactory`)
+**Stores**: 3 Redis stores (via lib-state `IStateStoreFactory`) + 1 raw Redis pattern (via `IRedisOperations`)
 
-| Store | Prefix | Purpose |
-|-------|--------|---------|
-| `mesh-endpoints` | `mesh:endpoint` | Individual endpoint registration with health/load metadata |
-| `mesh-appid-index` | `mesh:appid` | App-ID to instance-ID mapping for routing queries |
-| `mesh-global-index` | `mesh:idx` | Global endpoint index for discovery (avoids KEYS/SCAN) |
+| Store | Key Pattern | Data Type | Purpose |
+|-------|-------------|-----------|---------|
+| `mesh-endpoints` | `{instanceId}` (GUID string) | `MeshEndpoint` | Individual endpoint registration with health/load metadata |
+| `mesh-appid-index` | `{appId}` (set of instance IDs) | `Set<string>` | App-ID to instance-ID mapping for routing queries |
+| `mesh-global-index` | `_index` (set of instance IDs) | `Set<string>` | Global endpoint index for discovery (avoids KEYS/SCAN) |
+| *(raw Redis)* | `mesh:cb:{appId}` (hash) | Hash: failures, state, openedAt | Distributed circuit breaker state (via `IRedisOperations`, not state store factory) |
 
 **Key Patterns**:
 - Endpoint data keyed by instance ID (GUID)
-- App-ID index lists all instance IDs for a given app-id
-- Global index (`_index` key) tracks all known instance IDs
+- App-ID index lists all instance IDs for a given app-id (with TTL refresh on heartbeat)
+- Global index (`_index` key) tracks all known instance IDs (no TTL - cleaned lazily on access)
+- Circuit breaker uses raw Redis via `IRedisOperations` with Lua scripts for atomic state transitions (no TTL - cleared on success)
 
 ---
 
@@ -54,17 +59,21 @@ Native service mesh providing YARP-based HTTP routing and Redis-backed service d
 
 ### Published Events
 
-| Topic | Trigger |
-|-------|---------|
-| `mesh.endpoint.registered` | New endpoint registered (explicit or auto-discovered from heartbeat) |
-| `mesh.endpoint.deregistered` | Endpoint removed (graceful shutdown or health check failure) |
+| Topic | Event Type | Trigger |
+|-------|-----------|---------|
+| `mesh.endpoint.registered` | `MeshEndpointRegisteredEvent` | New endpoint registered (explicit or auto-discovered from heartbeat) |
+| `mesh.endpoint.deregistered` | `MeshEndpointDeregisteredEvent` | Endpoint removed (graceful shutdown or health check failure) |
+| `mesh.circuit.changed` | `MeshCircuitStateChangedEvent` | Circuit breaker state changes (Closed→Open, Open→HalfOpen, HalfOpen→Closed, etc.) |
+| `mesh.endpoint.health.failed` | `MeshEndpointHealthCheckFailedEvent` | Health check probe failed (before deregistration threshold - enables proactive monitoring) |
+| `mesh.endpoint.degraded` | `MeshEndpointDegradedEvent` | Endpoint transitioned to Degraded status (from Healthy; reason: MissedHeartbeat, HighLoad, HighConnectionCount) |
 
 ### Consumed Events
 
 | Topic | Event Type | Handler |
 |-------|-----------|---------|
-| `bannou.service-heartbeats` | `ServiceHeartbeatEvent` | Updates existing endpoint metrics or auto-registers new endpoints |
-| `bannou.full-service-mappings` | `FullServiceMappingsEvent` | Atomically updates `IServiceAppMappingResolver` for all generated clients |
+| `bannou.service-heartbeat` | `ServiceHeartbeatEvent` | `HandleServiceHeartbeatAsync` - Updates existing endpoint metrics or auto-registers new endpoints |
+| `bannou.full-service-mappings` | `FullServiceMappingsEvent` | `HandleServiceMappingsAsync` - Atomically updates `IServiceAppMappingResolver` for all generated clients (configurable via `EnableServiceMappingSync`) |
+| `mesh.circuit.changed` | `MeshCircuitStateChangedEvent` | `HandleCircuitStateChanged` - Updates local circuit breaker cache from other instances |
 
 ---
 
@@ -79,13 +88,16 @@ Native service mesh providing YARP-based HTTP routing and Redis-backed service d
 | `HeartbeatIntervalSeconds` | `MESH_HEARTBEAT_INTERVAL_SECONDS` | `30` | Recommended interval between heartbeats |
 | `EndpointTtlSeconds` | `MESH_ENDPOINT_TTL_SECONDS` | `90` | TTL for endpoint registration (>2x heartbeat) |
 | `DegradationThresholdSeconds` | `MESH_DEGRADATION_THRESHOLD_SECONDS` | `60` | Time without heartbeat before marking degraded |
-| `DefaultLoadBalancer` | `MESH_DEFAULT_LOAD_BALANCER` | `RoundRobin` | Load balancing algorithm (enum: RoundRobin, LeastConnections, Weighted, Random) |
+| `DefaultLoadBalancer` | `MESH_DEFAULT_LOAD_BALANCER` | `RoundRobin` | Load balancing algorithm (enum: RoundRobin, LeastConnections, Weighted, WeightedRoundRobin, Random) |
 | `LoadThresholdPercent` | `MESH_LOAD_THRESHOLD_PERCENT` | `80` | Load % above which endpoint is considered high-load |
 | `EnableServiceMappingSync` | `MESH_ENABLE_SERVICE_MAPPING_SYNC` | `true` | Subscribe to FullServiceMappingsEvent for routing updates |
 | `HealthCheckEnabled` | `MESH_HEALTH_CHECK_ENABLED` | `false` | Enable active health check probing |
 | `HealthCheckIntervalSeconds` | `MESH_HEALTH_CHECK_INTERVAL_SECONDS` | `60` | Interval between health probes |
 | `HealthCheckTimeoutSeconds` | `MESH_HEALTH_CHECK_TIMEOUT_SECONDS` | `5` | Timeout for health check requests |
+| `HealthCheckFailureThreshold` | `MESH_HEALTH_CHECK_FAILURE_THRESHOLD` | `3` | Consecutive failures before deregistering endpoint (0 disables) |
 | `HealthCheckStartupDelaySeconds` | `MESH_HEALTH_CHECK_STARTUP_DELAY_SECONDS` | `10` | Delay before first health probe |
+| `HealthCheckEventDeduplicationWindowSeconds` | `MESH_HEALTH_CHECK_EVENT_DEDUPLICATION_WINDOW_SECONDS` | `60` | Dedup window for health check failure events per endpoint |
+| `DegradationEventDeduplicationWindowSeconds` | `MESH_DEGRADATION_EVENT_DEDUPLICATION_WINDOW_SECONDS` | `60` | Dedup window for degradation events per endpoint+reason |
 | `CircuitBreakerEnabled` | `MESH_CIRCUIT_BREAKER_ENABLED` | `true` | Enable per-appId circuit breaker |
 | `CircuitBreakerThreshold` | `MESH_CIRCUIT_BREAKER_THRESHOLD` | `5` | Consecutive failures before opening circuit |
 | `CircuitBreakerResetSeconds` | `MESH_CIRCUIT_BREAKER_RESET_SECONDS` | `30` | Seconds before half-open probe attempt |
@@ -93,7 +105,10 @@ Native service mesh providing YARP-based HTTP routing and Redis-backed service d
 | `RetryDelayMilliseconds` | `MESH_RETRY_DELAY_MILLISECONDS` | `100` | Initial retry delay (doubles each retry) |
 | `PooledConnectionLifetimeMinutes` | `MESH_POOLED_CONNECTION_LIFETIME_MINUTES` | `2` | HTTP connection pool lifetime |
 | `ConnectTimeoutSeconds` | `MESH_CONNECT_TIMEOUT_SECONDS` | `10` | TCP connection timeout |
+| `RequestTimeoutSeconds` | `MESH_REQUEST_TIMEOUT_SECONDS` | `30` | Per-request timeout for complete request/response cycle |
 | `EndpointCacheTtlSeconds` | `MESH_ENDPOINT_CACHE_TTL_SECONDS` | `5` | TTL for cached endpoint resolution |
+| `EndpointCacheMaxSize` | `MESH_ENDPOINT_CACHE_MAX_SIZE` | `0` | Max app-ids in endpoint cache (0 = unlimited) |
+| `LoadBalancingStateMaxAppIds` | `MESH_LOAD_BALANCING_STATE_MAX_APP_IDS` | `0` | Max app-ids in load balancing state (0 = unlimited) |
 | `MaxTopEndpointsReturned` | `MESH_MAX_TOP_ENDPOINTS_RETURNED` | `2` | Max alternates in route response |
 | `MaxServiceMappingsDisplayed` | `MESH_MAX_SERVICE_MAPPINGS_DISPLAYED` | `10` | Max mappings in diagnostic logs |
 
@@ -104,12 +119,14 @@ Native service mesh providing YARP-based HTTP routing and Redis-backed service d
 | Service | Lifetime | Role |
 |---------|----------|------|
 | `ILogger<MeshService>` | Scoped | Structured logging |
-| `MeshServiceConfiguration` | Singleton | All 24 config properties above |
+| `MeshServiceConfiguration` | Singleton | All 27 config properties above |
 | `IMessageBus` | Scoped | Event publishing and error events |
-| `IEventConsumer` | Scoped | Heartbeat and mapping event subscription |
-| `IMeshStateManager` | Singleton | Redis state via lib-state (3 stores) |
+| `IMessageSubscriber` | Scoped | Circuit state change subscription in MeshInvocationClient |
+| `IEventConsumer` | Scoped | Heartbeat and mapping event subscription (via generated code) |
+| `IMeshStateManager` | Singleton | Redis state via lib-state (3 stores + raw Redis) |
 | `IServiceAppMappingResolver` | Singleton | Shared service→app-id routing (used by all generated clients) |
-| `MeshInvocationClient` | Singleton | HTTP invocation with circuit breaker, retries, caching |
+| `MeshInvocationClient` | Singleton | HTTP invocation with distributed circuit breaker, retries, caching |
+| `DistributedCircuitBreaker` | Internal (via MeshInvocationClient) | Redis-backed circuit breaker with local cache + event sync |
 | `MeshHealthCheckService` | Hosted (BackgroundService) | Active endpoint health probing |
 | `LocalMeshStateManager` | Singleton | In-memory state for `UseLocalRouting=true` mode |
 
@@ -122,13 +139,13 @@ Service lifetime is **Scoped** (per-request) for MeshService itself. Infrastruct
 ### Service Discovery (2 endpoints)
 
 - **GetEndpoints** (`/mesh/endpoints/get`): Returns endpoints for an app-id. Filters by health status (default: healthy only) and optional service name. Returns healthy/total counts.
-- **ListEndpoints** (`/mesh/endpoints/list`): Admin-level listing of all endpoints. Groups by status for summary (healthy, degraded, unavailable). Supports app-id prefix filter.
+- **ListEndpoints** (`/mesh/endpoints/list`): Admin-level listing of all endpoints. Groups by status for summary (healthy, degraded, unavailable). Supports app-id prefix filter and status filter (filters in-memory after fetching from Redis).
 
 ### Registration (3 endpoints)
 
 - **Register** (`/mesh/register`): Announces instance availability. Generates instance ID if not provided. Stores with configurable TTL. Publishes `mesh.endpoint.registered`.
 - **Deregister** (`/mesh/deregister`): Graceful shutdown removal. Looks up endpoint first (for app-id), removes from store, publishes `mesh.endpoint.deregistered` with reason=Graceful.
-- **Heartbeat** (`/mesh/heartbeat`): Refreshes TTL and updates metrics (status, load%, connections). Returns `NextHeartbeatSeconds` and `TtlSeconds` for client scheduling.
+- **Heartbeat** (`/mesh/heartbeat`): Refreshes TTL and updates metrics (status, load%, connections, issues). Issues are stored on the endpoint and visible in endpoint queries. Returns `NextHeartbeatSeconds` and `TtlSeconds` for client scheduling.
 
 ### Routing (2 endpoints)
 
@@ -188,6 +205,12 @@ Load Balancing Algorithms
        │              weight = max(100 - LoadPercent, 1)
        │              weighted random selection
        │
+       ├── WeightedRoundRobin → Smooth weighted round-robin (nginx-style)
+       │                         effective_weight = max(100 - LoadPercent, 1)
+       │                         current_weight += effective_weight
+       │                         select highest current_weight
+       │                         selected.current_weight -= total_effective_weight
+       │
        └── Random → Random.Shared.Next(endpoints.Count)
 
 
@@ -211,46 +234,56 @@ Event-Driven Auto-Registration
 
 ## Stubs & Unimplemented Features
 
-1. **Local routing mode is minimal**: `LocalMeshStateManager` provides in-memory state for testing but does not simulate failure scenarios or load balancing nuances.
-2. **Health check deregistration**: `MeshHealthCheckService` probes endpoints but the failure handling (marking unavailable, deregistering after sustained failure) depends on the full implementation of `ProbeAllEndpointsAsync`.
+*No stubs remaining - all features are implemented.*
 
 ---
 
 ## Potential Extensions
 
-1. **Weighted round-robin**: Combine round-robin with load-based weighting for predictable but load-aware distribution.
-2. **Distributed circuit breaker**: Share circuit breaker state across instances via Redis for cluster-wide protection.
-3. **Endpoint affinity**: Sticky routing for stateful services (session affinity based on request metadata).
-4. **Graceful draining**: Endpoint status `ShuttingDown` could actively drain connections before full deregistration.
+*No extensions identified. Graceful draining was previously listed here but deemed unnecessary: Orchestrator's two-level routing model (mapping resolver + endpoint resolution) handles managed deployments by changing app-id mappings before stopping old nodes, so new requests never reach the draining node. Crash scenarios can't be helped by draining since the node is already dead.*
 
 ---
 
 ## Known Quirks & Caveats
 
-### Bugs
+### Bugs (Fix Immediately)
 
-No bugs identified.
+1. ~~**No request-level timeout**~~: **FIXED** (2026-02-07) - Added `RequestTimeoutSeconds` configuration (default 30s) for per-request timeout. See [#324](https://github.com/beyond-immersion/bannou-service/issues/324).
 
-### Intentional Quirks
+### Intentional Quirks (Documented Behavior)
 
-1. **HeartbeatStatus.Overloaded maps to EndpointStatus.Degraded**: The status mapping is lossy - `Overloaded` and `Degraded` heartbeat statuses both become `Degraded` endpoint status. No distinct "overloaded" endpoint state exists.
+*No quirks - the service operates as expected for a distributed service mesh.*
 
-2. **GetRoute falls back to all endpoints**: If both degradation-threshold filtering and load-threshold filtering eliminate all endpoints, the algorithm falls back to the original unfiltered list. Prevents total routing failure at the cost of routing to potentially degraded endpoints.
+### Operational Notes
 
-3. **Dual round-robin implementations**: MeshService uses `static ConcurrentDictionary<string, int>` for per-appId counters. MeshInvocationClient uses `Interlocked.Increment` on a single `int` field. Different approaches for the same problem.
+These are standard behaviors worth understanding for operations and debugging:
 
-4. **Circuit breaker is per-instance, not distributed**: Each `MeshInvocationClient` instance maintains its own circuit breaker state. In multi-instance deployments, one instance may have an open circuit while others are still closed.
+1. **Two-level routing model**: Mesh routing operates in two stages. First, `IServiceAppMappingResolver` maps a **service name** to an **app-id** (e.g., `"auth"` → `"bannou-auth-node1"`). This mapping is populated by Orchestrator's `FullServiceMappingsEvent` broadcasts after deployments and topology changes. Second, Mesh resolves the **app-id** to a specific **endpoint** using load balancing across all healthy instances registered under that app-id. Node affinity is handled at the first level (Orchestrator assigns per-node app-ids like `bannou-{service}-{nodeName}`), so Mesh's load balancing at the second level is always stateless. In development, all services map to the default `"bannou"` app-id (single instance); in production, Orchestrator controls which node each service routes to by publishing different mappings.
 
-5. **No request-level timeout in MeshInvocationClient**: The only timeout is `ConnectTimeoutSeconds` on the `SocketsHttpHandler`. There's no per-request read/response timeout - slow responses block the retry loop indefinitely until cancellation.
+2. **Resilient routing fallback**: If health/load filtering eliminates all endpoints, `GetRoute` falls back to the full unfiltered list. Prefers degraded routing over total failure.
 
-### Design Considerations
+3. **Circuit breaker eventual consistency**: State syncs across instances via Redis + RabbitMQ events within milliseconds. Brief disagreement during propagation is expected and harmless.
 
-1. **EndpointCache uses Dictionary + lock, not ConcurrentDictionary**: The `EndpointCache` inner class in MeshInvocationClient uses a plain `Dictionary<>` with explicit lock statements instead of `ConcurrentDictionary`. Lower overhead for simple get/set but not lock-free.
+4. **Global index lazy cleanup**: The `mesh-global-index` store cleans stale entries on access rather than via TTL. Endpoints themselves have TTL, so this is an optimization choice, not a bug.
 
-2. **MeshInvocationClient is Singleton with mutable state**: The circuit breaker and endpoint cache are instance-level mutable state in a Singleton-lifetime service. Thread-safe by design (ConcurrentDictionary for circuits, lock for cache) but long-lived state accumulates.
+5. **Empty mappings = reset**: `FullServiceMappingsEvent` with empty mappings resets all routing to default ("bannou"). This is intentional for container teardown.
 
-3. **State manager lazy initialization**: `MeshStateManager.InitializeAsync()` must be called before use. The `_initialized` flag prevents re-initialization but doesn't protect against concurrent first-initialization.
+### Design Considerations (Requires Planning)
 
-4. **Static round-robin counter in MeshService**: `_roundRobinCounters` is static, meaning it persists across scoped service instances. The counter can grow unbounded as new app-ids are encountered (no eviction).
+*No design issues requiring planning - architecture is stable.*
 
-5. **Three overlapping endpoint resolution paths**: MeshService.GetRoute (for API callers), MeshInvocationClient.ResolveEndpointAsync (for generated clients), and heartbeat-based auto-registration all resolve/manage endpoints with subtly different logic.
+---
+
+## Work Tracking
+
+This section tracks active development work on items from the quirks/bugs lists above. Items here are managed by the `/audit-plugin` workflow.
+
+### Completed
+
+- **2026-02-07**: Closed [#161](https://github.com/beyond-immersion/bannou-service/issues/161) - removed `metadata` field from `RegisterEndpointRequest` schema.
+- **2026-02-07**: Closed [#219](https://github.com/beyond-immersion/bannou-service/issues/219) - distributed circuit breaker implementation complete.
+- **2026-02-07**: Closed [#323](https://github.com/beyond-immersion/bannou-service/issues/323) - degradation events implemented (health check failures + endpoint degraded).
+- **2026-02-07**: Closed [#322](https://github.com/beyond-immersion/bannou-service/issues/322) - all production readiness items complete, including event topic fix (`bannou.service-heartbeat`).
+- **2026-02-07**: Closed [#324](https://github.com/beyond-immersion/bannou-service/issues/324) - Added `RequestTimeoutSeconds` configuration (default 30s) for per-request timeout.
+- **2026-02-08**: Closed [#162](https://github.com/beyond-immersion/bannou-service/issues/162) - LocalMeshStateManager minimal by design; testing uses mocked interfaces (unit) and real Redis (integration).
+- **2026-02-08**: Closed [#144](https://github.com/beyond-immersion/bannou-service/issues/144) - ABML `service_call` contradicts established architecture; forbidden at compiler and runtime. Purpose-built actions and Variable Providers are the correct patterns.

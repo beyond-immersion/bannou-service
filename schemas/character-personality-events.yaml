@@ -5,8 +5,11 @@ info:
     Event models for Character Personality service RabbitMQ pub/sub via MassTransit.
     These events are published when personality or combat preference data changes.
 
-    **Schema Rules**: AI agents MUST review docs/reference/SCHEMA-RULES.md before
-    modifying this schema. Optional reference types require `nullable: true`.
+    **SCHEMA MODIFICATION GATE**: STOP. Before modifying this schema, you MUST:
+    1. Read docs/reference/SCHEMA-RULES.md
+    2. State which section applies to your change
+    3. Only then proceed with edits
+    Edits without stating the applicable rule are FORBIDDEN.
   version: 1.0.0
   x-event-subscriptions: []  # Character Personality doesn't subscribe to external events
   x-event-publications:
@@ -43,6 +46,10 @@ components:
       type: object
       additionalProperties: false
       description: Published when a character's personality is first created
+      x-resource-mapping:
+        resource_type: character
+        resource_id_field: characterId
+        source_type: character-personality
       required:
         - eventId
         - timestamp
@@ -69,6 +76,10 @@ components:
       type: object
       additionalProperties: false
       description: Published when a character's personality traits are updated
+      x-resource-mapping:
+        resource_type: character
+        resource_id_field: characterId
+        source_type: character-personality
       required:
         - eventId
         - timestamp
@@ -95,6 +106,10 @@ components:
       type: object
       additionalProperties: false
       description: Published when a character's personality evolves due to experience
+      x-resource-mapping:
+        resource_type: character
+        resource_id_field: characterId
+        source_type: character-personality
       required:
         - eventId
         - timestamp
@@ -158,6 +173,10 @@ components:
       type: object
       additionalProperties: false
       description: Published when a character's combat preferences are first created
+      x-resource-mapping:
+        resource_type: character
+        resource_id_field: characterId
+        source_type: character-personality
       required:
         - eventId
         - timestamp
@@ -184,6 +203,10 @@ components:
       type: object
       additionalProperties: false
       description: Published when a character's combat preferences are updated
+      x-resource-mapping:
+        resource_type: character
+        resource_id_field: characterId
+        source_type: character-personality
       required:
         - eventId
         - timestamp
@@ -210,6 +233,10 @@ components:
       type: object
       additionalProperties: false
       description: Published when a character's combat preferences evolve due to combat experience
+      x-resource-mapping:
+        resource_type: character
+        resource_id_field: characterId
+        source_type: character-personality
       required:
         - eventId
         - timestamp

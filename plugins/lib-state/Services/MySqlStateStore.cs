@@ -7,6 +7,7 @@ using BeyondImmersion.BannouService.State;
 using BeyondImmersion.BannouService.State.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using System.Collections;
 using System.Linq.Expressions;
 using System.Security.Cryptography;
 using System.Text;
@@ -24,22 +25,30 @@ public sealed class MySqlStateStore<TValue> : IJsonQueryableStateStore<TValue>
 {
     private readonly DbContextOptions<StateDbContext> _options;
     private readonly string _storeName;
+    private readonly int _inMemoryFallbackLimit;
     private readonly ILogger<MySqlStateStore<TValue>> _logger;
+    private readonly StateErrorPublisherAsync? _errorPublisher;
 
     /// <summary>
     /// Creates a new MySQL state store.
     /// </summary>
     /// <param name="options">EF Core database context options for creating per-operation contexts.</param>
     /// <param name="storeName">Name of this state store.</param>
+    /// <param name="inMemoryFallbackLimit">Maximum entries to load when falling back to in-memory filtering.</param>
     /// <param name="logger">Logger instance.</param>
+    /// <param name="errorPublisher">Optional callback for publishing state errors with deduplication.</param>
     public MySqlStateStore(
         DbContextOptions<StateDbContext> options,
         string storeName,
-        ILogger<MySqlStateStore<TValue>> logger)
+        int inMemoryFallbackLimit,
+        ILogger<MySqlStateStore<TValue>> logger,
+        StateErrorPublisherAsync? errorPublisher = null)
     {
         _options = options;
         _storeName = storeName;
+        _inMemoryFallbackLimit = inMemoryFallbackLimit;
         _logger = logger;
+        _errorPublisher = errorPublisher;
     }
 
     /// <summary>
@@ -48,9 +57,16 @@ public sealed class MySqlStateStore<TValue> : IJsonQueryableStateStore<TValue>
     /// </summary>
     private StateDbContext CreateContext() => new StateDbContext(_options);
 
-    private static string GenerateETag(string json)
+    /// <summary>
+    /// Generates an ETag from key + JSON content.
+    /// IMPLEMENTATION TENETS: Key is included to prevent cross-key ETag collisions
+    /// where different keys with identical content would otherwise match.
+    /// </summary>
+    private static string GenerateETag(string key, string json)
     {
-        var hash = SHA256.HashData(Encoding.UTF8.GetBytes(json));
+        // Include key in hash to prevent cross-key collisions
+        var input = $"{key}:{json}";
+        var hash = SHA256.HashData(Encoding.UTF8.GetBytes(input));
         return Convert.ToBase64String(hash)[..12]; // Short ETag
     }
 
@@ -70,7 +86,16 @@ public sealed class MySqlStateStore<TValue> : IJsonQueryableStateStore<TValue>
             return null;
         }
 
-        return BannouJson.Deserialize<TValue>(entry.ValueJson);
+        try
+        {
+            return BannouJson.Deserialize<TValue>(entry.ValueJson);
+        }
+        catch (System.Text.Json.JsonException ex)
+        {
+            // IMPLEMENTATION TENETS: Log data corruption as error for monitoring
+            _logger.LogError(ex, "JSON deserialization failed for key '{Key}' in store '{Store}' - data may be corrupted", key, _storeName);
+            return null;
+        }
     }
 
     /// <inheritdoc/>
@@ -90,7 +115,16 @@ public sealed class MySqlStateStore<TValue> : IJsonQueryableStateStore<TValue>
             return (null, null);
         }
 
-        return (BannouJson.Deserialize<TValue>(entry.ValueJson), entry.ETag);
+        try
+        {
+            return (BannouJson.Deserialize<TValue>(entry.ValueJson), entry.ETag);
+        }
+        catch (System.Text.Json.JsonException ex)
+        {
+            // IMPLEMENTATION TENETS: Log data corruption as error for monitoring
+            _logger.LogError(ex, "JSON deserialization failed for key '{Key}' in store '{Store}' - data may be corrupted", key, _storeName);
+            return (null, null);
+        }
     }
 
     /// <inheritdoc/>
@@ -100,9 +134,16 @@ public sealed class MySqlStateStore<TValue> : IJsonQueryableStateStore<TValue>
         StateOptions? options = null,
         CancellationToken cancellationToken = default)
     {
+        // MySQL stores do not support TTL - use Redis for ephemeral data
+        if (options?.Ttl != null)
+        {
+            throw new InvalidOperationException(
+                $"TTL is not supported for MySQL stores. Store '{_storeName}' uses MySQL backend. " +
+                "For ephemeral data requiring expiration, use a Redis-backed store instead.");
+        }
 
         var json = BannouJson.Serialize(value);
-        var etag = GenerateETag(json);
+        var etag = GenerateETag(key, json);
         var now = DateTimeOffset.UtcNow;
 
         using var context = CreateContext();
@@ -152,7 +193,7 @@ public sealed class MySqlStateStore<TValue> : IJsonQueryableStateStore<TValue>
             .FirstOrDefaultAsync(cancellationToken);
 
         var json = BannouJson.Serialize(value);
-        var newEtag = GenerateETag(json);
+        var newEtag = GenerateETag(key, json);
         var now = DateTimeOffset.UtcNow;
 
         // Empty etag means "create new entry if it doesn't exist"
@@ -263,10 +304,18 @@ public sealed class MySqlStateStore<TValue> : IJsonQueryableStateStore<TValue>
         var result = new Dictionary<string, TValue>();
         foreach (var entry in entries)
         {
-            var deserialized = BannouJson.Deserialize<TValue>(entry.ValueJson);
-            if (deserialized != null)
+            try
             {
-                result[entry.Key] = deserialized;
+                var deserialized = BannouJson.Deserialize<TValue>(entry.ValueJson);
+                if (deserialized != null)
+                {
+                    result[entry.Key] = deserialized;
+                }
+            }
+            catch (System.Text.Json.JsonException ex)
+            {
+                // IMPLEMENTATION TENETS: Log data corruption as error and skip the item
+                _logger.LogError(ex, "JSON deserialization failed for key '{Key}' in store '{Store}' - skipping corrupted item", entry.Key, _storeName);
             }
         }
 
@@ -277,31 +326,211 @@ public sealed class MySqlStateStore<TValue> : IJsonQueryableStateStore<TValue>
     }
 
     /// <inheritdoc/>
+    public async Task<IReadOnlyDictionary<string, string>> SaveBulkAsync(
+        IEnumerable<KeyValuePair<string, TValue>> items,
+        StateOptions? options = null,
+        CancellationToken cancellationToken = default)
+    {
+        // MySQL stores do not support TTL - use Redis for ephemeral data
+        if (options?.Ttl != null)
+        {
+            throw new InvalidOperationException(
+                $"TTL is not supported for MySQL stores. Store '{_storeName}' uses MySQL backend. " +
+                "For ephemeral data requiring expiration, use a Redis-backed store instead.");
+        }
+
+        var itemList = items.ToList();
+        if (itemList.Count == 0)
+        {
+            return new Dictionary<string, string>();
+        }
+
+        using var context = CreateContext();
+        var keys = itemList.Select(i => i.Key).ToList();
+        var existing = await context.StateEntries
+            .Where(e => e.StoreName == _storeName && keys.Contains(e.Key))
+            .ToDictionaryAsync(e => e.Key, cancellationToken);
+
+        var result = new Dictionary<string, string>();
+        var now = DateTimeOffset.UtcNow;
+
+        foreach (var (key, value) in itemList)
+        {
+            var json = BannouJson.Serialize(value);
+            var etag = GenerateETag(key, json);
+
+            if (existing.TryGetValue(key, out var entry))
+            {
+                entry.ValueJson = json;
+                entry.Version++;
+                entry.ETag = etag;
+                entry.UpdatedAt = now;
+            }
+            else
+            {
+                context.StateEntries.Add(new StateEntry
+                {
+                    StoreName = _storeName,
+                    Key = key,
+                    ValueJson = json,
+                    Version = 1,
+                    ETag = etag,
+                    CreatedAt = now,
+                    UpdatedAt = now
+                });
+            }
+            result[key] = etag;
+        }
+
+        await context.SaveChangesAsync(cancellationToken);
+
+        _logger.LogDebug("Bulk save {Count} items to store '{Store}'", itemList.Count, _storeName);
+        return result;
+    }
+
+    /// <inheritdoc/>
+    public async Task<IReadOnlySet<string>> ExistsBulkAsync(
+        IEnumerable<string> keys,
+        CancellationToken cancellationToken = default)
+    {
+        var keyList = keys.ToList();
+        if (keyList.Count == 0)
+        {
+            return new HashSet<string>();
+        }
+
+        using var context = CreateContext();
+        var existing = await context.StateEntries
+            .AsNoTracking()
+            .Where(e => e.StoreName == _storeName && keyList.Contains(e.Key))
+            .Select(e => e.Key)
+            .ToListAsync(cancellationToken);
+
+        _logger.LogDebug("Bulk exists check {RequestedCount} keys from store '{Store}', found {FoundCount}",
+            keyList.Count, _storeName, existing.Count);
+        return existing.ToHashSet();
+    }
+
+    /// <inheritdoc/>
+    public async Task<int> DeleteBulkAsync(
+        IEnumerable<string> keys,
+        CancellationToken cancellationToken = default)
+    {
+        var keyList = keys.ToList();
+        if (keyList.Count == 0)
+        {
+            return 0;
+        }
+
+        using var context = CreateContext();
+        var deletedCount = await context.StateEntries
+            .Where(e => e.StoreName == _storeName && keyList.Contains(e.Key))
+            .ExecuteDeleteAsync(cancellationToken);
+
+        _logger.LogDebug("Bulk delete {RequestedCount} keys from store '{Store}', deleted {DeletedCount}",
+            keyList.Count, _storeName, deletedCount);
+        return deletedCount;
+    }
+
+    /// <inheritdoc/>
     public async Task<IReadOnlyList<TValue>> QueryAsync(
         Expression<Func<TValue, bool>> predicate,
         CancellationToken cancellationToken = default)
     {
+        // IMPLEMENTATION TENETS: Try SQL-level filtering first to avoid loading entire store
+        // into memory. Falls back to in-memory for complex expressions that can't be translated.
+        if (TryConvertExpressionToConditions(predicate, out var conditions))
+        {
+            _logger.LogDebug(
+                "QueryAsync using SQL-level filtering with {ConditionCount} conditions for store '{Store}'",
+                conditions.Count, _storeName);
 
-        // Load all values for this store, deserialize, then filter
-        // Note: For true efficiency with large datasets, use SQL JSON functions
-        using var context = CreateContext();
-        var entries = await context.StateEntries
+            var (whereClauses, parameters) = BuildWhereClause(conditions);
+
+            var sql = $@"
+                SELECT `StoreName`, `Key`, `ValueJson`, `ETag`, `CreatedAt`, `UpdatedAt`, `Version`
+                FROM `state_entries`
+                WHERE `StoreName` = @p0
+                {(whereClauses.Length > 0 ? $"AND {whereClauses}" : "")}";
+
+            var allParams = new List<object?> { _storeName };
+            allParams.AddRange(parameters);
+
+            using var context = CreateContext();
+            var entries = await context.StateEntries
+                .FromSqlRaw(sql, allParams.ToArray())
+                .AsNoTracking()
+                .ToListAsync(cancellationToken);
+
+            var results = new List<TValue>();
+            foreach (var entry in entries)
+            {
+                try
+                {
+                    var value = BannouJson.Deserialize<TValue>(entry.ValueJson);
+                    if (value != null)
+                    {
+                        results.Add(value);
+                    }
+                    else
+                    {
+                        _logger.LogError(
+                            "Failed to deserialize entry {Key} in store '{Store}' - data corruption or schema mismatch detected",
+                            entry.Key, _storeName);
+                    }
+                }
+                catch (System.Text.Json.JsonException ex)
+                {
+                    // IMPLEMENTATION TENETS: Log data corruption as error and skip the item
+                    _logger.LogError(ex, "JSON deserialization failed for key '{Key}' in store '{Store}' - skipping corrupted item", entry.Key, _storeName);
+                }
+            }
+
+            _logger.LogDebug("SQL-level query on store '{Store}' returned {Count} results", _storeName, results.Count);
+            return results;
+        }
+
+        // Fallback to in-memory filtering for complex expressions
+        _logger.LogWarning(
+            "QueryAsync falling back to in-memory filtering for store '{Store}' - " +
+            "expression could not be translated to SQL. Consider using JsonQueryAsync for large datasets.",
+            _storeName);
+
+        using var fallbackContext = CreateContext();
+        var allEntries = await fallbackContext.StateEntries
             .AsNoTracking()
             .Where(e => e.StoreName == _storeName)
             .ToListAsync(cancellationToken);
 
-        var deserializedValues = new List<TValue>();
-        foreach (var entry in entries)
+        // Prevent OOM by enforcing configurable limit on in-memory fallback
+        if (allEntries.Count > _inMemoryFallbackLimit)
         {
-            var value = BannouJson.Deserialize<TValue>(entry.ValueJson);
-            if (value == null)
+            throw new InvalidOperationException(
+                $"QueryAsync in-memory fallback would load {allEntries.Count} entries from store '{_storeName}' " +
+                $"(limit: {_inMemoryFallbackLimit}). Use JsonQueryAsync with explicit conditions for large datasets, " +
+                "or simplify the predicate to enable SQL translation.");
+        }
+
+        var deserializedValues = new List<TValue>();
+        foreach (var entry in allEntries)
+        {
+            try
             {
-                _logger.LogError(
-                    "Failed to deserialize entry {Key} in store '{Store}' - data corruption or schema mismatch detected",
-                    entry.Key, _storeName);
-                continue;
+                var value = BannouJson.Deserialize<TValue>(entry.ValueJson);
+                if (value == null)
+                {
+                    _logger.LogError(
+                        "Failed to deserialize entry {Key} in store '{Store}' - data corruption or schema mismatch detected",
+                        entry.Key, _storeName);
+                    continue;
+                }
+                deserializedValues.Add(value);
             }
-            deserializedValues.Add(value);
+            catch (System.Text.Json.JsonException ex)
+            {
+                // IMPLEMENTATION TENETS: Log data corruption as error and skip the item
+                _logger.LogError(ex, "JSON deserialization failed for key '{Key}' in store '{Store}' - skipping corrupted item", entry.Key, _storeName);
+            }
         }
 
         var values = deserializedValues
@@ -309,7 +538,7 @@ public sealed class MySqlStateStore<TValue> : IJsonQueryableStateStore<TValue>
             .Where(predicate)
             .ToList();
 
-        _logger.LogDebug("Query on store '{Store}' returned {Count} results", _storeName, values.Count);
+        _logger.LogDebug("In-memory query on store '{Store}' returned {Count} results", _storeName, values.Count);
 
         return values;
     }
@@ -326,25 +555,142 @@ public sealed class MySqlStateStore<TValue> : IJsonQueryableStateStore<TValue>
         if (page < 0) throw new ArgumentOutOfRangeException(nameof(page));
         if (pageSize <= 0) throw new ArgumentOutOfRangeException(nameof(pageSize));
 
-        // Load all values for this store
-        using var context = CreateContext();
-        var entries = await context.StateEntries
+        // IMPLEMENTATION TENETS: Try SQL-level filtering when possible
+        // Check if we can translate both predicate and orderBy to SQL
+        IReadOnlyList<QueryCondition> conditions = Array.Empty<QueryCondition>();
+        var canTranslatePredicate = predicate == null || TryConvertExpressionToConditions(predicate, out conditions);
+
+        string? sortPath = null;
+        var canTranslateOrderBy = orderBy == null ||
+            TryGetMemberPath(orderBy.Body, orderBy.Parameters[0], out sortPath);
+
+        if (canTranslatePredicate && canTranslateOrderBy)
+        {
+            _logger.LogDebug(
+                "QueryPagedAsync using SQL-level filtering with {ConditionCount} conditions for store '{Store}'",
+                conditions.Count, _storeName);
+
+            var (whereClauses, parameters) = BuildWhereClause(conditions);
+
+            // Build ORDER BY clause
+            var orderByClause = "ORDER BY `UpdatedAt` DESC"; // Default ordering
+            if (sortPath != null)
+            {
+                var escapedPath = EscapeJsonPath(sortPath);
+                var direction = descending ? "DESC" : "ASC";
+                orderByClause = $"ORDER BY JSON_UNQUOTE(JSON_EXTRACT(`ValueJson`, '{escapedPath}')) {direction}";
+            }
+
+            // Count query
+            var countSql = $@"
+                SELECT COUNT(*) AS Value
+                FROM `state_entries`
+                WHERE `StoreName` = @p0
+                {(whereClauses.Length > 0 ? $"AND {whereClauses}" : "")}";
+
+            var allParams = new List<object?> { _storeName };
+            allParams.AddRange(parameters);
+
+            using var context = CreateContext();
+            var totalCount = await context.Database
+                .SqlQueryRaw<long>(countSql, allParams.Where(p => p != null).ToArray()!)
+                .FirstOrDefaultAsync(cancellationToken);
+
+            // Data query with pagination
+            var dataSql = $@"
+                SELECT `StoreName`, `Key`, `ValueJson`, `ETag`, `CreatedAt`, `UpdatedAt`, `Version`
+                FROM `state_entries`
+                WHERE `StoreName` = @p0
+                {(whereClauses.Length > 0 ? $"AND {whereClauses}" : "")}
+                {orderByClause}
+                LIMIT @pLimit OFFSET @pOffset";
+
+            var dataParams = new List<object?> { _storeName };
+            dataParams.AddRange(parameters);
+
+            var paramIndex = dataParams.Count;
+            dataSql = dataSql.Replace("@pLimit", $"@p{paramIndex}");
+            dataParams.Add(pageSize);
+            paramIndex++;
+            dataSql = dataSql.Replace("@pOffset", $"@p{paramIndex}");
+            dataParams.Add(page * pageSize);
+
+            var entries = await context.StateEntries
+                .FromSqlRaw(dataSql, dataParams.ToArray())
+                .AsNoTracking()
+                .ToListAsync(cancellationToken);
+
+            var items = new List<TValue>();
+            foreach (var entry in entries)
+            {
+                try
+                {
+                    var value = BannouJson.Deserialize<TValue>(entry.ValueJson);
+                    if (value != null)
+                    {
+                        items.Add(value);
+                    }
+                    else
+                    {
+                        _logger.LogError(
+                            "Failed to deserialize entry {Key} in store '{Store}' - data corruption or schema mismatch detected",
+                            entry.Key, _storeName);
+                    }
+                }
+                catch (System.Text.Json.JsonException ex)
+                {
+                    // IMPLEMENTATION TENETS: Log data corruption as error and skip the item
+                    _logger.LogError(ex, "JSON deserialization failed for key '{Key}' in store '{Store}' - skipping corrupted item", entry.Key, _storeName);
+                }
+            }
+
+            _logger.LogDebug("SQL-level paged query on store '{Store}' returned page {Page} with {Count} items (total: {Total})",
+                _storeName, page, items.Count, totalCount);
+
+            return new PagedResult<TValue>(items, (int)totalCount, page, pageSize);
+        }
+
+        // Fallback to in-memory filtering
+        _logger.LogWarning(
+            "QueryPagedAsync falling back to in-memory filtering for store '{Store}' - " +
+            "expression could not be translated to SQL.",
+            _storeName);
+
+        using var fallbackContext = CreateContext();
+        var allEntries = await fallbackContext.StateEntries
             .AsNoTracking()
             .Where(e => e.StoreName == _storeName)
             .ToListAsync(cancellationToken);
 
-        var deserializedValues = new List<TValue>();
-        foreach (var entry in entries)
+        // Prevent OOM by enforcing configurable limit on in-memory fallback
+        if (allEntries.Count > _inMemoryFallbackLimit)
         {
-            var value = BannouJson.Deserialize<TValue>(entry.ValueJson);
-            if (value == null)
+            throw new InvalidOperationException(
+                $"QueryPagedAsync in-memory fallback would load {allEntries.Count} entries from store '{_storeName}' " +
+                $"(limit: {_inMemoryFallbackLimit}). Use JsonQueryPagedAsync with explicit conditions for large datasets, " +
+                "or simplify the predicate/orderBy to enable SQL translation.");
+        }
+
+        var deserializedValues = new List<TValue>();
+        foreach (var entry in allEntries)
+        {
+            try
             {
-                _logger.LogError(
-                    "Failed to deserialize entry {Key} in store '{Store}' - data corruption or schema mismatch detected",
-                    entry.Key, _storeName);
-                continue;
+                var value = BannouJson.Deserialize<TValue>(entry.ValueJson);
+                if (value == null)
+                {
+                    _logger.LogError(
+                        "Failed to deserialize entry {Key} in store '{Store}' - data corruption or schema mismatch detected",
+                        entry.Key, _storeName);
+                    continue;
+                }
+                deserializedValues.Add(value);
             }
-            deserializedValues.Add(value);
+            catch (System.Text.Json.JsonException ex)
+            {
+                // IMPLEMENTATION TENETS: Log data corruption as error and skip the item
+                _logger.LogError(ex, "JSON deserialization failed for key '{Key}' in store '{Store}' - skipping corrupted item", entry.Key, _storeName);
+            }
         }
 
         var query = deserializedValues.AsQueryable();
@@ -356,7 +702,7 @@ public sealed class MySqlStateStore<TValue> : IJsonQueryableStateStore<TValue>
         }
 
         // Get total count before pagination
-        var totalCount = query.Count();
+        var inMemoryTotalCount = query.Count();
 
         // Apply ordering
         if (orderBy != null)
@@ -367,15 +713,15 @@ public sealed class MySqlStateStore<TValue> : IJsonQueryableStateStore<TValue>
         }
 
         // Apply pagination
-        var items = query
+        var inMemoryItems = query
             .Skip(page * pageSize)
             .Take(pageSize)
             .ToList();
 
-        _logger.LogDebug("Paged query on store '{Store}' returned page {Page} with {Count} items (total: {Total})",
-            _storeName, page, items.Count, totalCount);
+        _logger.LogDebug("In-memory paged query on store '{Store}' returned page {Page} with {Count} items (total: {Total})",
+            _storeName, page, inMemoryItems.Count, inMemoryTotalCount);
 
-        return new PagedResult<TValue>(items, totalCount, page, pageSize);
+        return new PagedResult<TValue>(inMemoryItems, inMemoryTotalCount, page, pageSize);
     }
 
     /// <inheritdoc/>
@@ -394,32 +740,80 @@ public sealed class MySqlStateStore<TValue> : IJsonQueryableStateStore<TValue>
                 .LongCountAsync(cancellationToken);
         }
 
-        // Slow path: load, deserialize, and filter
+        // IMPLEMENTATION TENETS: Try SQL-level counting first
+        if (TryConvertExpressionToConditions(predicate, out var conditions))
+        {
+            _logger.LogDebug(
+                "CountAsync using SQL-level filtering with {ConditionCount} conditions for store '{Store}'",
+                conditions.Count, _storeName);
+
+            var (whereClauses, parameters) = BuildWhereClause(conditions);
+
+            // EF Core 8 SqlQueryRaw<T> requires column named 'Value'
+            var sql = $@"
+                SELECT COUNT(*) AS Value
+                FROM `state_entries`
+                WHERE `StoreName` = @p0
+                {(whereClauses.Length > 0 ? $"AND {whereClauses}" : "")}";
+
+            var allParams = new List<object?> { _storeName };
+            allParams.AddRange(parameters);
+
+            var count = await context.Database
+                .SqlQueryRaw<long>(sql, allParams.Where(p => p != null).ToArray()!)
+                .FirstOrDefaultAsync(cancellationToken);
+
+            return count;
+        }
+
+        // Fallback: load, deserialize, and filter
+        _logger.LogWarning(
+            "CountAsync falling back to in-memory filtering for store '{Store}' - " +
+            "expression could not be translated to SQL.",
+            _storeName);
+
         var entries = await context.StateEntries
             .AsNoTracking()
             .Where(e => e.StoreName == _storeName)
             .ToListAsync(cancellationToken);
 
+        // Prevent OOM by enforcing configurable limit on in-memory fallback
+        if (entries.Count > _inMemoryFallbackLimit)
+        {
+            throw new InvalidOperationException(
+                $"CountAsync in-memory fallback would load {entries.Count} entries from store '{_storeName}' " +
+                $"(limit: {_inMemoryFallbackLimit}). Use JsonCountAsync with explicit conditions for large datasets, " +
+                "or simplify the predicate to enable SQL translation.");
+        }
+
         var deserializedValues = new List<TValue>();
         foreach (var entry in entries)
         {
-            var value = BannouJson.Deserialize<TValue>(entry.ValueJson);
-            if (value == null)
+            try
             {
-                _logger.LogError(
-                    "Failed to deserialize entry {Key} in store '{Store}' - data corruption or schema mismatch detected",
-                    entry.Key, _storeName);
-                continue;
+                var value = BannouJson.Deserialize<TValue>(entry.ValueJson);
+                if (value == null)
+                {
+                    _logger.LogError(
+                        "Failed to deserialize entry {Key} in store '{Store}' - data corruption or schema mismatch detected",
+                        entry.Key, _storeName);
+                    continue;
+                }
+                deserializedValues.Add(value);
             }
-            deserializedValues.Add(value);
+            catch (System.Text.Json.JsonException ex)
+            {
+                // IMPLEMENTATION TENETS: Log data corruption as error and skip the item
+                _logger.LogError(ex, "JSON deserialization failed for key '{Key}' in store '{Store}' - skipping corrupted item", entry.Key, _storeName);
+            }
         }
 
-        var count = deserializedValues
+        var filteredCount = deserializedValues
             .AsQueryable()
             .Where(predicate)
             .LongCount();
 
-        return count;
+        return filteredCount;
     }
 
     #region IJsonQueryableStateStore Implementation
@@ -450,10 +844,18 @@ public sealed class MySqlStateStore<TValue> : IJsonQueryableStateStore<TValue>
         var results = new List<JsonQueryResult<TValue>>();
         foreach (var entry in entries)
         {
-            var value = BannouJson.Deserialize<TValue>(entry.ValueJson);
-            if (value != null)
+            try
             {
-                results.Add(new JsonQueryResult<TValue>(entry.Key, value));
+                var value = BannouJson.Deserialize<TValue>(entry.ValueJson);
+                if (value != null)
+                {
+                    results.Add(new JsonQueryResult<TValue>(entry.Key, value));
+                }
+            }
+            catch (System.Text.Json.JsonException ex)
+            {
+                // IMPLEMENTATION TENETS: Log data corruption as error and skip the item
+                _logger.LogError(ex, "JSON deserialization failed for key '{Key}' in store '{Store}' - skipping corrupted item", entry.Key, _storeName);
             }
         }
 
@@ -528,10 +930,18 @@ public sealed class MySqlStateStore<TValue> : IJsonQueryableStateStore<TValue>
         var results = new List<JsonQueryResult<TValue>>();
         foreach (var entry in entries)
         {
-            var value = BannouJson.Deserialize<TValue>(entry.ValueJson);
-            if (value != null)
+            try
             {
-                results.Add(new JsonQueryResult<TValue>(entry.Key, value));
+                var value = BannouJson.Deserialize<TValue>(entry.ValueJson);
+                if (value != null)
+                {
+                    results.Add(new JsonQueryResult<TValue>(entry.Key, value));
+                }
+            }
+            catch (System.Text.Json.JsonException ex)
+            {
+                // IMPLEMENTATION TENETS: Log data corruption as error and skip the item
+                _logger.LogError(ex, "JSON deserialization failed for key '{Key}' in store '{Store}' - skipping corrupted item", entry.Key, _storeName);
             }
         }
 
@@ -699,19 +1109,19 @@ public sealed class MySqlStateStore<TValue> : IJsonQueryableStateStore<TValue>
                 return $"{jsonUnquote} != @p{paramIndex++}";
 
             case QueryOperator.GreaterThan:
-                parameters.Add(condition.Value);
+                parameters.Add(SerializeValue(condition.Value));
                 return $"CAST({jsonExtract} AS DECIMAL(20,6)) > @p{paramIndex++}";
 
             case QueryOperator.GreaterThanOrEqual:
-                parameters.Add(condition.Value);
+                parameters.Add(SerializeValue(condition.Value));
                 return $"CAST({jsonExtract} AS DECIMAL(20,6)) >= @p{paramIndex++}";
 
             case QueryOperator.LessThan:
-                parameters.Add(condition.Value);
+                parameters.Add(SerializeValue(condition.Value));
                 return $"CAST({jsonExtract} AS DECIMAL(20,6)) < @p{paramIndex++}";
 
             case QueryOperator.LessThanOrEqual:
-                parameters.Add(condition.Value);
+                parameters.Add(SerializeValue(condition.Value));
                 return $"CAST({jsonExtract} AS DECIMAL(20,6)) <= @p{paramIndex++}";
 
             case QueryOperator.Contains:
@@ -727,16 +1137,44 @@ public sealed class MySqlStateStore<TValue> : IJsonQueryableStateStore<TValue>
                 return $"{jsonUnquote} LIKE @p{paramIndex++}";
 
             case QueryOperator.In:
-                // For array containment: JSON_CONTAINS(ValueJson, '"value"', '$.path')
-                var jsonValue = BannouJson.Serialize(condition.Value);
-                parameters.Add(jsonValue);
-                return $"JSON_CONTAINS(`ValueJson`, @p{paramIndex++}, '{escapedPath}')";
+                // Check if value is a collection (from Enumerable.Contains pattern)
+                if (condition.Value is IEnumerable enumerable && condition.Value is not string)
+                {
+                    // Generate: JSON_UNQUOTE(JSON_EXTRACT(ValueJson, '$.path')) IN (@p1, @p2, ...)
+                    var inParams = new List<string>();
+                    foreach (var item in enumerable)
+                    {
+                        parameters.Add(SerializeValue(item));
+                        inParams.Add($"@p{paramIndex++}");
+                    }
+
+                    if (inParams.Count == 0)
+                    {
+                        // Empty collection - never matches
+                        return "1 = 0";
+                    }
+
+                    return $"{jsonUnquote} IN ({string.Join(", ", inParams)})";
+                }
+                else
+                {
+                    // Legacy behavior: For array containment in JSON
+                    // JSON_CONTAINS(ValueJson, '"value"', '$.path')
+                    var jsonValue = BannouJson.Serialize(condition.Value);
+                    parameters.Add(jsonValue);
+                    return $"JSON_CONTAINS(`ValueJson`, @p{paramIndex++}, '{escapedPath}')";
+                }
 
             case QueryOperator.Exists:
-                return $"JSON_CONTAINS_PATH(`ValueJson`, 'one', '{escapedPath}')";
+                // Check if value is non-null (covers both "path exists with non-null value" cases)
+                // Uses IS NOT NULL which returns false for missing paths OR JSON null values
+                return $"JSON_EXTRACT(`ValueJson`, '{escapedPath}') IS NOT NULL";
 
             case QueryOperator.NotExists:
-                return $"NOT JSON_CONTAINS_PATH(`ValueJson`, 'one', '{escapedPath}')";
+                // Check if value is null (covers both "path missing" and "path exists with null value")
+                // Uses IS NULL which returns true for missing paths OR JSON null values
+                // This matches C# null comparison semantics: x.Field == null
+                return $"JSON_EXTRACT(`ValueJson`, '{escapedPath}') IS NULL";
 
             case QueryOperator.FullText:
                 // Full-text search requires a FULLTEXT index on the column
@@ -764,7 +1202,8 @@ public sealed class MySqlStateStore<TValue> : IJsonQueryableStateStore<TValue>
     }
 
     /// <summary>
-    /// Serializes a value for SQL parameter.
+    /// Serializes a value for SQL parameter comparison.
+    /// Must match BannouJson serialization behavior for consistent query results.
     /// </summary>
     private static object? SerializeValue(object? value)
     {
@@ -772,173 +1211,473 @@ public sealed class MySqlStateStore<TValue> : IJsonQueryableStateStore<TValue>
         {
             null => null,
             string s => s,
-            bool b => b.ToString().ToLowerInvariant(),
+            bool b => b.ToString().ToLowerInvariant(), // JSON boolean: true/false
+            Enum e => e.ToString(), // Match JsonStringEnumConverter: enum name as string
+            Guid g => g.ToString(), // Explicit GUID handling
+            DateTime dt => dt.ToString("O"), // ISO 8601 format
+            DateTimeOffset dto => dto.ToString("O"), // ISO 8601 format
             _ => value.ToString()
         };
     }
 
     #endregion
 
-    // ==================== Set Operations (Not Supported) ====================
-    // MySQL backend does not support set operations. Use Redis or InMemory for sets.
+    #region Expression to QueryCondition Translator
 
-    /// <inheritdoc/>
-    public Task<bool> AddToSetAsync<TItem>(
-        string key,
-        TItem item,
-        StateOptions? options = null,
-        CancellationToken cancellationToken = default)
+    /// <summary>
+    /// Attempts to convert a LINQ expression to QueryCondition objects for SQL-level filtering.
+    /// Supports simple property comparisons and AND combinations. Returns false for complex
+    /// expressions that require in-memory evaluation.
+    /// </summary>
+    /// <remarks>
+    /// IMPLEMENTATION TENETS: This enables SQL-level filtering for common query patterns,
+    /// avoiding the O(N) memory issue of loading all entries for large datasets.
+    /// Supported patterns:
+    /// - Property equality: x => x.Name == "John"
+    /// - Null comparisons: x => x.Field == null, x => x.Field != null
+    /// - Numeric comparisons: x => x.Age > 25
+    /// - Boolean properties: x => x.IsActive (implicitly == true)
+    /// - AND combinations: x => x.Name == "John" &amp;&amp; x.Age > 25
+    /// - String methods: x.Name.Contains("oh"), x.Name.StartsWith("J")
+    /// - Nested properties: x => x.Address.City == "NYC"
+    /// Unsupported (falls back to in-memory):
+    /// - OR combinations, NOT operators, method calls on non-string types
+    /// - Complex expressions involving calculations
+    /// </remarks>
+    private bool TryConvertExpressionToConditions(
+        Expression<Func<TValue, bool>> predicate,
+        out IReadOnlyList<QueryCondition> conditions)
     {
-        throw new NotSupportedException("Set operations are not supported by MySQL backend. Use Redis or InMemory.");
+        conditions = Array.Empty<QueryCondition>();
+
+        try
+        {
+            var result = new List<QueryCondition>();
+            if (TryVisitExpression(predicate.Body, predicate.Parameters[0], result))
+            {
+                conditions = result;
+                return true;
+            }
+            return false;
+        }
+        catch (Exception ex)
+        {
+            // IMPLEMENTATION TENETS: Infrastructure libs intentionally catch broadly to prevent cascading failures.
+            // Expression tree visitors can fail in many ways (unsupported operations, complex lambda structures,
+            // dynamic types, etc.) - any failure should gracefully fall back to in-memory filtering rather than
+            // crashing the entire operation. The caller has a safe in-memory fallback path.
+            _logger.LogDebug(ex, "Failed to convert expression to QueryConditions - will use in-memory fallback");
+            return false;
+        }
     }
 
-    /// <inheritdoc/>
-    public Task<long> AddToSetAsync<TItem>(
-        string key,
-        IEnumerable<TItem> items,
-        StateOptions? options = null,
-        CancellationToken cancellationToken = default)
+    private static bool TryVisitExpression(
+        Expression expression,
+        ParameterExpression parameter,
+        List<QueryCondition> conditions)
     {
-        throw new NotSupportedException("Set operations are not supported by MySQL backend. Use Redis or InMemory.");
+        return expression switch
+        {
+            BinaryExpression binary => TryVisitBinaryExpression(binary, parameter, conditions),
+            MethodCallExpression methodCall => TryVisitMethodCallExpression(methodCall, parameter, conditions),
+            UnaryExpression unary when unary.NodeType == ExpressionType.Not =>
+                false, // NOT operations not supported
+            MemberExpression member => TryVisitBooleanMemberExpression(member, parameter, conditions),
+            _ => false
+        };
     }
 
-    /// <inheritdoc/>
-    public Task<bool> RemoveFromSetAsync<TItem>(
-        string key,
-        TItem item,
-        CancellationToken cancellationToken = default)
+    private static bool TryVisitBinaryExpression(
+        BinaryExpression binary,
+        ParameterExpression parameter,
+        List<QueryCondition> conditions)
     {
-        throw new NotSupportedException("Set operations are not supported by MySQL backend. Use Redis or InMemory.");
+        // Handle AND combinations
+        if (binary.NodeType == ExpressionType.AndAlso)
+        {
+            return TryVisitExpression(binary.Left, parameter, conditions) &&
+                    TryVisitExpression(binary.Right, parameter, conditions);
+        }
+
+        // Handle OR - not supported for SQL translation
+        if (binary.NodeType == ExpressionType.OrElse)
+        {
+            return false;
+        }
+
+        // Handle null comparisons: x.Field == null or x.Field != null
+        // Must check before normal flow since null requires special SQL (IS NULL / IS NOT NULL)
+        if (TryHandleNullComparison(binary, parameter, conditions))
+        {
+            return true;
+        }
+
+        // Handle comparison operators
+        if (!TryGetMemberPath(binary.Left, parameter, out var path))
+        {
+            // Try reversed (e.g., "John" == x.Name)
+            if (!TryGetMemberPath(binary.Right, parameter, out path))
+            {
+                return false;
+            }
+            // Swap for reversed comparison
+            var temp = binary.Left;
+            binary = Expression.MakeBinary(
+                GetReversedOperator(binary.NodeType),
+                binary.Right,
+                temp) as BinaryExpression ?? binary;
+        }
+
+        if (!TryGetConstantValue(binary.Right, out var value))
+        {
+            // Try reversed
+            if (!TryGetConstantValue(binary.Left, out value))
+            {
+                return false;
+            }
+        }
+
+        // If value is null at this point, we should have caught it in TryHandleNullComparison
+        // but as a safety net, fall back to in-memory filtering
+        if (value == null)
+        {
+            return false;
+        }
+
+        var queryOperator = binary.NodeType switch
+        {
+            ExpressionType.Equal => QueryOperator.Equals,
+            ExpressionType.NotEqual => QueryOperator.NotEquals,
+            ExpressionType.GreaterThan => QueryOperator.GreaterThan,
+            ExpressionType.GreaterThanOrEqual => QueryOperator.GreaterThanOrEqual,
+            ExpressionType.LessThan => QueryOperator.LessThan,
+            ExpressionType.LessThanOrEqual => QueryOperator.LessThanOrEqual,
+            _ => (QueryOperator?)null
+        };
+
+        if (queryOperator == null)
+        {
+            return false;
+        }
+
+        conditions.Add(new QueryCondition
+        {
+            Path = path,
+            Operator = queryOperator.Value,
+            Value = value
+        });
+
+        return true;
     }
 
-    /// <inheritdoc/>
-    public Task<IReadOnlyList<TItem>> GetSetAsync<TItem>(
-        string key,
-        CancellationToken cancellationToken = default)
+    /// <summary>
+    /// Handles null comparison expressions: x.Field == null or x.Field != null.
+    /// Uses SQL IS NULL / IS NOT NULL semantics via special QueryCondition markers.
+    /// </summary>
+    private static bool TryHandleNullComparison(
+        BinaryExpression binary,
+        ParameterExpression parameter,
+        List<QueryCondition> conditions)
     {
-        throw new NotSupportedException("Set operations are not supported by MySQL backend. Use Redis or InMemory.");
+        // Only handle equality/inequality with null
+        if (binary.NodeType != ExpressionType.Equal && binary.NodeType != ExpressionType.NotEqual)
+        {
+            return false;
+        }
+
+        // Check if either side is a null constant
+        var leftIsNull = IsNullConstant(binary.Left);
+        var rightIsNull = IsNullConstant(binary.Right);
+
+        if (!leftIsNull && !rightIsNull)
+        {
+            return false; // Neither side is null, not a null comparison
+        }
+
+        // Get the member path from the non-null side
+        var memberExpr = leftIsNull ? binary.Right : binary.Left;
+        if (!TryGetMemberPath(memberExpr, parameter, out var path))
+        {
+            return false;
+        }
+
+        // x.Field == null uses NotExists (JSON_EXTRACT IS NULL covers both missing and JSON null)
+        // x.Field != null uses Exists (JSON_EXTRACT IS NOT NULL)
+        var isEqualToNull = binary.NodeType == ExpressionType.Equal;
+        conditions.Add(new QueryCondition
+        {
+            Path = path,
+            Operator = isEqualToNull ? QueryOperator.NotExists : QueryOperator.Exists,
+            Value = new object() // Placeholder, not used by Exists/NotExists operators
+        });
+
+        return true;
     }
 
-    /// <inheritdoc/>
-    public Task<bool> SetContainsAsync<TItem>(
-        string key,
-        TItem item,
-        CancellationToken cancellationToken = default)
+    /// <summary>
+    /// Checks if an expression is a null constant.
+    /// </summary>
+    private static bool IsNullConstant(Expression expression)
     {
-        throw new NotSupportedException("Set operations are not supported by MySQL backend. Use Redis or InMemory.");
+        // Direct null constant
+        if (expression is ConstantExpression { Value: null })
+        {
+            return true;
+        }
+
+        // Handle default(T) which compiles to null for reference types
+        if (expression is DefaultExpression)
+        {
+            return true;
+        }
+
+        // Handle Convert(null) for nullable value types
+        if (expression is UnaryExpression { NodeType: ExpressionType.Convert } unary)
+        {
+            return IsNullConstant(unary.Operand);
+        }
+
+        return false;
     }
 
-    /// <inheritdoc/>
-    public Task<long> SetCountAsync(
-        string key,
-        CancellationToken cancellationToken = default)
+    private static ExpressionType GetReversedOperator(ExpressionType type)
     {
-        throw new NotSupportedException("Set operations are not supported by MySQL backend. Use Redis or InMemory.");
+        return type switch
+        {
+            ExpressionType.GreaterThan => ExpressionType.LessThan,
+            ExpressionType.GreaterThanOrEqual => ExpressionType.LessThanOrEqual,
+            ExpressionType.LessThan => ExpressionType.GreaterThan,
+            ExpressionType.LessThanOrEqual => ExpressionType.GreaterThanOrEqual,
+            _ => type // Equal/NotEqual are symmetric
+        };
     }
 
-    /// <inheritdoc/>
-    public Task<bool> DeleteSetAsync(
-        string key,
-        CancellationToken cancellationToken = default)
+    private static bool TryVisitMethodCallExpression(
+        MethodCallExpression methodCall,
+        ParameterExpression parameter,
+        List<QueryCondition> conditions)
     {
-        throw new NotSupportedException("Set operations are not supported by MySQL backend. Use Redis or InMemory.");
+        // Handle string methods: Contains, StartsWith, EndsWith
+        if (methodCall.Method.DeclaringType == typeof(string))
+        {
+            if (methodCall.Object == null) return false;
+
+            if (!TryGetMemberPath(methodCall.Object, parameter, out var path))
+            {
+                return false;
+            }
+
+            if (methodCall.Arguments.Count != 1)
+            {
+                return false;
+            }
+
+            if (!TryGetConstantValue(methodCall.Arguments[0], out var value))
+            {
+                return false;
+            }
+
+            var queryOperator = methodCall.Method.Name switch
+            {
+                "Contains" => QueryOperator.Contains,
+                "StartsWith" => QueryOperator.StartsWith,
+                "EndsWith" => QueryOperator.EndsWith,
+                _ => (QueryOperator?)null
+            };
+
+            if (queryOperator == null)
+            {
+                return false;
+            }
+
+            conditions.Add(new QueryCondition
+            {
+                Path = path,
+                Operator = queryOperator.Value,
+                Value = value ?? string.Empty
+            });
+
+            return true;
+        }
+
+        // Handle Enumerable.Contains(collection, item) - static extension method
+        // Pattern: ids.Contains(x.Id) compiles to Enumerable.Contains(ids, x.Id)
+        if (methodCall.Method.Name == "Contains" &&
+            methodCall.Method.DeclaringType == typeof(Enumerable) &&
+            methodCall.Arguments.Count == 2)
+        {
+            // Arguments[0] is the collection, Arguments[1] is the item (member access)
+            if (!TryGetConstantValue(methodCall.Arguments[0], out var collection))
+            {
+                return false;
+            }
+
+            if (!TryGetMemberPath(methodCall.Arguments[1], parameter, out var path))
+            {
+                return false;
+            }
+
+            if (collection == null)
+            {
+                return false;
+            }
+
+            conditions.Add(new QueryCondition
+            {
+                Path = path,
+                Operator = QueryOperator.In,
+                Value = collection
+            });
+
+            return true;
+        }
+
+        // Handle List<T>.Contains(item) - instance method
+        // Pattern: myList.Contains(x.Id)
+        if (methodCall.Method.Name == "Contains" &&
+            methodCall.Object != null &&
+            methodCall.Arguments.Count == 1 &&
+            IsCollectionType(methodCall.Object.Type))
+        {
+            // Object is the collection, Arguments[0] is the item (member access)
+            if (!TryGetConstantValue(methodCall.Object, out var collection))
+            {
+                return false;
+            }
+
+            if (!TryGetMemberPath(methodCall.Arguments[0], parameter, out var path))
+            {
+                return false;
+            }
+
+            if (collection == null)
+            {
+                return false;
+            }
+
+            conditions.Add(new QueryCondition
+            {
+                Path = path,
+                Operator = QueryOperator.In,
+                Value = collection
+            });
+
+            return true;
+        }
+
+        return false;
     }
 
-    /// <inheritdoc/>
-    public Task<bool> RefreshSetTtlAsync(
-        string key,
-        int ttlSeconds,
-        CancellationToken cancellationToken = default)
+    /// <summary>
+    /// Checks if a type is a collection type (List, Array, HashSet, etc.)
+    /// </summary>
+    private static bool IsCollectionType(Type type)
     {
-        throw new NotSupportedException("Set operations are not supported by MySQL backend. Use Redis or InMemory.");
+        if (type.IsArray) return true;
+        if (type.IsGenericType)
+        {
+            var genericDef = type.GetGenericTypeDefinition();
+            return genericDef == typeof(List<>) ||
+                    genericDef == typeof(HashSet<>) ||
+                    genericDef == typeof(IList<>) ||
+                    genericDef == typeof(ICollection<>) ||
+                    genericDef == typeof(IEnumerable<>);
+        }
+        return false;
     }
 
-    // ==================== Sorted Set Operations (Not Supported) ====================
-    // MySQL backend does not support sorted set operations. Use Redis for leaderboards.
-
-    /// <inheritdoc/>
-    public Task<bool> SortedSetAddAsync(
-        string key,
-        string member,
-        double score,
-        StateOptions? options = null,
-        CancellationToken cancellationToken = default)
+    private static bool TryVisitBooleanMemberExpression(
+        MemberExpression member,
+        ParameterExpression parameter,
+        List<QueryCondition> conditions)
     {
-        throw new NotSupportedException("Sorted set operations are not supported by MySQL backend. Use Redis for leaderboards.");
+        // Handle standalone boolean property access: x => x.IsActive (means x.IsActive == true)
+        if (member.Type == typeof(bool) && TryGetMemberPath(member, parameter, out var path))
+        {
+            conditions.Add(new QueryCondition
+            {
+                Path = path,
+                Operator = QueryOperator.Equals,
+                Value = true
+            });
+            return true;
+        }
+
+        return false;
     }
 
-    /// <inheritdoc/>
-    public Task<long> SortedSetAddBatchAsync(
-        string key,
-        IEnumerable<(string member, double score)> entries,
-        StateOptions? options = null,
-        CancellationToken cancellationToken = default)
+    private static bool TryGetMemberPath(
+        Expression expression,
+        ParameterExpression parameter,
+        out string path)
     {
-        throw new NotSupportedException("Sorted set operations are not supported by MySQL backend. Use Redis for leaderboards.");
+        path = string.Empty;
+
+        if (expression is not MemberExpression member)
+        {
+            // Handle conversion expressions (e.g., nullable value types)
+            if (expression is UnaryExpression unary && unary.NodeType == ExpressionType.Convert)
+            {
+                return TryGetMemberPath(unary.Operand, parameter, out path);
+            }
+            return false;
+        }
+
+        // Build the path from inner to outer
+        var pathParts = new List<string>();
+        var current = member;
+
+        while (current != null)
+        {
+            pathParts.Insert(0, current.Member.Name);
+
+            if (current.Expression == parameter)
+            {
+                // We've reached the parameter - build the JSON path
+                path = "$." + string.Join(".", pathParts);
+                return true;
+            }
+
+            current = current.Expression as MemberExpression;
+        }
+
+        return false;
     }
 
-    /// <inheritdoc/>
-    public Task<bool> SortedSetRemoveAsync(
-        string key,
-        string member,
-        CancellationToken cancellationToken = default)
+    private static bool TryGetConstantValue(Expression expression, out object? value)
     {
-        throw new NotSupportedException("Sorted set operations are not supported by MySQL backend. Use Redis for leaderboards.");
+        value = null;
+
+        // Direct constant
+        if (expression is ConstantExpression constant)
+        {
+            value = constant.Value;
+            return true;
+        }
+
+        // Member access on a constant (captured variable)
+        if (expression is MemberExpression member && member.Expression is ConstantExpression constExpr)
+        {
+            var container = constExpr.Value;
+            if (container == null) return false;
+
+            value = member.Member switch
+            {
+                System.Reflection.FieldInfo field => field.GetValue(container),
+                System.Reflection.PropertyInfo prop => prop.GetValue(container),
+                _ => null
+            };
+            return true;
+        }
+
+        // Handle conversion expressions
+        if (expression is UnaryExpression unary && unary.NodeType == ExpressionType.Convert)
+        {
+            return TryGetConstantValue(unary.Operand, out value);
+        }
+
+        return false;
     }
 
-    /// <inheritdoc/>
-    public Task<double?> SortedSetScoreAsync(
-        string key,
-        string member,
-        CancellationToken cancellationToken = default)
-    {
-        throw new NotSupportedException("Sorted set operations are not supported by MySQL backend. Use Redis for leaderboards.");
-    }
-
-    /// <inheritdoc/>
-    public Task<long?> SortedSetRankAsync(
-        string key,
-        string member,
-        bool descending = true,
-        CancellationToken cancellationToken = default)
-    {
-        throw new NotSupportedException("Sorted set operations are not supported by MySQL backend. Use Redis for leaderboards.");
-    }
-
-    /// <inheritdoc/>
-    public Task<IReadOnlyList<(string member, double score)>> SortedSetRangeByRankAsync(
-        string key,
-        long start,
-        long stop,
-        bool descending = true,
-        CancellationToken cancellationToken = default)
-    {
-        throw new NotSupportedException("Sorted set operations are not supported by MySQL backend. Use Redis for leaderboards.");
-    }
-
-    /// <inheritdoc/>
-    public Task<long> SortedSetCountAsync(
-        string key,
-        CancellationToken cancellationToken = default)
-    {
-        throw new NotSupportedException("Sorted set operations are not supported by MySQL backend. Use Redis for leaderboards.");
-    }
-
-    /// <inheritdoc/>
-    public Task<double> SortedSetIncrementAsync(
-        string key,
-        string member,
-        double increment,
-        CancellationToken cancellationToken = default)
-    {
-        throw new NotSupportedException("Sorted set operations are not supported by MySQL backend. Use Redis for leaderboards.");
-    }
-
-    /// <inheritdoc/>
-    public Task<bool> SortedSetDeleteAsync(
-        string key,
-        CancellationToken cancellationToken = default)
-    {
-        throw new NotSupportedException("Sorted set operations are not supported by MySQL backend. Use Redis for leaderboards.");
-    }
+    #endregion
 }

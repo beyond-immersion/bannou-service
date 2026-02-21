@@ -12,7 +12,7 @@
 //
 //     IMPLEMENTATION TENETS - Configuration-First:
 //     - Access configuration via dependency injection, never Environment.GetEnvironmentVariable.
-//     - ALL properties below MUST be referenced in EscrowService.cs (no dead config).
+//     - ALL properties below MUST be referenced somewhere in the plugin (no dead config).
 //     - Any hardcoded tunable (limit, timeout, threshold, capacity) in service code means
 //       a configuration property is MISSING - add it to the configuration schema.
 //     - If a property is unused, remove it from the configuration schema.
@@ -40,7 +40,7 @@ namespace BeyondImmersion.BannouService.Escrow;
 /// <para>
 /// <b>IMPLEMENTATION TENETS - Configuration-First:</b> Access configuration via dependency injection.
 /// Never use <c>Environment.GetEnvironmentVariable()</c> directly in service code.
-/// ALL properties in this class MUST be referenced in the service implementation.
+/// ALL properties in this class MUST be referenced somewhere in the plugin.
 /// If a property is unused, remove it from the configuration schema.
 /// </para>
 /// <para>
@@ -72,22 +72,10 @@ public class EscrowServiceConfiguration : IServiceConfiguration
     public string ExpirationGracePeriod { get; set; } = "PT1H";
 
     /// <summary>
-    /// Algorithm used for token generation
-    /// Environment variable: ESCROW_TOKEN_ALGORITHM
-    /// </summary>
-    public string TokenAlgorithm { get; set; } = "hmac_sha256";
-
-    /// <summary>
     /// Token length in bytes (before encoding)
     /// Environment variable: ESCROW_TOKEN_LENGTH
     /// </summary>
     public int TokenLength { get; set; } = 32;
-
-    /// <summary>
-    /// Token secret for HMAC (must be set in production)
-    /// Environment variable: ESCROW_TOKEN_SECRET
-    /// </summary>
-    public string? TokenSecret { get; set; }
 
     /// <summary>
     /// How often to check for expired escrows (ISO 8601 duration)
@@ -142,5 +130,41 @@ public class EscrowServiceConfiguration : IServiceConfiguration
     /// Environment variable: ESCROW_DEFAULT_LIST_LIMIT
     /// </summary>
     public int DefaultListLimit { get; set; } = 50;
+
+    /// <summary>
+    /// Default release confirmation mode when not specified in request
+    /// Environment variable: ESCROW_DEFAULT_RELEASE_MODE
+    /// </summary>
+    public ReleaseMode DefaultReleaseMode { get; set; } = ReleaseMode.ServiceOnly;
+
+    /// <summary>
+    /// Default refund confirmation mode when not specified in request
+    /// Environment variable: ESCROW_DEFAULT_REFUND_MODE
+    /// </summary>
+    public RefundMode DefaultRefundMode { get; set; } = RefundMode.Immediate;
+
+    /// <summary>
+    /// Timeout for party confirmations in seconds (default 5 minutes)
+    /// Environment variable: ESCROW_CONFIRMATION_TIMEOUT_SECONDS
+    /// </summary>
+    public int ConfirmationTimeoutSeconds { get; set; } = 300;
+
+    /// <summary>
+    /// What happens on confirmation timeout (auto_confirm/dispute/refund)
+    /// Environment variable: ESCROW_CONFIRMATION_TIMEOUT_BEHAVIOR
+    /// </summary>
+    public string ConfirmationTimeoutBehavior { get; set; } = "auto_confirm";
+
+    /// <summary>
+    /// How often the background service checks for expired confirmations
+    /// Environment variable: ESCROW_CONFIRMATION_TIMEOUT_CHECK_INTERVAL_SECONDS
+    /// </summary>
+    public int ConfirmationTimeoutCheckIntervalSeconds { get; set; } = 30;
+
+    /// <summary>
+    /// Maximum escrows to process per timeout check cycle
+    /// Environment variable: ESCROW_CONFIRMATION_TIMEOUT_BATCH_SIZE
+    /// </summary>
+    public int ConfirmationTimeoutBatchSize { get; set; } = 100;
 
 }

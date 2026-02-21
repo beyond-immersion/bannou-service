@@ -5,9 +5,15 @@ info:
     Event models for Relationship service RabbitMQ pub/sub via MassTransit.
     Lifecycle events are auto-generated from x-lifecycle definition.
 
-    **Schema Rules**: AI agents MUST review docs/reference/SCHEMA-RULES.md before
-    modifying this schema. Optional reference types require `nullable: true`.
-  version: 1.0.0
+    Covers both relationship instance lifecycle events and relationship type
+    lifecycle events (taxonomy definitions).
+
+    **SCHEMA MODIFICATION GATE**: STOP. Before modifying this schema, you MUST:
+    1. Read docs/reference/SCHEMA-RULES.md
+    2. State which section applies to your change
+    3. Only then proceed with edits
+    Edits without stating the applicable rule are FORBIDDEN.
+  version: 2.0.0
   x-event-subscriptions: []  # Relationship service doesn't subscribe to external events
   x-event-publications:
     # Relationship lifecycle events (auto-generated from x-lifecycle)
@@ -20,6 +26,20 @@ info:
     - topic: relationship.deleted
       event: RelationshipDeletedEvent
       description: Published when a relationship is soft-deleted
+    # Relationship Type lifecycle events (auto-generated from x-lifecycle)
+    - topic: relationship-type.created
+      event: RelationshipTypeCreatedEvent
+      description: Published when a new relationship type is created
+    - topic: relationship-type.updated
+      event: RelationshipTypeUpdatedEvent
+      description: Published when a relationship type is updated
+    - topic: relationship-type.deleted
+      event: RelationshipTypeDeletedEvent
+      description: Published when a relationship type is deleted
+    # Manually-defined merge summary event (not a lifecycle event)
+    - topic: relationship-type.merged
+      event: RelationshipTypeMergedEvent
+      description: Published when a relationship type merge operation completes
 
 # Lifecycle events auto-generated from this definition
 # Output: schemas/Generated/relationship-lifecycle-events.yaml
@@ -33,11 +53,71 @@ x-lifecycle:
       entity2Type: { $ref: 'common-api.yaml#/components/schemas/EntityType', required: true, description: "Type classification of the second entity" }
       relationshipTypeId: { type: string, format: uuid, required: true, description: "Reference to the relationship type definition" }
       startedAt: { type: string, format: date-time, required: true, description: "Timestamp when the relationship began" }
-      endedAt: { type: string, format: date-time, description: "Timestamp when the relationship ended, if applicable" }
-      metadata: { type: object, additionalProperties: true, description: "Additional custom key-value data associated with the relationship" }
+      endedAt: { type: string, format: date-time, nullable: true, description: "Timestamp when the relationship ended, if applicable" }
+      metadata: { type: object, additionalProperties: true, nullable: true, description: "Client-provided relationship data. No Bannou plugin reads specific keys from this field by convention." }
       createdAt: { type: string, format: date-time, required: true, description: "Timestamp when the relationship record was created" }
       updatedAt: { type: string, format: date-time, description: "Timestamp when the relationship record was last updated" }
+  RelationshipType:
+    model:
+      relationshipTypeId: { type: string, format: uuid, primary: true, required: true, description: "Unique identifier for the relationship type" }
+      code: { type: string, required: true, description: "Machine-readable code for the relationship type" }
+      name: { type: string, required: true, description: "Human-readable display name for the relationship type" }
+      description: { type: string, nullable: true, description: "Detailed description of the relationship type" }
+      category: { type: string, nullable: true, description: "Category grouping for the relationship type" }
+      parentTypeId: { type: string, format: uuid, nullable: true, description: "ID of the parent relationship type for hierarchical relationships" }
+      parentTypeCode: { type: string, nullable: true, description: "Code of the parent relationship type" }
+      inverseTypeId: { type: string, format: uuid, nullable: true, description: "ID of the inverse relationship type for asymmetric relationships" }
+      inverseTypeCode: { type: string, nullable: true, description: "Code of the inverse relationship type" }
+      isBidirectional: { type: boolean, required: true, description: "Whether the relationship applies equally in both directions" }
+      isDeprecated: { type: boolean, required: true, description: "Whether this relationship type is deprecated and should not be used for new relationships" }
+      deprecatedAt: { type: string, format: date-time, nullable: true, description: "Timestamp when the relationship type was deprecated" }
+      deprecationReason: { type: string, nullable: true, description: "Explanation for why the relationship type was deprecated" }
+      depth: { type: integer, required: true, description: "Hierarchy depth level from the root relationship type" }
+      metadata: { type: object, additionalProperties: true, nullable: true, description: "Client-provided relationship type metadata. No Bannou plugin reads specific keys from this field by convention." }
+      createdAt: { type: string, format: date-time, required: true, description: "Timestamp when the relationship type was created" }
+      updatedAt: { type: string, format: date-time, required: true, description: "Timestamp when the relationship type was last updated" }
 
 paths: {}  # Events don't have HTTP paths
 
-# NOTE: No components/schemas - lifecycle events are auto-generated to schemas/Generated/
+# Lifecycle events are auto-generated to schemas/Generated/
+# Manually-defined events below are for operations that don't follow CRUD lifecycle patterns
+components:
+  schemas:
+    RelationshipTypeMergedEvent:
+      type: object
+      additionalProperties: false
+      description: Published when a relationship type merge operation completes, replacing N individual relationship.updated events with a single summary event
+      required:
+        - eventId
+        - timestamp
+        - sourceTypeId
+        - targetTypeId
+        - migratedCount
+        - failedCount
+        - sourceDeleted
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique identifier for this event
+        timestamp:
+          type: string
+          format: date-time
+          description: When the merge operation completed
+        sourceTypeId:
+          type: string
+          format: uuid
+          description: ID of the deprecated source type that was merged
+        targetTypeId:
+          type: string
+          format: uuid
+          description: ID of the target type that received the relationships
+        migratedCount:
+          type: integer
+          description: Number of relationships successfully migrated to the target type
+        failedCount:
+          type: integer
+          description: Number of relationships that failed to migrate including duplicates detected via composite key collision
+        sourceDeleted:
+          type: boolean
+          description: Whether the source type was deleted after merge

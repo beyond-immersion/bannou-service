@@ -59,4 +59,40 @@ export class CharacterPersonalityProxy {
       Schemas['CombatPreferencesResponse']
     >('/character-personality/get-combat', request, channel, timeout);
   }
+
+  /**
+   * Get personality data for compression
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async getCompressDataAsync(
+    request: Schemas['GetCompressDataRequest'],
+    channel: number = 0,
+    timeout?: number
+  ): Promise<ApiResponse<Schemas['CharacterPersonalityArchive']>> {
+    return this.client.invokeAsync<
+      Schemas['GetCompressDataRequest'],
+      Schemas['CharacterPersonalityArchive']
+    >('/character-personality/get-compress-data', request, channel, timeout);
+  }
+
+  /**
+   * Cleanup all personality data for a deleted character
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async cleanupByCharacterAsync(
+    request: Schemas['CleanupByCharacterRequest'],
+    channel: number = 0,
+    timeout?: number
+  ): Promise<ApiResponse<Schemas['CleanupByCharacterResponse']>> {
+    return this.client.invokeAsync<
+      Schemas['CleanupByCharacterRequest'],
+      Schemas['CleanupByCharacterResponse']
+    >('/character-personality/cleanup-by-character', request, channel, timeout);
+  }
 }

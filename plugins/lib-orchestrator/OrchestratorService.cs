@@ -17,7 +17,7 @@ namespace BeyondImmersion.BannouService.Orchestrator;
 /// This class contains the business logic for all Orchestrator operations.
 /// Uses lib-state and lib-messaging infrastructure for state management and event publishing.
 /// </summary>
-[BannouService("orchestrator", typeof(IOrchestratorService), lifetime: ServiceLifetime.Scoped)]
+[BannouService("orchestrator", typeof(IOrchestratorService), lifetime: ServiceLifetime.Scoped, layer: ServiceLayer.AppFeatures)]
 public partial class OrchestratorService : IOrchestratorService
 {
     private readonly IMessageBus _messageBus;
@@ -80,14 +80,8 @@ public partial class OrchestratorService : IOrchestratorService
     /// </summary>
     private BackendType GetConfiguredDefaultBackend()
     {
-        return _configuration.DefaultBackend switch
-        {
-            DefaultBackend.Kubernetes => BackendType.Kubernetes,
-            DefaultBackend.Portainer => BackendType.Portainer,
-            DefaultBackend.Swarm => BackendType.Swarm,
-            DefaultBackend.Compose => BackendType.Compose,
-            _ => BackendType.Compose
-        };
+        // Configuration now directly uses BackendType (via $ref to API schema)
+        return _configuration.DefaultBackend;
     }
 
     public OrchestratorService(
@@ -223,98 +217,89 @@ public partial class OrchestratorService : IOrchestratorService
     {
         _logger.LogDebug("Executing GetInfrastructureHealth operation");
 
+        var components = new List<ComponentHealth>();
+        var overallHealthy = true;
+
+        // Check state store connectivity
+        var (stateHealthy, stateMessage, stateOpTime) = await _stateManager.CheckHealthAsync();
+        components.Add(new ComponentHealth
+        {
+            Name = "statestore",
+            Status = stateHealthy ? ComponentHealthStatus.Healthy : ComponentHealthStatus.Unavailable,
+            LastSeen = DateTimeOffset.UtcNow,
+            Message = stateMessage, // Nullable per schema
+            Metrics = stateOpTime.HasValue
+                ? (object)new Dictionary<string, object> { { "operationTimeMs", stateOpTime.Value.TotalMilliseconds } }
+                : new Dictionary<string, object>()
+        });
+        overallHealthy = overallHealthy && stateHealthy;
+
+        // Check pub/sub path by publishing a tiny health probe
+        bool pubsubHealthy;
+        string pubsubMessage;
         try
         {
-            var components = new List<ComponentHealth>();
-            var overallHealthy = true;
-
-            // Check state store connectivity
-            var (stateHealthy, stateMessage, stateOpTime) = await _stateManager.CheckHealthAsync();
-            components.Add(new ComponentHealth
+            await _messageBus.TryPublishAsync("orchestrator-health", new OrchestratorHealthPingEvent
             {
-                Name = "statestore",
-                Status = stateHealthy ? ComponentHealthStatus.Healthy : ComponentHealthStatus.Unavailable,
-                LastSeen = DateTimeOffset.UtcNow,
-                Message = stateMessage, // Nullable per schema
-                Metrics = stateOpTime.HasValue
-                    ? (object)new Dictionary<string, object> { { "operationTimeMs", stateOpTime.Value.TotalMilliseconds } }
-                    : new Dictionary<string, object>()
-            });
-            overallHealthy = overallHealthy && stateHealthy;
-
-            // Check pub/sub path by publishing a tiny health probe
-            bool pubsubHealthy;
-            string pubsubMessage;
-            try
-            {
-                await _messageBus.TryPublishAsync("orchestrator-health", new OrchestratorHealthPingEvent
-                {
-                    EventName = "orchestrator.health_ping",
-                    EventId = Guid.NewGuid(),
-                    Timestamp = DateTimeOffset.UtcNow,
-                    Status = OrchestratorHealthPingEventStatus.Ok
-                });
-                pubsubHealthy = true;
-                pubsubMessage = "Message bus pub/sub path active";
-            }
-            catch (Exception ex)
-            {
-                _logger.LogWarning(ex, "Message bus pub/sub health check failed");
-                pubsubHealthy = false;
-                pubsubMessage = $"Pub/sub check failed: {ex.Message}";
-            }
-            components.Add(new ComponentHealth
-            {
-                Name = "pubsub",
-                Status = pubsubHealthy ? ComponentHealthStatus.Healthy : ComponentHealthStatus.Unavailable,
-                LastSeen = DateTimeOffset.UtcNow,
-                Message = pubsubMessage // Always set in try/catch above
-            });
-            overallHealthy = overallHealthy && pubsubHealthy;
-
-            // Check messaging infrastructure health
-            bool messagingHealthy;
-            string messagingMessage;
-            try
-            {
-                // If we got here and the messageBus is not null, the infrastructure is healthy
-                // The actual pub/sub test above validates connectivity
-                messagingHealthy = _messageBus != null;
-                messagingMessage = messagingHealthy
-                    ? "Messaging infrastructure available"
-                    : "Messaging infrastructure unavailable";
-            }
-            catch (Exception ex)
-            {
-                _logger.LogWarning(ex, "Messaging infrastructure health check failed");
-                messagingHealthy = false;
-                messagingMessage = $"Messaging check failed: {ex.Message}";
-            }
-            components.Add(new ComponentHealth
-            {
-                Name = "messaging",
-                Status = messagingHealthy ? ComponentHealthStatus.Healthy : ComponentHealthStatus.Unavailable,
-                LastSeen = DateTimeOffset.UtcNow,
-                Message = messagingMessage
-            });
-            overallHealthy = overallHealthy && messagingHealthy;
-
-            var response = new InfrastructureHealthResponse
-            {
-                Healthy = overallHealthy,
+                EventName = "orchestrator.health_ping",
+                EventId = Guid.NewGuid(),
                 Timestamp = DateTimeOffset.UtcNow,
-                Components = components
-            };
-
-            var statusCode = overallHealthy ? StatusCodes.OK : StatusCodes.InternalServerError;
-            return (statusCode, response);
+                Status = OrchestratorHealthPingEventStatus.Ok
+            });
+            pubsubHealthy = true;
+            pubsubMessage = "Message bus pub/sub path active";
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error executing GetInfrastructureHealth operation");
-            await PublishErrorEventAsync("GetInfrastructureHealth", ex.GetType().Name, ex.Message);
-            return (StatusCodes.InternalServerError, null);
+            _logger.LogWarning(ex, "Message bus pub/sub health check failed");
+            pubsubHealthy = false;
+            pubsubMessage = $"Pub/sub check failed: {ex.Message}";
         }
+        components.Add(new ComponentHealth
+        {
+            Name = "pubsub",
+            Status = pubsubHealthy ? ComponentHealthStatus.Healthy : ComponentHealthStatus.Unavailable,
+            LastSeen = DateTimeOffset.UtcNow,
+            Message = pubsubMessage // Always set in try/catch above
+        });
+        overallHealthy = overallHealthy && pubsubHealthy;
+
+        // Check messaging infrastructure health
+        bool messagingHealthy;
+        string messagingMessage;
+        try
+        {
+            // If we got here and the messageBus is not null, the infrastructure is healthy
+            // The actual pub/sub test above validates connectivity
+            messagingHealthy = _messageBus != null;
+            messagingMessage = messagingHealthy
+                ? "Messaging infrastructure available"
+                : "Messaging infrastructure unavailable";
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Messaging infrastructure health check failed");
+            messagingHealthy = false;
+            messagingMessage = $"Messaging check failed: {ex.Message}";
+        }
+        components.Add(new ComponentHealth
+        {
+            Name = "messaging",
+            Status = messagingHealthy ? ComponentHealthStatus.Healthy : ComponentHealthStatus.Unavailable,
+            LastSeen = DateTimeOffset.UtcNow,
+            Message = messagingMessage
+        });
+        overallHealthy = overallHealthy && messagingHealthy;
+
+        var response = new InfrastructureHealthResponse
+        {
+            Healthy = overallHealthy,
+            Timestamp = DateTimeOffset.UtcNow,
+            Components = components
+        };
+
+        var statusCode = overallHealthy ? StatusCodes.OK : StatusCodes.InternalServerError;
+        return (statusCode, response);
     }
 
     /// <summary>
@@ -328,17 +313,8 @@ public partial class OrchestratorService : IOrchestratorService
             "Executing GetServicesHealth operation (source: {Source}, filter: {Filter})",
             body.Source, body.ServiceFilter ?? "(none)");
 
-        try
-        {
-            var report = await _healthMonitor.GetServiceHealthReportAsync(body.Source, body.ServiceFilter);
-            return (StatusCodes.OK, report);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error executing GetServicesHealth operation");
-            await PublishErrorEventAsync("GetServicesHealth", ex.GetType().Name, ex.Message);
-            return (StatusCodes.InternalServerError, null);
-        }
+        var report = await _healthMonitor.GetServiceHealthReportAsync(body.Source, body.ServiceFilter);
+        return (StatusCodes.OK, report);
     }
 
     /// <summary>
@@ -351,30 +327,21 @@ public partial class OrchestratorService : IOrchestratorService
             "Executing RestartService operation for: {ServiceName} (force: {Force})",
             body.ServiceName, body.Force);
 
-        try
+        var result = await _restartManager.RestartServiceAsync(body);
+
+        if (!result.Success)
         {
-            var result = await _restartManager.RestartServiceAsync(body);
-
-            if (!result.Success)
+            // Check if restart was declined (healthy service)
+            if (result.Message?.Contains("not needed") == true)
             {
-                // Check if restart was declined (healthy service)
-                if (result.Message?.Contains("not needed") == true)
-                {
-                    return (StatusCodes.Conflict, result);
-                }
-
-                // Restart failed
-                return (StatusCodes.InternalServerError, result);
+                return (StatusCodes.Conflict, result);
             }
 
-            return (StatusCodes.OK, result);
+            // Restart failed
+            return (StatusCodes.InternalServerError, result);
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error executing RestartService operation");
-            await PublishErrorEventAsync("RestartService", ex.GetType().Name, ex.Message, details: new { ServiceName = body.ServiceName });
-            return (StatusCodes.InternalServerError, null);
-        }
+
+        return (StatusCodes.OK, result);
     }
 
     /// <summary>
@@ -385,16 +352,9 @@ public partial class OrchestratorService : IOrchestratorService
     {
         _logger.LogDebug("Executing ShouldRestartService operation for: {ServiceName}", body.ServiceName);
 
-        try
         {
             var recommendation = await _healthMonitor.ShouldRestartServiceAsync(body.ServiceName);
             return (StatusCodes.OK, recommendation);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error executing ShouldRestartService operation");
-            await PublishErrorEventAsync("ShouldRestartService", ex.GetType().Name, ex.Message, details: new { ServiceName = body.ServiceName });
-            return (StatusCodes.InternalServerError, null);
         }
     }
 
@@ -406,17 +366,8 @@ public partial class OrchestratorService : IOrchestratorService
     {
         _logger.LogDebug("Executing GetBackends operation");
 
-        try
-        {
-            var response = await _backendDetector.DetectBackendsAsync(cancellationToken);
-            return (StatusCodes.OK, response);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error executing GetBackends operation");
-            await PublishErrorEventAsync("GetBackends", ex.GetType().Name, ex.Message);
-            return (StatusCodes.InternalServerError, null);
-        }
+        var response = await _backendDetector.DetectBackendsAsync(cancellationToken);
+        return (StatusCodes.OK, response);
     }
 
     /// <summary>
@@ -427,41 +378,32 @@ public partial class OrchestratorService : IOrchestratorService
     {
         _logger.LogDebug("Executing GetPresets operation");
 
-        try
-        {
-            var presetMetadata = await _presetLoader.ListPresetsAsync(cancellationToken);
-            var presets = new List<DeploymentPreset>();
+        var presetMetadata = await _presetLoader.ListPresetsAsync(cancellationToken);
+        var presets = new List<DeploymentPreset>();
 
-            foreach (var meta in presetMetadata)
+        foreach (var meta in presetMetadata)
+        {
+            // Load full preset to get topology
+            var preset = await _presetLoader.LoadPresetAsync(meta.Name, cancellationToken);
+            if (preset != null)
             {
-                // Load full preset to get topology
-                var preset = await _presetLoader.LoadPresetAsync(meta.Name, cancellationToken);
-                if (preset != null)
+                var topology = _presetLoader.ConvertToTopology(preset);
+                presets.Add(new DeploymentPreset
                 {
-                    var topology = _presetLoader.ConvertToTopology(preset);
-                    presets.Add(new DeploymentPreset
-                    {
-                        Name = meta.Name,
-                        Description = meta.Description ?? $"Preset: {meta.Name}",
-                        Topology = topology
-                    });
-                }
+                    Name = meta.Name,
+                    Description = meta.Description ?? $"Preset: {meta.Name}",
+                    Topology = topology
+                });
             }
-
-            var response = new PresetsResponse
-            {
-                Presets = presets,
-                ActivePreset = DEFAULT_PRESET // Default is "bannou" - all services on one node
-            };
-
-            return (StatusCodes.OK, response);
         }
-        catch (Exception ex)
+
+        var response = new PresetsResponse
         {
-            _logger.LogError(ex, "Error executing GetPresets operation");
-            await PublishErrorEventAsync("GetPresets", ex.GetType().Name, ex.Message);
-            return (StatusCodes.InternalServerError, null);
-        }
+            Presets = presets,
+            ActivePreset = DEFAULT_PRESET // Default is "bannou" - all services on one node
+        };
+
+        return (StatusCodes.OK, response);
     }
 
     /// <summary>
@@ -491,577 +433,556 @@ public partial class OrchestratorService : IOrchestratorService
             Backend = effectiveBackend
         });
 
-        try
+        // Detect available backends first
+        var backends = await _backendDetector.DetectBackendsAsync(cancellationToken);
+
+        // Check if the effective backend is available
+        var requestedBackend = backends.Backends?.FirstOrDefault(b => b.Type == effectiveBackend);
+
+        IContainerOrchestrator orchestrator;
+        if (requestedBackend != null && !requestedBackend.Available)
         {
-            // Detect available backends first
-            var backends = await _backendDetector.DetectBackendsAsync(cancellationToken);
+            // Backend exists in detection but is not available - fail the deployment
+            var errorMsg = requestedBackend.Error ?? "Backend not available";
+            var availableBackends = string.Join(", ", backends.Backends?.Where(b => b.Available).Select(b => b.Type) ?? Enumerable.Empty<BackendType>());
+            _logger.LogWarning(
+                "Requested backend {Backend} is not available: {Error}. Available backends: {AvailableBackends}",
+                effectiveBackend, errorMsg, availableBackends);
+            return (StatusCodes.BadRequest, null);
+        }
 
-            // Check if the effective backend is available
-            var requestedBackend = backends.Backends?.FirstOrDefault(b => b.Type == effectiveBackend);
+        // Use the effective backend if available, otherwise use recommended
+        if (requestedBackend != null && requestedBackend.Available)
+        {
+            orchestrator = _backendDetector.CreateOrchestrator(effectiveBackend);
+        }
+        else
+        {
+            // Fall back to recommended backend
+            orchestrator = _backendDetector.CreateOrchestrator(backends.Recommended);
+            _logger.LogInformation(
+                "Using recommended backend {Recommended} instead of {Requested}",
+                backends.Recommended, effectiveBackend);
+        }
 
-            IContainerOrchestrator orchestrator;
-            if (requestedBackend != null && !requestedBackend.Available)
+        // Get topology nodes to deploy - from preset or direct topology
+        ICollection<TopologyNode> nodesToDeploy;
+        IDictionary<string, string>? presetEnvironment = null;
+
+        // Check for "reset to default" request FIRST - "default", "bannou", or empty preset with no topology
+        // This must be checked before auto-cleanup since ResetToDefaultTopologyAsync handles its own cleanup.
+        var isResetToDefault = IsResetToDefaultRequest(body.Preset, body.Topology);
+
+        // AUTO-CLEANUP: If there's an existing deployment, clean it up before deploying new containers.
+        // This prevents orphaned containers when DeployAsync is called multiple times without cleanup.
+        // Each deployment is treated as a replacement, not an accumulation.
+        // SKIP for reset-to-default requests since ResetToDefaultTopologyAsync handles cleanup.
+        if (!body.DryRun && !isResetToDefault)
+        {
+            var previousDeployment = await _stateManager.GetCurrentConfigurationAsync();
+            if (previousDeployment != null && previousDeployment.Services.Count > 0)
             {
-                // Backend exists in detection but is not available - fail the deployment
-                var errorMsg = requestedBackend.Error ?? "Backend not available";
-                var availableBackends = string.Join(", ", backends.Backends?.Where(b => b.Available).Select(b => b.Type) ?? Enumerable.Empty<BackendType>());
-                _logger.LogWarning(
-                    "Requested backend {Backend} is not available: {Error}. Available backends: {AvailableBackends}",
-                    effectiveBackend, errorMsg, availableBackends);
-                return (StatusCodes.BadRequest, null);
-            }
+                var previousAppIds = previousDeployment.Services.Values
+                    .Where(s => s.Enabled && !string.IsNullOrEmpty(s.AppId))
+                    .Select(s => s.AppId!)
+                    .Where(appId => !appId.Equals("bannou", StringComparison.OrdinalIgnoreCase))
+                    .Distinct()
+                    .ToList();
 
-            // Use the effective backend if available, otherwise use recommended
-            if (requestedBackend != null && requestedBackend.Available)
-            {
-                orchestrator = _backendDetector.CreateOrchestrator(effectiveBackend);
-            }
-            else
-            {
-                // Fall back to recommended backend
-                orchestrator = _backendDetector.CreateOrchestrator(backends.Recommended);
-                _logger.LogInformation(
-                    "Using recommended backend {Recommended} instead of {Requested}",
-                    backends.Recommended, effectiveBackend);
-            }
-
-            // Get topology nodes to deploy - from preset or direct topology
-            ICollection<TopologyNode> nodesToDeploy;
-            IDictionary<string, string>? presetEnvironment = null;
-
-            // Check for "reset to default" request FIRST - "default", "bannou", or empty preset with no topology
-            // This must be checked before auto-cleanup since ResetToDefaultTopologyAsync handles its own cleanup.
-            var isResetToDefault = IsResetToDefaultRequest(body.Preset, body.Topology);
-
-            // AUTO-CLEANUP: If there's an existing deployment, clean it up before deploying new containers.
-            // This prevents orphaned containers when DeployAsync is called multiple times without cleanup.
-            // Each deployment is treated as a replacement, not an accumulation.
-            // SKIP for reset-to-default requests since ResetToDefaultTopologyAsync handles cleanup.
-            if (!body.DryRun && !isResetToDefault)
-            {
-                var previousDeployment = await _stateManager.GetCurrentConfigurationAsync();
-                if (previousDeployment != null && previousDeployment.Services.Count > 0)
+                if (previousAppIds.Count > 0)
                 {
-                    var previousAppIds = previousDeployment.Services.Values
-                        .Where(s => s.Enabled && !string.IsNullOrEmpty(s.AppId))
-                        .Select(s => s.AppId!)
-                        .Where(appId => !appId.Equals("bannou", StringComparison.OrdinalIgnoreCase))
-                        .Distinct()
-                        .ToList();
+                    _logger.LogInformation(
+                        "Auto-cleanup: Found existing deployment with {Count} containers [{AppIds}], tearing down before new deployment",
+                        previousAppIds.Count, string.Join(", ", previousAppIds));
 
-                    if (previousAppIds.Count > 0)
+                    // CRITICAL: Reset service mappings FIRST, before tearing down containers.
+                    // This ensures routing proxies (OpenResty, lib-mesh) get updated routes
+                    // before the old containers become unavailable. Prevents 404/502 errors
+                    // during the transition window.
+                    await _healthMonitor.ResetAllMappingsToDefaultAsync();
+
+                    // Invalidate OpenResty routing cache so it reads fresh routes from Redis
+                    await InvalidateOpenRestyRoutingCacheAsync();
+
+                    // Now tear down the old containers (routes already point elsewhere)
+                    foreach (var appId in previousAppIds)
                     {
-                        _logger.LogInformation(
-                            "Auto-cleanup: Found existing deployment with {Count} containers [{AppIds}], tearing down before new deployment",
-                            previousAppIds.Count, string.Join(", ", previousAppIds));
-
-                        // CRITICAL: Reset service mappings FIRST, before tearing down containers.
-                        // This ensures routing proxies (OpenResty, lib-mesh) get updated routes
-                        // before the old containers become unavailable. Prevents 404/502 errors
-                        // during the transition window.
-                        await _healthMonitor.ResetAllMappingsToDefaultAsync();
-
-                        // Invalidate OpenResty routing cache so it reads fresh routes from Redis
-                        await InvalidateOpenRestyRoutingCacheAsync();
-
-                        // Now tear down the old containers (routes already point elsewhere)
-                        foreach (var appId in previousAppIds)
+                        try
                         {
-                            try
-                            {
-                                var teardownResult = await orchestrator.TeardownServiceAsync(
-                                    appId,
-                                    removeVolumes: false,
-                                    cancellationToken);
+                            var teardownResult = await orchestrator.TeardownServiceAsync(
+                                appId,
+                                removeVolumes: false,
+                                cancellationToken);
 
-                                if (teardownResult.Success)
-                                {
-                                    _logger.LogInformation("Auto-cleanup: Torn down previous container {AppId}", appId);
-                                }
-                                else
-                                {
-                                    _logger.LogWarning(
-                                        "Auto-cleanup: Failed to tear down {AppId}: {Message}",
-                                        appId, teardownResult.Message);
-                                }
-                            }
-                            catch (Exception ex)
+                            if (teardownResult.Success)
                             {
-                                _logger.LogWarning(ex, "Auto-cleanup: Error tearing down container {AppId}", appId);
+                                _logger.LogInformation("Auto-cleanup: Torn down previous container {AppId}", appId);
                             }
+                            else
+                            {
+                                _logger.LogWarning(
+                                    "Auto-cleanup: Failed to tear down {AppId}: {Message}",
+                                    appId, teardownResult.Message);
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            _logger.LogWarning(ex, "Auto-cleanup: Error tearing down container {AppId}", appId);
                         }
                     }
                 }
             }
+        }
 
-            if (isResetToDefault)
+        if (isResetToDefault)
+        {
+            // Reset to default topology: tear down all dynamically deployed nodes, reset mappings to "bannou"
+            _logger.LogInformation("Reset to default topology requested (preset: '{Preset}')", body.Preset ?? "(empty)");
+
+            var resetResult = await ResetToDefaultTopologyAsync(orchestrator, deploymentId, cancellationToken);
+
+            var resetDuration = DateTime.UtcNow - startTime;
+            return (StatusCodes.OK, new DeployResponse
             {
-                // Reset to default topology: tear down all dynamically deployed nodes, reset mappings to "bannou"
-                _logger.LogInformation("Reset to default topology requested (preset: '{Preset}')", body.Preset ?? "(empty)");
-
-                var resetResult = await ResetToDefaultTopologyAsync(orchestrator, deploymentId, cancellationToken);
-
-                var resetDuration = DateTime.UtcNow - startTime;
-                return (StatusCodes.OK, new DeployResponse
+                Success = resetResult.Success,
+                DeploymentId = deploymentId,
+                Backend = orchestrator.BackendType,
+                Preset = "default",
+                Duration = $"{resetDuration.TotalSeconds:F1}s",
+                Message = resetResult.Message,
+                Topology = new ServiceTopology { Nodes = new List<TopologyNode>() }, // Empty topology = default
+                Services = resetResult.TornDownServices.Select(s => new DeployedService
                 {
-                    Success = resetResult.Success,
-                    DeploymentId = deploymentId,
-                    Backend = orchestrator.BackendType,
-                    Preset = "default",
-                    Duration = $"{resetDuration.TotalSeconds:F1}s",
-                    Message = resetResult.Message,
-                    Topology = new ServiceTopology { Nodes = new List<TopologyNode>() }, // Empty topology = default
-                    Services = resetResult.TornDownServices.Select(s => new DeployedService
-                    {
-                        Name = s,
-                        Status = DeployedServiceStatus.Stopped,
-                        Node = AppConstants.DEFAULT_APP_NAME
-                    }).ToList()
-                });
+                    Name = s,
+                    Status = DeployedServiceStatus.Stopped,
+                    Node = AppConstants.DEFAULT_APP_NAME
+                }).ToList()
+            });
+        }
+        else if (!string.IsNullOrEmpty(body.Preset))
+        {
+            // Load preset by name
+            var preset = await _presetLoader.LoadPresetAsync(body.Preset, cancellationToken);
+            if (preset == null)
+            {
+                _logger.LogWarning("Preset '{Preset}' not found", body.Preset);
+                return (StatusCodes.NotFound, null);
             }
-            else if (!string.IsNullOrEmpty(body.Preset))
+
+            var topology = _presetLoader.ConvertToTopology(preset);
+            nodesToDeploy = topology.Nodes;
+            presetEnvironment = preset.Environment;
+
+            _logger.LogInformation(
+                "Loaded preset '{Preset}' with {NodeCount} nodes",
+                body.Preset, nodesToDeploy.Count);
+
+            // Initialize processing pools if present in preset
+            if (preset.ProcessingPools != null && preset.ProcessingPools.Count > 0)
             {
-                // Load preset by name
-                var preset = await _presetLoader.LoadPresetAsync(body.Preset, cancellationToken);
-                if (preset == null)
-                {
-                    _logger.LogWarning("Preset '{Preset}' not found", body.Preset);
-                    return (StatusCodes.NotFound, null);
-                }
-
-                var topology = _presetLoader.ConvertToTopology(preset);
-                nodesToDeploy = topology.Nodes;
-                presetEnvironment = preset.Environment;
-
+                await InitializePoolConfigurationsAsync(preset.ProcessingPools, cancellationToken);
                 _logger.LogInformation(
-                    "Loaded preset '{Preset}' with {NodeCount} nodes",
-                    body.Preset, nodesToDeploy.Count);
+                    "Initialized {Count} processing pool configurations from preset",
+                    preset.ProcessingPools.Count);
+            }
+        }
+        else if (body.Topology?.Nodes != null && body.Topology.Nodes.Count > 0)
+        {
+            nodesToDeploy = body.Topology.Nodes;
+        }
+        else
+        {
+            _logger.LogWarning("No topology nodes specified for deployment. Provide a preset name or topology");
+            return (StatusCodes.BadRequest, null);
+        }
 
-                // Initialize processing pools if present in preset
-                if (preset.ProcessingPools != null && preset.ProcessingPools.Count > 0)
+        var deployedServices = new List<DeployedService>();
+        var failedServices = new List<string>();
+        var expectedAppIds = new HashSet<string>(); // Track app-ids that should send heartbeats
+
+        // Track successfully deployed nodes for rollback on partial failure
+        var successfullyDeployedNodes = new List<(string AppId, ICollection<string> Services)>();
+
+        foreach (var node in nodesToDeploy)
+        {
+            var appId = node.AppId ?? node.Name;
+
+            // VALIDATION: Reject any node attempting to deploy orchestrator service
+            // Orchestrator cannot deploy itself or another orchestrator - route cannot be overridden
+            if (node.Services.Any(s => s.Equals("orchestrator", StringComparison.OrdinalIgnoreCase)))
+            {
+                _logger.LogError(
+                    "REJECTED: Node '{NodeName}' contains 'orchestrator' service - orchestrator cannot deploy itself or another orchestrator",
+                    node.Name);
+                failedServices.Add($"{node.Name}: Cannot deploy orchestrator service - route cannot be overridden");
+                continue; // Skip this node
+            }
+
+            // Build environment with proper layering (lowest to highest priority):
+            // 1. Orchestrator's own environment (foundation)
+            // 2. Preset environment
+            // 3. Node-specific environment
+            // 4. Request body environment (highest priority)
+            var environment = new Dictionary<string, string>();
+
+            // Layer 1: Forward orchestrator's own environment as foundation
+            // This ensures deployed containers inherit all service configuration
+            // (AUTH_*, STATE_*, CONNECT_*, etc.) without needing to duplicate in presets
+            //
+            // IMPLEMENTATION TENETS exception: Direct Environment.GetEnvironmentVariables() access
+            // is required here because we're forwarding UNKNOWN configuration to deployed containers.
+            // This is the orchestrator's core responsibility - not reading config for itself.
+            // Uses strict whitelist (IsAllowedEnvironmentVariable) and excludes per-container values.
+            foreach (System.Collections.DictionaryEntry entry in Environment.GetEnvironmentVariables())
+            {
+                var key = entry.Key?.ToString();
+                var value = entry.Value?.ToString();
+                if (string.IsNullOrEmpty(key) || value == null)
+                    continue;
+
+                // Only forward vars with valid service prefixes (whitelist approach)
+                if (!IsAllowedEnvironmentVariable(key))
+                    continue;
+
+                environment[key] = value;
+            }
+
+            // Layer 2: Preset environment (overrides orchestrator's environment)
+            if (presetEnvironment != null)
+            {
+                foreach (var kvp in presetEnvironment)
                 {
-                    await InitializePoolConfigurationsAsync(preset.ProcessingPools, cancellationToken);
-                    _logger.LogInformation(
-                        "Initialized {Count} processing pool configurations from preset",
-                        preset.ProcessingPools.Count);
+                    environment[kvp.Key] = kvp.Value;
                 }
             }
-            else if (body.Topology?.Nodes != null && body.Topology.Nodes.Count > 0)
+
+            // Layer 3: Node-specific environment (overrides preset)
+            if (node.Environment != null)
             {
-                nodesToDeploy = body.Topology.Nodes;
+                foreach (var kvp in node.Environment)
+                {
+                    environment[kvp.Key] = kvp.Value;
+                }
             }
-            else
+
+            // Layer 4: Request body environment (highest priority, overrides all)
+            if (body.Environment != null)
             {
-                _logger.LogWarning("No topology nodes specified for deployment. Provide a preset name or topology");
-                return (StatusCodes.BadRequest, null);
+                foreach (var kvp in body.Environment)
+                {
+                    environment[kvp.Key] = kvp.Value;
+                }
             }
 
-            var deployedServices = new List<DeployedService>();
-            var failedServices = new List<string>();
-            var expectedAppIds = new HashSet<string>(); // Track app-ids that should send heartbeats
+            // CRITICAL: Disable all services by default, then enable only the specified ones
+            // This MUST override any forwarded SERVICES_ENABLED=true from the orchestrator's environment
+            // Without this, deployed containers would run ALL services (including orchestrator itself!)
+            environment["SERVICES_ENABLED"] = "false";
 
-            // Track successfully deployed nodes for rollback on partial failure
-            var successfullyDeployedNodes = new List<(string AppId, ICollection<string> Services)>();
-
-            foreach (var node in nodesToDeploy)
+            // Build service enable flags for this node's specified services only
+            foreach (var serviceName in node.Services)
             {
-                var appId = node.AppId ?? node.Name;
+                var serviceEnvKey = $"{serviceName.ToUpperInvariant().Replace("-", "_")}_SERVICE_ENABLED";
+                environment[serviceEnvKey] = "true";
+            }
 
-                // VALIDATION: Reject any node attempting to deploy orchestrator service
-                // Orchestrator cannot deploy itself or another orchestrator - route cannot be overridden
-                if (node.Services.Any(s => s.Equals("orchestrator", StringComparison.OrdinalIgnoreCase)))
+            // CRITICAL: Set the app-id so the container knows its identity for heartbeats and mesh routing
+            // Without this, the container falls back to "bannou" and the orchestrator never receives
+            // the expected heartbeat from the deployed app-id
+            environment["BANNOU_APP_ID"] = appId;
+
+            _logger.LogDebug(
+                "Node {NodeName} service configuration: SERVICES_ENABLED=false, APP_ID={AppId}, enabled services: {Services}",
+                node.Name, appId, string.Join(", ", node.Services));
+
+            // DryRun mode: collect what would be deployed without actually deploying
+            if (body.DryRun)
+            {
+                deployedServices.Add(new DeployedService
                 {
-                    _logger.LogError(
-                        "REJECTED: Node '{NodeName}' contains 'orchestrator' service - orchestrator cannot deploy itself or another orchestrator",
-                        node.Name);
-                    failedServices.Add($"{node.Name}: Cannot deploy orchestrator service - route cannot be overridden");
-                    continue; // Skip this node
-                }
+                    Name = node.Name,
+                    Status = DeployedServiceStatus.Starting, // Use Starting as placeholder for dryRun
+                    Node = Environment.MachineName
+                });
+                _logger.LogDebug(
+                    "DryRun mode: Would deploy node {NodeName} with app-id {AppId}, services: {Services}",
+                    node.Name, appId, string.Join(", ", node.Services));
+                continue;
+            }
 
-                // Build environment with proper layering (lowest to highest priority):
-                // 1. Orchestrator's own environment (foundation)
-                // 2. Preset environment
-                // 3. Node-specific environment
-                // 4. Request body environment (highest priority)
-                var environment = new Dictionary<string, string>();
+            // Deploy via container orchestrator
+            var deployResult = await orchestrator.DeployServiceAsync(
+                node.Name,
+                appId,
+                environment,
+                cancellationToken);
 
-                // Layer 1: Forward orchestrator's own environment as foundation
-                // This ensures deployed containers inherit all service configuration
-                // (AUTH_*, STATE_*, CONNECT_*, etc.) without needing to duplicate in presets
-                //
-                // IMPLEMENTATION TENETS exception: Direct Environment.GetEnvironmentVariables() access
-                // is required here because we're forwarding UNKNOWN configuration to deployed containers.
-                // This is the orchestrator's core responsibility - not reading config for itself.
-                // Uses strict whitelist (IsAllowedEnvironmentVariable) and excludes per-container values.
-                foreach (System.Collections.DictionaryEntry entry in Environment.GetEnvironmentVariables())
+            if (deployResult.Success)
+            {
+                deployedServices.Add(new DeployedService
                 {
-                    var key = entry.Key?.ToString();
-                    var value = entry.Value?.ToString();
-                    if (string.IsNullOrEmpty(key) || value == null)
-                        continue;
+                    Name = node.Name,
+                    Status = DeployedServiceStatus.Starting,
+                    Node = Environment.MachineName
+                });
 
-                    // Only forward vars with valid service prefixes (whitelist approach)
-                    if (!IsAllowedEnvironmentVariable(key))
-                        continue;
-
-                    environment[key] = value;
-                }
-
-                // Layer 2: Preset environment (overrides orchestrator's environment)
-                if (presetEnvironment != null)
-                {
-                    foreach (var kvp in presetEnvironment)
-                    {
-                        environment[kvp.Key] = kvp.Value;
-                    }
-                }
-
-                // Layer 3: Node-specific environment (overrides preset)
-                if (node.Environment != null)
-                {
-                    foreach (var kvp in node.Environment)
-                    {
-                        environment[kvp.Key] = kvp.Value;
-                    }
-                }
-
-                // Layer 4: Request body environment (highest priority, overrides all)
-                if (body.Environment != null)
-                {
-                    foreach (var kvp in body.Environment)
-                    {
-                        environment[kvp.Key] = kvp.Value;
-                    }
-                }
-
-                // CRITICAL: Disable all services by default, then enable only the specified ones
-                // This MUST override any forwarded SERVICES_ENABLED=true from the orchestrator's environment
-                // Without this, deployed containers would run ALL services (including orchestrator itself!)
-                environment["SERVICES_ENABLED"] = "false";
-
-                // Build service enable flags for this node's specified services only
+                // Register service routing for each service on this node
+                // ServiceHealthMonitor will automatically publish FullServiceMappingsEvent
                 foreach (var serviceName in node.Services)
                 {
-                    var serviceEnvKey = $"{serviceName.ToUpperInvariant().Replace("-", "_")}_SERVICE_ENABLED";
-                    environment[serviceEnvKey] = "true";
+                    await _healthMonitor.SetServiceRoutingAsync(serviceName, appId);
                 }
 
-                // CRITICAL: Set the app-id so the container knows its identity for heartbeats and mesh routing
-                // Without this, the container falls back to "bannou" and the orchestrator never receives
-                // the expected heartbeat from the deployed app-id
-                environment["BANNOU_APP_ID"] = appId;
+                // Track this app-id for heartbeat waiting
+                expectedAppIds.Add(appId);
 
-                _logger.LogDebug(
-                    "Node {NodeName} service configuration: SERVICES_ENABLED=false, APP_ID={AppId}, enabled services: {Services}",
-                    node.Name, appId, string.Join(", ", node.Services));
+                // Track for potential rollback
+                successfullyDeployedNodes.Add((appId, node.Services));
 
-                // DryRun mode: collect what would be deployed without actually deploying
-                if (body.DryRun)
+                _logger.LogInformation(
+                    "Node {NodeName} deployed with app-id {AppId}, {ServiceCount} service routings set",
+                    node.Name, appId, node.Services.Count);
+            }
+            else
+            {
+                failedServices.Add($"{node.Name}: {deployResult.Message}");
+                _logger.LogWarning(
+                    "Failed to deploy node {NodeName}: {Message}",
+                    node.Name, deployResult.Message);
+
+                // ROLLBACK: On partial failure, tear down all previously successful deployments
+                if (successfullyDeployedNodes.Count > 0)
                 {
-                    deployedServices.Add(new DeployedService
-                    {
-                        Name = node.Name,
-                        Status = DeployedServiceStatus.Starting, // Use Starting as placeholder for dryRun
-                        Node = Environment.MachineName
-                    });
-                    _logger.LogDebug(
-                        "DryRun mode: Would deploy node {NodeName} with app-id {AppId}, services: {Services}",
-                        node.Name, appId, string.Join(", ", node.Services));
-                    continue;
-                }
-
-                // Deploy via container orchestrator
-                var deployResult = await orchestrator.DeployServiceAsync(
-                    node.Name,
-                    appId,
-                    environment,
-                    cancellationToken);
-
-                if (deployResult.Success)
-                {
-                    deployedServices.Add(new DeployedService
-                    {
-                        Name = node.Name,
-                        Status = DeployedServiceStatus.Starting,
-                        Node = Environment.MachineName
-                    });
-
-                    // Register service routing for each service on this node
-                    // ServiceHealthMonitor will automatically publish FullServiceMappingsEvent
-                    foreach (var serviceName in node.Services)
-                    {
-                        await _healthMonitor.SetServiceRoutingAsync(serviceName, appId);
-                    }
-
-                    // Track this app-id for heartbeat waiting
-                    expectedAppIds.Add(appId);
-
-                    // Track for potential rollback
-                    successfullyDeployedNodes.Add((appId, node.Services));
-
-                    _logger.LogInformation(
-                        "Node {NodeName} deployed with app-id {AppId}, {ServiceCount} service routings set",
-                        node.Name, appId, node.Services.Count);
-                }
-                else
-                {
-                    failedServices.Add($"{node.Name}: {deployResult.Message}");
                     _logger.LogWarning(
-                        "Failed to deploy node {NodeName}: {Message}",
-                        node.Name, deployResult.Message);
+                        "Initiating rollback of {Count} previously deployed nodes due to failure of {NodeName}",
+                        successfullyDeployedNodes.Count, node.Name);
 
-                    // ROLLBACK: On partial failure, tear down all previously successful deployments
-                    if (successfullyDeployedNodes.Count > 0)
+                    foreach (var (rolledBackAppId, rolledBackServices) in successfullyDeployedNodes)
                     {
-                        _logger.LogWarning(
-                            "Initiating rollback of {Count} previously deployed nodes due to failure of {NodeName}",
-                            successfullyDeployedNodes.Count, node.Name);
+                        // Tear down the container
+                        var teardownResult = await orchestrator.TeardownServiceAsync(
+                            rolledBackAppId,
+                            false,
+                            cancellationToken);
 
-                        foreach (var (rolledBackAppId, rolledBackServices) in successfullyDeployedNodes)
+                        if (teardownResult.Success)
                         {
-                            // Tear down the container
-                            var teardownResult = await orchestrator.TeardownServiceAsync(
-                                rolledBackAppId,
-                                false,
-                                cancellationToken);
-
-                            if (teardownResult.Success)
-                            {
-                                _logger.LogInformation(
-                                    "Rolled back deployment of {AppId}",
-                                    rolledBackAppId);
-                            }
-                            else
-                            {
-                                _logger.LogError(
-                                    "Failed to rollback deployment of {AppId}: {Message}",
-                                    rolledBackAppId, teardownResult.Message);
-                            }
-
-                            // Remove service routings that were set
-                            foreach (var serviceName in rolledBackServices)
-                            {
-                                await _healthMonitor.RestoreServiceRoutingToDefaultAsync(serviceName);
-                            }
+                            _logger.LogInformation(
+                                "Rolled back deployment of {AppId}",
+                                rolledBackAppId);
+                        }
+                        else
+                        {
+                            _logger.LogError(
+                                "Failed to rollback deployment of {AppId}: {Message}",
+                                rolledBackAppId, teardownResult.Message);
                         }
 
-                        // Clear tracking - rollback complete
-                        successfullyDeployedNodes.Clear();
-                        deployedServices.Clear();
-                        expectedAppIds.Clear();
-
-                        failedServices.Add("Deployment rolled back due to partial failure");
+                        // Remove service routings that were set
+                        foreach (var serviceName in rolledBackServices)
+                        {
+                            await _healthMonitor.RestoreServiceRoutingToDefaultAsync(serviceName);
+                        }
                     }
 
-                    // Stop processing further nodes after rollback
+                    // Clear tracking - rollback complete
+                    successfullyDeployedNodes.Clear();
+                    deployedServices.Clear();
+                    expectedAppIds.Clear();
+
+                    failedServices.Add("Deployment rolled back due to partial failure");
+                }
+
+                // Stop processing further nodes after rollback
+                break;
+            }
+        }
+
+        // Wait for heartbeats from deployed containers before declaring success
+        // This ensures new containers are fully operational (mesh connected, plugins loaded)
+        // Skip in dryRun mode since no containers are actually deployed
+        if (expectedAppIds.Count > 0 && failedServices.Count == 0 && !body.DryRun)
+        {
+            _logger.LogInformation(
+                "Waiting for heartbeats from {Count} deployed app-ids: [{AppIds}]",
+                expectedAppIds.Count, string.Join(", ", expectedAppIds));
+
+            var heartbeatTimeout = TimeSpan.FromSeconds(_configuration.HeartbeatTimeoutSeconds);
+            var pollInterval = TimeSpan.FromSeconds(_configuration.ContainerStatusPollIntervalSeconds);
+            var heartbeatWaitStart = DateTime.UtcNow;
+            var receivedHeartbeats = new HashSet<string>();
+
+            while (DateTime.UtcNow - heartbeatWaitStart < heartbeatTimeout)
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+
+                // Poll Redis for heartbeats from expected app-ids
+                var heartbeats = await _stateManager.GetServiceHeartbeatsAsync();
+
+                // Check which expected app-ids have sent heartbeats
+                foreach (var heartbeat in heartbeats)
+                {
+                    if (expectedAppIds.Contains(heartbeat.AppId) &&
+                        !receivedHeartbeats.Contains(heartbeat.AppId))
+                    {
+                        receivedHeartbeats.Add(heartbeat.AppId);
+                        _logger.LogInformation(
+                            "Received heartbeat from deployed app-id {AppId} ({Received}/{Expected})",
+                            heartbeat.AppId, receivedHeartbeats.Count, expectedAppIds.Count);
+                    }
+                }
+
+                // All expected app-ids have sent heartbeats - deployment complete
+                if (receivedHeartbeats.Count >= expectedAppIds.Count)
+                {
+                    _logger.LogInformation(
+                        "All {Count} deployed containers are operational",
+                        expectedAppIds.Count);
                     break;
                 }
+
+                // Wait before next poll
+                await Task.Delay(pollInterval, cancellationToken);
             }
 
-            // Wait for heartbeats from deployed containers before declaring success
-            // This ensures new containers are fully operational (mesh connected, plugins loaded)
-            // Skip in dryRun mode since no containers are actually deployed
-            if (expectedAppIds.Count > 0 && failedServices.Count == 0 && !body.DryRun)
+            // Check for timeout - treat as deployment failure and rollback
+            var missingHeartbeats = expectedAppIds.Except(receivedHeartbeats).ToList();
+            if (missingHeartbeats.Count > 0)
             {
-                _logger.LogInformation(
-                    "Waiting for heartbeats from {Count} deployed app-ids: [{AppIds}]",
-                    expectedAppIds.Count, string.Join(", ", expectedAppIds));
+                var elapsed = DateTime.UtcNow - heartbeatWaitStart;
+                failedServices.Add($"Heartbeat timeout ({elapsed.TotalSeconds:F0}s) - missing heartbeats from: [{string.Join(", ", missingHeartbeats)}]");
+                _logger.LogWarning(
+                    "Deployment heartbeat timeout after {Elapsed}s - missing heartbeats from: [{AppIds}]",
+                    elapsed.TotalSeconds, string.Join(", ", missingHeartbeats));
 
-                var heartbeatTimeout = TimeSpan.FromSeconds(_configuration.HeartbeatTimeoutSeconds);
-                var pollInterval = TimeSpan.FromSeconds(_configuration.ContainerStatusPollIntervalSeconds);
-                var heartbeatWaitStart = DateTime.UtcNow;
-                var receivedHeartbeats = new HashSet<string>();
-
-                while (DateTime.UtcNow - heartbeatWaitStart < heartbeatTimeout)
+                // ROLLBACK: Tear down all deployed nodes since deployment is incomplete
+                if (successfullyDeployedNodes.Count > 0)
                 {
-                    cancellationToken.ThrowIfCancellationRequested();
-
-                    // Poll Redis for heartbeats from expected app-ids
-                    var heartbeats = await _stateManager.GetServiceHeartbeatsAsync();
-
-                    // Check which expected app-ids have sent heartbeats
-                    foreach (var heartbeat in heartbeats)
-                    {
-                        if (expectedAppIds.Contains(heartbeat.AppId) &&
-                            !receivedHeartbeats.Contains(heartbeat.AppId))
-                        {
-                            receivedHeartbeats.Add(heartbeat.AppId);
-                            _logger.LogInformation(
-                                "Received heartbeat from deployed app-id {AppId} ({Received}/{Expected})",
-                                heartbeat.AppId, receivedHeartbeats.Count, expectedAppIds.Count);
-                        }
-                    }
-
-                    // All expected app-ids have sent heartbeats - deployment complete
-                    if (receivedHeartbeats.Count >= expectedAppIds.Count)
-                    {
-                        _logger.LogInformation(
-                            "All {Count} deployed containers are operational",
-                            expectedAppIds.Count);
-                        break;
-                    }
-
-                    // Wait before next poll
-                    await Task.Delay(pollInterval, cancellationToken);
-                }
-
-                // Check for timeout - treat as deployment failure and rollback
-                var missingHeartbeats = expectedAppIds.Except(receivedHeartbeats).ToList();
-                if (missingHeartbeats.Count > 0)
-                {
-                    var elapsed = DateTime.UtcNow - heartbeatWaitStart;
-                    failedServices.Add($"Heartbeat timeout ({elapsed.TotalSeconds:F0}s) - missing heartbeats from: [{string.Join(", ", missingHeartbeats)}]");
                     _logger.LogWarning(
-                        "Deployment heartbeat timeout after {Elapsed}s - missing heartbeats from: [{AppIds}]",
-                        elapsed.TotalSeconds, string.Join(", ", missingHeartbeats));
+                        "Initiating rollback of {Count} deployed nodes due to heartbeat timeout",
+                        successfullyDeployedNodes.Count);
 
-                    // ROLLBACK: Tear down all deployed nodes since deployment is incomplete
-                    if (successfullyDeployedNodes.Count > 0)
+                    foreach (var (rolledBackAppId, rolledBackServices) in successfullyDeployedNodes)
                     {
-                        _logger.LogWarning(
-                            "Initiating rollback of {Count} deployed nodes due to heartbeat timeout",
-                            successfullyDeployedNodes.Count);
+                        var teardownResult = await orchestrator.TeardownServiceAsync(
+                            rolledBackAppId,
+                            false,
+                            cancellationToken);
 
-                        foreach (var (rolledBackAppId, rolledBackServices) in successfullyDeployedNodes)
+                        if (teardownResult.Success)
                         {
-                            var teardownResult = await orchestrator.TeardownServiceAsync(
-                                rolledBackAppId,
-                                false,
-                                cancellationToken);
-
-                            if (teardownResult.Success)
-                            {
-                                _logger.LogInformation("Rolled back deployment of {AppId}", rolledBackAppId);
-                            }
-                            else
-                            {
-                                _logger.LogError(
-                                    "Failed to rollback deployment of {AppId}: {Message}",
-                                    rolledBackAppId, teardownResult.Message);
-                            }
-
-                            foreach (var serviceName in rolledBackServices)
-                            {
-                                await _healthMonitor.RestoreServiceRoutingToDefaultAsync(serviceName);
-                            }
+                            _logger.LogInformation("Rolled back deployment of {AppId}", rolledBackAppId);
+                        }
+                        else
+                        {
+                            _logger.LogError(
+                                "Failed to rollback deployment of {AppId}: {Message}",
+                                rolledBackAppId, teardownResult.Message);
                         }
 
-                        successfullyDeployedNodes.Clear();
-                        deployedServices.Clear();
-                        failedServices.Add("Deployment rolled back due to heartbeat timeout");
-                    }
-                }
-            }
-
-            var duration = DateTime.UtcNow - startTime;
-            var success = failedServices.Count == 0;
-
-            // Save configuration version on successful deployment (skip in dryRun mode)
-            if (success && !body.DryRun)
-            {
-                // Get current configuration to store as previous state (for rollback)
-                var previousConfig = await _stateManager.GetCurrentConfigurationAsync();
-
-                // Strip nested PreviousDeploymentState to keep only one level deep
-                if (previousConfig?.PreviousDeploymentState != null)
-                {
-                    previousConfig.PreviousDeploymentState = null;
-                }
-
-                var deploymentConfig = new DeploymentConfiguration
-                {
-                    DeploymentId = deploymentId,
-                    PresetName = body.Preset,
-                    Description = $"Deployment {deploymentId} via {orchestrator.BackendType}",
-                    PreviousDeploymentState = previousConfig
-                };
-
-                // Build service configuration from deployed nodes
-                foreach (var node in nodesToDeploy)
-                {
-                    foreach (var serviceName in node.Services)
-                    {
-                        deploymentConfig.Services[serviceName] = new ServiceDeploymentConfig
+                        foreach (var serviceName in rolledBackServices)
                         {
-                            Enabled = true,
-                            AppId = node.AppId ?? node.Name,
-                            Replicas = 1
-                        };
-                    }
-                }
-
-                // Store environment variables (without sensitive values)
-                if (body.Environment != null)
-                {
-                    foreach (var kvp in body.Environment)
-                    {
-                        // Skip sensitive keys
-                        if (!kvp.Key.Contains("PASSWORD", StringComparison.OrdinalIgnoreCase) &&
-                            !kvp.Key.Contains("SECRET", StringComparison.OrdinalIgnoreCase) &&
-                            !kvp.Key.Contains("KEY", StringComparison.OrdinalIgnoreCase))
-                        {
-                            deploymentConfig.EnvironmentVariables[kvp.Key] = kvp.Value;
+                            await _healthMonitor.RestoreServiceRoutingToDefaultAsync(serviceName);
                         }
                     }
+
+                    successfullyDeployedNodes.Clear();
+                    deployedServices.Clear();
+                    failedServices.Add("Deployment rolled back due to heartbeat timeout");
                 }
+            }
+        }
 
-                var configVersion = await _stateManager.SaveConfigurationVersionAsync(deploymentConfig);
+        var duration = DateTime.UtcNow - startTime;
+        var success = failedServices.Count == 0;
 
-                // Update in-memory cache for awareness mode
-                deploymentConfig.Version = configVersion;
-                _lastKnownDeployment = deploymentConfig;
+        // Save configuration version on successful deployment (skip in dryRun mode)
+        if (success && !body.DryRun)
+        {
+            // Get current configuration to store as previous state (for rollback)
+            var previousConfig = await _stateManager.GetCurrentConfigurationAsync();
 
-                _logger.LogInformation(
-                    "Saved deployment configuration version {Version} for deployment {DeploymentId}",
-                    configVersion, deploymentId);
+            // Strip nested PreviousDeploymentState to keep only one level deep
+            if (previousConfig?.PreviousDeploymentState != null)
+            {
+                previousConfig.PreviousDeploymentState = null;
             }
 
-            var response = new DeployResponse
+            var deploymentConfig = new DeploymentConfiguration
             {
-                Success = success,
                 DeploymentId = deploymentId,
-                Backend = orchestrator.BackendType,
-                Duration = $"{duration.TotalSeconds:F1}s",
-                Message = body.DryRun
-                    ? $"DryRun mode: Would deploy {deployedServices.Count} node(s)"
-                    : success
-                        ? $"Successfully deployed {deployedServices.Count} node(s)"
-                        : $"Deployed {deployedServices.Count} node(s), {failedServices.Count} failed: {string.Join("; ", failedServices)}"
+                PresetName = body.Preset,
+                Description = $"Deployment {deploymentId} via {orchestrator.BackendType}",
+                PreviousDeploymentState = previousConfig
             };
 
-            // Publish deployment completed/failed event
-            await _eventManager.PublishDeploymentEventAsync(new DeploymentEvent
+            // Build service configuration from deployed nodes
+            foreach (var node in nodesToDeploy)
             {
-                EventId = Guid.NewGuid().ToString(),
-                Timestamp = DateTimeOffset.UtcNow,
-                Action = success ? DeploymentEventAction.Completed : DeploymentEventAction.Failed,
-                DeploymentId = deploymentId,
-                Preset = body.Preset,
-                Backend = orchestrator.BackendType,
-                Changes = deployedServices.Select(s => s.Name).ToList(),
-                Error = success ? null : string.Join("; ", failedServices)
-            });
+                foreach (var serviceName in node.Services)
+                {
+                    deploymentConfig.Services[serviceName] = new ServiceDeploymentConfig
+                    {
+                        Enabled = true,
+                        AppId = node.AppId ?? node.Name,
+                        Replicas = 1
+                    };
+                }
+            }
 
-            return (success ? StatusCodes.OK : StatusCodes.InternalServerError, response);
+            // Store environment variables (without sensitive values)
+            if (body.Environment != null)
+            {
+                foreach (var kvp in body.Environment)
+                {
+                    // Skip sensitive keys
+                    if (!kvp.Key.Contains("PASSWORD", StringComparison.OrdinalIgnoreCase) &&
+                        !kvp.Key.Contains("SECRET", StringComparison.OrdinalIgnoreCase) &&
+                        !kvp.Key.Contains("KEY", StringComparison.OrdinalIgnoreCase))
+                    {
+                        deploymentConfig.EnvironmentVariables[kvp.Key] = kvp.Value;
+                    }
+                }
+            }
+
+            var configVersion = await _stateManager.SaveConfigurationVersionAsync(deploymentConfig);
+
+            // Update in-memory cache for awareness mode
+            deploymentConfig.Version = configVersion;
+            _lastKnownDeployment = deploymentConfig;
+
+            _logger.LogInformation(
+                "Saved deployment configuration version {Version} for deployment {DeploymentId}",
+                configVersion, deploymentId);
         }
-        catch (Exception ex)
+
+        var response = new DeployResponse
         {
-            _logger.LogError(ex, "Error executing Deploy operation");
-            await PublishErrorEventAsync("Deploy", ex.GetType().Name, ex.Message, details: new { Preset = body.Preset, Backend = body.Backend });
+            Success = success,
+            DeploymentId = deploymentId,
+            Backend = orchestrator.BackendType,
+            Duration = $"{duration.TotalSeconds:F1}s",
+            Message = body.DryRun
+                ? $"DryRun mode: Would deploy {deployedServices.Count} node(s)"
+                : success
+                    ? $"Successfully deployed {deployedServices.Count} node(s)"
+                    : $"Deployed {deployedServices.Count} node(s), {failedServices.Count} failed: {string.Join("; ", failedServices)}"
+        };
 
-            // Publish deployment failed event on exception
-            await _eventManager.PublishDeploymentEventAsync(new DeploymentEvent
-            {
-                EventId = Guid.NewGuid().ToString(),
-                Timestamp = DateTimeOffset.UtcNow,
-                Action = DeploymentEventAction.Failed,
-                DeploymentId = deploymentId,
-                Preset = body.Preset,
-                Error = ex.Message
-            });
+        // Publish deployment completed/failed event
+        await _eventManager.PublishDeploymentEventAsync(new DeploymentEvent
+        {
+            EventId = Guid.NewGuid().ToString(),
+            Timestamp = DateTimeOffset.UtcNow,
+            Action = success ? DeploymentEventAction.Completed : DeploymentEventAction.Failed,
+            DeploymentId = deploymentId,
+            Preset = body.Preset,
+            Backend = orchestrator.BackendType,
+            Changes = deployedServices.Select(s => s.Name).ToList(),
+            Error = success ? null : string.Join("; ", failedServices)
+        });
 
-            return (StatusCodes.InternalServerError, null);
-        }
+        return (success ? StatusCodes.OK : StatusCodes.InternalServerError, response);
     }
 
     /// <summary>
@@ -1074,58 +995,49 @@ public partial class OrchestratorService : IOrchestratorService
     {
         _logger.LogDebug("Executing GetServiceRouting operation");
 
-        try
+        // Ensure we have the last deployment state loaded for DeploymentId
+        await EnsureLastDeploymentLoadedAsync();
+
+        // Get service-to-app-id mappings from Redis
+        // These are populated by DeployAsync when deploying presets with split topologies
+        var serviceRoutings = await _stateManager.GetServiceRoutingsAsync();
+
+        // Convert to simple string -> string mappings (service -> appId)
+        // CRITICAL: Exclude infrastructure services (state, messaging, mesh) - these must always be local
+        var mappings = new Dictionary<string, string>();
+        foreach (var kvp in serviceRoutings)
         {
-            // Ensure we have the last deployment state loaded for DeploymentId
-            await EnsureLastDeploymentLoadedAsync();
-
-            // Get service-to-app-id mappings from Redis
-            // These are populated by DeployAsync when deploying presets with split topologies
-            var serviceRoutings = await _stateManager.GetServiceRoutingsAsync();
-
-            // Convert to simple string -> string mappings (service -> appId)
-            // CRITICAL: Exclude infrastructure services (state, messaging, mesh) - these must always be local
-            var mappings = new Dictionary<string, string>();
-            foreach (var kvp in serviceRoutings)
+            // Never include infrastructure services - they must be handled locally
+            if (IsInfrastructureService(kvp.Key))
             {
-                // Never include infrastructure services - they must be handled locally
-                if (IsInfrastructureService(kvp.Key))
-                {
-                    continue;
-                }
-
-                // Apply filter if specified
-                if (string.IsNullOrEmpty(body.ServiceFilter) ||
-                    kvp.Key.StartsWith(body.ServiceFilter, StringComparison.OrdinalIgnoreCase))
-                {
-                    mappings[kvp.Key] = kvp.Value.AppId;
-                }
+                continue;
             }
 
-            // In development/monolith mode, all services route to "bannou"
-            if (mappings.Count == 0)
+            // Apply filter if specified
+            if (string.IsNullOrEmpty(body.ServiceFilter) ||
+                kvp.Key.StartsWith(body.ServiceFilter, StringComparison.OrdinalIgnoreCase))
             {
-                _logger.LogDebug("No custom service mappings in Redis - using default 'bannou' for all services");
+                mappings[kvp.Key] = kvp.Value.AppId;
             }
-
-            var response = new ServiceRoutingResponse
-            {
-                Mappings = mappings,
-                DefaultAppId = AppConstants.DEFAULT_APP_NAME,
-                GeneratedAt = DateTimeOffset.UtcNow,
-                TotalServices = mappings.Count,
-                DeploymentId = _lastKnownDeployment?.DeploymentId
-            };
-
-            _logger.LogInformation("Returning {Count} service routing mappings from Redis", response.TotalServices);
-            return (StatusCodes.OK, response);
         }
-        catch (Exception ex)
+
+        // In development/monolith mode, all services route to "bannou"
+        if (mappings.Count == 0)
         {
-            _logger.LogError(ex, "Error retrieving service routing mappings");
-            await PublishErrorEventAsync("GetServiceRouting", ex.GetType().Name, ex.Message, dependency: "redis");
-            return (StatusCodes.InternalServerError, null);
+            _logger.LogDebug("No custom service mappings in Redis - using default 'bannou' for all services");
         }
+
+        var response = new ServiceRoutingResponse
+        {
+            Mappings = mappings,
+            DefaultAppId = AppConstants.DEFAULT_APP_NAME,
+            GeneratedAt = DateTimeOffset.UtcNow,
+            TotalServices = mappings.Count,
+            DeploymentId = _lastKnownDeployment?.DeploymentId
+        };
+
+        _logger.LogInformation("Returning {Count} service routing mappings from Redis", response.TotalServices);
+        return (StatusCodes.OK, response);
     }
 
     /// <summary>
@@ -1136,49 +1048,40 @@ public partial class OrchestratorService : IOrchestratorService
     {
         _logger.LogDebug("Executing GetStatus operation");
 
-        try
+        var orchestrator = await GetOrchestratorAsync(cancellationToken);
+        var containers = await orchestrator.ListContainersAsync(cancellationToken);
+
+        // Build topology from running containers
+        var topology = new ServiceTopology
         {
-            var orchestrator = await GetOrchestratorAsync(cancellationToken);
-            var containers = await orchestrator.ListContainersAsync(cancellationToken);
-
-            // Build topology from running containers
-            var topology = new ServiceTopology
-            {
-                Nodes = containers
-                    .GroupBy(c => c.AppName ?? "unknown")
-                    .Select(g => new TopologyNode
-                    {
-                        Name = g.Key,
-                        Services = new List<string> { g.Key },
-                        Replicas = g.Count(),
-                        MeshEnabled = true,
-                        AppId = g.Key
-                    })
-                    .ToList()
-            };
-
-            var response = new EnvironmentStatus
-            {
-                Deployed = containers.Count > 0,
-                Timestamp = DateTimeOffset.UtcNow,
-                Backend = orchestrator.BackendType,
-                Topology = containers.Count > 0 ? topology : new ServiceTopology(),
-                Services = containers.Select(c => new DeployedService
+            Nodes = containers
+                .GroupBy(c => c.AppName ?? "unknown")
+                .Select(g => new TopologyNode
                 {
-                    Name = c.AppName ?? "unknown",
-                    Status = MapContainerStatusToDeployedServiceStatus(c.Status),
-                    Node = Environment.MachineName
-                }).ToList()
-            };
+                    Name = g.Key,
+                    Services = new List<string> { g.Key },
+                    Replicas = g.Count(),
+                    MeshEnabled = true,
+                    AppId = g.Key
+                })
+                .ToList()
+        };
 
-            return (StatusCodes.OK, response);
-        }
-        catch (Exception ex)
+        var response = new EnvironmentStatus
         {
-            _logger.LogError(ex, "Error executing GetStatus operation");
-            await PublishErrorEventAsync("GetStatus", ex.GetType().Name, ex.Message);
-            return (StatusCodes.InternalServerError, null);
-        }
+            Deployed = containers.Count > 0,
+            Timestamp = DateTimeOffset.UtcNow,
+            Backend = orchestrator.BackendType,
+            Topology = containers.Count > 0 ? topology : new ServiceTopology(),
+            Services = containers.Select(c => new DeployedService
+            {
+                Name = c.AppName ?? "unknown",
+                Status = MapContainerStatusToDeployedServiceStatus(c.Status),
+                Node = Environment.MachineName
+            }).ToList()
+        };
+
+        return (StatusCodes.OK, response);
     }
 
     /// <summary>
@@ -1217,115 +1120,95 @@ public partial class OrchestratorService : IOrchestratorService
             });
         }
 
-        try
+        var orchestrator = await GetOrchestratorAsync(cancellationToken);
+        var stoppedContainers = new List<string>();
+        var removedVolumes = new List<string>();
+        var failedTeardowns = new List<string>();
+
+        // Get all running containers
+        var containers = await orchestrator.ListContainersAsync(cancellationToken);
+        var allContainers = containers
+            .Select(c => c.AppName ?? "")
+            .Where(n => !string.IsNullOrEmpty(n))
+            .ToList();
+
+        // Get infrastructure services to filter them out (unless includeInfrastructure is true)
+        var infrastructureServices = await orchestrator.ListInfrastructureServicesAsync(cancellationToken);
+        var infraSet = new HashSet<string>(infrastructureServices, StringComparer.OrdinalIgnoreCase);
+
+        // Filter out infrastructure from main teardown list
+        var servicesToTeardown = allContainers
+            .Where(n => !infraSet.Contains(n))
+            .ToList();
+
+        _logger.LogInformation(
+            "Found {Count} app containers to tear down: {Services} (filtered {InfraCount} infrastructure services)",
+            servicesToTeardown.Count,
+            string.Join(", ", servicesToTeardown),
+            infraSet.Count);
+
+        if (servicesToTeardown.Count == 0)
         {
-            var orchestrator = await GetOrchestratorAsync(cancellationToken);
-            var stoppedContainers = new List<string>();
-            var removedVolumes = new List<string>();
-            var failedTeardowns = new List<string>();
-
-            // Get all running containers
-            var containers = await orchestrator.ListContainersAsync(cancellationToken);
-            var allContainers = containers
-                .Select(c => c.AppName ?? "")
-                .Where(n => !string.IsNullOrEmpty(n))
-                .ToList();
-
-            // Get infrastructure services to filter them out (unless includeInfrastructure is true)
-            var infrastructureServices = await orchestrator.ListInfrastructureServicesAsync(cancellationToken);
-            var infraSet = new HashSet<string>(infrastructureServices, StringComparer.OrdinalIgnoreCase);
-
-            // Filter out infrastructure from main teardown list
-            var servicesToTeardown = allContainers
-                .Where(n => !infraSet.Contains(n))
-                .ToList();
-
-            _logger.LogInformation(
-                "Found {Count} app containers to tear down: {Services} (filtered {InfraCount} infrastructure services)",
-                servicesToTeardown.Count,
-                string.Join(", ", servicesToTeardown),
-                infraSet.Count);
-
-            if (servicesToTeardown.Count == 0)
-            {
-                return (StatusCodes.OK, new TeardownResponse
-                {
-                    Success = true,
-                    Duration = "0s",
-                    StoppedContainers = stoppedContainers,
-                    RemovedVolumes = removedVolumes
-                });
-            }
-
-            // Collect infrastructure services that would be torn down
-            var infraToRemove = new List<string>();
-            if (body.IncludeInfrastructure)
-            {
-                infraToRemove.AddRange(infrastructureServices);
-            }
-
-            // Build the preview response (what will be torn down)
-            var previewDuration = DateTime.UtcNow - startTime;
-            var previewResponse = new TeardownResponse
+            return (StatusCodes.OK, new TeardownResponse
             {
                 Success = true,
-                Duration = $"{previewDuration.TotalSeconds:F1}s",
-                StoppedContainers = servicesToTeardown,
-                RemovedVolumes = new List<string>(),
-                RemovedInfrastructure = infraToRemove
-            };
-
-            // If dry run, just return the preview
-            if (body.DryRun)
-            {
-                _logger.LogInformation("Dry run mode - not actually tearing down containers");
-                return (StatusCodes.OK, previewResponse);
-            }
-
-            // Execute teardown synchronously to avoid returning before completion
-            var result = await ExecuteActualTeardownAsync(
-                orchestrator,
-                servicesToTeardown,
-                infraToRemove,
-                body.RemoveVolumes,
-                body.IncludeInfrastructure,
-                teardownId,
-                cancellationToken);
-
-            var duration = DateTime.UtcNow - startTime;
-            var success = result.Failed.Count == 0;
-
-            var response = new TeardownResponse
-            {
-                Success = success,
-                Duration = $"{duration.TotalSeconds:F1}s",
-                StoppedContainers = result.Stopped,
-                RemovedVolumes = result.RemovedVolumes,
-                RemovedInfrastructure = result.RemovedInfrastructure,
-                Message = success
-                    ? "Teardown completed"
-                    : "Teardown completed with failures"
-            };
-
-            return (StatusCodes.OK, response);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error executing Teardown operation");
-            await PublishErrorEventAsync("Teardown", ex.GetType().Name, ex.Message);
-
-            // Publish teardown failed event on exception
-            await _eventManager.PublishDeploymentEventAsync(new DeploymentEvent
-            {
-                EventId = Guid.NewGuid().ToString(),
-                Timestamp = DateTimeOffset.UtcNow,
-                Action = DeploymentEventAction.Failed,
-                DeploymentId = teardownId,
-                Error = ex.Message
+                Duration = "0s",
+                StoppedContainers = stoppedContainers,
+                RemovedVolumes = removedVolumes
             });
-
-            return (StatusCodes.InternalServerError, null);
         }
+
+        // Collect infrastructure services that would be torn down
+        var infraToRemove = new List<string>();
+        if (body.IncludeInfrastructure)
+        {
+            infraToRemove.AddRange(infrastructureServices);
+        }
+
+        // Build the preview response (what will be torn down)
+        var previewDuration = DateTime.UtcNow - startTime;
+        var previewResponse = new TeardownResponse
+        {
+            Success = true,
+            Duration = $"{previewDuration.TotalSeconds:F1}s",
+            StoppedContainers = servicesToTeardown,
+            RemovedVolumes = new List<string>(),
+            RemovedInfrastructure = infraToRemove
+        };
+
+        // If dry run, just return the preview
+        if (body.DryRun)
+        {
+            _logger.LogInformation("Dry run mode - not actually tearing down containers");
+            return (StatusCodes.OK, previewResponse);
+        }
+
+        // Execute teardown synchronously to avoid returning before completion
+        var result = await ExecuteActualTeardownAsync(
+            orchestrator,
+            servicesToTeardown,
+            infraToRemove,
+            body.RemoveVolumes,
+            body.IncludeInfrastructure,
+            teardownId,
+            cancellationToken);
+
+        var duration = DateTime.UtcNow - startTime;
+        var success = result.Failed.Count == 0;
+
+        var response = new TeardownResponse
+        {
+            Success = success,
+            Duration = $"{duration.TotalSeconds:F1}s",
+            StoppedContainers = result.Stopped,
+            RemovedVolumes = result.RemovedVolumes,
+            RemovedInfrastructure = result.RemovedInfrastructure,
+            Message = success
+                ? "Teardown completed"
+                : "Teardown completed with failures"
+        };
+
+        return (StatusCodes.OK, response);
     }
 
     /// <summary>
@@ -1460,133 +1343,147 @@ public partial class OrchestratorService : IOrchestratorService
             "Executing Clean operation: targets={Targets}, force={Force}",
             string.Join(",", targets), force);
 
-        try
+        var orchestrator = await GetOrchestratorAsync(cancellationToken);
+
+        // Track cleanup results
+        int removedContainers = 0;
+        int removedNetworks = 0;
+        int removedVolumes = 0;
+        int removedImages = 0;
+        long reclaimedBytes = 0;
+        var cleanedItems = new List<string>();
+
+        // Determine which targets to clean
+        var cleanAll = targets.Contains(CleanTarget.All);
+        var cleanContainers = cleanAll || targets.Contains(CleanTarget.Containers);
+        var cleanNetworks = cleanAll || targets.Contains(CleanTarget.Networks);
+        var cleanVolumes = cleanAll || targets.Contains(CleanTarget.Volumes);
+        var cleanImages = cleanAll || targets.Contains(CleanTarget.Images);
+
+        // Clean stopped containers
+        if (cleanContainers)
         {
-            var orchestrator = await GetOrchestratorAsync(cancellationToken);
+            _logger.LogInformation("Cleaning stopped containers...");
+            var containers = await orchestrator.ListContainersAsync(cancellationToken);
+            var stoppedContainers = containers.Where(c =>
+                c.Status == ContainerStatusStatus.Stopped).ToList();
 
-            // Track cleanup results
-            int removedContainers = 0;
-            int removedNetworks = 0;
-            int removedVolumes = 0;
-            int removedImages = 0;
-            long reclaimedBytes = 0;
-            var cleanedItems = new List<string>();
-
-            // Determine which targets to clean
-            var cleanAll = targets.Contains(CleanTarget.All);
-            var cleanContainers = cleanAll || targets.Contains(CleanTarget.Containers);
-            var cleanNetworks = cleanAll || targets.Contains(CleanTarget.Networks);
-            var cleanVolumes = cleanAll || targets.Contains(CleanTarget.Volumes);
-            var cleanImages = cleanAll || targets.Contains(CleanTarget.Images);
-
-            // Clean stopped containers
-            if (cleanContainers)
+            foreach (var container in stoppedContainers)
             {
-                _logger.LogInformation("Cleaning stopped containers...");
-                var containers = await orchestrator.ListContainersAsync(cancellationToken);
-                var stoppedContainers = containers.Where(c =>
-                    c.Status == ContainerStatusStatus.Stopped).ToList();
-
-                foreach (var container in stoppedContainers)
+                if (!force && !IsOrphanedContainer(container))
                 {
-                    if (!force && !IsOrphanedContainer(container))
-                    {
-                        _logger.LogDebug("Skipping non-orphaned container {AppName}", container.AppName);
-                        continue;
-                    }
+                    _logger.LogDebug("Skipping non-orphaned container {AppName}", container.AppName);
+                    continue;
+                }
 
-                    try
+                try
+                {
+                    var result = await orchestrator.TeardownServiceAsync(container.AppName, removeVolumes: false, cancellationToken);
+                    if (result.Success)
                     {
-                        var result = await orchestrator.TeardownServiceAsync(container.AppName, removeVolumes: false, cancellationToken);
-                        if (result.Success)
-                        {
-                            removedContainers++;
-                            cleanedItems.Add($"container:{container.AppName}");
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        _logger.LogWarning(ex, "Failed to remove container {AppName}", container.AppName);
+                        removedContainers++;
+                        cleanedItems.Add($"container:{container.AppName}");
                     }
                 }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "Failed to remove container {AppName}", container.AppName);
+                }
             }
-
-            // Note: Network, volume, and image pruning would require extending IContainerOrchestrator
-            // or direct Docker SDK access. Track unsupported operations to report accurately.
-            var unsupportedOperations = new List<string>();
-
-            if (cleanNetworks)
-            {
-                _logger.LogWarning("Network pruning requested but not yet implemented");
-                unsupportedOperations.Add("networks");
-            }
-
-            if (cleanVolumes)
-            {
-                _logger.LogWarning("Volume pruning requested but not yet implemented");
-                unsupportedOperations.Add("volumes");
-            }
-
-            if (cleanImages)
-            {
-                _logger.LogWarning("Image pruning requested but not yet implemented");
-                unsupportedOperations.Add("images");
-            }
-
-            // Build response message
-            var messageBuilder = new System.Text.StringBuilder();
-            if (cleanedItems.Count > 0)
-            {
-                messageBuilder.Append($"Cleaned: {string.Join(", ", cleanedItems)}");
-            }
-            else if (cleanContainers)
-            {
-                messageBuilder.Append("No orphaned containers found");
-            }
-
-            if (unsupportedOperations.Count > 0)
-            {
-                if (messageBuilder.Length > 0)
-                    messageBuilder.Append(". ");
-                messageBuilder.Append($"Unsupported operations skipped: {string.Join(", ", unsupportedOperations)}");
-            }
-
-            if (messageBuilder.Length == 0)
-            {
-                messageBuilder.Append("No cleanup targets specified");
-            }
-
-            // Success is true only if all requested operations were attempted
-            // (even if they found nothing to clean)
-            var allOperationsSupported = !unsupportedOperations.Any(op =>
-                (op == "networks" && cleanNetworks) ||
-                (op == "volumes" && cleanVolumes) ||
-                (op == "images" && cleanImages));
-
-            var cleanSuccess = unsupportedOperations.Count == 0 || cleanContainers;
-            var response = new CleanResponse
-            {
-                Success = cleanSuccess,
-                ReclaimedSpaceMb = (int)(reclaimedBytes / (1024 * 1024)),
-                RemovedContainers = removedContainers,
-                RemovedNetworks = removedNetworks,
-                RemovedVolumes = removedVolumes,
-                RemovedImages = removedImages,
-                Message = messageBuilder.ToString()
-            };
-
-            _logger.LogInformation(
-                "Clean operation completed: containers={Containers}, networks={Networks}, volumes={Volumes}",
-                removedContainers, removedNetworks, removedVolumes);
-
-            return (StatusCodes.OK, response);
         }
-        catch (Exception ex)
+
+        // Prune networks if requested
+        if (cleanNetworks)
         {
-            _logger.LogError(ex, "Error executing Clean operation");
-            await PublishErrorEventAsync("Clean", ex.GetType().Name, ex.Message);
-            return (StatusCodes.InternalServerError, null);
+            _logger.LogInformation("Pruning unused networks...");
+            var networkResult = await orchestrator.PruneNetworksAsync(cancellationToken);
+            if (networkResult.Success)
+            {
+                removedNetworks = networkResult.DeletedCount;
+                foreach (var network in networkResult.DeletedItems)
+                {
+                    cleanedItems.Add($"network:{network}");
+                }
+            }
+            else
+            {
+                _logger.LogWarning("Network pruning failed: {Message}", networkResult.Message);
+            }
         }
+
+        // Prune volumes if requested (CAUTION: can cause data loss)
+        if (cleanVolumes)
+        {
+            _logger.LogInformation("Pruning unused volumes...");
+            var volumeResult = await orchestrator.PruneVolumesAsync(cancellationToken);
+            if (volumeResult.Success)
+            {
+                removedVolumes = volumeResult.DeletedCount;
+                reclaimedBytes += volumeResult.ReclaimedBytes;
+                foreach (var volume in volumeResult.DeletedItems)
+                {
+                    cleanedItems.Add($"volume:{volume}");
+                }
+            }
+            else
+            {
+                _logger.LogWarning("Volume pruning failed: {Message}", volumeResult.Message);
+            }
+        }
+
+        // Prune dangling images if requested
+        if (cleanImages)
+        {
+            _logger.LogInformation("Pruning dangling images...");
+            var imageResult = await orchestrator.PruneImagesAsync(cancellationToken);
+            if (imageResult.Success)
+            {
+                removedImages = imageResult.DeletedCount;
+                reclaimedBytes += imageResult.ReclaimedBytes;
+                foreach (var image in imageResult.DeletedItems)
+                {
+                    cleanedItems.Add($"image:{image}");
+                }
+            }
+            else
+            {
+                _logger.LogWarning("Image pruning failed: {Message}", imageResult.Message);
+            }
+        }
+
+        // Build response message
+        var messageBuilder = new System.Text.StringBuilder();
+        if (cleanedItems.Count > 0)
+        {
+            messageBuilder.Append($"Cleaned: {cleanedItems.Count} item(s)");
+        }
+        else
+        {
+            messageBuilder.Append("No items to clean");
+        }
+
+        if (messageBuilder.Length == 0)
+        {
+            messageBuilder.Append("No cleanup targets specified");
+        }
+
+        var cleanSuccess = true;
+        var response = new CleanResponse
+        {
+            Success = cleanSuccess,
+            ReclaimedSpaceMb = (int)(reclaimedBytes / (1024 * 1024)),
+            RemovedContainers = removedContainers,
+            RemovedNetworks = removedNetworks,
+            RemovedVolumes = removedVolumes,
+            RemovedImages = removedImages,
+            Message = messageBuilder.ToString()
+        };
+
+        _logger.LogInformation(
+            "Clean operation completed: containers={Containers}, networks={Networks}, volumes={Volumes}",
+            removedContainers, removedNetworks, removedVolumes);
+
+        return (StatusCodes.OK, response);
     }
 
     /// <summary>
@@ -1682,68 +1579,59 @@ public partial class OrchestratorService : IOrchestratorService
             "Executing GetLogs operation: service={Service}, container={Container}, tail={Tail}",
             service, container, tail);
 
-        try
-        {
-            var orchestrator = await GetOrchestratorAsync(cancellationToken);
+        var orchestrator = await GetOrchestratorAsync(cancellationToken);
 
-            // Parse since timestamp if provided
-            DateTimeOffset? sinceTime = null;
-            if (!string.IsNullOrEmpty(since) && DateTimeOffset.TryParse(since, out var parsedSince))
+        // Parse since timestamp if provided
+        DateTimeOffset? sinceTime = null;
+        if (!string.IsNullOrEmpty(since) && DateTimeOffset.TryParse(since, out var parsedSince))
+        {
+            sinceTime = parsedSince;
+        }
+
+        var appName = service ?? container ?? AppConstants.DEFAULT_APP_NAME;
+        var logsText = await orchestrator.GetContainerLogsAsync(appName, tail, sinceTime, cancellationToken);
+
+        // Parse log text into LogEntry objects
+        // Docker logs with Timestamps=true format: "2024-01-01T12:00:00.123456789Z message"
+        // Stderr section is appended after a "[STDERR]" marker by ReadDockerLogStreamAsync
+        var logEntries = new List<LogEntry>();
+        var currentStream = LogEntryStream.Stdout;
+
+        foreach (var line in logsText.Split('\n', StringSplitOptions.RemoveEmptyEntries))
+        {
+            if (line == "[STDERR]")
             {
-                sinceTime = parsedSince;
+                currentStream = LogEntryStream.Stderr;
+                continue;
             }
 
-            var appName = service ?? container ?? AppConstants.DEFAULT_APP_NAME;
-            var logsText = await orchestrator.GetContainerLogsAsync(appName, tail, sinceTime, cancellationToken);
+            var timestamp = DateTimeOffset.UtcNow;
+            var message = line;
 
-            // Parse log text into LogEntry objects
-            // Docker logs with Timestamps=true format: "2024-01-01T12:00:00.123456789Z message"
-            // Stderr section is appended after a "[STDERR]" marker by ReadDockerLogStreamAsync
-            var logEntries = new List<LogEntry>();
-            var currentStream = LogEntryStream.Stdout;
-
-            foreach (var line in logsText.Split('\n', StringSplitOptions.RemoveEmptyEntries))
+            // Try to parse Docker timestamp prefix (ISO 8601 with nanoseconds)
+            var spaceIndex = line.IndexOf(' ');
+            if (spaceIndex > 0 && DateTimeOffset.TryParse(line[..spaceIndex], out var parsed))
             {
-                if (line == "[STDERR]")
-                {
-                    currentStream = LogEntryStream.Stderr;
-                    continue;
-                }
-
-                var timestamp = DateTimeOffset.UtcNow;
-                var message = line;
-
-                // Try to parse Docker timestamp prefix (ISO 8601 with nanoseconds)
-                var spaceIndex = line.IndexOf(' ');
-                if (spaceIndex > 0 && DateTimeOffset.TryParse(line[..spaceIndex], out var parsed))
-                {
-                    timestamp = parsed;
-                    message = line[(spaceIndex + 1)..];
-                }
-
-                logEntries.Add(new LogEntry
-                {
-                    Timestamp = timestamp,
-                    Stream = currentStream,
-                    Message = message
-                });
+                timestamp = parsed;
+                message = line[(spaceIndex + 1)..];
             }
 
-            var response = new LogsResponse
+            logEntries.Add(new LogEntry
             {
-                Service = appName,
-                Container = appName,
-                Logs = logEntries
-            };
+                Timestamp = timestamp,
+                Stream = currentStream,
+                Message = message
+            });
+        }
 
-            return (StatusCodes.OK, response);
-        }
-        catch (Exception ex)
+        var response = new LogsResponse
         {
-            _logger.LogError(ex, "Error executing GetLogs operation");
-            await PublishErrorEventAsync("GetLogs", ex.GetType().Name, ex.Message, details: new { Service = body.Service });
-            return (StatusCodes.InternalServerError, null);
-        }
+            Service = appName,
+            Container = appName,
+            Logs = logEntries
+        };
+
+        return (StatusCodes.OK, response);
     }
 
     /// <summary>
@@ -1758,313 +1646,304 @@ public partial class OrchestratorService : IOrchestratorService
 
         var startTime = DateTime.UtcNow;
 
-        try
+        var orchestrator = await GetOrchestratorAsync(cancellationToken);
+        var changes = body.Changes ?? new List<TopologyChange>();
+
+        if (changes.Count == 0)
         {
-            var orchestrator = await GetOrchestratorAsync(cancellationToken);
-            var changes = body.Changes ?? new List<TopologyChange>();
+            _logger.LogWarning("No topology changes specified");
+            return (StatusCodes.BadRequest, null);
+        }
 
-            if (changes.Count == 0)
+        var appliedChanges = new List<AppliedChange>();
+        var warnings = new List<string>();
+
+        foreach (var change in changes)
+        {
+            var appliedChange = new AppliedChange
             {
-                _logger.LogWarning("No topology changes specified");
-                return (StatusCodes.BadRequest, null);
-            }
-
-            var appliedChanges = new List<AppliedChange>();
-            var warnings = new List<string>();
-
-            foreach (var change in changes)
-            {
-                var appliedChange = new AppliedChange
-                {
-                    Action = change.Action.ToString(),
-                    Target = change.NodeName ?? string.Join(",", change.Services ?? Array.Empty<string>()),
-                    Success = false
-                };
-
-                try
-                {
-                    switch (change.Action)
-                    {
-                        case TopologyChangeAction.AddNode:
-                            // Add a new node with services configured via NodeConfig
-                            if (change.NodeConfig != null && change.Services != null)
-                            {
-                                // Convert IDictionary to Dictionary for the orchestrator method
-                                var nodeEnvironment = change.Environment != null
-                                    ? new Dictionary<string, string>(change.Environment)
-                                    : new Dictionary<string, string>();
-
-                                // CRITICAL: Disable all services by default, then enable only the specified ones
-                                if (!nodeEnvironment.ContainsKey("SERVICES_ENABLED"))
-                                {
-                                    nodeEnvironment["SERVICES_ENABLED"] = "false";
-                                }
-
-                                // Enable each service listed in the change
-                                foreach (var svc in change.Services)
-                                {
-                                    var envKey = $"{svc.ToUpperInvariant().Replace("-", "_")}_SERVICE_ENABLED";
-                                    if (!nodeEnvironment.ContainsKey(envKey))
-                                    {
-                                        nodeEnvironment[envKey] = "true";
-                                    }
-                                }
-
-                                var addNodeSucceeded = 0;
-                                var addNodeFailed = 0;
-                                foreach (var serviceName in change.Services)
-                                {
-                                    var appId = $"bannou-{serviceName}-{change.NodeName}";
-                                    var deployResult = await orchestrator.DeployServiceAsync(
-                                        serviceName,
-                                        appId,
-                                        nodeEnvironment,
-                                        cancellationToken);
-
-                                    if (deployResult.Success)
-                                    {
-                                        // Set service routing - ServiceHealthMonitor will publish FullServiceMappingsEvent
-                                        await _healthMonitor.SetServiceRoutingAsync(serviceName, appId);
-                                        addNodeSucceeded++;
-                                    }
-                                    else
-                                    {
-                                        warnings.Add($"Failed to deploy {serviceName} on {change.NodeName}: {deployResult.Message}");
-                                        addNodeFailed++;
-                                    }
-                                }
-                                // Only report success if at least one deployment succeeded AND none failed
-                                appliedChange.Success = addNodeSucceeded > 0 && addNodeFailed == 0;
-                                if (addNodeFailed > 0 && addNodeSucceeded > 0)
-                                {
-                                    appliedChange.Error = $"Partial failure: {addNodeSucceeded} deployed, {addNodeFailed} failed";
-                                }
-                                else if (addNodeFailed > 0)
-                                {
-                                    appliedChange.Error = $"All {addNodeFailed} deployments failed";
-                                }
-                            }
-                            else
-                            {
-                                appliedChange.Error = "NodeConfig and Services are required for add-node action";
-                            }
-                            break;
-
-                        case TopologyChangeAction.RemoveNode:
-                            // Remove a node and all its services
-                            if (change.Services != null)
-                            {
-                                var removeNodeSucceeded = 0;
-                                var removeNodeFailed = 0;
-                                foreach (var serviceName in change.Services)
-                                {
-                                    var appId = $"bannou-{serviceName}-{change.NodeName}";
-                                    var teardownResult = await orchestrator.TeardownServiceAsync(
-                                        appId,
-                                        false,
-                                        cancellationToken);
-
-                                    if (teardownResult.Success)
-                                    {
-                                        // Remove routing - ServiceHealthMonitor will publish FullServiceMappingsEvent
-                                        await _healthMonitor.RestoreServiceRoutingToDefaultAsync(serviceName);
-                                        removeNodeSucceeded++;
-                                    }
-                                    else
-                                    {
-                                        warnings.Add($"Failed to teardown {serviceName} on {change.NodeName}: {teardownResult.Message}");
-                                        removeNodeFailed++;
-                                    }
-                                }
-                                // Only report success if at least one teardown succeeded AND none failed
-                                appliedChange.Success = removeNodeSucceeded > 0 && removeNodeFailed == 0;
-                                if (removeNodeFailed > 0 && removeNodeSucceeded > 0)
-                                {
-                                    appliedChange.Error = $"Partial failure: {removeNodeSucceeded} removed, {removeNodeFailed} failed";
-                                }
-                                else if (removeNodeFailed > 0)
-                                {
-                                    appliedChange.Error = $"All {removeNodeFailed} teardowns failed";
-                                }
-                            }
-                            else
-                            {
-                                appliedChange.Error = "Services list is required for remove-node action";
-                            }
-                            break;
-
-                        case TopologyChangeAction.MoveService:
-                            // Move service(s) to a different node (update routing)
-                            if (change.Services != null && !string.IsNullOrEmpty(change.NodeName))
-                            {
-                                var moveSucceeded = 0;
-                                var moveFailed = 0;
-                                foreach (var serviceName in change.Services)
-                                {
-                                    var newAppId = $"bannou-{serviceName}-{change.NodeName}";
-
-                                    try
-                                    {
-                                        // Update routing - ServiceHealthMonitor will publish FullServiceMappingsEvent
-                                        await _healthMonitor.SetServiceRoutingAsync(serviceName, newAppId);
-                                        moveSucceeded++;
-                                    }
-                                    catch (Exception ex)
-                                    {
-                                        warnings.Add($"Failed to move {serviceName} to {change.NodeName}: {ex.Message}");
-                                        moveFailed++;
-                                    }
-                                }
-                                appliedChange.Success = moveSucceeded > 0 && moveFailed == 0;
-                                if (moveFailed > 0 && moveSucceeded > 0)
-                                {
-                                    appliedChange.Error = $"Partial failure: {moveSucceeded} moved, {moveFailed} failed";
-                                }
-                                else if (moveFailed > 0)
-                                {
-                                    appliedChange.Error = $"All {moveFailed} service moves failed";
-                                }
-                            }
-                            else
-                            {
-                                appliedChange.Error = "Services list and NodeName are required for move-service action";
-                            }
-                            break;
-
-                        case TopologyChangeAction.Scale:
-                            // Scale service instances on a node
-                            if (change.Services != null)
-                            {
-                                var scaleSucceeded = 0;
-                                var scaleFailed = 0;
-                                foreach (var serviceName in change.Services)
-                                {
-                                    var appId = !string.IsNullOrEmpty(change.NodeName)
-                                        ? $"bannou-{serviceName}-{change.NodeName}"
-                                        : $"bannou-{serviceName}";
-
-                                    var scaleResult = await orchestrator.ScaleServiceAsync(
-                                        appId,
-                                        change.Replicas,
-                                        cancellationToken);
-
-                                    if (scaleResult.Success)
-                                    {
-                                        scaleSucceeded++;
-                                    }
-                                    else
-                                    {
-                                        warnings.Add($"Failed to scale {serviceName}: {scaleResult.Message}");
-                                        scaleFailed++;
-                                    }
-                                }
-                                appliedChange.Success = scaleSucceeded > 0 && scaleFailed == 0;
-                                if (scaleFailed > 0 && scaleSucceeded > 0)
-                                {
-                                    appliedChange.Error = $"Partial failure: {scaleSucceeded} scaled, {scaleFailed} failed";
-                                }
-                                else if (scaleFailed > 0)
-                                {
-                                    appliedChange.Error = $"All {scaleFailed} scale operations failed";
-                                }
-                            }
-                            else
-                            {
-                                appliedChange.Error = "Services list is required for scale action";
-                            }
-                            break;
-
-                        case TopologyChangeAction.UpdateEnv:
-                            // Update environment variables for services by redeploying with new env vars.
-                            // DeployServiceAsync handles container cleanup and recreation automatically.
-                            if (change.Services != null && change.Environment != null)
-                            {
-                                var envDict = new Dictionary<string, string>(change.Environment);
-                                var allEnvDeploysSucceeded = true;
-
-                                foreach (var serviceName in change.Services)
-                                {
-                                    // Construct appId the same way as other actions
-                                    var appId = !string.IsNullOrEmpty(change.NodeName)
-                                        ? $"bannou-{serviceName}-{change.NodeName}"
-                                        : $"bannou-{serviceName}";
-
-                                    _logger.LogInformation(
-                                        "Updating environment for {ServiceName} (appId: {AppId}) with {EnvCount} variables",
-                                        serviceName, appId, envDict.Count);
-
-                                    // DeployServiceAsync cleans up existing container and redeploys with new env vars
-                                    var deployResult = await orchestrator.DeployServiceAsync(
-                                        serviceName,
-                                        appId,
-                                        envDict,
-                                        cancellationToken);
-
-                                    if (!deployResult.Success)
-                                    {
-                                        warnings.Add($"Failed to update environment for {serviceName}: {deployResult.Message}");
-                                        allEnvDeploysSucceeded = false;
-                                    }
-                                    else
-                                    {
-                                        _logger.LogInformation(
-                                            "Successfully updated environment for {ServiceName} (container: {ContainerId})",
-                                            serviceName, deployResult.ContainerId ?? "unknown");
-                                    }
-                                }
-
-                                appliedChange.Success = allEnvDeploysSucceeded;
-                                if (!allEnvDeploysSucceeded)
-                                {
-                                    appliedChange.Error = "Some services failed to update environment - check warnings for details";
-                                }
-                            }
-                            else
-                            {
-                                appliedChange.Error = "Services list and Environment are required for update-env action";
-                            }
-                            break;
-
-                        default:
-                            appliedChange.Error = $"Unknown action: {change.Action}";
-                            break;
-                    }
-                }
-                catch (Exception ex)
-                {
-                    appliedChange.Error = ex.Message;
-                    _logger.LogError(ex, "Error applying topology change: {Action} for {Target}",
-                        change.Action, change.NodeName);
-                    await PublishErrorEventAsync("UpdateTopology", ex.GetType().Name, ex.Message, details: new { Action = change.Action, NodeName = change.NodeName });
-                }
-
-                appliedChanges.Add(appliedChange);
-            }
-
-            var duration = DateTime.UtcNow - startTime;
-            var allSucceeded = appliedChanges.All(c => c.Success);
-            var successCount = appliedChanges.Count(c => c.Success);
-            var failCount = appliedChanges.Count(c => !c.Success);
-
-            var response = new TopologyUpdateResponse
-            {
-                Success = allSucceeded,
-                AppliedChanges = appliedChanges,
-                Duration = $"{duration.TotalSeconds:F1}s",
-                Warnings = warnings,
-                Message = allSucceeded
-                    ? $"Successfully applied {successCount} topology change(s)"
-                    : $"Applied {successCount} change(s), {failCount} failed"
+                Action = change.Action.ToString(),
+                Target = change.NodeName ?? string.Join(",", change.Services ?? Array.Empty<string>()),
+                Success = false
             };
 
-            return (StatusCodes.OK, response);
+            try
+            {
+                switch (change.Action)
+                {
+                    case TopologyChangeAction.AddNode:
+                        // Add a new node with services configured via NodeConfig
+                        if (change.NodeConfig != null && change.Services != null)
+                        {
+                            // Convert IDictionary to Dictionary for the orchestrator method
+                            var nodeEnvironment = change.Environment != null
+                                ? new Dictionary<string, string>(change.Environment)
+                                : new Dictionary<string, string>();
+
+                            // CRITICAL: Disable all services by default, then enable only the specified ones
+                            if (!nodeEnvironment.ContainsKey("SERVICES_ENABLED"))
+                            {
+                                nodeEnvironment["SERVICES_ENABLED"] = "false";
+                            }
+
+                            // Enable each service listed in the change
+                            foreach (var svc in change.Services)
+                            {
+                                var envKey = $"{svc.ToUpperInvariant().Replace("-", "_")}_SERVICE_ENABLED";
+                                if (!nodeEnvironment.ContainsKey(envKey))
+                                {
+                                    nodeEnvironment[envKey] = "true";
+                                }
+                            }
+
+                            var addNodeSucceeded = 0;
+                            var addNodeFailed = 0;
+                            foreach (var serviceName in change.Services)
+                            {
+                                var appId = $"bannou-{serviceName}-{change.NodeName}";
+                                var deployResult = await orchestrator.DeployServiceAsync(
+                                    serviceName,
+                                    appId,
+                                    nodeEnvironment,
+                                    cancellationToken);
+
+                                if (deployResult.Success)
+                                {
+                                    // Set service routing - ServiceHealthMonitor will publish FullServiceMappingsEvent
+                                    await _healthMonitor.SetServiceRoutingAsync(serviceName, appId);
+                                    addNodeSucceeded++;
+                                }
+                                else
+                                {
+                                    warnings.Add($"Failed to deploy {serviceName} on {change.NodeName}: {deployResult.Message}");
+                                    addNodeFailed++;
+                                }
+                            }
+                            // Only report success if at least one deployment succeeded AND none failed
+                            appliedChange.Success = addNodeSucceeded > 0 && addNodeFailed == 0;
+                            if (addNodeFailed > 0 && addNodeSucceeded > 0)
+                            {
+                                appliedChange.Error = $"Partial failure: {addNodeSucceeded} deployed, {addNodeFailed} failed";
+                            }
+                            else if (addNodeFailed > 0)
+                            {
+                                appliedChange.Error = $"All {addNodeFailed} deployments failed";
+                            }
+                        }
+                        else
+                        {
+                            appliedChange.Error = "NodeConfig and Services are required for add-node action";
+                        }
+                        break;
+
+                    case TopologyChangeAction.RemoveNode:
+                        // Remove a node and all its services
+                        if (change.Services != null)
+                        {
+                            var removeNodeSucceeded = 0;
+                            var removeNodeFailed = 0;
+                            foreach (var serviceName in change.Services)
+                            {
+                                var appId = $"bannou-{serviceName}-{change.NodeName}";
+                                var teardownResult = await orchestrator.TeardownServiceAsync(
+                                    appId,
+                                    false,
+                                    cancellationToken);
+
+                                if (teardownResult.Success)
+                                {
+                                    // Remove routing - ServiceHealthMonitor will publish FullServiceMappingsEvent
+                                    await _healthMonitor.RestoreServiceRoutingToDefaultAsync(serviceName);
+                                    removeNodeSucceeded++;
+                                }
+                                else
+                                {
+                                    warnings.Add($"Failed to teardown {serviceName} on {change.NodeName}: {teardownResult.Message}");
+                                    removeNodeFailed++;
+                                }
+                            }
+                            // Only report success if at least one teardown succeeded AND none failed
+                            appliedChange.Success = removeNodeSucceeded > 0 && removeNodeFailed == 0;
+                            if (removeNodeFailed > 0 && removeNodeSucceeded > 0)
+                            {
+                                appliedChange.Error = $"Partial failure: {removeNodeSucceeded} removed, {removeNodeFailed} failed";
+                            }
+                            else if (removeNodeFailed > 0)
+                            {
+                                appliedChange.Error = $"All {removeNodeFailed} teardowns failed";
+                            }
+                        }
+                        else
+                        {
+                            appliedChange.Error = "Services list is required for remove-node action";
+                        }
+                        break;
+
+                    case TopologyChangeAction.MoveService:
+                        // Move service(s) to a different node (update routing)
+                        if (change.Services != null && !string.IsNullOrEmpty(change.NodeName))
+                        {
+                            var moveSucceeded = 0;
+                            var moveFailed = 0;
+                            foreach (var serviceName in change.Services)
+                            {
+                                var newAppId = $"bannou-{serviceName}-{change.NodeName}";
+
+                                try
+                                {
+                                    // Update routing - ServiceHealthMonitor will publish FullServiceMappingsEvent
+                                    await _healthMonitor.SetServiceRoutingAsync(serviceName, newAppId);
+                                    moveSucceeded++;
+                                }
+                                catch (Exception ex)
+                                {
+                                    warnings.Add($"Failed to move {serviceName} to {change.NodeName}: {ex.Message}");
+                                    moveFailed++;
+                                }
+                            }
+                            appliedChange.Success = moveSucceeded > 0 && moveFailed == 0;
+                            if (moveFailed > 0 && moveSucceeded > 0)
+                            {
+                                appliedChange.Error = $"Partial failure: {moveSucceeded} moved, {moveFailed} failed";
+                            }
+                            else if (moveFailed > 0)
+                            {
+                                appliedChange.Error = $"All {moveFailed} service moves failed";
+                            }
+                        }
+                        else
+                        {
+                            appliedChange.Error = "Services list and NodeName are required for move-service action";
+                        }
+                        break;
+
+                    case TopologyChangeAction.Scale:
+                        // Scale service instances on a node
+                        if (change.Services != null)
+                        {
+                            var scaleSucceeded = 0;
+                            var scaleFailed = 0;
+                            foreach (var serviceName in change.Services)
+                            {
+                                var appId = !string.IsNullOrEmpty(change.NodeName)
+                                    ? $"bannou-{serviceName}-{change.NodeName}"
+                                    : $"bannou-{serviceName}";
+
+                                var scaleResult = await orchestrator.ScaleServiceAsync(
+                                    appId,
+                                    change.Replicas,
+                                    cancellationToken);
+
+                                if (scaleResult.Success)
+                                {
+                                    scaleSucceeded++;
+                                }
+                                else
+                                {
+                                    warnings.Add($"Failed to scale {serviceName}: {scaleResult.Message}");
+                                    scaleFailed++;
+                                }
+                            }
+                            appliedChange.Success = scaleSucceeded > 0 && scaleFailed == 0;
+                            if (scaleFailed > 0 && scaleSucceeded > 0)
+                            {
+                                appliedChange.Error = $"Partial failure: {scaleSucceeded} scaled, {scaleFailed} failed";
+                            }
+                            else if (scaleFailed > 0)
+                            {
+                                appliedChange.Error = $"All {scaleFailed} scale operations failed";
+                            }
+                        }
+                        else
+                        {
+                            appliedChange.Error = "Services list is required for scale action";
+                        }
+                        break;
+
+                    case TopologyChangeAction.UpdateEnv:
+                        // Update environment variables for services by redeploying with new env vars.
+                        // DeployServiceAsync handles container cleanup and recreation automatically.
+                        if (change.Services != null && change.Environment != null)
+                        {
+                            var envDict = new Dictionary<string, string>(change.Environment);
+                            var allEnvDeploysSucceeded = true;
+
+                            foreach (var serviceName in change.Services)
+                            {
+                                // Construct appId the same way as other actions
+                                var appId = !string.IsNullOrEmpty(change.NodeName)
+                                    ? $"bannou-{serviceName}-{change.NodeName}"
+                                    : $"bannou-{serviceName}";
+
+                                _logger.LogInformation(
+                                    "Updating environment for {ServiceName} (appId: {AppId}) with {EnvCount} variables",
+                                    serviceName, appId, envDict.Count);
+
+                                // DeployServiceAsync cleans up existing container and redeploys with new env vars
+                                var deployResult = await orchestrator.DeployServiceAsync(
+                                    serviceName,
+                                    appId,
+                                    envDict,
+                                    cancellationToken);
+
+                                if (!deployResult.Success)
+                                {
+                                    warnings.Add($"Failed to update environment for {serviceName}: {deployResult.Message}");
+                                    allEnvDeploysSucceeded = false;
+                                }
+                                else
+                                {
+                                    _logger.LogInformation(
+                                        "Successfully updated environment for {ServiceName} (container: {ContainerId})",
+                                        serviceName, deployResult.ContainerId ?? "unknown");
+                                }
+                            }
+
+                            appliedChange.Success = allEnvDeploysSucceeded;
+                            if (!allEnvDeploysSucceeded)
+                            {
+                                appliedChange.Error = "Some services failed to update environment - check warnings for details";
+                            }
+                        }
+                        else
+                        {
+                            appliedChange.Error = "Services list and Environment are required for update-env action";
+                        }
+                        break;
+
+                    default:
+                        appliedChange.Error = $"Unknown action: {change.Action}";
+                        break;
+                }
+            }
+            catch (Exception ex)
+            {
+                appliedChange.Error = ex.Message;
+                _logger.LogError(ex, "Error applying topology change: {Action} for {Target}",
+                    change.Action, change.NodeName);
+                await PublishErrorEventAsync("UpdateTopology", ex.GetType().Name, ex.Message, details: new { Action = change.Action, NodeName = change.NodeName });
+            }
+
+            appliedChanges.Add(appliedChange);
         }
-        catch (Exception ex)
+
+        var duration = DateTime.UtcNow - startTime;
+        var allSucceeded = appliedChanges.All(c => c.Success);
+        var successCount = appliedChanges.Count(c => c.Success);
+        var failCount = appliedChanges.Count(c => !c.Success);
+
+        var response = new TopologyUpdateResponse
         {
-            _logger.LogError(ex, "Error executing UpdateTopology operation");
-            await PublishErrorEventAsync("UpdateTopology", ex.GetType().Name, ex.Message);
-            return (StatusCodes.InternalServerError, null);
-        }
+            Success = allSucceeded,
+            AppliedChanges = appliedChanges,
+            Duration = $"{duration.TotalSeconds:F1}s",
+            Warnings = warnings,
+            Message = allSucceeded
+                ? $"Successfully applied {successCount} topology change(s)"
+                : $"Applied {successCount} change(s), {failCount} failed"
+        };
+
+        return (StatusCodes.OK, response);
     }
 
     /// <summary>
@@ -2080,30 +1959,21 @@ public partial class OrchestratorService : IOrchestratorService
             "Executing RequestContainerRestart operation: app={AppName}, priority={Priority}",
             appName, body.Priority);
 
-        try
+        var orchestrator = await GetOrchestratorAsync(cancellationToken);
+        // Create ContainerRestartRequest from the body for the orchestrator
+        var restartRequest = new ContainerRestartRequest
         {
-            var orchestrator = await GetOrchestratorAsync(cancellationToken);
-            // Create ContainerRestartRequest from the body for the orchestrator
-            var restartRequest = new ContainerRestartRequest
-            {
-                Priority = body.Priority,
-                Reason = body.Reason
-            };
-            var response = await orchestrator.RestartContainerAsync(appName, restartRequest, cancellationToken);
+            Priority = body.Priority,
+            Reason = body.Reason
+        };
+        var response = await orchestrator.RestartContainerAsync(appName, restartRequest, cancellationToken);
 
-            if (!response.Accepted)
-            {
-                return (StatusCodes.InternalServerError, response);
-            }
-
-            return (StatusCodes.OK, response);
-        }
-        catch (Exception ex)
+        if (!response.Accepted)
         {
-            _logger.LogError(ex, "Error executing RequestContainerRestart operation");
-            await PublishErrorEventAsync("RequestContainerRestart", ex.GetType().Name, ex.Message, details: new { AppName = body.AppName });
-            return (StatusCodes.InternalServerError, null);
+            return (StatusCodes.InternalServerError, response);
         }
+
+        return (StatusCodes.OK, response);
     }
 
     /// <summary>
@@ -2115,25 +1985,16 @@ public partial class OrchestratorService : IOrchestratorService
         var appName = body.AppName;
         _logger.LogDebug("Executing GetContainerStatus operation: app={AppName}", appName);
 
-        try
-        {
-            var orchestrator = await GetOrchestratorAsync(cancellationToken);
-            var status = await orchestrator.GetContainerStatusAsync(appName, cancellationToken);
+        var orchestrator = await GetOrchestratorAsync(cancellationToken);
+        var status = await orchestrator.GetContainerStatusAsync(appName, cancellationToken);
 
-            if (status.Status == ContainerStatusStatus.Stopped && status.Instances == 0)
-            {
-                // Container not found is returned as Stopped with 0 instances
-                return (StatusCodes.NotFound, status);
-            }
-
-            return (StatusCodes.OK, status);
-        }
-        catch (Exception ex)
+        if (status.Status == ContainerStatusStatus.Stopped && status.Instances == 0)
         {
-            _logger.LogError(ex, "Error executing GetContainerStatus operation");
-            await PublishErrorEventAsync("GetContainerStatus", ex.GetType().Name, ex.Message, details: new { AppName = body.AppName });
-            return (StatusCodes.InternalServerError, null);
+            // Container not found is returned as Stopped with 0 instances
+            return (StatusCodes.NotFound, status);
         }
+
+        return (StatusCodes.OK, status);
     }
 
     /// <summary>
@@ -2144,85 +2005,76 @@ public partial class OrchestratorService : IOrchestratorService
     {
         _logger.LogDebug("Executing RollbackConfiguration operation: reason={Reason}", body.Reason);
 
-        try
+        // Get current configuration
+        var currentConfig = await _stateManager.GetCurrentConfigurationAsync();
+        var currentVersion = await _stateManager.GetConfigVersionAsync();
+
+        if (currentVersion <= 1)
         {
-            // Get current configuration
-            var currentConfig = await _stateManager.GetCurrentConfigurationAsync();
-            var currentVersion = await _stateManager.GetConfigVersionAsync();
-
-            if (currentVersion <= 1)
-            {
-                _logger.LogWarning("Cannot rollback - no previous configuration version available (current version: {Version})",
-                    currentVersion);
-                return (StatusCodes.BadRequest, null);
-            }
-
-            // Get the previous version (currentVersion - 1)
-            var targetVersion = currentVersion - 1;
-            var previousConfig = await _stateManager.GetConfigurationVersionAsync(targetVersion);
-
-            if (previousConfig == null)
-            {
-                _logger.LogWarning("Previous configuration version {Version} not found in history (may have expired)", targetVersion);
-                return (StatusCodes.NotFound, null);
-            }
-
-            // Perform the rollback
-            var success = await _stateManager.RestoreConfigurationVersionAsync(targetVersion);
-
-            if (!success)
-            {
-                _logger.LogError("Failed to restore configuration version {Version}", targetVersion);
-                await PublishErrorEventAsync("RollbackConfiguration", "restore_failed", $"Failed to restore configuration version {targetVersion}", dependency: "redis");
-                return (StatusCodes.InternalServerError, null);
-            }
-
-            // Get the new version (which is currentVersion + 1 after rollback)
-            var newVersion = await _stateManager.GetConfigVersionAsync();
-
-            // Determine what changed
-            var changedKeys = new List<string>();
-            if (currentConfig != null && previousConfig.Services != null)
-            {
-                // Find services that were different
-                foreach (var service in previousConfig.Services)
-                {
-                    if (!currentConfig.Services.TryGetValue(service.Key, out var currentService) ||
-                        currentService.Enabled != service.Value.Enabled)
-                    {
-                        changedKeys.Add($"services.{service.Key}.enabled");
-                    }
-                }
-
-                // Find env vars that changed
-                foreach (var env in previousConfig.EnvironmentVariables)
-                {
-                    if (!currentConfig.EnvironmentVariables.TryGetValue(env.Key, out var currentValue) ||
-                        currentValue != env.Value)
-                    {
-                        changedKeys.Add($"env.{env.Key}");
-                    }
-                }
-            }
-
-            _logger.LogInformation(
-                "Configuration rolled back from version {OldVersion} to version {NewVersion} (restored from v{RestoredVersion}). Reason: {Reason}. Changed keys: {ChangedCount}",
-                currentVersion, newVersion, targetVersion, body.Reason, changedKeys.Count);
-
-            return (StatusCodes.OK, new ConfigRollbackResponse
-            {
-                PreviousVersion = currentVersion,
-                CurrentVersion = newVersion,
-                ChangedKeys = changedKeys,
-                Message = $"Successfully rolled back to configuration version {targetVersion}. Reason: {body.Reason}"
-            });
+            _logger.LogWarning("Cannot rollback - no previous configuration version available (current version: {Version})",
+                currentVersion);
+            return (StatusCodes.BadRequest, null);
         }
-        catch (Exception ex)
+
+        // Get the previous version (currentVersion - 1)
+        var targetVersion = currentVersion - 1;
+        var previousConfig = await _stateManager.GetConfigurationVersionAsync(targetVersion);
+
+        if (previousConfig == null)
         {
-            _logger.LogError(ex, "Error executing RollbackConfiguration operation");
-            await PublishErrorEventAsync("RollbackConfiguration", ex.GetType().Name, ex.Message);
+            _logger.LogWarning("Previous configuration version {Version} not found in history (may have expired)", targetVersion);
+            return (StatusCodes.NotFound, null);
+        }
+
+        // Perform the rollback
+        var success = await _stateManager.RestoreConfigurationVersionAsync(targetVersion);
+
+        if (!success)
+        {
+            _logger.LogError("Failed to restore configuration version {Version}", targetVersion);
+            await PublishErrorEventAsync("RollbackConfiguration", "restore_failed", $"Failed to restore configuration version {targetVersion}", dependency: "redis");
             return (StatusCodes.InternalServerError, null);
         }
+
+        // Get the new version (which is currentVersion + 1 after rollback)
+        var newVersion = await _stateManager.GetConfigVersionAsync();
+
+        // Determine what changed
+        var changedKeys = new List<string>();
+        if (currentConfig != null && previousConfig.Services != null)
+        {
+            // Find services that were different
+            foreach (var service in previousConfig.Services)
+            {
+                if (!currentConfig.Services.TryGetValue(service.Key, out var currentService) ||
+                    currentService.Enabled != service.Value.Enabled)
+                {
+                    changedKeys.Add($"services.{service.Key}.enabled");
+                }
+            }
+
+            // Find env vars that changed
+            foreach (var env in previousConfig.EnvironmentVariables)
+            {
+                if (!currentConfig.EnvironmentVariables.TryGetValue(env.Key, out var currentValue) ||
+                    currentValue != env.Value)
+                {
+                    changedKeys.Add($"env.{env.Key}");
+                }
+            }
+        }
+
+        _logger.LogInformation(
+            "Configuration rolled back from version {OldVersion} to version {NewVersion} (restored from v{RestoredVersion}). Reason: {Reason}. Changed keys: {ChangedCount}",
+            currentVersion, newVersion, targetVersion, body.Reason, changedKeys.Count);
+
+        return (StatusCodes.OK, new ConfigRollbackResponse
+        {
+            PreviousVersion = currentVersion,
+            CurrentVersion = newVersion,
+            ChangedKeys = changedKeys,
+            Message = $"Successfully rolled back to configuration version {targetVersion}. Reason: {body.Reason}"
+        });
     }
 
     /// <summary>
@@ -2233,102 +2085,73 @@ public partial class OrchestratorService : IOrchestratorService
     {
         _logger.LogDebug("Executing GetConfigVersion operation");
 
-        try
+        // Get current version and configuration from Redis
+        var currentVersion = await _stateManager.GetConfigVersionAsync();
+        var currentConfig = await _stateManager.GetCurrentConfigurationAsync();
+
+        // Check if previous version exists
+        var hasPreviousConfig = currentVersion > 1 &&
+            await _stateManager.GetConfigurationVersionAsync(currentVersion - 1) != null;
+
+        // Collect key prefixes from current config
+        var keyPrefixes = new List<string>();
+        if (currentConfig != null)
         {
-            // Get current version and configuration from Redis
-            var currentVersion = await _stateManager.GetConfigVersionAsync();
-            var currentConfig = await _stateManager.GetCurrentConfigurationAsync();
-
-            // Check if previous version exists
-            var hasPreviousConfig = currentVersion > 1 &&
-                await _stateManager.GetConfigurationVersionAsync(currentVersion - 1) != null;
-
-            // Collect key prefixes from current config
-            var keyPrefixes = new List<string>();
-            if (currentConfig != null)
+            if (currentConfig.Services.Any())
+                keyPrefixes.Add("services");
+            if (currentConfig.EnvironmentVariables.Any())
             {
-                if (currentConfig.Services.Any())
-                    keyPrefixes.Add("services");
-                if (currentConfig.EnvironmentVariables.Any())
-                {
-                    // Extract unique prefixes from env vars (e.g., "AUTH", "ACCOUNT")
-                    var envPrefixes = currentConfig.EnvironmentVariables.Keys
-                        .Select(k => k.Split('_').FirstOrDefault() ?? k)
-                        .Distinct()
-                        .Take(10); // Limit to avoid excessive data
-                    keyPrefixes.AddRange(envPrefixes.Select(p => $"env.{p}"));
-                }
+                // Extract unique prefixes from env vars (e.g., "AUTH", "ACCOUNT")
+                var envPrefixes = currentConfig.EnvironmentVariables.Keys
+                    .Select(k => k.Split('_').FirstOrDefault() ?? k)
+                    .Distinct()
+                    .Take(10); // Limit to avoid excessive data
+                keyPrefixes.AddRange(envPrefixes.Select(p => $"env.{p}"));
             }
-
-            var response = new ConfigVersionResponse
-            {
-                Version = currentVersion,
-                Timestamp = currentConfig?.Timestamp ?? DateTimeOffset.UtcNow,
-                HasPreviousConfig = hasPreviousConfig,
-                KeyCount = (currentConfig?.Services.Count ?? 0) + (currentConfig?.EnvironmentVariables.Count ?? 0),
-                KeyPrefixes = keyPrefixes
-            };
-
-            return (StatusCodes.OK, response);
         }
-        catch (Exception ex)
+
+        var response = new ConfigVersionResponse
         {
-            _logger.LogError(ex, "Error executing GetConfigVersion operation");
-            await PublishErrorEventAsync("GetConfigVersion", ex.GetType().Name, ex.Message, dependency: "redis");
-            return (StatusCodes.InternalServerError, null);
-        }
+            Version = currentVersion,
+            Timestamp = currentConfig?.Timestamp ?? DateTimeOffset.UtcNow,
+            HasPreviousConfig = hasPreviousConfig,
+            KeyCount = (currentConfig?.Services.Count ?? 0) + (currentConfig?.EnvironmentVariables.Count ?? 0),
+            KeyPrefixes = keyPrefixes
+        };
+
+        return (StatusCodes.OK, response);
     }
 
     /// <summary>
     /// Registers service permissions for the Orchestrator API endpoints.
-    /// Uses the generated OrchestratorPermissionRegistration to publish to the correct pub/sub topic.
-    /// All orchestrator operations require admin role access.
-    /// When SecureWebsocket is enabled (default), publishes a blank registration to make
+    /// When SecureWebsocket is enabled (default), registers an empty permission matrix to make
     /// orchestrator inaccessible via WebSocket - only service-to-service calls work.
+    /// Manually implemented because Orchestrator has custom SecureWebsocket conditional logic
+    /// (generation script skips partial class overlay for orchestrator).
     /// </summary>
-    public async Task RegisterServicePermissionsAsync(string appId)
+    async Task IBannouService.RegisterServicePermissionsAsync(
+        string appId, IPermissionRegistry? registry)
     {
-        _logger.LogInformation("Registering Orchestrator service permissions... (starting)");
-        try
-        {
-            if (_configuration.SecureWebsocket)
-            {
-                // Secure mode: publish blank registration to make orchestrator inaccessible via WebSocket
-                // This overwrites any previous permissions, ensuring the service cannot be called by clients
-                var blankRegistration = new ServiceRegistrationEvent
-                {
-                    EventId = Guid.NewGuid(),
-                    Timestamp = DateTimeOffset.UtcNow,
-                    ServiceId = Program.ServiceGUID,
-                    ServiceName = OrchestratorPermissionRegistration.ServiceId,
-                    Version = OrchestratorPermissionRegistration.ServiceVersion,
-                    AppId = appId,
-                    Endpoints = new List<ServiceEndpoint>() // Empty = no WebSocket access
-                };
+        if (registry == null) return;
 
-                var success = await _messageBus.TryPublishAsync("permission.service-registered", blankRegistration);
-                if (success)
-                {
-                    _logger.LogInformation(
-                        "Orchestrator running in secure mode - published blank registration (no WebSocket access)");
-                }
-                else
-                {
-                    _logger.LogWarning("Failed to publish blank registration for secure mode (will be retried)");
-                }
-            }
-            else
-            {
-                // Non-secure mode: register all endpoints for admin access (testing environments)
-                await OrchestratorPermissionRegistration.RegisterViaEventAsync(_messageBus, appId, _logger);
-                _logger.LogInformation("Orchestrator service permissions registered via event (complete)");
-            }
-        }
-        catch (Exception ex)
+        if (_configuration.SecureWebsocket)
         {
-            _logger.LogError(ex, "Failed to register Orchestrator service permissions");
-            await PublishErrorEventAsync("RegisterServicePermissions", ex.GetType().Name, ex.Message, dependency: "permission");
-            throw;
+            // Secure mode: register empty matrix to make orchestrator inaccessible via WebSocket
+            await registry.RegisterServiceAsync(
+                OrchestratorPermissionRegistration.ServiceId,
+                OrchestratorPermissionRegistration.ServiceVersion,
+                new Dictionary<string, IDictionary<string, ICollection<string>>>());
+            _logger.LogInformation(
+                "Orchestrator running in secure mode - registered empty permissions (no WebSocket access)");
+        }
+        else
+        {
+            // Non-secure mode: register all endpoints for admin access (testing environments)
+            await registry.RegisterServiceAsync(
+                OrchestratorPermissionRegistration.ServiceId,
+                OrchestratorPermissionRegistration.ServiceVersion,
+                OrchestratorPermissionRegistration.BuildPermissionMatrix());
+            _logger.LogInformation("Orchestrator service permissions registered via DI registry");
         }
     }
 
@@ -2510,85 +2333,77 @@ public partial class OrchestratorService : IOrchestratorService
         AcquireProcessorRequest body,
         CancellationToken cancellationToken = default)
     {
-        try
+
+        if (string.IsNullOrEmpty(body.PoolType))
         {
-
-            if (string.IsNullOrEmpty(body.PoolType))
-            {
-                _logger.LogWarning("AcquireProcessor: Missing pool_type");
-                return (StatusCodes.BadRequest, null);
-            }
-
-            // Acquire pool lock to serialize pool state changes
-            await using var poolLock = await _lockProvider.LockAsync(
-                "orchestrator-pool", body.PoolType, Guid.NewGuid().ToString(), 15, cancellationToken);
-            if (!poolLock.Success)
-            {
-                _logger.LogWarning("Could not acquire pool lock for acquire in pool {PoolType}", body.PoolType);
-                return (StatusCodes.Conflict, null);
-            }
-
-            var availableKey = string.Format(POOL_AVAILABLE_KEY, body.PoolType);
-            var leasesKey = string.Format(POOL_LEASES_KEY, body.PoolType);
-
-            // Reclaim any expired leases before checking availability
-            await ReclaimExpiredLeasesAsync(body.PoolType, availableKey, leasesKey);
-
-            // Try to get an available processor from the pool
-            var availableProcessors = await _stateManager.GetListAsync<ProcessorInstance>(availableKey);
-
-            if (availableProcessors == null || availableProcessors.Count == 0)
-            {
-                _logger.LogInformation("AcquireProcessor: No available processors in pool {PoolType}", body.PoolType);
-
-                // Return 503 Service Unavailable to indicate pool is busy
-                return (StatusCodes.ServiceUnavailable, null);
-            }
-
-            // Pop the first available processor
-            var processor = availableProcessors[0];
-            availableProcessors.RemoveAt(0);
-            await _stateManager.SetListAsync(availableKey, availableProcessors);
-
-            // Create a lease for this processor
-            var leaseId = Guid.NewGuid();
-            var timeoutSeconds = body.TimeoutSeconds > 0 ? body.TimeoutSeconds : 300;
-            var expiresAt = DateTimeOffset.UtcNow.AddSeconds(timeoutSeconds);
-
-            var lease = new ProcessorLease
-            {
-                LeaseId = leaseId,
-                ProcessorId = processor.ProcessorId,
-                AppId = processor.AppId,
-                PoolType = body.PoolType,
-                AcquiredAt = DateTimeOffset.UtcNow,
-                ExpiresAt = expiresAt,
-                Priority = body.Priority,
-                Metadata = body.Metadata
-            };
-
-            // Store the lease
-            var leases = await _stateManager.GetHashAsync<ProcessorLease>(leasesKey) ?? new Dictionary<string, ProcessorLease>();
-            leases[leaseId.ToString()] = lease;
-            await _stateManager.SetHashAsync(leasesKey, leases);
-
-            _logger.LogInformation(
-                "AcquireProcessor: Acquired processor {ProcessorId} from pool {PoolType} with lease {LeaseId}, expires at {ExpiresAt}",
-                processor.ProcessorId, body.PoolType, leaseId, expiresAt);
-
-            return (StatusCodes.OK, new AcquireProcessorResponse
-            {
-                ProcessorId = processor.ProcessorId,
-                AppId = processor.AppId,
-                LeaseId = leaseId,
-                ExpiresAt = expiresAt
-            });
+            _logger.LogWarning("AcquireProcessor: Missing pool_type");
+            return (StatusCodes.BadRequest, null);
         }
-        catch (Exception ex)
+
+        // Acquire pool lock to serialize pool state changes
+        await using var poolLock = await _lockProvider.LockAsync(
+            "orchestrator-pool", body.PoolType, Guid.NewGuid().ToString(), 15, cancellationToken);
+        if (!poolLock.Success)
         {
-            _logger.LogError(ex, "AcquireProcessor: Error acquiring processor from pool {PoolType}", body?.PoolType);
-            return (StatusCodes.InternalServerError, null);
+            _logger.LogWarning("Could not acquire pool lock for acquire in pool {PoolType}", body.PoolType);
+            return (StatusCodes.Conflict, null);
         }
+
+        var availableKey = string.Format(POOL_AVAILABLE_KEY, body.PoolType);
+        var leasesKey = string.Format(POOL_LEASES_KEY, body.PoolType);
+
+        // Reclaim any expired leases before checking availability
+        await ReclaimExpiredLeasesAsync(body.PoolType, availableKey, leasesKey);
+
+        // Try to get an available processor from the pool
+        var availableProcessors = await _stateManager.GetListAsync<ProcessorInstance>(availableKey);
+
+        if (availableProcessors == null || availableProcessors.Count == 0)
+        {
+            _logger.LogInformation("AcquireProcessor: No available processors in pool {PoolType}", body.PoolType);
+
+            // Return 503 Service Unavailable to indicate pool is busy
+            return (StatusCodes.ServiceUnavailable, null);
+        }
+
+        // Pop the first available processor
+        var processor = availableProcessors[0];
+        availableProcessors.RemoveAt(0);
+        await _stateManager.SetListAsync(availableKey, availableProcessors);
+
+        // Create a lease for this processor
+        var leaseId = Guid.NewGuid();
+        var timeoutSeconds = body.TimeoutSeconds > 0 ? body.TimeoutSeconds : 300;
+        var expiresAt = DateTimeOffset.UtcNow.AddSeconds(timeoutSeconds);
+
+        var lease = new ProcessorLease
+        {
+            LeaseId = leaseId,
+            ProcessorId = processor.ProcessorId,
+            AppId = processor.AppId,
+            PoolType = body.PoolType,
+            AcquiredAt = DateTimeOffset.UtcNow,
+            ExpiresAt = expiresAt,
+            Priority = body.Priority,
+            Metadata = body.Metadata
+        };
+
+        // Store the lease
+        var leases = await _stateManager.GetHashAsync<ProcessorLease>(leasesKey) ?? new Dictionary<string, ProcessorLease>();
+        leases[leaseId.ToString()] = lease;
+        await _stateManager.SetHashAsync(leasesKey, leases);
+
+        _logger.LogInformation(
+            "AcquireProcessor: Acquired processor {ProcessorId} from pool {PoolType} with lease {LeaseId}, expires at {ExpiresAt}",
+            processor.ProcessorId, body.PoolType, leaseId, expiresAt);
+
+        return (StatusCodes.OK, new AcquireProcessorResponse
+        {
+            ProcessorId = processor.ProcessorId,
+            AppId = processor.AppId,
+            LeaseId = leaseId,
+            ExpiresAt = expiresAt
+        });
     }
 
     /// <summary>
@@ -2601,100 +2416,92 @@ public partial class OrchestratorService : IOrchestratorService
         ReleaseProcessorRequest body,
         CancellationToken cancellationToken = default)
     {
-        try
+
+        if (body.LeaseId == Guid.Empty)
         {
-
-            if (body.LeaseId == Guid.Empty)
-            {
-                _logger.LogWarning("ReleaseProcessor: Missing or invalid lease_id");
-                return (StatusCodes.BadRequest, null);
-            }
-
-            // Find the lease across all pool types
-            ProcessorLease? lease = null;
-            string? poolType = null;
-
-            // We need to search all pools for the lease
-            var poolTypes = await GetKnownPoolTypesAsync();
-
-            foreach (var pt in poolTypes)
-            {
-                var leasesKey = string.Format(POOL_LEASES_KEY, pt);
-                var leases = await _stateManager.GetHashAsync<ProcessorLease>(leasesKey);
-
-                if (leases != null && leases.TryGetValue(body.LeaseId.ToString(), out var foundLease))
-                {
-                    lease = foundLease;
-                    poolType = pt;
-                    break;
-                }
-            }
-
-            if (lease == null || poolType == null)
-            {
-                _logger.LogWarning("ReleaseProcessor: Lease {LeaseId} not found", body.LeaseId);
-                return (StatusCodes.NotFound, null);
-            }
-
-            // Acquire pool lock to serialize pool state changes
-            await using var poolLock = await _lockProvider.LockAsync(
-                "orchestrator-pool", poolType, Guid.NewGuid().ToString(), 15, cancellationToken);
-            if (!poolLock.Success)
-            {
-                _logger.LogWarning("Could not acquire pool lock for release in pool {PoolType}", poolType);
-                return (StatusCodes.Conflict, null);
-            }
-
-            // Remove the lease
-            var leasesKeyToUpdate = string.Format(POOL_LEASES_KEY, poolType);
-            var currentLeases = await _stateManager.GetHashAsync<ProcessorLease>(leasesKeyToUpdate) ?? new Dictionary<string, ProcessorLease>();
-            currentLeases.Remove(body.LeaseId.ToString());
-            await _stateManager.SetHashAsync(leasesKeyToUpdate, currentLeases);
-
-            // Return processor to available pool
-            var availableKey = string.Format(POOL_AVAILABLE_KEY, poolType);
-            var availableProcessors = await _stateManager.GetListAsync<ProcessorInstance>(availableKey) ?? new List<ProcessorInstance>();
-
-            availableProcessors.Add(new ProcessorInstance
-            {
-                ProcessorId = lease.ProcessorId,
-                AppId = lease.AppId,
-                PoolType = poolType,
-                Status = ProcessorStatus.Available,
-                LastUpdated = DateTimeOffset.UtcNow
-            });
-
-            await _stateManager.SetListAsync(availableKey, availableProcessors);
-
-            // Update metrics
-            await UpdatePoolMetricsAsync(poolType, body.Success);
-
-            // Publish typed event for analytics aggregation
-            await _messageBus.TryPublishAsync("orchestrator.processor.released", new ProcessorReleasedEvent
-            {
-                EventId = Guid.NewGuid(),
-                Timestamp = DateTimeOffset.UtcNow,
-                PoolType = poolType,
-                ProcessorId = lease.ProcessorId,
-                Success = body.Success,
-                LeaseDurationMs = (long)(DateTimeOffset.UtcNow - lease.AcquiredAt).TotalMilliseconds
-            }, cancellationToken);
-
-            _logger.LogInformation(
-                "ReleaseProcessor: Released processor {ProcessorId} back to pool {PoolType}, success={Success}",
-                lease.ProcessorId, poolType, body.Success);
-
-            return (StatusCodes.OK, new ReleaseProcessorResponse
-            {
-                Released = true,
-                ProcessorId = lease.ProcessorId
-            });
+            _logger.LogWarning("ReleaseProcessor: Missing or invalid lease_id");
+            return (StatusCodes.BadRequest, null);
         }
-        catch (Exception ex)
+
+        // Find the lease across all pool types
+        ProcessorLease? lease = null;
+        string? poolType = null;
+
+        // We need to search all pools for the lease
+        var poolTypes = await GetKnownPoolTypesAsync();
+
+        foreach (var pt in poolTypes)
         {
-            _logger.LogError(ex, "ReleaseProcessor: Error releasing processor with lease {LeaseId}", body?.LeaseId);
-            return (StatusCodes.InternalServerError, null);
+            var leasesKey = string.Format(POOL_LEASES_KEY, pt);
+            var leases = await _stateManager.GetHashAsync<ProcessorLease>(leasesKey);
+
+            if (leases != null && leases.TryGetValue(body.LeaseId.ToString(), out var foundLease))
+            {
+                lease = foundLease;
+                poolType = pt;
+                break;
+            }
         }
+
+        if (lease == null || poolType == null)
+        {
+            _logger.LogWarning("ReleaseProcessor: Lease {LeaseId} not found", body.LeaseId);
+            return (StatusCodes.NotFound, null);
+        }
+
+        // Acquire pool lock to serialize pool state changes
+        await using var poolLock = await _lockProvider.LockAsync(
+            "orchestrator-pool", poolType, Guid.NewGuid().ToString(), 15, cancellationToken);
+        if (!poolLock.Success)
+        {
+            _logger.LogWarning("Could not acquire pool lock for release in pool {PoolType}", poolType);
+            return (StatusCodes.Conflict, null);
+        }
+
+        // Remove the lease
+        var leasesKeyToUpdate = string.Format(POOL_LEASES_KEY, poolType);
+        var currentLeases = await _stateManager.GetHashAsync<ProcessorLease>(leasesKeyToUpdate) ?? new Dictionary<string, ProcessorLease>();
+        currentLeases.Remove(body.LeaseId.ToString());
+        await _stateManager.SetHashAsync(leasesKeyToUpdate, currentLeases);
+
+        // Return processor to available pool
+        var availableKey = string.Format(POOL_AVAILABLE_KEY, poolType);
+        var availableProcessors = await _stateManager.GetListAsync<ProcessorInstance>(availableKey) ?? new List<ProcessorInstance>();
+
+        availableProcessors.Add(new ProcessorInstance
+        {
+            ProcessorId = lease.ProcessorId,
+            AppId = lease.AppId,
+            PoolType = poolType,
+            Status = ProcessorStatus.Available,
+            LastUpdated = DateTimeOffset.UtcNow
+        });
+
+        await _stateManager.SetListAsync(availableKey, availableProcessors);
+
+        // Update metrics
+        await UpdatePoolMetricsAsync(poolType, body.Success);
+
+        // Publish typed event for analytics aggregation
+        await _messageBus.TryPublishAsync("orchestrator.processor.released", new ProcessorReleasedEvent
+        {
+            EventId = Guid.NewGuid(),
+            Timestamp = DateTimeOffset.UtcNow,
+            PoolType = poolType,
+            ProcessorId = lease.ProcessorId,
+            Success = body.Success,
+            LeaseDurationMs = (long)(DateTimeOffset.UtcNow - lease.AcquiredAt).TotalMilliseconds
+        }, cancellationToken);
+
+        _logger.LogInformation(
+            "ReleaseProcessor: Released processor {ProcessorId} back to pool {PoolType}, success={Success}",
+            lease.ProcessorId, poolType, body.Success);
+
+        return (StatusCodes.OK, new ReleaseProcessorResponse
+        {
+            Released = true,
+            ProcessorId = lease.ProcessorId
+        });
     }
 
     /// <summary>
@@ -2707,60 +2514,52 @@ public partial class OrchestratorService : IOrchestratorService
         GetPoolStatusRequest body,
         CancellationToken cancellationToken = default)
     {
-        try
+
+        if (string.IsNullOrEmpty(body.PoolType))
         {
+            _logger.LogWarning("GetPoolStatus: Missing pool_type");
+            return (StatusCodes.BadRequest, null);
+        }
 
-            if (string.IsNullOrEmpty(body.PoolType))
+        var instancesKey = string.Format(POOL_INSTANCES_KEY, body.PoolType);
+        var availableKey = string.Format(POOL_AVAILABLE_KEY, body.PoolType);
+        var leasesKey = string.Format(POOL_LEASES_KEY, body.PoolType);
+        var configKey = string.Format(POOL_CONFIG_KEY, body.PoolType);
+        var metricsKey = string.Format(POOL_METRICS_KEY, body.PoolType);
+
+        var allInstances = await _stateManager.GetListAsync<ProcessorInstance>(instancesKey) ?? new List<ProcessorInstance>();
+        var availableInstances = await _stateManager.GetListAsync<ProcessorInstance>(availableKey) ?? new List<ProcessorInstance>();
+        var leases = await _stateManager.GetHashAsync<ProcessorLease>(leasesKey) ?? new Dictionary<string, ProcessorLease>();
+        var config = await _stateManager.GetValueAsync<PoolConfiguration>(configKey);
+
+        var response = new PoolStatusResponse
+        {
+            PoolType = body.PoolType,
+            TotalInstances = allInstances.Count,
+            AvailableInstances = availableInstances.Count,
+            BusyInstances = leases.Count,
+            QueueDepth = 0, // We don't have a queue yet
+            MinInstances = config?.MinInstances ?? 1,
+            MaxInstances = config?.MaxInstances ?? 5
+        };
+
+        // Include metrics if requested
+        if (body.IncludeMetrics)
+        {
+            var metrics = await _stateManager.GetValueAsync<PoolMetricsData>(metricsKey);
+            if (metrics != null)
             {
-                _logger.LogWarning("GetPoolStatus: Missing pool_type");
-                return (StatusCodes.BadRequest, null);
-            }
-
-            var instancesKey = string.Format(POOL_INSTANCES_KEY, body.PoolType);
-            var availableKey = string.Format(POOL_AVAILABLE_KEY, body.PoolType);
-            var leasesKey = string.Format(POOL_LEASES_KEY, body.PoolType);
-            var configKey = string.Format(POOL_CONFIG_KEY, body.PoolType);
-            var metricsKey = string.Format(POOL_METRICS_KEY, body.PoolType);
-
-            var allInstances = await _stateManager.GetListAsync<ProcessorInstance>(instancesKey) ?? new List<ProcessorInstance>();
-            var availableInstances = await _stateManager.GetListAsync<ProcessorInstance>(availableKey) ?? new List<ProcessorInstance>();
-            var leases = await _stateManager.GetHashAsync<ProcessorLease>(leasesKey) ?? new Dictionary<string, ProcessorLease>();
-            var config = await _stateManager.GetValueAsync<PoolConfiguration>(configKey);
-
-            var response = new PoolStatusResponse
-            {
-                PoolType = body.PoolType,
-                TotalInstances = allInstances.Count,
-                AvailableInstances = availableInstances.Count,
-                BusyInstances = leases.Count,
-                QueueDepth = 0, // We don't have a queue yet
-                MinInstances = config?.MinInstances ?? 1,
-                MaxInstances = config?.MaxInstances ?? 5
-            };
-
-            // Include metrics if requested
-            if (body.IncludeMetrics)
-            {
-                var metrics = await _stateManager.GetValueAsync<PoolMetricsData>(metricsKey);
-                if (metrics != null)
+                response.RecentMetrics = new PoolMetrics
                 {
-                    response.RecentMetrics = new PoolMetrics
-                    {
-                        JobsCompleted1h = metrics.JobsCompleted1h,
-                        JobsFailed1h = metrics.JobsFailed1h,
-                        AvgProcessingTimeMs = metrics.AvgProcessingTimeMs,
-                        LastScaleEvent = metrics.LastScaleEvent
-                    };
-                }
+                    JobsCompleted1h = metrics.JobsCompleted1h,
+                    JobsFailed1h = metrics.JobsFailed1h,
+                    AvgProcessingTimeMs = metrics.AvgProcessingTimeMs,
+                    LastScaleEvent = metrics.LastScaleEvent
+                };
             }
+        }
 
-            return (StatusCodes.OK, response);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "GetPoolStatus: Error getting status for pool {PoolType}", body?.PoolType);
-            return (StatusCodes.InternalServerError, null);
-        }
+        return (StatusCodes.OK, response);
     }
 
     /// <summary>
@@ -2773,224 +2572,216 @@ public partial class OrchestratorService : IOrchestratorService
         ScalePoolRequest body,
         CancellationToken cancellationToken = default)
     {
-        try
+
+        if (string.IsNullOrEmpty(body.PoolType))
         {
+            _logger.LogWarning("ScalePool: Missing pool_type");
+            return (StatusCodes.BadRequest, null);
+        }
 
-            if (string.IsNullOrEmpty(body.PoolType))
+        if (body.TargetInstances < 0)
+        {
+            _logger.LogWarning("ScalePool: Invalid target_instances {Target}", body.TargetInstances);
+            return (StatusCodes.BadRequest, null);
+        }
+
+        // Load pool configuration - required to know how to deploy workers
+        var configKey = string.Format(POOL_CONFIG_KEY, body.PoolType);
+        var poolConfig = await _stateManager.GetValueAsync<PoolConfiguration>(configKey);
+        if (poolConfig == null)
+        {
+            _logger.LogWarning("ScalePool: No configuration found for pool {PoolType}", body.PoolType);
+            return (StatusCodes.NotFound, null);
+        }
+
+        // Get container orchestrator backend
+        var orchestrator = await GetOrchestratorAsync(cancellationToken);
+
+        var instancesKey = string.Format(POOL_INSTANCES_KEY, body.PoolType);
+        var availableKey = string.Format(POOL_AVAILABLE_KEY, body.PoolType);
+        var leasesKey = string.Format(POOL_LEASES_KEY, body.PoolType);
+        var metricsKey = string.Format(POOL_METRICS_KEY, body.PoolType);
+
+        var currentInstances = await _stateManager.GetListAsync<ProcessorInstance>(instancesKey) ?? new List<ProcessorInstance>();
+        var availableInstances = await _stateManager.GetListAsync<ProcessorInstance>(availableKey) ?? new List<ProcessorInstance>();
+        var leases = await _stateManager.GetHashAsync<ProcessorLease>(leasesKey) ?? new Dictionary<string, ProcessorLease>();
+
+        var previousCount = currentInstances.Count;
+        var scaledUp = 0;
+        var scaledDown = 0;
+        var deployErrors = new List<string>();
+
+        if (body.TargetInstances > previousCount)
+        {
+            // Scale up - deploy new worker containers
+            var toSpawn = body.TargetInstances - previousCount;
+
+            for (int i = 0; i < toSpawn; i++)
             {
-                _logger.LogWarning("ScalePool: Missing pool_type");
-                return (StatusCodes.BadRequest, null);
-            }
+                var processorId = $"{body.PoolType}-{Guid.NewGuid():N}";
+                var appId = $"bannou-pool-{body.PoolType}-{processorId[^8..]}";
 
-            if (body.TargetInstances < 0)
-            {
-                _logger.LogWarning("ScalePool: Invalid target_instances {Target}", body.TargetInstances);
-                return (StatusCodes.BadRequest, null);
-            }
+                // Build environment for this pool worker
+                var workerEnv = new Dictionary<string, string>();
 
-            // Load pool configuration - required to know how to deploy workers
-            var configKey = string.Format(POOL_CONFIG_KEY, body.PoolType);
-            var poolConfig = await _stateManager.GetValueAsync<PoolConfiguration>(configKey);
-            if (poolConfig == null)
-            {
-                _logger.LogWarning("ScalePool: No configuration found for pool {PoolType}", body.PoolType);
-                return (StatusCodes.NotFound, null);
-            }
-
-            // Get container orchestrator backend
-            var orchestrator = await GetOrchestratorAsync(cancellationToken);
-
-            var instancesKey = string.Format(POOL_INSTANCES_KEY, body.PoolType);
-            var availableKey = string.Format(POOL_AVAILABLE_KEY, body.PoolType);
-            var leasesKey = string.Format(POOL_LEASES_KEY, body.PoolType);
-            var metricsKey = string.Format(POOL_METRICS_KEY, body.PoolType);
-
-            var currentInstances = await _stateManager.GetListAsync<ProcessorInstance>(instancesKey) ?? new List<ProcessorInstance>();
-            var availableInstances = await _stateManager.GetListAsync<ProcessorInstance>(availableKey) ?? new List<ProcessorInstance>();
-            var leases = await _stateManager.GetHashAsync<ProcessorLease>(leasesKey) ?? new Dictionary<string, ProcessorLease>();
-
-            var previousCount = currentInstances.Count;
-            var scaledUp = 0;
-            var scaledDown = 0;
-            var deployErrors = new List<string>();
-
-            if (body.TargetInstances > previousCount)
-            {
-                // Scale up - deploy new worker containers
-                var toSpawn = body.TargetInstances - previousCount;
-
-                for (int i = 0; i < toSpawn; i++)
+                // Include base pool configuration environment
+                if (poolConfig.Environment != null)
                 {
-                    var processorId = $"{body.PoolType}-{Guid.NewGuid():N}";
-                    var appId = $"bannou-pool-{body.PoolType}-{processorId[^8..]}";
-
-                    // Build environment for this pool worker
-                    var workerEnv = new Dictionary<string, string>();
-
-                    // Include base pool configuration environment
-                    if (poolConfig.Environment != null)
+                    foreach (var kvp in poolConfig.Environment)
                     {
-                        foreach (var kvp in poolConfig.Environment)
-                        {
-                            workerEnv[kvp.Key] = kvp.Value;
-                        }
+                        workerEnv[kvp.Key] = kvp.Value;
                     }
+                }
 
-                    // Set the unique identifiers for this worker
-                    // BANNOU_APP_ID is the standard mesh routing identifier
-                    workerEnv["BANNOU_APP_ID"] = appId;
+                // Set the unique identifiers for this worker
+                // BANNOU_APP_ID is the standard mesh routing identifier
+                workerEnv["BANNOU_APP_ID"] = appId;
 
-                    // ActorPoolNodeWorker uses this for self-registration
-                    workerEnv["ACTOR_POOL_NODE_ID"] = processorId;
+                // ActorPoolNodeWorker uses this for self-registration
+                workerEnv["ACTOR_POOL_NODE_ID"] = processorId;
 
-                    // Service name defaults to "bannou" if not specified in pool config
-                    var serviceName = poolConfig.ServiceName;
-                    if (string.IsNullOrEmpty(serviceName))
+                // Service name defaults to "bannou" if not specified in pool config
+                var serviceName = poolConfig.ServiceName;
+                if (string.IsNullOrEmpty(serviceName))
+                {
+                    serviceName = AppConstants.DEFAULT_APP_NAME;
+                }
+
+                // Deploy the worker container
+                _logger.LogInformation(
+                    "ScalePool: Deploying worker {ProcessorId} with app-id {AppId} for pool {PoolType}",
+                    processorId, appId, body.PoolType);
+
+                var deployResult = await orchestrator.DeployServiceAsync(
+                    serviceName,
+                    appId,
+                    workerEnv,
+                    cancellationToken);
+
+                if (deployResult.Success)
+                {
+                    // Create instance record - initially pending until self-registration
+                    var newInstance = new ProcessorInstance
                     {
-                        serviceName = AppConstants.DEFAULT_APP_NAME;
-                    }
+                        ProcessorId = processorId,
+                        AppId = appId,
+                        PoolType = body.PoolType,
+                        Status = ProcessorStatus.Pending, // Will become Available after self-registration
+                        CreatedAt = DateTimeOffset.UtcNow,
+                        LastUpdated = DateTimeOffset.UtcNow
+                    };
 
-                    // Deploy the worker container
+                    currentInstances.Add(newInstance);
+                    scaledUp++;
+
                     _logger.LogInformation(
-                        "ScalePool: Deploying worker {ProcessorId} with app-id {AppId} for pool {PoolType}",
-                        processorId, appId, body.PoolType);
+                        "ScalePool: Deployed worker {ProcessorId} successfully",
+                        processorId);
+                }
+                else
+                {
+                    _logger.LogError(
+                        "ScalePool: Failed to deploy worker {ProcessorId}: {Message}",
+                        processorId, deployResult.Message);
+                    deployErrors.Add($"{processorId}: {deployResult.Message}");
+                }
+            }
 
-                    var deployResult = await orchestrator.DeployServiceAsync(
-                        serviceName,
-                        appId,
-                        workerEnv,
+            _logger.LogInformation(
+                "ScalePool: Scaled up pool {PoolType} by {Count} instances (target was {Target})",
+                body.PoolType, scaledUp, toSpawn);
+        }
+        else if (body.TargetInstances < previousCount)
+        {
+            // Scale down - teardown worker containers
+            var toRemove = previousCount - body.TargetInstances;
+
+            // Can only remove available instances (unless force)
+            var maxRemovable = body.Force ? previousCount : availableInstances.Count;
+            var actualToRemove = Math.Min(toRemove, maxRemovable);
+
+            if (actualToRemove > 0)
+            {
+                // Collect instances to remove (prefer available/idle ones first)
+                var instancesToRemove = new List<ProcessorInstance>();
+
+                // First take from available
+                for (int i = 0; i < Math.Min(actualToRemove, availableInstances.Count); i++)
+                {
+                    instancesToRemove.Add(availableInstances[i]);
+                }
+
+                // If force and still need more, take from busy instances
+                if (body.Force && instancesToRemove.Count < actualToRemove)
+                {
+                    var busyToRemove = actualToRemove - instancesToRemove.Count;
+                    var busyInstances = currentInstances
+                        .Where(i => !instancesToRemove.Any(r => r.ProcessorId == i.ProcessorId))
+                        .Take(busyToRemove);
+                    instancesToRemove.AddRange(busyInstances);
+                }
+
+                // Teardown each worker container
+                foreach (var instance in instancesToRemove)
+                {
+                    _logger.LogInformation(
+                        "ScalePool: Tearing down worker {ProcessorId} with app-id {AppId}",
+                        instance.ProcessorId, instance.AppId);
+
+                    var teardownResult = await orchestrator.TeardownServiceAsync(
+                        instance.AppId,
+                        removeVolumes: false,
                         cancellationToken);
 
-                    if (deployResult.Success)
+                    if (teardownResult.Success)
                     {
-                        // Create instance record - initially pending until self-registration
-                        var newInstance = new ProcessorInstance
+                        // Release any lease for this processor
+                        var leaseToRemove = leases.FirstOrDefault(l => l.Value.ProcessorId == instance.ProcessorId);
+                        if (leaseToRemove.Key != null)
                         {
-                            ProcessorId = processorId,
-                            AppId = appId,
-                            PoolType = body.PoolType,
-                            Status = ProcessorStatus.Pending, // Will become Available after self-registration
-                            CreatedAt = DateTimeOffset.UtcNow,
-                            LastUpdated = DateTimeOffset.UtcNow
-                        };
+                            leases.Remove(leaseToRemove.Key);
+                        }
 
-                        currentInstances.Add(newInstance);
-                        scaledUp++;
+                        availableInstances.RemoveAll(p => p.ProcessorId == instance.ProcessorId);
+                        currentInstances.RemoveAll(p => p.ProcessorId == instance.ProcessorId);
+                        scaledDown++;
 
                         _logger.LogInformation(
-                            "ScalePool: Deployed worker {ProcessorId} successfully",
-                            processorId);
+                            "ScalePool: Torn down worker {ProcessorId} successfully",
+                            instance.ProcessorId);
                     }
                     else
                     {
-                        _logger.LogError(
-                            "ScalePool: Failed to deploy worker {ProcessorId}: {Message}",
-                            processorId, deployResult.Message);
-                        deployErrors.Add($"{processorId}: {deployResult.Message}");
+                        _logger.LogWarning(
+                            "ScalePool: Failed to teardown worker {ProcessorId}: {Message}",
+                            instance.ProcessorId, teardownResult.Message);
                     }
                 }
-
-                _logger.LogInformation(
-                    "ScalePool: Scaled up pool {PoolType} by {Count} instances (target was {Target})",
-                    body.PoolType, scaledUp, toSpawn);
-            }
-            else if (body.TargetInstances < previousCount)
-            {
-                // Scale down - teardown worker containers
-                var toRemove = previousCount - body.TargetInstances;
-
-                // Can only remove available instances (unless force)
-                var maxRemovable = body.Force ? previousCount : availableInstances.Count;
-                var actualToRemove = Math.Min(toRemove, maxRemovable);
-
-                if (actualToRemove > 0)
-                {
-                    // Collect instances to remove (prefer available/idle ones first)
-                    var instancesToRemove = new List<ProcessorInstance>();
-
-                    // First take from available
-                    for (int i = 0; i < Math.Min(actualToRemove, availableInstances.Count); i++)
-                    {
-                        instancesToRemove.Add(availableInstances[i]);
-                    }
-
-                    // If force and still need more, take from busy instances
-                    if (body.Force && instancesToRemove.Count < actualToRemove)
-                    {
-                        var busyToRemove = actualToRemove - instancesToRemove.Count;
-                        var busyInstances = currentInstances
-                            .Where(i => !instancesToRemove.Any(r => r.ProcessorId == i.ProcessorId))
-                            .Take(busyToRemove);
-                        instancesToRemove.AddRange(busyInstances);
-                    }
-
-                    // Teardown each worker container
-                    foreach (var instance in instancesToRemove)
-                    {
-                        _logger.LogInformation(
-                            "ScalePool: Tearing down worker {ProcessorId} with app-id {AppId}",
-                            instance.ProcessorId, instance.AppId);
-
-                        var teardownResult = await orchestrator.TeardownServiceAsync(
-                            instance.AppId,
-                            removeVolumes: false,
-                            cancellationToken);
-
-                        if (teardownResult.Success)
-                        {
-                            // Release any lease for this processor
-                            var leaseToRemove = leases.FirstOrDefault(l => l.Value.ProcessorId == instance.ProcessorId);
-                            if (leaseToRemove.Key != null)
-                            {
-                                leases.Remove(leaseToRemove.Key);
-                            }
-
-                            availableInstances.RemoveAll(p => p.ProcessorId == instance.ProcessorId);
-                            currentInstances.RemoveAll(p => p.ProcessorId == instance.ProcessorId);
-                            scaledDown++;
-
-                            _logger.LogInformation(
-                                "ScalePool: Torn down worker {ProcessorId} successfully",
-                                instance.ProcessorId);
-                        }
-                        else
-                        {
-                            _logger.LogWarning(
-                                "ScalePool: Failed to teardown worker {ProcessorId}: {Message}",
-                                instance.ProcessorId, teardownResult.Message);
-                        }
-                    }
-                }
-
-                _logger.LogInformation(
-                    "ScalePool: Scaled down pool {PoolType} by {Count} instances",
-                    body.PoolType, scaledDown);
             }
 
-            // Save updated state
-            await _stateManager.SetListAsync(instancesKey, currentInstances);
-            await _stateManager.SetListAsync(availableKey, availableInstances);
-            await _stateManager.SetHashAsync(leasesKey, leases);
-
-            // Update metrics with scale event
-            var metrics = await _stateManager.GetValueAsync<PoolMetricsData>(metricsKey) ?? new PoolMetricsData();
-            metrics.LastScaleEvent = DateTimeOffset.UtcNow;
-            await _stateManager.SetValueAsync(metricsKey, metrics);
-
-            return (StatusCodes.OK, new ScalePoolResponse
-            {
-                PoolType = body.PoolType,
-                PreviousInstances = previousCount,
-                CurrentInstances = currentInstances.Count,
-                ScaledUp = scaledUp,
-                ScaledDown = scaledDown
-            });
+            _logger.LogInformation(
+                "ScalePool: Scaled down pool {PoolType} by {Count} instances",
+                body.PoolType, scaledDown);
         }
-        catch (Exception ex)
+
+        // Save updated state
+        await _stateManager.SetListAsync(instancesKey, currentInstances);
+        await _stateManager.SetListAsync(availableKey, availableInstances);
+        await _stateManager.SetHashAsync(leasesKey, leases);
+
+        // Update metrics with scale event
+        var metrics = await _stateManager.GetValueAsync<PoolMetricsData>(metricsKey) ?? new PoolMetricsData();
+        metrics.LastScaleEvent = DateTimeOffset.UtcNow;
+        await _stateManager.SetValueAsync(metricsKey, metrics);
+
+        return (StatusCodes.OK, new ScalePoolResponse
         {
-            _logger.LogError(ex, "ScalePool: Error scaling pool {PoolType}", body?.PoolType);
-            return (StatusCodes.InternalServerError, null);
-        }
+            PoolType = body.PoolType,
+            PreviousInstances = previousCount,
+            CurrentInstances = currentInstances.Count,
+            ScaledUp = scaledUp,
+            ScaledDown = scaledDown
+        });
     }
 
     /// <summary>
@@ -3003,88 +2794,80 @@ public partial class OrchestratorService : IOrchestratorService
         CleanupPoolRequest body,
         CancellationToken cancellationToken = default)
     {
-        try
+
+        if (string.IsNullOrEmpty(body.PoolType))
         {
+            _logger.LogWarning("CleanupPool: Missing pool_type");
+            return (StatusCodes.BadRequest, null);
+        }
 
-            if (string.IsNullOrEmpty(body.PoolType))
-            {
-                _logger.LogWarning("CleanupPool: Missing pool_type");
-                return (StatusCodes.BadRequest, null);
-            }
+        var instancesKey = string.Format(POOL_INSTANCES_KEY, body.PoolType);
+        var availableKey = string.Format(POOL_AVAILABLE_KEY, body.PoolType);
+        var configKey = string.Format(POOL_CONFIG_KEY, body.PoolType);
 
-            var instancesKey = string.Format(POOL_INSTANCES_KEY, body.PoolType);
-            var availableKey = string.Format(POOL_AVAILABLE_KEY, body.PoolType);
-            var configKey = string.Format(POOL_CONFIG_KEY, body.PoolType);
+        var currentInstances = await _stateManager.GetListAsync<ProcessorInstance>(instancesKey) ?? new List<ProcessorInstance>();
+        var availableInstances = await _stateManager.GetListAsync<ProcessorInstance>(availableKey) ?? new List<ProcessorInstance>();
+        var config = await _stateManager.GetValueAsync<PoolConfiguration>(configKey);
 
-            var currentInstances = await _stateManager.GetListAsync<ProcessorInstance>(instancesKey) ?? new List<ProcessorInstance>();
-            var availableInstances = await _stateManager.GetListAsync<ProcessorInstance>(availableKey) ?? new List<ProcessorInstance>();
-            var config = await _stateManager.GetValueAsync<PoolConfiguration>(configKey);
+        var minInstances = config?.MinInstances ?? 1;
+        var targetCount = body.PreserveMinimum ? minInstances : 0;
 
-            var minInstances = config?.MinInstances ?? 1;
-            var targetCount = body.PreserveMinimum ? minInstances : 0;
-
-            var toRemove = availableInstances.Count - targetCount;
-            if (toRemove <= 0)
-            {
-                return (StatusCodes.OK, new CleanupPoolResponse
-                {
-                    PoolType = body.PoolType,
-                    InstancesRemoved = 0,
-                    CurrentInstances = currentInstances.Count,
-                    Message = "No idle instances to remove"
-                });
-            }
-
-            // Remove idle instances and teardown their containers
-            var instancesToRemove = availableInstances.Take(toRemove).ToList();
-            var orchestrator = await GetOrchestratorAsync(cancellationToken);
-            var removedCount = 0;
-
-            foreach (var instance in instancesToRemove)
-            {
-                _logger.LogInformation(
-                    "CleanupPool: Tearing down idle worker {ProcessorId} with app-id {AppId}",
-                    instance.ProcessorId, instance.AppId);
-
-                var teardownResult = await orchestrator.TeardownServiceAsync(
-                    instance.AppId,
-                    removeVolumes: false,
-                    cancellationToken);
-
-                if (teardownResult.Success)
-                {
-                    availableInstances.RemoveAll(p => p.ProcessorId == instance.ProcessorId);
-                    currentInstances.RemoveAll(p => p.ProcessorId == instance.ProcessorId);
-                    removedCount++;
-                }
-                else
-                {
-                    _logger.LogWarning(
-                        "CleanupPool: Failed to teardown worker {ProcessorId}: {Message}",
-                        instance.ProcessorId, teardownResult.Message);
-                }
-            }
-
-            await _stateManager.SetListAsync(instancesKey, currentInstances);
-            await _stateManager.SetListAsync(availableKey, availableInstances);
-
-            _logger.LogInformation(
-                "CleanupPool: Removed {Count} idle instances from pool {PoolType}, {Remaining} instances remaining",
-                removedCount, body.PoolType, currentInstances.Count);
-
+        var toRemove = availableInstances.Count - targetCount;
+        if (toRemove <= 0)
+        {
             return (StatusCodes.OK, new CleanupPoolResponse
             {
                 PoolType = body.PoolType,
-                InstancesRemoved = removedCount,
+                InstancesRemoved = 0,
                 CurrentInstances = currentInstances.Count,
-                Message = $"Cleaned up {removedCount} idle processor(s)"
+                Message = "No idle instances to remove"
             });
         }
-        catch (Exception ex)
+
+        // Remove idle instances and teardown their containers
+        var instancesToRemove = availableInstances.Take(toRemove).ToList();
+        var orchestrator = await GetOrchestratorAsync(cancellationToken);
+        var removedCount = 0;
+
+        foreach (var instance in instancesToRemove)
         {
-            _logger.LogError(ex, "CleanupPool: Error cleaning up pool {PoolType}", body?.PoolType);
-            return (StatusCodes.InternalServerError, null);
+            _logger.LogInformation(
+                "CleanupPool: Tearing down idle worker {ProcessorId} with app-id {AppId}",
+                instance.ProcessorId, instance.AppId);
+
+            var teardownResult = await orchestrator.TeardownServiceAsync(
+                instance.AppId,
+                removeVolumes: false,
+                cancellationToken);
+
+            if (teardownResult.Success)
+            {
+                availableInstances.RemoveAll(p => p.ProcessorId == instance.ProcessorId);
+                currentInstances.RemoveAll(p => p.ProcessorId == instance.ProcessorId);
+                removedCount++;
+            }
+            else
+            {
+                _logger.LogWarning(
+                    "CleanupPool: Failed to teardown worker {ProcessorId}: {Message}",
+                    instance.ProcessorId, teardownResult.Message);
+            }
         }
+
+        await _stateManager.SetListAsync(instancesKey, currentInstances);
+        await _stateManager.SetListAsync(availableKey, availableInstances);
+
+        _logger.LogInformation(
+            "CleanupPool: Removed {Count} idle instances from pool {PoolType}, {Remaining} instances remaining",
+            removedCount, body.PoolType, currentInstances.Count);
+
+        return (StatusCodes.OK, new CleanupPoolResponse
+        {
+            PoolType = body.PoolType,
+            InstancesRemoved = removedCount,
+            CurrentInstances = currentInstances.Count,
+            Message = $"Cleaned up {removedCount} idle processor(s)"
+        });
     }
 
     /// <summary>

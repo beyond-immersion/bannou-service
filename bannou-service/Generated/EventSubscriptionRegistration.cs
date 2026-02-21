@@ -28,13 +28,13 @@ public static class EventSubscriptionRegistration
         EventSubscriptionRegistry.Register<LeaderboardRankChangedEvent>("leaderboard.rank.changed");
 
         // From actor-events.yaml
-        EventSubscriptionRegistry.Register<BehaviorUpdatedEvent>("behavior.updated");
         EventSubscriptionRegistry.Register<SessionDisconnectedEvent>("session.disconnected");
         EventSubscriptionRegistry.Register<PoolNodeRegisteredEvent>("actor.pool-node.registered");
         EventSubscriptionRegistry.Register<PoolNodeHeartbeatEvent>("actor.pool-node.heartbeat");
         EventSubscriptionRegistry.Register<PoolNodeDrainingEvent>("actor.pool-node.draining");
         EventSubscriptionRegistry.Register<ActorStatusChangedEvent>("actor.instance.status-changed");
         EventSubscriptionRegistry.Register<ActorCompletedEvent>("actor.instance.completed");
+        EventSubscriptionRegistry.Register<ActorTemplateUpdatedEvent>("actor-template.updated");
 
         // From analytics-events.yaml
         EventSubscriptionRegistry.Register<GameSessionActionPerformedEvent>("game-session.action.performed");
@@ -52,14 +52,23 @@ public static class EventSubscriptionRegistration
         // From auth-events.yaml
         EventSubscriptionRegistry.Register<AccountDeletedEvent>("account.deleted");
         EventSubscriptionRegistry.Register<AccountUpdatedEvent>("account.updated");
-        EventSubscriptionRegistry.Register<SubscriptionUpdatedEvent>("subscription.updated");
 
-        // From character-encounter-events.yaml
+        // From chat-events.yaml
+        EventSubscriptionRegistry.Register<ContractFulfilledEvent>("contract.fulfilled");
+        EventSubscriptionRegistry.Register<ContractBreachDetectedEvent>("contract.breach.detected");
+        EventSubscriptionRegistry.Register<ContractTerminatedEvent>("contract.terminated");
+        EventSubscriptionRegistry.Register<ContractExpiredEvent>("contract.expired");
+
+        // From collection-events.yaml
         EventSubscriptionRegistry.Register<CharacterDeletedEvent>("character.deleted");
+        EventSubscriptionRegistry.Register<AccountDeletedEvent>("account.deleted");
 
         // From connect-events.yaml
         EventSubscriptionRegistry.Register<SessionInvalidatedEvent>("session.invalidated");
         EventSubscriptionRegistry.Register<ServiceErrorEvent>("service.error");
+
+        // From divine-events.yaml
+        EventSubscriptionRegistry.Register<AnalyticsScoreUpdatedEvent>("analytics.score.updated");
 
         // From escrow-events.yaml
         EventSubscriptionRegistry.Register<ContractFulfilledEvent>("contract.fulfilled");
@@ -70,6 +79,11 @@ public static class EventSubscriptionRegistration
         EventSubscriptionRegistry.Register<SessionDisconnectedEvent>("session.disconnected");
         EventSubscriptionRegistry.Register<SessionReconnectedEvent>("session.reconnected");
         EventSubscriptionRegistry.Register<SubscriptionUpdatedEvent>("subscription.updated");
+
+        // From gardener-events.yaml
+        EventSubscriptionRegistry.Register<SeedBondFormedEvent>("seed.bond.formed");
+        EventSubscriptionRegistry.Register<SeedActivatedEvent>("seed.activated");
+        EventSubscriptionRegistry.Register<GameSessionDeletedEvent>("game-session.deleted");
 
         // From leaderboard-events.yaml
         EventSubscriptionRegistry.Register<AnalyticsScoreUpdatedEvent>("analytics.score.updated");
@@ -84,17 +98,40 @@ public static class EventSubscriptionRegistration
         EventSubscriptionRegistry.Register<SessionReconnectedEvent>("session.reconnected");
 
         // From mesh-events.yaml
-        EventSubscriptionRegistry.Register<ServiceHeartbeatEvent>("bannou.service-heartbeats");
+        EventSubscriptionRegistry.Register<ServiceHeartbeatEvent>("bannou.service-heartbeat");
         EventSubscriptionRegistry.Register<FullServiceMappingsEvent>("bannou.full-service-mappings");
+        EventSubscriptionRegistry.Register<MeshCircuitStateChangedEvent>("mesh.circuit.changed");
+
+        // From obligation-events.yaml
+        EventSubscriptionRegistry.Register<ContractActivatedEvent>("contract.activated");
+        EventSubscriptionRegistry.Register<ContractTerminatedEvent>("contract.terminated");
+        EventSubscriptionRegistry.Register<ContractFulfilledEvent>("contract.fulfilled");
+        EventSubscriptionRegistry.Register<ContractExpiredEvent>("contract.expired");
 
         // From orchestrator-events.yaml
-        EventSubscriptionRegistry.Register<ServiceHeartbeatEvent>("bannou.service-heartbeats");
+        EventSubscriptionRegistry.Register<ServiceHeartbeatEvent>("bannou.service-heartbeat");
 
         // From permission-events.yaml
-        EventSubscriptionRegistry.Register<ServiceRegistrationEvent>("permission.service-registered");
-        EventSubscriptionRegistry.Register<SessionStateChangeEvent>("permission.session-state-changed");
         EventSubscriptionRegistry.Register<SessionUpdatedEvent>("session.updated");
         EventSubscriptionRegistry.Register<SessionConnectedEvent>("session.connected");
         EventSubscriptionRegistry.Register<SessionDisconnectedEvent>("session.disconnected");
+
+        // From puppetmaster-events.yaml
+        EventSubscriptionRegistry.Register<RealmCreatedEvent>("realm.created");
+        EventSubscriptionRegistry.Register<RealmDeletedEvent>("realm.deleted");
+        EventSubscriptionRegistry.Register<RealmUpdatedEvent>("realm.updated");
+        EventSubscriptionRegistry.Register<BehaviorUpdatedEvent>("behavior.updated");
+        EventSubscriptionRegistry.Register<ActorInstanceDeletedEvent>("actor.instance.deleted");
+
+        // From quest-events.yaml
+        EventSubscriptionRegistry.Register<ContractMilestoneCompletedEvent>("contract.milestone.completed");
+        EventSubscriptionRegistry.Register<ContractFulfilledEvent>("contract.fulfilled");
+        EventSubscriptionRegistry.Register<ContractTerminatedEvent>("contract.terminated");
+
+        // From status-events.yaml
+        EventSubscriptionRegistry.Register<SeedCapabilityUpdatedEvent>("seed.capability.updated");
+
+        // From worldstate-events.yaml
+        EventSubscriptionRegistry.Register<CalendarTemplateUpdatedEvent>("worldstate.calendar-template.updated");
     }
 }

@@ -107,7 +107,7 @@ public class AudioProcessorTests
         var result = await processor.ValidateAsync(context);
 
         Assert.False(result.IsValid);
-        Assert.Equal("UNSUPPORTED_CONTENT_TYPE", result.ErrorCode);
+        Assert.Equal(ProcessingErrorCode.UnsupportedContentType, result.ErrorCode);
     }
 
     [Fact]
@@ -119,7 +119,7 @@ public class AudioProcessorTests
         var result = await processor.ValidateAsync(context);
 
         Assert.False(result.IsValid);
-        Assert.Equal("FILE_TOO_LARGE", result.ErrorCode);
+        Assert.Equal(ProcessingErrorCode.FileTooLarge, result.ErrorCode);
     }
 
     [Fact]
@@ -235,7 +235,7 @@ public class AudioProcessorTests
         var result = await processor.ProcessAsync(context);
 
         Assert.False(result.Success);
-        Assert.Equal("TRANSCODING_FAILED", result.ErrorCode);
+        Assert.Equal(ProcessingErrorCode.TranscodingFailed, result.ErrorCode);
     }
 
     [Fact]
@@ -255,7 +255,7 @@ public class AudioProcessorTests
         var result = await processor.ProcessAsync(context);
 
         Assert.False(result.Success);
-        Assert.Equal("SOURCE_NOT_FOUND", result.ErrorCode);
+        Assert.Equal(ProcessingErrorCode.SourceNotFound, result.ErrorCode);
     }
 
     [Fact]

@@ -12,7 +12,7 @@
 //
 //     IMPLEMENTATION TENETS - Configuration-First:
 //     - Access configuration via dependency injection, never Environment.GetEnvironmentVariable.
-//     - ALL properties below MUST be referenced in CharacterService.cs (no dead config).
+//     - ALL properties below MUST be referenced somewhere in the plugin (no dead config).
 //     - Any hardcoded tunable (limit, timeout, threshold, capacity) in service code means
 //       a configuration property is MISSING - add it to the configuration schema.
 //     - If a property is unused, remove it from the configuration schema.
@@ -40,7 +40,7 @@ namespace BeyondImmersion.BannouService.Character;
 /// <para>
 /// <b>IMPLEMENTATION TENETS - Configuration-First:</b> Access configuration via dependency injection.
 /// Never use <c>Environment.GetEnvironmentVariable()</c> directly in service code.
-/// ALL properties in this class MUST be referenced in the service implementation.
+/// ALL properties in this class MUST be referenced somewhere in the plugin.
 /// If a property is unused, remove it from the configuration schema.
 /// </para>
 /// <para>
@@ -66,39 +66,21 @@ public class CharacterServiceConfiguration : IServiceConfiguration
     public int DefaultPageSize { get; set; } = 20;
 
     /// <summary>
-    /// Number of days to retain deleted characters before permanent removal
-    /// Environment variable: CHARACTER_RETENTION_DAYS
-    /// </summary>
-    public int CharacterRetentionDays { get; set; } = 90;
-
-    /// <summary>
     /// Maximum retry attempts when updating realm character index (optimistic concurrency)
     /// Environment variable: CHARACTER_REALM_INDEX_UPDATE_MAX_RETRIES
     /// </summary>
     public int RealmIndexUpdateMaxRetries { get; set; } = 3;
 
     /// <summary>
+    /// Timeout in seconds for acquiring distributed locks during character updates and compression
+    /// Environment variable: CHARACTER_LOCK_TIMEOUT_SECONDS
+    /// </summary>
+    public int LockTimeoutSeconds { get; set; } = 30;
+
+    /// <summary>
     /// Grace period in days before cleanup of dead character references (default 30 days)
     /// Environment variable: CHARACTER_CLEANUP_GRACE_PERIOD_DAYS
     /// </summary>
     public int CleanupGracePeriodDays { get; set; } = 30;
-
-    /// <summary>
-    /// Maximum number of backstory points to include in character compression summary
-    /// Environment variable: CHARACTER_COMPRESSION_MAX_BACKSTORY_POINTS
-    /// </summary>
-    public int CompressionMaxBackstoryPoints { get; set; } = 5;
-
-    /// <summary>
-    /// Maximum number of major life events to include in character compression summary
-    /// Environment variable: CHARACTER_COMPRESSION_MAX_LIFE_EVENTS
-    /// </summary>
-    public int CompressionMaxLifeEvents { get; set; } = 10;
-
-    /// <summary>
-    /// Threshold for personality trait classification (values above this are positive, below negative are opposite)
-    /// Environment variable: CHARACTER_PERSONALITY_TRAIT_THRESHOLD
-    /// </summary>
-    public double PersonalityTraitThreshold { get; set; } = 0.3;
 
 }

@@ -1,0 +1,299 @@
+openapi: 3.0.3
+info:
+  title: Resource Lifecycle Events
+  description: |
+    Event models for Resource service RabbitMQ pub/sub.
+    Handles cleanup coordination, grace period, compression, and snapshot events.
+
+    **Note**: Reference registration/unregistration is handled via direct API calls
+    (IResourceClient.RegisterReferenceAsync/UnregisterReferenceAsync), not events.
+    Higher-layer services call the Resource API directly for reliable reference tracking.
+
+    **SCHEMA MODIFICATION GATE**: STOP. Before modifying this schema, you MUST:
+    1. Read docs/reference/SCHEMA-RULES.md
+    2. State which section applies to your change
+    3. Only then proceed with edits
+    Edits without stating the applicable rule are FORBIDDEN.
+  version: 1.0.0
+  x-event-publications:
+    # Cleanup failure event for monitoring
+    - topic: resource.cleanup.callback-failed
+      event: ResourceCleanupCallbackFailedEvent
+      description: Published when a cleanup callback fails during resource deletion
+    # Grace period started event
+    - topic: resource.grace-period.started
+      event: ResourceGracePeriodStartedEvent
+      description: Published when a resource's refcount reaches zero and grace period begins
+    # Compression events
+    - topic: resource.compressed
+      event: ResourceCompressedEvent
+      description: Published when a resource is successfully compressed
+    - topic: resource.compress.callback-failed
+      event: ResourceCompressCallbackFailedEvent
+      description: Published when a compression callback fails
+    - topic: resource.decompressed
+      event: ResourceDecompressedEvent
+      description: Published when a resource is decompressed
+    # Snapshot events (for living entities)
+    - topic: resource.snapshot.created
+      event: ResourceSnapshotCreatedEvent
+      description: Published when an ephemeral snapshot of a living resource is created
+
+paths: {}  # Events don't have HTTP paths
+
+components:
+  schemas:
+    # =========================================================================
+    # Events this service PUBLISHES
+    # =========================================================================
+
+    ResourceCleanupCallbackFailedEvent:
+      type: object
+      additionalProperties: false
+      description: |
+        Published when a cleanup callback fails during resource deletion.
+        Used for monitoring and alerting on cleanup failures.
+      required:
+      - resourceType
+      - resourceId
+      - sourceType
+      - serviceName
+      - endpoint
+      - statusCode
+      - timestamp
+      properties:
+        resourceType:
+          type: string
+          description: Type of resource being cleaned up (opaque identifier)
+        resourceId:
+          type: string
+          format: uuid
+          description: ID of the resource being cleaned up
+        sourceType:
+          type: string
+          description: Type of entity whose cleanup failed (opaque identifier)
+        serviceName:
+          type: string
+          description: Service whose callback failed
+        endpoint:
+          type: string
+          description: Endpoint that failed
+        statusCode:
+          type: integer
+          description: HTTP status code returned (0 if connection failed)
+        errorMessage:
+          type: string
+          nullable: true
+          description: Error details
+        timestamp:
+          type: string
+          format: date-time
+          description: When the failure occurred
+
+    ResourceGracePeriodStartedEvent:
+      type: object
+      additionalProperties: false
+      description: |
+        Published when a resource's reference count reaches zero.
+        The resource enters a grace period before becoming eligible for cleanup.
+      required:
+      - resourceType
+      - resourceId
+      - gracePeriodEndsAt
+      - timestamp
+      properties:
+        resourceType:
+          type: string
+          description: Type of resource entering grace period (opaque identifier)
+        resourceId:
+          type: string
+          format: uuid
+          description: ID of the resource entering grace period
+        gracePeriodEndsAt:
+          type: string
+          format: date-time
+          description: When the grace period ends and cleanup becomes eligible
+        timestamp:
+          type: string
+          format: date-time
+          description: When the grace period started
+
+    # =========================================================================
+    # Compression Events
+    # =========================================================================
+
+    ResourceCompressedEvent:
+      type: object
+      additionalProperties: false
+      description: |
+        Published when compression completes successfully.
+        Services can subscribe to perform post-compression actions.
+      required:
+      - eventId
+      - timestamp
+      - resourceType
+      - resourceId
+      - archiveId
+      - sourceDataDeleted
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique identifier for this event
+        timestamp:
+          type: string
+          format: date-time
+          description: When the compression completed
+        resourceType:
+          type: string
+          description: Type of resource compressed (opaque identifier)
+        resourceId:
+          type: string
+          format: uuid
+          description: ID of the resource compressed
+        archiveId:
+          type: string
+          format: uuid
+          description: ID of the created archive
+        sourceDataDeleted:
+          type: boolean
+          description: Whether source data was deleted after archival
+        entriesCount:
+          type: integer
+          description: Number of services that contributed data to the archive
+
+    ResourceCompressCallbackFailedEvent:
+      type: object
+      additionalProperties: false
+      description: |
+        Published when a compression callback fails.
+        Used for monitoring and alerting on compression failures.
+      required:
+      - eventId
+      - timestamp
+      - resourceType
+      - resourceId
+      - sourceType
+      - serviceName
+      - endpoint
+      - statusCode
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique identifier for this event
+        timestamp:
+          type: string
+          format: date-time
+          description: When the failure occurred
+        resourceType:
+          type: string
+          description: Type of resource being compressed (opaque identifier)
+        resourceId:
+          type: string
+          format: uuid
+          description: ID of the resource being compressed
+        sourceType:
+          type: string
+          description: Type of data whose compression failed (opaque identifier)
+        serviceName:
+          type: string
+          description: Service whose callback failed
+        endpoint:
+          type: string
+          description: Endpoint that failed
+        statusCode:
+          type: integer
+          description: HTTP status code returned (0 if connection failed)
+        errorMessage:
+          type: string
+          nullable: true
+          description: Error details
+
+    ResourceDecompressedEvent:
+      type: object
+      additionalProperties: false
+      description: |
+        Published when decompression completes successfully.
+        Services can subscribe to perform post-decompression actions.
+      required:
+      - eventId
+      - timestamp
+      - resourceType
+      - resourceId
+      - archiveId
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique identifier for this event
+        timestamp:
+          type: string
+          format: date-time
+          description: When the decompression completed
+        resourceType:
+          type: string
+          description: Type of resource decompressed (opaque identifier)
+        resourceId:
+          type: string
+          format: uuid
+          description: ID of the resource decompressed
+        archiveId:
+          type: string
+          format: uuid
+          description: ID of the archive that was restored
+
+    # =========================================================================
+    # Snapshot Events (Living Entity Snapshots)
+    # =========================================================================
+
+    ResourceSnapshotCreatedEvent:
+      type: object
+      additionalProperties: false
+      description: |
+        Published when an ephemeral snapshot of a living resource is created.
+        Unlike ResourceCompressedEvent, this indicates a non-destructive capture
+        of data from a resource that continues to exist.
+
+        **Use Case**: Storyline Composer and Actor behaviors need compressed
+        data from living entities to seed emergent narratives without affecting
+        the source data.
+      required:
+      - eventId
+      - timestamp
+      - resourceType
+      - resourceId
+      - snapshotId
+      - snapshotType
+      - expiresAt
+      - entriesCount
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique identifier for this event
+        timestamp:
+          type: string
+          format: date-time
+          description: When the snapshot was created
+        resourceType:
+          type: string
+          description: Type of resource snapshotted (opaque identifier)
+        resourceId:
+          type: string
+          format: uuid
+          description: ID of the resource snapshotted
+        snapshotId:
+          type: string
+          format: uuid
+          description: ID of the created snapshot (for retrieval)
+        snapshotType:
+          type: string
+          description: Label for snapshot purpose (e.g., "storyline_seed")
+        expiresAt:
+          type: string
+          format: date-time
+          description: When this snapshot will expire
+        entriesCount:
+          type: integer
+          description: Number of services that contributed data to the snapshot

@@ -205,7 +205,7 @@ public partial class CreateSpeciesRequest
     public int? MaturityAge { get; set; } = default!;
 
     /// <summary>
-    /// Base trait modifiers for this species (JSON)
+    /// Client-only trait modifiers. No Bannou plugin reads specific keys from this field by convention.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("traitModifiers")]
     public object? TraitModifiers { get; set; } = default!;
@@ -217,7 +217,7 @@ public partial class CreateSpeciesRequest
     public System.Collections.Generic.ICollection<System.Guid>? RealmIds { get; set; } = default!;
 
     /// <summary>
-    /// Additional metadata for the species
+    /// Client-only metadata. No Bannou plugin reads specific keys from this field by convention.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("metadata")]
     public object? Metadata { get; set; } = default!;
@@ -281,13 +281,13 @@ public partial class UpdateSpeciesRequest
     public int? MaturityAge { get; set; } = default!;
 
     /// <summary>
-    /// Base trait modifiers for this species
+    /// Client-only trait modifiers. No Bannou plugin reads specific keys from this field by convention.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("traitModifiers")]
     public object? TraitModifiers { get; set; } = default!;
 
     /// <summary>
-    /// Additional metadata
+    /// Client-only metadata. No Bannou plugin reads specific keys from this field by convention.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("metadata")]
     public object? Metadata { get; set; } = default!;
@@ -510,7 +510,7 @@ public partial class SeedSpecies
     public int? MaturityAge { get; set; } = default!;
 
     /// <summary>
-    /// Base trait modifiers for this species (null if none)
+    /// Client-only trait modifiers. No Bannou plugin reads specific keys from this field by convention.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("traitModifiers")]
     public object? TraitModifiers { get; set; } = default!;
@@ -522,7 +522,7 @@ public partial class SeedSpecies
     public System.Collections.Generic.ICollection<string>? RealmCodes { get; set; } = default!;
 
     /// <summary>
-    /// Additional metadata for the species (null if none)
+    /// Client-only metadata. No Bannou plugin reads specific keys from this field by convention.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("metadata")]
     public object? Metadata { get; set; } = default!;
@@ -609,7 +609,7 @@ public partial class SpeciesResponse
     public int? MaturityAge { get; set; } = default!;
 
     /// <summary>
-    /// Base trait modifiers for this species
+    /// Client-only trait modifiers. No Bannou plugin reads specific keys from this field by convention.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("traitModifiers")]
     public object? TraitModifiers { get; set; } = default!;
@@ -621,7 +621,7 @@ public partial class SpeciesResponse
     public System.Collections.Generic.ICollection<System.Guid> RealmIds { get; set; } = default!;
 
     /// <summary>
-    /// Additional metadata for the species
+    /// Client-only metadata. No Bannou plugin reads specific keys from this field by convention.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("metadata")]
     public object? Metadata { get; set; } = default!;

@@ -117,6 +117,60 @@ public sealed class StateProxy
     }
 
     /// <summary>
+    /// Bulk save multiple key-value pairs
+    /// </summary>
+    /// <param name="request">The request payload.</param>
+    /// <param name="channel">Message channel for ordering (default 0).</param>
+    /// <param name="timeout">Request timeout.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>ApiResponse containing BulkSaveStateResponse on success.</returns>
+    public Task<ApiResponse<BulkSaveStateResponse>> BulkSaveStateAsync(
+        BulkSaveStateRequest request,
+        ushort channel = 0,
+        TimeSpan? timeout = null,
+        CancellationToken cancellationToken = default)
+    {
+        return _client.InvokeAsync<BulkSaveStateRequest, BulkSaveStateResponse>(
+            "/state/bulk-save", request, channel, timeout, cancellationToken);
+    }
+
+    /// <summary>
+    /// Check existence of multiple keys
+    /// </summary>
+    /// <param name="request">The request payload.</param>
+    /// <param name="channel">Message channel for ordering (default 0).</param>
+    /// <param name="timeout">Request timeout.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>ApiResponse containing BulkExistsStateResponse on success.</returns>
+    public Task<ApiResponse<BulkExistsStateResponse>> BulkExistsStateAsync(
+        BulkExistsStateRequest request,
+        ushort channel = 0,
+        TimeSpan? timeout = null,
+        CancellationToken cancellationToken = default)
+    {
+        return _client.InvokeAsync<BulkExistsStateRequest, BulkExistsStateResponse>(
+            "/state/bulk-exists", request, channel, timeout, cancellationToken);
+    }
+
+    /// <summary>
+    /// Delete multiple keys
+    /// </summary>
+    /// <param name="request">The request payload.</param>
+    /// <param name="channel">Message channel for ordering (default 0).</param>
+    /// <param name="timeout">Request timeout.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>ApiResponse containing BulkDeleteStateResponse on success.</returns>
+    public Task<ApiResponse<BulkDeleteStateResponse>> BulkDeleteStateAsync(
+        BulkDeleteStateRequest request,
+        ushort channel = 0,
+        TimeSpan? timeout = null,
+        CancellationToken cancellationToken = default)
+    {
+        return _client.InvokeAsync<BulkDeleteStateRequest, BulkDeleteStateResponse>(
+            "/state/bulk-delete", request, channel, timeout, cancellationToken);
+    }
+
+    /// <summary>
     /// List configured state stores
     /// </summary>
     /// <param name="request">The request payload.</param>

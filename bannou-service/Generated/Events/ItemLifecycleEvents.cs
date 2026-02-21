@@ -79,6 +79,12 @@ public partial class ItemTemplateCreatedEvent : BaseServiceEvent
     public string Name { get; set; } = default!;
 
     /// <summary>
+    /// Detailed item description
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("description")]
+    public string? Description { get; set; } = default!;
+
+    /// <summary>
     /// Item classification category
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("category")]
@@ -106,6 +112,12 @@ public partial class ItemTemplateCreatedEvent : BaseServiceEvent
     public QuantityModel QuantityModel { get; set; } = default!;
 
     /// <summary>
+    /// Maximum stack size for this item
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("maxStackSize")]
+    public int MaxStackSize { get; set; } = default!;
+
+    /// <summary>
     /// Realm availability scope
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("scope")]
@@ -115,10 +127,61 @@ public partial class ItemTemplateCreatedEvent : BaseServiceEvent
     public ItemScope Scope { get; set; } = default!;
 
     /// <summary>
+    /// When item becomes bound to a character
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("soulboundType")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public SoulboundType SoulboundType { get; set; } = default!;
+
+    /// <summary>
+    /// Whether item can be traded between characters
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("tradeable")]
+    public bool Tradeable { get; set; } = default!;
+
+    /// <summary>
+    /// Whether item can be destroyed by the owner
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("destroyable")]
+    public bool Destroyable { get; set; } = default!;
+
+    /// <summary>
+    /// Whether item has durability system
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("hasDurability")]
+    public bool HasDurability { get; set; } = default!;
+
+    /// <summary>
+    /// Maximum durability value (if hasDurability is true)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("maxDurability")]
+    public int? MaxDurability { get; set; } = default!;
+
+    /// <summary>
     /// Whether template is currently active
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("isActive")]
     public bool IsActive { get; set; } = default!;
+
+    /// <summary>
+    /// Whether template is deprecated
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("isDeprecated")]
+    public bool IsDeprecated { get; set; } = default!;
+
+    /// <summary>
+    /// When the template was deprecated
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("deprecatedAt")]
+    public System.DateTimeOffset? DeprecatedAt { get; set; } = default!;
+
+    /// <summary>
+    /// Template ID to migrate existing instances to
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("migrationTargetId")]
+    public System.Guid? MigrationTargetId { get; set; } = default!;
 
     /// <summary>
     /// When the template was created
@@ -184,6 +247,12 @@ public partial class ItemTemplateUpdatedEvent : BaseServiceEvent
     public string Name { get; set; } = default!;
 
     /// <summary>
+    /// Detailed item description
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("description")]
+    public string? Description { get; set; } = default!;
+
+    /// <summary>
     /// Item classification category
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("category")]
@@ -211,6 +280,12 @@ public partial class ItemTemplateUpdatedEvent : BaseServiceEvent
     public QuantityModel QuantityModel { get; set; } = default!;
 
     /// <summary>
+    /// Maximum stack size for this item
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("maxStackSize")]
+    public int MaxStackSize { get; set; } = default!;
+
+    /// <summary>
     /// Realm availability scope
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("scope")]
@@ -220,10 +295,61 @@ public partial class ItemTemplateUpdatedEvent : BaseServiceEvent
     public ItemScope Scope { get; set; } = default!;
 
     /// <summary>
+    /// When item becomes bound to a character
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("soulboundType")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public SoulboundType SoulboundType { get; set; } = default!;
+
+    /// <summary>
+    /// Whether item can be traded between characters
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("tradeable")]
+    public bool Tradeable { get; set; } = default!;
+
+    /// <summary>
+    /// Whether item can be destroyed by the owner
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("destroyable")]
+    public bool Destroyable { get; set; } = default!;
+
+    /// <summary>
+    /// Whether item has durability system
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("hasDurability")]
+    public bool HasDurability { get; set; } = default!;
+
+    /// <summary>
+    /// Maximum durability value (if hasDurability is true)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("maxDurability")]
+    public int? MaxDurability { get; set; } = default!;
+
+    /// <summary>
     /// Whether template is currently active
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("isActive")]
     public bool IsActive { get; set; } = default!;
+
+    /// <summary>
+    /// Whether template is deprecated
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("isDeprecated")]
+    public bool IsDeprecated { get; set; } = default!;
+
+    /// <summary>
+    /// When the template was deprecated
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("deprecatedAt")]
+    public System.DateTimeOffset? DeprecatedAt { get; set; } = default!;
+
+    /// <summary>
+    /// Template ID to migrate existing instances to
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("migrationTargetId")]
+    public System.Guid? MigrationTargetId { get; set; } = default!;
 
     /// <summary>
     /// When the template was created
@@ -297,6 +423,12 @@ public partial class ItemTemplateDeletedEvent : BaseServiceEvent
     public string Name { get; set; } = default!;
 
     /// <summary>
+    /// Detailed item description
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("description")]
+    public string? Description { get; set; } = default!;
+
+    /// <summary>
     /// Item classification category
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("category")]
@@ -324,6 +456,12 @@ public partial class ItemTemplateDeletedEvent : BaseServiceEvent
     public QuantityModel QuantityModel { get; set; } = default!;
 
     /// <summary>
+    /// Maximum stack size for this item
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("maxStackSize")]
+    public int MaxStackSize { get; set; } = default!;
+
+    /// <summary>
     /// Realm availability scope
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("scope")]
@@ -333,10 +471,61 @@ public partial class ItemTemplateDeletedEvent : BaseServiceEvent
     public ItemScope Scope { get; set; } = default!;
 
     /// <summary>
+    /// When item becomes bound to a character
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("soulboundType")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public SoulboundType SoulboundType { get; set; } = default!;
+
+    /// <summary>
+    /// Whether item can be traded between characters
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("tradeable")]
+    public bool Tradeable { get; set; } = default!;
+
+    /// <summary>
+    /// Whether item can be destroyed by the owner
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("destroyable")]
+    public bool Destroyable { get; set; } = default!;
+
+    /// <summary>
+    /// Whether item has durability system
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("hasDurability")]
+    public bool HasDurability { get; set; } = default!;
+
+    /// <summary>
+    /// Maximum durability value (if hasDurability is true)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("maxDurability")]
+    public int? MaxDurability { get; set; } = default!;
+
+    /// <summary>
     /// Whether template is currently active
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("isActive")]
     public bool IsActive { get; set; } = default!;
+
+    /// <summary>
+    /// Whether template is deprecated
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("isDeprecated")]
+    public bool IsDeprecated { get; set; } = default!;
+
+    /// <summary>
+    /// When the template was deprecated
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("deprecatedAt")]
+    public System.DateTimeOffset? DeprecatedAt { get; set; } = default!;
+
+    /// <summary>
+    /// Template ID to migrate existing instances to
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("migrationTargetId")]
+    public System.Guid? MigrationTargetId { get; set; } = default!;
 
     /// <summary>
     /// When the template was created
@@ -414,6 +603,54 @@ public partial class ItemInstanceCreatedEvent : BaseServiceEvent
     public double Quantity { get; set; } = default!;
 
     /// <summary>
+    /// Slot position in slot-based containers
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("slotIndex")]
+    public int? SlotIndex { get; set; } = default!;
+
+    /// <summary>
+    /// X position in grid-based containers
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("slotX")]
+    public int? SlotX { get; set; } = default!;
+
+    /// <summary>
+    /// Y position in grid-based containers
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("slotY")]
+    public int? SlotY { get; set; } = default!;
+
+    /// <summary>
+    /// Whether item is rotated in grid-based containers
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("rotated")]
+    public bool? Rotated { get; set; } = default!;
+
+    /// <summary>
+    /// Current durability value
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("currentDurability")]
+    public int? CurrentDurability { get; set; } = default!;
+
+    /// <summary>
+    /// Character ID this item is bound to (if soulbound)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("boundToId")]
+    public System.Guid? BoundToId { get; set; } = default!;
+
+    /// <summary>
+    /// When the item was bound to a character
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("boundAt")]
+    public System.DateTimeOffset? BoundAt { get; set; } = default!;
+
+    /// <summary>
+    /// Player-assigned custom name for this instance
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("customName")]
+    public string? CustomName { get; set; } = default!;
+
+    /// <summary>
     /// How this item instance was created
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("originType")]
@@ -421,6 +658,12 @@ public partial class ItemInstanceCreatedEvent : BaseServiceEvent
     [System.Text.Json.Serialization.JsonRequired]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public ItemOriginType OriginType { get; set; } = default!;
+
+    /// <summary>
+    /// Source entity ID for the origin (e.g., crafting recipe, vendor)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("originId")]
+    public System.Guid? OriginId { get; set; } = default!;
 
     /// <summary>
     /// When the instance was created
@@ -492,6 +735,54 @@ public partial class ItemInstanceUpdatedEvent : BaseServiceEvent
     public double Quantity { get; set; } = default!;
 
     /// <summary>
+    /// Slot position in slot-based containers
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("slotIndex")]
+    public int? SlotIndex { get; set; } = default!;
+
+    /// <summary>
+    /// X position in grid-based containers
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("slotX")]
+    public int? SlotX { get; set; } = default!;
+
+    /// <summary>
+    /// Y position in grid-based containers
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("slotY")]
+    public int? SlotY { get; set; } = default!;
+
+    /// <summary>
+    /// Whether item is rotated in grid-based containers
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("rotated")]
+    public bool? Rotated { get; set; } = default!;
+
+    /// <summary>
+    /// Current durability value
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("currentDurability")]
+    public int? CurrentDurability { get; set; } = default!;
+
+    /// <summary>
+    /// Character ID this item is bound to (if soulbound)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("boundToId")]
+    public System.Guid? BoundToId { get; set; } = default!;
+
+    /// <summary>
+    /// When the item was bound to a character
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("boundAt")]
+    public System.DateTimeOffset? BoundAt { get; set; } = default!;
+
+    /// <summary>
+    /// Player-assigned custom name for this instance
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("customName")]
+    public string? CustomName { get; set; } = default!;
+
+    /// <summary>
     /// How this item instance was created
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("originType")]
@@ -499,6 +790,12 @@ public partial class ItemInstanceUpdatedEvent : BaseServiceEvent
     [System.Text.Json.Serialization.JsonRequired]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public ItemOriginType OriginType { get; set; } = default!;
+
+    /// <summary>
+    /// Source entity ID for the origin (e.g., crafting recipe, vendor)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("originId")]
+    public System.Guid? OriginId { get; set; } = default!;
 
     /// <summary>
     /// When the instance was created
@@ -578,6 +875,54 @@ public partial class ItemInstanceDeletedEvent : BaseServiceEvent
     public double Quantity { get; set; } = default!;
 
     /// <summary>
+    /// Slot position in slot-based containers
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("slotIndex")]
+    public int? SlotIndex { get; set; } = default!;
+
+    /// <summary>
+    /// X position in grid-based containers
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("slotX")]
+    public int? SlotX { get; set; } = default!;
+
+    /// <summary>
+    /// Y position in grid-based containers
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("slotY")]
+    public int? SlotY { get; set; } = default!;
+
+    /// <summary>
+    /// Whether item is rotated in grid-based containers
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("rotated")]
+    public bool? Rotated { get; set; } = default!;
+
+    /// <summary>
+    /// Current durability value
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("currentDurability")]
+    public int? CurrentDurability { get; set; } = default!;
+
+    /// <summary>
+    /// Character ID this item is bound to (if soulbound)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("boundToId")]
+    public System.Guid? BoundToId { get; set; } = default!;
+
+    /// <summary>
+    /// When the item was bound to a character
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("boundAt")]
+    public System.DateTimeOffset? BoundAt { get; set; } = default!;
+
+    /// <summary>
+    /// Player-assigned custom name for this instance
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("customName")]
+    public string? CustomName { get; set; } = default!;
+
+    /// <summary>
     /// How this item instance was created
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("originType")]
@@ -585,6 +930,12 @@ public partial class ItemInstanceDeletedEvent : BaseServiceEvent
     [System.Text.Json.Serialization.JsonRequired]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public ItemOriginType OriginType { get; set; } = default!;
+
+    /// <summary>
+    /// Source entity ID for the origin (e.g., crafting recipe, vendor)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("originId")]
+    public System.Guid? OriginId { get; set; } = default!;
 
     /// <summary>
     /// When the instance was created

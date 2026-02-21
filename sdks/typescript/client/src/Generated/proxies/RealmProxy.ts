@@ -103,4 +103,22 @@ export class RealmProxy {
       timeout
     );
   }
+
+  /**
+   * Check if multiple realms exist and are active
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async realmsExistBatchAsync(
+    request: Schemas['RealmsExistBatchRequest'],
+    channel: number = 0,
+    timeout?: number
+  ): Promise<ApiResponse<Schemas['RealmsExistBatchResponse']>> {
+    return this.client.invokeAsync<
+      Schemas['RealmsExistBatchRequest'],
+      Schemas['RealmsExistBatchResponse']
+    >('/realm/exists-batch', request, channel, timeout);
+  }
 }

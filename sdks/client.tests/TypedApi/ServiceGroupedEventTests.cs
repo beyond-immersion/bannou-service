@@ -91,9 +91,9 @@ public class ServiceGroupedEventTests
     // =========================================================================
 
     [Fact]
-    public void GameSessionEventSubscriptions_HasOnChatMessageReceived()
+    public void GameSessionEventSubscriptions_HasOnSessionChatReceived()
     {
-        var method = typeof(GameSessionEventSubscriptions).GetMethod("OnChatMessageReceived");
+        var method = typeof(GameSessionEventSubscriptions).GetMethod("OnSessionChatReceived");
         Assert.NotNull(method);
         Assert.True(method.IsPublic);
         Assert.Equal(typeof(IEventSubscription), method.ReturnType);
@@ -118,7 +118,7 @@ public class ServiceGroupedEventTests
     [Fact]
     public void SubscriptionMethods_TakeActionHandler()
     {
-        var method = typeof(GameSessionEventSubscriptions).GetMethod("OnChatMessageReceived");
+        var method = typeof(GameSessionEventSubscriptions).GetMethod("OnSessionChatReceived");
         Assert.NotNull(method);
 
         var parameters = method.GetParameters();
@@ -127,7 +127,7 @@ public class ServiceGroupedEventTests
         var handlerType = parameters[0].ParameterType;
         Assert.True(handlerType.IsGenericType);
         Assert.Equal(typeof(Action<>), handlerType.GetGenericTypeDefinition());
-        Assert.Equal(typeof(ChatMessageReceivedEvent), handlerType.GetGenericArguments()[0]);
+        Assert.Equal(typeof(SessionChatReceivedEvent), handlerType.GetGenericArguments()[0]);
     }
 
     [Fact]

@@ -3,8 +3,8 @@
 // Tests for runtime intent channel creation from archetypes.
 // =============================================================================
 
+using BeyondImmersion.Bannou.BehaviorCompiler.Archetypes;
 using BeyondImmersion.BannouService.Behavior;
-using BeyondImmersion.BannouService.Behavior.Archetypes;
 using Xunit;
 
 namespace BeyondImmersion.BannouService.Behavior.Tests.Archetypes;

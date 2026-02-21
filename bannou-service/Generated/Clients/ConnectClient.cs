@@ -121,6 +121,26 @@ public partial interface IConnectClient
     /// <param name="body">The body parameter.</param>
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
+    /// Permission-gated proxy for endpoint metadata
+    /// </summary>
+    /// <remarks>
+    /// Accepts a full meta endpoint path (e.g., "/account/get/meta/info"),
+    /// <br/>validates the caller's JWT, looks up their active WebSocket session
+    /// <br/>via the JWT's sessionKey, checks the session's capability mappings
+    /// <br/>for the underlying endpoint, and proxies the internal meta GET
+    /// <br/>request if authorized. Returns the meta endpoint response directly.
+    /// <br/>
+    /// <br/>Requires an active WebSocket connection -- the session's compiled
+    /// <br/>capability mappings in Connect's in-memory connection state are the
+    /// <br/>permission source, exactly as for WebSocket meta requests.
+    /// </remarks>
+    /// <returns>Meta endpoint response</returns>
+    /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+    System.Threading.Tasks.Task<GetEndpointMetaResponse> GetEndpointMetaAsync(GetEndpointMetaRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
+    /// <param name="body">The body parameter.</param>
+    /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+    /// <summary>
     /// Get all active WebSocket sessions for an account
     /// </summary>
     /// <remarks>
@@ -697,6 +717,115 @@ public partial class ConnectClient : IConnectClient, BeyondImmersion.BannouServi
                     {
 
                         return;
+                    }
+                    else
+                    {
+                        var responseData_ = response_.Content == null ? null : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
+                        throw new BeyondImmersion.Bannou.Core.ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
+                    }
+                }
+                finally
+                {
+                    if (disposeResponse_)
+                        response_.Dispose();
+                }
+            }
+            finally
+            {
+                // Clear headers after request (one-time use)
+                ClearHeaders();
+            }
+        }
+    }
+
+    /// <param name="body">The body parameter.</param>
+    /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+    /// <summary>
+    /// Permission-gated proxy for endpoint metadata
+    /// </summary>
+    /// <remarks>
+    /// Accepts a full meta endpoint path (e.g., "/account/get/meta/info"),
+    /// <br/>validates the caller's JWT, looks up their active WebSocket session
+    /// <br/>via the JWT's sessionKey, checks the session's capability mappings
+    /// <br/>for the underlying endpoint, and proxies the internal meta GET
+    /// <br/>request if authorized. Returns the meta endpoint response directly.
+    /// <br/>
+    /// <br/>Requires an active WebSocket connection -- the session's compiled
+    /// <br/>capability mappings in Connect's in-memory connection state are the
+    /// <br/>permission source, exactly as for WebSocket meta requests.
+    /// </remarks>
+    /// <returns>Meta endpoint response</returns>
+    /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+    public virtual async System.Threading.Tasks.Task<GetEndpointMetaResponse> GetEndpointMetaAsync(GetEndpointMetaRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    {
+        if (body == null)
+            throw new System.ArgumentNullException("body");
+
+        // Build method path (without base URL - mesh client handles endpoint resolution)
+        var urlBuilder_ = new System.Text.StringBuilder();
+        // Operation Path: "connect/get-endpoint-meta"
+        urlBuilder_.Append("connect/get-endpoint-meta");
+
+        var methodPath_ = urlBuilder_.ToString().TrimStart('/');
+        var appId_ = _resolver.GetAppIdForService(ServiceName);
+
+        // Create HTTP request via mesh client
+        using (var request_ = _meshClient.CreateInvokeMethodRequest(
+            new System.Net.Http.HttpMethod("POST"),
+            appId_,
+            methodPath_))
+        {
+            var json_ = BeyondImmersion.Bannou.Core.BannouJson.SerializeToUtf8Bytes(body);
+            var content_ = new System.Net.Http.ByteArrayContent(json_);
+            content_.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse("application/json");
+            request_.Content = content_;
+            request_.Headers.Accept.Add(System.Net.Http.Headers.MediaTypeWithQualityHeaderValue.Parse("application/json"));
+
+            // Apply custom headers
+            ApplyHeaders(request_);
+
+            try
+            {
+                var response_ = await _meshClient.InvokeMethodWithResponseAsync(request_, cancellationToken).ConfigureAwait(false);
+                var disposeResponse_ = true;
+                try
+                {
+                    var headers_ = new System.Collections.Generic.Dictionary<string, System.Collections.Generic.IEnumerable<string>>();
+                    foreach (var item_ in response_.Headers)
+                        headers_[item_.Key] = item_.Value;
+                    if (response_.Content != null && response_.Content.Headers != null)
+                    {
+                        foreach (var item_ in response_.Content.Headers)
+                            headers_[item_.Key] = item_.Value;
+                    }
+
+                    var status_ = (int)response_.StatusCode;
+                    if (status_ == 200)
+                    {
+                        var objectResponse_ = await ReadObjectResponseAsync<GetEndpointMetaResponse>(response_, headers_, cancellationToken).ConfigureAwait(false);
+                        if (objectResponse_.Object == null)
+                        {
+                            throw new BeyondImmersion.Bannou.Core.ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
+                        }
+                        return objectResponse_.Object;
+                    }
+                    else
+                    if (status_ == 401)
+                    {
+                        string responseText_ = ( response_.Content == null ) ? string.Empty : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
+                        throw new BeyondImmersion.Bannou.Core.ApiException("Invalid or missing JWT, or no active WebSocket session", status_, responseText_, headers_, null);
+                    }
+                    else
+                    if (status_ == 403)
+                    {
+                        string responseText_ = ( response_.Content == null ) ? string.Empty : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
+                        throw new BeyondImmersion.Bannou.Core.ApiException("Session lacks permission for the underlying endpoint", status_, responseText_, headers_, null);
+                    }
+                    else
+                    if (status_ == 404)
+                    {
+                        string responseText_ = ( response_.Content == null ) ? string.Empty : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
+                        throw new BeyondImmersion.Bannou.Core.ApiException("Endpoint or meta type not found", status_, responseText_, headers_, null);
                     }
                     else
                     {

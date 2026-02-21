@@ -124,4 +124,14 @@ public partial interface ICharacterEncounterService : IBannouService
         /// </summary>
         Task<(StatusCodes, DecayMemoriesResponse?)> DecayMemoriesAsync(DecayMemoriesRequest body, CancellationToken cancellationToken = default(CancellationToken));
 
+        /// <summary>
+        /// GetCompressData operation
+        /// </summary>
+        Task<(StatusCodes, CharacterEncounterArchive?)> GetCompressDataAsync(GetCompressDataRequest body, CancellationToken cancellationToken = default(CancellationToken));
+
+        /// <summary>
+        /// RestoreFromArchive operation
+        /// </summary>
+        Task<(StatusCodes, RestoreFromArchiveResponse?)> RestoreFromArchiveAsync(RestoreFromArchiveRequest body, CancellationToken cancellationToken = default(CancellationToken));
+
 }

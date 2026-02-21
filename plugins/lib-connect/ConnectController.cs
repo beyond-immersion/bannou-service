@@ -15,7 +15,7 @@ public partial class ConnectController : ConnectControllerBase
     private readonly IConnectService _connectService;
     private readonly ILogger<ConnectController> _logger;
 
-    public ConnectController(IConnectService connectService, ILogger<ConnectController> logger) : base(connectService)
+    public ConnectController(IConnectService connectService, BeyondImmersion.BannouService.Services.ITelemetryProvider telemetryProvider, ILogger<ConnectController> logger) : base(connectService, telemetryProvider)
     {
         _connectService = connectService;
         _logger = logger;
@@ -72,6 +72,15 @@ public partial class ConnectController : ConnectControllerBase
             if (sessionId == null)
             {
                 return Unauthorized("Invalid or expired JWT token");
+            }
+
+            // Check connection capacity BEFORE accepting WebSocket upgrade
+            // This allows returning 503 Service Unavailable instead of accepting then immediately closing
+            if (!connectService.CanAcceptNewConnection())
+            {
+                _logger.LogWarning("Maximum concurrent connections ({MaxConnections}) reached, rejecting WebSocket upgrade for session {SessionId}",
+                    connectService.MaxConcurrentConnections, sessionId);
+                return StatusCode(503, "Service temporarily unavailable: maximum connections reached");
             }
 
             // Accept WebSocket connection - this starts the HTTP 101 response

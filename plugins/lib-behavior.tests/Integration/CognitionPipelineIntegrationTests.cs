@@ -30,22 +30,23 @@ public sealed class CognitionPipelineIntegrationTests
     // =========================================================================
 
     [Fact]
-    public void BuildPipeline_HumanoidTemplate_HasAllFiveStages()
+    public void BuildPipeline_HumanoidTemplate_HasAllSixStages()
     {
         // Act - Build pipeline from humanoid template
         var pipeline = _builder.Build(CognitionTemplates.HumanoidBase);
 
-        // Assert - All 5 cognition stages present
+        // Assert - All 6 cognition stages present (including forward-compatible evaluate_consequences)
         Assert.NotNull(pipeline);
         Assert.Equal(CognitionTemplates.HumanoidBase, pipeline.TemplateId);
-        Assert.Equal(5, pipeline.Stages.Count);
+        Assert.Equal(6, pipeline.Stages.Count);
 
         // Verify stage ordering
         Assert.Equal(CognitionStages.Filter, pipeline.Stages[0].Name);
         Assert.Equal(CognitionStages.MemoryQuery, pipeline.Stages[1].Name);
         Assert.Equal(CognitionStages.Significance, pipeline.Stages[2].Name);
         Assert.Equal(CognitionStages.Storage, pipeline.Stages[3].Name);
-        Assert.Equal(CognitionStages.Intention, pipeline.Stages[4].Name);
+        Assert.Equal(CognitionStages.EvaluateConsequences, pipeline.Stages[4].Name);
+        Assert.Equal(CognitionStages.Intention, pipeline.Stages[5].Name);
     }
 
     [Fact]

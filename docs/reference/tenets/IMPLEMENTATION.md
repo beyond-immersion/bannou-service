@@ -2,9 +2,9 @@
 
 > **Category**: Coding Patterns & Practices
 > **When to Reference**: While actively writing service code
-> **Tenets**: T3, T7, T8, T9, T14, T17, T20, T21, T23, T24, T25
+> **Tenets**: T3, T7, T8, T9, T14, T17, T20, T21, T23, T24, T25, T26, T30
 
-These tenets define the patterns you follow while implementing services. Reference them during active development.
+These tenets define the patterns you follow while implementing services.
 
 > **Note**: Schema Reference Hierarchy (formerly T26) is now covered in [SCHEMA-RULES.md](../SCHEMA-RULES.md) and referenced by Tenet 1 in [TENETS.md](../TENETS.md).
 
@@ -12,23 +12,13 @@ These tenets define the patterns you follow while implementing services. Referen
 
 ## Tenet 3: Event Consumer Fan-Out (MANDATORY)
 
-**Rule**: Services that subscribe to pub/sub events MUST use the `IEventConsumer` infrastructure to enable multi-plugin event handling.
+**Rule**: Services subscribing to pub/sub events MUST use `IEventConsumer` for multi-plugin event handling.
 
-### The Problem
-
-RabbitMQ queue binding allows only ONE consumer per queue to receive events. When multiple plugins need the same event (e.g., Auth, Permission, and GameSession all need `session.connected`), only one randomly "wins."
-
-### The Solution: Application-Level Fan-Out
-
-`IEventConsumer` provides fan-out within the bannou process:
-
-1. **Generated Controllers** receive events from lib-messaging and dispatch via `IEventConsumer.DispatchAsync()`
-2. **Services register handlers** in their `{Service}ServiceEvents.cs` partial class
-3. **All registered handlers** receive every event, isolated from each other's failures
+RabbitMQ allows only ONE consumer per queue. When multiple plugins need the same event, `IEventConsumer` provides application-level fan-out: generated controllers receive events and dispatch via `DispatchAsync()`, services register handlers in `{Service}ServiceEvents.cs`, and all registered handlers receive every event, isolated from each other's failures.
 
 ### Defining Event Subscriptions
 
-Define subscriptions in `{service}-events.yaml`:
+In `{service}-events.yaml`:
 
 ```yaml
 info:
@@ -37,16 +27,8 @@ info:
   x-event-subscriptions:
     - topic: account.deleted
       event: AccountDeletedEvent
-      handler: HandleAccountDeleted
-    - topic: session.connected
-      event: SessionConnectedEvent
-      handler: HandleSessionConnected
+      handler: HandleAccountDeleted      # Method name without Async suffix
 ```
-
-**Field Definitions**:
-- `topic`: The RabbitMQ routing key / topic name
-- `event`: The event model class name (must exist in an events schema)
-- `handler`: The handler method name (without `Async` suffix)
 
 ### Generated Files
 
@@ -78,7 +60,7 @@ public async Task HandleAccountDeletedAsync(AccountDeletedEvent evt)
 }
 ```
 
-**Key Points**: Registration is idempotent. Handlers are isolated (one throwing doesn't prevent others). `IEventConsumer` is singleton.
+Registration is idempotent. Handlers are isolated (one throwing doesn't prevent others). `IEventConsumer` is singleton.
 
 ---
 
@@ -91,20 +73,17 @@ public async Task HandleAccountDeletedAsync(AccountDeletedEvent evt)
 ```csharp
 try
 {
-    // External call (state store, service client, etc.)
     var result = await _stateStore.GetAsync(key, ct);
     if (result == null) return (StatusCodes.NotFound, null);
     return (StatusCodes.OK, result);
 }
 catch (ApiException ex)
 {
-    // Expected API error - log as warning, propagate status
     _logger.LogWarning(ex, "Service call failed with status {Status}", ex.StatusCode);
     return ((StatusCodes)ex.StatusCode, null);
 }
 catch (Exception ex)
 {
-    // Unexpected error - log as error, emit error event
     _logger.LogError(ex, "Failed operation {Operation}", operationName);
     await _messageBus.TryPublishErrorAsync(
         serviceId: _configuration.ServiceId ?? "unknown",
@@ -115,122 +94,45 @@ catch (Exception ex)
 
 ### When ApiException Handling Applies
 
-**IMPORTANT**: The `ApiException` catch block is ONLY required when making **inter-service calls** using:
-- Generated service clients (e.g., `IItemClient`, `IAuthClient`, `IAccountClient`)
-- `IServiceNavigator` to invoke other Bannou plugins
-- `IMeshClient` for direct mesh invocation
-
-These clients throw `ApiException` when the target service returns a non-2xx status code.
-
-**ApiException handling is NOT required for**:
-- State store operations (`IStateStore<T>`) - these throw standard exceptions, not ApiException
-- Message bus operations (`IMessageBus`) - fire-and-forget, uses `TryPublishAsync`
-- Lock provider operations (`IDistributedLockProvider`) - returns success/failure, doesn't throw
-- Local business logic - no cross-service boundary
-
-```csharp
-// REQUIRED: Inter-service call - must catch ApiException
-var (status, items) = await _itemClient.ListItemsByContainerAsync(request, ct);
-
-// NOT REQUIRED: State store operation - ApiException won't be thrown
-var container = await _containerStore.GetAsync(key, ct);
-
-// NOT REQUIRED: Message publishing - uses TryPublish pattern
-await _messageBus.TryPublishAsync("topic", evt, cancellationToken: ct);
-```
+The `ApiException` catch is ONLY required for **inter-service calls** (generated clients like `IItemClient`, `IServiceNavigator`, `IMeshClient`). NOT required for state store operations, message bus operations, lock provider operations, or local business logic.
 
 ### Error Event Publishing
 
-Use `IMessageBus.TryPublishErrorAsync` for unexpected/internal failures only. **This method is ALWAYS safe to call** - both implementations (RabbitMQMessageBus and InMemoryMessageBus) have internal try/catch blocks that prevent exceptions from propagating. Returns `false` if publishing fails (prevents cascading failures). Replaces legacy `IErrorEventEmitter`.
+`IMessageBus.TryPublishErrorAsync` is ALWAYS safe to call (internal try/catch prevents propagation). Returns `false` on failure. When an operation fails unexpectedly: log the error, call `TryPublishErrorAsync`, return failure for the ORIGINAL reason.
 
-**CRITICAL**: When an operation fails due to an unexpected exception:
-1. Log the error
-2. Call `TryPublishErrorAsync` (safe - won't throw)
-3. Return failure for the ORIGINAL reason (not because error event failed)
+**Emit for**: Unexpected exceptions, infrastructure failures, programming errors caught at runtime.
+**Do NOT emit for**: Validation (400), authentication (401), authorization (403), not found (404), conflicts (409).
 
-**Emit for**:
-- Unexpected exceptions that should never happen in normal operation
-- Infrastructure failures (database unavailable, message broker down)
-- Programming errors caught at runtime (null references, invalid state)
+### Error Granularity & Log Levels
 
-**Do NOT emit for**:
-- Validation errors (400) - these are expected user input issues
-- Authentication failures (401) - expected when credentials are wrong
-- Authorization failures (403) - expected when permissions are insufficient
-- Not found (404) - expected when resources don't exist
-- Conflicts (409) - expected during concurrent modifications
+Services MUST distinguish: 400 Bad Request, 401 Unauthorized, 403 Forbidden, 404 Not Found, 409 Conflict, 500 Internal Server Error.
 
-**Guidelines**: Redact sensitive information (passwords, tokens). Include correlation IDs for tracing. Keep structured context minimal.
-
-### Error Granularity
-
-Services MUST distinguish between:
-- **400 Bad Request**: Invalid input/validation failures
-- **401 Unauthorized**: Missing or invalid authentication
-- **403 Forbidden**: Valid auth but insufficient permissions
-- **404 Not Found**: Resource doesn't exist
-- **409 Conflict**: State conflict (duplicate creation, etc.)
-- **500 Internal Server Error**: Unexpected failures
-
-### Warning vs Error Log Levels
-
-- **LogWarning**: Expected failures (timeouts, transient failures, API errors from downstream)
-- **LogError**: Unexpected failures that should trigger `ServiceErrorEvent` emission
+- **LogWarning**: Expected failures (timeouts, transient failures, downstream API errors)
+- **LogError**: Unexpected failures that should trigger error event emission
 
 ---
 
 ## Tenet 8: Return Pattern (MANDATORY)
 
-**Rule**: All service methods MUST return `(StatusCodes, TResponse?)` tuples.
-
-### StatusCodes Enum
-
-**Important**: Use `BeyondImmersion.BannouService.StatusCodes` (our internal enum), NOT `Microsoft.AspNetCore.Http.StatusCodes` (static class).
+**Rule**: All service methods MUST return `(StatusCodes, TResponse?)` tuples using `BeyondImmersion.BannouService.StatusCodes` (NOT `Microsoft.AspNetCore.Http.StatusCodes`).
 
 ```csharp
 return (StatusCodes.OK, response);              // Success
-return (StatusCodes.BadRequest, null);          // Validation error
-return (StatusCodes.Unauthorized, null);        // Missing/invalid auth
-return (StatusCodes.Forbidden, null);           // Valid auth, insufficient permissions
 return (StatusCodes.NotFound, null);            // Resource doesn't exist
-return (StatusCodes.Conflict, null);            // State conflict
 return (StatusCodes.InternalServerError, null); // Unexpected failure
 ```
 
 ### Empty Payload for Error Responses (ABSOLUTE)
 
-Error responses MUST return `null` as the second tuple element. **No exceptions for "structured error responses" or "API contracts".**
+Error responses MUST return `null` as the second tuple element. Status codes are sufficient (400=validation, 404=not found, 409=conflict). Error message strings aren't programmatically actionable and risk leaking internal details. For detailed errors (like compilation failures), log server-side.
 
-**Why null is required**:
-- **Status codes are sufficient**: The status code already communicates what failed (400=validation, 404=not found, 409=conflict, etc.)
-- **Error messages aren't actionable**: Clients cannot programmatically act on error strings without brittle magic string matching
-- **Consistency**: All errors follow the same pattern - check status code, handle accordingly
-- **Security**: Prevents accidental leakage of internal details
-
-**Incorrect patterns** (even if they seem "helpful"):
 ```csharp
-// WRONG: Structured error response - status code already says "bad request"
+// WRONG: Structured error response - status code already communicates the failure
 return (StatusCodes.BadRequest, new CompileResponse { Success = false, Errors = errors });
 
-// WRONG: User-friendly message - status code already says "not found"
-return (StatusCodes.NotFound, new Response { Error = "Entity not found" });
-
-// WRONG: Boolean result with error status - redundant and inconsistent
-return (StatusCodes.Conflict, new Response { Released = false });
+// CORRECT: Null payload, status code tells the story
+return (StatusCodes.BadRequest, null);
 ```
-
-**Correct pattern**:
-```csharp
-return (StatusCodes.BadRequest, null);   // Client checks status, knows validation failed
-return (StatusCodes.NotFound, null);     // Client checks status, knows resource missing
-return (StatusCodes.Conflict, null);     // Client checks status, knows conflict occurred
-```
-
-**For detailed errors** (like compilation failures), log server-side for debugging. Clients should retry with corrected input based on status code semantics, not parse error strings.
-
-### Rationale
-
-Tuple pattern enables clean status code propagation without throwing exceptions for expected failure cases. This provides explicit status handling, avoids exception overhead, and keeps service logic decoupled from HTTP concerns.
 
 ---
 
@@ -241,65 +143,20 @@ Tuple pattern enables clean status code propagation without throwing exceptions 
 ### Requirements
 
 1. **No in-memory state** that isn't reconstructible from lib-state stores
-2. **Use atomic state operations** for state that requires consistency
+2. **Use atomic state operations** for state requiring consistency
 3. **Use ConcurrentDictionary** for local caches, never plain Dictionary
 4. **Use IDistributedLockProvider** for cross-instance coordination
 
-### Acceptable Patterns
-
-```csharp
-// Thread-safe local cache (acceptable for non-critical data)
-private readonly ConcurrentDictionary<string, CachedItem> _cache = new();
-
-// lib-state for authoritative state
-await _stateStore.SaveAsync(key, value);
-```
-
 ### Event-Backed Local Caches (ACCEPTABLE)
 
-Local instance caches are acceptable when **both** conditions are met:
-
-1. **Loaded via API on startup**: Cache is populated from authoritative source (another service or lib-state) during service initialization - no data loss risk
-2. **Kept current via events**: Cache subscribes to relevant pub/sub events to stay synchronized with changes
-
-**Example**: `_accountSubscriptions` in GameSessionService
-- Loaded from SubscriptionClient on session connect
-- Updated via `subscription.changed` events
-- Authoritative state lives in Subscription service
-- Local cache is purely for performance (avoid API call per operation)
+Local caches are acceptable when **both**: (1) loaded via API on startup from authoritative source, and (2) kept current via event subscriptions. The authoritative state must live in a service or lib-state store. Local state as the *only* source of truth is NOT acceptable.
 
 ```csharp
-// ACCEPTABLE: Event-backed local cache
+// ACCEPTABLE: Event-backed local cache (authoritative state in Subscription service)
 private static readonly ConcurrentDictionary<Guid, HashSet<string>> _accountSubscriptions = new();
-
-// Loaded from API on session connect:
-var subscriptions = await _subscriptionsClient.GetAccountSubscriptionsAsync(accountId);
-_accountSubscriptions[accountId] = subscriptions;
-
-// Updated via event subscription:
-public Task HandleSubscriptionChangedAsync(SubscriptionChangedEvent evt)
-{
-    _accountSubscriptions[evt.AccountId] = evt.ActiveSubscriptions;
-    return Task.CompletedTask;
-}
 ```
 
-**NOT acceptable**: Local state that is the *only* source of truth (e.g., tracking which WebSocket sessions are connected - this must use distributed state).
-
-### Forbidden Patterns
-
-```csharp
-// Plain dictionary (not thread-safe)
-private readonly Dictionary<string, Item> _items = new(); // NO!
-```
-
-### Local Locks vs Distributed Locks
-
-**Local locks** (`lock`, `SemaphoreSlim`) protect in-memory state within a single process only. They do NOT work for cross-instance coordination.
-
-### IDistributedLockProvider Pattern
-
-For cross-instance coordination:
+### Distributed Lock Pattern
 
 ```csharp
 await using var lockResponse = await _lockProvider.LockAsync(
@@ -307,108 +164,70 @@ await using var lockResponse = await _lockProvider.LockAsync(
     lockOwner: Guid.NewGuid().ToString(),
     expiryInSeconds: 30, cancellationToken: ct);
 if (!lockResponse.Success) return (StatusCodes.Conflict, null);
-// Critical section - safe across all instances
 ```
 
 ### Optimistic Concurrency with ETags
 
-For consistency without locking:
-
 ```csharp
 var (value, etag) = await _stateStore.GetWithETagAsync(key, ct);
 var saved = await _stateStore.TrySaveAsync(key, modifiedValue, etag, ct);
-if (!saved) return (StatusCodes.Conflict, null);  // Concurrent modification
+if (!saved) return (StatusCodes.Conflict, null);
 ```
 
 ### Shared Security Components (CRITICAL)
 
-**Rule**: Security-critical shared components (salts, keys, secrets) MUST use consistent shared values across all service instances, NEVER generate unique values per instance.
+Security-critical shared components (salts, keys, secrets) MUST use consistent shared values across all instances, NEVER generate unique values per instance. Client shortcuts from instance A must work on instance B; reconnection tokens from A must validate on B.
 
 ```csharp
-// CORRECT - Use shared/deterministic value (consistent across instances)
+// CORRECT - shared/deterministic (consistent across instances)
 _serverSalt = GuidGenerator.GetSharedServerSalt();
 
-// WRONG - Per-instance random generation breaks distributed deployment
-_serverSalt = GuidGenerator.GenerateServerSalt();  // BREAKS CROSS-INSTANCE OPERATIONS
+// WRONG - per-instance random generation breaks distributed deployment
+_serverSalt = GuidGenerator.GenerateServerSalt();
 ```
 
-**Why This Matters**:
-- Client shortcuts published by instance A must work when routing to instance B
-- Reconnection tokens from instance A must validate on instance B
-- GUID-based security isolation requires predictable server component
-
-**Services Requiring Shared State**:
-| Service | Component | Pattern |
-|---------|-----------|---------|
-| Connect | Server salt for client GUIDs | `GetSharedServerSalt()` |
-| Auth | JWT signing keys | Configuration-based (already correct) |
-
-**Detection Criteria** - If a service has:
-- `Singleton` lifetime
-- Generates cryptographic values in constructor
-- Participates in distributed deployment
-- → MUST use shared/deterministic values, NOT per-instance random generation
+**Detection**: If a service has Singleton lifetime + generates cryptographic values in constructor + participates in distributed deployment → MUST use shared/deterministic values.
 
 ---
 
 ## Tenet 14: Polymorphic Associations (STANDARDIZED)
 
-**Rule**: When entities can reference multiple entity types, use the **Entity ID + Type Column** pattern in schemas and **composite string keys** for state store operations.
-
-### Required Pattern: Separate Columns in API Schema
+**Rule**: When entities reference multiple entity types, use **Entity ID + Type Column** in schemas and **composite string keys** for state store operations.
 
 ```yaml
+# Schema pattern
 CreateRelationshipRequest:
-  type: object
-  required: [entity1Id, entity1Type, entity2Id, entity2Type, relationshipTypeId]
   properties:
     entity1Id: { type: string, format: uuid }
     entity1Type: { $ref: '#/components/schemas/EntityType' }
-    entity2Id: { type: string, format: uuid }
-    entity2Type: { $ref: '#/components/schemas/EntityType' }
-
-EntityType:
-  type: string
-  enum: [CHARACTER, NPC, ITEM, LOCATION, REALM]
 ```
 
-### Composite Keys for State Store
-
 ```csharp
-// Format: "{entityType}:{entityId}"
+// Composite keys for state store
 private static string BuildEntityRef(Guid id, EntityType type)
     => $"{type.ToString().ToLowerInvariant()}:{id}";
 
-// Uniqueness constraint key
 private static string BuildCompositeKey(...)
     => $"composite:{BuildEntityRef(id1, type1)}:{BuildEntityRef(id2, type2)}:{relationshipTypeId}";
 ```
 
-### Application-Level Referential Integrity
-
-Since lib-state stores cannot enforce foreign key constraints at the application level, implement validation in service logic and subscribe to `entity.deleted` events for cascade handling.
+Since lib-state stores cannot enforce foreign key constraints, implement validation in service logic and subscribe to `entity.deleted` events for cascade handling.
 
 ---
 
 ## Tenet 17: Client Event Schema Pattern (RECOMMENDED)
 
-**Rule**: Services that push events to WebSocket clients MUST define those events in a dedicated `{service}-client-events.yaml` schema file.
-
-### Client Events vs Service Events
+**Rule**: Services pushing events to WebSocket clients MUST define them in `{service}-client-events.yaml`.
 
 | Type | File | Purpose | Consumers |
 |------|------|---------|-----------|
 | **Client Events** | `{service}-client-events.yaml` | Pushed TO clients via WebSocket | Game clients, SDK |
 | **Service Events** | `{service}-events.yaml` | Service-to-service pub/sub | Other Bannou services |
 
-### RabbitMQ Exchange Architecture
-
 | Exchange | Type | Purpose |
 |----------|------|---------|
-| `bannou` | Fanout | Service events via `IMessageBus` (all subscribers receive all) |
+| `bannou` | Fanout | Service events via `IMessageBus` |
 | `bannou-client-events` | Direct | Client events via `IClientEventPublisher` (per-session routing) |
-
-**CRITICAL: Publishing to Sessions**
 
 ```csharp
 // CORRECT: Uses direct exchange with per-session routing
@@ -418,553 +237,337 @@ await _clientEventPublisher.PublishToSessionAsync(sessionId, clientEvent);
 await _messageBus.PublishAsync($"CONNECT_SESSION_{sessionId}", clientEvent);
 ```
 
-### Required Pattern
-
-1. Define client events in `/schemas/{service}-client-events.yaml`
-2. Generate models via `make generate`
-3. Auto-included in SDKs via `scripts/generate-client-sdk.sh`
-
 ---
 
 ## Tenet 20: JSON Serialization (MANDATORY)
 
-**Rule**: All JSON serialization and deserialization MUST use `BannouJson` helper methods. Direct use of `JsonSerializer` is forbidden except in unit tests specifically testing serialization behavior.
-
-### Why Centralized Serialization?
-
-Inconsistent serialization options caused significant debugging issues:
-- Enum format mismatches (kebab-case vs PascalCase vs snake_case)
-- Case sensitivity failures between services
-- Missing converters causing deserialization exceptions
-
-`BannouJson` (located in `sdks/core`, namespace `BeyondImmersion.Bannou.Core`) provides the single source of truth for all serialization settings. This is part of the Core SDK shared across server and client code.
-
-### Required Pattern
+**Rule**: All JSON serialization/deserialization MUST use `BannouJson` (from `BeyondImmersion.Bannou.Core`). Direct `JsonSerializer` use is forbidden except in unit tests specifically testing serialization behavior (with `BannouJson.Options`).
 
 ```csharp
-using BeyondImmersion.Bannou.Core;
-
-// CORRECT: Use BannouJson helper (from Core SDK)
+// CORRECT
 var model = BannouJson.Deserialize<MyModel>(jsonString);
 var json = BannouJson.Serialize(model);
+// Extension methods: jsonString.FromJson<MyModel>(), model.ToJson()
 
-// CORRECT: Extension method syntax also available
-var model = jsonString.FromJson<MyModel>();
-var json = model.ToJson();
-
-// FORBIDDEN: Direct JsonSerializer usage
-var model = JsonSerializer.Deserialize<MyModel>(jsonString); // NO!
-var json = JsonSerializer.Serialize(model); // NO!
-var model = JsonSerializer.Deserialize<MyModel>(jsonString, options); // NO - even with custom options!
+// FORBIDDEN
+var model = JsonSerializer.Deserialize<MyModel>(jsonString);
 ```
 
 ### JsonDocument Navigation is Allowed
 
-This tenet targets **deserialization to typed models**, not DOM navigation. `JsonDocument.Parse()` and `JsonElement` navigation are acceptable for:
-
-1. **External API responses**: Parsing third-party API responses with unknown/variable structure
-2. **Metadata dictionaries**: Reading pre-parsed `JsonElement` values from metadata fields
-3. **JSON introspection**: Examining JSON structure without deserializing to a model
-
-```csharp
-// ALLOWED: JsonDocument for navigating external API response
-using var doc = JsonDocument.Parse(steamApiResponse);
-var success = doc.RootElement.GetProperty("response").GetProperty("success").GetBoolean();
-
-// ALLOWED: Reading JsonElement from metadata dictionary
-if (metadata.TryGetValue("threshold", out var element) && element.ValueKind == JsonValueKind.Number)
-    return element.GetDouble();
-
-// FORBIDDEN: JsonSerializer for typed model deserialization (use BannouJson)
-var model = JsonSerializer.Deserialize<SteamResponse>(steamApiResponse); // NO!
-```
+`JsonDocument.Parse()` and `JsonElement` navigation are acceptable for external API responses, metadata dictionaries, and JSON introspection. Only **typed model deserialization** must use BannouJson.
 
 ### Key Serialization Behaviors
 
-All serialization via `BannouJson` uses these settings:
-
-| Behavior | Setting | Example |
-|----------|---------|---------|
-| **Enums** | PascalCase strings matching C# names | `GettingStarted` (NOT `getting-started` or `getting_started`) |
-| **Property matching** | Case-insensitive | Handles both `AccountId` and `accountId` |
-| **Null values** | Ignored when writing | `{ "name": "test" }` not `{ "name": "test", "optional": null }` |
-| **Numbers** | Strict parsing | `"123"` does NOT coerce to integer 123 |
-
-**Async/Stream**: `BannouJson.DeserializeAsync`, `SerializeAsync`, `SerializeToUtf8Bytes` also available.
-
-**Exception**: Unit tests validating serialization behavior MAY use `JsonSerializer` directly with `BannouJson.Options`.
+| Behavior | Setting |
+|----------|---------|
+| **Enums** | PascalCase strings matching C# names |
+| **Property matching** | Case-insensitive |
+| **Null values** | Ignored when writing |
+| **Numbers** | Strict parsing (no string coercion) |
 
 ---
 
 ## Tenet 21: Configuration-First Development (MANDATORY)
 
-**Rule**: All runtime configuration MUST be defined in service configuration schemas and accessed through generated configuration classes. Direct `Environment.GetEnvironmentVariable` calls are forbidden except for documented exceptions.
+**Rule**: All runtime configuration MUST be defined in `schemas/{service}-configuration.yaml` and accessed through generated configuration classes. Direct `Environment.GetEnvironmentVariable` is forbidden except for documented exceptions.
 
 ### Requirements
 
-1. **Define in Schema**: All configuration goes in `schemas/{service}-configuration.yaml`
+1. **Define in Schema**: All configuration in `schemas/{service}-configuration.yaml`
 2. **Use Injected Configuration**: Access via `{Service}ServiceConfiguration` class
 3. **Fail-Fast Required Config**: Required values without defaults MUST throw at startup
 4. **No Hardcoded Credentials**: Never fall back to hardcoded credentials or connection strings
-5. **Use AppConstants**: Shared defaults use `AppConstants` constants, not hardcoded strings
-6. **No Dead Configuration**: Every defined config property MUST be referenced in service code
-7. **No Hardcoded Tunables**: Any tunable value (limits, timeouts, thresholds, capacities) MUST be a configuration property. A hardcoded tunable is a sign you need to create a new config property.
-8. **Use Defined Infrastructure**: If a cache/ephemeral state store is defined for the service in `schemas/state-stores.yaml`, the service MUST implement cache read-through/write-through using that store
-9. **NEVER Add Secondary Fallbacks for Schema-Defaulted Properties**: If a configuration property has a default value in the schema (which compiles into the C# property initializer), service code MUST NOT add a null-coalescing fallback. This is absolutely forbidden because:
-   - **Redundant**: The default already exists in the generated class
-   - **Dangerous**: If the fallback differs from the schema default, it creates silent behavioral differences
-   - **Bug-masking**: If configuration loading fails catastrophically enough that a defaulted property becomes null, that's a critical infrastructure failure we NEED to know about via exception
-   - **Confusing**: Developers read the schema default and expect that behavior; a hidden code fallback violates that expectation
-
-### Configuration Completeness (MANDATORY)
-
-**Rule**: Configuration properties exist to be used. If a property is defined in the configuration schema, the service implementation MUST reference it. Unused config properties indicate either dead schema (remove from configuration YAML) or missing functionality (implement the feature that uses it).
-
-**Hardcoded Tunables are Forbidden**:
-
-Any numeric literal that represents a limit, timeout, threshold, or capacity is a sign that a configuration property needs to exist. If you find yourself writing a magic number, define it in the configuration schema first.
+5. **Use AppConstants**: Shared defaults use `AppConstants` constants
+6. **No Dead Configuration**: Every defined config property MUST be referenced in the plugin (service, cache, provider, worker, etc.)
+7. **No Hardcoded Tunables**: Any limit, timeout, threshold, or capacity MUST be a configuration property
+8. **Use Defined Infrastructure**: If `schemas/state-stores.yaml` defines a cache store for the service, implement cache read-through using that store
+9. **No Secondary Fallbacks**: If a config property has a schema default, NEVER add `??` fallback in code. The default exists in the generated class. If it's null, that's a critical infrastructure failure - throw, don't mask it.
 
 ```csharp
-// FORBIDDEN: Hardcoded tunables - these need configuration properties
-var maxResults = Math.Min(body.Limit, 1000);  // NO - define MaxResultsPerQuery in config schema
-await Task.Delay(TimeSpan.FromSeconds(30));   // NO - define RetryDelaySeconds in config schema
-if (list.Count >= 100) return error;          // NO - define MaxItemsPerContainer in config schema
+// FORBIDDEN: Hardcoded tunables
+var maxResults = Math.Min(body.Limit, 1000);           // Define MaxResultsPerQuery in config
+await Task.Delay(TimeSpan.FromSeconds(30));            // Define RetryDelaySeconds in config
 
-// CORRECT: All tunables come from configuration
+// CORRECT: All tunables from configuration
 var maxResults = Math.Min(body.Limit, _configuration.MaxResultsPerQuery);
-await Task.Delay(TimeSpan.FromSeconds(_configuration.RetryDelaySeconds));
-if (list.Count >= _configuration.MaxItemsPerContainer) return error;
 ```
 
-**Mathematical Constants are Not Tunables**:
+**Mathematical constants** (epsilon, golden ratio, bits-per-byte) are NOT tunables and are acceptable as hardcoded values.
 
-Constants used for mathematical correctness (not business logic tuning) are acceptable as hardcoded values:
+**Stub scaffolding**: Config properties for unimplemented features may exist unreferenced if documented in the plugin's Stubs section.
 
-```csharp
-// ACCEPTABLE: Mathematical constants for floating-point comparison
-private const double Epsilon = 0.000001;  // Standard floating-point tolerance
-if (Math.Abs(a - b) < Epsilon) { ... }
-
-// ACCEPTABLE: Algorithm constants with mathematical meaning
-private const double GoldenRatio = 1.618033988749895;
-private const int BitsPerByte = 8;
-```
-
-**Stub Scaffolding Configuration**:
-
-Configuration properties for unimplemented features (stubs) may exist without being referenced, provided the stub is documented and the config is clearly prepared for future implementation. Document these in the plugin's Stubs section.
-
-**Defined State Stores Must Be Used**:
-
-If `schemas/state-stores.yaml` defines a Redis cache store for your service (e.g., `item-template-cache`), you MUST implement cache read-through:
-
-```csharp
-// CORRECT: Cache store defined in schema is used for read-through caching
-var cached = await _cacheStore.GetAsync(key, ct);
-if (cached is not null) return cached;
-
-var persistent = await _persistentStore.GetAsync(key, ct);
-if (persistent is null) return null;
-
-await _cacheStore.SaveAsync(key, persistent,
-    new StateOptions { Ttl = _configuration.CacheTtlSeconds }, ct);
-return persistent;
-```
-
-If a defined cache store is genuinely unnecessary, remove it from `schemas/state-stores.yaml` rather than leaving dead infrastructure.
+**Defined state stores**: If `schemas/state-stores.yaml` defines a Redis cache for your service, implement read-through caching. If genuinely unnecessary, remove it from the schema.
 
 ### Allowed Exceptions (4 Categories)
 
 Document with code comments explaining the exception:
 
-1. **Assembly Loading Control**: `SERVICES_ENABLED`, `*_SERVICE_ENABLED/DISABLED` in `PluginLoader.cs`/`IBannouService.cs`
-   - Required before DI container is available to determine which plugins to load
-
+1. **Assembly Loading Control**: `SERVICES_ENABLED`, `*_SERVICE_ENABLED/DISABLED` in `PluginLoader.cs`/`IBannouService.cs` (required before DI container available)
 2. **Test Harness Control**: `DAEMON_MODE`, `PLUGIN` in test projects
-   - Test infrastructure, not production code
-   - Tests specifically testing configuration-binding may use `SetEnvironmentVariable`
-
-3. **Orchestrator Environment Forwarding**: `Environment.GetEnvironmentVariables()` in `OrchestratorService.cs`
-   - Forwards UNKNOWN configuration to deployed containers (orchestrator's core responsibility)
-   - Not reading config for orchestrator itself - forwarding to child containers
-   - Uses strict whitelist (`IsAllowedEnvironmentVariable`) and excludes per-container values
-   - Required because container deployments need inherited infrastructure config
-
-4. **Integration Test Runners**: `BANNOU_HTTP_ENDPOINT`, `BANNOU_APP_ID` in `http-tester/` and `edge-tester/`
-   - Standalone test harnesses without access to bannou-service's DI or configuration system
-   - Use `AppConstants.ENV_*` for env var names, not hardcoded strings
-   - Must provide sensible defaults (e.g., `?? "http://localhost:5012"`)
-
-### Pattern
+3. **Orchestrator Environment Forwarding**: `Environment.GetEnvironmentVariables()` in `OrchestratorService.cs` (forwards config to deployed containers via strict whitelist)
+4. **Integration Test Runners**: `BANNOU_HTTP_ENDPOINT`, `BANNOU_APP_ID` in `http-tester/`/`edge-tester/` (standalone harnesses without DI access, use `AppConstants.ENV_*`)
 
 ```csharp
-// CORRECT: Use injected configuration with fail-fast
+// CORRECT: Injected config with fail-fast
 _connectionString = config.ConnectionString
     ?? throw new InvalidOperationException("SERVICE_CONNECTION_STRING required");
 
-// FORBIDDEN: Direct env var access, hidden fallbacks, hardcoded defaults
-Environment.GetEnvironmentVariable("...");  // NO - use config class
-?? "amqp://guest:guest@localhost";          // NO - masks config issues
+// FORBIDDEN
+Environment.GetEnvironmentVariable("...");  // Use config class
+?? "amqp://guest:guest@localhost";          // Masks config issues
 ```
 
 ---
 
 ## Tenet 23: Async Method Pattern (MANDATORY)
 
-**Rule**: All methods returning `Task` or `Task<T>` MUST use the `async` keyword and contain at least one `await`.
-
-### Why This Matters
-
-Non-async Task-returning methods have several problems:
-1. **Exception handling differs** - Exceptions thrown before returning the Task won't be captured in the Task
-2. **Stack traces are incomplete** - Missing async state machine makes debugging harder
-3. **Disposal timing issues** - `using` statements don't work correctly without `await`
-4. **Inconsistent behavior** - Some code paths await, others don't
-
-### Correct Pattern
+**Rule**: All methods returning `Task` or `Task<T>` MUST use `async` and contain at least one `await`. Non-async Task-returning methods have different exception handling, incomplete stack traces, and broken `using` semantics.
 
 ```csharp
-// CORRECT: async method with await
+// CORRECT
 public async Task<AccountResponse> GetAccountAsync(Guid accountId, CancellationToken ct)
 {
     var account = await _stateStore.GetAsync($"account:{accountId}", ct);
     return MapToResponse(account);
 }
 
-// CORRECT: async even when just returning a value
-public async Task<int> GetCountAsync()
-{
-    return await Task.FromResult(_items.Count);
-}
-```
-
-### Incorrect Patterns
-
-```csharp
-// WRONG: Returns Task without async/await
+// WRONG: Blocks thread, wrong exception semantics
 public Task<AccountResponse> GetAccountAsync(Guid accountId)
 {
     var account = _stateStore.GetAsync($"account:{accountId}").Result; // BLOCKS!
     return Task.FromResult(MapToResponse(account));
 }
-
-// WRONG: Non-async method returning Task
-public Task DoWorkAsync()
-{
-    _logger.LogInformation("Working");
-    return Task.CompletedTask; // Should be: async Task, no return needed
-}
 ```
 
 ### Synchronous Implementation of Async Interface
 
-When implementing an interface that requires async methods but your implementation is synchronous, use `await Task.CompletedTask;`:
+When implementing an async interface with synchronous logic, use `await Task.CompletedTask`:
 
 ```csharp
 public async Task DoWorkAsync()
 {
     _logger.LogInformation("Working");
-    // Synchronous work, but interface requires Task
     await Task.CompletedTask;
-}
-
-public async Task<bool> IsEnabledAsync()
-{
-    var result = _isEnabled; // Synchronous check
-    await Task.CompletedTask;
-    return result;
 }
 ```
-
-This maintains proper async semantics without pragma suppressions.
-
----
-
-## Quick Reference: Implementation Violations
-
-| Violation | Tenet | Fix |
-|-----------|-------|-----|
-| Missing event consumer registration | T3 | Add RegisterEventConsumers call |
-| Using IErrorEventEmitter | T7 | Use IMessageBus.TryPublishErrorAsync instead |
-| Generic catch returning 500 | T7 | Catch ApiException specifically |
-| Emitting error events for user errors | T7 | Only emit for unexpected/internal failures |
-| Using Microsoft.AspNetCore.Http.StatusCodes | T8 | Use BeyondImmersion.BannouService.StatusCodes |
-| Plain Dictionary for cache | T9 | Use ConcurrentDictionary |
-| Per-instance salt/key generation | T9 | Use shared/deterministic values |
-| Wrong exchange for client events | T17 | Use IClientEventPublisher, not IMessageBus |
-| Direct `JsonSerializer` usage | T20 | Use `BannouJson.Serialize/Deserialize` |
-| Direct `Environment.GetEnvironmentVariable` | T21 | Use service configuration class |
-| Hardcoded credential fallback | T21 | Remove default, require configuration |
-| Non-async Task-returning method | T23 | Add async keyword and await |
-| `Task.FromResult` without async | T23 | Use async method with await |
-| `.Result` or `.Wait()` on Task | T23 | Use await instead |
 
 ---
 
 ## Tenet 24: Using Statement Pattern (MANDATORY)
 
-**Rule**: All disposable objects with method-scoped lifetimes MUST use `using` statements instead of manual `.Dispose()` calls.
-
-### Why This Matters
-
-Manual `.Dispose()` calls are error-prone:
-1. **Exception paths miss disposal** - If an exception is thrown before the `.Dispose()` call, the resource leaks
-2. **Maintenance burden** - Developers must remember to add dispose logic to finally blocks
-3. **Code complexity** - try/finally patterns for disposal are verbose and obscure intent
-4. **Analyzer blindness** - CA2000 cannot verify dispose is called on all paths with manual patterns
-
-### Correct Pattern
+**Rule**: All disposable objects with method-scoped lifetimes MUST use `using` statements. Manual `.Dispose()` misses exception paths and leaks resources.
 
 ```csharp
-// CORRECT: using statement - guarantees disposal on all paths
+// CORRECT
 using var connection = await _connectionFactory.CreateAsync(ct);
 await connection.SendAsync(data, ct);
-// connection.Dispose() called automatically when scope exits
 
-// CORRECT: using block for explicit scope control
-using (var reader = new StreamReader(stream))
-{
-    var content = await reader.ReadToEndAsync(ct);
-    return Parse(content);
-} // reader.Dispose() called here
-```
-
-### Incorrect Patterns
-
-```csharp
-// WRONG: Manual dispose in try/finally
+// WRONG: If SendAsync throws, connection leaks
 var connection = await _connectionFactory.CreateAsync(ct);
-try
-{
-    await connection.SendAsync(data, ct);
-}
-finally
-{
-    connection.Dispose(); // Use 'using' instead!
-}
-
-// WRONG: Manual dispose without exception safety
-var reader = new StreamReader(stream);
-var content = await reader.ReadToEndAsync(ct);
-reader.Dispose(); // If ReadToEndAsync throws, reader leaks!
-
-// WRONG: Conditional dispose that may miss paths
-HttpResponseMessage? response = null;
-try
-{
-    response = await _client.GetAsync(url, ct);
-    // ... processing
-}
-finally
-{
-    response?.Dispose(); // Should be: using var response = await ...
-}
+await connection.SendAsync(data, ct);
+connection.Dispose();
 ```
 
 ### When Manual Dispose is Acceptable
 
-Manual `.Dispose()` is only acceptable when the disposal scope extends **beyond the creating method**:
+Only when disposal scope extends beyond the creating method:
 
-1. **Class-owned resources** - Objects stored in instance fields that are disposed in the class's `Dispose()` method
-2. **Conditional ownership transfer** - When a resource is sometimes returned to the caller (who takes ownership)
-3. **Async disposal patterns** - When `await using` is not possible due to framework constraints
+1. **Class-owned resources** - Fields disposed in the class's `Dispose()` method
+2. **Conditional ownership transfer** - Resource sometimes returned to caller
+3. **Async disposal constraints** - When `await using` is impossible due to framework limitations
 
-```csharp
-// ACCEPTABLE: Class-owned resource, disposed in class's Dispose()
-private readonly Timer _heartbeatTimer;
-
-public void Dispose()
-{
-    _heartbeatTimer.Dispose(); // Class owns lifetime, not a method
-}
-
-// ACCEPTABLE: Conditional ownership transfer
-public async Task<Stream?> TryGetStreamAsync()
-{
-    var stream = await _factory.CreateAsync();
-    if (!await ValidateAsync(stream))
-    {
-        stream.Dispose(); // We own it, validation failed
-        return null;
-    }
-    return stream; // Caller takes ownership
-}
-```
-
-### EditorConfig Enforcement
-
-This tenet is enforced via `CA2000` (Dispose objects before losing scope) at warning level and `IDE0063` (Use simple 'using' statement) at suggestion level in `.editorconfig`.
+Enforced via `CA2000` (warning) and `IDE0063` (suggestion) in `.editorconfig`.
 
 ---
 
 ## Tenet 25: Type Safety Across All Models (MANDATORY)
 
-**Rule**: ALL models in the Bannou codebase - requests, responses, events, configuration, internal POCOs - MUST use the strongest available C# type for each field. String representations of typed values are **absolutely forbidden**.
+**Rule**: ALL models (requests, responses, events, configuration, internal POCOs) MUST use the strongest available C# type. String representations of typed values are **forbidden**.
 
-### ⚠️ CRITICAL: There Are No "JSON Boundaries"
+### There Are No "JSON Boundaries"
 
-**A common misconception**: "Strings are needed because JSON is involved" or "we get strings from HTTP requests."
-
-**This is FALSE.** Here's why:
-
-1. **NSwag generates typed models** from OpenAPI schemas. Request models have enum properties, not strings.
-2. **Configuration generator creates enum properties** from YAML enum definitions. Config classes have enum properties, not strings.
-3. **Event schemas define enum types**. Generated event models have enum properties, not strings.
-4. **BannouJson handles all serialization** automatically. Developers NEVER manually convert to/from JSON strings.
-
-**The JSON wire format is irrelevant to your code.** ASP.NET Core + NSwag + BannouJson handle the HTTP layer. By the time your service method receives a request body, it's already a fully-typed C# object with enum properties.
-
-### What This Means
-
-```csharp
-// When you receive a request:
-public async Task<(StatusCodes, Response?)> CreateItemAsync(CreateItemRequest body, CancellationToken ct)
-{
-    // body.Category is ALREADY ItemCategory enum - NSwag generated it that way
-    // body.Rarity is ALREADY ItemRarity enum - NSwag generated it that way
-    // There is NO string parsing needed. The framework did it.
-}
-
-// When you read configuration:
-public MyService(MyServiceConfiguration config)
-{
-    // config.DeploymentMode is ALREADY DeploymentMode enum - generator created it that way
-    // config.StorageProvider is ALREADY StorageProvider enum - generator created it that way
-    // There is NO string parsing needed. The DI system did it.
-}
-
-// When you receive an event:
-public async Task HandleItemCreatedAsync(ItemCreatedEvent evt)
-{
-    // evt.Category is ALREADY ItemCategory enum - NSwag generated it that way
-    // There is NO string parsing needed. BannouJson did it.
-}
-```
+"Strings are needed because JSON is involved" is FALSE. NSwag generates typed models from schemas with enum properties. Configuration generator creates enum properties from YAML. Event schemas define enum types. BannouJson handles all serialization automatically. By the time your service method receives a request, it's already a fully-typed C# object.
 
 ### Requirements
 
-1. **Request/Response models**: Generated by NSwag with proper enum types. Never manually define string alternatives.
-2. **Event models**: Generated by NSwag with proper enum types. Never manually define string alternatives.
-3. **Configuration classes**: Generated with proper enum types. Never use string for enum config.
-4. **Internal POCOs**: MUST mirror the types in generated models. If the schema has an enum, the POCO has an enum.
-5. **GUIDs**: Always `Guid` type, never `string`.
-6. **Dates**: Always `DateTimeOffset`, never `string`.
-7. **No Enum.Parse in business logic**: If you're parsing enums, something is wrong with your model definitions.
-
-### Correct Patterns
+1. **Request/Response/Event models**: Generated with proper enum types by NSwag
+2. **Configuration classes**: Generated with proper enum types
+3. **Internal POCOs**: MUST mirror types from generated models (enum→enum, not enum→string)
+4. **GUIDs**: Always `Guid`, never `string`
+5. **Dates**: Always `DateTimeOffset`, never `string`
+6. **No Enum.Parse in business logic**: If you're parsing enums, your model definition is wrong
 
 ```csharp
-// CORRECT: All models use proper types throughout the entire flow
-public async Task<(StatusCodes, CreateItemResponse?)> CreateItemAsync(CreateItemRequest body, CancellationToken ct)
+// CORRECT: Typed throughout the entire flow
+var model = new ItemTemplateModel
 {
-    // Request already has typed enums (NSwag generated)
-    var model = new ItemTemplateModel
-    {
-        TemplateId = Guid.NewGuid(),
-        Category = body.Category,        // ItemCategory enum → ItemCategory enum
-        Rarity = body.Rarity,            // ItemRarity enum → ItemRarity enum
-        CreatedAt = DateTimeOffset.UtcNow
-    };
+    TemplateId = Guid.NewGuid(),
+    Category = body.Category,        // ItemCategory enum -> ItemCategory enum
+    Rarity = body.Rarity,            // ItemRarity enum -> ItemRarity enum
+};
 
-    await _stateStore.SaveAsync(key, model, ct);  // BannouJson serializes enums automatically
-
-    // Event also has typed enums (NSwag generated)
-    var evt = new ItemCreatedEvent
-    {
-        ItemId = model.TemplateId,
-        Category = model.Category,       // ItemCategory enum → ItemCategory enum
-        Rarity = model.Rarity            // ItemRarity enum → ItemRarity enum
-    };
-    await _messageBus.PublishAsync("item.created", evt, cancellationToken: ct);
-
-    return (StatusCodes.OK, new CreateItemResponse { ItemId = model.TemplateId });
-}
-
-// CORRECT: Configuration uses enum types
-public class MyServiceConfiguration : IServiceConfiguration
-{
-    public DeploymentMode DeploymentMode { get; set; } = DeploymentMode.Bannou;  // Enum, not string
-    public StorageProvider StorageProvider { get; set; } = StorageProvider.Minio;  // Enum, not string
-}
-
-// CORRECT: Internal POCO mirrors typed properties
-internal class ItemTemplateModel
-{
-    public Guid TemplateId { get; set; }           // Guid, not string
-    public ItemCategory Category { get; set; }     // Enum, not string
-    public ItemRarity Rarity { get; set; }         // Enum, not string
-    public DateTimeOffset CreatedAt { get; set; }  // DateTimeOffset, not string
-}
+// FORBIDDEN
+public string Category { get; set; } = string.Empty;  // Use ItemCategory enum
+Category = body.Category.ToString();                    // Assign enum directly
+if (model.Status == "active") { ... }                   // Use enum equality
+var rarity = Enum.Parse<ItemRarity>(someString);        // Model is wrong
+public string OwnerId { get; set; } = string.Empty;    // Use Guid
 ```
 
-### Forbidden Patterns
+### Acceptable String Conversions (3 Cases Only)
+
+1. **State Store Set APIs**: Generic `TItem` parameters serialize via BannouJson automatically - `Guid`, `enum`, etc. work directly.
+
+2. **External Third-Party APIs**: Parsing responses from Steam, Discord, payment processors that we don't control. Does NOT apply to Bannou-to-Bannou calls.
+
+3. **Intentionally Generic Services (Hierarchy Isolation)**: Lower-layer services that must NOT enumerate higher-layer types use opaque string identifiers to prevent coupling:
 
 ```csharp
-// FORBIDDEN: String representation of enum in ANY model
-public string Category { get; set; } = string.Empty;  // NO - use ItemCategory enum
-public string DeploymentMode { get; set; } = "bannou";  // NO - use DeploymentMode enum
-
-// FORBIDDEN: ToString() when assigning to models
-Category = body.Category.ToString(),  // NO - assign enum directly
-
-// FORBIDDEN: Enum.Parse anywhere in service code
-var rarity = Enum.Parse<ItemRarity>(someString);  // NO - if you need this, your model is wrong
-
-// FORBIDDEN: String comparison for enum values
-if (model.Status == "active") { ... }  // NO - use enum equality
-if (config.Mode == "internal") { ... }  // NO - config should have enum property
-
-// FORBIDDEN: String for GUID fields
-public string OwnerId { get; set; } = string.Empty;  // NO - use Guid
-
-// FORBIDDEN: Claiming "JSON requires strings"
-// This excuse is invalid. BannouJson handles serialization. You never touch JSON directly.
+// ACCEPTABLE: lib-resource (L1) uses strings to avoid enumerating L2+ services
+public class RegisterReferenceRequest
+{
+    public string ResourceType { get; set; } = string.Empty;  // Opaque - caller provides
+    public string SourceType { get; set; } = string.Empty;    // Opaque - caller provides
+}
+// Creating an enum would make L1 depend on L4 types - hierarchy violation
 ```
 
-### The ONLY Acceptable String Conversions
+**When to apply**: Service is intentionally generic + at a lower layer + enum would require schema updates for new consumers + value is an opaque key, not semantic.
 
-There are exactly TWO places where string conversion is acceptable:
+See also: [SCHEMA-RULES.md "When NOT to Create Enums"](../SCHEMA-RULES.md#when-not-to-create-enums-service-hierarchy-consideration)
 
-#### 1. State Store Set APIs (Infrastructure Constraint)
+Tests follow the same rules. `DeploymentMode = "bannou"` in a test is wrong - use `DeploymentMode.Bannou`.
 
-The `AddToSetAsync`/`RemoveFromSetAsync` APIs require string members. This is a lib-state API constraint:
+---
+
+## Tenet 26: No Sentinel Values (MANDATORY)
+
+**Rule**: Never use "magic values" to represent absence. If a value can be absent, make it nullable.
+
+Sentinel values (`Guid.Empty` for "none", `-1` for "no index", `string.Empty` for "absent", `DateTime.MinValue` for "not set") circumvent NRT, hide bugs that compile silently, create ambiguity, and break JSON serialization semantics (`null` means absent; an empty GUID is a value).
 
 ```csharp
-// ACCEPTABLE: State store set API requires string values
-await _store.AddToSetAsync(indexKey, gameServiceId.ToString(), ct);
+// CORRECT: Nullable types - compiler-enforced, unambiguous
+public Guid? ContainerId { get; set; }          // null = no container
+public int? SlotIndex { get; set; }              // null = no slot
+public DateTimeOffset? ExpiresAt { get; set; }   // null = never expires
 
-// ACCEPTABLE: Parsing back when reading from set
-foreach (var idStr in await _store.GetSetMembersAsync(indexKey, ct))
+// FORBIDDEN: Sentinel values
+public Guid ContainerId { get; set; }            // Guid.Empty = "none"? Bug? Uninitialized?
+public int SlotIndex { get; set; } = -1;         // -1 = "no slot"
+```
+
+### Schema & Model Consistency
+
+If a field can be absent, the schema MUST declare `nullable: true`, and internal storage models MUST also use nullable types:
+
+```yaml
+containerId:
+  type: string
+  format: uuid
+  nullable: true
+  description: Container holding this item, null if unplaced
+```
+
+```csharp
+// Internal model MUST match schema nullability
+internal class ItemInstanceModel
 {
-    if (Guid.TryParse(idStr, out var id)) { ... }
+    public Guid? ContainerId { get; set; }  // Nullable - matches schema
 }
 ```
 
-The internal model should still use `Guid` - only the set API call uses string.
+### Migration Path
 
-#### 2. External Third-Party APIs (Outside Bannou's Control)
+For existing sentinel values: update schema to nullable → regenerate → update POCOs → replace sentinel comparisons with `HasValue`/null checks → migrate stored data.
 
-When calling external services (Steam API, Discord API, payment processors) that return string data:
+---
 
-```csharp
-// ACCEPTABLE: Parsing external API response that WE DON'T CONTROL
-var steamResponse = await _httpClient.GetStringAsync(steamUrl, ct);
-using var doc = JsonDocument.Parse(steamResponse);
-var statusStr = doc.RootElement.GetProperty("status").GetString();
-if (Enum.TryParse<SteamStatus>(statusStr, out var status)) { ... }
+## Tenet 30: Telemetry Span Instrumentation (MANDATORY)
+
+**Rule**: All async methods in service code MUST create a telemetry span via `ITelemetryProvider.StartActivity`. This applies to generated controller wrappers, helper DI services, and async methods in service implementation classes (except the primary methods that generated controllers already wrap).
+
+### Why This Matters
+
+Bannou's telemetry system builds on .NET's `System.Diagnostics.Activity` and `System.Diagnostics.Metrics`. With an exporter configured (OTLP, Prometheus, console), spans provide a 4-level hierarchy that answers "where is time being spent?" without printf-debugging:
+
+```
+Mesh span (transport + everything)
+  └─ Controller span (endpoint handler, without transport)
+       ├─ HelperService.MethodA (domain logic chunk)
+       │    ├─ StateStore.GetAsync (already instrumented via WrapStateStore)
+       │    └─ MessageBus.TryPublishAsync (already instrumented)
+       └─ HelperService.MethodB
+            └─ MeshClient.InvokeMethodAsync (already instrumented via lib-mesh)
 ```
 
-Note: This applies to TRUE external APIs, not other Bannou services. Bannou-to-Bannou calls use generated clients with proper types.
+- **Mesh span**: Already exists — lib-mesh instruments all inter-service calls
+- **Controller span**: Generated into controller wrappers — measures endpoint execution without transport
+- **Helper/service spans**: Added per this tenet — measures domain logic chunks
+- **Infrastructure spans**: Already exist — lib-state, lib-messaging, lib-mesh wrap operations
 
-### Why Tests Use Proper Types Too
+### The Zero-Signature-Change Pattern
 
-Test code follows the same rules. If a test is setting `DeploymentMode = "bannou"` as a string, the test is **wrong** - it should use `DeploymentMode = DeploymentMode.Bannou`.
+`Activity.Current` is ambient via `AsyncLocal<T>`. When a controller span starts an `Activity`, every async method called within that `await` chain automatically sees it as the parent. Child spans nest automatically. **No parameter passing or signature changes are required.**
 
-The type system catches mistakes at compile time. String-based tests would compile successfully with typos like `"bannon"` and fail mysteriously at runtime.
+```csharp
+// In a helper DI service — span automatically nests under the controller span
+public async Task<TicketModel?> ResolveTicketAsync(Guid ticketId, CancellationToken ct)
+{
+    using var activity = _telemetryProvider.StartActivity(
+        "bannou.matchmaking", "TicketResolver.ResolveTicket");
 
-### Serialization
+    var ticket = await _stateStore.GetAsync(key, ct);  // state store span nests under this
+    if (ticket == null) return null;
 
-`BannouJson` handles all enum serialization automatically (PascalCase string representation in JSON). State stores using `IStateStore<T>` serialize via `BannouJson`, so enum-typed POCO fields are stored as their string names and deserialized back to enum values transparently. **You never interact with this process.**
+    await _permissionClient.ClearSessionStateAsync(...);  // mesh span nests under this
+    return ticket;
+}
+```
+
+### Scope Rules
+
+| Code Location | Span Required? | How |
+|---------------|---------------|-----|
+| **Generated controllers** | Yes | Code generation adds spans automatically |
+| **Helper DI services** (`Services/*.cs`) | Yes — all `async` methods | Manual: add `StartActivity` call |
+| **Service implementation** (`*Service.cs`) | Yes — async helper methods only | Manual: add `StartActivity` call |
+| **Service implementation** — primary interface methods | No | Controller span already covers these |
+| **Event handlers** (`*ServiceEvents.cs`) | Yes — all `async` handlers | Manual: add `StartActivity` call |
+| **Infrastructure libs** (lib-state, lib-messaging, lib-mesh) | Already instrumented | No action needed |
+
+### The Async Heuristic
+
+"If it's `async`, it gets a span" — including methods with `await Task.CompletedTask` that are currently synchronous. Those methods are async because they logically should (or will) contain awaitable operations. The span costs nothing when telemetry is disabled (`StartActivity` returns null, all `?.SetTag` calls no-op) and will provide value when the method eventually gains real async work.
+
+### Naming Convention
+
+Activity names follow the pattern `{component}.{class}.{method}`:
+
+```csharp
+// Component is the service's telemetry component name
+_telemetryProvider.StartActivity("bannou.matchmaking", "QueueProcessor.ProcessQueue");
+_telemetryProvider.StartActivity("bannou.account", "AccountLookupHelper.ResolveByEmail");
+_telemetryProvider.StartActivity("bannou.matchmaking", "MatchmakingServiceEvents.HandleSessionDisconnected");
+```
+
+### What NOT to Instrument
+
+- **Pure synchronous computation** (non-async methods): These are CPU-bound and show up as the gap between async spans. The gap is almost always trivial.
+- **Trivial property accessors or validation helpers**: Only instrument methods that represent meaningful units of work.
+- **Generated code**: Never add spans to `*/Generated/` files — instrument via code generation templates instead.
+
+### Implementation Priority
+
+1. **Generated controller spans** — highest value per effort, zero ongoing maintenance. Add to NSwag templates so every endpoint gets a span automatically.
+2. **Helper DI service spans** — manual but targeted. Add to all async methods in `Services/*.cs` files within plugins.
+3. **Service implementation async helpers** — the private async methods in `*Service.cs` that aren't primary interface methods.
+4. **Event handler spans** — async handlers in `*ServiceEvents.cs`.
+
+### Dependency
+
+Services that need to create spans must have access to `ITelemetryProvider`. This is already available via DI (constructor injection) in all services since it's an L0 infrastructure dependency. Helper DI services should accept `ITelemetryProvider` in their constructors.
 
 ---
 
@@ -986,23 +589,34 @@ The type system catches mistakes at compile time. String-based tests would compi
 | Unused configuration property | T21 | Wire up in service or remove from schema |
 | Hardcoded magic number for tunable | T21 | Define in configuration schema |
 | Defined cache store not used | T21 | Implement cache read-through or remove store |
-| Secondary fallback for schema-defaulted property | T21 | Remove fallback; throw exception if null (indicates infrastructure failure) |
+| Secondary fallback for schema-defaulted property | T21 | Remove fallback; throw if null (infrastructure failure) |
 | Non-async Task-returning method | T23 | Add async keyword and await |
 | `Task.FromResult` without async | T23 | Use async method with await |
 | `.Result` or `.Wait()` on Task | T23 | Use await instead |
 | Manual `.Dispose()` in method scope | T24 | Use `using` statement instead |
 | try/finally for disposal | T24 | Use `using` statement instead |
-| String field for enum in ANY model | T25 | Use the generated enum type |
+| String field for enum in ANY model | T25 | Use generated enum type (exception: opaque hierarchy identifiers) |
 | String field for GUID in ANY model | T25 | Use `Guid` type |
 | `Enum.Parse` anywhere in service code | T25 | Your model is wrong - fix the type |
 | `.ToString()` when assigning enum | T25 | Assign enum directly |
 | String comparison for enum value | T25 | Use enum equality operator |
 | Claiming "JSON requires strings" | T25 | FALSE - BannouJson handles serialization |
-| String in request/response/event model | T25 | Schema should define enum type |
+| String in request/response/event model | T25 | Schema should define enum type (exception: opaque hierarchy identifiers) |
 | String in configuration class | T25 | Config schema should define enum type |
+| Enum enumerating higher-layer services | T25 | Use opaque string identifiers - see SCHEMA-RULES.md |
+| Using `Guid.Empty` to mean "none" | T26 | Make field `Guid?` nullable |
+| Using `-1` to mean "no index" | T26 | Make field `int?` nullable |
+| Using empty string for "absent" | T26 | Make field `string?` nullable |
+| Using `DateTime.MinValue` for "not set" | T26 | Make field `DateTime?` nullable |
+| Non-nullable model when schema is nullable | T26 | Match nullability in internal model |
+| Async helper method without `StartActivity` span | T30 | Add `using var activity = _telemetryProvider.StartActivity(...)` |
+| Span on generated code (manual edit) | T30 | Add to code generation templates, not generated files |
+| Span on non-async synchronous method | T30 | Only async methods need spans |
+| Missing `ITelemetryProvider` in helper service constructor | T30 | Add constructor parameter for span creation |
+| Span name not following `{component}.{class}.{method}` pattern | T30 | Use `"bannou.{service}", "{Class}.{Method}"` format |
 
 > **Schema-related violations** (shared type in events schema, API `$ref` to events, cross-service `$ref`) are covered in [SCHEMA-RULES.md](../SCHEMA-RULES.md).
 
 ---
 
-*This document covers tenets T3, T7, T8, T9, T14, T17, T20, T21, T23, T24, T25. See [TENETS.md](../TENETS.md) for the complete index and Tenet 1 (Schema-First Development).*
+*This document covers tenets T3, T7, T8, T9, T14, T17, T20, T21, T23, T24, T25, T26, T30. See [TENETS.md](../TENETS.md) for the complete index.*

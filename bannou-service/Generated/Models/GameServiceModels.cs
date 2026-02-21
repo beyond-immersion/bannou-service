@@ -31,7 +31,7 @@ namespace BeyondImmersion.BannouService.GameService;
 using System = global::System;
 
 /// <summary>
-/// Request to list all game services
+/// Request to list all game services with optional pagination
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class ListServicesRequest
@@ -42,6 +42,20 @@ public partial class ListServicesRequest
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("activeOnly")]
     public bool ActiveOnly { get; set; } = false;
+
+    /// <summary>
+    /// Number of services to skip for pagination (offset)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("skip")]
+    [System.ComponentModel.DataAnnotations.Range(0, int.MaxValue)]
+    public int Skip { get; set; } = 0;
+
+    /// <summary>
+    /// Maximum number of services to return (limit)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("take")]
+    [System.ComponentModel.DataAnnotations.Range(1, 200)]
+    public int Take { get; set; } = 50;
 
 }
 

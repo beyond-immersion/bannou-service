@@ -13,8 +13,13 @@ info:
     **Browser Endpoint**: The GET /documentation/view/{slug} endpoint is browser-facing
     (NGINX-routed) per FOUNDATION TENETS.
 
-    **Schema Rules**: AI agents MUST review docs/reference/SCHEMA-RULES.md before modifying this schema. Optional reference types require `nullable: true`.
+    **SCHEMA MODIFICATION GATE**: STOP. Before modifying this schema, you MUST:
+    1. Read docs/reference/SCHEMA-RULES.md
+    2. State which section applies to your change
+    3. Only then proceed with edits
+    Edits without stating the applicable rule are FORBIDDEN.
   version: 1.0.0
+x-service-layer: AppFeatures
 servers:
 - url: http://localhost:5012
   description: Bannou service endpoint (MUST use "bannou" app-id)
@@ -290,25 +295,25 @@ paths:
         \                    \"items\": {\n                        \"type\": \"string\",\n                        \"format\"\
         : \"uuid\"\n                    },\n                    \"description\": \"IDs of related documents\"\n          \
         \      },\n                \"metadata\": {\n                    \"type\": \"object\",\n                    \"additionalProperties\"\
-        : true,\n                    \"description\": \"Custom metadata key-value pairs\"\n                },\n          \
-        \      \"createdAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\"\
-        ,\n                    \"description\": \"Timestamp when the document was created\"\n                },\n        \
-        \        \"updatedAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\"\
-        ,\n                    \"description\": \"Timestamp when the document was last updated\"\n                }\n    \
-        \        }\n        },\n        \"DocumentCategory\": {\n            \"type\": \"string\",\n            \"enum\":
-        [\n                \"getting-started\",\n                \"api-reference\",\n                \"architecture\",\n \
-        \               \"deployment\",\n                \"troubleshooting\",\n                \"tutorials\",\n          \
-        \      \"game-systems\",\n                \"world-lore\",\n                \"npc-ai\",\n                \"other\"\n\
-        \            ],\n            \"description\": \"Fixed categories for type-safe filtering\"\n        },\n        \"\
-        DocumentSummary\": {\n            \"description\": \"Lightweight document representation for listings and references\"\
-        ,\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"required\": [\n\
-        \                \"documentId\",\n                \"slug\",\n                \"title\",\n                \"category\"\
-        \n            ],\n            \"properties\": {\n                \"documentId\": {\n                    \"type\":
-        \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Unique identifier of
-        the document\"\n                },\n                \"slug\": {\n                    \"type\": \"string\",\n     \
-        \               \"description\": \"URL-friendly unique identifier\"\n                },\n                \"title\"\
-        : {\n                    \"type\": \"string\",\n                    \"description\": \"Display title of the document\"\
-        \n                },\n                \"category\": {\n                    \"$ref\": \"#/$defs/DocumentCategory\"\
+        : true,\n                    \"description\": \"Client-provided custom metadata. No Bannou plugin reads specific keys
+        from this field by convention.\"\n                },\n                \"createdAt\": {\n                    \"type\"\
+        : \"string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"Timestamp when
+        the document was created\"\n                },\n                \"updatedAt\": {\n                    \"type\": \"\
+        string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"Timestamp when the
+        document was last updated\"\n                }\n            }\n        },\n        \"DocumentCategory\": {\n     \
+        \       \"type\": \"string\",\n            \"enum\": [\n                \"getting-started\",\n                \"api-reference\"\
+        ,\n                \"architecture\",\n                \"deployment\",\n                \"troubleshooting\",\n    \
+        \            \"tutorials\",\n                \"game-systems\",\n                \"world-lore\",\n                \"\
+        npc-ai\",\n                \"other\"\n            ],\n            \"description\": \"Fixed categories for type-safe
+        filtering\"\n        },\n        \"DocumentSummary\": {\n            \"description\": \"Lightweight document representation
+        for listings and references\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n\
+        \            \"required\": [\n                \"documentId\",\n                \"slug\",\n                \"title\"\
+        ,\n                \"category\"\n            ],\n            \"properties\": {\n                \"documentId\": {\n\
+        \                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
+        : \"Unique identifier of the document\"\n                },\n                \"slug\": {\n                    \"type\"\
+        : \"string\",\n                    \"description\": \"URL-friendly unique identifier\"\n                },\n     \
+        \           \"title\": {\n                    \"type\": \"string\",\n                    \"description\": \"Display
+        title of the document\"\n                },\n                \"category\": {\n                    \"$ref\": \"#/$defs/DocumentCategory\"\
         ,\n                    \"description\": \"Category of the document\"\n                },\n                \"summary\"\
         : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
         : \"Brief text summary of the document\"\n                },\n                \"voiceSummary\": {\n              \
@@ -653,13 +658,13 @@ paths:
         \      \"format\": \"uuid\"\n                    },\n                    \"nullable\": true,\n                   \
         \ \"description\": \"IDs of related documents to link (null to skip linking)\"\n                },\n             \
         \   \"metadata\": {\n                    \"type\": \"object\",\n                    \"additionalProperties\": true,\n\
-        \                    \"nullable\": true,\n                    \"description\": \"Custom metadata key-value pairs (null
-        if not needed)\"\n                }\n            }\n        },\n        \"DocumentCategory\": {\n            \"type\"\
-        : \"string\",\n            \"enum\": [\n                \"getting-started\",\n                \"api-reference\",\n\
-        \                \"architecture\",\n                \"deployment\",\n                \"troubleshooting\",\n      \
-        \          \"tutorials\",\n                \"game-systems\",\n                \"world-lore\",\n                \"\
-        npc-ai\",\n                \"other\"\n            ],\n            \"description\": \"Fixed categories for type-safe
-        filtering\"\n        }\n    }\n}"
+        \                    \"nullable\": true,\n                    \"description\": \"Client-provided custom metadata.
+        No Bannou plugin reads specific keys from this field by convention.\"\n                }\n            }\n        },\n\
+        \        \"DocumentCategory\": {\n            \"type\": \"string\",\n            \"enum\": [\n                \"getting-started\"\
+        ,\n                \"api-reference\",\n                \"architecture\",\n                \"deployment\",\n      \
+        \          \"troubleshooting\",\n                \"tutorials\",\n                \"game-systems\",\n             \
+        \   \"world-lore\",\n                \"npc-ai\",\n                \"other\"\n            ],\n            \"description\"\
+        : \"Fixed categories for type-safe filtering\"\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/CreateDocumentResponse\"\
         ,\n    \"$defs\": {\n        \"CreateDocumentResponse\": {\n            \"description\": \"Response confirming document
         creation with assigned identifiers\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n\
@@ -726,13 +731,13 @@ paths:
         : \"uuid\"\n                    },\n                    \"nullable\": true,\n                    \"description\":
         \"New set of related document IDs (null to keep unchanged)\"\n                },\n                \"metadata\": {\n\
         \                    \"type\": \"object\",\n                    \"additionalProperties\": true,\n                \
-        \    \"nullable\": true,\n                    \"description\": \"New custom metadata key-value pairs (null to keep
-        unchanged)\"\n                }\n            }\n        },\n        \"DocumentCategory\": {\n            \"type\"\
-        : \"string\",\n            \"enum\": [\n                \"getting-started\",\n                \"api-reference\",\n\
-        \                \"architecture\",\n                \"deployment\",\n                \"troubleshooting\",\n      \
-        \          \"tutorials\",\n                \"game-systems\",\n                \"world-lore\",\n                \"\
-        npc-ai\",\n                \"other\"\n            ],\n            \"description\": \"Fixed categories for type-safe
-        filtering\"\n        }\n    }\n}"
+        \    \"nullable\": true,\n                    \"description\": \"Updated client-provided custom metadata (null to
+        keep unchanged). No Bannou plugin reads specific keys from this field by convention.\"\n                }\n      \
+        \      }\n        },\n        \"DocumentCategory\": {\n            \"type\": \"string\",\n            \"enum\": [\n\
+        \                \"getting-started\",\n                \"api-reference\",\n                \"architecture\",\n   \
+        \             \"deployment\",\n                \"troubleshooting\",\n                \"tutorials\",\n            \
+        \    \"game-systems\",\n                \"world-lore\",\n                \"npc-ai\",\n                \"other\"\n\
+        \            ],\n            \"description\": \"Fixed categories for type-safe filtering\"\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/UpdateDocumentResponse\"\
         ,\n    \"$defs\": {\n        \"UpdateDocumentResponse\": {\n            \"description\": \"Response confirming document
         update with timestamp\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n      \
@@ -1028,12 +1033,13 @@ paths:
         \ },\n                    \"nullable\": true,\n                    \"description\": \"Tags for filtering and search
         (null to skip tagging)\"\n                },\n                \"metadata\": {\n                    \"type\": \"object\"\
         ,\n                    \"additionalProperties\": true,\n                    \"nullable\": true,\n                \
-        \    \"description\": \"Custom metadata key-value pairs (null if not needed)\"\n                }\n            }\n\
-        \        },\n        \"DocumentCategory\": {\n            \"type\": \"string\",\n            \"enum\": [\n       \
-        \         \"getting-started\",\n                \"api-reference\",\n                \"architecture\",\n          \
-        \      \"deployment\",\n                \"troubleshooting\",\n                \"tutorials\",\n                \"game-systems\"\
-        ,\n                \"world-lore\",\n                \"npc-ai\",\n                \"other\"\n            ],\n     \
-        \       \"description\": \"Fixed categories for type-safe filtering\"\n        }\n    }\n}"
+        \    \"description\": \"Client-provided custom metadata. No Bannou plugin reads specific keys from this field by convention.\"\
+        \n                }\n            }\n        },\n        \"DocumentCategory\": {\n            \"type\": \"string\"\
+        ,\n            \"enum\": [\n                \"getting-started\",\n                \"api-reference\",\n           \
+        \     \"architecture\",\n                \"deployment\",\n                \"troubleshooting\",\n                \"\
+        tutorials\",\n                \"game-systems\",\n                \"world-lore\",\n                \"npc-ai\",\n  \
+        \              \"other\"\n            ],\n            \"description\": \"Fixed categories for type-safe filtering\"\
+        \n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ImportDocumentationResponse\"\
         ,\n    \"$defs\": {\n        \"ImportDocumentationResponse\": {\n            \"description\": \"Response reporting
         import results with counts and failure details\",\n            \"type\": \"object\",\n            \"additionalProperties\"\
@@ -2398,7 +2404,9 @@ components:
           type: object
           additionalProperties: true
           nullable: true
-          description: Custom metadata key-value pairs (null if not needed)
+          description: >-
+            Client-provided custom metadata.
+            No Bannou plugin reads specific keys from this field by convention.
     CreateDocumentResponse:
       description: Response confirming document creation with assigned identifiers
       type: object
@@ -2476,7 +2484,9 @@ components:
           type: object
           additionalProperties: true
           nullable: true
-          description: New custom metadata key-value pairs (null to keep unchanged)
+          description: >-
+            Updated client-provided custom metadata (null to keep unchanged).
+            No Bannou plugin reads specific keys from this field by convention.
     UpdateDocumentResponse:
       description: Response confirming document update with timestamp
       type: object
@@ -2740,7 +2750,9 @@ components:
           type: object
           additionalProperties: true
           nullable: true
-          description: Custom metadata key-value pairs (null if not needed)
+          description: >-
+            Client-provided custom metadata.
+            No Bannou plugin reads specific keys from this field by convention.
     ImportDocumentationResponse:
       description: Response reporting import results with counts and failure details
       type: object
@@ -2976,7 +2988,9 @@ components:
         metadata:
           type: object
           additionalProperties: true
-          description: Custom metadata key-value pairs
+          description: >-
+            Client-provided custom metadata.
+            No Bannou plugin reads specific keys from this field by convention.
         createdAt:
           type: string
           format: date-time

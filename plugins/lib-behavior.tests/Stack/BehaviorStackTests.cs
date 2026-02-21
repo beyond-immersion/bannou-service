@@ -3,8 +3,8 @@
 // Tests for the behavior stacking system.
 // =============================================================================
 
+using BeyondImmersion.Bannou.BehaviorCompiler.Archetypes;
 using BeyondImmersion.BannouService.Behavior;
-using BeyondImmersion.BannouService.Behavior.Archetypes;
 using BeyondImmersion.BannouService.Behavior.Stack;
 using Xunit;
 

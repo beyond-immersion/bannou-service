@@ -3,10 +3,10 @@
 // Runtime state for document execution.
 // ═══════════════════════════════════════════════════════════════════════════
 
-using BeyondImmersion.BannouService.Abml.Documents;
-using BeyondImmersion.BannouService.Abml.Expressions;
-using BeyondImmersion.BannouService.Abml.Parser;
-using BeyondImmersion.BannouService.Abml.Runtime;
+using BeyondImmersion.Bannou.BehaviorCompiler.Documents;
+using BeyondImmersion.Bannou.BehaviorCompiler.Parser;
+using BeyondImmersion.Bannou.BehaviorExpressions.Expressions;
+using BeyondImmersion.Bannou.BehaviorExpressions.Runtime;
 
 namespace BeyondImmersion.BannouService.Abml.Execution;
 
@@ -47,6 +47,12 @@ public sealed class ExecutionContext
     /// Action handler registry for dispatching actions.
     /// </summary>
     public required IActionHandlerRegistry Handlers { get; init; }
+
+    /// <summary>
+    /// Optional actor ID when executing within an actor context.
+    /// Required for actions like watch/unwatch that track per-actor state.
+    /// </summary>
+    public Guid? ActorId { get; init; }
 
     /// <summary>
     /// Call stack for flow execution.

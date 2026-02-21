@@ -1,0 +1,1022 @@
+openapi: 3.0.0
+info:
+  title: Bannou Character History Service API
+  description: |
+    Historical event participation and backstory management for characters.
+
+    **Machine-Readable**: All data is structured for behavior system consumption,
+    not player-facing narrative. Backstory elements are key-value pairs that
+    influence NPC decision-making.
+
+    **Fully Optional**: Games not using character history incur zero overhead.
+    This service is completely independent from the core Character service.
+
+    **POST-Only API Pattern**: This API uses POST for all operations to support zero-copy
+    WebSocket routing. Path parameters are passed in request bodies instead of URLs.
+    See docs/BANNOU_DESIGN.md for architectural rationale.
+
+    **Historical Events**: Characters can participate in realm-wide or world events.
+    Participation is tracked with roles (LEADER, COMBATANT, VICTIM, etc.) and
+    significance ratings that affect behavior system weighting.
+
+    **Backstory Elements**: Structured key-value elements that define character background:
+    - ORIGIN: Where the character is from
+    - OCCUPATION: Past or current profession
+    - TRAINING: Skills and education received
+    - TRAUMA: Past traumatic experiences
+    - ACHIEVEMENT: Notable accomplishments
+    - SECRET: Hidden knowledge or past
+    - GOAL: Life ambitions
+    - FEAR: Deep-seated fears
+    - BELIEF: Core values and principles
+
+    **Compression Integration**: When a character is compressed (archived after death),
+    history records are summarized into the CharacterArchive and then deleted.
+
+    **SCHEMA MODIFICATION GATE**: STOP. Before modifying this schema, you MUST:
+    1. Read docs/reference/SCHEMA-RULES.md
+    2. State which section applies to your change
+    3. Only then proceed with edits
+    Edits without stating the applicable rule are FORBIDDEN.
+  version: 1.0.0
+  # Resource reference tracking (see SCHEMA-RULES.md "x-references")
+  x-references:
+  - target: character
+    sourceType: character-history
+    field: characterId
+    onDelete: cascade
+    cleanup:
+      endpoint: /character-history/delete-all
+      payloadTemplate: '{"characterId": "{{resourceId}}"}'
+  # Compression callback for resource archival (see SCHEMA-RULES.md "x-compression-callback")
+  x-compression-callback:
+    resourceType: character
+    sourceType: character-history
+    compressEndpoint: /character-history/get-compress-data
+    compressPayloadTemplate: '{"characterId": "{{resourceId}}"}'
+    priority: 20
+    templateNamespace: history
+    description: Historical event participations and backstory elements
+    decompressEndpoint: /character-history/restore-from-archive
+    decompressPayloadTemplate: '{"characterId": "{{resourceId}}", "data": "{{data}}"}'
+servers:
+- url: http://localhost:5012
+  description: Bannou service endpoint (internal only)
+
+paths:
+  /character-history/record-participation:
+    post:
+      summary: Record character participation in a historical event
+      operationId: recordParticipation
+      tags:
+      - Historical Events
+      description: |
+        Records that a character participated in a historical event. Events are
+        identified by eventId (typically managed by a game-specific event system).
+        The significance rating affects how strongly this event influences behavior.
+      x-permissions: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RecordParticipationRequest'
+      responses:
+        '200':
+          description: Participation recorded successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HistoricalParticipation'
+        '400':
+          description: Invalid participation data
+        '409':
+          description: Participation already recorded for this character and event
+
+  /character-history/get-participation:
+    post:
+      summary: Get all historical events a character participated in
+      operationId: getParticipation
+      tags:
+      - Historical Events
+      description: |
+        Retrieves all historical event participation records for a character.
+        Supports filtering by event category and minimum significance.
+      x-permissions:
+      - role: user
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetParticipationRequest'
+      responses:
+        '200':
+          description: Participation records retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ParticipationListResponse'
+
+  /character-history/get-event-participants:
+    post:
+      summary: Get all characters who participated in a historical event
+      operationId: getEventParticipants
+      tags:
+      - Historical Events
+      description: |
+        Retrieves all characters who participated in a specific historical event.
+        Useful for generating event summaries or finding related characters.
+      x-permissions:
+      - role: user
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetEventParticipantsRequest'
+      responses:
+        '200':
+          description: Participants retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ParticipationListResponse'
+
+  /character-history/delete-participation:
+    post:
+      summary: Delete a participation record
+      operationId: deleteParticipation
+      tags:
+      - Historical Events
+      description: |
+        Removes a specific participation record. Used during character compression
+        or to correct erroneous records.
+      x-permissions:
+      - role: admin
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeleteParticipationRequest'
+      responses:
+        '200':
+          description: Participation deleted successfully
+        '404':
+          description: Participation record not found
+
+  /character-history/get-backstory:
+    post:
+      summary: Get machine-readable backstory elements for behavior system
+      operationId: getBackstory
+      tags:
+      - Backstory
+      description: |
+        Retrieves structured backstory elements for a character. These elements
+        are machine-readable key-value pairs used by the behavior system for
+        decision-making, not narrative text for players.
+      x-permissions:
+      - role: user
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetBackstoryRequest'
+      responses:
+        '200':
+          description: Backstory retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BackstoryResponse'
+        '404':
+          description: No backstory defined for this character
+
+  /character-history/set-backstory:
+    post:
+      summary: Set backstory elements for a character
+      operationId: setBackstory
+      tags:
+      - Backstory
+      description: |
+        Creates or updates backstory elements for a character. Can either replace
+        all existing elements or merge with them based on the replaceExisting flag.
+      x-permissions:
+      - role: admin
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SetBackstoryRequest'
+      responses:
+        '200':
+          description: Backstory saved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BackstoryResponse'
+        '400':
+          description: Invalid backstory data
+
+  /character-history/add-backstory-element:
+    post:
+      summary: Add a single backstory element
+      operationId: addBackstoryElement
+      tags:
+      - Backstory
+      description: |
+        Adds a single backstory element to a character's existing backstory.
+        If an element with the same type and key exists, it will be updated.
+      x-permissions:
+      - role: admin
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AddBackstoryElementRequest'
+      responses:
+        '200':
+          description: Element added successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BackstoryResponse'
+        '400':
+          description: Invalid element data
+
+  /character-history/delete-backstory:
+    post:
+      summary: Delete all backstory for a character
+      operationId: deleteBackstory
+      tags:
+      - Backstory
+      description: |
+        Removes all backstory elements for a character. Used during character
+        compression or deletion.
+      x-permissions:
+      - role: admin
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeleteBackstoryRequest'
+      responses:
+        '200':
+          description: Backstory deleted successfully
+        '404':
+          description: No backstory found for this character
+
+  /character-history/delete-all:
+    post:
+      summary: Delete all history data for a character
+      operationId: deleteAllHistory
+      tags:
+      - History Management
+      description: |
+        Removes all history data (participation records and backstory) for a
+        character. Used during character compression after summarization.
+      x-permissions:
+      - role: admin
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeleteAllHistoryRequest'
+      responses:
+        '200':
+          description: All history deleted successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeleteAllHistoryResponse'
+
+  /character-history/summarize:
+    post:
+      summary: Generate text summaries for character compression
+      operationId: summarizeHistory
+      tags:
+      - History Management
+      description: |
+        Generates text summaries of a character's backstory and historical
+        participation for inclusion in the CharacterArchive. Called during
+        character compression before history data is deleted.
+      x-permissions: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SummarizeHistoryRequest'
+      responses:
+        '200':
+          description: Summaries generated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HistorySummaryResponse'
+
+  # ===========================================================================
+  # Compression Endpoints (Resource Service Integration)
+  # ===========================================================================
+
+  /character-history/get-compress-data:
+    post:
+      summary: Get history data for compression
+      operationId: getCompressData
+      tags:
+      - Compression
+      description: |
+        Called by Resource service during character compression.
+        Returns historical participations, backstory elements, and text summaries for archival.
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetCompressDataRequest'
+      responses:
+        '200':
+          description: Compressed data returned
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CharacterHistoryArchive'
+        '404':
+          description: No history data for character
+
+  /character-history/restore-from-archive:
+    post:
+      summary: Restore history data from archive
+      operationId: restoreFromArchive
+      tags:
+      - Compression
+      description: |
+        Called by Resource service during character decompression.
+        Restores historical participations and backstory elements from archive data.
+      x-permissions:
+      - role: admin
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RestoreFromArchiveRequest'
+      responses:
+        '200':
+          description: Restoration result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RestoreFromArchiveResponse'
+        '400':
+          description: Invalid archive data
+
+components:
+  schemas:
+    # Enums
+    EventCategory:
+      type: string
+      description: Categories of historical events that characters can participate in
+      enum:
+      - WAR
+      - NATURAL_DISASTER
+      - POLITICAL
+      - ECONOMIC
+      - RELIGIOUS
+      - CULTURAL
+      - PERSONAL
+
+    ParticipationRole:
+      type: string
+      description: How the character participated in the historical event
+      enum:
+      - LEADER
+      - COMBATANT
+      - VICTIM
+      - WITNESS
+      - BENEFICIARY
+      - CONSPIRATOR
+      - HERO
+      - SURVIVOR
+
+    BackstoryElementType:
+      type: string
+      description: |
+        Types of backstory elements. Each type represents a different aspect
+        of the character's background that influences behavior.
+      enum:
+      - ORIGIN
+      - OCCUPATION
+      - TRAINING
+      - TRAUMA
+      - ACHIEVEMENT
+      - SECRET
+      - GOAL
+      - FEAR
+      - BELIEF
+
+    # Core Models
+    HistoricalParticipation:
+      type: object
+      description: Record of a character's participation in a historical event
+      additionalProperties: false
+      required:
+      - participationId
+      - characterId
+      - eventId
+      - eventName
+      - eventCategory
+      - role
+      - eventDate
+      - createdAt
+      properties:
+        participationId:
+          type: string
+          format: uuid
+          description: Unique ID for this participation record
+        characterId:
+          type: string
+          format: uuid
+          description: ID of the character who participated
+        eventId:
+          type: string
+          format: uuid
+          description: ID of the historical event
+        eventName:
+          type: string
+          description: Name of the event (for display and summarization)
+        eventCategory:
+          $ref: '#/components/schemas/EventCategory'
+          description: Category of the historical event
+        role:
+          $ref: '#/components/schemas/ParticipationRole'
+          description: How the character participated
+        eventDate:
+          type: string
+          format: date-time
+          description: In-game date when the event occurred
+        significance:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 1.0
+          default: 0.5
+          description: |
+            How significant this event was for the character (0.0 to 1.0).
+            Affects behavior system weighting of this memory.
+        metadata:
+          type: object
+          additionalProperties: true
+          nullable: true
+          description: >-
+            Client-provided event-specific details.
+            No Bannou plugin reads specific keys from this field by convention.
+        createdAt:
+          type: string
+          format: date-time
+          description: When this record was created
+
+    BackstoryElement:
+      type: object
+      description: A machine-readable backstory element for behavior system consumption
+      additionalProperties: false
+      required:
+      - elementType
+      - key
+      - value
+      properties:
+        elementType:
+          $ref: '#/components/schemas/BackstoryElementType'
+          description: Category of this backstory element
+        key:
+          type: string
+          minLength: 1
+          maxLength: 100
+          description: |
+            Machine-readable key (e.g., "homeland", "trained_by", "past_job").
+            Used by behavior system to query specific aspects.
+        value:
+          type: string
+          minLength: 1
+          maxLength: 500
+          description: |
+            Machine-readable value (e.g., "northlands", "knights_guild", "blacksmith").
+            Referenced in behavior rules.
+        strength:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 1.0
+          default: 0.5
+          description: |
+            How strongly this element affects behavior (0.0 to 1.0).
+            Higher strength = greater influence on decisions.
+        relatedEntityId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Optional related entity (location, organization, character)
+        relatedEntityType:
+          type: string
+          nullable: true
+          description: Type of the related entity (if any)
+
+    BackstoryResponse:
+      type: object
+      description: Complete backstory data for a character
+      additionalProperties: false
+      required:
+      - characterId
+      - elements
+      properties:
+        characterId:
+          type: string
+          format: uuid
+          description: ID of the character this backstory belongs to
+        elements:
+          type: array
+          items:
+            $ref: '#/components/schemas/BackstoryElement'
+          description: All backstory elements for this character
+        createdAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When this backstory was first created
+        updatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When this backstory was last modified
+
+    # Request Models
+    RecordParticipationRequest:
+      type: object
+      description: Request payload for recording event participation
+      additionalProperties: false
+      required:
+      - characterId
+      - eventId
+      - eventName
+      - eventCategory
+      - role
+      - eventDate
+      properties:
+        characterId:
+          type: string
+          format: uuid
+          description: ID of the character who participated
+        eventId:
+          type: string
+          format: uuid
+          description: ID of the historical event
+        eventName:
+          type: string
+          minLength: 1
+          maxLength: 200
+          description: Name of the event
+        eventCategory:
+          $ref: '#/components/schemas/EventCategory'
+          description: Category of the event
+        role:
+          $ref: '#/components/schemas/ParticipationRole'
+          description: How the character participated
+        eventDate:
+          type: string
+          format: date-time
+          description: In-game date when the event occurred
+        significance:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 1.0
+          default: 0.5
+          description: How significant this event was for the character
+        metadata:
+          type: object
+          additionalProperties: true
+          nullable: true
+          description: >-
+            Client-provided event-specific details.
+            No Bannou plugin reads specific keys from this field by convention.
+
+    GetParticipationRequest:
+      type: object
+      description: Request payload for getting a character's event participation
+      additionalProperties: false
+      required:
+      - characterId
+      properties:
+        characterId:
+          type: string
+          format: uuid
+          description: ID of the character to get participation for
+        eventCategory:
+          $ref: '#/components/schemas/EventCategory'
+          nullable: true
+          description: Filter by event category
+        minimumSignificance:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 1.0
+          nullable: true
+          description: Filter by minimum significance
+        page:
+          type: integer
+          minimum: 1
+          default: 1
+          description: Page number for pagination (1-based)
+        pageSize:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 20
+          description: Number of results per page
+
+    GetEventParticipantsRequest:
+      type: object
+      description: Request payload for getting participants of an event
+      additionalProperties: false
+      required:
+      - eventId
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: ID of the historical event
+        role:
+          $ref: '#/components/schemas/ParticipationRole'
+          nullable: true
+          description: Filter by participation role
+        page:
+          type: integer
+          minimum: 1
+          default: 1
+          description: Page number for pagination (1-based)
+        pageSize:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 20
+          description: Number of results per page
+
+    DeleteParticipationRequest:
+      type: object
+      description: Request payload for deleting a participation record
+      additionalProperties: false
+      required:
+      - participationId
+      properties:
+        participationId:
+          type: string
+          format: uuid
+          description: ID of the participation record to delete
+
+    GetBackstoryRequest:
+      type: object
+      description: Request payload for getting a character's backstory
+      additionalProperties: false
+      required:
+      - characterId
+      properties:
+        characterId:
+          type: string
+          format: uuid
+          description: ID of the character to get backstory for
+        elementTypes:
+          type: array
+          items:
+            $ref: '#/components/schemas/BackstoryElementType'
+          nullable: true
+          description: Filter by element types (null for all)
+        minimumStrength:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 1.0
+          nullable: true
+          description: Filter by minimum strength
+
+    SetBackstoryRequest:
+      type: object
+      description: Request payload for setting a character's backstory
+      additionalProperties: false
+      required:
+      - characterId
+      - elements
+      properties:
+        characterId:
+          type: string
+          format: uuid
+          description: ID of the character to set backstory for
+        elements:
+          type: array
+          items:
+            $ref: '#/components/schemas/BackstoryElement'
+          minItems: 1
+          description: Backstory elements to set
+        replaceExisting:
+          type: boolean
+          default: false
+          description: |
+            If true, replace all existing elements.
+            If false, merge with existing (update matching type+key pairs).
+
+    AddBackstoryElementRequest:
+      type: object
+      description: Request payload for adding a single backstory element
+      additionalProperties: false
+      required:
+      - characterId
+      - element
+      properties:
+        characterId:
+          type: string
+          format: uuid
+          description: ID of the character to add element to
+        element:
+          $ref: '#/components/schemas/BackstoryElement'
+          description: The backstory element to add
+
+    DeleteBackstoryRequest:
+      type: object
+      description: Request payload for deleting a character's backstory
+      additionalProperties: false
+      required:
+      - characterId
+      properties:
+        characterId:
+          type: string
+          format: uuid
+          description: ID of the character to delete backstory for
+
+    DeleteAllHistoryRequest:
+      type: object
+      description: Request payload for deleting all history data for a character
+      additionalProperties: false
+      required:
+      - characterId
+      properties:
+        characterId:
+          type: string
+          format: uuid
+          description: ID of the character to delete history for
+
+    SummarizeHistoryRequest:
+      type: object
+      description: Request payload for generating history summaries
+      additionalProperties: false
+      required:
+      - characterId
+      properties:
+        characterId:
+          type: string
+          format: uuid
+          description: ID of the character to summarize history for
+        maxBackstoryPoints:
+          type: integer
+          minimum: 1
+          maximum: 20
+          default: 5
+          description: Maximum number of key backstory points to include
+        maxLifeEvents:
+          type: integer
+          minimum: 1
+          maximum: 20
+          default: 10
+          description: Maximum number of major life events to include
+
+    # Response Models
+    ParticipationListResponse:
+      type: object
+      description: Paginated list of participation records
+      additionalProperties: false
+      required:
+      - participations
+      - totalCount
+      - page
+      - pageSize
+      properties:
+        participations:
+          type: array
+          items:
+            $ref: '#/components/schemas/HistoricalParticipation'
+          description: List of participation records
+        totalCount:
+          type: integer
+          description: Total number of matching records
+        page:
+          type: integer
+          description: Current page number (1-based)
+        pageSize:
+          type: integer
+          description: Number of results per page
+        hasNextPage:
+          type: boolean
+          description: Whether there are more results after this page
+        hasPreviousPage:
+          type: boolean
+          description: Whether there are results before this page
+
+    DeleteAllHistoryResponse:
+      type: object
+      description: Result of deleting all history data
+      additionalProperties: false
+      required:
+      - characterId
+      - participationsDeleted
+      - backstoryDeleted
+      properties:
+        characterId:
+          type: string
+          format: uuid
+          description: ID of the character whose history was deleted
+        participationsDeleted:
+          type: integer
+          description: Number of participation records deleted
+        backstoryDeleted:
+          type: boolean
+          description: Whether backstory was deleted
+
+    HistorySummaryResponse:
+      type: object
+      description: Generated text summaries for character compression
+      additionalProperties: false
+      required:
+      - characterId
+      - keyBackstoryPoints
+      - majorLifeEvents
+      properties:
+        characterId:
+          type: string
+          format: uuid
+          description: ID of the character summarized
+        keyBackstoryPoints:
+          type: array
+          items:
+            type: string
+          description: |
+            Key backstory elements as text summaries.
+            e.g., ["Trained by Knights Guild", "Born in the Northlands"]
+        majorLifeEvents:
+          type: array
+          items:
+            type: string
+          description: |
+            Major historical events as text summaries.
+            e.g., ["Fought in the Battle of Stormgate (Hero)", "Survived the Great Flood"]
+
+    # ===========================================================================
+    # Compression Models (Resource Service Integration)
+    # ===========================================================================
+
+    GetCompressDataRequest:
+      type: object
+      description: Request to get history data for compression
+      additionalProperties: false
+      required:
+      - characterId
+      properties:
+        characterId:
+          type: string
+          format: uuid
+          description: ID of the character to get compress data for
+
+    CharacterHistoryArchive:
+      type: object
+      x-archive-type: true
+      description: |
+        Complete history data for archive storage and storyline SDK consumption.
+        Inherits base archive properties from ResourceArchiveBase.
+        The characterId field equals resourceId for convenience.
+      allOf:
+      - $ref: '#/components/schemas/ResourceArchiveBase'
+      additionalProperties: false
+      required:
+      - characterId
+      - hasParticipations
+      - hasBackstory
+      properties:
+        characterId:
+          type: string
+          format: uuid
+          description: Character this data belongs to (equals resourceId)
+        hasParticipations:
+          type: boolean
+          description: Whether historical participations exist
+        participations:
+          type: array
+          items:
+            $ref: '#/components/schemas/HistoricalParticipation'
+          description: Historical event participations (empty if hasParticipations=false)
+        hasBackstory:
+          type: boolean
+          description: Whether backstory elements exist
+        backstory:
+          $ref: '#/components/schemas/BackstoryResponse'
+          nullable: true
+          description: Backstory data (null if hasBackstory=false)
+        summaries:
+          $ref: '#/components/schemas/HistorySummaryResponse'
+          nullable: true
+          description: Text summaries for reference
+
+    RestoreFromArchiveRequest:
+      type: object
+      description: Request to restore history data from archive
+      additionalProperties: false
+      required:
+      - characterId
+      - data
+      properties:
+        characterId:
+          type: string
+          format: uuid
+          description: ID of the character to restore data for
+        data:
+          type: string
+          description: Base64-encoded gzipped CharacterHistoryArchive JSON
+
+    RestoreFromArchiveResponse:
+      type: object
+      description: Result of restoration from archive
+      additionalProperties: false
+      required:
+      - characterId
+      - participationsRestored
+      - backstoryRestored
+      - success
+      properties:
+        characterId:
+          type: string
+          format: uuid
+          description: Character data was restored for
+        participationsRestored:
+          type: integer
+          description: Number of participation records restored
+        backstoryRestored:
+          type: boolean
+          description: Whether backstory was restored
+        success:
+          type: boolean
+          description: Whether restoration completed successfully
+        errorMessage:
+          type: string
+          nullable: true
+          description: Error details if restoration failed
+    ResourceArchiveBase:
+      type: object
+      description: |
+        Base schema for all resource archives that can be stored in
+        the resource service's archive bundles and consumed by the
+        storyline SDK's ArchiveExtractor.
+
+        Archives implementing this base schema are marked with
+        x-archive-type: true and are automatically collected by
+        the archive generation script for SDK model generation.
+      required:
+      - resourceId
+      - resourceType
+      - archivedAt
+      - schemaVersion
+      properties:
+        resourceId:
+          type: string
+          format: uuid
+          description: Unique identifier of the archived resource
+        resourceType:
+          type: string
+          description: Type identifier (e.g., "character", "character-personality", "realm-history")
+        archivedAt:
+          type: string
+          format: date-time
+          description: When this archive was created
+        schemaVersion:
+          type: integer
+          minimum: 1
+          description: Schema version for forward compatibility migration
+        nestedArchives:
+          type: array
+          description: Child archives from dependent resources (populated by lib-resource compression)
+          items:
+            $ref: '#/components/schemas/ResourceArchiveBase'
+x-inlined-types:
+- ResourceArchiveBase

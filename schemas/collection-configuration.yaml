@@ -1,0 +1,46 @@
+openapi: 3.0.3
+info:
+  title: Collection Service Configuration
+  description: |
+    Configuration schema for Collection service.
+    Properties are bound to environment variables with BANNOU_ prefix.
+
+    **SCHEMA MODIFICATION GATE**: STOP. Before modifying this schema, you MUST:
+    1. Read docs/reference/SCHEMA-RULES.md
+    2. State which section applies to your change
+    3. Only then proceed with edits
+    Edits without stating the applicable rule are FORBIDDEN.
+  version: 1.0.0
+paths: {}
+x-service-configuration:
+  properties:
+    maxCollectionsPerOwner:
+      type: integer
+      env: COLLECTION_MAX_COLLECTIONS_PER_OWNER
+      default: 20
+      description: Maximum number of collections a single owner entity can have
+    maxEntriesPerCollection:
+      type: integer
+      env: COLLECTION_MAX_ENTRIES_PER_COLLECTION
+      default: 500
+      description: Maximum number of unlocked entries per collection instance
+    lockTimeoutSeconds:
+      type: integer
+      env: COLLECTION_LOCK_TIMEOUT_SECONDS
+      default: 30
+      description: Distributed lock TTL for collection mutations in seconds
+    collectionCacheTtlSeconds:
+      type: integer
+      env: COLLECTION_CACHE_TTL_SECONDS
+      default: 300
+      description: Redis TTL for collection state cache in seconds
+    defaultPageSize:
+      type: integer
+      env: COLLECTION_DEFAULT_PAGE_SIZE
+      default: 20
+      description: Default page size for paginated queries
+    maxConcurrencyRetries:
+      type: integer
+      env: COLLECTION_MAX_CONCURRENCY_RETRIES
+      default: 3
+      description: Maximum retry attempts for optimistic concurrency conflicts

@@ -1,0 +1,117 @@
+version: "2.0"
+
+metadata:
+  id: regional_watcher_base
+  type: event_brain
+  description: |
+    Base behavior template for Regional Watcher (god) actors.
+    Monitors a realm region, coordinates encounters, and manages
+    emergent storylines. Extend this for specific watcher types.
+  tags:
+    - watcher
+    - god
+    - orchestration
+    - regional
+  deterministic: false
+
+# Event subscriptions for region monitoring
+subscriptions:
+  - "character.*.entered_region"
+  - "character.*.exited_region"
+  - "encounter.*.completed"
+  - "encounter.*.failed"
+  - "storyline.*.milestone_reached"
+
+# Variables for regional state
+variables:
+  active_encounters: 0
+  max_concurrent_encounters: 5
+  encounter_cooldown_minutes: 15
+  last_encounter_time: null
+  storyline_seeds: []
+
+# Entry flow - initialize watcher
+flows:
+  start:
+    actions:
+      - log: "Regional watcher initialized"
+      - set:
+          variable: last_encounter_time
+          value: "${now()}"
+
+  # Periodic evaluation of regional conditions
+  on_tick:
+    actions:
+      # Only evaluate periodically (every 100 ticks)
+      - cond:
+          - when: "${tick_count % 100 == 0}"
+            then:
+              - call: { flow: evaluate_region }
+
+  # Evaluate regional conditions for encounter opportunities
+  evaluate_region:
+    actions:
+      - cond:
+          # Check if we can spawn more encounters
+          - when: "${active_encounters < max_concurrent_encounters}"
+            then:
+              - call: { flow: check_encounter_conditions }
+
+  # Check conditions for spawning encounters
+  check_encounter_conditions:
+    actions:
+      # Placeholder - specific watchers override with actual logic
+      - log: "Checking encounter conditions..."
+
+  # Handle character entering the watched region
+  on_character_entered_region:
+    actions:
+      - log: { message: "Character ${event.characterId} entered region" }
+      # Evaluate if this character triggers storyline hooks
+      - call: { flow: evaluate_storyline_hooks }
+
+  # Handle character leaving the watched region
+  on_character_exited_region:
+    actions:
+      - log: { message: "Character ${event.characterId} exited region" }
+
+  # Handle encounter completion
+  on_encounter_completed:
+    actions:
+      - decrement:
+          variable: active_encounters
+          by: 1
+      - log: { message: "Encounter ${event.encounterId} completed, active: ${active_encounters}" }
+      # Record outcome for future storyline seeding
+      - call: { flow: record_encounter_outcome }
+
+  # Handle encounter failure
+  on_encounter_failed:
+    actions:
+      - decrement:
+          variable: active_encounters
+          by: 1
+      - log: { message: "Encounter ${event.encounterId} failed, active: ${active_encounters}" }
+
+  # Evaluate storyline hooks for a character
+  evaluate_storyline_hooks:
+    actions:
+      # Placeholder - specific watchers implement storyline logic
+      - log: "Evaluating storyline hooks..."
+
+  # Record encounter outcomes for storyline seeding
+  record_encounter_outcome:
+    actions:
+      # Placeholder - specific watchers implement recording logic
+      - log: "Recording encounter outcome..."
+
+  # Spawn an encounter (called by specific implementations)
+  spawn_encounter:
+    actions:
+      - increment:
+          variable: active_encounters
+          by: 1
+      - set:
+          variable: last_encounter_time
+          value: "${now()}"
+      - log: { message: "Spawned encounter, active: ${active_encounters}" }

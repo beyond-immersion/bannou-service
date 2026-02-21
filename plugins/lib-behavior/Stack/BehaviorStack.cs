@@ -3,6 +3,7 @@
 // Manages a stack of behavior layers for an entity with priority-based merging.
 // =============================================================================
 
+using BeyondImmersion.Bannou.BehaviorCompiler.Archetypes;
 using BeyondImmersion.BannouService.Behavior;
 using Microsoft.Extensions.Logging;
 

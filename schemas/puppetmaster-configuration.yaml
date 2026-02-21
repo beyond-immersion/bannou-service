@@ -1,0 +1,48 @@
+openapi: 3.0.3
+info:
+  title: Puppetmaster Service Configuration
+  description: |
+    Configuration schema for Puppetmaster service.
+    Properties are bound to environment variables with PUPPETMASTER_ prefix.
+
+    **SCHEMA MODIFICATION GATE**: STOP. Before modifying this schema, you MUST:
+    1. Read docs/reference/SCHEMA-RULES.md
+    2. State which section applies to your change
+    3. Only then proceed with edits
+    Edits without stating the applicable rule are FORBIDDEN.
+  version: 1.0.0
+
+servers: []
+
+paths: {}
+
+x-service-configuration:
+  properties:
+    BehaviorCacheMaxSize:
+      type: integer
+      default: 1000
+      env: PUPPETMASTER_BEHAVIOR_CACHE_MAX_SIZE
+      description: Maximum number of behavior documents to cache in memory
+    BehaviorCacheTtlSeconds:
+      type: integer
+      default: 3600
+      env: PUPPETMASTER_BEHAVIOR_CACHE_TTL_SECONDS
+      description: Time-to-live for cached behavior documents in seconds
+    AssetDownloadTimeoutSeconds:
+      type: integer
+      default: 30
+      env: PUPPETMASTER_ASSET_DOWNLOAD_TIMEOUT_SECONDS
+      description: Timeout for downloading behavior YAML from asset service
+    SnapshotCacheTtlSeconds:
+      type: integer
+      minimum: 1
+      default: 300
+      env: PUPPETMASTER_SNAPSHOT_CACHE_TTL_SECONDS
+      description: Time-to-live for cached resource snapshots in seconds (used by Event Brain actors)
+    DefaultWatcherTypes:
+      type: array
+      items:
+        type: string
+      default: ["regional"]
+      env: PUPPETMASTER_DEFAULT_WATCHER_TYPES
+      description: Default watcher types to start for each realm (comma-separated in env var)

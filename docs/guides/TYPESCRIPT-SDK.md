@@ -454,5 +454,5 @@ const client = new BannouClient({
 
 - [TypeScript SDK README](../../sdks/typescript/README.md) - Package overview
 - [WebSocket Protocol](../WEBSOCKET-PROTOCOL.md) - Binary protocol specification
-- [SDKs Overview](SDKs.md) - All Bannou SDKs
-- [Client Integration](CLIENT_INTEGRATION.md) - General client integration patterns
+- [SDKs Overview](SDK-OVERVIEW.md) - All Bannou SDKs
+- [Client Integration](CLIENT-INTEGRATION.md) - General client integration patterns

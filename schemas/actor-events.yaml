@@ -6,13 +6,13 @@ info:
     Events published and subscribed to by the Actor service.
     Includes lifecycle events for templates and instances, plus event subscriptions.
 
-    **Schema Rules**: AI agents MUST review docs/reference/SCHEMA-RULES.md before
-    modifying this schema. Optional reference types require `nullable: true`.
+    **SCHEMA MODIFICATION GATE**: STOP. Before modifying this schema, you MUST:
+    1. Read docs/reference/SCHEMA-RULES.md
+    2. State which section applies to your change
+    3. Only then proceed with edits
+    Edits without stating the applicable rule are FORBIDDEN.
 
   x-event-subscriptions:
-    - topic: behavior.updated
-      event: BehaviorUpdatedEvent
-      handler: HandleBehaviorUpdated
     - topic: session.disconnected
       event: SessionDisconnectedEvent
       handler: HandleSessionDisconnected
@@ -31,6 +31,9 @@ info:
     - topic: actor.instance.completed
       event: ActorCompletedEvent
       handler: HandleActorCompleted
+    - topic: actor-template.updated
+      event: ActorTemplateUpdatedEvent
+      handler: HandleActorTemplateUpdated
 
 servers: []
 
@@ -477,6 +480,43 @@ components:
           type: string
           description: Phase after the change
 
+    ActorCharacterBoundEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
+      type: object
+      additionalProperties: false
+      description: |
+        Published when an actor binds to a character, either via hot-swap
+        (BindActorCharacter API) or on startup when spawned with a characterId.
+        Published to topic: actor.instance.character-bound
+      required:
+        - actorId
+        - characterId
+        - realmId
+      properties:
+        eventName:
+          type: string
+          default: "actor.instance.character-bound"
+          description: Event type identifier for character binding
+        actorId:
+          type: string
+          description: Unique identifier of the actor that bound
+        characterId:
+          type: string
+          format: uuid
+          description: Character the actor is now bound to
+        realmId:
+          type: string
+          format: uuid
+          description: Realm the actor operates in
+        previousCharacterId:
+          type: string
+          format: uuid
+          nullable: true
+          description: >-
+            Previous character ID if this is a re-bind (null for first bind,
+            including actors spawned with a characterId)
+
     # === Internal Commands (control plane to pool nodes) ===
     SpawnActorCommand:
       type: object
@@ -503,12 +543,16 @@ components:
           type: object
           additionalProperties: true
           nullable: true
-          description: Merged configuration (template + overrides)
+          description: >-
+            Game-specific configuration for ABML behavior execution scope.
+            No Bannou plugin reads specific keys from this field by convention.
         initialState:
           type: object
           additionalProperties: true
           nullable: true
-          description: Initial state for the actor
+          description: >-
+            Initial actor state snapshot. No Bannou plugin reads specific keys
+            from this field by convention.
         tickIntervalMs:
           type: integer
           description: Behavior loop interval in milliseconds
@@ -520,6 +564,11 @@ components:
           format: uuid
           nullable: true
           description: Character ID for NPC brain actors
+        realmId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Realm the actor operates in (resolved by control plane)
 
     StopActorCommand:
       type: object
@@ -558,7 +607,9 @@ components:
           type: object
           additionalProperties: true
           nullable: true
-          description: Message payload data
+          description: >-
+            Game-specific message payload passed to ABML behavior scope.
+            No Bannou plugin reads specific keys from this field by convention.
         urgency:
           type: number
           format: float
@@ -585,6 +636,24 @@ components:
         newBehaviorRef:
           type: string
           description: New asset reference to fetch
+
+    BindActorCharacterCommand:
+      type: object
+      additionalProperties: false
+      description: |
+        Command sent from control plane to pool node to bind an actor to a character.
+        Published to topic: actor.node.{poolAppId}.bind-character
+      required:
+        - actorId
+        - characterId
+      properties:
+        actorId:
+          type: string
+          description: Unique identifier of the actor to bind
+        characterId:
+          type: string
+          format: uuid
+          description: Character ID to bind the actor to
 
     # === Character Perception Events (game servers to actors) ===
     CharacterPerceptionEvent:

@@ -1,0 +1,1563 @@
+openapi: 3.0.0
+info:
+  title: Seed Service API
+  version: 1.0.0
+  description: >
+    Generic progressive growth entity service (L2 GameFoundation). Seeds are
+    entities that start empty and grow by accumulating metadata from external
+    events, progressively gaining capabilities. Polymorphic ownership allows
+    seeds to be bound to any entity type (accounts, actors, realms, characters,
+    relationships). Growth domains are arbitrary key-value maps contributed by
+    any consuming service via events, following the same pattern as Resource
+    reference tracking. Capability manifests are computed from growth domains
+    using configurable rules per seed type. The Seed service is agnostic to
+    what seeds represent -- consumers (lib-gardener for player spirits,
+    lib-actor for dungeon cores, etc.) provide the interpretation.
+
+    **SCHEMA MODIFICATION GATE**: STOP. Before modifying this schema, you MUST:
+    1. Read docs/reference/SCHEMA-RULES.md
+    2. State which section applies to your change
+    3. Only then proceed with edits
+    Edits without stating the applicable rule are FORBIDDEN.
+x-service-layer: GameFoundation
+
+servers:
+  - url: http://localhost:5012
+
+paths:
+  # --- Seed CRUD ---
+
+  /seed/create:
+    post:
+      operationId: CreateSeed
+      summary: Create a new seed
+      description: >
+        Creates a new seed bound to the specified owner. The seed type must
+        be registered and the owner type must be allowed by the seed type
+        definition. Returns conflict if creating this seed would exceed
+        the type's MaxPerOwner limit.
+      x-permissions:
+        - role: user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateSeedRequest'
+      responses:
+        '200':
+          description: Seed created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SeedResponse'
+
+  /seed/get:
+    post:
+      operationId: GetSeed
+      summary: Get seed by ID
+      description: Returns the seed entity with current growth phase and summary data.
+      x-permissions:
+        - role: user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetSeedRequest'
+      responses:
+        '200':
+          description: Seed found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SeedResponse'
+
+  /seed/get-by-owner:
+    post:
+      operationId: GetSeedsByOwner
+      summary: Get seeds by owner ID and type
+      description: >
+        Returns all seeds owned by the specified entity. Optionally filter
+        by seed type code and status.
+      x-permissions:
+        - role: user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetSeedsByOwnerRequest'
+      responses:
+        '200':
+          description: Seeds found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListSeedsResponse'
+
+  /seed/list:
+    post:
+      operationId: ListSeeds
+      summary: List seeds with filtering
+      description: >
+        Returns seeds matching the specified filters. Supports filtering
+        by seed type, owner type, growth phase, status, and game service.
+      x-permissions:
+        - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ListSeedsRequest'
+      responses:
+        '200':
+          description: Seeds returned
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListSeedsResponse'
+
+  /seed/update:
+    post:
+      operationId: UpdateSeed
+      summary: Update seed metadata or display name
+      description: Updates mutable fields of a seed. Cannot change owner or seed type.
+      x-permissions:
+        - role: user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateSeedRequest'
+      responses:
+        '200':
+          description: Seed updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SeedResponse'
+
+  /seed/activate:
+    post:
+      operationId: ActivateSeed
+      summary: Set a seed as active
+      description: >
+        Activates the specified seed. Only one seed of a given type can be
+        active per owner at a time. Deactivates any previously active seed
+        of the same type.
+      x-permissions:
+        - role: user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ActivateSeedRequest'
+      responses:
+        '200':
+          description: Seed activated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SeedResponse'
+
+  /seed/archive:
+    post:
+      operationId: ArchiveSeed
+      summary: Archive a seed
+      description: >
+        Soft-deletes a seed, preserving its data but removing it from active
+        rotation. Archived seeds do not count toward the MaxPerOwner limit.
+        Cannot archive an active seed.
+      x-permissions:
+        - role: user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ArchiveSeedRequest'
+      responses:
+        '200':
+          description: Seed archived
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SeedResponse'
+
+  # --- Growth ---
+
+  /seed/growth/get:
+    post:
+      operationId: GetGrowth
+      summary: Get full growth domain map
+      description: >
+        Returns the complete growth domain map for a seed, including all
+        top-level and sub-domain entries with their current depth values.
+      x-permissions:
+        - role: user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetGrowthRequest'
+      responses:
+        '200':
+          description: Growth data returned
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GrowthResponse'
+
+  /seed/growth/record:
+    post:
+      operationId: RecordGrowth
+      summary: Record growth in a domain
+      description: >
+        Records growth in a specific domain for a seed. Primarily called
+        internally by consuming services after processing game events.
+        Triggers capability manifest recomputation if thresholds are crossed.
+      x-permissions:
+        - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RecordGrowthRequest'
+      responses:
+        '200':
+          description: Growth recorded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GrowthResponse'
+
+  /seed/growth/record-batch:
+    post:
+      operationId: RecordGrowthBatch
+      summary: Record growth across multiple domains atomically
+      description: >
+        Records growth across multiple domains in a single atomic operation.
+        Useful when a single game event contributes to multiple domains
+        simultaneously.
+      x-permissions:
+        - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RecordGrowthBatchRequest'
+      responses:
+        '200':
+          description: Growth recorded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GrowthResponse'
+
+  /seed/growth/get-phase:
+    post:
+      operationId: GetGrowthPhase
+      summary: Get current growth phase
+      description: >
+        Returns the current computed growth phase for the seed, based on
+        the seed type's configured phase thresholds.
+      x-permissions:
+        - role: user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetGrowthPhaseRequest'
+      responses:
+        '200':
+          description: Phase returned
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GrowthPhaseResponse'
+
+  # --- Capabilities ---
+
+  /seed/capability/get-manifest:
+    post:
+      operationId: GetCapabilityManifest
+      summary: Get current capability manifest
+      description: >
+        Returns the most recently computed capability manifest for the seed.
+        Consumers interpret what capabilities mean (UX modules, spawning
+        permissions, faction actions, etc.).
+      x-permissions:
+        - role: user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetCapabilityManifestRequest'
+      responses:
+        '200':
+          description: Manifest returned
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CapabilityManifestResponse'
+
+  # --- Seed Type Definitions ---
+
+  /seed/type/register:
+    post:
+      operationId: RegisterSeedType
+      summary: Register a new seed type definition
+      description: >
+        Registers a seed type with its growth phase definitions, capability
+        rules, bond cardinality, and owner type restrictions. Seed types
+        are scoped to game services.
+      x-permissions:
+        - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterSeedTypeRequest'
+      responses:
+        '200':
+          description: Seed type registered
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SeedTypeResponse'
+
+  /seed/type/get:
+    post:
+      operationId: GetSeedType
+      summary: Get seed type definition
+      description: Returns the full seed type definition including phases and capability rules.
+      x-permissions:
+        - role: user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetSeedTypeRequest'
+      responses:
+        '200':
+          description: Seed type found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SeedTypeResponse'
+
+  /seed/type/list:
+    post:
+      operationId: ListSeedTypes
+      summary: List registered seed types
+      description: Returns all seed types registered for the specified game service.
+      x-permissions:
+        - role: user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ListSeedTypesRequest'
+      responses:
+        '200':
+          description: Seed types returned
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListSeedTypesResponse'
+
+  /seed/type/update:
+    post:
+      operationId: UpdateSeedType
+      summary: Update seed type definition
+      description: >
+        Updates a seed type definition. Changes to phase thresholds or
+        capability rules trigger recomputation for all seeds of this type.
+      x-permissions:
+        - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateSeedTypeRequest'
+      responses:
+        '200':
+          description: Seed type updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SeedTypeResponse'
+
+  /seed/type/deprecate:
+    post:
+      operationId: DeprecateSeedType
+      summary: Deprecate a seed type
+      description: >
+        Marks a seed type as deprecated. Deprecated seed types cannot be used
+        to create new seeds. Existing seeds of this type remain unaffected.
+        Must be deprecated before it can be deleted.
+      x-permissions:
+        - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeprecateSeedTypeRequest'
+      responses:
+        '200':
+          description: Seed type deprecated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SeedTypeResponse'
+        '404':
+          description: Seed type not found
+        '409':
+          description: Seed type already deprecated
+
+  /seed/type/undeprecate:
+    post:
+      operationId: UndeprecateSeedType
+      summary: Restore a deprecated seed type
+      description: >
+        Removes deprecated status from a seed type, allowing new seeds
+        of this type to be created again.
+      x-permissions:
+        - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UndeprecateSeedTypeRequest'
+      responses:
+        '200':
+          description: Seed type restored
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SeedTypeResponse'
+        '404':
+          description: Seed type not found
+        '409':
+          description: Seed type is not deprecated
+
+  /seed/type/delete:
+    post:
+      operationId: DeleteSeedType
+      summary: Delete a seed type
+      description: >
+        Hard deletes a deprecated seed type. Fails if any non-archived seeds
+        of this type exist. Must deprecate first, then ensure all seeds are
+        archived or deleted before calling this endpoint.
+      x-permissions:
+        - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeleteSeedTypeRequest'
+      responses:
+        '200':
+          description: Seed type deleted
+        '400':
+          description: Seed type is not deprecated
+        '404':
+          description: Seed type not found
+        '409':
+          description: Non-archived seeds still exist for this type
+
+  # --- Bonds ---
+
+  /seed/bond/initiate:
+    post:
+      operationId: InitiateBond
+      summary: Begin bond process between seeds
+      description: >
+        Initiates a bond between seeds of the same type. All participants
+        must confirm for the bond to become active. Returns conflict if
+        any participant already has a bond and the type's cardinality is 1.
+      x-permissions:
+        - role: user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InitiateBondRequest'
+      responses:
+        '200':
+          description: Bond initiated, awaiting confirmation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BondResponse'
+
+  /seed/bond/confirm:
+    post:
+      operationId: ConfirmBond
+      summary: Confirm a pending bond
+      description: >
+        Confirms a pending bond. When all participants have confirmed, the
+        bond becomes active. Bond permanence is determined by the seed type.
+      x-permissions:
+        - role: user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ConfirmBondRequest'
+      responses:
+        '200':
+          description: Bond confirmed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BondResponse'
+
+  /seed/bond/get:
+    post:
+      operationId: GetBond
+      summary: Get bond by ID
+      description: Returns the bond record with all participants and status.
+      x-permissions:
+        - role: user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetBondRequest'
+      responses:
+        '200':
+          description: Bond found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BondResponse'
+
+  /seed/bond/get-for-seed:
+    post:
+      operationId: GetBondForSeed
+      summary: Get bond for a specific seed
+      description: Returns the bond that the specified seed participates in, if any.
+      x-permissions:
+        - role: user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetBondForSeedRequest'
+      responses:
+        '200':
+          description: Bond found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BondResponse'
+
+  /seed/bond/get-partners:
+    post:
+      operationId: GetBondPartners
+      summary: Get partner seed(s) public info
+      description: Returns public information about the other seeds in the bond.
+      x-permissions:
+        - role: user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetBondPartnersRequest'
+      responses:
+        '200':
+          description: Partners returned
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BondPartnersResponse'
+
+components:
+  schemas:
+    # --- Enums ---
+
+    SeedStatus:
+      type: string
+      description: Lifecycle status of a seed.
+      enum: [Active, Dormant, Archived]
+
+    PhaseChangeDirection:
+      type: string
+      description: Direction of a phase transition.
+      enum: [Progressed, Regressed]
+
+    BondStatus:
+      type: string
+      description: Lifecycle status of a seed bond.
+      enum: [PendingConfirmation, Active]
+
+    # --- Seed Type Models ---
+
+    GrowthPhaseDefinition:
+      type: object
+      description: Defines a growth phase with its threshold.
+      required: [phaseCode, displayName, minTotalGrowth]
+      properties:
+        phaseCode:
+          type: string
+          description: Machine-readable phase identifier (e.g., "nascent", "awakening").
+        displayName:
+          type: string
+          description: Human-readable phase label.
+        minTotalGrowth:
+          type: number
+          format: float
+          description: Minimum total growth to enter this phase.
+
+    CapabilityRule:
+      type: object
+      description: Maps a growth domain to a capability with unlock threshold and fidelity formula.
+      required: [capabilityCode, domain, unlockThreshold, fidelityFormula]
+      properties:
+        capabilityCode:
+          type: string
+          description: Unique capability identifier (e.g., "combat.stance").
+        domain:
+          type: string
+          description: Which growth domain this capability maps to.
+        unlockThreshold:
+          type: number
+          format: float
+          description: Minimum domain depth to unlock this capability.
+        fidelityFormula:
+          type: string
+          description: >
+            How domain depth maps to fidelity (0.0-1.0). Values: "linear",
+            "logarithmic", "step". Consumers may define additional formulas.
+
+    # --- Collection Growth Mapping Models ---
+
+    CollectionGrowthMapping:
+      type: object
+      description: >
+        Maps a collection type to growth domain mappings. When a collection entry
+        is unlocked, Seed uses these mappings to determine which growth domains
+        receive growth and how much. Matched by collection type code.
+      required: [collectionType, domainMappings]
+      properties:
+        collectionType:
+          type: string
+          description: Collection type code to match against (e.g., "bestiary", "music_library").
+        domainMappings:
+          type: array
+          items:
+            $ref: '#/components/schemas/CollectionDomainMapping'
+          minItems: 1
+          description: Mappings from entry tag prefixes to growth domains.
+
+    CollectionDomainMapping:
+      type: object
+      description: >
+        Maps a tag prefix on a collection entry to a growth domain and amount.
+        When an entry is unlocked, its tags are matched against tagPrefix. Matching
+        tags determine the growth domain (tagPrefix becomes the domain path) and
+        the growth amount to record.
+      required: [tagPrefix, baseAmount]
+      properties:
+        tagPrefix:
+          type: string
+          description: >
+            Tag prefix to match against entry tags. An entry tag "combat.melee.sword"
+            matches prefix "combat" and "combat.melee". The full matching tag becomes
+            the growth domain path.
+        baseAmount:
+          type: number
+          format: float
+          description: Base growth amount to record when a tag matches this prefix.
+        discoveryBonusPerLevel:
+          type: number
+          format: float
+          nullable: true
+          description: >
+            Additional growth amount per discovery level of the entry.
+            Total growth = baseAmount + (discoveryLevel * discoveryBonusPerLevel).
+            Null or 0 means no discovery bonus.
+
+    # --- Request Models ---
+
+    CreateSeedRequest:
+      type: object
+      description: Request to create a new seed.
+      required: [ownerId, ownerType, seedTypeCode]
+      properties:
+        ownerId:
+          type: string
+          format: uuid
+          description: The entity that owns this seed.
+        ownerType:
+          type: string
+          description: >
+            Entity type discriminator (e.g., "account", "actor", "realm",
+            "character", "relationship").
+        seedTypeCode:
+          type: string
+          description: Registered seed type code (e.g., "guardian", "dungeon_core").
+        gameServiceId:
+          type: string
+          format: uuid
+          nullable: true
+          description: >-
+            Game service this seed is scoped to. Null for cross-game seed types
+            that are not scoped to any single game service.
+        displayName:
+          type: string
+          nullable: true
+          description: Human-readable name. Auto-generated if omitted.
+        metadata:
+          type: object
+          additionalProperties: true
+          nullable: true
+          description: >-
+            Client-provided seed-type-specific initial data.
+            No Bannou plugin reads specific keys from this field by convention.
+
+    GetSeedRequest:
+      type: object
+      description: Request to get a seed by ID.
+      required: [seedId]
+      properties:
+        seedId:
+          type: string
+          format: uuid
+          description: The seed to retrieve.
+
+    GetSeedsByOwnerRequest:
+      type: object
+      description: Request to get seeds by owner.
+      required: [ownerId, ownerType]
+      properties:
+        ownerId:
+          type: string
+          format: uuid
+          description: The owner entity ID.
+        ownerType:
+          type: string
+          description: The owner entity type.
+        seedTypeCode:
+          type: string
+          nullable: true
+          description: Filter by seed type.
+        includeArchived:
+          type: boolean
+          description: Whether to include archived seeds.
+          default: false
+
+    ListSeedsRequest:
+      type: object
+      description: Request to list seeds with optional filters.
+      properties:
+        seedTypeCode:
+          type: string
+          nullable: true
+          description: Filter by seed type.
+        ownerType:
+          type: string
+          nullable: true
+          description: Filter by owner type.
+        gameServiceId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Filter by game service.
+        growthPhase:
+          type: string
+          nullable: true
+          description: Filter by current growth phase code.
+        status:
+          $ref: '#/components/schemas/SeedStatus'
+          nullable: true
+          description: Filter by seed status.
+        page:
+          type: integer
+          description: Page number (1-based).
+          default: 1
+        pageSize:
+          type: integer
+          description: Number of results per page.
+          default: 50
+
+    UpdateSeedRequest:
+      type: object
+      description: Request to update a seed's mutable fields.
+      required: [seedId]
+      properties:
+        seedId:
+          type: string
+          format: uuid
+          description: The seed to update.
+        displayName:
+          type: string
+          nullable: true
+          description: New display name.
+        metadata:
+          type: object
+          additionalProperties: true
+          nullable: true
+          description: >-
+            Client-provided metadata fields to merge (set key to null to delete).
+            No Bannou plugin reads specific keys from this field by convention.
+
+    ActivateSeedRequest:
+      type: object
+      description: Request to activate a seed.
+      required: [seedId]
+      properties:
+        seedId:
+          type: string
+          format: uuid
+          description: The seed to activate.
+
+    ArchiveSeedRequest:
+      type: object
+      description: Request to archive a seed.
+      required: [seedId]
+      properties:
+        seedId:
+          type: string
+          format: uuid
+          description: The seed to archive.
+
+    GetGrowthRequest:
+      type: object
+      description: Request to get growth data for a seed.
+      required: [seedId]
+      properties:
+        seedId:
+          type: string
+          format: uuid
+          description: The seed whose growth to retrieve.
+
+    RecordGrowthRequest:
+      type: object
+      description: Request to record growth in a specific domain.
+      required: [seedId, domain, amount, source]
+      properties:
+        seedId:
+          type: string
+          format: uuid
+          description: The seed to record growth for.
+        domain:
+          type: string
+          description: >
+            Dot-separated domain path (e.g., "combat.melee.sword").
+            New domains are created automatically on first contribution.
+        amount:
+          type: number
+          format: float
+          description: Amount of growth to add.
+        source:
+          type: string
+          description: Identifier of the contributing service (e.g., "character-encounter").
+        sourceEventId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Optional reference to the originating event.
+
+    RecordGrowthBatchRequest:
+      type: object
+      description: Request to record growth across multiple domains atomically.
+      required: [seedId, entries, source]
+      properties:
+        seedId:
+          type: string
+          format: uuid
+          description: The seed to record growth for.
+        entries:
+          type: array
+          items:
+            $ref: '#/components/schemas/GrowthEntry'
+          description: Domain-amount pairs to record.
+        source:
+          type: string
+          description: Identifier of the contributing service.
+
+    GrowthEntry:
+      type: object
+      description: A single domain-amount pair for batch growth recording.
+      required: [domain, amount]
+      properties:
+        domain:
+          type: string
+          description: Dot-separated domain path.
+        amount:
+          type: number
+          format: float
+          description: Growth amount to add.
+
+    GetGrowthPhaseRequest:
+      type: object
+      description: Request to get the current growth phase.
+      required: [seedId]
+      properties:
+        seedId:
+          type: string
+          format: uuid
+          description: The seed whose phase to retrieve.
+
+    GetCapabilityManifestRequest:
+      type: object
+      description: Request to get the capability manifest.
+      required: [seedId]
+      properties:
+        seedId:
+          type: string
+          format: uuid
+          description: The seed whose manifest to retrieve.
+
+    RegisterSeedTypeRequest:
+      type: object
+      description: Request to register a new seed type definition.
+      required:
+        [seedTypeCode, displayName, description,
+         maxPerOwner, allowedOwnerTypes, growthPhases, bondCardinality, bondPermanent]
+      properties:
+        seedTypeCode:
+          type: string
+          description: Unique code for this seed type (e.g., "guardian", "dungeon_core").
+        gameServiceId:
+          type: string
+          format: uuid
+          nullable: true
+          description: >-
+            Game service this type is scoped to. Null for cross-game seed types
+            that are not scoped to any single game service.
+        displayName:
+          type: string
+          description: Human-readable name.
+        description:
+          type: string
+          description: Description of what this seed type represents.
+        maxPerOwner:
+          type: integer
+          description: Maximum seeds of this type per owner entity.
+        allowedOwnerTypes:
+          type: array
+          items:
+            type: string
+          description: Entity types that can own seeds of this type.
+        growthPhases:
+          type: array
+          items:
+            $ref: '#/components/schemas/GrowthPhaseDefinition'
+          description: Ordered growth phase definitions with thresholds.
+        bondCardinality:
+          type: integer
+          description: >
+            Max bond participants. 0 = no bonding, 1 = pair bonds,
+            N = group bonds of up to N+1 participants.
+        bondPermanent:
+          type: boolean
+          description: >
+            Whether bonds of this type are permanent (cannot be dissolved).
+            True for guardian spirit pair bonds, false for dungeon-master
+            bonds that can end when the contract dissolves.
+          default: false
+        capabilityRules:
+          type: array
+          items:
+            $ref: '#/components/schemas/CapabilityRule'
+          nullable: true
+          description: Rules for computing capabilities from growth domains.
+        growthDecayEnabled:
+          type: boolean
+          nullable: true
+          description: Whether unused growth domains decay over time for this seed type. Falls back to global config if null.
+        growthDecayRatePerDay:
+          type: number
+          format: float
+          nullable: true
+          description: Daily decay rate for unused domains of this seed type. Falls back to global config if null.
+        sameOwnerGrowthMultiplier:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 1.0
+          default: 0.0
+          description: Fraction of growth applied to other seeds of the same type owned by the same entity. 0.0 = no sharing (default), 1.0 = full mirror.
+        collectionGrowthMappings:
+          type: array
+          nullable: true
+          items:
+            $ref: '#/components/schemas/CollectionGrowthMapping'
+          description: >
+            Mappings from collection types to growth domains. When a collection entry
+            is unlocked for an entity that owns seeds of this type, the entry's tags
+            are matched against these mappings to determine growth contributions.
+            Null means this seed type does not respond to collection unlocks.
+
+    GetSeedTypeRequest:
+      type: object
+      description: Request to get a seed type definition.
+      required: [seedTypeCode]
+      properties:
+        seedTypeCode:
+          type: string
+          description: The seed type code.
+        gameServiceId:
+          type: string
+          format: uuid
+          nullable: true
+          description: >-
+            The game service scope. Null for cross-game seed types.
+
+    ListSeedTypesRequest:
+      type: object
+      description: Request to list seed types, optionally filtered by game service.
+      properties:
+        gameServiceId:
+          type: string
+          format: uuid
+          nullable: true
+          description: >-
+            Game service to filter seed types for. Null returns cross-game types.
+        includeDeprecated:
+          type: boolean
+          default: false
+          description: Whether to include deprecated seed types in the response.
+
+    UpdateSeedTypeRequest:
+      type: object
+      description: Request to update a seed type definition.
+      required: [seedTypeCode]
+      properties:
+        seedTypeCode:
+          type: string
+          description: The seed type to update.
+        gameServiceId:
+          type: string
+          format: uuid
+          nullable: true
+          description: >-
+            The game service scope. Null for cross-game seed types.
+        displayName:
+          type: string
+          nullable: true
+          description: New display name.
+        description:
+          type: string
+          nullable: true
+          description: New description.
+        maxPerOwner:
+          type: integer
+          nullable: true
+          description: Updated maximum per owner.
+        growthPhases:
+          type: array
+          items:
+            $ref: '#/components/schemas/GrowthPhaseDefinition'
+          nullable: true
+          description: Updated phase definitions.
+        capabilityRules:
+          type: array
+          items:
+            $ref: '#/components/schemas/CapabilityRule'
+          nullable: true
+          description: Updated capability rules.
+        growthDecayEnabled:
+          type: boolean
+          nullable: true
+          description: Whether unused growth domains decay over time for this seed type. Falls back to global config if null.
+        growthDecayRatePerDay:
+          type: number
+          format: float
+          nullable: true
+          description: Daily decay rate for unused domains of this seed type. Falls back to global config if null.
+        sameOwnerGrowthMultiplier:
+          type: number
+          format: float
+          nullable: true
+          minimum: 0.0
+          maximum: 1.0
+          description: Updated fraction of growth applied to other seeds of the same type owned by the same entity.
+        collectionGrowthMappings:
+          type: array
+          nullable: true
+          items:
+            $ref: '#/components/schemas/CollectionGrowthMapping'
+          description: >
+            Updated collection growth mappings. Null means no change,
+            empty array removes all mappings.
+
+    DeprecateSeedTypeRequest:
+      type: object
+      description: Request to deprecate a seed type, preventing new seed creation.
+      additionalProperties: false
+      required: [seedTypeCode]
+      properties:
+        seedTypeCode:
+          type: string
+          description: The seed type to deprecate.
+        gameServiceId:
+          type: string
+          format: uuid
+          nullable: true
+          description: >-
+            The game service scope. Null for cross-game seed types.
+        reason:
+          type: string
+          maxLength: 500
+          nullable: true
+          description: Optional reason for deprecation (for audit purposes).
+
+    UndeprecateSeedTypeRequest:
+      type: object
+      description: Request to restore a deprecated seed type to active status.
+      additionalProperties: false
+      required: [seedTypeCode]
+      properties:
+        seedTypeCode:
+          type: string
+          description: The seed type to restore.
+        gameServiceId:
+          type: string
+          format: uuid
+          nullable: true
+          description: >-
+            The game service scope. Null for cross-game seed types.
+
+    DeleteSeedTypeRequest:
+      type: object
+      description: Request to hard-delete a deprecated seed type with no remaining non-archived seeds.
+      additionalProperties: false
+      required: [seedTypeCode]
+      properties:
+        seedTypeCode:
+          type: string
+          description: The seed type to delete.
+        gameServiceId:
+          type: string
+          format: uuid
+          nullable: true
+          description: >-
+            The game service scope. Null for cross-game seed types.
+
+    InitiateBondRequest:
+      type: object
+      description: Request to initiate a bond between seeds.
+      required: [initiatorSeedId, targetSeedId]
+      properties:
+        initiatorSeedId:
+          type: string
+          format: uuid
+          description: The seed initiating the bond.
+        targetSeedId:
+          type: string
+          format: uuid
+          description: The seed being invited to bond.
+
+    ConfirmBondRequest:
+      type: object
+      description: Request to confirm a pending bond.
+      required: [bondId, confirmingSeedId]
+      properties:
+        bondId:
+          type: string
+          format: uuid
+          description: The bond to confirm.
+        confirmingSeedId:
+          type: string
+          format: uuid
+          description: The seed confirming the bond.
+
+    GetBondRequest:
+      type: object
+      description: Request to get a bond by ID.
+      required: [bondId]
+      properties:
+        bondId:
+          type: string
+          format: uuid
+          description: The bond to retrieve.
+
+    GetBondForSeedRequest:
+      type: object
+      description: Request to get the bond for a specific seed.
+      required: [seedId]
+      properties:
+        seedId:
+          type: string
+          format: uuid
+          description: The seed whose bond to retrieve.
+
+    GetBondPartnersRequest:
+      type: object
+      description: Request to get partner seed information.
+      required: [seedId]
+      properties:
+        seedId:
+          type: string
+          format: uuid
+          description: The requesting seed (returns partner info).
+
+    # --- Response Models ---
+
+    SeedResponse:
+      type: object
+      description: Full seed entity response.
+      required:
+        [seedId, ownerId, ownerType, seedTypeCode,
+         createdAt, growthPhase, totalGrowth, displayName, status]
+      properties:
+        seedId:
+          type: string
+          format: uuid
+          description: Unique identifier for this seed.
+        ownerId:
+          type: string
+          format: uuid
+          description: The entity that owns this seed.
+        ownerType:
+          type: string
+          description: Owner entity type discriminator.
+        seedTypeCode:
+          type: string
+          description: Registered seed type code.
+        gameServiceId:
+          type: string
+          format: uuid
+          nullable: true
+          description: >-
+            Game service this seed is scoped to. Null for cross-game seed types.
+        createdAt:
+          type: string
+          format: date-time
+          description: When the seed was created.
+        growthPhase:
+          type: string
+          description: Current computed growth phase code.
+        totalGrowth:
+          type: number
+          format: float
+          description: Aggregate growth across all domains.
+        bondId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Bond ID if this seed is bonded, null otherwise.
+        displayName:
+          type: string
+          description: Human-readable name.
+        status:
+          $ref: '#/components/schemas/SeedStatus'
+          description: Current lifecycle status.
+
+    ListSeedsResponse:
+      type: object
+      description: Paginated list of seeds.
+      required: [seeds, totalCount]
+      properties:
+        seeds:
+          type: array
+          items:
+            $ref: '#/components/schemas/SeedResponse'
+          description: Seeds matching the query.
+        totalCount:
+          type: integer
+          description: Total matching seeds across all pages.
+
+    GrowthResponse:
+      type: object
+      description: Growth domain data for a seed.
+      required: [seedId, totalGrowth, domains]
+      properties:
+        seedId:
+          type: string
+          format: uuid
+          description: The seed this growth belongs to.
+        totalGrowth:
+          type: number
+          format: float
+          description: Aggregate growth across all domains.
+        domains:
+          type: object
+          additionalProperties:
+            type: number
+            format: float
+          description: >
+            Map of domain path to depth value. Keys are dot-separated
+            (e.g., "combat.melee.sword"). Values are floating-point depth scores.
+
+    GrowthPhaseResponse:
+      type: object
+      description: Current growth phase information for a seed.
+      required: [seedId, phaseCode, displayName, totalGrowth]
+      properties:
+        seedId:
+          type: string
+          format: uuid
+          description: The seed.
+        phaseCode:
+          type: string
+          description: Current phase code.
+        displayName:
+          type: string
+          description: Current phase display name.
+        totalGrowth:
+          type: number
+          format: float
+          description: Current total growth.
+        nextPhaseCode:
+          type: string
+          nullable: true
+          description: Next phase code, null if at maximum.
+        nextPhaseThreshold:
+          type: number
+          format: float
+          nullable: true
+          description: Growth needed for next phase, null if at maximum.
+
+    CapabilityManifestResponse:
+      type: object
+      description: Computed capability manifest for a seed.
+      required: [seedId, seedTypeCode, computedAt, version, capabilities]
+      properties:
+        seedId:
+          type: string
+          format: uuid
+          description: The seed this manifest belongs to.
+        seedTypeCode:
+          type: string
+          description: The seed type for consumer interpretation.
+        computedAt:
+          type: string
+          format: date-time
+          description: When this manifest was last computed.
+        version:
+          type: integer
+          description: Monotonically increasing version number.
+        capabilities:
+          type: array
+          items:
+            $ref: '#/components/schemas/Capability'
+          description: List of capabilities with availability and fidelity.
+
+    Capability:
+      type: object
+      description: A single capability entry in the manifest.
+      required: [capabilityCode, domain, fidelity, unlocked]
+      properties:
+        capabilityCode:
+          type: string
+          description: >
+            Unique capability identifier. Consumer-interpreted
+            (e.g., UX module ID, spawning permission, faction action).
+        domain:
+          type: string
+          description: Growth domain this capability maps to.
+        fidelity:
+          type: number
+          format: float
+          description: >
+            Capability fidelity from 0.0 to 1.0. Higher values mean the
+            seed has more developed capability in this area.
+        unlocked:
+          type: boolean
+          description: Whether this capability is available at all.
+
+    SeedTypeResponse:
+      type: object
+      description: Full seed type definition response.
+      required:
+        [seedTypeCode, displayName, description,
+         maxPerOwner, allowedOwnerTypes, growthPhases, bondCardinality, bondPermanent,
+         isDeprecated]
+      properties:
+        seedTypeCode:
+          type: string
+          description: Unique type code.
+        gameServiceId:
+          type: string
+          format: uuid
+          nullable: true
+          description: >-
+            Game service scope. Null for cross-game seed types.
+        displayName:
+          type: string
+          description: Human-readable name.
+        description:
+          type: string
+          description: Type description.
+        maxPerOwner:
+          type: integer
+          description: Maximum seeds of this type per owner.
+        allowedOwnerTypes:
+          type: array
+          items:
+            type: string
+          description: Allowed owner entity types.
+        growthPhases:
+          type: array
+          items:
+            $ref: '#/components/schemas/GrowthPhaseDefinition'
+          description: Phase definitions with thresholds.
+        bondCardinality:
+          type: integer
+          description: Bond participant limit.
+        bondPermanent:
+          type: boolean
+          description: Whether bonds of this type are permanent.
+        capabilityRules:
+          type: array
+          items:
+            $ref: '#/components/schemas/CapabilityRule'
+          nullable: true
+          description: Capability computation rules.
+        growthDecayEnabled:
+          type: boolean
+          nullable: true
+          description: Whether unused growth domains decay over time for this seed type. Null means using global config.
+        growthDecayRatePerDay:
+          type: number
+          format: float
+          nullable: true
+          description: Daily decay rate for unused domains of this seed type. Null means using global config.
+        sameOwnerGrowthMultiplier:
+          type: number
+          format: float
+          description: Fraction of growth applied to other seeds of the same type owned by the same entity.
+        collectionGrowthMappings:
+          type: array
+          nullable: true
+          items:
+            $ref: '#/components/schemas/CollectionGrowthMapping'
+          description: Collection-to-growth-domain mappings for this seed type. Null if this type does not respond to collection unlocks.
+        isDeprecated:
+          type: boolean
+          description: Whether this seed type is deprecated and cannot be used for new seeds.
+        deprecatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: Timestamp when this seed type was deprecated.
+        deprecationReason:
+          type: string
+          nullable: true
+          description: Optional reason for deprecation.
+
+    ListSeedTypesResponse:
+      type: object
+      description: List of registered seed types.
+      required: [seedTypes]
+      properties:
+        seedTypes:
+          type: array
+          items:
+            $ref: '#/components/schemas/SeedTypeResponse'
+          description: Registered seed types.
+
+    BondResponse:
+      type: object
+      description: Full bond record response.
+      required: [bondId, seedTypeCode, participants, createdAt, status, bondStrength, sharedGrowth]
+      properties:
+        bondId:
+          type: string
+          format: uuid
+          description: Unique bond identifier.
+        seedTypeCode:
+          type: string
+          description: Seed type this bond connects.
+        participants:
+          type: array
+          items:
+            $ref: '#/components/schemas/BondParticipant'
+          description: Seeds participating in this bond.
+        createdAt:
+          type: string
+          format: date-time
+          description: When the bond was formed.
+        status:
+          $ref: '#/components/schemas/BondStatus'
+          description: Current bond lifecycle status.
+        bondStrength:
+          type: number
+          format: float
+          description: Grows with shared growth. Consumer-interpreted.
+        sharedGrowth:
+          type: number
+          format: float
+          description: Total accumulated shared growth.
+
+    BondParticipant:
+      type: object
+      description: A participant in a seed bond.
+      required: [seedId, joinedAt]
+      properties:
+        seedId:
+          type: string
+          format: uuid
+          description: Participant seed ID.
+        joinedAt:
+          type: string
+          format: date-time
+          description: When this seed joined the bond.
+        role:
+          type: string
+          nullable: true
+          description: Optional role within the bond.
+
+    BondPartnersResponse:
+      type: object
+      description: Partner seed summaries for a bond.
+      required: [bondId, partners]
+      properties:
+        bondId:
+          type: string
+          format: uuid
+          description: The bond.
+        partners:
+          type: array
+          items:
+            $ref: '#/components/schemas/PartnerSummary'
+          description: Partner seed summaries.
+
+    PartnerSummary:
+      type: object
+      description: Public summary of a bond partner's seed.
+      required: [seedId, ownerId, ownerType, growthPhase, status]
+      properties:
+        seedId:
+          type: string
+          format: uuid
+          description: Partner seed ID.
+        ownerId:
+          type: string
+          format: uuid
+          description: Partner's owner entity ID.
+        ownerType:
+          type: string
+          description: Partner's owner entity type.
+        growthPhase:
+          type: string
+          description: Partner's current growth phase.
+        status:
+          $ref: '#/components/schemas/SeedStatus'
+          description: Partner's seed status.

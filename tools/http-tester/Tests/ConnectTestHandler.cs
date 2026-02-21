@@ -163,10 +163,12 @@ public class ConnectTestHandler : BaseHttpTestHandler
 
                 return TestResult.Successful($"Internal proxy completed - Status: {response.StatusCode}");
             }
-            catch (ApiException ex) when (ex.StatusCode == 403)
+            catch (ApiException ex)
             {
-                // 403 is expected for proxy calls without proper auth
-                return TestResult.Successful("Internal proxy correctly returned 403 (permission denied without auth)");
+                // 403 = permission denied without auth; 404 = session not found (no active WebSocket in HTTP test mode)
+                if (ex.StatusCode == 403 || ex.StatusCode == 404)
+                    return TestResult.Successful($"Internal proxy correctly returned {ex.StatusCode}");
+                return TestResult.Failed($"Internal proxy failed with unexpected status: {ex.StatusCode}");
             }
         }, "Internal proxy");
 
@@ -201,10 +203,12 @@ public class ConnectTestHandler : BaseHttpTestHandler
 
                 return TestResult.Failed("Proxy to invalid service should return an error status");
             }
-            catch (ApiException ex) when (ex.StatusCode == 403 || ex.StatusCode == 404 || ex.StatusCode == 502 || ex.StatusCode == 503)
+            catch (ApiException ex)
             {
                 // 403 is expected - permission check happens before service existence check (correct security behavior)
-                return TestResult.Successful($"Proxy correctly returned {ex.StatusCode} for invalid service");
+                if (ex.StatusCode == 403 || ex.StatusCode == 404 || ex.StatusCode == 502 || ex.StatusCode == 503)
+                    return TestResult.Successful($"Proxy correctly returned {ex.StatusCode} for invalid service");
+                return TestResult.Failed($"Proxy to invalid service failed with unexpected status: {ex.StatusCode}");
             }
         }, "Proxy to invalid service");
 
@@ -238,10 +242,12 @@ public class ConnectTestHandler : BaseHttpTestHandler
                 // Might succeed with empty session for some endpoints
                 return TestResult.Successful("Proxy accepted empty session (may be allowed for public endpoints)");
             }
-            catch (ApiException ex) when (ex.StatusCode == 400 || ex.StatusCode == 401 || ex.StatusCode == 403)
+            catch (ApiException ex)
             {
-                // 403 is expected - permission denied for empty/invalid session
-                return TestResult.Successful($"Proxy correctly returned {ex.StatusCode} for empty session ID");
+                // 400/401/403 = permission denied for empty/invalid session; 404 = session not found (no active WebSocket)
+                if (ex.StatusCode == 400 || ex.StatusCode == 401 || ex.StatusCode == 403 || ex.StatusCode == 404)
+                    return TestResult.Successful($"Proxy correctly returned {ex.StatusCode} for empty session ID");
+                return TestResult.Failed($"Proxy failed with unexpected status: {ex.StatusCode}");
             }
         }, "Proxy without session");
 
@@ -286,14 +292,17 @@ public class ConnectTestHandler : BaseHttpTestHandler
                     var response = await connectClient.ProxyInternalRequestAsync(proxyRequest);
                     successCount++;
                 }
-                catch (ApiException ex) when (ex.StatusCode == 403)
-                {
-                    // 403 is expected - permission denied without auth
-                    successCount++;
-                }
                 catch (ApiException ex)
                 {
-                    errorDetails.Add($"{method}: {ex.StatusCode} - {ex.Message}");
+                    // 403 = permission denied without auth; 404 = session not found (no active WebSocket)
+                    if (ex.StatusCode == 403 || ex.StatusCode == 404)
+                    {
+                        successCount++;
+                    }
+                    else
+                    {
+                        errorDetails.Add($"{method}: {ex.StatusCode} - {ex.Message}");
+                    }
                 }
                 catch (Exception ex)
                 {
@@ -338,10 +347,12 @@ public class ConnectTestHandler : BaseHttpTestHandler
                 // The request was processed - check for valid response
                 return TestResult.Successful($"Proxy processed request with body - Status: {response?.StatusCode}");
             }
-            catch (ApiException ex) when (ex.StatusCode == 403)
+            catch (ApiException ex)
             {
-                // 403 is expected - permission denied without auth
-                return TestResult.Successful("Proxy correctly returned 403 (permission denied without auth)");
+                // 403 = permission denied without auth; 404 = session not found (no active WebSocket)
+                if (ex.StatusCode == 403 || ex.StatusCode == 404)
+                    return TestResult.Successful($"Proxy correctly returned {ex.StatusCode}");
+                return TestResult.Failed($"Proxy with body failed with unexpected status: {ex.StatusCode}");
             }
         }, "Proxy with body");
 
@@ -373,10 +384,12 @@ public class ConnectTestHandler : BaseHttpTestHandler
                 var response = await connectClient.ProxyInternalRequestAsync(proxyRequest);
                 return TestResult.Successful($"Proxy processed request with custom headers - Status: {response?.StatusCode}");
             }
-            catch (ApiException ex) when (ex.StatusCode == 403)
+            catch (ApiException ex)
             {
-                // 403 is expected - permission denied without auth
-                return TestResult.Successful("Proxy correctly returned 403 (permission denied without auth)");
+                // 403 = permission denied without auth; 404 = session not found (no active WebSocket)
+                if (ex.StatusCode == 403 || ex.StatusCode == 404)
+                    return TestResult.Successful($"Proxy correctly returned {ex.StatusCode}");
+                return TestResult.Failed($"Proxy with headers failed with unexpected status: {ex.StatusCode}");
             }
         }, "Proxy with headers");
 
@@ -411,10 +424,12 @@ public class ConnectTestHandler : BaseHttpTestHandler
                 // Might redirect to root endpoint
                 return TestResult.Successful($"Proxy accepted empty endpoint - Status: {response?.StatusCode}");
             }
-            catch (ApiException ex) when (ex.StatusCode == 400 || ex.StatusCode == 403 || ex.StatusCode == 404)
+            catch (ApiException ex)
             {
                 // 403 is expected - permission check happens before endpoint validation
-                return TestResult.Successful($"Proxy correctly returned {ex.StatusCode} for empty endpoint");
+                if (ex.StatusCode == 400 || ex.StatusCode == 403 || ex.StatusCode == 404)
+                    return TestResult.Successful($"Proxy correctly returned {ex.StatusCode} for empty endpoint");
+                return TestResult.Failed($"Proxy with empty endpoint failed with unexpected status: {ex.StatusCode}");
             }
         }, "Proxy with empty endpoint");
 
@@ -455,10 +470,12 @@ public class ConnectTestHandler : BaseHttpTestHandler
 
                 return TestResult.Successful($"Proxy to account service completed - Status: {response.StatusCode}");
             }
-            catch (ApiException ex) when (ex.StatusCode == 403)
+            catch (ApiException ex)
             {
-                // 403 is expected - permission denied without auth
-                return TestResult.Successful("Proxy correctly returned 403 (permission denied without auth)");
+                // 403 = permission denied without auth; 404 = session not found (no active WebSocket)
+                if (ex.StatusCode == 403 || ex.StatusCode == 404)
+                    return TestResult.Successful($"Proxy correctly returned {ex.StatusCode}");
+                return TestResult.Failed($"Proxy to account service failed with unexpected status: {ex.StatusCode}");
             }
         }, "Proxy to account service");
 
@@ -496,16 +513,16 @@ public class ConnectTestHandler : BaseHttpTestHandler
             var validation = await ((IServiceClient<AuthClient>)authClient).WithAuthorization(token).ValidateTokenAsync();
 
             if (!validation.Valid)
-                return TestResult.Failed($"Token validation failed for WebSocket upgrade simulation. Valid={validation.Valid}, SessionId={validation.SessionId}, RemainingTime={validation.RemainingTime}");
+                return TestResult.Failed($"Token validation failed for WebSocket upgrade simulation. Valid={validation.Valid}, SessionId={validation.SessionKey}, RemainingTime={validation.RemainingTime}");
 
             // Verify we have the data Connect needs
-            if (validation.SessionId == Guid.Empty)
+            if (validation.SessionKey == Guid.Empty)
                 return TestResult.Failed("SessionId is empty - Connect needs this for session tracking");
 
             if (validation.RemainingTime <= 0)
                 return TestResult.Failed($"RemainingTime is {validation.RemainingTime} - session appears expired (ExpiresAtUnix deserialization issue?)");
 
-            return TestResult.Successful($"Token validation for WebSocket ready. SessionId: {validation.SessionId}, RemainingTime: {validation.RemainingTime}s, Roles: {validation.Roles?.Count ?? 0}");
+            return TestResult.Successful($"Token validation for WebSocket ready. SessionId: {validation.SessionKey}, RemainingTime: {validation.RemainingTime}s, Roles: {validation.Roles?.Count ?? 0}");
         }, "Token validation for WebSocket");
 
     /// <summary>
@@ -541,7 +558,7 @@ public class ConnectTestHandler : BaseHttpTestHandler
             if (validation.AccountId == Guid.Empty)
                 issues.Add("AccountId is empty GUID");
 
-            if (validation.SessionId == Guid.Empty)
+            if (validation.SessionKey == Guid.Empty)
                 issues.Add("SessionId is empty");
 
             if (validation.RemainingTime <= 0)
@@ -555,7 +572,7 @@ public class ConnectTestHandler : BaseHttpTestHandler
                 return TestResult.Failed($"Session data incomplete: {string.Join(", ", issues)}");
             }
 
-            return TestResult.Successful($"Session data complete - AccountId: {validation.AccountId}, SessionId: {validation.SessionId}, RemainingTime: {validation.RemainingTime}s, Roles: [{string.Join(", ", validation.Roles ?? Array.Empty<string>())}]");
+            return TestResult.Successful($"Session data complete - AccountId: {validation.AccountId}, SessionId: {validation.SessionKey}, RemainingTime: {validation.RemainingTime}s, Roles: [{string.Join(", ", validation.Roles ?? Array.Empty<string>())}]");
         }, "Token validation returns session data");
 
     /// <summary>

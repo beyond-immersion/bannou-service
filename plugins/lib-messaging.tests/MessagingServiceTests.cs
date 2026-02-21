@@ -24,7 +24,7 @@ public class MessagingServiceTests : IDisposable
     private readonly Mock<IMessageSubscriber> _mockMessageSubscriber;
     private readonly Mock<IHttpClientFactory> _mockHttpClientFactory;
     private readonly Mock<IStateStoreFactory> _mockStateStoreFactory;
-    private readonly Mock<IStateStore<ExternalSubscriptionData>> _mockSubscriptionStore;
+    private readonly Mock<ICacheableStateStore<ExternalSubscriptionData>> _mockSubscriptionStore;
     private readonly MessagingService _service;
     private readonly List<HttpClient> _createdHttpClients = new();
 
@@ -53,11 +53,11 @@ public class MessagingServiceTests : IDisposable
         _mockMessageSubscriber = new Mock<IMessageSubscriber>();
         _mockHttpClientFactory = new Mock<IHttpClientFactory>();
         _mockStateStoreFactory = new Mock<IStateStoreFactory>();
-        _mockSubscriptionStore = new Mock<IStateStore<ExternalSubscriptionData>>();
+        _mockSubscriptionStore = new Mock<ICacheableStateStore<ExternalSubscriptionData>>();
 
         // Configure state store factory to return the mock subscription store
         _mockStateStoreFactory
-            .Setup(x => x.GetStore<ExternalSubscriptionData>(StateStoreDefinitions.MessagingExternalSubs))
+            .Setup(x => x.GetCacheableStore<ExternalSubscriptionData>(StateStoreDefinitions.MessagingExternalSubs))
             .Returns(_mockSubscriptionStore.Object);
 
         // Configure default mock behaviors for state store set operations

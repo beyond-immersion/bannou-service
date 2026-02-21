@@ -171,4 +171,22 @@ export class CharacterEncounterProxy {
       Schemas['PerspectiveResponse']
     >('/character-encounter/get-perspective', request, channel, timeout);
   }
+
+  /**
+   * Get encounter data for compression
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async getCompressDataAsync(
+    request: Schemas['GetCompressDataRequest'],
+    channel: number = 0,
+    timeout?: number
+  ): Promise<ApiResponse<Schemas['CharacterEncounterArchive']>> {
+    return this.client.invokeAsync<
+      Schemas['GetCompressDataRequest'],
+      Schemas['CharacterEncounterArchive']
+    >('/character-encounter/get-compress-data', request, channel, timeout);
+  }
 }

@@ -75,9 +75,24 @@ public partial interface IItemService : IBannouService
         Task<(StatusCodes, ItemInstanceResponse?)> BindItemInstanceAsync(BindItemInstanceRequest body, CancellationToken cancellationToken = default(CancellationToken));
 
         /// <summary>
+        /// UnbindItemInstance operation
+        /// </summary>
+        Task<(StatusCodes, ItemInstanceResponse?)> UnbindItemInstanceAsync(UnbindItemInstanceRequest body, CancellationToken cancellationToken = default(CancellationToken));
+
+        /// <summary>
         /// DestroyItemInstance operation
         /// </summary>
         Task<(StatusCodes, DestroyItemInstanceResponse?)> DestroyItemInstanceAsync(DestroyItemInstanceRequest body, CancellationToken cancellationToken = default(CancellationToken));
+
+        /// <summary>
+        /// UseItem operation
+        /// </summary>
+        Task<(StatusCodes, UseItemResponse?)> UseItemAsync(UseItemRequest body, CancellationToken cancellationToken = default(CancellationToken));
+
+        /// <summary>
+        /// UseItemStep operation
+        /// </summary>
+        Task<(StatusCodes, UseItemStepResponse?)> UseItemStepAsync(UseItemStepRequest body, CancellationToken cancellationToken = default(CancellationToken));
 
         /// <summary>
         /// ListItemsByContainer operation

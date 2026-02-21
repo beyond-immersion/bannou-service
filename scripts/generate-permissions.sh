@@ -1,5 +1,20 @@
 #!/bin/bash
 
+# ⛔⛔⛔ AGENT MODIFICATION PROHIBITED ⛔⛔⛔
+# This script is part of Bannou's code generation pipeline.
+# DO NOT MODIFY without EXPLICIT user instructions to change code generation.
+#
+# Changes to generation scripts silently break builds across ALL 48 services.
+# An agent once changed namespace strings across 4 scripts in a single commit,
+# breaking every service. If you believe a change is needed:
+#   1. STOP and explain what you think is wrong
+#   2. Show the EXACT diff you propose
+#   3. Wait for EXPLICIT approval before touching ANY generation script
+#
+# This applies to: namespace strings, output paths, exclusion logic,
+# NSwag parameters, post-processing steps, and file naming conventions.
+# ⛔⛔⛔ AGENT MODIFICATION PROHIBITED ⛔⛔⛔
+
 # Permission registration code generator
 # Usage: ./generate-permissions.sh <service-name> <schema-file>
 # Extracts x-permissions from OpenAPI schema and generates RegisterServicePermissionsAsync code
@@ -47,7 +62,12 @@ if [ -f "$OLD_FILE" ]; then
 fi
 
 # Extract service version from schema info.version
-SERVICE_VERSION=$(grep -A1 '^info:' "$SCHEMA_FILE" | grep 'version:' | head -1 | sed "s/.*version:[[:space:]]*['\"]*//" | sed "s/['\"].*//")
+# Use awk to find the version field within the info block (handles multiline descriptions)
+SERVICE_VERSION=$(awk '
+/^info:/ { in_info=1; next }
+in_info && /^[^ ]/ { in_info=0 }
+in_info && /^  version:/ { gsub(/.*version:[[:space:]]*/, ""); gsub(/["\047]/, ""); print; exit }
+' "$SCHEMA_FILE")
 if [ -z "$SERVICE_VERSION" ]; then
     SERVICE_VERSION="1.0.0"
 fi
@@ -154,7 +174,6 @@ cat > "$OUTPUT_FILE" << CSHARP_EOF
 #nullable enable
 
 using BeyondImmersion.BannouService;
-using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.Logging;
 
@@ -175,25 +194,6 @@ public static class ${SERVICE_PASCAL}PermissionRegistration
     /// Service version from OpenAPI schema.
     /// </summary>
     public const string ServiceVersion = "${SERVICE_VERSION}";
-
-    /// <summary>
-    /// Generates the ServiceRegistrationEvent containing all endpoint permissions.
-    /// </summary>
-    /// <param name="instanceId">The unique instance GUID for this bannou instance</param>
-    /// <param name="appId">The effective app ID for this service instance</param>
-    public static ServiceRegistrationEvent CreateRegistrationEvent(Guid instanceId, string appId)
-    {
-        return new ServiceRegistrationEvent
-        {
-            EventId = Guid.NewGuid(),
-            Timestamp = DateTimeOffset.UtcNow,
-            ServiceId = instanceId,
-            ServiceName = ServiceId,
-            Version = ServiceVersion,
-            AppId = appId,
-            Endpoints = GetEndpoints()
-        };
-    }
 
     /// <summary>
     /// Gets the list of endpoints with their permission requirements.
@@ -242,7 +242,7 @@ for endpoint in data:
 " >> "$OUTPUT_FILE"
 fi
 
-# Complete the C# file
+# Complete the static class (data methods only, no event publishing)
 cat >> "$OUTPUT_FILE" << 'CSHARP_FOOTER'
 
         return endpoints;
@@ -294,36 +294,43 @@ cat >> "$OUTPUT_FILE" << 'CSHARP_FOOTER'
         return matrix;
     }
 
-    /// <summary>
-    /// Registers service permissions via event publishing.
-    /// Should only be called after messaging infrastructure is confirmed.
-    /// </summary>
-    /// <param name="messageBus">The message bus for publishing events</param>
-    /// <param name="appId">The effective app ID for this service instance</param>
-    /// <param name="logger">Optional logger for diagnostics</param>
-    public static async Task RegisterViaEventAsync(IMessageBus messageBus, string appId, ILogger? logger = null)
-    {
-        var registrationEvent = CreateRegistrationEvent(Program.ServiceGUID, appId);
-
-        var success = await messageBus.TryPublishAsync(
-            "permission.service-registered",
-            registrationEvent);
-
-        if (success)
-        {
-            logger?.LogInformation(
-                "Published service registration event for {ServiceName} v{Version} with {EndpointCount} endpoints",
-                ServiceId, ServiceVersion, registrationEvent.Endpoints.Count);
-        }
-        else
-        {
-            logger?.LogWarning(
-                "Failed to publish service registration event for {ServiceId} (will be retried)",
-                ServiceId);
-        }
-    }
-
 }
 CSHARP_FOOTER
+
+# Generate partial class overlay for DI-based permission registration
+# Skip for services with custom registration logic (orchestrator has SecureWebsocket conditional)
+SKIP_PARTIAL_SERVICES="orchestrator"
+
+if [[ ! " $SKIP_PARTIAL_SERVICES " =~ " $SERVICE_NAME " ]]; then
+    cat >> "$OUTPUT_FILE" << CSHARP_PARTIAL
+
+/// <summary>
+/// Partial class overlay: registers ${SERVICE_PASCAL} service permissions via DI registry.
+/// Generated from x-permissions sections in ${SERVICE_NAME}-api.yaml.
+/// Push-based: this service pushes its permission matrix TO the IPermissionRegistry.
+/// </summary>
+public partial class ${SERVICE_PASCAL}Service
+{
+    /// <summary>
+    /// Registers this service's permissions with the Permission service via DI registry.
+    /// Called by PluginLoader during startup with the resolved IPermissionRegistry.
+    /// </summary>
+    async Task IBannouService.RegisterServicePermissionsAsync(
+        string appId, IPermissionRegistry? registry)
+    {
+        if (registry != null)
+        {
+            await registry.RegisterServiceAsync(
+                ${SERVICE_PASCAL}PermissionRegistration.ServiceId,
+                ${SERVICE_PASCAL}PermissionRegistration.ServiceVersion,
+                ${SERVICE_PASCAL}PermissionRegistration.BuildPermissionMatrix());
+        }
+    }
+}
+CSHARP_PARTIAL
+    echo -e "  🔗 Generated partial class overlay for ${SERVICE_PASCAL}Service"
+else
+    echo -e "  ⚡ Skipped partial class overlay for ${SERVICE_NAME} (custom registration logic)"
+fi
 
 echo -e "${GREEN}✅ Generated: $OUTPUT_FILE${NC}"

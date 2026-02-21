@@ -30,6 +30,64 @@ namespace BeyondImmersion.BannouService.Events;
 
 using System = global::System;
 
+/// <summary>
+/// Published when a relationship type merge operation completes, replacing N individual relationship.updated events with a single summary event
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class RelationshipTypeMergedEvent
+{
+
+    /// <summary>
+    /// Unique identifier for this event
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("eventId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid EventId { get; set; } = default!;
+
+    /// <summary>
+    /// When the merge operation completed
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("timestamp")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset Timestamp { get; set; } = default!;
+
+    /// <summary>
+    /// ID of the deprecated source type that was merged
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("sourceTypeId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid SourceTypeId { get; set; } = default!;
+
+    /// <summary>
+    /// ID of the target type that received the relationships
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("targetTypeId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid TargetTypeId { get; set; } = default!;
+
+    /// <summary>
+    /// Number of relationships successfully migrated to the target type
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("migratedCount")]
+    public int MigratedCount { get; set; } = default!;
+
+    /// <summary>
+    /// Number of relationships that failed to migrate including duplicates detected via composite key collision
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("failedCount")]
+    public int FailedCount { get; set; } = default!;
+
+    /// <summary>
+    /// Whether the source type was deleted after merge
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("sourceDeleted")]
+    public bool SourceDeleted { get; set; } = default!;
+
+}
 
 
 

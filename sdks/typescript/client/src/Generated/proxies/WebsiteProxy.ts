@@ -79,24 +79,6 @@ export class WebsiteProxy {
   }
 
   /**
-   * Get game server status for all realms
-   * @param channel - Message channel for ordering (default 0).
-   * @param timeout - Request timeout in milliseconds.
-   * @returns ApiResponse containing the response on success.
-   */
-  async getServerStatusAsync(
-    channel: number = 0,
-    timeout?: number
-  ): Promise<ApiResponse<Schemas['ServerStatusResponse']>> {
-    return this.client.invokeAsync<object, Schemas['ServerStatusResponse']>(
-      '/website/server-status',
-      {},
-      channel,
-      timeout
-    );
-  }
-
-  /**
    * Get download links for game clients
    * @param channel - Message channel for ordering (default 0).
    * @param timeout - Request timeout in milliseconds.
@@ -146,24 +128,6 @@ export class WebsiteProxy {
   ): Promise<ApiResponse<Schemas['AccountProfile']>> {
     return this.client.invokeAsync<object, Schemas['AccountProfile']>(
       '/website/account/profile',
-      {},
-      channel,
-      timeout
-    );
-  }
-
-  /**
-   * Get character list for logged-in user
-   * @param channel - Message channel for ordering (default 0).
-   * @param timeout - Request timeout in milliseconds.
-   * @returns ApiResponse containing the response on success.
-   */
-  async getAccountCharactersAsync(
-    channel: number = 0,
-    timeout?: number
-  ): Promise<ApiResponse<Schemas['CharacterListResponse']>> {
-    return this.client.invokeAsync<object, Schemas['CharacterListResponse']>(
-      '/website/account/characters',
       {},
       channel,
       timeout
@@ -277,24 +241,6 @@ export class WebsiteProxy {
       '/website/cms/theme',
       request,
       channel
-    );
-  }
-
-  /**
-   * Get subscription status
-   * @param channel - Message channel for ordering (default 0).
-   * @param timeout - Request timeout in milliseconds.
-   * @returns ApiResponse containing the response on success.
-   */
-  async getAccountSubscriptionAsync(
-    channel: number = 0,
-    timeout?: number
-  ): Promise<ApiResponse<Schemas['SubscriptionResponse']>> {
-    return this.client.invokeAsync<object, Schemas['SubscriptionResponse']>(
-      '/website/account/subscription',
-      {},
-      channel,
-      timeout
     );
   }
 }

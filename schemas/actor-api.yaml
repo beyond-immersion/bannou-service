@@ -7,10 +7,27 @@ info:
     and other long-running behavior loops. Actors output behavioral state (feelings,
     goals, memories) to characters - NOT physics data.
 
-    **Schema Rules**: AI agents MUST review docs/reference/SCHEMA-RULES.md before modifying this schema. Optional reference types require `nullable: true`.
-
+    **SCHEMA MODIFICATION GATE**: STOP. Before modifying this schema, you MUST:
+    1. Read docs/reference/SCHEMA-RULES.md
+    2. State which section applies to your change
+    3. Only then proceed with edits
+    Edits without stating the applicable rule are FORBIDDEN.
+  # Resource reference tracking (see SCHEMA-RULES.md "x-references")
+  x-references:
+    - target: character
+      sourceType: actor
+      field: characterId
+      onDelete: cascade
+      cleanup:
+        endpoint: /actor/cleanup-by-character
+        payloadTemplate: '{"characterId": "{{resourceId}}"}'
 servers:
 - url: http://localhost:5012
+
+# Service hierarchy layer - Actor is L2 (Game Foundation) because it's a core
+# runtime for behavior execution. It uses IVariableProviderFactory pattern to
+# receive data from L4 services without depending on them directly.
+x-service-layer: GameFoundation
 
 paths:
   # === Actor Templates ===
@@ -181,6 +198,56 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/StopActorResponse'
+
+  /actor/bind-character:
+    post:
+      operationId: BindActorCharacter
+      summary: Bind an unbound actor to a character
+      description: |
+        Transitions an unbound (event-mode) actor to a bound (character-mode) actor.
+        After binding, the actor receives character perception events and variable
+        providers begin loading character-specific data on subsequent ticks.
+        Fails if the actor is already bound to a character.
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BindActorCharacterRequest'
+      responses:
+        '200':
+          description: Actor bound to character successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ActorInstanceResponse'
+
+  /actor/cleanup-by-character:
+    post:
+      operationId: CleanupByCharacter
+      summary: Cleanup actors referencing a deleted character
+      description: |
+        Called by lib-resource cleanup coordination when a character is deleted.
+        Stops and removes all actors that reference the specified characterId.
+        This endpoint is designed for internal service-to-service calls during
+        cascading resource cleanup.
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CleanupByCharacterRequest'
+      responses:
+        '200':
+          description: Cleanup completed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CleanupByCharacterResponse'
 
   /actor/list:
     post:
@@ -367,7 +434,10 @@ components:
           type: object
           additionalProperties: true
           nullable: true
-          description: Default configuration passed to behavior execution
+          description: >-
+            Game-specific configuration passed to ABML behavior execution scope.
+            No Bannou plugin reads specific keys from this field by convention.
+            Different ABML behaviors define their own expected configuration structure.
         autoSpawn:
           description: Auto-spawn configuration for instantiate-on-access
           nullable: true
@@ -384,6 +454,23 @@ components:
           type: integer
           default: 100
           description: Maximum actors of this category per pool node
+        cognitionTemplateId:
+          type: string
+          nullable: true
+          description: |
+            Cognition template ID for this actor type. Primary source for cognition
+            pipeline resolution. When null, falls back to ABML metadata, then category default.
+            Examples: "humanoid-cognition-base", "creature-cognition-base", "object-cognition-base"
+        cognitionOverrides:
+          type: object
+          additionalProperties: true
+          nullable: true
+          description: >-
+            Static template-level cognition overrides (polymorphic JSON).
+            Deserialized internally to CognitionOverrides type with discriminated subtypes.
+            Applied as the first layer in the three-layer override composition
+            (template, instance, ABML metadata). Structure defined by ICognitionOverride
+            interface hierarchy in bannou-service/Behavior/.
 
     AutoSpawnConfig:
       type: object
@@ -412,6 +499,13 @@ components:
             1-based regex capture group index for extracting CharacterId from actor ID.
             Example: With idPattern "npc-brain-([a-f0-9-]+)" and characterIdCaptureGroup: 1,
             actor ID "npc-brain-abc-123-def" extracts "abc-123-def" as CharacterId (parsed as GUID).
+        defaultRealmId:
+          type: string
+          format: uuid
+          nullable: true
+          description: |
+            Default realm ID for auto-spawned actors when no CharacterId is available to resolve a realm.
+            Required when characterIdCaptureGroup is not configured and auto-spawn is enabled.
 
     ActorTemplateResponse:
       type: object
@@ -442,7 +536,9 @@ components:
           type: object
           additionalProperties: true
           nullable: true
-          description: Default configuration passed to behavior execution
+          description: >-
+            Game-specific configuration passed to ABML behavior execution scope.
+            No Bannou plugin reads specific keys from this field by convention.
         autoSpawn:
           description: Auto-spawn configuration for instantiate-on-access
           nullable: true
@@ -456,6 +552,19 @@ components:
         maxInstancesPerNode:
           type: integer
           description: Maximum actors of this category per pool node
+        cognitionTemplateId:
+          type: string
+          nullable: true
+          description: |
+            Cognition template ID for this actor type. Primary source for cognition
+            pipeline resolution. When null, falls back to ABML metadata, then category default.
+        cognitionOverrides:
+          type: object
+          additionalProperties: true
+          nullable: true
+          description: >-
+            Static template-level cognition overrides (polymorphic JSON).
+            Deserialized internally to CognitionOverrides type with discriminated subtypes.
         createdAt:
           type: string
           format: date-time
@@ -531,7 +640,9 @@ components:
           type: object
           additionalProperties: true
           nullable: true
-          description: Updated configuration settings
+          description: >-
+            Updated game-specific configuration for ABML behavior execution scope.
+            No Bannou plugin reads specific keys from this field by convention.
         autoSpawn:
           description: Updated auto-spawn configuration
           nullable: true
@@ -544,6 +655,19 @@ components:
           type: integer
           nullable: true
           description: Updated auto-save interval in seconds
+        cognitionTemplateId:
+          type: string
+          nullable: true
+          description: |
+            Updated cognition template ID. Set to override the cognition pipeline
+            for actors created from this template.
+        cognitionOverrides:
+          type: object
+          additionalProperties: true
+          nullable: true
+          description: >-
+            Updated cognition overrides (polymorphic JSON).
+            Deserialized internally to CognitionOverrides type with discriminated subtypes.
 
     DeleteActorTemplateRequest:
       type: object
@@ -597,17 +721,30 @@ components:
           type: object
           additionalProperties: true
           nullable: true
-          description: Override template defaults
+          description: >-
+            Game-specific configuration overrides merged with template defaults.
+            No Bannou plugin reads specific keys from this field by convention.
         initialState:
           type: object
           additionalProperties: true
           nullable: true
-          description: Initial state passed to behavior
+          description: >-
+            Initial actor state snapshot. Deserialized internally to ActorStateSnapshot.
+            No Bannou plugin reads specific keys from this field by convention.
         characterId:
           type: string
           format: uuid
           nullable: true
           description: Optional character ID for NPC brain actors
+        realmId:
+          type: string
+          format: uuid
+          nullable: true
+          description: >-
+            Realm the actor operates in. Optional on request -- when not provided
+            and characterId is set, the service looks up the character's realm
+            automatically. Required for non-character actors that operate in a
+            specific realm.
 
     GetActorRequest:
       type: object
@@ -659,6 +796,11 @@ components:
           format: uuid
           nullable: true
           description: Associated character ID (for NPC brains)
+        realmId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Realm the actor operates in (resolved at spawn time)
         startedAt:
           type: string
           format: date-time
@@ -729,6 +871,59 @@ components:
         finalStatus:
           description: Final status of the actor after stopping
           $ref: '#/components/schemas/ActorStatus'
+
+    BindActorCharacterRequest:
+      type: object
+      additionalProperties: false
+      description: >-
+        Request to bind an unbound actor to a character. After binding, the actor
+        subscribes to the character's perception stream and variable providers begin
+        loading character-specific data. The actor's behavior document continues
+        executing — it should already handle both unbound and bound modes gracefully.
+      required:
+      - actorId
+      - characterId
+      properties:
+        actorId:
+          type: string
+          description: ID of the actor to bind
+        characterId:
+          type: string
+          format: uuid
+          description: ID of the character to bind to
+
+    CleanupByCharacterRequest:
+      type: object
+      additionalProperties: false
+      description: Request to cleanup actors referencing a deleted character
+      required:
+      - characterId
+      properties:
+        characterId:
+          type: string
+          format: uuid
+          description: ID of the character that was deleted
+
+    CleanupByCharacterResponse:
+      type: object
+      additionalProperties: false
+      description: Response from character cleanup operation
+      # NRT: Response properties server always sets (Rule 4)
+      required:
+      - actorsCleanedUp
+      - success
+      properties:
+        actorsCleanedUp:
+          type: integer
+          description: Number of actors that were stopped and cleaned up
+        actorIds:
+          type: array
+          items:
+            type: string
+          description: IDs of actors that were cleaned up
+        success:
+          type: boolean
+          description: Whether cleanup completed successfully
 
     ListActorsRequest:
       type: object
@@ -827,9 +1022,10 @@ components:
           type: object
           additionalProperties: true
           nullable: true
-          description: |
-            Perception-specific data. For perceptionType="spatial", this can contain
-            game-specific spatial context in any format the game server defines.
+          description: >-
+            Game-specific perception payload passed to ABML behavior execution scope.
+            No Bannou plugin reads specific keys from this field by convention.
+            Different perception types carry different data structures defined by the game.
         urgency:
           type: number
           format: float
@@ -837,6 +1033,15 @@ components:
           maximum: 1
           default: 0.5
           description: How urgent this perception is (0-1)
+        locationId:
+          type: string
+          format: uuid
+          nullable: true
+          description: >-
+            Current location ID of the entity sending this perception.
+            Used by ActorRunner to track the actor's current location for
+            location-aware variable providers. Updated on each perception
+            event that carries this field.
         spatialContext:
           allOf:
           - $ref: '#/components/schemas/SpatialContext'
@@ -849,12 +1054,11 @@ components:
     SpatialContext:
       type: object
       additionalProperties: true
-      description: |
+      description: >-
         Spatial context derived from game server's authoritative spatial state.
-        Included in perception events to give NPC actors awareness of their environment
-        without requiring direct map subscriptions.
-
-        Note: additionalProperties=true allows game-specific extensions.
+        Included in perception events to give NPC actors awareness of their environment.
+        Core properties are schema-defined; additionalProperties allows game-specific
+        spatial extensions. No Bannou plugin reads specific extension keys by convention.
       properties:
         terrainType:
           type: string
@@ -896,7 +1100,10 @@ components:
     NearbyObject:
       type: object
       additionalProperties: true
-      description: Information about a nearby object perceived by the character
+      description: >-
+        Information about a nearby object perceived by the character.
+        Core properties are schema-defined; additionalProperties allows game-specific
+        object data. No Bannou plugin reads specific extension keys by convention.
       properties:
         objectId:
           type: string
@@ -921,7 +1128,10 @@ components:
     HazardInfo:
       type: object
       additionalProperties: true
-      description: Information about a hazard in range
+      description: >-
+        Information about a hazard in range.
+        Core properties are schema-defined; additionalProperties allows game-specific
+        hazard data. No Bannou plugin reads specific extension keys by convention.
       properties:
         hazardType:
           type: string
@@ -1081,9 +1291,11 @@ components:
     ActorOption:
       type: object
       additionalProperties: true
-      description: |
-        A single option available to the actor. The standardized fields enable
-        Event Brain to reason about options; additional fields allow actor-specific data.
+      description: >-
+        A single option available to the actor. Core properties (actionId, preference,
+        risk, available, etc.) are schema-defined and used by Actor internally.
+        additionalProperties allows game-specific option extensions.
+        No Bannou plugin reads specific extension keys by convention.
       required:
       - actionId
       - preference
@@ -1132,9 +1344,11 @@ components:
     OptionsQueryContext:
       type: object
       additionalProperties: true
-      description: |
+      description: >-
         Context provided with a fresh query. Injected as a perception to the actor
-        to trigger context-sensitive option recomputation.
+        to trigger context-sensitive option recomputation. Core properties are schema-defined;
+        use customContext for game-specific extensions.
+        No Bannou plugin reads specific extension keys by convention.
       properties:
         combatState:
           type: string
@@ -1169,7 +1383,9 @@ components:
           type: object
           additionalProperties: true
           nullable: true
-          description: Actor-specific context data
+          description: >-
+            Game-specific context data passed through to ABML behavior scope.
+            No Bannou plugin reads specific keys from this field by convention.
 
     CharacterOptionContext:
       type: object
@@ -1260,9 +1476,11 @@ components:
     ChoreographyAction:
       type: object
       additionalProperties: true
-      description: |
-        A single action within a choreographed sequence.
-        ActionId should match one from the participant's options.
+      description: >-
+        A single action within a choreographed sequence. Core properties (actionId,
+        targetId, position, durationMs, style, delayMs) are schema-defined.
+        additionalProperties allows game-specific action extensions.
+        No Bannou plugin reads specific extension keys by convention.
       required:
       - actionId
       properties:
@@ -1408,7 +1626,9 @@ components:
           type: object
           additionalProperties: true
           nullable: true
-          description: Optional initial data for the encounter
+          description: >-
+            Game-specific encounter initialization data passed to ABML behavior scope.
+            No Bannou plugin reads specific keys from this field by convention.
 
     UpdateEncounterPhaseRequest:
       type: object
@@ -1540,4 +1760,6 @@ components:
           type: object
           additionalProperties: true
           nullable: true
-          description: Custom encounter-specific data
+          description: >-
+            Game-specific encounter state data passed to ABML behavior scope.
+            No Bannou plugin reads specific keys from this field by convention.

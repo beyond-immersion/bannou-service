@@ -1,5 +1,20 @@
 #!/bin/bash
 
+# ⛔⛔⛔ AGENT MODIFICATION PROHIBITED ⛔⛔⛔
+# This script is part of Bannou's code generation pipeline.
+# DO NOT MODIFY without EXPLICIT user instructions to change code generation.
+#
+# Changes to generation scripts silently break builds across ALL 48 services.
+# An agent once changed namespace strings across 4 scripts in a single commit,
+# breaking every service. If you believe a change is needed:
+#   1. STOP and explain what you think is wrong
+#   2. Show the EXACT diff you propose
+#   3. Wait for EXPLICIT approval before touching ANY generation script
+#
+# This applies to: namespace strings, output paths, exclusion logic,
+# NSwag parameters, post-processing steps, and file naming conventions.
+# ⛔⛔⛔ AGENT MODIFICATION PROHIBITED ⛔⛔⛔
+
 # Event subscription code generator
 # Usage: ./generate-event-subscriptions.sh <service-name> <schema-file>
 # Extracts x-event-subscriptions from {service}-events.yaml (preferred) or
@@ -185,6 +200,7 @@ else
 
     cat > "$SERVICE_EVENTS_FILE" << CSHARP_EVENTS_HEADER
 using BeyondImmersion.BannouService.Events;
+using Microsoft.Extensions.Logging;
 
 namespace BeyondImmersion.BannouService.${SERVICE_PASCAL};
 
@@ -253,7 +269,7 @@ for sub in data:
     public Task {handler}Async({event_type} evt)
     {{
         // TODO: Implement {topic} event handling
-        _logger.LogInformation(\"[EVENT] Received {topic} event\");
+        _logger.LogInformation(\"Received {{Topic}} event\", \"{topic}\");
         return Task.CompletedTask;
     }}''')
 " >> "$SERVICE_EVENTS_FILE"

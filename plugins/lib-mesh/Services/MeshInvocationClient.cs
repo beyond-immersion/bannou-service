@@ -2,9 +2,11 @@
 
 using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.BannouService.Configuration;
+using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.Logging;
 using System.Collections.Concurrent;
+using System.Diagnostics;
 using System.Net;
 using System.Net.Http.Headers;
 
@@ -20,13 +22,14 @@ public sealed class MeshInvocationClient : IMeshInvocationClient, IDisposable
     private readonly IMeshStateManager _stateManager;
     private readonly MeshServiceConfiguration _configuration;
     private readonly ILogger<MeshInvocationClient> _logger;
+    private readonly ITelemetryProvider _telemetryProvider;
     private readonly HttpMessageInvoker _httpClient;
 
     // Cache for endpoint resolution to reduce state store calls
     private readonly EndpointCache _endpointCache;
 
-    // Circuit breaker state per app-id
-    private readonly CircuitBreaker _circuitBreaker;
+    // Distributed circuit breaker state per app-id (shared across instances via Redis)
+    private readonly DistributedCircuitBreaker _circuitBreaker;
 
     // Round-robin counter for load balancing across multiple endpoints
     private int _roundRobinCounter;
@@ -35,36 +38,94 @@ public sealed class MeshInvocationClient : IMeshInvocationClient, IDisposable
     /// Creates a new MeshInvocationClient.
     /// </summary>
     /// <param name="stateManager">State manager for endpoint resolution (avoids circular dependency with generated clients).</param>
+    /// <param name="stateStoreFactory">Factory for obtaining Redis operations for distributed circuit breaker.</param>
+    /// <param name="messageBus">Message bus for publishing circuit state change events.</param>
+    /// <param name="messageSubscriber">Message subscriber for receiving circuit state change events from other instances.</param>
     /// <param name="configuration">Mesh service configuration.</param>
     /// <param name="logger">Logger instance.</param>
+    /// <param name="telemetryProvider">Telemetry provider for instrumentation (NullTelemetryProvider when telemetry disabled).</param>
     public MeshInvocationClient(
         IMeshStateManager stateManager,
+        IStateStoreFactory stateStoreFactory,
+        IMessageBus messageBus,
+        IMessageSubscriber messageSubscriber,
         MeshServiceConfiguration configuration,
-        ILogger<MeshInvocationClient> logger)
+        ILogger<MeshInvocationClient> logger,
+        ITelemetryProvider telemetryProvider)
     {
         _stateManager = stateManager;
         _configuration = configuration;
         _logger = logger;
+        _telemetryProvider = telemetryProvider;
 
-        // CA2000: handler ownership transferred to HttpMessageInvoker - it will dispose the handler
-#pragma warning disable CA2000
-        var handler = new SocketsHttpHandler
+        if (_telemetryProvider.TracingEnabled || _telemetryProvider.MetricsEnabled)
         {
-            UseProxy = false,
-            AllowAutoRedirect = false,
-            AutomaticDecompression = DecompressionMethods.None,
-            UseCookies = false,
-            EnableMultipleHttp2Connections = true,
-            PooledConnectionLifetime = TimeSpan.FromMinutes(configuration.PooledConnectionLifetimeMinutes),
-            ConnectTimeout = TimeSpan.FromSeconds(configuration.ConnectTimeoutSeconds)
-        };
-        _httpClient = new HttpMessageInvoker(handler);
-#pragma warning restore CA2000
+            _logger.LogDebug(
+                "MeshInvocationClient created with telemetry instrumentation: tracing={TracingEnabled}, metrics={MetricsEnabled}",
+                _telemetryProvider.TracingEnabled, _telemetryProvider.MetricsEnabled);
+        }
 
-        _endpointCache = new EndpointCache(TimeSpan.FromSeconds(configuration.EndpointCacheTtlSeconds));
-        _circuitBreaker = new CircuitBreaker(
+        SocketsHttpHandler? handler = null;
+        try
+        {
+            handler = new SocketsHttpHandler
+            {
+                UseProxy = false,
+                AllowAutoRedirect = false,
+                AutomaticDecompression = DecompressionMethods.None,
+                UseCookies = false,
+                EnableMultipleHttp2Connections = true,
+                PooledConnectionLifetime = TimeSpan.FromMinutes(configuration.PooledConnectionLifetimeMinutes),
+                ConnectTimeout = TimeSpan.FromSeconds(configuration.ConnectTimeoutSeconds)
+            };
+            _httpClient = new HttpMessageInvoker(handler);
+            handler = null; // Ownership transferred to HttpMessageInvoker
+        }
+        finally
+        {
+            handler?.Dispose(); // Only executes if ownership transfer failed
+        }
+
+        _endpointCache = new EndpointCache(
+            TimeSpan.FromSeconds(configuration.EndpointCacheTtlSeconds),
+            configuration.EndpointCacheMaxSize);
+
+        // Create distributed circuit breaker (shares state across instances via Redis + events)
+        _circuitBreaker = new DistributedCircuitBreaker(
+            stateStoreFactory,
+            messageBus,
+            logger,
             configuration.CircuitBreakerThreshold,
             TimeSpan.FromSeconds(configuration.CircuitBreakerResetSeconds));
+
+        // Subscribe to circuit state change events from other instances
+        if (configuration.CircuitBreakerEnabled)
+        {
+            _ = SubscribeToCircuitStateChangesAsync(messageSubscriber);
+        }
+    }
+
+    /// <summary>
+    /// Subscribes to circuit state change events to keep local cache synchronized.
+    /// </summary>
+    private async Task SubscribeToCircuitStateChangesAsync(IMessageSubscriber messageSubscriber)
+    {
+        try
+        {
+            await messageSubscriber.SubscribeAsync<MeshCircuitStateChangedEvent>(
+                "mesh.circuit.changed",
+                (evt, _) =>
+                {
+                    _circuitBreaker.HandleStateChangeEvent(evt);
+                    return Task.CompletedTask;
+                });
+
+            _logger.LogDebug("Subscribed to mesh.circuit.changed events for distributed circuit breaker");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Failed to subscribe to circuit state change events - distributed sync disabled");
+        }
     }
 
     /// <inheritdoc/>
@@ -146,125 +207,255 @@ public sealed class MeshInvocationClient : IMeshInvocationClient, IDisposable
             methodName = request.RequestUri?.PathAndQuery ?? "unknown";
         }
 
-        // Check circuit breaker before attempting invocation
-        if (_configuration.CircuitBreakerEnabled)
+        // Start telemetry activity for this mesh invocation
+        using var activity = _telemetryProvider?.StartActivity(
+            TelemetryComponents.Mesh,
+            "mesh.invoke",
+            ActivityKind.Client);
+
+        var sw = Stopwatch.StartNew();
+        var success = false;
+        var retryCount = 0;
+
+        // Set activity tags for tracing
+        activity?.SetTag("rpc.system", "bannou-mesh");
+        activity?.SetTag("rpc.service", appId);
+        activity?.SetTag("rpc.method", methodName);
+        activity?.SetTag("bannou.mesh.app_id", appId);
+
+        try
         {
-            var state = _circuitBreaker.GetState(appId);
-            if (state == CircuitState.Open)
+            // Check circuit breaker before attempting invocation
+            if (_configuration.CircuitBreakerEnabled)
             {
-                _logger.LogWarning(
-                    "Circuit breaker open for {AppId}, rejecting call to {Method}",
-                    appId, methodName);
-                throw MeshInvocationException.CircuitBreakerOpen(appId, methodName);
-            }
-        }
+                var state = await _circuitBreaker.GetStateAsync(appId, cancellationToken);
+                activity?.SetTag("bannou.mesh.circuit_breaker_state", state.ToString());
 
-        var maxAttempts = _configuration.MaxRetries + 1;
-        var delayMs = _configuration.RetryDelayMilliseconds;
-        HttpResponseMessage? lastResponse = null;
-        Exception? lastException = null;
-
-        for (var attempt = 0; attempt < maxAttempts; attempt++)
-        {
-            // On retry, invalidate cache to potentially get a different endpoint
-            if (attempt > 0)
-            {
-                _endpointCache.Invalidate(appId);
-
-                _logger.LogDebug(
-                    "Retrying {Method} on {AppId} (attempt {Attempt}/{MaxAttempts}, delay {DelayMs}ms)",
-                    methodName, appId, attempt + 1, maxAttempts, delayMs);
-
-                await Task.Delay(delayMs, cancellationToken);
-                delayMs *= 2; // Exponential backoff
-            }
-
-            // Resolve endpoint
-            var endpoint = await ResolveEndpointAsync(appId, cancellationToken);
-            if (endpoint == null)
-            {
-                if (attempt < maxAttempts - 1)
-                    continue; // Retry - endpoint might become available
-
-                RecordCircuitBreakerFailure(appId);
-                throw MeshInvocationException.NoEndpointsAvailable(appId, methodName);
-            }
-
-            // Build target URL
-            var targetUri = BuildTargetUri(endpoint, methodName);
-            request.RequestUri = new Uri(targetUri);
-
-            if (attempt == 0)
-            {
-                _logger.LogDebug(
-                    "Invoking {Method} on {AppId} at {TargetUri}",
-                    methodName, appId, targetUri);
-            }
-
-            try
-            {
-                lastResponse = await _httpClient.SendAsync(request, cancellationToken);
-
-                if (!IsTransientError(lastResponse.StatusCode))
+                if (state == CircuitState.Open)
                 {
-                    // Non-transient response (success or client error) - done
-                    RecordCircuitBreakerSuccess(appId);
-                    return lastResponse;
+                    _logger.LogWarning(
+                        "Circuit breaker open for {AppId}, rejecting call to {Method}",
+                        appId, methodName);
+                    RecordCircuitBreakerStateChange(appId, "open");
+                    activity?.SetStatus(ActivityStatusCode.Error, "Circuit breaker open");
+                    throw MeshInvocationException.CircuitBreakerOpen(appId, methodName);
+                }
+            }
+
+            var maxAttempts = _configuration.MaxRetries + 1;
+            var delayMs = _configuration.RetryDelayMilliseconds;
+            HttpResponseMessage? lastResponse = null;
+            Exception? lastException = null;
+
+            for (var attempt = 0; attempt < maxAttempts; attempt++)
+            {
+                // On retry, invalidate cache to potentially get a different endpoint
+                if (attempt > 0)
+                {
+                    retryCount++;
+                    _endpointCache.Invalidate(appId);
+
+                    _logger.LogDebug(
+                        "Retrying {Method} on {AppId} (attempt {Attempt}/{MaxAttempts}, delay {DelayMs}ms)",
+                        methodName, appId, attempt + 1, maxAttempts, delayMs);
+
+                    RecordRetryMetric(appId, methodName, "transient_error");
+
+                    await Task.Delay(delayMs, cancellationToken);
+                    delayMs *= 2; // Exponential backoff
                 }
 
-                // Transient server error - retry if attempts remain
-                _logger.LogDebug(
-                    "Transient error {StatusCode} from {AppId}, {Remaining} retries remaining",
-                    (int)lastResponse.StatusCode, appId, maxAttempts - attempt - 1);
+                // Resolve endpoint
+                var endpoint = await ResolveEndpointAsync(appId, cancellationToken);
+                if (endpoint == null)
+                {
+                    if (attempt < maxAttempts - 1)
+                        continue; // Retry - endpoint might become available
 
-                lastException = null;
+                    await RecordCircuitBreakerFailureAsync(appId, cancellationToken);
+                    activity?.SetStatus(ActivityStatusCode.Error, "No endpoints available");
+                    throw MeshInvocationException.NoEndpointsAvailable(appId, methodName);
+                }
+
+                // Build target URL
+                var targetUri = BuildTargetUri(endpoint, methodName);
+                request.RequestUri = new Uri(targetUri);
+                activity?.SetTag("server.address", endpoint.Host);
+                activity?.SetTag("server.port", endpoint.Port);
+
+                if (attempt == 0)
+                {
+                    _logger.LogDebug(
+                        "Invoking {Method} on {AppId} at {TargetUri}",
+                        methodName, appId, targetUri);
+                }
+
+                try
+                {
+                    // Apply per-request timeout (excludes retries)
+                    using var timeoutCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+                    timeoutCts.CancelAfter(TimeSpan.FromSeconds(_configuration.RequestTimeoutSeconds));
+
+                    lastResponse = await _httpClient.SendAsync(request, timeoutCts.Token);
+                    activity?.SetTag("http.response.status_code", (int)lastResponse.StatusCode);
+
+                    if (!IsTransientError(lastResponse.StatusCode))
+                    {
+                        // Non-transient response (success or client error) - done
+                        await RecordCircuitBreakerSuccessAsync(appId, cancellationToken);
+                        success = lastResponse.IsSuccessStatusCode;
+                        if (success)
+                        {
+                            activity?.SetStatus(ActivityStatusCode.Ok);
+                        }
+                        else
+                        {
+                            activity?.SetStatus(ActivityStatusCode.Error, $"HTTP {(int)lastResponse.StatusCode}");
+                        }
+                        return lastResponse;
+                    }
+
+                    // Transient server error - retry if attempts remain
+                    _logger.LogDebug(
+                        "Transient error {StatusCode} from {AppId}, {Remaining} retries remaining",
+                        (int)lastResponse.StatusCode, appId, maxAttempts - attempt - 1);
+
+                    lastException = null;
+                }
+                catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
+                {
+                    // Request timeout (not external cancellation) - treat as transient error for retry
+                    lastException = new TimeoutException(
+                        $"Request to {appId}/{methodName} timed out after {_configuration.RequestTimeoutSeconds}s");
+                    _endpointCache.Invalidate(appId);
+                    activity?.SetTag("bannou.mesh.timeout", true);
+
+                    _logger.LogDebug(
+                        "Request timeout to {AppId}/{Method} after {TimeoutSeconds}s, {Remaining} retries remaining",
+                        appId, methodName, _configuration.RequestTimeoutSeconds, maxAttempts - attempt - 1);
+                }
+                catch (HttpRequestException ex)
+                {
+                    lastException = ex;
+                    _endpointCache.Invalidate(appId);
+
+                    _logger.LogDebug(
+                        ex, "Connection failure to {AppId}, {Remaining} retries remaining",
+                        appId, maxAttempts - attempt - 1);
+                }
             }
-            catch (HttpRequestException ex)
+
+            // All attempts exhausted
+            await RecordCircuitBreakerFailureAsync(appId, cancellationToken);
+            activity?.SetTag("bannou.mesh.retry_count", retryCount);
+
+            if (lastException != null)
             {
-                lastException = ex;
-                _endpointCache.Invalidate(appId);
-
-                _logger.LogDebug(
-                    ex, "Connection failure to {AppId}, {Remaining} retries remaining",
-                    appId, maxAttempts - attempt - 1);
+                _logger.LogWarning(lastException, "Failed to invoke {Method} on {AppId} after {Attempts} attempts",
+                    methodName, appId, maxAttempts);
+                activity?.SetStatus(ActivityStatusCode.Error, lastException.Message);
+                throw new MeshInvocationException(appId, methodName, lastException.Message, lastException);
             }
+
+            // Return the last transient error response
+            if (lastResponse != null)
+            {
+                activity?.SetStatus(ActivityStatusCode.Error, $"HTTP {(int)lastResponse.StatusCode}");
+                return lastResponse;
+            }
+
+            activity?.SetStatus(ActivityStatusCode.Error, "No endpoints available");
+            throw MeshInvocationException.NoEndpointsAvailable(appId, methodName);
         }
-
-        // All attempts exhausted
-        RecordCircuitBreakerFailure(appId);
-
-        if (lastException != null)
+        finally
         {
-            _logger.LogWarning(lastException, "Failed to invoke {Method} on {AppId} after {Attempts} attempts",
-                methodName, appId, maxAttempts);
-            throw new MeshInvocationException(appId, methodName, lastException.Message, lastException);
+            sw.Stop();
+            activity?.SetTag("bannou.mesh.retry_count", retryCount);
+            RecordInvocationMetrics(appId, methodName, success, retryCount, sw.Elapsed.TotalSeconds);
         }
-
-        // Return the last transient error response
-        return lastResponse ?? throw MeshInvocationException.NoEndpointsAvailable(appId, methodName);
     }
 
     /// <summary>
     /// Records a circuit breaker failure if circuit breaking is enabled.
     /// Called once per invocation after all retries are exhausted.
     /// </summary>
-    private void RecordCircuitBreakerFailure(string appId)
+    private async Task RecordCircuitBreakerFailureAsync(string appId, CancellationToken cancellationToken)
     {
         if (_configuration.CircuitBreakerEnabled)
         {
-            _circuitBreaker.RecordFailure(appId);
+            await _circuitBreaker.RecordFailureAsync(appId, cancellationToken);
         }
     }
 
     /// <summary>
     /// Records a circuit breaker success if circuit breaking is enabled.
     /// </summary>
-    private void RecordCircuitBreakerSuccess(string appId)
+    private async Task RecordCircuitBreakerSuccessAsync(string appId, CancellationToken cancellationToken)
     {
         if (_configuration.CircuitBreakerEnabled)
         {
-            _circuitBreaker.RecordSuccess(appId);
+            await _circuitBreaker.RecordSuccessAsync(appId, cancellationToken);
         }
+    }
+
+    /// <summary>
+    /// Records metrics for a mesh invocation operation.
+    /// </summary>
+    private void RecordInvocationMetrics(string appId, string method, bool success, int retryCount, double durationSeconds)
+    {
+        if (_telemetryProvider == null)
+        {
+            return;
+        }
+
+        var tags = new[]
+        {
+            new KeyValuePair<string, object?>("service", appId),
+            new KeyValuePair<string, object?>("method", method),
+            new KeyValuePair<string, object?>("success", success)
+        };
+
+        _telemetryProvider.RecordCounter(TelemetryComponents.Mesh, TelemetryMetrics.MeshInvocations, 1, tags);
+        _telemetryProvider.RecordHistogram(TelemetryComponents.Mesh, TelemetryMetrics.MeshDuration, durationSeconds, tags);
+    }
+
+    /// <summary>
+    /// Records a retry attempt metric.
+    /// </summary>
+    private void RecordRetryMetric(string appId, string method, string reason)
+    {
+        if (_telemetryProvider == null)
+        {
+            return;
+        }
+
+        var tags = new[]
+        {
+            new KeyValuePair<string, object?>("service", appId),
+            new KeyValuePair<string, object?>("method", method),
+            new KeyValuePair<string, object?>("reason", reason)
+        };
+
+        _telemetryProvider.RecordCounter(TelemetryComponents.Mesh, TelemetryMetrics.MeshRetries, 1, tags);
+    }
+
+    /// <summary>
+    /// Records a circuit breaker state change metric.
+    /// </summary>
+    private void RecordCircuitBreakerStateChange(string appId, string state)
+    {
+        if (_telemetryProvider == null)
+        {
+            return;
+        }
+
+        var tags = new[]
+        {
+            new KeyValuePair<string, object?>("app_id", appId),
+            new KeyValuePair<string, object?>("state", state)
+        };
+
+        _telemetryProvider.RecordCounter(TelemetryComponents.Mesh, TelemetryMetrics.MeshCircuitBreakerStateChanges, 1, tags);
     }
 
     /// <summary>
@@ -330,6 +521,200 @@ public sealed class MeshInvocationClient : IMeshInvocationClient, IDisposable
         return endpoint != null;
     }
 
+    /// <inheritdoc/>
+    public async Task<HttpResponseMessage> InvokeRawAsync(
+        HttpRequestMessage request,
+        CancellationToken cancellationToken = default)
+    {
+        // Extract app-id and method from request headers/uri
+        if (!request.Options.TryGetValue(new HttpRequestOptionsKey<string>("mesh-app-id"), out var appId) ||
+            string.IsNullOrEmpty(appId))
+        {
+            throw new ArgumentException("Request must include mesh-app-id option. Use CreateInvokeMethodRequest to create requests.");
+        }
+
+        if (!request.Options.TryGetValue(new HttpRequestOptionsKey<string>("mesh-method"), out var methodName))
+        {
+            methodName = request.RequestUri?.PathAndQuery ?? "unknown";
+        }
+
+        // Start telemetry activity for this raw mesh invocation (distinct from normal invoke)
+        using var activity = _telemetryProvider?.StartActivity(
+            TelemetryComponents.Mesh,
+            "mesh.invoke.raw",
+            ActivityKind.Client);
+
+        var sw = Stopwatch.StartNew();
+        var success = false;
+        var retryCount = 0;
+
+        // Set activity tags for tracing - include raw_api marker
+        activity?.SetTag("rpc.system", "bannou-mesh");
+        activity?.SetTag("rpc.service", appId);
+        activity?.SetTag("rpc.method", methodName);
+        activity?.SetTag("bannou.mesh.app_id", appId);
+        activity?.SetTag("bannou.mesh.raw_api", true);
+
+        try
+        {
+            // NOTE: No circuit breaker check - this is intentional for raw API execution
+            // where target services may be optional/disabled
+
+            var maxAttempts = _configuration.MaxRetries + 1;
+            var delayMs = _configuration.RetryDelayMilliseconds;
+            HttpResponseMessage? lastResponse = null;
+            Exception? lastException = null;
+
+            for (var attempt = 0; attempt < maxAttempts; attempt++)
+            {
+                // On retry, invalidate cache to potentially get a different endpoint
+                if (attempt > 0)
+                {
+                    retryCount++;
+                    _endpointCache.Invalidate(appId);
+
+                    _logger.LogDebug(
+                        "Retrying raw API {Method} on {AppId} (attempt {Attempt}/{MaxAttempts}, delay {DelayMs}ms)",
+                        methodName, appId, attempt + 1, maxAttempts, delayMs);
+
+                    RecordRetryMetric(appId, methodName, "transient_error");
+
+                    await Task.Delay(delayMs, cancellationToken);
+                    delayMs *= 2; // Exponential backoff
+                }
+
+                // Resolve endpoint
+                var endpoint = await ResolveEndpointAsync(appId, cancellationToken);
+                if (endpoint == null)
+                {
+                    if (attempt < maxAttempts - 1)
+                        continue; // Retry - endpoint might become available
+
+                    // NOTE: No circuit breaker failure recording for raw API
+                    activity?.SetStatus(ActivityStatusCode.Error, "No endpoints available");
+                    throw MeshInvocationException.NoEndpointsAvailable(appId, methodName);
+                }
+
+                // Build target URL
+                var targetUri = BuildTargetUri(endpoint, methodName);
+                request.RequestUri = new Uri(targetUri);
+                activity?.SetTag("server.address", endpoint.Host);
+                activity?.SetTag("server.port", endpoint.Port);
+
+                if (attempt == 0)
+                {
+                    _logger.LogDebug(
+                        "Invoking raw API {Method} on {AppId} at {TargetUri}",
+                        methodName, appId, targetUri);
+                }
+
+                try
+                {
+                    // Apply per-request timeout (excludes retries)
+                    using var timeoutCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+                    timeoutCts.CancelAfter(TimeSpan.FromSeconds(_configuration.RequestTimeoutSeconds));
+
+                    lastResponse = await _httpClient.SendAsync(request, timeoutCts.Token);
+                    activity?.SetTag("http.response.status_code", (int)lastResponse.StatusCode);
+
+                    if (!IsTransientError(lastResponse.StatusCode))
+                    {
+                        // Non-transient response (success or client error) - done
+                        // NOTE: No circuit breaker success recording for raw API
+                        success = lastResponse.IsSuccessStatusCode;
+                        if (success)
+                        {
+                            activity?.SetStatus(ActivityStatusCode.Ok);
+                        }
+                        else
+                        {
+                            activity?.SetStatus(ActivityStatusCode.Error, $"HTTP {(int)lastResponse.StatusCode}");
+                        }
+                        return lastResponse;
+                    }
+
+                    // Transient server error - retry if attempts remain
+                    _logger.LogDebug(
+                        "Transient error {StatusCode} from raw API {AppId}, {Remaining} retries remaining",
+                        (int)lastResponse.StatusCode, appId, maxAttempts - attempt - 1);
+
+                    lastException = null;
+                }
+                catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
+                {
+                    // Request timeout (not external cancellation) - treat as transient error for retry
+                    lastException = new TimeoutException(
+                        $"Raw API request to {appId}/{methodName} timed out after {_configuration.RequestTimeoutSeconds}s");
+                    _endpointCache.Invalidate(appId);
+                    activity?.SetTag("bannou.mesh.timeout", true);
+
+                    _logger.LogDebug(
+                        "Request timeout to raw API {AppId}/{Method} after {TimeoutSeconds}s, {Remaining} retries remaining",
+                        appId, methodName, _configuration.RequestTimeoutSeconds, maxAttempts - attempt - 1);
+                }
+                catch (HttpRequestException ex)
+                {
+                    lastException = ex;
+                    _endpointCache.Invalidate(appId);
+
+                    _logger.LogDebug(
+                        ex, "Connection failure to raw API {AppId}, {Remaining} retries remaining",
+                        appId, maxAttempts - attempt - 1);
+                }
+            }
+
+            // All attempts exhausted
+            // NOTE: No circuit breaker failure recording for raw API
+            activity?.SetTag("bannou.mesh.retry_count", retryCount);
+
+            if (lastException != null)
+            {
+                _logger.LogWarning(lastException, "Failed to invoke raw API {Method} on {AppId} after {Attempts} attempts",
+                    methodName, appId, maxAttempts);
+                activity?.SetStatus(ActivityStatusCode.Error, lastException.Message);
+                throw new MeshInvocationException(appId, methodName, lastException.Message, lastException);
+            }
+
+            // Return the last transient error response
+            if (lastResponse != null)
+            {
+                activity?.SetStatus(ActivityStatusCode.Error, $"HTTP {(int)lastResponse.StatusCode}");
+                return lastResponse;
+            }
+
+            activity?.SetStatus(ActivityStatusCode.Error, "No endpoints available");
+            throw MeshInvocationException.NoEndpointsAvailable(appId, methodName);
+        }
+        finally
+        {
+            sw.Stop();
+            activity?.SetTag("bannou.mesh.retry_count", retryCount);
+            RecordRawInvocationMetrics(appId, methodName, success, retryCount, sw.Elapsed.TotalSeconds);
+        }
+    }
+
+    /// <summary>
+    /// Records metrics for a raw mesh invocation operation (no circuit breaker).
+    /// </summary>
+    private void RecordRawInvocationMetrics(string appId, string method, bool success, int retryCount, double durationSeconds)
+    {
+        if (_telemetryProvider == null)
+        {
+            return;
+        }
+
+        var tags = new[]
+        {
+            new KeyValuePair<string, object?>("service", appId),
+            new KeyValuePair<string, object?>("method", method),
+            new KeyValuePair<string, object?>("success", success),
+            new KeyValuePair<string, object?>("raw_api", true)
+        };
+
+        _telemetryProvider.RecordCounter(TelemetryComponents.Mesh, TelemetryMetrics.MeshRawInvocations, 1, tags);
+        _telemetryProvider.RecordHistogram(TelemetryComponents.Mesh, TelemetryMetrics.MeshDuration, durationSeconds, tags);
+    }
+
     private async Task<MeshEndpoint?> ResolveEndpointAsync(
         string appId,
         CancellationToken cancellationToken)
@@ -383,118 +768,38 @@ public sealed class MeshInvocationClient : IMeshInvocationClient, IDisposable
     }
 
     /// <summary>
-    /// Circuit breaker states for mesh endpoints.
-    /// </summary>
-    private enum CircuitState
-    {
-        /// <summary>Requests flow normally.</summary>
-        Closed,
-        /// <summary>Requests are blocked; waiting for reset period to elapse.</summary>
-        Open,
-        /// <summary>One probe request allowed to test recovery.</summary>
-        HalfOpen
-    }
-
-    /// <summary>
-    /// Per-appId circuit breaker tracking consecutive failures.
+    /// Simple in-memory cache for endpoint resolution with optional size limit.
     /// Uses ConcurrentDictionary per IMPLEMENTATION TENETS (Multi-Instance Safety).
-    /// </summary>
-    private sealed class CircuitBreaker
-    {
-        private readonly int _threshold;
-        private readonly TimeSpan _resetTimeout;
-        private readonly ConcurrentDictionary<string, CircuitEntry> _circuits = new();
-
-        public CircuitBreaker(int threshold, TimeSpan resetTimeout)
-        {
-            _threshold = threshold;
-            _resetTimeout = resetTimeout;
-        }
-
-        /// <summary>
-        /// Gets the current circuit state for an appId.
-        /// Transitions from Open to HalfOpen when the reset period has elapsed.
-        /// </summary>
-        public CircuitState GetState(string appId)
-        {
-            if (!_circuits.TryGetValue(appId, out var entry))
-                return CircuitState.Closed;
-
-            if (entry.State == CircuitState.Open &&
-                DateTimeOffset.UtcNow >= entry.OpenedAt + _resetTimeout)
-            {
-                // Reset period elapsed - allow a probe
-                entry.State = CircuitState.HalfOpen;
-                return CircuitState.HalfOpen;
-            }
-
-            return entry.State;
-        }
-
-        /// <summary>
-        /// Records a successful invocation. Resets the circuit to Closed.
-        /// </summary>
-        public void RecordSuccess(string appId)
-        {
-            if (_circuits.TryGetValue(appId, out var entry))
-            {
-                entry.ConsecutiveFailures = 0;
-                entry.State = CircuitState.Closed;
-            }
-        }
-
-        /// <summary>
-        /// Records a failed invocation. Opens the circuit when threshold is reached.
-        /// </summary>
-        public void RecordFailure(string appId)
-        {
-            var entry = _circuits.GetOrAdd(appId, _ => new CircuitEntry());
-
-            entry.ConsecutiveFailures++;
-
-            if (entry.ConsecutiveFailures >= _threshold)
-            {
-                entry.State = CircuitState.Open;
-                entry.OpenedAt = DateTimeOffset.UtcNow;
-            }
-        }
-
-        private sealed class CircuitEntry
-        {
-            public int ConsecutiveFailures;
-            public CircuitState State = CircuitState.Closed;
-            public DateTimeOffset OpenedAt;
-        }
-    }
-
-    /// <summary>
-    /// Simple in-memory cache for endpoint resolution.
     /// </summary>
     private sealed class EndpointCache
     {
         private readonly TimeSpan _ttl;
-        private readonly Dictionary<string, (MeshEndpoint Endpoint, DateTimeOffset Expiry)> _cache = new();
-        private readonly object _lock = new();
+        private readonly int _maxSize;
+        private readonly ConcurrentDictionary<string, (MeshEndpoint Endpoint, DateTimeOffset Expiry)> _cache = new();
 
-        public EndpointCache(TimeSpan ttl)
+        /// <summary>
+        /// Creates a new endpoint cache.
+        /// </summary>
+        /// <param name="ttl">Time-to-live for cached entries.</param>
+        /// <param name="maxSize">Maximum number of entries (0 for unlimited).</param>
+        public EndpointCache(TimeSpan ttl, int maxSize = 0)
         {
             _ttl = ttl;
+            _maxSize = maxSize;
         }
 
         public bool TryGet(string appId, out MeshEndpoint? endpoint)
         {
-            lock (_lock)
+            if (_cache.TryGetValue(appId, out var entry))
             {
-                if (_cache.TryGetValue(appId, out var entry))
+                if (entry.Expiry > DateTimeOffset.UtcNow)
                 {
-                    if (entry.Expiry > DateTimeOffset.UtcNow)
-                    {
-                        endpoint = entry.Endpoint;
-                        return true;
-                    }
-
-                    _cache.Remove(appId);
+                    endpoint = entry.Endpoint;
+                    return true;
                 }
+
+                // Expired - remove it
+                _cache.TryRemove(appId, out _);
             }
 
             endpoint = null;
@@ -503,18 +808,40 @@ public sealed class MeshInvocationClient : IMeshInvocationClient, IDisposable
 
         public void Set(string appId, MeshEndpoint endpoint)
         {
-            lock (_lock)
+            // Enforce size limit if configured (0 means unlimited)
+            if (_maxSize > 0 && _cache.Count >= _maxSize && !_cache.ContainsKey(appId))
             {
-                _cache[appId] = (endpoint, DateTimeOffset.UtcNow.Add(_ttl));
+                // Evict expired entries first
+                var now = DateTimeOffset.UtcNow;
+                foreach (var key in _cache.Keys.ToList())
+                {
+                    if (_cache.TryGetValue(key, out var entry) && entry.Expiry <= now)
+                    {
+                        _cache.TryRemove(key, out _);
+                    }
+                }
+
+                // If still at limit, evict oldest entry
+                if (_cache.Count >= _maxSize)
+                {
+                    var oldestKey = _cache
+                        .OrderBy(kv => kv.Value.Expiry)
+                        .Select(kv => kv.Key)
+                        .FirstOrDefault();
+
+                    if (oldestKey != null)
+                    {
+                        _cache.TryRemove(oldestKey, out _);
+                    }
+                }
             }
+
+            _cache[appId] = (endpoint, DateTimeOffset.UtcNow.Add(_ttl));
         }
 
         public void Invalidate(string appId)
         {
-            lock (_lock)
-            {
-                _cache.Remove(appId);
-            }
+            _cache.TryRemove(appId, out _);
         }
     }
 }

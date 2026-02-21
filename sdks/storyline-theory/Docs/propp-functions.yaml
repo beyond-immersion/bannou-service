@@ -1,0 +1,1049 @@
+# Vladimir Propp's Morphology of the Folktale (1928)
+# Computational formalization for narrative generation
+#
+# Sources:
+#   - ~/repos/propper (Go implementation)
+#   - ~/repos/propper-narrative (Inform 7 implementation)
+#   - ~/repos/story-analysis/research/propp_functions.md
+#   - ~/repos/story-analysis/research/The_Thirty_One_Functions_Vladimir_Propp.md
+#   - Gervás (2013) "Propp's Morphology as Grammar for Generation"
+#     https://drops.dagstuhl.de/storage/01oasics/oasics-vol032-cmn2013/OASIcs.CMN.2013.106/OASIcs.CMN.2013.106.pdf
+
+version: "1.0"
+source: "Vladimir Propp, Morphology of the Folktale (1928)"
+
+# =============================================================================
+# DRAMATIS PERSONAE (7 Character Archetypes)
+# =============================================================================
+# Characters are defined by their SPHERE OF ACTION, not personality traits.
+# A single character may perform functions from multiple spheres.
+# A sphere may be split among multiple characters.
+
+dramatis_personae:
+  villain:
+    id: 1
+    name: "The Villain"
+    sphere_of_action: "Antagonist/Conflict"
+    description: "Causes initial harm or lack; engages in struggle with hero"
+    associated_functions: ["villainy", "reconnaissance", "delivery", "trickery", "struggle", "pursuit"]
+
+  donor:
+    id: 2
+    name: "The Donor"
+    sphere_of_action: "Magical Gift Provider"
+    description: "Tests hero and provides magical agent or helper"
+    associated_functions: ["first_donor_function", "provision_of_magical_agent"]
+
+  helper:
+    id: 3
+    name: "The Helper"
+    sphere_of_action: "Magical Aid"
+    description: "Aids hero's spatial transference; rescues from pursuit; solves difficult tasks; transforms hero"
+    associated_functions: ["guidance", "liquidation", "rescue", "solution", "transfiguration"]
+
+  princess:
+    id: 4
+    name: "The Princess (Sought-For Person)"
+    sphere_of_action: "Reward Object"
+    description: "Object of desire/rescue; assigns difficult tasks; brands hero; exposes false hero; recognizes true hero; punishes villain; marries hero"
+    associated_functions: ["difficult_task", "branding", "exposure", "recognition", "punishment", "wedding"]
+    note: "Princess and her father are often merged into single functional unit"
+
+  dispatcher:
+    id: 5
+    name: "The Dispatcher"
+    sphere_of_action: "Quest Initiation"
+    description: "Sends hero on quest by making lack known"
+    associated_functions: ["mediation"]
+
+  hero:
+    id: 6
+    name: "The Hero"
+    sphere_of_action: "Protagonist"
+    description: "Departs on search; reacts to donor; weds princess"
+    subtypes:
+      - seeker_hero: "Actively seeks to resolve lack"
+      - victimized_hero: "Directly suffers from villain's actions"
+    associated_functions: ["departure", "hero_reaction", "return", "wedding"]
+
+  false_hero:
+    id: 7
+    name: "The False Hero"
+    sphere_of_action: "Impostor"
+    description: "Claims hero's achievements; exposed and punished"
+    associated_functions: ["unfounded_claims"]
+
+# =============================================================================
+# THE 31 NARRATIVE FUNCTIONS
+# =============================================================================
+# Functions are the fundamental units of narrative action.
+# They occur in INVARIABLE sequence (though some may be omitted).
+# Each function has stable narrative meaning regardless of HOW it manifests.
+
+functions:
+  # ---------------------------------------------------------------------------
+  # PREPARATORY SECTION (Functions 1-7)
+  # Establishes initial equilibrium and its disruption
+  # ---------------------------------------------------------------------------
+
+  absentation:
+    id: 1
+    symbol: "β"
+    code: "ABSENTATION"
+    name: "Absentation"
+    definition: "One member of the family absents himself from home"
+    phase: "preparation"
+    variants:
+      - "Elder member dies"
+      - "Elder departs (business, war, trip)"
+      - "Younger member departs (visits, fishing, walking)"
+    preconditions: []
+    postconditions:
+      - "family_incomplete"
+      - "hero_vulnerable"
+    performer: null  # Various family members
+
+  interdiction:
+    id: 2
+    symbol: "γ"
+    code: "INTERDICTION"
+    name: "Interdiction"
+    definition: "An interdiction is addressed to the hero"
+    phase: "preparation"
+    variants:
+      - "Direct prohibition (do not look in closet, do not pick apples)"
+      - "Inverted form: command (bring breakfast to field, stay home)"
+    preconditions:
+      - "hero_present"
+    postconditions:
+      - "rule_established"
+    performer: "authority_figure"
+
+  violation:
+    id: 3
+    symbol: "δ"
+    code: "VIOLATION"
+    name: "Violation of Interdiction"
+    definition: "The interdiction is violated"
+    phase: "preparation"
+    preconditions:
+      - "rule_established"
+    postconditions:
+      - "rule_broken"
+      - "vulnerability_created"
+    performer: "hero"
+    note: "Paired with interdiction - if interdiction exists, violation follows"
+
+  reconnaissance:
+    id: 4
+    symbol: "ε"
+    code: "RECONNAISSANCE"
+    name: "Reconnaissance"
+    definition: "The villain makes an attempt at reconnaissance"
+    phase: "preparation"
+    variants:
+      - "Villain seeks location (dwelling, precious object)"
+      - "Inverted: victim questions villain"
+      - "Through intermediary"
+    preconditions:
+      - "villain_present"
+    postconditions:
+      - "information_sought"
+    performer: "villain"
+
+  delivery:
+    id: 5
+    symbol: "ζ"
+    code: "DELIVERY"
+    name: "Delivery"
+    definition: "The villain receives information about his victim"
+    phase: "preparation"
+    variants:
+      - "Villain receives direct answer"
+      - "Villain overhears conversation"
+      - "Villain uses other means to learn"
+    preconditions:
+      - "information_sought"
+    postconditions:
+      - "villain_informed"
+    performer: "informant"
+    note: "Paired with reconnaissance"
+
+  trickery:
+    id: 6
+    symbol: "η"
+    code: "TRICKERY"
+    name: "Trickery"
+    definition: "The villain attempts to deceive his victim"
+    phase: "preparation"
+    variants:
+      - "Villain uses persuasion"
+      - "Villain uses magical means"
+      - "Villain uses other means of deception"
+    preconditions:
+      - "villain_informed"
+      - "victim_present"
+    postconditions:
+      - "deception_attempted"
+    performer: "villain"
+
+  complicity:
+    id: 7
+    symbol: "θ"
+    code: "COMPLICITY"
+    name: "Complicity"
+    definition: "The victim submits to deception and thereby unwittingly helps enemy"
+    phase: "preparation"
+    variants:
+      - "Hero agrees to persuasion"
+      - "Hero reacts mechanically to magic"
+      - "Hero is deceived by other means"
+    preconditions:
+      - "deception_attempted"
+    postconditions:
+      - "victim_deceived"
+      - "villain_enabled"
+    performer: "hero"
+    note: "Paired with trickery"
+
+  # ---------------------------------------------------------------------------
+  # COMPLICATION SECTION (Functions 8-11)
+  # Establishes the core narrative problem
+  # ---------------------------------------------------------------------------
+
+  villainy:
+    id: 8
+    symbol: "A"
+    code: "VILLAINY"
+    name: "Villainy"
+    definition: "The villain causes harm or injury to a member of the family"
+    phase: "complication"
+    is_primary_initiator: true
+    variants:
+      - id: "A1"
+        description: "Villain abducts a person"
+      - id: "A2"
+        description: "Villain seizes daylight"
+      - id: "A3"
+        description: "Villain plunders in other forms"
+      - id: "A4"
+        description: "Villain causes bodily injury"
+      - id: "A5"
+        description: "Villain causes sudden disappearance"
+      - id: "A6"
+        description: "Villain demands or entices victim"
+      - id: "A7"
+        description: "Villain causes expulsion"
+      - id: "A8"
+        description: "Villain orders someone killed"
+      - id: "A9"
+        description: "Villain imprisons/detains someone"
+      - id: "A10"
+        description: "Villain threatens forced marriage"
+      - id: "A11"
+        description: "Villain torments at night"
+      - id: "A12"
+        description: "Villain substitutes"
+      - id: "A13"
+        description: "Villain orders murder"
+      - id: "A14"
+        description: "Villain commits murder"
+      - id: "A15"
+        description: "Villain seizes/takes away"
+      - id: "A16"
+        description: "Villain mutilates"
+      - id: "A17"
+        description: "Villain causes substitution"
+      - id: "A18"
+        description: "Villain issues commands"
+      - id: "A19"
+        description: "Villain declares war"
+    preconditions:
+      - "villain_present"
+    postconditions:
+      - "harm_caused"
+      - "narrative_problem_established"
+    performer: "villain"
+    mutually_exclusive_with: "lack"
+
+  lack:
+    id: 8  # Same ID as villainy - they are alternatives
+    symbol: "a"
+    code: "LACK"
+    name: "Lack"
+    definition: "One member of family lacks something or desires something"
+    phase: "complication"
+    is_primary_initiator: true
+    variants:
+      - id: "a1"
+        description: "Lack of bride (or friend)"
+      - id: "a2"
+        description: "Lack of magical agent/helper"
+      - id: "a3"
+        description: "Lack of wondrous object"
+      - id: "a4"
+        description: "Lack of egg of death (or love)"
+      - id: "a5"
+        description: "Lack of money/means of existence"
+      - id: "a6"
+        description: "Other forms of lack"
+    preconditions: []
+    postconditions:
+      - "lack_established"
+      - "narrative_problem_established"
+    performer: null  # State, not action
+    mutually_exclusive_with: "villainy"
+
+  mediation:
+    id: 9
+    symbol: "B"
+    code: "MEDIATION"
+    name: "Mediation"
+    definition: "Misfortune or lack is made known; hero is approached with request or command; dispatched"
+    phase: "complication"
+    variants:
+      - id: "B1"
+        description: "Call for help is issued, hero dispatched"
+      - id: "B2"
+        description: "Hero dispatched directly"
+      - id: "B3"
+        description: "Hero released to depart"
+      - id: "B4"
+        description: "Misfortune announced, hero leaves"
+    preconditions:
+      - "narrative_problem_established"
+    postconditions:
+      - "hero_aware_of_problem"
+      - "quest_initiated"
+    performer: "dispatcher"
+
+  counteraction:
+    id: 10
+    symbol: "C"
+    code: "COUNTERACTION"
+    name: "Beginning Counteraction"
+    definition: "The seeker agrees to or decides upon counteraction"
+    phase: "complication"
+    variants:
+      - id: "C1"
+        description: "Hero agrees to request"
+      - id: "C2"
+        description: "Hero decides independently"
+    preconditions:
+      - "hero_aware_of_problem"
+    postconditions:
+      - "hero_committed"
+    performer: "hero"
+
+  departure:
+    id: 11
+    symbol: "↑"
+    code: "DEPARTURE"
+    name: "Departure"
+    definition: "The hero leaves home"
+    phase: "complication"
+    preconditions:
+      - "hero_committed"
+    postconditions:
+      - "hero_in_field"
+      - "quest_active"
+    performer: "hero"
+    note: "Marks transition from ordinary world to adventure world"
+
+  # ---------------------------------------------------------------------------
+  # DONOR SEQUENCE (Functions 12-14)
+  # Hero acquires magical aid
+  # ---------------------------------------------------------------------------
+
+  first_donor_function:
+    id: 12
+    symbol: "D"
+    code: "FIRST_DONOR_FUNCTION"
+    name: "First Function of the Donor"
+    definition: "The hero is tested, interrogated, attacked, etc., preparing for magical agent"
+    phase: "donor_sequence"
+    variants:
+      - id: "D1"
+        description: "Donor tests hero"
+      - id: "D2"
+        description: "Donor greets and interrogates hero"
+      - id: "D3"
+        description: "Request for service after death"
+      - id: "D4"
+        description: "Prisoner begs for freedom"
+      - id: "D5"
+        description: "Hero approached with request for mercy"
+      - id: "D6"
+        description: "Disputants request division of inheritance"
+      - id: "D7"
+        description: "Other requests"
+    preconditions:
+      - "hero_in_field"
+    postconditions:
+      - "hero_tested"
+    performer: "donor"
+
+  hero_reaction:
+    id: 13
+    symbol: "E"
+    code: "HERO_REACTION"
+    name: "Hero's Reaction"
+    definition: "The hero reacts to the actions of the future donor"
+    phase: "donor_sequence"
+    variants:
+      - id: "E1"
+        description: "Hero withstands/passes test"
+      - id: "E2"
+        description: "Hero answers greeting"
+      - id: "E3"
+        description: "Hero renders service to dead person"
+      - id: "E4"
+        description: "Hero frees captive"
+      - id: "E5"
+        description: "Hero shows mercy"
+      - id: "E6"
+        description: "Hero completes division/reconciles disputants"
+      - id: "E7"
+        description: "Hero performs other service"
+      - id: "E_neg"
+        description: "Hero fails test (negative)"
+    preconditions:
+      - "hero_tested"
+    postconditions:
+      - "test_result_established"
+    performer: "hero"
+    note: "Negative reaction may lead to retry or alternative path"
+
+  provision_of_magical_agent:
+    id: 14
+    symbol: "F"
+    code: "PROVISION_OF_MAGICAL_AGENT"
+    name: "Provision of Magical Agent"
+    definition: "The hero acquires the use of a magical agent"
+    phase: "donor_sequence"
+    variants:
+      - id: "F1"
+        description: "Agent directly transferred (given, eaten, drunk)"
+      - id: "F2"
+        description: "Agent pointed out, located"
+      - id: "F3"
+        description: "Agent prepared/sold/purchased"
+      - id: "F4"
+        description: "Agent falls into hero's hands"
+      - id: "F5"
+        description: "Agent appears spontaneously"
+      - id: "F6"
+        description: "Agent eaten/drunk"
+      - id: "F_neg"
+        description: "Agent seized by force"
+      - id: "F9"
+        description: "Different helpers offer services"
+    preconditions:
+      - "test_result_established"
+      - "test_passed: true"  # Usually requires passing test
+    postconditions:
+      - "hero_has_magical_agent"
+    performer: "donor"
+    agent_types:
+      - "magical_object"
+      - "animal_helper"
+      - "human_helper"
+      - "quality_or_ability"
+
+  # ---------------------------------------------------------------------------
+  # TRANSFERENCE AND STRUGGLE (Functions 15-19)
+  # Hero reaches villain and resolves conflict
+  # ---------------------------------------------------------------------------
+
+  guidance:
+    id: 15
+    symbol: "G"
+    code: "GUIDANCE"
+    name: "Spatial Transference"
+    definition: "The hero is transferred, delivered, or led to whereabouts of object of search"
+    phase: "quest"
+    variants:
+      - id: "G1"
+        description: "Hero flies through air (on bird, horse, carpet, etc.)"
+      - id: "G2"
+        description: "Hero travels on ground/water"
+      - id: "G3"
+        description: "Hero is led"
+      - id: "G4"
+        description: "Route shown to hero"
+      - id: "G5"
+        description: "Hero uses stationary means of transportation (stairs, underground)"
+      - id: "G6"
+        description: "Hero follows bloody tracks"
+    preconditions:
+      - "hero_has_magical_agent"
+    postconditions:
+      - "hero_at_location_of_object"
+    performer: "helper"
+
+  struggle:
+    id: 16
+    symbol: "H"
+    code: "STRUGGLE"
+    name: "Struggle"
+    definition: "The hero and villain join in direct combat"
+    phase: "quest"
+    variants:
+      - id: "H1"
+        description: "Open-field fight"
+      - id: "H2"
+        description: "Competition/contest"
+      - id: "H3"
+        description: "Card game"
+      - id: "H4"
+        description: "Weighing"
+    preconditions:
+      - "hero_at_location_of_object"
+      - "villain_present"
+    postconditions:
+      - "combat_engaged"
+    performer: "hero"
+    mutually_exclusive_with: "difficult_task"  # Alternative path
+
+  branding:
+    id: 17
+    symbol: "I"
+    code: "BRANDING"
+    name: "Branding"
+    definition: "The hero is branded or marked"
+    phase: "quest"
+    variants:
+      - id: "I1"
+        description: "Mark applied to body (wound, brand, star)"
+      - id: "I2"
+        description: "Hero receives ring or towel"
+    preconditions:
+      - "combat_engaged"
+    postconditions:
+      - "hero_marked"
+    performer: "villain or princess"
+    note: "Serves as later recognition token"
+
+  victory:
+    id: 18
+    symbol: "J"
+    code: "VICTORY"
+    name: "Victory"
+    definition: "The villain is defeated"
+    phase: "quest"
+    variants:
+      - id: "J1"
+        description: "Villain beaten in open combat"
+      - id: "J2"
+        description: "Villain beaten in contest"
+      - id: "J3"
+        description: "Villain loses at cards"
+      - id: "J4"
+        description: "Villain loses at weighing"
+      - id: "J5"
+        description: "Villain killed without fight"
+      - id: "J6"
+        description: "Villain banished"
+    preconditions:
+      - "combat_engaged"
+    postconditions:
+      - "villain_defeated"
+    performer: "hero"
+
+  liquidation:
+    id: 19
+    symbol: "K"
+    code: "LIQUIDATION"
+    name: "Liquidation"
+    definition: "Initial misfortune or lack is liquidated"
+    phase: "quest"
+    variants:
+      - id: "K1"
+        description: "Object of search seized by force"
+      - id: "K2"
+        description: "Object of search obtained by several persons"
+      - id: "K3"
+        description: "Object of search obtained by enticement"
+      - id: "K4"
+        description: "Liquidation as direct result of previous actions"
+      - id: "K5"
+        description: "Object obtained immediately through magical agent"
+      - id: "K6"
+        description: "Poverty ended through magical agent"
+      - id: "K7"
+        description: "Object caught"
+      - id: "K8"
+        description: "Victim released from spell"
+      - id: "K9"
+        description: "Resuscitation of slain person"
+      - id: "K10"
+        description: "Captive freed"
+      - id: "K_neg"
+        description: "Object/person obtained by ruse"
+    preconditions:
+      - "villain_defeated"
+    postconditions:
+      - "lack_resolved"
+      - "primary_goal_achieved"
+    performer: "hero"
+    note: "This is the dramatic climax - the central problem is solved"
+
+  # ---------------------------------------------------------------------------
+  # RETURN SEQUENCE (Functions 20-22)
+  # Hero returns home, often with complications
+  # ---------------------------------------------------------------------------
+
+  return:
+    id: 20
+    symbol: "↓"
+    code: "RETURN"
+    name: "Return"
+    definition: "The hero returns"
+    phase: "return"
+    preconditions:
+      - "lack_resolved"
+    postconditions:
+      - "hero_returning"
+    performer: "hero"
+    note: "Same form as departure but reversed direction"
+
+  pursuit:
+    id: 21
+    symbol: "Pr"
+    code: "PURSUIT"
+    name: "Pursuit"
+    definition: "The hero is pursued"
+    phase: "return"
+    variants:
+      - id: "Pr1"
+        description: "Pursuer flies after hero"
+      - id: "Pr2"
+        description: "Pursuer demands guilty person"
+      - id: "Pr3"
+        description: "Pursuer pursues with transformations"
+      - id: "Pr4"
+        description: "Pursuer turns into various objects in hero's path"
+      - id: "Pr5"
+        description: "Pursuer tries to devour hero"
+      - id: "Pr6"
+        description: "Pursuer tries to kill hero"
+      - id: "Pr7"
+        description: "Pursuer tries to gnaw through tree"
+    preconditions:
+      - "hero_returning"
+    postconditions:
+      - "hero_pursued"
+    performer: "villain or villain's allies"
+
+  rescue:
+    id: 22
+    symbol: "Rs"
+    code: "RESCUE"
+    name: "Rescue"
+    definition: "Hero is rescued from pursuit"
+    phase: "return"
+    variants:
+      - id: "Rs1"
+        description: "Hero carried away through air"
+      - id: "Rs2"
+        description: "Hero flees, places obstacles"
+      - id: "Rs3"
+        description: "Hero transformed during flight"
+      - id: "Rs4"
+        description: "Hero hides during flight"
+      - id: "Rs5"
+        description: "Hero hidden by blacksmiths"
+      - id: "Rs6"
+        description: "Hero escapes through transformations"
+      - id: "Rs7"
+        description: "Hero avoids punishment"
+      - id: "Rs8"
+        description: "Hero leaps to another tree"
+      - id: "Rs9"
+        description: "Hero saves self by rapid flight"
+      - id: "Rs10"
+        description: "Pursuer's strength exhausted"
+    preconditions:
+      - "hero_pursued"
+    postconditions:
+      - "pursuit_escaped"
+    performer: "helper or hero"
+
+  # ---------------------------------------------------------------------------
+  # RECOGNITION SEQUENCE (Functions 23-31)
+  # Hero's identity established, false hero exposed, rewards given
+  # ---------------------------------------------------------------------------
+
+  unrecognized_arrival:
+    id: 23
+    symbol: "o"
+    code: "UNRECOGNIZED_ARRIVAL"
+    name: "Unrecognized Arrival"
+    definition: "Hero, unrecognized, arrives home or in another country"
+    phase: "recognition"
+    variants:
+      - id: "o1"
+        description: "Arrival home"
+      - id: "o2"
+        description: "Arrival in another country"
+    preconditions:
+      - "pursuit_escaped"
+    postconditions:
+      - "hero_incognito"
+    performer: "hero"
+
+  unfounded_claims:
+    id: 24
+    symbol: "L"
+    code: "UNFOUNDED_CLAIMS"
+    name: "Unfounded Claims"
+    definition: "A false hero presents unfounded claims"
+    phase: "recognition"
+    preconditions:
+      - "hero_incognito"
+    postconditions:
+      - "false_claims_made"
+    performer: "false_hero"
+
+  difficult_task:
+    id: 25
+    symbol: "M"
+    code: "DIFFICULT_TASK"
+    name: "Difficult Task"
+    definition: "A difficult task is proposed to the hero"
+    phase: "recognition"
+    variants:
+      - "Ordeal by food/drink"
+      - "Ordeal by fire"
+      - "Riddle solving"
+      - "Test of choice"
+      - "Test of endurance"
+      - "Other difficult tests"
+    preconditions:
+      - "false_claims_made"
+    postconditions:
+      - "task_proposed"
+    performer: "princess or king"
+    note: "Sometimes replaces struggle (H) as alternative conflict type"
+
+  solution:
+    id: 26
+    symbol: "N"
+    code: "SOLUTION"
+    name: "Solution"
+    definition: "The task is resolved"
+    phase: "recognition"
+    preconditions:
+      - "task_proposed"
+    postconditions:
+      - "task_completed"
+    performer: "hero"
+    note: "Paired with difficult_task"
+
+  recognition:
+    id: 27
+    symbol: "Q"
+    code: "RECOGNITION"
+    name: "Recognition"
+    definition: "The hero is recognized"
+    phase: "recognition"
+    variants:
+      - "By mark/brand"
+      - "By object given"
+      - "By task solution"
+    preconditions:
+      - "task_completed"
+      - "hero_marked"
+    postconditions:
+      - "hero_identity_confirmed"
+    performer: "princess or king"
+
+  exposure:
+    id: 28
+    symbol: "Ex"
+    code: "EXPOSURE"
+    name: "Exposure"
+    definition: "The false hero or villain is exposed"
+    phase: "recognition"
+    preconditions:
+      - "hero_identity_confirmed"
+      - "false_claims_made"
+    postconditions:
+      - "impostor_exposed"
+    performer: null  # Emerges from recognition
+
+  transfiguration:
+    id: 29
+    symbol: "T"
+    code: "TRANSFIGURATION"
+    name: "Transfiguration"
+    definition: "The hero is given a new appearance"
+    phase: "recognition"
+    variants:
+      - "New garments"
+      - "Magical transformation"
+      - "Building of palace"
+    preconditions:
+      - "impostor_exposed"
+    postconditions:
+      - "hero_transformed"
+    performer: "helper or magical agent"
+
+  punishment:
+    id: 30
+    symbol: "U"
+    code: "PUNISHMENT"
+    name: "Punishment"
+    definition: "The villain is punished"
+    phase: "recognition"
+    variants:
+      - "Shot"
+      - "Banished"
+      - "Tied to horse tail"
+      - "Commits suicide"
+      - "Forgiven (mercy shown)"
+    preconditions:
+      - "villain_defeated"
+      - "impostor_exposed"
+    postconditions:
+      - "justice_served"
+    performer: "hero or authority"
+    note: "Sometimes absent - villain simply defeated, not punished"
+
+  wedding:
+    id: 31
+    symbol: "W"
+    code: "WEDDING"
+    name: "Wedding"
+    definition: "The hero is married and ascends the throne"
+    phase: "recognition"
+    is_terminal: true
+    variants:
+      - id: "W1"
+        description: "Hero receives bride and kingdom"
+      - id: "W2"
+        description: "Hero betrothed (promise of marriage)"
+      - id: "W3"
+        description: "Renewed marriage after spell"
+      - id: "W0"
+        description: "Monetary reward only (no wedding)"
+    preconditions:
+      - "justice_served"
+    postconditions:
+      - "story_complete"
+      - "equilibrium_restored"
+    performer: null  # Ceremony
+    note: "Final function - represents achievement of mature social status"
+
+# =============================================================================
+# NARRATIVE STRUCTURE
+# =============================================================================
+
+structure:
+  acts:
+    act_1:
+      name: "Exposition and Preparation"
+      phases: ["preparation", "complication"]
+      functions:
+        required: ["villainy_or_lack", "mediation", "counteraction", "departure"]
+        optional: ["absentation", "interdiction", "violation", "reconnaissance", "delivery", "trickery", "complicity"]
+      ordering: "strict"
+
+    act_2:
+      name: "Donor Sequence and Conflict"
+      phases: ["donor_sequence", "quest"]
+      paths:
+        struggle_path:
+          description: "Hero engages in direct combat with villain"
+          functions: ["first_donor_function", "hero_reaction", "provision_of_magical_agent", "guidance", "struggle", "branding", "victory", "liquidation"]
+        task_path:
+          description: "Hero solves difficult task instead of combat"
+          functions: ["first_donor_function", "hero_reaction", "provision_of_magical_agent", "guidance", "difficult_task", "solution", "liquidation"]
+      selection: "mutually_exclusive"
+
+    act_3:
+      name: "Return and Recognition"
+      phases: ["return", "recognition"]
+      functions:
+        required: ["return", "recognition", "wedding"]
+        optional: ["pursuit", "rescue", "unrecognized_arrival", "unfounded_claims", "exposure", "transfiguration", "punishment"]
+      ordering: "strict"
+
+  # Paired functions (if one appears, the other typically follows)
+  paired_functions:
+    - ["interdiction", "violation"]
+    - ["reconnaissance", "delivery"]
+    - ["trickery", "complicity"]
+    - ["first_donor_function", "hero_reaction"]
+    - ["struggle", "victory"]
+    - ["difficult_task", "solution"]
+    - ["pursuit", "rescue"]
+    - ["unfounded_claims", "exposure"]
+
+  # Functions that can repeat within a tale
+  repeatable_functions:
+    - "villainy"  # Multiple villainies possible
+    - "lack"      # Multiple lacks
+    - "donor_sequence"  # Hero may encounter multiple donors
+
+# =============================================================================
+# COMPUTATIONAL PROPERTIES
+# =============================================================================
+# Source: docs/research/PROPPER-IMPLEMENTATION.md
+
+computational:
+  automaton_type: "finite_state"
+  decidability: "decidable"
+  complexity: "O(31)"  # Linear in function count
+  determinism: "deterministic_with_seed"
+
+  # ---------------------------------------------------------------------------
+  # THREE-ACT STRUCTURE
+  # ---------------------------------------------------------------------------
+  # Source: ~/repos/propper (Go implementation)
+
+  three_act_structure:
+    description: "Deterministic frame with probabilistic middle"
+
+    act_1:
+      name: "Exposition & Preparation"
+      determinism: "deterministic"
+      description: "Setup sequence - all functions applied in order"
+      functions: ["A", "B", "C", "↑", "D", "E", "F", "G"]
+      narrative_sequence:
+        - "Villainy/Lack (A) - Initial harm or need established"
+        - "Mediation (B) - Call to adventure"
+        - "Counteraction (C) - Decision to act"
+        - "Departure (↑) - Hero leaves home"
+        - "Testing (D) - Donor tests hero"
+        - "Reaction (E) - Hero responds to test"
+        - "Acquisition (F) - Magical agent received"
+        - "Guidance (G) - Transfer to object of search"
+
+    act_2:
+      name: "Conflict Resolution"
+      determinism: "probabilistic"
+      description: "Two mutually exclusive paths with 50/50 selection"
+
+      branching:
+        probability: 0.5  # Each path has 50% chance of being selected
+        outcomes: 4       # struggle only, task only, both, or neither
+
+        path_a_struggle:
+          name: "Struggle Flow"
+          description: "Direct combat resolution"
+          functions: ["H", "J", "I", "K", "↓", "Pr", "Rs", "o", "L"]
+          narrative_sequence:
+            - "Struggle (H) - Direct combat"
+            - "Victory (J) - Villain defeated"
+            - "Branding (I) - Hero marked"
+            - "Liquidation (K) - Misfortune resolved"
+            - "Return (↓) - Hero returns"
+            - "Pursuit (Pr) - Hero pursued"
+            - "Rescue (Rs) - Escape from pursuit"
+            - "Arrival (o) - Arrives unrecognized"
+            - "Unfounded Claims (L) - False hero appears"
+
+        path_b_task:
+          name: "Task Flow"
+          description: "Trial/challenge resolution"
+          functions: ["L", "M", "J", "N", "K", "↓", "Pr", "Rs"]
+          narrative_sequence:
+            - "Unfounded Claims (L) - False hero appears"
+            - "Difficult Task (M) - Task proposed"
+            - "Branding (J) - Hero marked (variant position)"
+            - "Solution (N) - Task resolved"
+            - "Liquidation (K) - Misfortune resolved"
+            - "Return (↓) - Hero returns"
+            - "Pursuit (Pr) - Hero pursued"
+            - "Rescue (Rs) - Escape from pursuit"
+
+    act_3:
+      name: "Resolution"
+      determinism: "deterministic"
+      description: "Recognition and reward sequence"
+      functions: ["Q", "Ex", "T", "U", "W"]
+      narrative_sequence:
+        - "Recognition (Q) - Hero recognized"
+        - "Exposure (Ex) - False hero/villain exposed"
+        - "Transfiguration (T) - Hero transformed"
+        - "Punishment (U) - Villain punished"
+        - "Wedding (W) - Hero rewarded"
+
+  # ---------------------------------------------------------------------------
+  # GENERATION ALGORITHM
+  # ---------------------------------------------------------------------------
+
+  generation_algorithm:
+    name: "Three-Act Compositional Generation"
+
+    seeded_generation:
+      description: "Same seed produces identical story every time"
+      seed_source: "Unix timestamp if not provided"
+      determinism: "Fully deterministic given seed"
+
+    steps:
+      - "Initialize random generator with seed"
+      - "Generate Act 1: Apply all functions A,B,C,↑,D,E,F,G in sequence"
+      - "Select Act 2 path with 50/50 branching:"
+      - "  - 25% chance: Struggle path only"
+      - "  - 25% chance: Task path only"
+      - "  - 25% chance: Both paths (struggle then task)"
+      - "  - 25% chance: Neither (abbreviated quest)"
+      - "Generate Act 2: Apply selected path functions"
+      - "Generate Act 3: Apply all functions Q,Ex,T,U,W in sequence"
+      - "Deduplicate consecutive identical outputs"
+      - "Return (seed, function_codes, prose_lines)"
+
+    rule_composition:
+      apply_all_rules:
+        description: "Sequential application - all rules in order"
+        use_case: "Acts 1 and 3 (deterministic)"
+
+      apply_any_rule:
+        description: "Random selection - pick ONE rule"
+        use_case: "Act 2 branching"
+
+      choose:
+        description: "Uniform random selection from array"
+        probability: "1/N for N variants"
+
+    deduplication:
+      description: "Skip consecutive duplicate lines"
+      reason: "Prevents repetitive output when same variant selected twice"
+
+  variant_probabilities:
+    strategy: "uniform_random"
+    per_function: true  # Each function variant selected independently
+    formula: "probability = 1 / number_of_variants"
+
+  output_format:
+    stderr: "Seed + function codes (e.g., ABC↑DEFGHJIK↓PrRsoLQExTUW)"
+    stdout: "Prose narrative (human-readable story outline)"
+
+# =============================================================================
+# REFERENCES
+# =============================================================================
+
+references:
+  primary:
+    - title: "Morphology of the Folktale"
+      author: "Vladimir Propp"
+      year: 1928
+      translation: "Laurence Scott (1958, 1968)"
+
+  computational:
+    - title: "Propp's Morphology of the Folk Tale as a Grammar for Generation"
+      author: "Pablo Gervás"
+      year: 2013
+      venue: "CMN 2013"
+      url: "https://drops.dagstuhl.de/storage/01oasics/oasics-vol032-cmn2013/OASIcs.CMN.2013.106/OASIcs.CMN.2013.106.pdf"
+
+  implementations:
+    - name: "propper"
+      language: "Go"
+      repository: "~/repos/propper"
+
+    - name: "propper-narrative"
+      language: "Inform 7"
+      repository: "~/repos/propper-narrative"

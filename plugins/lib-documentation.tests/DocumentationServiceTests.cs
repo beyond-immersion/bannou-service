@@ -1152,8 +1152,6 @@ public class DocumentationConfigurationTests
         Assert.Equal(0.3, config.MinRelevanceScore);
         Assert.Equal(20, config.MaxSearchResults);
         Assert.Equal(0, config.MaxImportDocuments); // 0 = unlimited
-        Assert.False(config.AiEnhancementsEnabled);
-        Assert.Null(config.AiEmbeddingsModel); // NRT: Optional config with no default is null
     }
 
     [Fact]
@@ -1179,9 +1177,7 @@ public class DocumentationConfigurationTests
             SearchCacheTtlSeconds = 600,
             MinRelevanceScore = 0.5,
             MaxSearchResults = 50,
-            MaxImportDocuments = 100,
-            AiEnhancementsEnabled = true,
-            AiEmbeddingsModel = "text-embedding-ada-002"
+            MaxImportDocuments = 100
         };
 
         // Assert
@@ -1193,7 +1189,5 @@ public class DocumentationConfigurationTests
         Assert.Equal(0.5, config.MinRelevanceScore);
         Assert.Equal(50, config.MaxSearchResults);
         Assert.Equal(100, config.MaxImportDocuments);
-        Assert.True(config.AiEnhancementsEnabled);
-        Assert.Equal("text-embedding-ada-002", config.AiEmbeddingsModel);
     }
 }

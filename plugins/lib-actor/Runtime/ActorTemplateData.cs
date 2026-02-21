@@ -1,3 +1,7 @@
+using BeyondImmersion.Bannou.Core;
+using BeyondImmersion.BannouService.Behavior;
+using System.Text.Json;
+
 namespace BeyondImmersion.BannouService.Actor.Runtime;
 
 /// <summary>
@@ -56,6 +60,46 @@ public class ActorTemplateData
     public DateTimeOffset UpdatedAt { get; set; }
 
     /// <summary>
+    /// Gets or sets the cognition template ID for this actor type.
+    /// Primary source for cognition pipeline resolution (per IMPLEMENTATION TENETS).
+    /// When null, falls back to ABML metadata, then category default mapping.
+    /// </summary>
+    public string? CognitionTemplateId { get; set; }
+
+    /// <summary>
+    /// Gets or sets the static template-level cognition overrides.
+    /// Applied as the first layer in the three-layer override composition.
+    /// </summary>
+    public CognitionOverrides? CognitionOverrides { get; set; }
+
+    /// <summary>
+    /// Deserializes cognition overrides from API object.
+    /// The generated API model uses object? (arrives as JsonElement), but internal model is typed.
+    /// </summary>
+    public static CognitionOverrides? DeserializeCognitionOverrides(object? apiOverrides)
+    {
+        if (apiOverrides is not JsonElement element)
+            return null;
+
+        if (element.ValueKind == JsonValueKind.Null || element.ValueKind == JsonValueKind.Undefined)
+            return null;
+
+        return BannouJson.Deserialize<CognitionOverrides>(element.GetRawText());
+    }
+
+    /// <summary>
+    /// Serializes cognition overrides to a JsonElement for the API response model.
+    /// </summary>
+    private static object? SerializeCognitionOverrides(CognitionOverrides? overrides)
+    {
+        if (overrides == null)
+            return null;
+
+        var json = BannouJson.Serialize(overrides);
+        return JsonDocument.Parse(json).RootElement.Clone();
+    }
+
+    /// <summary>
     /// Converts to API response model.
     /// </summary>
     public ActorTemplateResponse ToResponse()
@@ -70,6 +114,8 @@ public class ActorTemplateData
             TickIntervalMs = TickIntervalMs,
             AutoSaveIntervalSeconds = AutoSaveIntervalSeconds,
             MaxInstancesPerNode = MaxInstancesPerNode,
+            CognitionTemplateId = CognitionTemplateId,
+            CognitionOverrides = SerializeCognitionOverrides(CognitionOverrides),
             CreatedAt = CreatedAt,
             UpdatedAt = UpdatedAt
         };
@@ -102,6 +148,11 @@ public class AutoSpawnConfigData
     public int? CharacterIdCaptureGroup { get; set; }
 
     /// <summary>
+    /// Gets or sets the default realm ID for auto-spawned actors when no CharacterId is available.
+    /// </summary>
+    public Guid? DefaultRealmId { get; set; }
+
+    /// <summary>
     /// Converts to API model.
     /// </summary>
     public AutoSpawnConfig ToConfig()
@@ -111,7 +162,8 @@ public class AutoSpawnConfigData
             Enabled = Enabled,
             IdPattern = IdPattern,
             MaxInstances = MaxInstances,
-            CharacterIdCaptureGroup = CharacterIdCaptureGroup
+            CharacterIdCaptureGroup = CharacterIdCaptureGroup,
+            DefaultRealmId = DefaultRealmId
         };
     }
 
@@ -128,7 +180,8 @@ public class AutoSpawnConfigData
             Enabled = config.Enabled,
             IdPattern = config.IdPattern,
             MaxInstances = config.MaxInstances,
-            CharacterIdCaptureGroup = config.CharacterIdCaptureGroup
+            CharacterIdCaptureGroup = config.CharacterIdCaptureGroup,
+            DefaultRealmId = config.DefaultRealmId
         };
     }
 }

@@ -3,11 +3,11 @@
 // Tests for variable scope semantics, call isolation, and error handling.
 // =============================================================================
 
-using BeyondImmersion.BannouService.Abml.Documents.Actions;
+using BeyondImmersion.Bannou.BehaviorCompiler.Documents.Actions;
+using BeyondImmersion.Bannou.BehaviorCompiler.Parser;
+using BeyondImmersion.Bannou.BehaviorExpressions.Expressions;
+using BeyondImmersion.Bannou.BehaviorExpressions.Runtime;
 using BeyondImmersion.BannouService.Abml.Execution;
-using BeyondImmersion.BannouService.Abml.Expressions;
-using BeyondImmersion.BannouService.Abml.Parser;
-using BeyondImmersion.BannouService.Abml.Runtime;
 using Xunit;
 
 namespace BeyondImmersion.BannouService.Tests.Abml;

@@ -41,22 +41,24 @@ public partial class GetStateRequest
     /// Name of the state store
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("storeName")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(100, MinimumLength = 1)]
     public string StoreName { get; set; } = default!;
 
     /// <summary>
     /// Key to retrieve
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("key")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(255, MinimumLength = 1)]
     public string Key { get; set; } = default!;
 
 }
 
 /// <summary>
-/// Response containing a retrieved state value with its metadata and ETag
+/// Response containing a retrieved state value with its ETag for optimistic concurrency
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class GetStateResponse
@@ -74,12 +76,6 @@ public partial class GetStateResponse
     [System.Text.Json.Serialization.JsonPropertyName("etag")]
     public string? Etag { get; set; } = default!;
 
-    /// <summary>
-    /// Metadata about the state entry including timestamps and version
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("metadata")]
-    public StateMetadata Metadata { get; set; } = default!;
-
 }
 
 /// <summary>
@@ -93,16 +89,18 @@ public partial class SaveStateRequest
     /// Name of the state store
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("storeName")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(100, MinimumLength = 1)]
     public string StoreName { get; set; } = default!;
 
     /// <summary>
     /// Key to save
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("key")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(255, MinimumLength = 1)]
     public string Key { get; set; } = default!;
 
     /// <summary>
@@ -132,6 +130,7 @@ public partial class SaveStateResponse
     /// New ETag after save
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("etag")]
+    [System.ComponentModel.DataAnnotations.StringLength(100, MinimumLength = 1)]
     public string Etag { get; set; } = default!;
 
 }
@@ -147,16 +146,18 @@ public partial class DeleteStateRequest
     /// Name of the state store
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("storeName")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(100, MinimumLength = 1)]
     public string StoreName { get; set; } = default!;
 
     /// <summary>
     /// Key to delete
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("key")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(255, MinimumLength = 1)]
     public string Key { get; set; } = default!;
 
 }
@@ -184,50 +185,18 @@ public partial class StateOptions
 {
 
     /// <summary>
-    /// TTL in seconds (Redis only)
+    /// TTL in seconds (Redis only). Maximum 1 year (31536000 seconds).
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("ttl")]
+    [System.ComponentModel.DataAnnotations.Range(1, 31536000)]
     public int? Ttl { get; set; } = default!;
-
-    /// <summary>
-    /// Consistency level
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("consistency")]
-    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public StateOptionsConsistency Consistency { get; set; } = BeyondImmersion.BannouService.State.StateOptionsConsistency.Strong;
 
     /// <summary>
     /// Optimistic concurrency check - save fails if ETag mismatch
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("etag")]
+    [System.ComponentModel.DataAnnotations.StringLength(100, MinimumLength = 1)]
     public string? Etag { get; set; } = default!;
-
-}
-
-/// <summary>
-/// Metadata associated with a state entry including creation time, last update time, and version
-/// </summary>
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class StateMetadata
-{
-
-    /// <summary>
-    /// When the state was created
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
-    public System.DateTimeOffset? CreatedAt { get; set; } = default!;
-
-    /// <summary>
-    /// When the state was last updated
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
-    public System.DateTimeOffset? UpdatedAt { get; set; } = default!;
-
-    /// <summary>
-    /// Version number for optimistic concurrency
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("version")]
-    public int Version { get; set; } = default!;
 
 }
 
@@ -242,8 +211,9 @@ public partial class QueryStateRequest
     /// Name of the state store (MySQL or Redis with search enabled)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("storeName")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(100, MinimumLength = 1)]
     public string StoreName { get; set; } = default!;
 
     /// <summary>
@@ -252,6 +222,7 @@ public partial class QueryStateRequest
     /// <br/>
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("conditions")]
+    [System.ComponentModel.DataAnnotations.MaxLength(50)]
     public System.Collections.Generic.ICollection<QueryCondition>? Conditions { get; set; } = default!;
 
     /// <summary>
@@ -260,6 +231,7 @@ public partial class QueryStateRequest
     /// <br/>
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("indexName")]
+    [System.ComponentModel.DataAnnotations.StringLength(100, MinimumLength = 1)]
     public string? IndexName { get; set; } = default!;
 
     /// <summary>
@@ -268,24 +240,28 @@ public partial class QueryStateRequest
     /// <br/>
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("query")]
+    [System.ComponentModel.DataAnnotations.StringLength(1000, MinimumLength = 1)]
     public string? Query { get; set; } = default!;
 
     /// <summary>
     /// Sort order (first field only is used) (null for default ordering)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("sort")]
+    [System.ComponentModel.DataAnnotations.MaxLength(10)]
     public System.Collections.Generic.ICollection<SortField>? Sort { get; set; } = default!;
 
     /// <summary>
     /// Page number (0-indexed)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("page")]
+    [System.ComponentModel.DataAnnotations.Range(0, int.MaxValue)]
     public int Page { get; set; } = 0;
 
     /// <summary>
     /// Items per page (max 1000)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("pageSize")]
+    [System.ComponentModel.DataAnnotations.Range(1, 1000)]
     public int PageSize { get; set; } = 100;
 
 }
@@ -301,6 +277,7 @@ public partial class SortField
     /// Field name to sort by (JSON path for MySQL, field name for Redis)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("field")]
+    [System.ComponentModel.DataAnnotations.StringLength(200, MinimumLength = 1)]
     public string Field { get; set; } = default!;
 
     /// <summary>
@@ -323,8 +300,9 @@ public partial class QueryCondition
     /// JSON path to query (e.g., "$.name", "$.address.city", "$.tags[0]")
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("path")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(200, MinimumLength = 1)]
     public string Path { get; set; } = default!;
 
     /// <summary>
@@ -409,18 +387,21 @@ public partial class QueryStateResponse
     /// Total matching items (for pagination)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("totalCount")]
+    [System.ComponentModel.DataAnnotations.Range(0, int.MaxValue)]
     public int TotalCount { get; set; } = default!;
 
     /// <summary>
     /// Current page number
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("page")]
+    [System.ComponentModel.DataAnnotations.Range(0, int.MaxValue)]
     public int Page { get; set; } = default!;
 
     /// <summary>
     /// Items per page
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("pageSize")]
+    [System.ComponentModel.DataAnnotations.Range(1, 1000)]
     public int PageSize { get; set; } = default!;
 
 }
@@ -436,8 +417,9 @@ public partial class BulkGetStateRequest
     /// Name of the state store
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("storeName")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(100, MinimumLength = 1)]
     public string StoreName { get; set; } = default!;
 
     /// <summary>
@@ -446,6 +428,8 @@ public partial class BulkGetStateRequest
     [System.Text.Json.Serialization.JsonPropertyName("keys")]
     [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.MinLength(1)]
+    [System.ComponentModel.DataAnnotations.MaxLength(1000)]
     public System.Collections.Generic.ICollection<string> Keys { get; set; } = new System.Collections.ObjectModel.Collection<string>();
 
 }
@@ -476,6 +460,7 @@ public partial class BulkStateItem
     /// The key
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("key")]
+    [System.ComponentModel.DataAnnotations.StringLength(255, MinimumLength = 1)]
     public string Key { get; set; } = default!;
 
     /// <summary>
@@ -488,6 +473,7 @@ public partial class BulkStateItem
     /// ETag for this item
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("etag")]
+    [System.ComponentModel.DataAnnotations.StringLength(100, MinimumLength = 1)]
     public string? Etag { get; set; } = default!;
 
     /// <summary>
@@ -495,6 +481,199 @@ public partial class BulkStateItem
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("found")]
     public bool Found { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Request to save multiple key-value pairs in a single operation
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class BulkSaveStateRequest
+{
+
+    /// <summary>
+    /// Name of the state store
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("storeName")]
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(100, MinimumLength = 1)]
+    public string StoreName { get; set; } = default!;
+
+    /// <summary>
+    /// Items to save
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("items")]
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.MinLength(1)]
+    [System.ComponentModel.DataAnnotations.MaxLength(1000)]
+    public System.Collections.Generic.ICollection<BulkSaveItem> Items { get; set; } = new System.Collections.ObjectModel.Collection<BulkSaveItem>();
+
+    /// <summary>
+    /// Optional settings applied to all items
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("options")]
+    public StateOptions? Options { get; set; } = default!;
+
+}
+
+/// <summary>
+/// A single item to save in a bulk operation
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class BulkSaveItem
+{
+
+    /// <summary>
+    /// The key to save
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("key")]
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(255, MinimumLength = 1)]
+    public string Key { get; set; } = default!;
+
+    /// <summary>
+    /// The value to store
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("value")]
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
+    public object Value { get; set; } = new object();
+
+}
+
+/// <summary>
+/// Response from a bulk save operation with ETags for each saved item
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class BulkSaveStateResponse
+{
+
+    /// <summary>
+    /// Results for each saved item
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("results")]
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Collections.Generic.ICollection<BulkSaveResult> Results { get; set; } = new System.Collections.ObjectModel.Collection<BulkSaveResult>();
+
+}
+
+/// <summary>
+/// Result for a single item in a bulk save operation
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class BulkSaveResult
+{
+
+    /// <summary>
+    /// The key that was saved
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("key")]
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(255, MinimumLength = 1)]
+    public string Key { get; set; } = default!;
+
+    /// <summary>
+    /// New ETag after save
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("etag")]
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(100, MinimumLength = 1)]
+    public string Etag { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Request to check existence of multiple keys
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class BulkExistsStateRequest
+{
+
+    /// <summary>
+    /// Name of the state store
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("storeName")]
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(100, MinimumLength = 1)]
+    public string StoreName { get; set; } = default!;
+
+    /// <summary>
+    /// Keys to check for existence
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("keys")]
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.MinLength(1)]
+    [System.ComponentModel.DataAnnotations.MaxLength(1000)]
+    public System.Collections.Generic.ICollection<string> Keys { get; set; } = new System.Collections.ObjectModel.Collection<string>();
+
+}
+
+/// <summary>
+/// Response indicating which keys exist in the store
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class BulkExistsStateResponse
+{
+
+    /// <summary>
+    /// Keys that exist in the store
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("existingKeys")]
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Collections.Generic.ICollection<string> ExistingKeys { get; set; } = new System.Collections.ObjectModel.Collection<string>();
+
+}
+
+/// <summary>
+/// Request to delete multiple keys
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class BulkDeleteStateRequest
+{
+
+    /// <summary>
+    /// Name of the state store
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("storeName")]
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(100, MinimumLength = 1)]
+    public string StoreName { get; set; } = default!;
+
+    /// <summary>
+    /// Keys to delete
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("keys")]
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.MinLength(1)]
+    [System.ComponentModel.DataAnnotations.MaxLength(1000)]
+    public System.Collections.Generic.ICollection<string> Keys { get; set; } = new System.Collections.ObjectModel.Collection<string>();
+
+}
+
+/// <summary>
+/// Response from a bulk delete operation
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class BulkDeleteStateResponse
+{
+
+    /// <summary>
+    /// Number of keys actually deleted
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("deletedCount")]
+    [System.ComponentModel.DataAnnotations.Range(0, int.MaxValue)]
+    public int DeletedCount { get; set; } = default!;
 
 }
 
@@ -546,6 +725,7 @@ public partial class StoreInfo
     /// Store name
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("name")]
+    [System.ComponentModel.DataAnnotations.StringLength(100, MinimumLength = 1)]
     public string Name { get; set; } = default!;
 
     /// <summary>
@@ -559,23 +739,10 @@ public partial class StoreInfo
     /// Number of keys (only if includeStats=true)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("keyCount")]
+    [System.ComponentModel.DataAnnotations.Range(0, int.MaxValue)]
     public int? KeyCount { get; set; } = default!;
 
 }
-
-#pragma warning disable CS1591 // Enum members cannot have XML documentation
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum StateOptionsConsistency
-{
-
-    [System.Runtime.Serialization.EnumMember(Value = @"strong")]
-    Strong = 0,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"eventual")]
-    Eventual = 1,
-
-}
-#pragma warning restore CS1591
 
 #pragma warning disable CS1591 // Enum members cannot have XML documentation
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]

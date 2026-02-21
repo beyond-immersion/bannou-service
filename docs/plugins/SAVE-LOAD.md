@@ -3,13 +3,14 @@
 > **Plugin**: lib-save-load
 > **Schema**: schemas/save-load-api.yaml
 > **Version**: 1.0.0
+> **Layer**: GameFeatures
 > **State Stores**: save-load-slots (MySQL), save-load-versions (MySQL), save-load-schemas (MySQL), save-load-cache (Redis), save-load-pending (Redis)
 
 ---
 
 ## Overview
 
-Generic save/load system for game state persistence with polymorphic ownership, versioned saves, and schema migration. Handles the full lifecycle of save data: slot creation (namespaced by game+owner), writing save data with automatic compression, loading with hot cache acceleration, delta/incremental saves via JSON Patch (RFC 6902), schema version registration with forward migration paths, version pinning/promotion, rolling cleanup based on category-specific retention limits, export/import via ZIP archives through the Asset service, and content hash integrity verification. Features a two-tier storage architecture where saves are immediately acknowledged in Redis hot cache and asynchronously uploaded to MinIO via the Asset service through a background worker with circuit breaker protection. Supports five save categories (QUICK_SAVE, AUTO_SAVE, MANUAL_SAVE, CHECKPOINT, STATE_SNAPSHOT) each with distinct compression and retention defaults. Designed for multi-device cloud sync with conflict detection windowing. Owners can be accounts, characters, sessions, or realms (polymorphic association pattern).
+Generic save/load system (L4 GameFeatures) for game state persistence with polymorphic ownership (accounts, characters, sessions, realms). Manages save slots, versioned writes with automatic compression, delta/incremental saves via JSON Patch (RFC 6902), schema migration with forward migration paths, and rolling cleanup by save category. Uses a two-tier storage architecture: Redis hot cache for immediate acknowledgment, with async upload to MinIO via the Asset service for durable storage. Supports export/import via ZIP archives and multi-device cloud sync with conflict detection.
 
 ---
 
@@ -56,6 +57,7 @@ Generic save/load system for game state persistence with polymorphic ownership, 
 | `pending:{uploadId}` | `PendingUploadEntry` | Queued upload with data and retry state |
 | `pending-upload-ids` (set) | `Set<string>` | Tracking set of pending upload IDs |
 | `circuit:storage` | `CircuitBreakerState` | Circuit breaker state (Closed/Open/HalfOpen) |
+| `save-rate:{gameId}:{ownerType}:{ownerId}:{minuteBucket}` | `string` (count) | Rate limiting counter (TTL 120s) |
 
 ---
 
@@ -432,22 +434,23 @@ Circuit Breaker State Machine
 ## Stubs & Unimplemented Features
 
 1. **BSDIFF delta algorithm**: DeltaProcessor throws `NotSupportedException` for BSDIFF. Defined in config as an option but not implemented. Intended for binary game state where JSON Patch is inappropriate.
+<!-- AUDIT:NEEDS_DESIGN:2026-01-31:https://github.com/beyond-immersion/bannou-service/issues/193 -->
 
 2. **XDELTA delta algorithm**: Same as BSDIFF - stubbed with `NotSupportedException`. Listed as a supported algorithm in configuration but has no implementation.
+<!-- AUDIT:NEEDS_DESIGN:2026-01-31:https://github.com/beyond-immersion/bannou-service/issues/193 -->
 
 3. **JSON Schema validation**: SchemaMigrator.ValidateAgainstSchema only verifies data is valid JSON. Full JSON Schema (draft-07) validation is not implemented. Comment notes potential use of JsonSchema.Net library.
+<!-- AUDIT:NEEDS_DESIGN:2026-02-01:https://github.com/beyond-immersion/bannou-service/issues/229 -->
 
-4. **Auto-collapse during cleanup**: CleanupService logs delta chains that could be collapsed when AutoCollapseEnabled is true, but does not actually perform the collapse. It only identifies candidates.
+4. ~~**Auto-collapse during cleanup**~~: **FIXED** (2026-02-01) - CleanupService now calls VersionCleanupManager.CollapseExcessiveDeltaChainsAsync when AutoCollapseEnabled is true, collapsing delta chains that exceed MaxDeltaChainLength. Collapsed versions are converted from delta to full snapshot, stored in hot cache, and queued for async upload.
 
-5. **Rate limiting (MaxSavesPerMinute)**: Configuration property exists but no rate limiting implementation is present in the Save endpoint. The property is defined but not enforced.
+5. **MaxTotalSizeBytesPerOwner quota**: Partially implemented - a per-SLOT check exists but it only checks the current slot's TotalSizeBytes, not the aggregate across all owner slots. Multi-slot owners can exceed the per-owner limit.
 
-6. **MaxTotalSizeBytesPerOwner quota**: Partially implemented - a per-SLOT check exists (line 578 of SaveLoadService.cs) but it only checks the current slot's TotalSizeBytes, not the aggregate across all owner slots. Multi-slot owners can exceed the per-owner limit. Also see Bug #4 (raw vs compressed size mismatch in the check).
+6. **Thumbnail upload and storage**: ThumbnailMaxSizeBytes and ThumbnailAllowedFormats are configured, and SaveVersionManifest has ThumbnailAssetId, but no thumbnail validation or upload logic exists in the Save endpoint.
 
-7. **Thumbnail upload and storage**: ThumbnailMaxSizeBytes and ThumbnailAllowedFormats are configured, and SaveVersionManifest has ThumbnailAssetId, but no thumbnail validation or upload logic exists in the Save endpoint.
+7. **Conflict detection flagging**: ConflictDetectionEnabled and ConflictDetectionWindowMinutes are configured, and DeviceId is stored on SaveVersionManifest, but no conflict flag is returned to the client during save or load.
 
-8. **Conflict detection flagging**: ConflictDetectionEnabled and ConflictDetectionWindowMinutes are configured, and DeviceId is stored on SaveVersionManifest, but no conflict flag is returned to the client during save or load.
-
-9. **SlotResponse display name**: ExportSlotEntry has a DisplayName field but SaveSlotMetadata does not store a display name.
+8. **SlotResponse display name**: ExportSlotEntry has a DisplayName field but SaveSlotMetadata does not store a display name.
 
 ---
 
@@ -455,7 +458,7 @@ Circuit Breaker State Machine
 
 1. **Binary delta algorithms**: Implement BSDIFF or XDELTA for binary game state (meshes, textures, compiled world data) where JSON Patch is not applicable.
 
-2. **Rate limiting enforcement**: Use Redis sliding window or token bucket to enforce MaxSavesPerMinute per owner. Return 429 Too Many Requests when exceeded.
+2. **Rate limiting status code**: Rate limiting is implemented but returns 400 Bad Request instead of 429 Too Many Requests. Change to return proper 429 status code for standard HTTP semantics.
 
 3. **Storage quota enforcement**: Track cumulative storage per owner and reject saves that would exceed MaxTotalSizeBytesPerOwner. Could also emit a warning event at 80% threshold.
 
@@ -463,9 +466,11 @@ Circuit Breaker State Machine
 
 5. **Streaming save/load**: For saves exceeding hot cache size limits, support chunked upload/download without holding entire blob in memory.
 
-6. **Auto-collapse implementation**: During CleanupService runs, actually collapse identified delta chains rather than just logging them.
+6. ~~**Auto-collapse implementation**~~: **FIXED** (2026-02-01) - See Stubs section item 4.
 
 7. **Retention policy per-slot**: Allow slots to define custom retention policies beyond MaxVersions and RetentionDays (e.g., keep first version of each day, weekly snapshots).
+
+8. **Voxel housing persistence via chunk-level deltas**: The Voxel Builder SDK's `.bvox` format ([VOXEL-BUILDER-SDK.md](../planning/VOXEL-BUILDER-SDK.md)) is chunk-aligned (16x16x16 blocks with LZ4 compression), enabling natural integration with Save-Load's delta save system. When a player modifies their housing voxels, only modified chunks re-serialize (~4KB compressed per dirty chunk). Save-Load stores the base `.bvox` in MinIO via the Asset service; incremental edits are stored as chunk-scoped binary deltas. The `BSDIFF`/`XDELTA` delta algorithms (Stubs #1/#2) become relevant here -- JSON Patch doesn't apply to binary voxel data, so binary delta is the correct algorithm for `.bvox` saves. Polymorphic ownership enables `ownerType: seed`, `ownerId: housingSeedId` for housing save slots. See [Gardener: Housing Garden Pattern](GARDENER.md#housing-garden-pattern-no-plugin-required).
 
 ---
 
@@ -473,9 +478,7 @@ Circuit Breaker State Machine
 
 ### Bugs
 
-1. **String config properties should use enum references**: Two configuration properties in `save-load-configuration.yaml` are `type: string` but should use `$ref` to their respective enum types:
-   - `DefaultCompressionType` → should reference `CompressionType` enum from save-load-api.yaml
-   - `DefaultDeltaAlgorithm` → should reference `DeltaAlgorithm` enum from save-load-api.yaml
+(None currently identified)
 
 ### Intentional Quirks
 
@@ -490,6 +493,8 @@ Circuit Breaker State Machine
 5. **CleanupControlPlaneOnly uses default app name**: The cleanup service only runs when EffectiveAppId matches "bannou". In distributed deployments with custom app IDs, cleanup will not run automatically.
 
 6. **Asset deletion is best-effort**: When deleting versions or slots, Asset service failures are caught and logged as warnings but do not fail the operation. Orphaned assets may accumulate if the Asset service is repeatedly unavailable.
+
+7. **Rate limiting returns 400 instead of 429**: The rate limiting implementation (SaveLoadService.cs lines 487-505) returns `StatusCodes.BadRequest` when the per-minute limit is exceeded, not the standard HTTP 429 Too Many Requests. Uses Redis counter with key pattern `save-rate:{gameId}:{ownerType}:{ownerId}:{minuteBucket}` and 120-second TTL.
 
 ### Design Considerations
 
@@ -516,3 +521,19 @@ Circuit Breaker State Machine
 11. **Storage quota check mixes raw and compressed sizes**: The save quota check compares `slot.TotalSizeBytes + body.Data.Length` against `MaxTotalSizeBytesPerOwner`. The `slot.TotalSizeBytes` tracks compressed sizes, but `body.Data.Length` is the raw uncompressed data. The check happens pre-compression so the compressed size is unknown. Options: check after compression (changes error timing), use a compression ratio estimate, or accept the conservative over-estimate.
 
 12. **Storage quota check is per-slot, not per-owner**: The quota check only examines the current slot's TotalSizeBytes against `MaxTotalSizeBytesPerOwner`. An owner with multiple slots can exceed the per-owner limit since each slot is checked individually. True per-owner enforcement requires querying all slots for the owner before each save.
+
+---
+
+## Work Tracking
+
+This section tracks active development work on items from the quirks/bugs lists above. Items here are managed by the `/audit-plugin` workflow and should not be manually edited except to add new tracking markers.
+
+### Completed
+
+- **Auto-collapse during cleanup** - Implemented in VersionCleanupManager.CollapseExcessiveDeltaChainsAsync; CleanupService now calls this when AutoCollapseEnabled is true. (2026-02-01)
+
+### Needs Design Review
+
+- **BSDIFF delta algorithm** - Library selection and design decisions needed. See [#193](https://github.com/beyond-immersion/bannou-service/issues/193). (2026-01-31)
+- **XDELTA delta algorithm** - Consolidated with BSDIFF; same library selection and design questions apply. See [#193](https://github.com/beyond-immersion/bannou-service/issues/193). (2026-01-31)
+- **JSON Schema validation** - Method exists but is never called; design decisions needed on where/when to invoke validation. See [#229](https://github.com/beyond-immersion/bannou-service/issues/229). (2026-02-01)

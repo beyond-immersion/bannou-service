@@ -7,8 +7,11 @@ info:
     The Scene service publishes lifecycle events for scene documents and
     operational events for instantiation and checkout workflows.
 
-    **Schema Rules**: AI agents MUST review docs/reference/SCHEMA-RULES.md before
-    modifying this schema. Optional reference types require `nullable: true`.
+    **SCHEMA MODIFICATION GATE**: STOP. Before modifying this schema, you MUST:
+    1. Read docs/reference/SCHEMA-RULES.md
+    2. State which section applies to your change
+    3. Only then proceed with edits
+    Edits without stating the applicable rule are FORBIDDEN.
   version: 1.0.0
 
   x-event-subscriptions:
@@ -132,7 +135,9 @@ components:
           type: object
           additionalProperties: true
           nullable: true
-          description: Caller-provided metadata passed through to consumers
+          description: >-
+            Caller-provided metadata passed through from instantiation request.
+            No Bannou plugin reads specific keys from this field by convention.
         instantiatedBy:
           type: string
           nullable: true
@@ -169,7 +174,9 @@ components:
           type: object
           additionalProperties: true
           nullable: true
-          description: Caller-provided metadata
+          description: >-
+            Caller-provided metadata passed through from destruction request.
+            No Bannou plugin reads specific keys from this field by convention.
 
     # ========== CHECKOUT WORKFLOW EVENTS ==========
 

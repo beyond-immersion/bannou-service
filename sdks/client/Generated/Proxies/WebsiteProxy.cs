@@ -75,22 +75,6 @@ public sealed class WebsiteProxy
     }
 
     /// <summary>
-    /// Get game server status for all realms
-    /// </summary>
-    /// <param name="channel">Message channel for ordering (default 0).</param>
-    /// <param name="timeout">Request timeout.</param>
-    /// <param name="cancellationToken">Cancellation token.</param>
-    /// <returns>ApiResponse containing ServerStatusResponse on success.</returns>
-    public Task<ApiResponse<ServerStatusResponse>> GetServerStatusAsync(
-        ushort channel = 0,
-        TimeSpan? timeout = null,
-        CancellationToken cancellationToken = default)
-    {
-        return _client.InvokeAsync<object, ServerStatusResponse>(
-            "/website/server-status", new {}, channel, timeout, cancellationToken);
-    }
-
-    /// <summary>
     /// Get download links for game clients
     /// </summary>
     /// <param name="channel">Message channel for ordering (default 0).</param>
@@ -138,22 +122,6 @@ public sealed class WebsiteProxy
     {
         return _client.InvokeAsync<object, AccountProfile>(
             "/website/account/profile", new {}, channel, timeout, cancellationToken);
-    }
-
-    /// <summary>
-    /// Get character list for logged-in user
-    /// </summary>
-    /// <param name="channel">Message channel for ordering (default 0).</param>
-    /// <param name="timeout">Request timeout.</param>
-    /// <param name="cancellationToken">Cancellation token.</param>
-    /// <returns>ApiResponse containing CharacterListResponse on success.</returns>
-    public Task<ApiResponse<CharacterListResponse>> GetAccountCharactersAsync(
-        ushort channel = 0,
-        TimeSpan? timeout = null,
-        CancellationToken cancellationToken = default)
-    {
-        return _client.InvokeAsync<object, CharacterListResponse>(
-            "/website/account/characters", new {}, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -256,21 +224,5 @@ public sealed class WebsiteProxy
     {
         return _client.SendEventAsync<ThemeConfig>(
             "/website/cms/theme", request, channel, cancellationToken);
-    }
-
-    /// <summary>
-    /// Get subscription status
-    /// </summary>
-    /// <param name="channel">Message channel for ordering (default 0).</param>
-    /// <param name="timeout">Request timeout.</param>
-    /// <param name="cancellationToken">Cancellation token.</param>
-    /// <returns>ApiResponse containing SubscriptionResponse on success.</returns>
-    public Task<ApiResponse<SubscriptionResponse>> GetAccountSubscriptionAsync(
-        ushort channel = 0,
-        TimeSpan? timeout = null,
-        CancellationToken cancellationToken = default)
-    {
-        return _client.InvokeAsync<object, SubscriptionResponse>(
-            "/website/account/subscription", new {}, channel, timeout, cancellationToken);
     }
 }

@@ -155,6 +155,13 @@ public class SpeciesTestHandler : BaseHttpTestHandler
             };
             var created = await speciesClient.CreateSpeciesAsync(createRequest);
 
+            // Deprecate first (required before deletion)
+            await speciesClient.DeprecateSpeciesAsync(new DeprecateSpeciesRequest
+            {
+                SpeciesId = created.SpeciesId,
+                Reason = "Test deletion"
+            });
+
             await speciesClient.DeleteSpeciesAsync(new DeleteSpeciesRequest { SpeciesId = created.SpeciesId });
 
             // Verify deletion - expect 404
@@ -412,15 +419,23 @@ public class SpeciesTestHandler : BaseHttpTestHandler
             if (species.RealmIds != null && species.RealmIds.Contains(realm.RealmId))
                 return TestResult.Failed("Realm still present after removal");
 
-            // Step 7: Delete species
-            Console.WriteLine("  Step 7: Deleting species...");
+            // Step 7: Deprecate species (required before deletion)
+            Console.WriteLine("  Step 7: Deprecating species...");
+            await speciesClient.DeprecateSpeciesAsync(new DeprecateSpeciesRequest
+            {
+                SpeciesId = species.SpeciesId,
+                Reason = "Lifecycle test cleanup"
+            });
+
+            // Step 8: Delete species
+            Console.WriteLine("  Step 8: Deleting species...");
             await speciesClient.DeleteSpeciesAsync(new DeleteSpeciesRequest
             {
                 SpeciesId = species.SpeciesId
             });
 
-            // Step 8: Verify deletion
-            Console.WriteLine("  Step 8: Verifying deletion...");
+            // Step 9: Verify deletion
+            Console.WriteLine("  Step 9: Verifying deletion...");
             try
             {
                 await speciesClient.GetSpeciesAsync(new GetSpeciesRequest { SpeciesId = species.SpeciesId });

@@ -96,6 +96,12 @@ public partial class RealmCreatedEvent : BaseServiceEvent
     public bool IsActive { get; set; } = default!;
 
     /// <summary>
+    /// Whether this realm is a system infrastructure realm (e.g., VOID)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("isSystemType")]
+    public bool IsSystemType { get; set; } = default!;
+
+    /// <summary>
     /// Whether the realm has been marked as deprecated
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("isDeprecated")]
@@ -105,7 +111,7 @@ public partial class RealmCreatedEvent : BaseServiceEvent
     /// Timestamp when the realm was deprecated
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("deprecatedAt")]
-    public System.DateTimeOffset DeprecatedAt { get; set; } = default!;
+    public System.DateTimeOffset? DeprecatedAt { get; set; } = default!;
 
     /// <summary>
     /// Explanation for why the realm was deprecated
@@ -114,10 +120,10 @@ public partial class RealmCreatedEvent : BaseServiceEvent
     public string? DeprecationReason { get; set; } = default!;
 
     /// <summary>
-    /// Additional custom key-value data associated with the realm
+    /// Client-only metadata. No Bannou plugin reads specific keys from this field by convention.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("metadata")]
-    public object Metadata { get; set; } = default!;
+    public object? Metadata { get; set; } = default!;
 
     /// <summary>
     /// Timestamp when the realm was created
@@ -203,6 +209,12 @@ public partial class RealmUpdatedEvent : BaseServiceEvent
     public bool IsActive { get; set; } = default!;
 
     /// <summary>
+    /// Whether this realm is a system infrastructure realm (e.g., VOID)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("isSystemType")]
+    public bool IsSystemType { get; set; } = default!;
+
+    /// <summary>
     /// Whether the realm has been marked as deprecated
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("isDeprecated")]
@@ -212,7 +224,7 @@ public partial class RealmUpdatedEvent : BaseServiceEvent
     /// Timestamp when the realm was deprecated
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("deprecatedAt")]
-    public System.DateTimeOffset DeprecatedAt { get; set; } = default!;
+    public System.DateTimeOffset? DeprecatedAt { get; set; } = default!;
 
     /// <summary>
     /// Explanation for why the realm was deprecated
@@ -221,10 +233,10 @@ public partial class RealmUpdatedEvent : BaseServiceEvent
     public string? DeprecationReason { get; set; } = default!;
 
     /// <summary>
-    /// Additional custom key-value data associated with the realm
+    /// Client-only metadata. No Bannou plugin reads specific keys from this field by convention.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("metadata")]
-    public object Metadata { get; set; } = default!;
+    public object? Metadata { get; set; } = default!;
 
     /// <summary>
     /// Timestamp when the realm was created
@@ -318,6 +330,12 @@ public partial class RealmDeletedEvent : BaseServiceEvent
     public bool IsActive { get; set; } = default!;
 
     /// <summary>
+    /// Whether this realm is a system infrastructure realm (e.g., VOID)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("isSystemType")]
+    public bool IsSystemType { get; set; } = default!;
+
+    /// <summary>
     /// Whether the realm has been marked as deprecated
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("isDeprecated")]
@@ -327,7 +345,7 @@ public partial class RealmDeletedEvent : BaseServiceEvent
     /// Timestamp when the realm was deprecated
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("deprecatedAt")]
-    public System.DateTimeOffset DeprecatedAt { get; set; } = default!;
+    public System.DateTimeOffset? DeprecatedAt { get; set; } = default!;
 
     /// <summary>
     /// Explanation for why the realm was deprecated
@@ -336,10 +354,10 @@ public partial class RealmDeletedEvent : BaseServiceEvent
     public string? DeprecationReason { get; set; } = default!;
 
     /// <summary>
-    /// Additional custom key-value data associated with the realm
+    /// Client-only metadata. No Bannou plugin reads specific keys from this field by convention.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("metadata")]
-    public object Metadata { get; set; } = default!;
+    public object? Metadata { get; set; } = default!;
 
     /// <summary>
     /// Timestamp when the realm was created

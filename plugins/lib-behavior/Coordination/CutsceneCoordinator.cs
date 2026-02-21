@@ -3,7 +3,9 @@
 // Server-side coordination for multi-participant cutscenes.
 // =============================================================================
 
+using BeyondImmersion.Bannou.BehaviorCompiler.Runtime;
 using BeyondImmersion.BannouService.Behavior;
+using BeyondImmersion.BannouService.Behavior.Runtime;
 using Microsoft.Extensions.Logging;
 using System.Collections.Concurrent;
 
@@ -208,7 +210,7 @@ public static class CutsceneCoordinatorExtensions
     public static async Task<ICutsceneSession> CreateCoordinatedSessionAsync(
         this ICutsceneCoordinator coordinator,
         string sessionId,
-        Runtime.CinematicRunner controller,
+        CinematicRunner controller,
         CutsceneSessionOptions? options = null,
         CancellationToken ct = default)
     {

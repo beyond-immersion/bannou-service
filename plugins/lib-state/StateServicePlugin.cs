@@ -1,3 +1,4 @@
+using BeyondImmersion.BannouService.Messaging;
 using BeyondImmersion.BannouService.Plugins;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State.Services;
@@ -61,7 +62,19 @@ public class StateServicePlugin : StandardServicePlugin<IStateService>
             var stateConfig = sp.GetRequiredService<StateServiceConfiguration>();
             return BuildFactoryConfiguration(stateConfig);
         });
-        services.AddSingleton<IStateStoreFactory, StateStoreFactory>();
+
+        // Register state store factory with telemetry instrumentation
+        // NullTelemetryProvider is registered by default; lib-telemetry overrides it when enabled
+        // IMessageBus is optional for error event publishing - may be null during minimal startup
+        services.AddSingleton<IStateStoreFactory>(sp =>
+        {
+            var config = sp.GetRequiredService<StateStoreFactoryConfiguration>();
+            var loggerFactory = sp.GetRequiredService<ILoggerFactory>();
+            var telemetryProvider = sp.GetRequiredService<ITelemetryProvider>();
+            var messageBus = sp.GetService<IMessageBus>();
+
+            return new StateStoreFactory(config, loggerFactory, telemetryProvider, messageBus);
+        });
 
         // Register distributed lock provider (used by Permission service and others)
         services.AddSingleton<IDistributedLockProvider, Services.RedisDistributedLockProvider>();
@@ -78,10 +91,18 @@ public class StateServicePlugin : StandardServicePlugin<IStateService>
         var config = new StateStoreFactoryConfiguration
         {
             UseInMemory = stateConfig.UseInMemory,
+            UseSqlite = stateConfig.UseSqlite,
+            SqliteDataPath = stateConfig.SqliteDataPath,
             RedisConnectionString = !string.IsNullOrEmpty(stateConfig.RedisConnectionString)
                 ? stateConfig.RedisConnectionString
                 : "localhost:6379",
-            MySqlConnectionString = stateConfig.MySqlConnectionString
+            MySqlConnectionString = stateConfig.MySqlConnectionString,
+            ConnectionTimeoutSeconds = stateConfig.ConnectionTimeoutSeconds,
+            ConnectionRetryCount = stateConfig.ConnectionRetryCount,
+            MinRetryDelayMs = stateConfig.MinRetryDelayMs,
+            InMemoryFallbackLimit = stateConfig.InMemoryFallbackLimit,
+            EnableErrorEventPublishing = stateConfig.EnableErrorEventPublishing,
+            ErrorEventDeduplicationWindowSeconds = stateConfig.ErrorEventDeduplicationWindowSeconds
         };
 
         // Load store configurations from generated definitions (schema-first approach)

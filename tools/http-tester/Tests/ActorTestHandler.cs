@@ -10,6 +10,25 @@ namespace BeyondImmersion.BannouService.HttpTester.Tests;
 public class ActorTestHandler : BaseHttpTestHandler
 {
     /// <summary>
+    /// Cached realm ID for actor tests that need a realm to spawn actors in.
+    /// </summary>
+    private static Guid? _cachedRealmId;
+
+    /// <summary>
+    /// Gets or creates a test realm for actor tests.
+    /// Actors require a realmId to spawn.
+    /// </summary>
+    private static async Task<Guid> GetOrCreateTestRealmAsync()
+    {
+        if (_cachedRealmId.HasValue)
+            return _cachedRealmId.Value;
+
+        var realm = await CreateTestRealmAsync("ACTOR", "Actor", "SPAWN");
+        _cachedRealmId = realm.RealmId;
+        return _cachedRealmId.Value;
+    }
+
+    /// <summary>
     /// Get all actor service tests.
     /// </summary>
     public override ServiceTest[] GetServiceTests() =>
@@ -301,6 +320,7 @@ public class ActorTestHandler : BaseHttpTestHandler
         await ExecuteTestAsync(async () =>
         {
             var actorClient = GetServiceClient<IActorClient>();
+            var realmId = await GetOrCreateTestRealmAsync();
             var category = GenerateTestSlug("spawn-test");
             var actorId = GenerateTestSlug("actor");
 
@@ -316,7 +336,8 @@ public class ActorTestHandler : BaseHttpTestHandler
             var response = await actorClient.SpawnActorAsync(new SpawnActorRequest
             {
                 TemplateId = template.TemplateId,
-                ActorId = actorId
+                ActorId = actorId,
+                RealmId = realmId
             });
 
             if (response.ActorId != actorId)
@@ -336,6 +357,7 @@ public class ActorTestHandler : BaseHttpTestHandler
         await ExecuteTestAsync(async () =>
         {
             var actorClient = GetServiceClient<IActorClient>();
+            var realmId = await GetOrCreateTestRealmAsync();
             var category = GenerateTestSlug("get-actor-test");
             var actorId = GenerateTestSlug("get-actor");
 
@@ -349,7 +371,8 @@ public class ActorTestHandler : BaseHttpTestHandler
             await actorClient.SpawnActorAsync(new SpawnActorRequest
             {
                 TemplateId = template.TemplateId,
-                ActorId = actorId
+                ActorId = actorId,
+                RealmId = realmId
             });
 
             // Get actor
@@ -372,6 +395,7 @@ public class ActorTestHandler : BaseHttpTestHandler
         await ExecuteTestAsync(async () =>
         {
             var actorClient = GetServiceClient<IActorClient>();
+            var realmId = await GetOrCreateTestRealmAsync();
             var category = GenerateTestSlug("list-actors-test");
             var actorId1 = GenerateTestSlug("list-actor-1");
             var actorId2 = GenerateTestSlug("list-actor-2");
@@ -386,13 +410,15 @@ public class ActorTestHandler : BaseHttpTestHandler
             await actorClient.SpawnActorAsync(new SpawnActorRequest
             {
                 TemplateId = template.TemplateId,
-                ActorId = actorId1
+                ActorId = actorId1,
+                RealmId = realmId
             });
 
             await actorClient.SpawnActorAsync(new SpawnActorRequest
             {
                 TemplateId = template.TemplateId,
-                ActorId = actorId2
+                ActorId = actorId2,
+                RealmId = realmId
             });
 
             // List actors for this category
@@ -416,6 +442,7 @@ public class ActorTestHandler : BaseHttpTestHandler
         await ExecuteTestAsync(async () =>
         {
             var actorClient = GetServiceClient<IActorClient>();
+            var realmId = await GetOrCreateTestRealmAsync();
             var category = GenerateTestSlug("stop-actor-test");
             var actorId = GenerateTestSlug("stop-actor");
 
@@ -429,7 +456,8 @@ public class ActorTestHandler : BaseHttpTestHandler
             await actorClient.SpawnActorAsync(new SpawnActorRequest
             {
                 TemplateId = template.TemplateId,
-                ActorId = actorId
+                ActorId = actorId,
+                RealmId = realmId
             });
 
             // Stop actor
@@ -506,6 +534,7 @@ public class ActorTestHandler : BaseHttpTestHandler
         await ExecuteTestAsync(async () =>
         {
             var actorClient = GetServiceClient<IActorClient>();
+            var realmId = await GetOrCreateTestRealmAsync();
             var category = GenerateTestSlug("full-lifecycle");
             var actorId = GenerateTestSlug("lifecycle-actor");
 
@@ -525,7 +554,8 @@ public class ActorTestHandler : BaseHttpTestHandler
             var spawned = await actorClient.SpawnActorAsync(new SpawnActorRequest
             {
                 TemplateId = template.TemplateId,
-                ActorId = actorId
+                ActorId = actorId,
+                RealmId = realmId
             });
 
             if (spawned.Status != ActorStatus.Running && spawned.Status != ActorStatus.Starting)
@@ -579,11 +609,13 @@ public class ActorTestHandler : BaseHttpTestHandler
         await ExecuteTestAsync(async () =>
         {
             var actorClient = GetServiceClient<IActorClient>();
+            var realmId = await GetOrCreateTestRealmAsync();
             var category = GenerateTestSlug("autospawn-test");
             var actorIdPattern = $"autospawn-{category}-.*";
             var actorId = $"autospawn-{category}-actor-1";
 
-            // Create template with auto-spawn enabled
+            // Create template with auto-spawn enabled and defaultRealmId
+            // so auto-spawn can resolve a realm without characterIdCaptureGroup
             var template = await actorClient.CreateActorTemplateAsync(new CreateActorTemplateRequest
             {
                 Category = category,
@@ -593,7 +625,8 @@ public class ActorTestHandler : BaseHttpTestHandler
                 {
                     Enabled = true,
                     IdPattern = actorIdPattern,
-                    MaxInstances = 10
+                    MaxInstances = 10,
+                    DefaultRealmId = realmId
                 }
             });
 
@@ -627,6 +660,7 @@ public class ActorTestHandler : BaseHttpTestHandler
         await ExecuteTestAsync(async () =>
         {
             var actorClient = GetServiceClient<IActorClient>();
+            var realmId = await GetOrCreateTestRealmAsync();
             var category = GenerateTestSlug("inject-test");
             var actorId = GenerateTestSlug("inject-actor");
 
@@ -641,7 +675,8 @@ public class ActorTestHandler : BaseHttpTestHandler
             await actorClient.SpawnActorAsync(new SpawnActorRequest
             {
                 TemplateId = template.TemplateId,
-                ActorId = actorId
+                ActorId = actorId,
+                RealmId = realmId
             });
 
             // Give the actor a moment to start
@@ -699,6 +734,7 @@ public class ActorTestHandler : BaseHttpTestHandler
         await ExecuteTestAsync(async () =>
         {
             var actorClient = GetServiceClient<IActorClient>();
+            var realmId = await GetOrCreateTestRealmAsync();
             var category = GenerateTestSlug("encounter-start");
             var actorId = GenerateTestSlug("event-brain");
 
@@ -713,7 +749,8 @@ public class ActorTestHandler : BaseHttpTestHandler
             await actorClient.SpawnActorAsync(new SpawnActorRequest
             {
                 TemplateId = template.TemplateId,
-                ActorId = actorId
+                ActorId = actorId,
+                RealmId = realmId
             });
 
             // Give the actor a moment to start
@@ -742,6 +779,7 @@ public class ActorTestHandler : BaseHttpTestHandler
         await ExecuteTestAsync(async () =>
         {
             var actorClient = GetServiceClient<IActorClient>();
+            var realmId = await GetOrCreateTestRealmAsync();
             var category = GenerateTestSlug("encounter-get");
             var actorId = GenerateTestSlug("event-brain");
 
@@ -756,7 +794,8 @@ public class ActorTestHandler : BaseHttpTestHandler
             await actorClient.SpawnActorAsync(new SpawnActorRequest
             {
                 TemplateId = template.TemplateId,
-                ActorId = actorId
+                ActorId = actorId,
+                RealmId = realmId
             });
 
             await Task.Delay(100);
@@ -802,6 +841,7 @@ public class ActorTestHandler : BaseHttpTestHandler
         await ExecuteTestAsync(async () =>
         {
             var actorClient = GetServiceClient<IActorClient>();
+            var realmId = await GetOrCreateTestRealmAsync();
             var category = GenerateTestSlug("encounter-phase");
             var actorId = GenerateTestSlug("event-brain");
 
@@ -816,7 +856,8 @@ public class ActorTestHandler : BaseHttpTestHandler
             await actorClient.SpawnActorAsync(new SpawnActorRequest
             {
                 TemplateId = template.TemplateId,
-                ActorId = actorId
+                ActorId = actorId,
+                RealmId = realmId
             });
 
             await Task.Delay(100);
@@ -853,6 +894,7 @@ public class ActorTestHandler : BaseHttpTestHandler
         await ExecuteTestAsync(async () =>
         {
             var actorClient = GetServiceClient<IActorClient>();
+            var realmId = await GetOrCreateTestRealmAsync();
             var category = GenerateTestSlug("encounter-end");
             var actorId = GenerateTestSlug("event-brain");
 
@@ -867,7 +909,8 @@ public class ActorTestHandler : BaseHttpTestHandler
             await actorClient.SpawnActorAsync(new SpawnActorRequest
             {
                 TemplateId = template.TemplateId,
-                ActorId = actorId
+                ActorId = actorId,
+                RealmId = realmId
             });
 
             await Task.Delay(100);
@@ -910,6 +953,7 @@ public class ActorTestHandler : BaseHttpTestHandler
         await ExecuteTestAsync(async () =>
         {
             var actorClient = GetServiceClient<IActorClient>();
+            var realmId = await GetOrCreateTestRealmAsync();
             var category = GenerateTestSlug("encounter-flow");
             var actorId = GenerateTestSlug("event-brain");
 
@@ -924,7 +968,8 @@ public class ActorTestHandler : BaseHttpTestHandler
             await actorClient.SpawnActorAsync(new SpawnActorRequest
             {
                 TemplateId = template.TemplateId,
-                ActorId = actorId
+                ActorId = actorId,
+                RealmId = realmId
             });
 
             await Task.Delay(100);

@@ -28,6 +28,8 @@
   <ItemGroup>
     <ProjectReference Include="..\bannou-service\bannou-service.csproj" />
     <ProjectReference Include="..\plugins\lib-testing\lib-testing.csproj" />
+    <!-- behavior-expressions SDK: Required for expression VM tests -->
+    <ProjectReference Include="..\sdks\behavior-expressions\BeyondImmersion.Bannou.BehaviorExpressions.csproj" />
   </ItemGroup>
 
   <ItemGroup>

@@ -13,8 +13,11 @@ info:
 
     **Scale**: Designed for 100k+ entities per leaderboard using Redis Sorted Sets.
 
-    **Schema Rules**: AI agents MUST review docs/reference/SCHEMA-RULES.md before modifying
-    this schema. Optional reference types require `nullable: true`.
+    **SCHEMA MODIFICATION GATE**: STOP. Before modifying this schema, you MUST:
+    1. Read docs/reference/SCHEMA-RULES.md
+    2. State which section applies to your change
+    3. Only then proceed with edits
+    Edits without stating the applicable rule are FORBIDDEN.
   version: 1.0.0
 servers:
 - url: http://localhost:5012
@@ -73,12 +76,13 @@ paths:
         \      \"default\": true,\n                    \"description\": \"Whether the leaderboard is publicly visible\"\n\
         \                },\n                \"metadata\": {\n                    \"type\": \"object\",\n                \
         \    \"additionalProperties\": true,\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Additional leaderboard-specific metadata\"\n                }\n            }\n        },\n        \"SortOrder\"\
-        : {\n            \"type\": \"string\",\n            \"description\": \"How scores are sorted\",\n            \"enum\"\
-        : [\n                \"descending\",\n                \"ascending\"\n            ]\n        },\n        \"UpdateMode\"\
-        : {\n            \"type\": \"string\",\n            \"description\": \"How to handle score updates\",\n          \
-        \  \"enum\": [\n                \"replace\",\n                \"increment\",\n                \"max\",\n         \
-        \       \"min\"\n            ]\n        }\n    }\n}"
+        : \"Client-provided leaderboard-specific metadata. No Bannou plugin reads specific keys from this field by convention.\"\
+        \n                }\n            }\n        },\n        \"SortOrder\": {\n            \"type\": \"string\",\n    \
+        \        \"description\": \"How scores are sorted\",\n            \"enum\": [\n                \"descending\",\n \
+        \               \"ascending\"\n            ]\n        },\n        \"UpdateMode\": {\n            \"type\": \"string\"\
+        ,\n            \"description\": \"How to handle score updates\",\n            \"enum\": [\n                \"replace\"\
+        ,\n                \"increment\",\n                \"max\",\n                \"min\"\n            ]\n        }\n \
+        \   }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/LeaderboardDefinitionResponse\"\
         ,\n    \"$defs\": {\n        \"LeaderboardDefinitionResponse\": {\n            \"type\": \"object\",\n           \
         \ \"description\": \"Leaderboard definition details\",\n            \"additionalProperties\": false,\n           \
@@ -108,12 +112,13 @@ paths:
         createdAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n      \
         \              \"description\": \"When the leaderboard was created\"\n                },\n                \"metadata\"\
         : {\n                    \"type\": \"object\",\n                    \"additionalProperties\": true,\n            \
-        \        \"nullable\": true,\n                    \"description\": \"Additional metadata\"\n                }\n  \
-        \          }\n        },\n        \"SortOrder\": {\n            \"type\": \"string\",\n            \"description\"\
-        : \"How scores are sorted\",\n            \"enum\": [\n                \"descending\",\n                \"ascending\"\
-        \n            ]\n        },\n        \"UpdateMode\": {\n            \"type\": \"string\",\n            \"description\"\
-        : \"How to handle score updates\",\n            \"enum\": [\n                \"replace\",\n                \"increment\"\
-        ,\n                \"max\",\n                \"min\"\n            ]\n        }\n    }\n}"
+        \        \"nullable\": true,\n                    \"description\": \"Client-provided leaderboard-specific metadata.
+        No Bannou plugin reads specific keys from this field by convention.\"\n                }\n            }\n        },\n\
+        \        \"SortOrder\": {\n            \"type\": \"string\",\n            \"description\": \"How scores are sorted\"\
+        ,\n            \"enum\": [\n                \"descending\",\n                \"ascending\"\n            ]\n      \
+        \  },\n        \"UpdateMode\": {\n            \"type\": \"string\",\n            \"description\": \"How to handle
+        score updates\",\n            \"enum\": [\n                \"replace\",\n                \"increment\",\n        \
+        \        \"max\",\n                \"min\"\n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Create a new leaderboard definition\",\n    \"description\": \"Create a
         new leaderboard with specified properties.\\nDeveloper-only endpoint for setting up game leaderboards.\\n\",\n   \
         \ \"tags\": [\n        \"Definitions\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"createLeaderboardDefinition\"\
@@ -178,12 +183,13 @@ paths:
         createdAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n      \
         \              \"description\": \"When the leaderboard was created\"\n                },\n                \"metadata\"\
         : {\n                    \"type\": \"object\",\n                    \"additionalProperties\": true,\n            \
-        \        \"nullable\": true,\n                    \"description\": \"Additional metadata\"\n                }\n  \
-        \          }\n        },\n        \"SortOrder\": {\n            \"type\": \"string\",\n            \"description\"\
-        : \"How scores are sorted\",\n            \"enum\": [\n                \"descending\",\n                \"ascending\"\
-        \n            ]\n        },\n        \"UpdateMode\": {\n            \"type\": \"string\",\n            \"description\"\
-        : \"How to handle score updates\",\n            \"enum\": [\n                \"replace\",\n                \"increment\"\
-        ,\n                \"max\",\n                \"min\"\n            ]\n        }\n    }\n}"
+        \        \"nullable\": true,\n                    \"description\": \"Client-provided leaderboard-specific metadata.
+        No Bannou plugin reads specific keys from this field by convention.\"\n                }\n            }\n        },\n\
+        \        \"SortOrder\": {\n            \"type\": \"string\",\n            \"description\": \"How scores are sorted\"\
+        ,\n            \"enum\": [\n                \"descending\",\n                \"ascending\"\n            ]\n      \
+        \  },\n        \"UpdateMode\": {\n            \"type\": \"string\",\n            \"description\": \"How to handle
+        score updates\",\n            \"enum\": [\n                \"replace\",\n                \"increment\",\n        \
+        \        \"max\",\n                \"min\"\n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Get leaderboard definition\",\n    \"description\": \"Retrieve details
         about a specific leaderboard.\",\n    \"tags\": [\n        \"Definitions\"\n    ],\n    \"deprecated\": false,\n \
         \   \"operationId\": \"getLeaderboardDefinition\"\n}"
@@ -251,12 +257,13 @@ paths:
         \ \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"When
         the leaderboard was created\"\n                },\n                \"metadata\": {\n                    \"type\":
         \"object\",\n                    \"additionalProperties\": true,\n                    \"nullable\": true,\n      \
-        \              \"description\": \"Additional metadata\"\n                }\n            }\n        },\n        \"\
-        SortOrder\": {\n            \"type\": \"string\",\n            \"description\": \"How scores are sorted\",\n     \
-        \       \"enum\": [\n                \"descending\",\n                \"ascending\"\n            ]\n        },\n \
-        \       \"UpdateMode\": {\n            \"type\": \"string\",\n            \"description\": \"How to handle score updates\"\
-        ,\n            \"enum\": [\n                \"replace\",\n                \"increment\",\n                \"max\"\
-        ,\n                \"min\"\n            ]\n        }\n    }\n}"
+        \              \"description\": \"Client-provided leaderboard-specific metadata. No Bannou plugin reads specific keys
+        from this field by convention.\"\n                }\n            }\n        },\n        \"SortOrder\": {\n       \
+        \     \"type\": \"string\",\n            \"description\": \"How scores are sorted\",\n            \"enum\": [\n  \
+        \              \"descending\",\n                \"ascending\"\n            ]\n        },\n        \"UpdateMode\":
+        {\n            \"type\": \"string\",\n            \"description\": \"How to handle score updates\",\n            \"\
+        enum\": [\n                \"replace\",\n                \"increment\",\n                \"max\",\n              \
+        \  \"min\"\n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"List leaderboard definitions\",\n    \"description\": \"List all leaderboards
         for a game service.\",\n    \"tags\": [\n        \"Definitions\"\n    ],\n    \"deprecated\": false,\n    \"operationId\"\
         : \"listLeaderboardDefinitions\"\n}"
@@ -330,12 +337,13 @@ paths:
         createdAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n      \
         \              \"description\": \"When the leaderboard was created\"\n                },\n                \"metadata\"\
         : {\n                    \"type\": \"object\",\n                    \"additionalProperties\": true,\n            \
-        \        \"nullable\": true,\n                    \"description\": \"Additional metadata\"\n                }\n  \
-        \          }\n        },\n        \"SortOrder\": {\n            \"type\": \"string\",\n            \"description\"\
-        : \"How scores are sorted\",\n            \"enum\": [\n                \"descending\",\n                \"ascending\"\
-        \n            ]\n        },\n        \"UpdateMode\": {\n            \"type\": \"string\",\n            \"description\"\
-        : \"How to handle score updates\",\n            \"enum\": [\n                \"replace\",\n                \"increment\"\
-        ,\n                \"max\",\n                \"min\"\n            ]\n        }\n    }\n}"
+        \        \"nullable\": true,\n                    \"description\": \"Client-provided leaderboard-specific metadata.
+        No Bannou plugin reads specific keys from this field by convention.\"\n                }\n            }\n        },\n\
+        \        \"SortOrder\": {\n            \"type\": \"string\",\n            \"description\": \"How scores are sorted\"\
+        ,\n            \"enum\": [\n                \"descending\",\n                \"ascending\"\n            ]\n      \
+        \  },\n        \"UpdateMode\": {\n            \"type\": \"string\",\n            \"description\": \"How to handle
+        score updates\",\n            \"enum\": [\n                \"replace\",\n                \"increment\",\n        \
+        \        \"max\",\n                \"min\"\n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Update leaderboard definition\",\n    \"description\": \"Update properties
         of an existing leaderboard.\\nDeveloper-only endpoint.\\n\",\n    \"tags\": [\n        \"Definitions\"\n    ],\n \
         \   \"deprecated\": false,\n    \"operationId\": \"updateLeaderboardDefinition\"\n}"
@@ -418,8 +426,8 @@ paths:
         ,\n                    \"format\": \"double\",\n                    \"description\": \"Score value to submit\"\n \
         \               },\n                \"metadata\": {\n                    \"type\": \"object\",\n                 \
         \   \"additionalProperties\": true,\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Optional metadata about this score (e.g., how it was achieved)\"\n                }\n            }\n        }\n\
-        \    }\n}"
+        : \"Client-provided score metadata (e.g., how the score was achieved). No Bannou plugin reads specific keys from this
+        field by convention.\"\n                }\n            }\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/SubmitScoreResponse\"\
         ,\n    \"$defs\": {\n        \"SubmitScoreResponse\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Response after score submission\",\n            \"additionalProperties\": false,\n            \"required\": [\n\
@@ -609,7 +617,8 @@ paths:
         \       \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Cached
         display name for the entity\"\n                },\n                \"metadata\": {\n                    \"type\":
         \"object\",\n                    \"additionalProperties\": true,\n                    \"nullable\": true,\n      \
-        \              \"description\": \"Entry metadata\"\n                }\n            }\n        }\n    }\n}"
+        \              \"description\": \"Client-provided entry metadata. No Bannou plugin reads specific keys from this field
+        by convention.\"\n                }\n            }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Get top entries\",\n    \"description\": \"Get the top N entries on a leaderboard.\"\
         ,\n    \"tags\": [\n        \"Rankings\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"getTopRanks\"\
         \n}"
@@ -680,7 +689,8 @@ paths:
         \       \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Cached
         display name for the entity\"\n                },\n                \"metadata\": {\n                    \"type\":
         \"object\",\n                    \"additionalProperties\": true,\n                    \"nullable\": true,\n      \
-        \              \"description\": \"Entry metadata\"\n                }\n            }\n        }\n    }\n}"
+        \              \"description\": \"Client-provided entry metadata. No Bannou plugin reads specific keys from this field
+        by convention.\"\n                }\n            }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Get entries around entity\",\n    \"description\": \"Get leaderboard entries
         surrounding a specific entity.\\nUseful for showing a player's position with nearby competitors.\\n\",\n    \"tags\"\
         : [\n        \"Rankings\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"getRanksAround\"\n}"
@@ -868,7 +878,9 @@ components:
           type: object
           additionalProperties: true
           nullable: true
-          description: Additional leaderboard-specific metadata
+          description: >-
+            Client-provided leaderboard-specific metadata.
+            No Bannou plugin reads specific keys from this field by convention.
     GetLeaderboardDefinitionRequest:
       type: object
       description: Request to get a leaderboard definition
@@ -1016,7 +1028,9 @@ components:
           type: object
           additionalProperties: true
           nullable: true
-          description: Additional metadata
+          description: >-
+            Client-provided leaderboard-specific metadata.
+            No Bannou plugin reads specific keys from this field by convention.
     SubmitScoreRequest:
       type: object
       description: Request to submit a score
@@ -1050,7 +1064,9 @@ components:
           type: object
           additionalProperties: true
           nullable: true
-          description: Optional metadata about this score (e.g., how it was achieved)
+          description: >-
+            Client-provided score metadata (e.g., how the score was achieved).
+            No Bannou plugin reads specific keys from this field by convention.
     SubmitScoreResponse:
       type: object
       description: Response after score submission
@@ -1311,7 +1327,9 @@ components:
           type: object
           additionalProperties: true
           nullable: true
-          description: Entry metadata
+          description: >-
+            Client-provided entry metadata.
+            No Bannou plugin reads specific keys from this field by convention.
     CreateSeasonRequest:
       type: object
       description: Request to create a new season

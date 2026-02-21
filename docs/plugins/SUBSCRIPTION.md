@@ -3,13 +3,14 @@
 > **Plugin**: lib-subscription
 > **Schema**: schemas/subscription-api.yaml
 > **Version**: 1.0.0
+> **Layer**: GameFoundation
 > **State Store**: subscription-statestore (MySQL)
 
 ---
 
 ## Overview
 
-The Subscription service manages user subscriptions to game services, controlling which accounts have access to which games/applications with time-limited access. It publishes `subscription.updated` events that Auth and GameSession services consume for real-time authorization updates. Includes a background expiration worker that automatically deactivates expired subscriptions.
+The Subscription service (L2 GameFoundation) manages user subscriptions to game services, controlling which accounts have access to which games/applications with time-limited access. Publishes `subscription.updated` events consumed by GameSession for real-time shortcut publishing. Includes a background expiration worker that periodically deactivates expired subscriptions. Internal-only, serves as the canonical source for subscription state.
 
 ---
 
@@ -18,9 +19,9 @@ The Subscription service manages user subscriptions to game services, controllin
 | Dependency | Usage |
 |------------|-------|
 | lib-state (`IStateStoreFactory`) | Persistence for subscription records and indexes |
-| lib-messaging (`IMessageBus`) | Publishing subscription lifecycle events |
-| lib-messaging (`IEventConsumer`) | Event handler registration (no handlers currently) |
-| lib-game-service (`IGameServiceClient`) | Resolving stub names and fetching service display names during creation |
+| lib-messaging (`IMessageBus`) | Publishing `subscription.updated` events |
+| lib-messaging (`IEventConsumer`) | Event handler registration infrastructure (no actual handlers registered) |
+| lib-game-service (`IGameServiceClient`) | Resolving service metadata (stub name, display name) during subscription creation; validating service existence for stubName queries |
 
 ---
 
@@ -28,23 +29,24 @@ The Subscription service manages user subscriptions to game services, controllin
 
 | Dependent | Relationship |
 |-----------|-------------|
-| lib-auth (`AuthService`) | Calls `QueryCurrentSubscriptionsAsync` via `ISubscriptionClient` during session creation and token refresh |
-| lib-auth (`TokenService`) | Validates active subscriptions for token generation |
-| lib-auth (`AuthServiceEvents`) | Subscribes to `subscription.updated` to update session authorizations |
 | lib-game-session (`GameSessionService`) | Calls `ISubscriptionClient` to validate subscriptions during session join |
-| lib-game-session (`GameSessionServiceEvents`) | Subscribes to `subscription.updated` to update subscriber discovery |
+| lib-game-session (`GameSessionStartupService`) | Calls `ISubscriptionClient` for subscription discovery at startup |
+| lib-game-session (`GameSessionServiceEvents`) | Subscribes to `subscription.updated` event to update subscription cache and publish/revoke shortcuts |
 
 ---
 
 ## State Storage
 
-**Store**: `subscription-statestore` (Backend: MySQL)
+**Store**: `subscription-statestore` (Backend: MySQL, Constant: `StateStoreDefinitions.Subscription`)
 
 | Key Pattern | Data Type | Purpose |
 |-------------|-----------|---------|
-| `subscription:{subscriptionId}` | `SubscriptionDataModel` | Full subscription record |
-| `account-subscriptions:{accountId}` | `List<string>` | Subscription IDs for an account |
-| `service-subscriptions:{serviceId}` | `List<string>` | Subscription IDs for a game service |
+| `subscription:{subscriptionId}` | `SubscriptionDataModel` | Full subscription record (internal model with Unix timestamps) |
+| `account-subscriptions:{accountId}` | `List<Guid>` | Index of subscription IDs belonging to an account |
+| `service-subscriptions:{serviceId}` | `List<Guid>` | Index of subscription IDs for a game service |
+| `subscription-index` | `List<Guid>` | Global index of all subscription IDs (used by expiration worker) |
+
+**Note**: The `SubscriptionDataModel` is an internal class using Unix timestamps to avoid serialization issues. It maps to the public `SubscriptionInfo` model via `MapToSubscriptionInfo()`.
 
 ---
 
@@ -52,19 +54,22 @@ The Subscription service manages user subscriptions to game services, controllin
 
 ### Published Events
 
-| Topic | Trigger |
-|-------|---------|
-| `subscription.updated` (action: `Created`) | New subscription created |
-| `subscription.updated` (action: `Updated`) | Expiration or active status changed |
-| `subscription.updated` (action: `Cancelled`) | User cancels subscription |
-| `subscription.updated` (action: `Renewed`) | Subscription extended or reactivated |
-| `subscription.updated` (action: `Expired`) | Background worker deactivates expired subscription |
+| Topic | Event Type | Trigger |
+|-------|-----------|---------|
+| `subscription.updated` | `SubscriptionUpdatedEvent` | All subscription state changes (see actions below) |
 
-All actions publish the same `SubscriptionUpdatedEvent` type with an `Action` enum discriminator.
+**Action values in `SubscriptionUpdatedEvent`:**
+| Action | Trigger |
+|--------|---------|
+| `Created` | New subscription created via `CreateSubscriptionAsync` |
+| `Updated` | Expiration date or active status changed via `UpdateSubscriptionAsync` |
+| `Cancelled` | User cancels subscription via `CancelSubscriptionAsync` |
+| `Renewed` | Subscription extended/reactivated via `RenewSubscriptionAsync` |
+| `Expired` | Background worker deactivates expired subscription |
 
 ### Consumed Events
 
-This plugin does not consume external events.
+This plugin does not consume external events. The `IEventConsumer` is injected but only the default no-op handler is registered. No `SubscriptionServiceEvents.cs` file exists.
 
 ---
 
@@ -72,10 +77,9 @@ This plugin does not consume external events.
 
 | Property | Env Var | Default | Purpose |
 |----------|---------|---------|---------|
-| `ExpirationCheckIntervalMinutes` | `SUBSCRIPTION_EXPIRATION_CHECK_INTERVAL_MINUTES` | `5` | How often the background worker checks for expired subscriptions |
-| `ExpirationGracePeriodSeconds` | `SUBSCRIPTION_EXPIRATION_GRACE_PERIOD_SECONDS` | `30` | Grace period before marking as expired (prevents race conditions) |
-| `StartupDelaySeconds` | `SUBSCRIPTION_STARTUP_DELAY_SECONDS` | `30` | Delay before first expiration check after service start |
-| `AuthorizationSuffix` | `SUBSCRIPTION_AUTHORIZATION_SUFFIX` | `authorized` | Unused — property exists but is never referenced in implementation |
+| `ExpirationCheckIntervalMinutes` | `SUBSCRIPTION_EXPIRATION_CHECK_INTERVAL_MINUTES` | `5` | Interval between expiration check cycles in the background worker |
+| `ExpirationGracePeriodSeconds` | `SUBSCRIPTION_EXPIRATION_GRACE_PERIOD_SECONDS` | `30` | Grace period after expiration before marking inactive (prevents race conditions with last-second renewals) |
+| `StartupDelaySeconds` | `SUBSCRIPTION_STARTUP_DELAY_SECONDS` | `30` | Delay before first expiration check after service start (allows dependencies to initialize) |
 
 ---
 
@@ -84,101 +88,150 @@ This plugin does not consume external events.
 | Service | Lifetime | Role |
 |---------|----------|------|
 | `ILogger<SubscriptionService>` | Singleton | Structured logging |
-| `SubscriptionServiceConfiguration` | Singleton | Typed configuration |
-| `IStateStoreFactory` | Singleton | State store access |
-| `IMessageBus` | Singleton | Event publishing |
-| `IGameServiceClient` | Scoped | Resolves stub names for service metadata |
-| `IEventConsumer` | Singleton | Event registration (no handlers) |
-| `SubscriptionExpirationService` | HostedService | Background worker for expiration checks |
+| `SubscriptionServiceConfiguration` | Singleton | Typed configuration access |
+| `IStateStoreFactory` | Singleton | State store access for subscription persistence |
+| `IMessageBus` | Singleton | Event publishing for `subscription.updated` |
+| `IGameServiceClient` | Scoped | Resolves service metadata during creation/query |
+| `IEventConsumer` | Singleton | Event registration infrastructure (no handlers registered) |
+| `SubscriptionExpirationService` | HostedService | Background worker for periodic expiration checks |
 
-Service lifetime is **Singleton**.
+**Service Lifetime**: `SubscriptionService` is registered as **Singleton** (unusual for Bannou - see Quirk #7).
 
 ---
 
 ## API Endpoints (Implementation Notes)
 
-- **GetAccountSubscriptions** (`/subscription/account/list`): Fetches account index, loads all subscriptions, filters by `includeInactive` and `includeExpired` flags.
-- **QueryCurrentSubscriptions** (`/subscription/query`): Returns only active, non-expired subscriptions. Supports query by `accountId` OR `stubName` OR both. Has **empty x-permissions** (no auth required) — designed for internal service-to-service calls.
-- **CreateSubscription**: Calls `IGameServiceClient.GetServiceAsync()` to resolve stub name and display name. Checks for existing active subscription (409 Conflict). Denormalizes service metadata into subscription record.
-- **CancelSubscription**: Sets `IsActive=false`, records `CancelledAtUnix` and reason. User-accessible (not admin-only).
-- **RenewSubscription**: Extends from current expiration date (or from "now" if already expired). Reactivates cancelled subscriptions.
+All endpoints follow standard POST-only pattern with request bodies.
+
+- **GetAccountSubscriptions** (`/subscription/account/list`): Loads account index, fetches each subscription by ID, filters by `includeInactive` and `includeExpired` flags. Returns empty list (not 404) for accounts with no subscriptions.
+
+- **QueryCurrentSubscriptions** (`/subscription/query`): Returns only active, non-expired subscriptions. Requires at least one of `accountId` or `stubName`. Has **empty x-permissions** (`[]`) - designed for internal service-to-service calls without auth. When querying by `stubName` only, calls `IGameServiceClient` to resolve the service ID first.
+
+- **GetSubscription** (`/subscription/get`): Direct lookup by subscription ID. Returns 404 if not found.
+
+- **CreateSubscription** (`/subscription/create`): Admin-only. Validates service exists via `IGameServiceClient`, checks for existing active subscription (409 Conflict), denormalizes `StubName` and `DisplayName` into the subscription record. Adds to three indexes: account, service, and global.
+
+- **UpdateSubscription** (`/subscription/update`): Admin-only. Updates expiration date and/or active status. `ExpirationDate = null` in request means "leave unchanged" (not "remove expiration"). Uses action "updated" in event.
+
+- **CancelSubscription** (`/subscription/cancel`): User-accessible (role: user). Sets `IsActive=false`, records `CancelledAtUnix` and optional `Reason`. Does NOT remove from indexes.
+
+- **RenewSubscription** (`/subscription/renew`): Admin-only. Extends from current expiration if still valid, or from "now" if already expired. Reactivates cancelled subscriptions by setting `IsActive=true` and clearing cancellation fields. Does NOT re-add to global index (already present).
 
 ---
 
 ## Visual Aid
 
 ```
-Subscription Lifecycle & Event Flow
-=====================================
+State Key Relationships & Index Cleanup
+========================================
 
-  CreateSubscription ──► subscription.updated (Created)
-         │                         │
-         ▼                         ▼
-  [Active subscription]      Auth: updates session
-         │                   GameSession: updates discovery
-         │
-    ┌────┴─────────┐
-    │              │
- Cancel         Expire (background)
-    │              │
-    ▼              ▼
-subscription.   subscription.
-updated         updated
-(Cancelled)     (Expired)
-    │              │
-    ▼              ▼
- [Inactive]     [Inactive]
-    │
- Renew
-    │
-    ▼
-subscription.updated (Renewed)
-    │
-    ▼
- [Active again]
+  account-subscriptions:{accountId}     service-subscriptions:{serviceId}
+           │                                      │
+           │  (List<Guid>)                        │  (List<Guid>)
+           ▼                                      ▼
+     ┌─────────────────────────────────────────────────┐
+     │              subscription:{id}                   │
+     │           (SubscriptionDataModel)               │
+     │                                                 │
+     │  ┌─ SubscriptionId: Guid                        │
+     │  ├─ AccountId: Guid                             │
+     │  ├─ ServiceId: Guid                             │
+     │  ├─ StubName: string (denormalized)             │
+     │  ├─ DisplayName: string (denormalized)          │
+     │  ├─ StartDateUnix: long                         │
+     │  ├─ ExpirationDateUnix: long?                   │
+     │  ├─ IsActive: bool                              │
+     │  ├─ CancelledAtUnix: long?                      │
+     │  ├─ CancellationReason: string?                 │
+     │  ├─ CreatedAtUnix: long                         │
+     │  └─ UpdatedAtUnix: long?                        │
+     └─────────────────────────────────────────────────┘
+                          ▲
+                          │  (Guid in list)
+                          │
+              subscription-index (global)
+                          │
+      ┌───────────────────┼───────────────────┐
+      │                   │                   │
+      ▼                   ▼                   ▼
+ [Expiration Worker]  [Deleted?]         [Inactive/No Expiry]
+      │                   │                   │
+      │  Marks expired    │  Remove from      │  Remove from
+      │  subscriptions    │  index            │  index
+      │  as inactive      │                   │
+      └───────────────────┴───────────────────┘
+
+  NOTE: account-subscriptions and service-subscriptions indexes
+        are NEVER cleaned - they grow indefinitely with cancelled
+        and expired entries. Only subscription-index is maintained
+        by the expiration worker.
 ```
 
 ---
 
 ## Stubs & Unimplemented Features
 
-1. **`AuthorizationSuffix` config property**: Defined in schema and generated configuration class but never referenced in service implementation. Should be either wired up or removed.
+None identified.
 
 ---
 
 ## Potential Extensions
 
-1. **Subscription tiers**: Support multiple subscription levels (free, premium, enterprise) with different access grants.
-2. **Usage-based expiration**: Track API call counts and expire when quota exhausted.
-3. **Batch subscription management**: Admin endpoint for bulk-creating subscriptions (e.g., game launch grants).
-4. **Subscription history**: Immutable audit trail of all state transitions.
+1. **Subscription tiers**: Support multiple subscription levels (free, premium, enterprise) with different access grants and feature flags.
+
+2. **Usage-based expiration**: Track API call counts or usage metrics and expire when quota exhausted.
+
+3. **Batch subscription management**: Admin endpoint for bulk-creating subscriptions (e.g., game launch grants, promotional campaigns).
+
+4. **Subscription history**: Immutable audit trail of all state transitions with timestamps and actor IDs.
+
+5. **Subscription transfer**: Allow transferring subscriptions between accounts (gift/resale scenarios).
+
+6. **Proration support**: Handle mid-cycle upgrades/downgrades with prorated billing periods.
 
 ---
 
 ## Known Quirks & Caveats
 
-### Bugs
+### Bugs (Fix Immediately)
 
 None identified.
 
-### Intentional Quirks
+### Intentional Quirks (Documented Behavior)
 
-1. **Denormalized service metadata**: `StubName` and `DisplayName` are copied from GameService at creation time. If the game service's display name later changes, existing subscriptions retain the old name.
+1. **Denormalized service metadata**: `StubName` and `DisplayName` are copied from GameService at creation time. If the game service's display name later changes, existing subscriptions retain the old name. This is intentional to provide stable display names for historical records.
 
-2. **Null means "don't change" in updates**: `ExpirationDate = null` in an update request means "leave unchanged", not "remove expiration". There is no way to convert a time-limited subscription to unlimited via the update endpoint.
+2. **Null means "don't change" in updates**: `ExpirationDate = null` in an `UpdateSubscriptionRequest` means "leave unchanged", not "remove expiration". There is no API mechanism to convert a time-limited subscription to unlimited via the update endpoint (must cancel and recreate).
 
-3. **Renewal logic depends on expiration state**: `RenewSubscriptionAsync` with `extensionDays` extends from current expiration if still valid, but from "now" if already expired. A subscription that expired 5 days ago with 30-day extension expires 30 days from now (not 25).
+3. **Renewal extension base date logic**: `RenewSubscriptionAsync` with `extensionDays` extends from current expiration if still valid, but from "now" if already expired. A subscription that expired 5 days ago with 30-day extension expires 30 days from now (not 25 days). This prevents "stacking" lost time and ensures renewals always provide the full extension period.
 
-### Design Considerations
+4. **Global index cleanup only**: The expiration worker cleans the `subscription-index` by removing processed entries (expired, inactive, unlimited, or deleted subscriptions). However, `account-subscriptions` and `service-subscriptions` indexes are never cleaned - they accumulate cancelled/expired entries indefinitely.
 
-1. **No optimistic concurrency**: Two simultaneous cancellations or renewals could produce inconsistent state. The `IsActive` flag could be toggled unexpectedly if a cancel and renew arrive simultaneously.
+5. **Grace period for expiration**: Subscriptions are only marked expired if `ExpirationDateUnix <= now - gracePeriodSeconds`. This 30-second default grace period prevents race conditions where a subscription expires while a renewal request is in flight.
 
-2. **Service/account index maintenance on delete**: No endpoint exists to delete subscriptions. The `service-subscriptions:{serviceId}` and `account-subscriptions:{accountId}` indexes grow indefinitely with cancelled/expired entries. (The global `subscription-index` is cleaned by the expiration worker, but per-service and per-account indexes are not.)
+6. **Data integrity validation in expiration worker**: The expiration worker explicitly checks for corrupted subscriptions with null/empty `StubName` and publishes error events for them rather than crashing. These subscriptions are skipped but not removed from the index, generating error events on every expiration cycle until manually resolved.
 
-3. **Event publishing without transactional guarantee**: State store update and event publish are separate operations. If the service crashes between saving and publishing, dependent services (Auth, GameSession) won't learn about the change until the next direct query.
+7. **Singleton service lifetime**: `SubscriptionService` is registered as `ServiceLifetime.Singleton` instead of the standard Bannou `Scoped` lifetime. This is safe because the service holds no in-memory state - all state goes through `IStateStoreFactory`. The singleton avoids unnecessary re-instantiation per request.
 
-4. **Read-modify-write on indexes without distributed locks**: `AddToAccountIndexAsync`, `AddToServiceIndexAsync`, and `AddToSubscriptionIndexAsync` perform read-modify-write operations without distributed locks or optimistic concurrency (ETags). Two instances could race and lose an index entry.
+8. **Renewal always reactivates**: `RenewSubscriptionAsync` unconditionally sets `IsActive = true` and clears cancellation fields (`CancelledAtUnix`, `CancellationReason`). There is no way to extend a subscription's duration without also reactivating it - "extend but keep cancelled" is impossible.
 
-5. **Update operations without distributed locks**: `UpdateSubscriptionAsync`, `CancelSubscriptionAsync`, `RenewSubscriptionAsync`, and `ExpireSubscriptionAsync` perform read-modify-write operations without distributed locks or optimistic concurrency.
+9. **`ExpireSubscriptionAsync` is public but not in the generated interface**: This method is exposed as `public` for use by `SubscriptionExpirationService` (background worker in the same assembly) but is not defined in `ISubscriptionService`. It cannot be called via HTTP endpoints or service clients - it's an internal-only API.
 
-6. **AuthorizationSuffix config property is dead**: `AuthorizationSuffix` property is accessed but the resulting value is never used in any business logic. Should be wired up or removed from schema.
+### Design Considerations (Requires Planning)
+
+1. **No optimistic concurrency on subscription operations**: `UpdateSubscriptionAsync`, `CancelSubscriptionAsync`, `RenewSubscriptionAsync`, and `ExpireSubscriptionAsync` perform read-modify-write operations without distributed locks or ETag-based optimistic concurrency. Two simultaneous operations could produce inconsistent state (e.g., cancel and renew arriving simultaneously could toggle `IsActive` unexpectedly).
+
+2. **Read-modify-write on indexes without distributed locks**: `AddToAccountIndexAsync`, `AddToServiceIndexAsync`, and `AddToSubscriptionIndexAsync` perform read-modify-write operations without distributed locks. Two instances racing to add subscriptions could lose an index entry. The `Contains` check before adding provides some protection but is not atomic.
+
+3. **Index cleanup only applies to global index**: While the expiration worker uses ETag-based optimistic concurrency to clean `subscription-index`, there is no mechanism to clean `account-subscriptions:{accountId}` or `service-subscriptions:{serviceId}` indexes. These grow indefinitely with cancelled/expired entries, potentially impacting query performance over time.
+<!-- AUDIT:NEEDS_DESIGN:2026-02-01:https://github.com/beyond-immersion/bannou-service/issues/223 -->
+
+4. **Event publishing without transactional outbox**: State store update and event publish are separate operations (no transactional outbox pattern). However, lib-messaging's `TryPublishAsync` implements aggressive retry: if RabbitMQ is unavailable, messages are buffered in-memory and retried every 5 seconds. The node crashes if the buffer exceeds 10,000 messages or 5 minutes age - making failures visible rather than silent. True event loss only occurs if the node dies before the buffer flushes. The expiration worker provides additional resilience for expired subscriptions by re-publishing events on each cycle. This is the standard Bannou architecture used by all services (see MESSAGING.md Quirk #1).
+
+5. **No subscription deletion endpoint**: There is no endpoint to permanently delete subscription records. The indexes grow indefinitely with cancelled/expired entries. This may be intentional (audit trail) but should be documented as a design decision.
+
+---
+
+## Work Tracking
+
+*This section tracks active development work managed by the `/audit-plugin` workflow.*

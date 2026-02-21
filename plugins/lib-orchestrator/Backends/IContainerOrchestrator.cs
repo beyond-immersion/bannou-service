@@ -106,6 +106,28 @@ public interface IContainerOrchestrator : IDisposable
     /// <param name="cancellationToken">Cancellation token</param>
     /// <returns>List of infrastructure service names/identifiers</returns>
     Task<IReadOnlyList<string>> ListInfrastructureServicesAsync(CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Prunes unused networks not attached to any container.
+    /// </summary>
+    /// <param name="cancellationToken">Cancellation token</param>
+    /// <returns>Result of the prune operation with deleted network names and count</returns>
+    Task<PruneResult> PruneNetworksAsync(CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Prunes unused volumes not attached to any container.
+    /// CAUTION: This can cause data loss if volumes contain important data.
+    /// </summary>
+    /// <param name="cancellationToken">Cancellation token</param>
+    /// <returns>Result of the prune operation with deleted volume names and reclaimed bytes</returns>
+    Task<PruneResult> PruneVolumesAsync(CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Prunes dangling images (images without tags or not referenced by containers).
+    /// </summary>
+    /// <param name="cancellationToken">Cancellation token</param>
+    /// <returns>Result of the prune operation with deleted image IDs and reclaimed bytes</returns>
+    Task<PruneResult> PruneImagesAsync(CancellationToken cancellationToken = default);
 }
 
 /// <summary>
@@ -163,6 +185,27 @@ public class ScaleServiceResult
 
     /// <summary>Current number of instances after scaling.</summary>
     public int CurrentReplicas { get; set; }
+
+    /// <summary>Human-readable message describing the result.</summary>
+    public string Message { get; set; } = string.Empty;
+}
+
+/// <summary>
+/// Result of a prune operation (networks, volumes, or images).
+/// </summary>
+public class PruneResult
+{
+    /// <summary>Whether the prune operation was successful.</summary>
+    public bool Success { get; set; }
+
+    /// <summary>Names or IDs of items that were deleted.</summary>
+    public List<string> DeletedItems { get; set; } = new();
+
+    /// <summary>Number of items deleted.</summary>
+    public int DeletedCount { get; set; }
+
+    /// <summary>Bytes of disk space reclaimed (for volumes and images).</summary>
+    public long ReclaimedBytes { get; set; }
 
     /// <summary>Human-readable message describing the result.</summary>
     public string Message { get; set; } = string.Empty;

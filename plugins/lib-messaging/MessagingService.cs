@@ -60,7 +60,7 @@ public sealed record ExternalSubscriptionData(
 /// serialized. The <see cref="_subscriptionStore"/> persists metadata for recovery.
 /// </para>
 /// </remarks>
-[BannouService("messaging", typeof(IMessagingService), lifetime: ServiceLifetime.Singleton)]
+[BannouService("messaging", typeof(IMessagingService), lifetime: ServiceLifetime.Singleton, layer: ServiceLayer.Infrastructure)]
 public partial class MessagingService : IMessagingService, IAsyncDisposable
 {
     /// <summary>
@@ -75,7 +75,7 @@ public partial class MessagingService : IMessagingService, IAsyncDisposable
     private readonly IMessageBus _messageBus;
     private readonly IMessageSubscriber _messageSubscriber;
     private readonly IHttpClientFactory _httpClientFactory;
-    private readonly IStateStore<ExternalSubscriptionData> _subscriptionStore;
+    private readonly ICacheableStateStore<ExternalSubscriptionData> _subscriptionStore;
     private readonly string _appId;
 
     /// <summary>
@@ -113,7 +113,7 @@ public partial class MessagingService : IMessagingService, IAsyncDisposable
         _messageBus = messageBus;
         _messageSubscriber = messageSubscriber;
         _httpClientFactory = httpClientFactory;
-        _subscriptionStore = stateStoreFactory.GetStore<ExternalSubscriptionData>(StateStoreDefinitions.MessagingExternalSubs);
+        _subscriptionStore = stateStoreFactory.GetCacheableStore<ExternalSubscriptionData>(StateStoreDefinitions.MessagingExternalSubs);
         _appId = appConfiguration.EffectiveAppId;
     }
 
@@ -129,7 +129,8 @@ public partial class MessagingService : IMessagingService, IAsyncDisposable
             // Wrap payload in GenericMessageEnvelope - MassTransit requires concrete types
             var envelope = new Services.GenericMessageEnvelope(body.Topic, body.Payload);
 
-            // Normalize options - treat Guid.Empty as null for CorrelationId
+            // IMPLEMENTATION TENETS (T26 compliance): Normalize Guid.Empty sentinel to null
+            // Callers should pass null for "no correlation", but we normalize defensively
             var options = body.Options;
             if (options?.CorrelationId == Guid.Empty)
             {
@@ -554,16 +555,6 @@ public partial class MessagingService : IMessagingService, IAsyncDisposable
     }
 
     #region Permission Registration
-
-    /// <summary>
-    /// Registers this service's API permissions with the Permission service on startup.
-    /// Overrides the default IBannouService implementation to use generated permission data.
-    /// </summary>
-    public async Task RegisterServicePermissionsAsync(string appId)
-    {
-        _logger.LogInformation("Registering Messaging service permissions...");
-        await MessagingPermissionRegistration.RegisterViaEventAsync(_messageBus, appId, _logger);
-    }
 
     #endregion
 }

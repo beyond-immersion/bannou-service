@@ -261,6 +261,42 @@ public sealed class EscrowProxy
     }
 
     /// <summary>
+    /// Confirm receipt of released assets
+    /// </summary>
+    /// <param name="request">The request payload.</param>
+    /// <param name="channel">Message channel for ordering (default 0).</param>
+    /// <param name="timeout">Request timeout.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>ApiResponse containing ConfirmReleaseResponse on success.</returns>
+    public Task<ApiResponse<ConfirmReleaseResponse>> ConfirmReleaseAsync(
+        ConfirmReleaseRequest request,
+        ushort channel = 0,
+        TimeSpan? timeout = null,
+        CancellationToken cancellationToken = default)
+    {
+        return _client.InvokeAsync<ConfirmReleaseRequest, ConfirmReleaseResponse>(
+            "/escrow/confirm-release", request, channel, timeout, cancellationToken);
+    }
+
+    /// <summary>
+    /// Confirm receipt of refunded assets
+    /// </summary>
+    /// <param name="request">The request payload.</param>
+    /// <param name="channel">Message channel for ordering (default 0).</param>
+    /// <param name="timeout">Request timeout.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>ApiResponse containing ConfirmRefundResponse on success.</returns>
+    public Task<ApiResponse<ConfirmRefundResponse>> ConfirmRefundAsync(
+        ConfirmRefundRequest request,
+        ushort channel = 0,
+        TimeSpan? timeout = null,
+        CancellationToken cancellationToken = default)
+    {
+        return _client.InvokeAsync<ConfirmRefundRequest, ConfirmRefundResponse>(
+            "/escrow/confirm-refund", request, channel, timeout, cancellationToken);
+    }
+
+    /// <summary>
     /// Arbiter resolves disputed escrow
     /// </summary>
     /// <param name="request">The request payload.</param>

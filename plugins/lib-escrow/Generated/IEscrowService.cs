@@ -95,6 +95,16 @@ public partial interface IEscrowService : IBannouService
         Task<(StatusCodes, DisputeResponse?)> DisputeAsync(DisputeRequest body, CancellationToken cancellationToken = default(CancellationToken));
 
         /// <summary>
+        /// ConfirmRelease operation
+        /// </summary>
+        Task<(StatusCodes, ConfirmReleaseResponse?)> ConfirmReleaseAsync(ConfirmReleaseRequest body, CancellationToken cancellationToken = default(CancellationToken));
+
+        /// <summary>
+        /// ConfirmRefund operation
+        /// </summary>
+        Task<(StatusCodes, ConfirmRefundResponse?)> ConfirmRefundAsync(ConfirmRefundRequest body, CancellationToken cancellationToken = default(CancellationToken));
+
+        /// <summary>
         /// Resolve operation
         /// </summary>
         Task<(StatusCodes, ResolveResponse?)> ResolveAsync(ResolveRequest body, CancellationToken cancellationToken = default(CancellationToken));

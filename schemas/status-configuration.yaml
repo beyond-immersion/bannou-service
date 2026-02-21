@@ -1,0 +1,130 @@
+openapi: 3.0.3
+info:
+  title: Status Service Configuration
+  description: |
+    Configuration schema for Status service.
+    Properties are bound to environment variables with BANNOU_ prefix.
+
+    **SCHEMA MODIFICATION GATE**: STOP. Before modifying this schema, you MUST:
+    1. Read docs/reference/SCHEMA-RULES.md
+    2. State which section applies to your change
+    3. Only then proceed with edits
+    Edits without stating the applicable rule are FORBIDDEN.
+  version: 1.0.0
+paths: {}
+x-service-configuration:
+  properties:
+    # =========================================================================
+    # Limits
+    # =========================================================================
+
+    MaxStatusesPerEntity:
+      type: integer
+      env: STATUS_MAX_STATUSES_PER_ENTITY
+      minimum: 1
+      maximum: 200
+      default: 50
+      description: Maximum concurrent active statuses per entity
+
+    MaxStacksPerStatus:
+      type: integer
+      env: STATUS_MAX_STACKS_PER_STATUS
+      minimum: 1
+      maximum: 100
+      default: 10
+      description: Global maximum stack count per status (template maxStacks takes precedence if lower)
+
+    MaxStatusTemplatesPerGameService:
+      type: integer
+      env: STATUS_MAX_STATUS_TEMPLATES_PER_GAME_SERVICE
+      minimum: 1
+      maximum: 1000
+      default: 200
+      description: Maximum status template definitions per game service
+
+    # =========================================================================
+    # Cache
+    # =========================================================================
+
+    StatusCacheTtlSeconds:
+      type: integer
+      env: STATUS_STATUS_CACHE_TTL_SECONDS
+      minimum: 5
+      maximum: 3600
+      default: 60
+      description: TTL in seconds for active status cache per entity (short because statuses change frequently)
+
+    SeedEffectsCacheTtlSeconds:
+      type: integer
+      env: STATUS_SEED_EFFECTS_CACHE_TTL_SECONDS
+      minimum: 10
+      maximum: 3600
+      default: 300
+      description: TTL in seconds for seed-derived effects cache (longer because capabilities change less frequently)
+
+    MaxCachedEntities:
+      type: integer
+      env: STATUS_MAX_CACHED_ENTITIES
+      minimum: 100
+      maximum: 100000
+      default: 10000
+      description: Maximum number of entity active-status cache entries retained in Redis (LRU eviction when exceeded)
+
+    CacheWarmingEnabled:
+      type: boolean
+      env: STATUS_CACHE_WARMING_ENABLED
+      default: false
+      description: Enable proactive cache warming on startup by pre-loading active statuses for recently active entities
+
+    # =========================================================================
+    # Distributed Locks
+    # =========================================================================
+
+    LockTimeoutSeconds:
+      type: integer
+      env: STATUS_LOCK_TIMEOUT_SECONDS
+      minimum: 5
+      maximum: 120
+      default: 30
+      description: TTL for distributed locks on status mutations
+
+    LockAcquisitionTimeoutSeconds:
+      type: integer
+      env: STATUS_LOCK_ACQUISITION_TIMEOUT_SECONDS
+      minimum: 1
+      maximum: 60
+      default: 5
+      description: Maximum seconds to wait when acquiring a distributed lock before failing with a timeout error
+
+    # Note: No expiration worker config -- TTL-based expiration is delegated to
+    # lib-item's native decay system (#407). Status reacts to item.expired events.
+
+    # =========================================================================
+    # Defaults
+    # =========================================================================
+
+    DefaultPageSize:
+      type: integer
+      env: STATUS_DEFAULT_PAGE_SIZE
+      minimum: 1
+      maximum: 500
+      default: 50
+      description: Default page size for paginated queries
+
+    DefaultStatusDurationSeconds:
+      type: integer
+      env: STATUS_DEFAULT_STATUS_DURATION_SECONDS
+      minimum: 1
+      maximum: 86400
+      default: 60
+      description: Default duration when template has no defaultDurationSeconds and no contract
+
+    # =========================================================================
+    # Seed Integration
+    # =========================================================================
+
+    SeedEffectsEnabled:
+      type: boolean
+      env: STATUS_SEED_EFFECTS_ENABLED
+      default: true
+      description: Enable seed-derived passive effects in unified queries (disable if Seed is not deployed)

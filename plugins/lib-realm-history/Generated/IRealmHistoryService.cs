@@ -79,4 +79,14 @@ public partial interface IRealmHistoryService : IBannouService
         /// </summary>
         Task<(StatusCodes, RealmHistorySummaryResponse?)> SummarizeRealmHistoryAsync(SummarizeRealmHistoryRequest body, CancellationToken cancellationToken = default(CancellationToken));
 
+        /// <summary>
+        /// GetCompressData operation
+        /// </summary>
+        Task<(StatusCodes, RealmHistoryArchive?)> GetCompressDataAsync(GetCompressDataRequest body, CancellationToken cancellationToken = default(CancellationToken));
+
+        /// <summary>
+        /// RestoreFromArchive operation
+        /// </summary>
+        Task<(StatusCodes, RestoreFromArchiveResponse?)> RestoreFromArchiveAsync(RestoreFromArchiveRequest body, CancellationToken cancellationToken = default(CancellationToken));
+
 }

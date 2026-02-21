@@ -212,7 +212,7 @@ public partial class HistoricalParticipation
     public float Significance { get; set; } = 0.5F;
 
     /// <summary>
-    /// Event-specific details for behavior decisions
+    /// Client-provided event-specific details. No Bannou plugin reads specific keys from this field by convention.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("metadata")]
     public object? Metadata { get; set; } = default!;
@@ -391,7 +391,7 @@ public partial class RecordParticipationRequest
     public float Significance { get; set; } = 0.5F;
 
     /// <summary>
-    /// Optional event-specific details
+    /// Client-provided event-specific details. No Bannou plugin reads specific keys from this field by convention.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("metadata")]
     public object? Metadata { get; set; } = default!;
@@ -763,6 +763,139 @@ public partial class HistorySummaryResponse
     [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
     public System.Collections.Generic.ICollection<string> MajorLifeEvents { get; set; } = new System.Collections.ObjectModel.Collection<string>();
+
+}
+
+/// <summary>
+/// Request to get history data for compression
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class GetCompressDataRequest
+{
+
+    /// <summary>
+    /// ID of the character to get compress data for
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("characterId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid CharacterId { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Complete history data for archive storage and storyline SDK consumption.
+/// <br/>Inherits base archive properties from ResourceArchiveBase.
+/// <br/>The characterId field equals resourceId for convenience.
+/// <br/>
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class CharacterHistoryArchive : ResourceArchiveBase
+{
+
+    /// <summary>
+    /// Character this data belongs to (equals resourceId)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("characterId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid CharacterId { get; set; } = default!;
+
+    /// <summary>
+    /// Whether historical participations exist
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("hasParticipations")]
+    public bool HasParticipations { get; set; } = default!;
+
+    /// <summary>
+    /// Historical event participations (empty if hasParticipations=false)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("participations")]
+    public System.Collections.Generic.ICollection<HistoricalParticipation> Participations { get; set; } = default!;
+
+    /// <summary>
+    /// Whether backstory elements exist
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("hasBackstory")]
+    public bool HasBackstory { get; set; } = default!;
+
+    /// <summary>
+    /// Backstory data (null if hasBackstory=false)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("backstory")]
+    public BackstoryResponse? Backstory { get; set; } = default!;
+
+    /// <summary>
+    /// Text summaries for reference
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("summaries")]
+    public HistorySummaryResponse? Summaries { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Request to restore history data from archive
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class RestoreFromArchiveRequest
+{
+
+    /// <summary>
+    /// ID of the character to restore data for
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("characterId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid CharacterId { get; set; } = default!;
+
+    /// <summary>
+    /// Base64-encoded gzipped CharacterHistoryArchive JSON
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("data")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string Data { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Result of restoration from archive
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class RestoreFromArchiveResponse
+{
+
+    /// <summary>
+    /// Character data was restored for
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("characterId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid CharacterId { get; set; } = default!;
+
+    /// <summary>
+    /// Number of participation records restored
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("participationsRestored")]
+    public int ParticipationsRestored { get; set; } = default!;
+
+    /// <summary>
+    /// Whether backstory was restored
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("backstoryRestored")]
+    public bool BackstoryRestored { get; set; } = default!;
+
+    /// <summary>
+    /// Whether restoration completed successfully
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("success")]
+    public bool Success { get; set; } = default!;
+
+    /// <summary>
+    /// Error details if restoration failed
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("errorMessage")]
+    public string? ErrorMessage { get; set; } = default!;
 
 }
 

@@ -393,6 +393,12 @@ public class OAuthProviderService : IOAuthProviderService
             return (null, false);
         }
 
+        if (string.IsNullOrEmpty(userInfo.ProviderId))
+        {
+            _logger.LogError("OAuth user info missing ProviderId for provider {Provider}", provider);
+            return (null, false);
+        }
+
         var providerName = provider.ToString().ToLower();
         var oauthLinkKey = $"oauth-link:{providerName}:{userInfo.ProviderId}";
 
@@ -403,6 +409,7 @@ public class OAuthProviderService : IOAuthProviderService
             // Check existing link (stored as string since Guid is a value type)
             var existingAccountIdStr = await linkStore.GetAsync(oauthLinkKey, cancellationToken);
 
+            // Defensive: guard against corrupt Redis data (stored accountId should always be a valid non-empty GUID)
             if (!string.IsNullOrEmpty(existingAccountIdStr) && Guid.TryParse(existingAccountIdStr, out var existingAccountId) && existingAccountId != Guid.Empty)
             {
                 try
@@ -420,17 +427,17 @@ public class OAuthProviderService : IOAuthProviderService
                 }
                 catch (ApiException ex) when (ex.StatusCode == 404)
                 {
-                    _logger.LogWarning("Linked account {AccountId} not found, removing stale OAuth link", existingAccountId);
-                    await linkStore.DeleteAsync(oauthLinkKey, cancellationToken);
+                    _logger.LogWarning("Linked account {AccountId} not found, cleaning up all stale OAuth links for account", existingAccountId);
+                    await CleanupOAuthLinksForAccountAsync(existingAccountId, cancellationToken);
                 }
             }
 
-            // Create new account
+            // Create new account - email is null for providers that don't supply it (Steam, some OAuth)
             var createRequest = new CreateAccountRequest
             {
-                Email = userInfo.Email ?? $"{providerName}_{userInfo.ProviderId}@oauth.local",
+                Email = userInfo.Email, // Honest: null if provider doesn't supply email
                 DisplayName = userInfo.DisplayName ?? $"{providerName}_user",
-                EmailVerified = userInfo.Email != null,
+                EmailVerified = userInfo.Email != null, // Can only be verified if we have an email
                 PasswordHash = null
             };
 
@@ -757,6 +764,9 @@ public class OAuthProviderService : IOAuthProviderService
     }
 
     #region OAuth Response Models
+
+    // External OAuth provider response DTOs below use string.Empty defaults as defensive coding.
+    // These are third-party API responses where we have no control over the response format.
 
     private class DiscordTokenResponse
     {

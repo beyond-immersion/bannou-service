@@ -1,6 +1,7 @@
 using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.BannouService.Messaging.Services;
 using BeyondImmersion.BannouService.Plugins;
+using BeyondImmersion.BannouService.Providers;
 using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -21,14 +22,20 @@ public class MessagingServicePlugin : StandardServicePlugin<IMessagingService>
     {
         Logger?.LogDebug("Configuring messaging service dependencies");
 
+        // Register unhandled exception handler that publishes error events via IMessageBus.
+        // Composite pattern: fires alongside LoggingUnhandledExceptionHandler and any other registered handlers.
+        // Registered before the in-memory/RabbitMQ branch — handler resolves IMessageBus lazily from DI.
+        services.AddSingleton<IUnhandledExceptionHandler, MessagingUnhandledExceptionHandler>();
+
         // Register named HttpClient for subscription callbacks (FOUNDATION TENETS: use IHttpClientFactory)
         services.AddHttpClient(MessagingService.HttpClientName);
         Logger?.LogDebug("Registered named HttpClient '{ClientName}' for subscription callbacks", MessagingService.HttpClientName);
 
         // Get configuration to read RabbitMQ settings
         // Cache the provider to avoid multiple builds and ensure consistent config
-        var tempProvider = services.BuildServiceProvider();
-        _cachedConfig = tempProvider.GetService<MessagingServiceConfiguration>();
+        // IMPLEMENTATION TENETS (T24): Use using statement for proper disposal
+        using var tempProvider = services.BuildServiceProvider();
+        _cachedConfig = tempProvider.GetRequiredService<MessagingServiceConfiguration>();
         var config = _cachedConfig;
 
         // Check for in-memory mode
@@ -53,15 +60,52 @@ public class MessagingServicePlugin : StandardServicePlugin<IMessagingService>
         // Configure direct RabbitMQ (no MassTransit)
         Logger?.LogInformation("Configuring direct RabbitMQ messaging (no MassTransit)");
 
-        // Register shared connection manager
+        // Register shared connection manager as both concrete type and interface
+        // The interface (IChannelManager) allows mocking in tests
         services.AddSingleton<RabbitMQConnectionManager>();
+        services.AddSingleton<IChannelManager>(sp => sp.GetRequiredService<RabbitMQConnectionManager>());
 
-        // Register retry buffer for handling transient publish failures
-        services.AddSingleton<MessageRetryBuffer>();
+        // Register retry buffer using factory to break circular dependency:
+        // IMessageBus → RabbitMQMessageBus → IRetryBuffer → MessageRetryBuffer → IMessageBus?
+        // StateStoreFactory also takes IMessageBus? and is resolved before IMessageBus is fully
+        // constructed, so DI would deadlock trying to resolve MessageRetryBuffer's optional
+        // IMessageBus? parameter. Explicitly pass null to break the cycle.
+        services.AddSingleton<MessageRetryBuffer>(sp =>
+        {
+            var channelManager = sp.GetRequiredService<IChannelManager>();
+            var msgConfig = sp.GetRequiredService<MessagingServiceConfiguration>();
+            var logger = sp.GetRequiredService<ILogger<MessageRetryBuffer>>();
+            return new MessageRetryBuffer(channelManager, msgConfig, logger);
+        });
+        services.AddSingleton<IRetryBuffer>(sp => sp.GetRequiredService<MessageRetryBuffer>());
 
         // Register messaging interfaces with direct RabbitMQ implementations
-        services.AddSingleton<IMessageBus, RabbitMQMessageBus>();
-        services.AddSingleton<IMessageSubscriber, RabbitMQMessageSubscriber>();
+        // Use factory registration to pass optional telemetry provider
+        services.AddSingleton<IMessageBus>(sp =>
+        {
+            var channelManager = sp.GetRequiredService<IChannelManager>();
+            var retryBuffer = sp.GetRequiredService<IRetryBuffer>();
+            var appConfig = sp.GetRequiredService<BeyondImmersion.BannouService.Configuration.AppConfiguration>();
+            var msgConfig = sp.GetRequiredService<MessagingServiceConfiguration>();
+            var logger = sp.GetRequiredService<ILogger<RabbitMQMessageBus>>();
+            // NullTelemetryProvider is registered by default; lib-telemetry overrides it when enabled
+            var telemetryProvider = sp.GetRequiredService<ITelemetryProvider>();
+
+            return new RabbitMQMessageBus(channelManager, retryBuffer, appConfig, msgConfig, logger, telemetryProvider);
+        });
+
+        // Use factory registration to pass telemetry provider and message bus
+        // NullTelemetryProvider is registered by default; lib-telemetry overrides it when enabled
+        services.AddSingleton<IMessageSubscriber>(sp =>
+        {
+            var channelManager = sp.GetRequiredService<IChannelManager>();
+            var logger = sp.GetRequiredService<ILogger<RabbitMQMessageSubscriber>>();
+            var msgConfig = sp.GetRequiredService<MessagingServiceConfiguration>();
+            var telemetryProvider = sp.GetRequiredService<ITelemetryProvider>();
+            var messageBus = sp.GetRequiredService<IMessageBus>();
+
+            return new RabbitMQMessageSubscriber(channelManager, logger, msgConfig, telemetryProvider, messageBus);
+        });
 
         // Register message tap for forwarding events between exchanges
         services.AddSingleton<IMessageTap, RabbitMQMessageTap>();

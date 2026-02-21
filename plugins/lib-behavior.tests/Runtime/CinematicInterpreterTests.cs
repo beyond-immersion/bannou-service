@@ -3,7 +3,8 @@
 // Tests for pause/resume functionality and extension injection.
 // =============================================================================
 
-using BeyondImmersion.Bannou.Behavior.Compiler;
+using BeyondImmersion.Bannou.BehaviorCompiler.Compiler;
+using BeyondImmersion.Bannou.BehaviorCompiler.Runtime;
 using BeyondImmersion.BannouService.Behavior.Runtime;
 using BeyondImmersion.BannouService.Events;
 using Xunit;

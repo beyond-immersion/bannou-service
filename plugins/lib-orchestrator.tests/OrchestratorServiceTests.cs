@@ -609,7 +609,7 @@ public class OrchestratorServiceTests
     }
 
     [Fact]
-    public async Task GetServiceRoutingAsync_WhenStateStoreThrows_ShouldReturnInternalServerError()
+    public async Task GetServiceRoutingAsync_WhenStateStoreThrows_ShouldThrow()
     {
         // Arrange
         _mockStateManager
@@ -618,14 +618,10 @@ public class OrchestratorServiceTests
 
         var service = CreateService();
 
-        // Act
-        var (statusCode, response) = await service.GetServiceRoutingAsync(
+        // Act & Assert - exceptions propagate to generated controller for error handling
+        await Assert.ThrowsAsync<InvalidOperationException>(() => service.GetServiceRoutingAsync(
             new GetServiceRoutingRequest(),
-            CancellationToken.None);
-
-        // Assert
-        Assert.Equal(StatusCodes.InternalServerError, statusCode);
-        Assert.Null(response);
+            CancellationToken.None));
     }
 
     #endregion

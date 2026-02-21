@@ -3,14 +3,15 @@
 // Shared test infrastructure for cognition handler tests.
 // =============================================================================
 
-using BeyondImmersion.Bannou.Behavior.Cognition;
-using BeyondImmersion.BannouService.Abml.Documents;
-using BeyondImmersion.BannouService.Abml.Documents.Actions;
+using BeyondImmersion.Bannou.BehaviorCompiler.Documents;
+using BeyondImmersion.Bannou.BehaviorCompiler.Documents.Actions;
+using BeyondImmersion.Bannou.BehaviorExpressions.Expressions;
+using BeyondImmersion.Bannou.BehaviorExpressions.Runtime;
+using BeyondImmersion.BannouService.Abml.Cognition;
 using BeyondImmersion.BannouService.Abml.Execution;
-using BeyondImmersion.BannouService.Abml.Expressions;
-using BeyondImmersion.BannouService.Abml.Runtime;
 using Moq;
 using AbmlExecutionContext = BeyondImmersion.BannouService.Abml.Execution.ExecutionContext;
+using CognitionMemory = BeyondImmersion.BannouService.Abml.Cognition.Memory;
 
 namespace BeyondImmersion.BannouService.Behavior.Tests.Handlers;
 
@@ -86,14 +87,14 @@ public abstract class CognitionHandlerTestBase
     /// <summary>
     /// Creates a test memory.
     /// </summary>
-    protected static Memory CreateMemory(
+    protected static CognitionMemory CreateMemory(
         string? id = null,
         string entityId = "test-entity",
         string category = "routine",
         string content = "Test memory",
         float significance = 0.5f)
     {
-        return new Memory
+        return new CognitionMemory
         {
             Id = id ?? Guid.NewGuid().ToString(),
             EntityId = entityId,

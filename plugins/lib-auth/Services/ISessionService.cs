@@ -102,7 +102,7 @@ public interface ISessionService
     /// <param name="accountId">The account ID.</param>
     /// <param name="reason">The reason for invalidation.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
-    Task InvalidateAllSessionsForAccountAsync(Guid accountId, SessionInvalidatedEventReason reason = SessionInvalidatedEventReason.Account_deleted, CancellationToken cancellationToken = default);
+    Task InvalidateAllSessionsForAccountAsync(Guid accountId, SessionInvalidatedEventReason reason = SessionInvalidatedEventReason.AccountDeleted, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Publishes a session invalidated event.
@@ -136,9 +136,9 @@ public class SessionDataModel
     public Guid AccountId { get; set; }
 
     /// <summary>
-    /// The account email.
+    /// The account email. Null for OAuth/Steam accounts without email.
     /// </summary>
-    public string Email { get; set; } = string.Empty;
+    public string? Email { get; set; }
 
     /// <summary>
     /// The account display name. Null if user hasn't set one.
@@ -159,6 +159,11 @@ public class SessionDataModel
     /// The unique session ID (displayed to users).
     /// </summary>
     public Guid SessionId { get; set; }
+
+    /// <summary>
+    /// The JWT unique identifier (jti claim) for edge revocation tracking.
+    /// </summary>
+    public string? Jti { get; set; }
 
     /// <summary>
     /// Session creation time as Unix timestamp.

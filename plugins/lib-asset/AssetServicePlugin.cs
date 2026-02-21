@@ -95,13 +95,18 @@ public class AssetServicePlugin : StandardServicePlugin<IAssetService>
             var options = sp.GetRequiredService<IOptions<MinioStorageOptions>>().Value;
             var logger = sp.GetService<ILogger<MinioStorageProvider>>();
 
-            var credentials = new BasicAWSCredentials(options.AccessKey, options.SecretKey);
             var assetConfig = sp.GetRequiredService<AssetServiceConfiguration>();
+            var credentials = new BasicAWSCredentials(options.AccessKey, options.SecretKey);
             var config = new AmazonS3Config
             {
                 ServiceURL = $"{(options.UseSSL ? "https" : "http")}://{options.Endpoint}",
                 ForcePathStyle = assetConfig.StorageForcePathStyle,
-                UseHttp = !options.UseSSL
+                UseHttp = !options.UseSSL,
+                // AWSSDK.S3 v4 uses identity resolvers for credential resolution.
+                // Setting DefaultAWSCredentials on the config ensures the v4 identity
+                // resolver uses these credentials instead of the default chain
+                // (env vars, profiles, EC2 metadata).
+                DefaultAWSCredentials = credentials
             };
 
             logger?.LogInformation(
@@ -194,54 +199,60 @@ public class AssetServicePlugin : StandardServicePlugin<IAssetService>
             "Waiting for MinIO connectivity at {Endpoint} (max {MaxRetries} attempts, {Delay}ms between retries)",
             options.Endpoint, maxRetries, retryDelayMs);
 
-        // MinioClient fluent API returns 'this'; Build() also returns 'this' as IMinioClient
-        // The using below disposes the same object that was created by new MinioClient()
-#pragma warning disable CA2000
-        var builder = new MinioClient()
-            .WithEndpoint(options.Endpoint)
-            .WithCredentials(options.AccessKey, options.SecretKey)
-            .WithRegion(options.Region);
-#pragma warning restore CA2000
-
-        if (options.UseSSL)
+        // MinioClient fluent API: all methods return 'this', Build() returns same instance as IMinioClient
+        // Declare disposable before try, dispose unconditionally in finally
+        MinioClient? minioClient = null;
+        try
         {
-            _ = builder.WithSSL();
+            minioClient = new MinioClient();
+            minioClient.WithEndpoint(options.Endpoint)
+                .WithCredentials(options.AccessKey, options.SecretKey)
+                .WithRegion(options.Region);
+
+            if (options.UseSSL)
+            {
+                minioClient.WithSSL();
+            }
+
+            var client = minioClient.Build();
+
+            for (int attempt = 1; attempt <= maxRetries; attempt++)
+            {
+                try
+                {
+                    var bucketExists = await client.BucketExistsAsync(
+                        new Minio.DataModel.Args.BucketExistsArgs().WithBucket(options.DefaultBucket));
+
+                    if (!bucketExists)
+                    {
+                        Logger?.LogInformation("MinIO reachable, creating default bucket: {Bucket}", options.DefaultBucket);
+                        await client.MakeBucketAsync(
+                            new Minio.DataModel.Args.MakeBucketArgs().WithBucket(options.DefaultBucket));
+                    }
+
+                    Logger?.LogInformation("MinIO connectivity confirmed on attempt {Attempt}", attempt);
+                    return true;
+                }
+                catch (Exception ex)
+                {
+                    Logger?.LogWarning(
+                        "MinIO connectivity check failed on attempt {Attempt}/{MaxRetries}: {Message}",
+                        attempt, maxRetries, ex.Message);
+
+                    if (attempt < maxRetries)
+                    {
+                        var delay = retryDelayMs * Math.Min(attempt, 5);
+                        await Task.Delay(delay);
+                    }
+                }
+            }
+
+            Logger?.LogError("MinIO connectivity check failed after {MaxRetries} attempts", maxRetries);
+            return false;
         }
-
-        using var client = builder.Build();
-
-        for (int attempt = 1; attempt <= maxRetries; attempt++)
+        finally
         {
-            try
-            {
-                var bucketExists = await client.BucketExistsAsync(
-                    new Minio.DataModel.Args.BucketExistsArgs().WithBucket(options.DefaultBucket));
-
-                if (!bucketExists)
-                {
-                    Logger?.LogInformation("MinIO reachable, creating default bucket: {Bucket}", options.DefaultBucket);
-                    await client.MakeBucketAsync(
-                        new Minio.DataModel.Args.MakeBucketArgs().WithBucket(options.DefaultBucket));
-                }
-
-                Logger?.LogInformation("MinIO connectivity confirmed on attempt {Attempt}", attempt);
-                return true;
-            }
-            catch (Exception ex)
-            {
-                Logger?.LogWarning(
-                    "MinIO connectivity check failed on attempt {Attempt}/{MaxRetries}: {Message}",
-                    attempt, maxRetries, ex.Message);
-
-                if (attempt < maxRetries)
-                {
-                    var delay = retryDelayMs * Math.Min(attempt, 5);
-                    await Task.Delay(delay);
-                }
-            }
+            minioClient?.Dispose();
         }
-
-        Logger?.LogError("MinIO connectivity check failed after {MaxRetries} attempts", maxRetries);
-        return false;
     }
 }

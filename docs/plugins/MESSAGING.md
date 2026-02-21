@@ -3,13 +3,34 @@
 > **Plugin**: lib-messaging
 > **Schema**: schemas/messaging-api.yaml
 > **Version**: 1.0.0
+> **Layer**: Infrastructure
 > **State Store**: messaging-external-subs (Redis, app-id keyed with TTL)
 
 ---
 
 ## Overview
 
-The Messaging service is the native RabbitMQ pub/sub infrastructure for Bannou. It operates in a dual role: (1) as an internal infrastructure library (`IMessageBus`/`IMessageSubscriber`) used by all services for event publishing and subscription, and (2) as an HTTP API service providing dynamic subscription management with HTTP callback delivery. Supports in-memory mode for testing, direct RabbitMQ with channel pooling, retry buffering, and crash-fast philosophy for unrecoverable failures.
+The Messaging service (L0 Infrastructure) is the native RabbitMQ pub/sub infrastructure for Bannou. Operates in a dual role: as the `IMessageBus`/`IMessageSubscriber` infrastructure library used by all services for event publishing and subscription, and as an HTTP API providing dynamic subscription management with HTTP callback delivery. Supports in-memory mode for testing, direct RabbitMQ with channel pooling, and aggressive retry buffering with crash-fast philosophy for unrecoverable failures.
+
+## Event Publishing Reliability Model
+
+**Key behavior**: `TryPublishAsync` returns `true` even when RabbitMQ is unavailable - because the message is buffered for retry and WILL be delivered when the connection recovers. This is **not** "fire-and-forget" or "best-effort" in the traditional sense:
+
+1. **On publish failure**: Message is buffered in `MessageRetryBuffer` (in-memory `ConcurrentQueue`)
+2. **Retry processing**: Every 5 seconds, buffered messages are retried
+3. **Backpressure**: When buffer reaches 80% full (`RetryBufferBackpressureThreshold`), new publishes are rejected
+4. **Crash-fast on prolonged failure**: If RabbitMQ stays down too long (buffer >500k messages OR oldest message >10 minutes), the node **crashes intentionally** via `IProcessTerminator.TerminateProcess()`
+5. **Why crash?** Makes failure visible in monitoring, triggers orchestrator restart, prevents silent data loss
+
+**True loss scenarios** (rare):
+- Node dies (power failure, OOM kill) before buffer flushes
+- Clean shutdown with non-empty buffer (logged as warning)
+- Serialization failure (programming bug, not retryable)
+- Backpressure active and caller doesn't handle `false` return
+
+**Return value semantics**:
+- `true` = Published successfully OR buffered for retry (delivery will happen)
+- `false` = Unrecoverable failure (serialization error, backpressure active, retry buffer disabled)
 
 ---
 
@@ -19,6 +40,9 @@ The Messaging service is the native RabbitMQ pub/sub infrastructure for Bannou. 
 |------------|-------|
 | RabbitMQ.Client 7.2.0 | Direct AMQP connection for publish/subscribe |
 | lib-state (`IStateStoreFactory`) | Persisting external subscription metadata for recovery |
+| lib-core (`BannouJson`) | Consistent JSON serialization via `BannouJson.Serialize/Deserialize` |
+| lib-core (`IBannouEvent`) | Event interface for generic envelope pattern |
+| lib-telemetry (`ITelemetryProvider`) | OpenTelemetry traces and metrics (NullProvider if telemetry disabled) |
 
 ---
 
@@ -27,9 +51,10 @@ The Messaging service is the native RabbitMQ pub/sub infrastructure for Bannou. 
 | Dependent | Relationship |
 |-----------|-------------|
 | Every service | Uses `IMessageBus` for event publishing and `IMessageSubscriber` for static subscriptions |
-| lib-connect | Uses `IMessageBus` for client event routing |
+| lib-connect | Uses `IMessageBus` for client event routing; uses `IMessageTap` for session-scoped event forwarding |
 | lib-actor | Uses `IMessageBus` for actor lifecycle, heartbeats, pool management |
 | lib-documentation | Uses `IMessageBus` for git sync and search indexing |
+| lib-permission | Uses `IMessageBus` for permission registration broadcasts |
 
 All services depend on messaging infrastructure. The HTTP API (`IMessagingClient`) is rarely used directly.
 
@@ -41,9 +66,9 @@ All services depend on messaging infrastructure. The HTTP API (`IMessagingClient
 
 | Key Pattern | Data Type | Purpose |
 |-------------|-----------|---------|
-| `{appId}` | `List<ExternalSubscriptionData>` | Persisted HTTP callback subscriptions for recovery across restarts |
+| `msg:subs:{appId}` | `Set<ExternalSubscriptionData>` | Persisted HTTP callback subscriptions for recovery across restarts |
 
-ExternalSubscriptionData contains: SubscriptionId, Topic, CallbackUrl, CreatedAt.
+ExternalSubscriptionData contains: SubscriptionId (Guid), Topic (string), CallbackUrl (string), CreatedAt (DateTimeOffset).
 
 ---
 
@@ -51,7 +76,7 @@ ExternalSubscriptionData contains: SubscriptionId, Topic, CallbackUrl, CreatedAt
 
 ### Published Events
 
-This service **intentionally publishes no lifecycle events**. It is infrastructure, not a domain service. Debug/monitoring events (MessagePublished, SubscriptionCreated/Removed) were planned but never implemented.
+This service **intentionally publishes no lifecycle events**. It is infrastructure, not a domain service. Debug/monitoring events (MessagePublished, SubscriptionCreated/Removed) were planned but never implemented. The events schema (`schemas/messaging-events.yaml`) documents this explicitly.
 
 ### Consumed Events
 
@@ -60,6 +85,8 @@ This plugin does not consume external events (it IS the event infrastructure).
 ---
 
 ## Configuration
+
+### Connection Settings
 
 | Property | Env Var | Default | Purpose |
 |----------|---------|---------|---------|
@@ -70,32 +97,80 @@ This plugin does not consume external events (it IS the event infrastructure).
 | `RabbitMQPassword` | `MESSAGING_RABBITMQ_PASSWORD` | `"guest"` | Connection credentials |
 | `RabbitMQVirtualHost` | `MESSAGING_RABBITMQ_VHOST` | `"/"` | Virtual host for isolation |
 | `DefaultExchange` | `MESSAGING_DEFAULT_EXCHANGE` | `"bannou"` | Default publish exchange |
-| `DeadLetterExchange` | `MESSAGING_DEAD_LETTER_EXCHANGE` | `"bannou-dlx"` | Dead-letter routing exchange |
 | `ConnectionRetryCount` | `MESSAGING_CONNECTION_RETRY_COUNT` | `5` | Max connection attempts |
 | `ConnectionRetryDelayMs` | `MESSAGING_CONNECTION_RETRY_DELAY_MS` | `1000` | Delay between retries |
+| `ConnectionMaxBackoffMs` | `MESSAGING_CONNECTION_MAX_BACKOFF_MS` | `60000` | Maximum backoff delay for connection retries |
+| `RabbitMQNetworkRecoveryIntervalSeconds` | `MESSAGING_RABBITMQ_NETWORK_RECOVERY_INTERVAL_SECONDS` | `10` | Auto-recovery interval |
+
+### Channel Pool Settings
+
+| Property | Env Var | Default | Purpose |
+|----------|---------|---------|---------|
+| `ChannelPoolSize` | `MESSAGING_CHANNEL_POOL_SIZE` | `100` | Maximum channels in publisher pool |
+| `MaxConcurrentChannelCreation` | `MESSAGING_MAX_CONCURRENT_CHANNEL_CREATION` | `50` | Backpressure: max concurrent channel creation requests |
+| `MaxTotalChannels` | `MESSAGING_MAX_TOTAL_CHANNELS` | `1000` | Hard limit on total active channels per connection |
+
+### Publisher Confirms
+
+| Property | Env Var | Default | Purpose |
+|----------|---------|---------|---------|
+| `EnablePublisherConfirms` | `MESSAGING_ENABLE_CONFIRMS` | `true` | Enable broker confirmation for at-least-once delivery |
+
+When `EnablePublisherConfirms` is true, `BasicPublishAsync` waits for broker confirmation before returning (RabbitMQ.Client 7.x pattern). The timeout is managed internally by RabbitMQ.Client 7.x and is not configurable.
+
+### Publish Batching (High-Throughput)
+
+| Property | Env Var | Default | Purpose |
+|----------|---------|---------|---------|
+| `EnablePublishBatching` | `MESSAGING_ENABLE_PUBLISH_BATCHING` | `false` | Enable batched publishing for high-throughput scenarios |
+| `PublishBatchSize` | `MESSAGING_PUBLISH_BATCH_SIZE` | `100` | Max messages per batch before flush |
+| `PublishBatchTimeoutMs` | `MESSAGING_PUBLISH_BATCH_TIMEOUT_MS` | `10` | Max delay before flushing partial batch |
+
+### Subscription Settings
+
+| Property | Env Var | Default | Purpose |
+|----------|---------|---------|---------|
 | `DefaultPrefetchCount` | `MESSAGING_DEFAULT_PREFETCH_COUNT` | `10` | Consumer channel QoS |
-| `DefaultAutoAck` | `MESSAGING_DEFAULT_AUTO_ACK` | `false` | Auto-acknowledge messages |
+| `DefaultAutoAck` | `MESSAGING_DEFAULT_AUTO_ACK` | `false` | Fallback when SubscriptionOptions.AutoAck is null |
+
+### Dead Letter Queue Settings
+
+| Property | Env Var | Default | Purpose |
+|----------|---------|---------|---------|
+| `DeadLetterExchange` | `MESSAGING_DEAD_LETTER_EXCHANGE` | `"bannou-dlx"` | Dead-letter routing exchange |
+| `DeadLetterMaxLength` | `MESSAGING_DEAD_LETTER_MAX_LENGTH` | `100000` | Max messages in DLX queue before oldest dropped |
+| `DeadLetterTtlMs` | `MESSAGING_DEAD_LETTER_TTL_MS` | `604800000` | TTL for DLX messages (7 days) |
+| `DeadLetterOverflowBehavior` | `MESSAGING_DEAD_LETTER_OVERFLOW_BEHAVIOR` | `"drop-head"` | Behavior when DLX exceeds max length |
+
+### Poison Message Handling (Retry Buffer)
+
+| Property | Env Var | Default | Purpose |
+|----------|---------|---------|---------|
+| `RetryMaxAttempts` | `MESSAGING_RETRY_MAX_ATTEMPTS` | `5` | Max retry attempts before discarding to dead-letter |
+| `RetryDelayMs` | `MESSAGING_RETRY_DELAY_MS` | `5000` | Base delay between retries (doubles each retry) |
+| `RetryMaxBackoffMs` | `MESSAGING_RETRY_MAX_BACKOFF_MS` | `60000` | Maximum backoff delay (caps exponential growth) |
+
+These settings apply to the **MessageRetryBuffer** (publish failures). After `RetryMaxAttempts`, messages are discarded to the dead-letter exchange with `x-retry-count` header.
+
+### Retry Buffer Settings (Transient Failures)
+
+| Property | Env Var | Default | Purpose |
+|----------|---------|---------|---------|
 | `RetryBufferEnabled` | `MESSAGING_RETRY_BUFFER_ENABLED` | `true` | Enable publish failure buffering |
-| `RetryBufferMaxSize` | `MESSAGING_RETRY_BUFFER_MAX_SIZE` | `10000` | Max buffered messages before crash |
-| `RetryBufferMaxAgeSeconds` | `MESSAGING_RETRY_BUFFER_MAX_AGE_SECONDS` | `300` | Max message age before crash |
+| `RetryBufferMaxSize` | `MESSAGING_RETRY_BUFFER_MAX_SIZE` | `500000` | Max buffered messages before crash (~5s at 100k msg/sec) |
+| `RetryBufferMaxAgeSeconds` | `MESSAGING_RETRY_BUFFER_MAX_AGE_SECONDS` | `600` | Max message age before crash (10 minutes) |
 | `RetryBufferIntervalSeconds` | `MESSAGING_RETRY_BUFFER_INTERVAL_SECONDS` | `5` | Retry processing interval |
+| `RetryBufferBackpressureThreshold` | `MESSAGING_RETRY_BUFFER_BACKPRESSURE_THRESHOLD` | `0.8` | Start rejecting publishes at this buffer fill ratio |
+
+### HTTP Callback Settings
+
+| Property | Env Var | Default | Purpose |
+|----------|---------|---------|---------|
 | `CallbackRetryMaxAttempts` | `MESSAGING_CALLBACK_RETRY_MAX_ATTEMPTS` | `3` | HTTP callback retry limit |
 | `CallbackRetryDelayMs` | `MESSAGING_CALLBACK_RETRY_DELAY_MS` | `1000` | HTTP callback retry delay |
 | `SubscriptionTtlRefreshIntervalHours` | `MESSAGING_SUBSCRIPTION_TTL_REFRESH_INTERVAL_HOURS` | `6` | TTL refresh period |
 | `SubscriptionRecoveryStartupDelaySeconds` | `MESSAGING_SUBSCRIPTION_RECOVERY_STARTUP_DELAY_SECONDS` | `2` | Delay before recovery on startup |
-| `RabbitMQNetworkRecoveryIntervalSeconds` | `MESSAGING_RABBITMQ_NETWORK_RECOVERY_INTERVAL_SECONDS` | `10` | Auto-recovery interval |
 | `ExternalSubscriptionTtlSeconds` | `MESSAGING_EXTERNAL_SUBSCRIPTION_TTL_SECONDS` | `86400` | External subscription persistence TTL (24h) |
-
-### Unused Configuration Properties
-
-| Property | Env Var | Default | Notes |
-|----------|---------|---------|-------|
-| `EnablePublisherConfirms` | `MESSAGING_ENABLE_CONFIRMS` | `true` | Defined but never evaluated |
-| `RetryMaxAttempts` | `MESSAGING_RETRY_MAX_ATTEMPTS` | `3` | Defined but not used in service code |
-| `RetryDelayMs` | `MESSAGING_RETRY_DELAY_MS` | `5000` | Defined but not used in service code |
-| `UseMassTransit` | `MESSAGING_USE_MASSTRANSIT` | `true` | Feature flag, never checked |
-| `EnableMetrics` | `MESSAGING_ENABLE_METRICS` | `true` | Feature flag, never implemented |
-| `EnableTracing` | `MESSAGING_ENABLE_TRACING` | `true` | Feature flag, never implemented |
 
 ---
 
@@ -104,15 +179,26 @@ This plugin does not consume external events (it IS the event infrastructure).
 | Service | Lifetime | Role |
 |---------|----------|------|
 | `IMessageBus` | Singleton | Event publishing (RabbitMQ or InMemory) |
-| `IMessageSubscriber` | Singleton | Topic subscriptions |
-| `IMessageTap` | Singleton | Event tapping/observation |
-| `RabbitMQConnectionManager` | Singleton | Connection pooling (up to 10 channels) |
-| `MessageRetryBuffer` | Singleton | Transient publish failure recovery |
+| `IMessageSubscriber` | Singleton | Topic subscriptions (static and dynamic) |
+| `IMessageTap` | Singleton | Event tapping/forwarding between exchanges |
+| `IChannelManager` | Singleton | Interface for channel pooling (testability) |
+| `RabbitMQConnectionManager` | Singleton | Connection pooling (configurable via `ChannelPoolSize`) |
+| `IRetryBuffer` | Singleton | Interface for retry buffer (testability) |
+| `MessageRetryBuffer` | Singleton | Transient publish failure recovery with crash-fast |
 | `NativeEventConsumerBackend` | HostedService | Bridges IEventConsumer fan-out to RabbitMQ |
-| `MessagingSubscriptionRecoveryService` | HostedService | Recovers external subscriptions on startup |
-| `MessagingService` | Singleton | HTTP API implementation |
+| `MessagingSubscriptionRecoveryService` | HostedService | Recovers external subscriptions on startup, refreshes TTL |
+| `MessagingService` | Singleton | HTTP API implementation (also registered as concrete for recovery service) |
 
 Service lifetime is **Singleton** (infrastructure must persist across requests).
+
+### Helper Classes
+
+| Class | Role |
+|-------|------|
+| `GenericMessageEnvelope` | Wraps arbitrary JSON payloads for MassTransit compatibility; implements `IBannouEvent` |
+| `TappedMessageEnvelope` | Extended envelope with tap routing metadata for multi-stream forwarding |
+| `ExternalSubscriptionData` | Record type for persisting HTTP callback subscriptions |
+| `IProcessTerminator` | Interface for crash-fast behavior; `EnvironmentProcessTerminator` calls `Environment.Exit(1)` |
 
 ---
 
@@ -124,7 +210,7 @@ Wraps arbitrary JSON payloads in `GenericMessageEnvelope` (MassTransit requires 
 
 ### Subscribe (`/messaging/subscribe`)
 
-Creates dynamic HTTP callback subscriptions. Generates unique queue name `bannou-dynamic-{subscriptionId:N}`. Stores subscription in both in-memory dictionary (for disposal) and state store (for recovery). Retry logic: retries on `HttpRequestException` and `TaskCanceledException` only; HTTP 4xx/5xx treated as successful delivery. Subscription options: durable, exclusive, autoAck, prefetchCount, useDeadLetter, consumerGroup.
+Creates dynamic HTTP callback subscriptions. Generates unique queue name `bannou-dynamic-{subscriptionId:N}`. Stores subscription in both in-memory dictionary (for disposal) and state store (for recovery). Retry logic: retries on `HttpRequestException` and `TaskCanceledException` (timeout) only; HTTP 4xx/5xx treated as successful delivery. Subscription options: durable, exclusive, autoAck, prefetchCount, useDeadLetter, consumerGroup.
 
 ### Unsubscribe (`/messaging/unsubscribe`)
 
@@ -170,65 +256,102 @@ Messaging Architecture
               │               │ (per-plugin handlers)   │
               │               └─────────────────────────┘
               │
-    ┌─────────┴─────────┐
-    │ RabbitMQConnection │
-    │ Manager            │
-    │                    │
-    │ Single connection  │
-    │ Channel pool (10)  │
-    │ Auto-recovery      │
-    └────────────────────┘
+    ┌─────────┴─────────┐         ┌──────────────────────┐
+    │ RabbitMQConnection │         │  RabbitMQMessageTap   │
+    │ Manager            │         │  (IMessageTap)        │
+    │                    │         │                       │
+    │ Single connection  │         │ Creates taps that     │
+    │ Channel pool (100) │         │ forward events from   │
+    │ Max 1000 channels  │         │ source to destination │
+    │ Auto-recovery      │         │                       │
+    └────────────────────┘         └───────────────────────┘
 ```
 
 ---
 
 ## Stubs & Unimplemented Features
 
-1. **Publisher confirms**: `EnablePublisherConfirms` config exists but confirmations are not implemented.
-2. **Metrics collection**: `EnableMetrics` flag exists but no instrumentation code.
-3. **Distributed tracing**: `EnableTracing` flag exists but no Activity/DiagnosticSource usage.
-4. **Lifecycle events**: MessagePublished, SubscriptionCreated/Removed were planned but never implemented.
-5. **ListTopics MessageCount**: Always returns 0 (would require RabbitMQ Management HTTP API).
+1. **Lifecycle events**: MessagePublished, SubscriptionCreated/Removed were planned but never implemented.
+2. **ListTopics MessageCount**: Always returns 0 (would require RabbitMQ Management HTTP API).
+3. **Prometheus metrics**: Publish/subscribe rates, buffer depth, retry counts not yet exposed.
 
 ---
 
 ## Potential Extensions
 
 1. **RabbitMQ Management API integration**: Enable accurate message counts and queue depth monitoring.
-2. **Publisher confirm support**: Add reliability guarantees for critical event publishing.
-3. **Prometheus metrics**: Publish/subscribe rates, buffer depth, retry counts.
-4. **Dead-letter processing**: Consumer for DLX queue to handle poison messages.
+2. **Prometheus metrics**: Publish/subscribe rates, buffer depth, retry counts.
+3. **Dead-letter processing consumer**: Background service to process DLX queue and handle poison messages (alerting, logging, reprocessing).
 
 ---
 
 ## Known Quirks & Caveats
 
-### Bugs
+### Bugs (Fix Immediately)
 
 No bugs identified.
 
-### Intentional Quirks
+### Intentional Quirks (Documented Behavior)
 
-1. **Crash-fast buffer philosophy**: If the retry buffer exceeds `RetryBufferMaxSize` (10,000) or oldest message exceeds `RetryBufferMaxAgeSeconds` (300s), the node calls `Environment.FailFast()`. Philosophy: better to crash and restart than silently drop events.
+1. **Aggressive retry with crash-fast buffer philosophy**: When `TryPublishAsync` fails to deliver to RabbitMQ (connection down, channel error, etc.), the message is **not lost** - it's buffered in `MessageRetryBuffer` and `TryPublishAsync` returns `true` (because delivery WILL be retried). The buffer is processed every `RetryBufferIntervalSeconds` (default 5s). If RabbitMQ stays down too long, the node **intentionally crashes** via `IProcessTerminator.TerminateProcess()`:
+   - Buffer exceeds `RetryBufferMaxSize` (default 500,000 messages)
+   - Oldest message exceeds `RetryBufferMaxAgeSeconds` (default 600s / 10 minutes)
 
-2. **HTTP callbacks don't retry on HTTP errors**: Only retries on network failures (`HttpRequestException`, `TaskCanceledException`). HTTP 4xx/5xx is treated as successful delivery. Philosophy: callback endpoint is responsible for its own error handling.
+   **Why crash?** Crashing makes the failure visible in monitoring, triggers orchestrator restart, and prevents silent data loss or unbounded memory growth. True event loss only occurs if the node dies (power failure, OOM kill) before the buffer flushes.
 
-3. **Channel pool size fixed at 10**: `RabbitMQConnectionManager` uses `MAX_POOL_SIZE = 10` hardcoded constant. Not configurable. Consumer channels are separate (not pooled).
+2. **Backpressure on buffer fill**: When the retry buffer reaches `RetryBufferBackpressureThreshold` (default 80%), new publishes are rejected (`TryPublishAsync` returns `false`). This prevents memory exhaustion and gives the buffer time to drain. Callers should handle `false` returns appropriately.
 
-4. **Two queue naming schemes**: HTTP API subscriptions use `bannou-dynamic-{id:N}` while internal dynamic subscriptions use `{topic}.dynamic.{id:N}`. Different schemes for different subscription paths.
+3. **HTTP callbacks don't retry on HTTP errors**: Only retries on network failures (`HttpRequestException`, `TaskCanceledException` for timeout). HTTP 4xx/5xx is treated as successful delivery. Philosophy: callback endpoint is responsible for its own error handling.
 
-5. **GetAwaiter().GetResult() in ReturnChannel**: `RabbitMQConnectionManager.ReturnChannel()` uses synchronous blocking on async disposal. Could cause deadlocks in certain synchronization contexts. Requires method signature change to fix properly.
+4. **Channel pool for publishers only**: `RabbitMQConnectionManager` maintains a channel pool (default 100, max 1000 total via `MaxTotalChannels`) for publish operations. Consumer channels are separate (not pooled) - each subscription gets a dedicated channel.
 
-### Design Considerations
+5. **Two queue naming schemes**: HTTP API subscriptions use `bannou-dynamic-{id:N}` while internal dynamic subscriptions use `{topic}.dynamic.{id:N}`. Different schemes for different subscription paths.
 
-1. **In-memory mode limitations**: `InMemoryMessageBus` delivers asynchronously via a discarded task (`_ = DeliverToSubscribersAsync(...)`, fire-and-forget). Subscriptions use `List<Func<object, ...>>` which is not fully representative of RabbitMQ semantics (no queue persistence, no dead-letter, no prefetch).
+6. **Static subscriptions prevent duplicates**: `RabbitMQMessageSubscriber.SubscribeAsync()` logs a warning and returns early if already subscribed to the same topic. This prevents duplicate handlers but can mask subscription misuse.
+
+7. **Subscriber requeue behavior**: When a handler throws `HandlerError`, messages are requeued once (if not already redelivered via RabbitMQ's `Redelivered` flag). This is a single retry only - no exponential backoff or retry counting. For multi-attempt retries with backoff, that logic is in the **MessageRetryBuffer** for publish failures (tracked via `x-retry-count` header).
+
+8. **DLX queue size limits**: Dead letter queue has configurable max length (default 100k messages) and TTL (default 7 days). When limits are exceeded, oldest messages are dropped (`drop-head` policy).
+
+### Design Considerations (Requires Planning)
+
+1. **In-memory mode limitations**: `InMemoryMessageBus` delivers asynchronously via a discarded task (`_ = DeliverToSubscribersAsync(...)`, fire-and-forget). Subscriptions use `List<Func<object, ...>>` which is not fully representative of RabbitMQ semantics (no queue persistence, no dead-letter, no prefetch). `InMemoryMessageTap` works in-process only and simulates exchanges by combining exchange+routing key as destination topic.
 
 2. **No graceful drain on shutdown**: `DisposeAsync` iterates subscriptions without timeout. A hung subscription disposal could hang the entire shutdown process.
 
 3. **ServiceId from global static**: `RabbitMQMessageBus.TryPublishErrorAsync()` accesses `Program.ServiceGUID` directly (global variable) rather than injecting it via configuration.
 
-4. **Six unused config properties**: `EnablePublisherConfirms`, `RetryMaxAttempts`, `RetryDelayMs`, `UseMassTransit`, `EnableMetrics`, `EnableTracing` are all defined but never evaluated. Should be wired up or removed.
+4. **Tap creates exchange if not exists**: `RabbitMQMessageTap.CreateTapAsync()` has a `CreateExchangeIfNotExists` flag on `TapDestination` that creates the destination exchange if it doesn't exist. This is powerful but could mask configuration errors where a typo in exchange name silently creates a new exchange instead of failing.
 
-5. **Hardcoded tunables in RabbitMQConnectionManager**: `MAX_POOL_SIZE = 10` and max backoff `60000ms` are hardcoded. Would require schema changes to make configurable.
+5. **Publisher confirms add latency**: When `EnablePublisherConfirms` is true (default), each `BasicPublishAsync` waits for broker confirmation. This adds ~1-5ms latency per publish. For high-throughput scenarios, consider enabling batching via `EnablePublishBatching`.
 
-6. **Non-thread-safe List in NativeEventConsumerBackend**: `List<IAsyncDisposable> _subscriptions` is only written in StartAsync and read in StopAsync. Race between late startup and early shutdown is possible but unlikely in practice.
+---
+
+## Work Tracking
+
+This section tracks active development work on items from the quirks/bugs lists above.
+
+### Completed
+
+- **GitHub Issue #328**: Production readiness for 100k NPC agents
+  - Fixed channel pool exhaustion with configurable limits (`MaxTotalChannels`, `MaxConcurrentChannelCreation`)
+  - Fixed poison message infinite loop with retry counting and dead-lettering
+  - Fixed retry buffer crash thresholds (500k messages, 10 minute age, 80% backpressure)
+  - Fixed silent deserialization failures with error event publishing
+  - Fixed T23 async void timer callback violation
+  - Fixed T24 blocking on async (ReturnChannelAsync)
+  - Fixed T26 sentinel values (nullable TapId)
+  - Added message batching support for high-throughput scenarios
+  - Fixed connection recovery race condition (TOCTOU)
+  - Improved handler exception logging with telemetry
+  - Added DLX queue size/TTL limits
+  - Fixed temp ServiceProvider disposal
+  - Fixed publisher confirms configuration (tracking enabled)
+  - **Audit fixes (2026-02-07)**:
+    - Fixed T7 violation: Added error event publishing (`TryPublishErrorAsync`) when poison messages are discarded
+    - Fixed T21 violation: Removed dead config `PublisherConfirmTimeoutSeconds` (RabbitMQ.Client 7.x manages timeout internally)
+    - Added unit tests for poison message discard scenario
+
+### Active
+
+No active work items.

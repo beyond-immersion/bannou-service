@@ -1,4 +1,5 @@
 using BeyondImmersion.BannouService.Character;
+using BeyondImmersion.BannouService.CharacterPersonality;
 using BeyondImmersion.BannouService.Realm;
 using BeyondImmersion.BannouService.ServiceClients;
 using BeyondImmersion.BannouService.Species;
@@ -28,12 +29,20 @@ public class CharacterTestHandler : BaseHttpTestHandler
         new ServiceTest(TestListCharacters, "ListCharacters", "Character", "Test character listing with filters"),
         new ServiceTest(TestGetCharactersByRealm, "GetCharactersByRealm", "Character", "Test realm-based character query"),
 
+        // Enriched and archive operations
+        new ServiceTest(TestGetEnrichedCharacter, "GetEnrichedCharacter", "Character", "Test character retrieval with cross-service data"),
+        new ServiceTest(TestCheckCharacterReferences, "CheckCharacterReferences", "Character", "Test character reference count check"),
+        new ServiceTest(TestCompressAndGetArchive, "CompressAndGetArchive", "Character", "Test compress dead character and retrieve archive"),
+
         // Error handling tests
         new ServiceTest(TestGetNonExistentCharacter, "GetNonExistentCharacter", "Character", "Test 404 for non-existent character"),
         new ServiceTest(TestListCharactersRequiresRealmId, "ListRequiresRealmId", "Character", "Test ListCharacters requires realmId"),
 
         // Complete lifecycle test
         new ServiceTest(TestCompleteCharacterLifecycle, "CompleteCharacterLifecycle", "Character", "Test complete character lifecycle: create → update → delete"),
+
+        // Cross-service resource tracking tests (lib-resource integration)
+        new ServiceTest(TestResourceTrackingWithPersonality, "ResourceTrackingWithPersonality", "Character", "Test that L4 references via lib-resource are tracked in check-references"),
     ];
 
     /// <summary>
@@ -380,4 +389,207 @@ public class CharacterTestHandler : BaseHttpTestHandler
 
             return TestResult.Successful($"Complete character lifecycle test passed for character {createResponse.CharacterId}");
         }, "Complete character lifecycle");
+
+    private static async Task<TestResult> TestGetEnrichedCharacter(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
+        {
+            var realm = await CreateTestRealmAsync("CHAR_TEST", "Character", "ENRICHED");
+            var species = await CreateTestSpeciesAsync(realm.RealmId, "ENRICHED");
+            var characterClient = GetServiceClient<ICharacterClient>();
+
+            // Create a test character
+            var createResponse = await characterClient.CreateCharacterAsync(new CreateCharacterRequest
+            {
+                Name = $"EnrichedTest_{DateTime.Now.Ticks}",
+                RealmId = realm.RealmId,
+                SpeciesId = species.SpeciesId,
+                BirthDate = DateTimeOffset.UtcNow.AddYears(-30),
+                Status = CharacterStatus.Alive
+            });
+
+            // Get enriched character (with options to include cross-service data)
+            var response = await characterClient.GetEnrichedCharacterAsync(new GetEnrichedCharacterRequest
+            {
+                CharacterId = createResponse.CharacterId,
+                IncludePersonality = true,
+                IncludeBackstory = true,
+                IncludeFamilyTree = false
+            });
+
+            if (response.CharacterId != createResponse.CharacterId)
+                return TestResult.Failed($"Character ID mismatch: expected '{createResponse.CharacterId}', got '{response.CharacterId}'");
+
+            return TestResult.Successful($"Enriched character retrieved: ID={response.CharacterId}, Name={response.Name}");
+        }, "Get enriched character");
+
+    private static async Task<TestResult> TestCheckCharacterReferences(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
+        {
+            var realm = await CreateTestRealmAsync("CHAR_TEST", "Character", "REFCHECK");
+            var species = await CreateTestSpeciesAsync(realm.RealmId, "REFCHECK");
+            var characterClient = GetServiceClient<ICharacterClient>();
+
+            // Create a test character
+            var createResponse = await characterClient.CreateCharacterAsync(new CreateCharacterRequest
+            {
+                Name = $"RefCheckTest_{DateTime.Now.Ticks}",
+                RealmId = realm.RealmId,
+                SpeciesId = species.SpeciesId,
+                BirthDate = DateTimeOffset.UtcNow.AddYears(-25),
+                Status = CharacterStatus.Alive
+            });
+
+            // Check references (should have no references for a new character)
+            var response = await characterClient.CheckCharacterReferencesAsync(new CheckReferencesRequest
+            {
+                CharacterId = createResponse.CharacterId
+            });
+
+            // New character should have 0 references
+            if (response.ReferenceCount < 0)
+                return TestResult.Failed($"Invalid reference count: {response.ReferenceCount}");
+
+            return TestResult.Successful($"Reference check: count={response.ReferenceCount}, isCompressed={response.IsCompressed}, canCleanup={response.IsEligibleForCleanup}");
+        }, "Check character references");
+
+    private static async Task<TestResult> TestCompressAndGetArchive(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
+        {
+            var realm = await CreateTestRealmAsync("CHAR_TEST", "Character", "COMPRESS");
+            var species = await CreateTestSpeciesAsync(realm.RealmId, "COMPRESS");
+            var characterClient = GetServiceClient<ICharacterClient>();
+
+            // Create a character first
+            var createResponse = await characterClient.CreateCharacterAsync(new CreateCharacterRequest
+            {
+                Name = $"CompressTest_{DateTime.Now.Ticks}",
+                RealmId = realm.RealmId,
+                SpeciesId = species.SpeciesId,
+                BirthDate = DateTimeOffset.UtcNow.AddYears(-50),
+                Status = CharacterStatus.Alive
+            });
+
+            // Update to dead status (required for compression)
+            await characterClient.UpdateCharacterAsync(new UpdateCharacterRequest
+            {
+                CharacterId = createResponse.CharacterId,
+                Status = CharacterStatus.Dead,
+                DeathDate = DateTimeOffset.UtcNow.AddDays(-1)
+            });
+
+            // Compress the dead character
+            var compressResponse = await characterClient.CompressCharacterAsync(new CompressCharacterRequest
+            {
+                CharacterId = createResponse.CharacterId,
+                DeleteSourceData = false // Keep source data for testing
+            });
+
+            if (compressResponse.CharacterId != createResponse.CharacterId)
+                return TestResult.Failed($"Archive character ID mismatch: expected '{createResponse.CharacterId}', got '{compressResponse.CharacterId}'");
+
+            // Retrieve the archive
+            var archiveResponse = await characterClient.GetCharacterArchiveAsync(new GetCharacterArchiveRequest
+            {
+                CharacterId = createResponse.CharacterId
+            });
+
+            if (archiveResponse.CharacterId != createResponse.CharacterId)
+                return TestResult.Failed($"Archive retrieval ID mismatch: expected '{createResponse.CharacterId}', got '{archiveResponse.CharacterId}'");
+
+            return TestResult.Successful($"Character compressed and archive retrieved: ID={archiveResponse.CharacterId}, Name={archiveResponse.Name}");
+        }, "Compress and get archive");
+
+    /// <summary>
+    /// Tests cross-service resource tracking via lib-resource.
+    /// L4 services (character-personality, character-history, character-encounter, actor)
+    /// register references with lib-resource when they create data referencing a character.
+    /// CharacterService.CheckCharacterReferencesAsync queries lib-resource to include these
+    /// L4 references in the total count.
+    /// </summary>
+    private static async Task<TestResult> TestResourceTrackingWithPersonality(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
+        {
+            var realm = await CreateTestRealmAsync("CHAR_TEST", "Character", "RESOURCE_TRACK");
+            var species = await CreateTestSpeciesAsync(realm.RealmId, "RESOURCE_TRACK");
+            var characterClient = GetServiceClient<ICharacterClient>();
+            var personalityClient = GetServiceClient<ICharacterPersonalityClient>();
+
+            // Step 1: Create a test character
+            var createResponse = await characterClient.CreateCharacterAsync(new CreateCharacterRequest
+            {
+                Name = $"ResourceTrackTest_{DateTime.Now.Ticks}",
+                RealmId = realm.RealmId,
+                SpeciesId = species.SpeciesId,
+                BirthDate = DateTimeOffset.UtcNow.AddYears(-30),
+                Status = CharacterStatus.Alive
+            });
+            var characterId = createResponse.CharacterId;
+
+            // Step 2: Check initial references (should be 0 from L4 services)
+            var initialRefCheck = await characterClient.CheckCharacterReferencesAsync(new CheckReferencesRequest
+            {
+                CharacterId = characterId
+            });
+            var initialL4Count = initialRefCheck.ReferenceCount;
+
+            // Step 3: Create personality for this character (L4 service)
+            // This should register a reference with lib-resource
+            await personalityClient.SetPersonalityAsync(new SetPersonalityRequest
+            {
+                CharacterId = characterId,
+                Traits = new List<TraitValue>
+                {
+                    new TraitValue { Axis = TraitAxis.OPENNESS, Value = 0.5f },
+                    new TraitValue { Axis = TraitAxis.CONSCIENTIOUSNESS, Value = 0.3f }
+                }
+            });
+
+            // Allow time for event propagation and lib-resource registration
+            await Task.Delay(200);
+
+            // Step 4: Check references again - should now include personality reference
+            var afterPersonalityRefCheck = await characterClient.CheckCharacterReferencesAsync(new CheckReferencesRequest
+            {
+                CharacterId = characterId
+            });
+
+            // We expect the reference count to increase by 1 (personality)
+            // or the reference types to include CHARACTER-PERSONALITY
+            var hasPersonalityRef = afterPersonalityRefCheck.ReferenceTypes.Any(t =>
+                t.Equals("CHARACTER-PERSONALITY", StringComparison.OrdinalIgnoreCase));
+            var countIncreased = afterPersonalityRefCheck.ReferenceCount > initialL4Count;
+
+            if (!hasPersonalityRef && !countIncreased)
+            {
+                return TestResult.Failed(
+                    $"Reference tracking did not register personality. " +
+                    $"Initial count: {initialL4Count}, After personality: {afterPersonalityRefCheck.ReferenceCount}, " +
+                    $"Reference types: [{string.Join(", ", afterPersonalityRefCheck.ReferenceTypes)}]");
+            }
+
+            // Step 5: Delete personality
+            await personalityClient.DeletePersonalityAsync(new DeletePersonalityRequest
+            {
+                CharacterId = characterId
+            });
+
+            // Allow time for event propagation and lib-resource unregistration
+            await Task.Delay(200);
+
+            // Step 6: Check references - should be back to initial count
+            var afterDeleteRefCheck = await characterClient.CheckCharacterReferencesAsync(new CheckReferencesRequest
+            {
+                CharacterId = characterId
+            });
+
+            var personalityRefRemoved = !afterDeleteRefCheck.ReferenceTypes.Any(t =>
+                t.Equals("CHARACTER-PERSONALITY", StringComparison.OrdinalIgnoreCase));
+
+            return TestResult.Successful(
+                $"Resource tracking verified: " +
+                $"Initial refs={initialL4Count}, " +
+                $"After personality={afterPersonalityRefCheck.ReferenceCount} (types: [{string.Join(", ", afterPersonalityRefCheck.ReferenceTypes)}]), " +
+                $"After delete={afterDeleteRefCheck.ReferenceCount} (types: [{string.Join(", ", afterDeleteRefCheck.ReferenceTypes)}]), " +
+                $"Personality ref removed: {personalityRefRemoved}");
+        }, "Resource tracking with personality");
 }

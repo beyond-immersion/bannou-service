@@ -10,9 +10,13 @@ info:
     **POST-Only API Pattern**: All endpoints use POST with request bodies for
     consistency with WebSocket routing architecture.
 
-    **Schema Rules**: AI agents MUST review docs/reference/SCHEMA-RULES.md before
-    modifying this schema. Optional reference types require `nullable: true`.
+    **SCHEMA MODIFICATION GATE**: STOP. Before modifying this schema, you MUST:
+    1. Read docs/reference/SCHEMA-RULES.md
+    2. State which section applies to your change
+    3. Only then proceed with edits
+    Edits without stating the applicable rule are FORBIDDEN.
   version: 1.0.0
+x-service-layer: Infrastructure
 servers:
 - url: http://localhost:5012
   description: Bannou service endpoint
@@ -67,8 +71,9 @@ paths:
         : \"string\",\n                    \"format\": \"duration\",\n                    \"nullable\": true,\n          \
         \          \"description\": \"Message expiration time (ISO 8601 duration format)\"\n                },\n         \
         \       \"headers\": {\n                    \"type\": \"object\",\n                    \"additionalProperties\": true,\n\
-        \                    \"nullable\": true,\n                    \"description\": \"Custom headers to include with the
-        message\"\n                }\n            }\n        }\n    }\n}"
+        \                    \"nullable\": true,\n                    \"description\": \"Caller-provided custom headers included
+        with the message. No Bannou plugin reads specific keys from this field by convention.\"\n                }\n     \
+        \       }\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/PublishEventResponse\"\
         ,\n    \"$defs\": {\n        \"PublishEventResponse\": {\n            \"description\": \"Response confirming event
         publication with message identifier\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n\
@@ -115,14 +120,14 @@ paths:
         broker restarts\"\n                },\n                \"exclusive\": {\n                    \"type\": \"boolean\"\
         ,\n                    \"default\": false,\n                    \"description\": \"Whether only this connection can
         consume from the queue\"\n                },\n                \"autoAck\": {\n                    \"type\": \"boolean\"\
-        ,\n                    \"default\": false,\n                    \"description\": \"Whether messages should be auto-acknowledged\"\
-        \n                },\n                \"prefetchCount\": {\n                    \"type\": \"integer\",\n         \
-        \           \"default\": 10,\n                    \"description\": \"Number of messages to prefetch\"\n          \
-        \      },\n                \"useDeadLetter\": {\n                    \"type\": \"boolean\",\n                    \"\
-        default\": true,\n                    \"description\": \"Whether to use dead letter exchange for failed messages\"\
-        \n                },\n                \"consumerGroup\": {\n                    \"type\": \"string\",\n          \
-        \          \"nullable\": true,\n                    \"description\": \"Name of the consumer group for load balancing\"\
-        \n                }\n            }\n        }\n    }\n}"
+        ,\n                    \"nullable\": true,\n                    \"description\": \"Whether messages should be auto-acknowledged
+        (null uses DefaultAutoAck config)\"\n                },\n                \"prefetchCount\": {\n                  \
+        \  \"type\": \"integer\",\n                    \"default\": 10,\n                    \"description\": \"Number of
+        messages to prefetch\"\n                },\n                \"useDeadLetter\": {\n                    \"type\": \"\
+        boolean\",\n                    \"default\": true,\n                    \"description\": \"Whether to use dead letter
+        exchange for failed messages\"\n                },\n                \"consumerGroup\": {\n                    \"type\"\
+        : \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Name of the consumer
+        group for load balancing\"\n                }\n            }\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/CreateSubscriptionResponse\"\
         ,\n    \"$defs\": {\n        \"CreateSubscriptionResponse\": {\n            \"description\": \"Response containing
         the created subscription details\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n\
@@ -272,7 +277,9 @@ components:
           type: object
           additionalProperties: true
           nullable: true
-          description: Custom headers to include with the message
+          description: >-
+            Caller-provided custom headers included with the message.
+            No Bannou plugin reads specific keys from this field by convention.
     PublishEventResponse:
       description: Response confirming event publication with message identifier
       type: object
@@ -318,8 +325,8 @@ components:
           description: Whether only this connection can consume from the queue
         autoAck:
           type: boolean
-          default: false
-          description: Whether messages should be auto-acknowledged
+          nullable: true
+          description: Whether messages should be auto-acknowledged (null uses DefaultAutoAck config)
         prefetchCount:
           type: integer
           default: 10

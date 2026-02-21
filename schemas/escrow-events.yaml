@@ -12,8 +12,11 @@ info:
     - Timeout events: escrow.expired, escrow.cancelled
     - Validation events: escrow.validation.failed, escrow.validation.reaffirmed
 
-    **Schema Rules**: AI agents MUST review docs/reference/SCHEMA-RULES.md before
-    modifying this schema. Optional reference types require `nullable: true`.
+    **SCHEMA MODIFICATION GATE**: STOP. Before modifying this schema, you MUST:
+    1. Read docs/reference/SCHEMA-RULES.md
+    2. State which section applies to your change
+    3. Only then proceed with edits
+    Edits without stating the applicable rule are FORBIDDEN.
   version: 1.0.0
   x-event-subscriptions:
     # Escrow listens to contract fulfillment/failure events
@@ -44,9 +47,15 @@ info:
       description: Published when finalization begins (contract execution)
 
     # Completion events
+    - topic: escrow.releasing
+      event: EscrowReleasingEvent
+      description: Published when escrow transitions to Releasing state, awaiting confirmations
     - topic: escrow.released
       event: EscrowReleasedEvent
       description: Published when assets are released to recipients
+    - topic: escrow.refunding
+      event: EscrowRefundingEvent
+      description: Published when escrow transitions to Refunding state, awaiting confirmations
     - topic: escrow.refunded
       event: EscrowRefundedEvent
       description: Published when assets are refunded to depositors
@@ -326,6 +335,131 @@ components:
     # =========================================================================
     # Completion Events
     # =========================================================================
+
+    EscrowReleasingEvent:
+      type: object
+      description: |
+        Event published when escrow transitions to Releasing state.
+        Downstream services (currency, inventory) subscribe to execute actual asset transfers.
+        Parties may also need to confirm receipt depending on ReleaseMode.
+      additionalProperties: false
+      required:
+      - eventId
+      - timestamp
+      - escrowId
+      - releaseMode
+      - allocations
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique event identifier
+        timestamp:
+          type: string
+          format: date-time
+          description: When the release was initiated
+        escrowId:
+          type: string
+          format: uuid
+          description: The escrow transitioning to Releasing
+        releaseMode:
+          $ref: 'escrow-api.yaml#/components/schemas/ReleaseMode'
+          description: The confirmation mode for this release
+        allocations:
+          type: array
+          items:
+            $ref: '#/components/schemas/ReleaseAllocationWithConfirmation'
+          description: Per-party allocations with confirmation details
+        confirmationDeadline:
+          type: string
+          format: date-time
+          nullable: true
+          description: Deadline for party confirmations (if applicable)
+        boundContractId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Associated contract ID if this is a contract-driven release
+
+    ReleaseAllocationWithConfirmation:
+      type: object
+      description: Release allocation details with confirmation information
+      additionalProperties: false
+      required:
+      - recipientPartyId
+      - recipientPartyType
+      - assets
+      properties:
+        recipientPartyId:
+          type: string
+          format: uuid
+          description: Party receiving these assets
+        recipientPartyType:
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
+          description: Type of the recipient party
+        assets:
+          type: array
+          items:
+            $ref: 'escrow-api.yaml#/components/schemas/EscrowAsset'
+          description: Assets being released to this party
+        destinationWalletId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Target wallet for currency assets
+        destinationContainerId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Target container for item assets
+        releaseToken:
+          type: string
+          nullable: true
+          description: Token for this party to confirm release
+        confirmationShortcut:
+          type: object
+          additionalProperties: true
+          nullable: true
+          description: Prebound API shortcut for client confirmation (pushed via WebSocket)
+
+    EscrowRefundingEvent:
+      type: object
+      description: |
+        Event published when escrow transitions to Refunding state.
+        Downstream services subscribe to execute actual refund transfers.
+        Parties may also need to confirm receipt depending on RefundMode.
+      additionalProperties: false
+      required:
+      - eventId
+      - timestamp
+      - escrowId
+      - refundMode
+      - deposits
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique event identifier
+        timestamp:
+          type: string
+          format: date-time
+          description: When the refund was initiated
+        escrowId:
+          type: string
+          format: uuid
+          description: The escrow transitioning to Refunding
+        refundMode:
+          $ref: 'escrow-api.yaml#/components/schemas/RefundMode'
+          description: The confirmation mode for this refund
+        deposits:
+          type: array
+          items:
+            $ref: 'escrow-api.yaml#/components/schemas/EscrowDeposit'
+          description: Deposits being refunded
+        reason:
+          type: string
+          nullable: true
+          description: Reason for refund
 
     EscrowReleasedEvent:
       type: object

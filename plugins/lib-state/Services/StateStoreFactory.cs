@@ -1,5 +1,7 @@
 #nullable enable
 
+using BeyondImmersion.BannouService.Events;
+using BeyondImmersion.BannouService.Messaging;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State.Data;
 using Microsoft.EntityFrameworkCore;
@@ -21,8 +23,25 @@ public class StateStoreFactoryConfiguration
     /// <summary>
     /// Use in-memory storage for all stores. Data is NOT persisted.
     /// ONLY use for testing or minimal infrastructure scenarios.
+    /// Mutually exclusive with UseSqlite.
     /// </summary>
     public bool UseInMemory { get; set; }
+
+    /// <summary>
+    /// Use SQLite file storage instead of MySQL for SQL-backed stores.
+    /// Redis-configured stores use in-memory when this is enabled.
+    /// Data IS persisted to SQLite files at SqliteDataPath.
+    /// Mutually exclusive with UseInMemory.
+    /// </summary>
+    public bool UseSqlite { get; set; }
+
+    /// <summary>
+    /// Directory path for SQLite database files.
+    /// Each MySQL-configured store gets its own .db file in this directory.
+    /// In Docker containers the app runs from /app, so the effective default
+    /// path is /app/data/state — mount a volume there for persistence and backup access.
+    /// </summary>
+    public string? SqliteDataPath { get; set; } = "./data/state";
 
     /// <summary>
     /// Redis connection string.
@@ -45,10 +64,49 @@ public class StateStoreFactoryConfiguration
     public int ConnectionTimeoutSeconds { get; set; } = 60;
 
     /// <summary>
+    /// Minimum delay in milliseconds between MySQL connection retry attempts.
+    /// </summary>
+    public int MinRetryDelayMs { get; set; } = 1000;
+
+    /// <summary>
+    /// Maximum entries to load when LINQ expression cannot be translated to SQL
+    /// and falls back to in-memory filtering. Queries exceeding this limit will throw.
+    /// Use JsonQueryAsync with explicit conditions for large datasets.
+    /// </summary>
+    public int InMemoryFallbackLimit { get; set; } = 10000;
+
+    /// <summary>
+    /// Enable publishing error events when state store operations fail.
+    /// When true, infrastructure failures (Redis connection, MySQL errors) publish
+    /// ServiceErrorEvents for observability. Events are deduplicated within the
+    /// configured window to prevent storms during infrastructure failures.
+    /// </summary>
+    public bool EnableErrorEventPublishing { get; set; } = true;
+
+    /// <summary>
+    /// Time window in seconds for deduplicating identical error events.
+    /// Events with the same store+operation+errorType are published at most once per window.
+    /// </summary>
+    public int ErrorEventDeduplicationWindowSeconds { get; set; } = 60;
+
+    /// <summary>
     /// Store configurations by name.
     /// </summary>
     public Dictionary<string, StoreConfiguration> Stores { get; set; } = new();
 }
+
+/// <summary>
+/// Callback delegate for stores to publish infrastructure errors with deduplication.
+/// </summary>
+/// <param name="storeName">Name of the store where error occurred.</param>
+/// <param name="operation">Operation that failed (e.g., "GetAsync", "SaveAsync").</param>
+/// <param name="exception">The exception that occurred.</param>
+/// <param name="key">Optional key being accessed when error occurred.</param>
+public delegate Task StateErrorPublisherAsync(
+    string storeName,
+    string operation,
+    Exception exception,
+    string? key = null);
 
 /// <summary>
 /// Factory for creating typed state stores.
@@ -59,27 +117,115 @@ public sealed class StateStoreFactory : IStateStoreFactory, IAsyncDisposable
     private readonly StateStoreFactoryConfiguration _configuration;
     private readonly ILoggerFactory _loggerFactory;
     private readonly ILogger<StateStoreFactory> _logger;
+    private readonly ITelemetryProvider _telemetryProvider;
+    private readonly IMessageBus? _messageBus;
 
     private ConnectionMultiplexer? _redis;
     private DbContextOptions<StateDbContext>? _mysqlOptions;
+    private DbContextOptions<StateDbContext>? _sqliteOptions;
     private readonly SemaphoreSlim _initLock = new(1, 1);
-    private bool _initialized;
+    // IMPLEMENTATION TENETS: volatile required for double-checked locking pattern visibility across CPU cores
+    private volatile bool _initialized;
+
+    // Singleton RedisOperations instance (shares connection with state stores)
+    // IMPLEMENTATION TENETS: Lazy<T> with ExecutionAndPublication ensures thread-safe single initialization
+    private Lazy<RedisOperations>? _lazyRedisOperations;
 
     // Cache for created store instances
     private readonly ConcurrentDictionary<string, object> _storeCache = new();
+
+    // Cache for error event deduplication: key = "storeName:operation:errorType", value = last publish time
+    // IMPLEMENTATION TENETS: ConcurrentDictionary for multi-instance safety
+    private readonly ConcurrentDictionary<string, DateTimeOffset> _errorDeduplicationCache = new();
 
     /// <summary>
     /// Creates a new StateStoreFactory.
     /// </summary>
     /// <param name="configuration">Factory configuration.</param>
     /// <param name="loggerFactory">Logger factory.</param>
+    /// <param name="telemetryProvider">Telemetry provider for instrumentation (NullTelemetryProvider when telemetry disabled).</param>
+    /// <param name="messageBus">Optional message bus for error event publishing. When null, error events are not published.</param>
     public StateStoreFactory(
         StateStoreFactoryConfiguration configuration,
-        ILoggerFactory loggerFactory)
+        ILoggerFactory loggerFactory,
+        ITelemetryProvider telemetryProvider,
+        IMessageBus? messageBus = null)
     {
         _configuration = configuration;
         _loggerFactory = loggerFactory;
         _logger = loggerFactory.CreateLogger<StateStoreFactory>();
+        _telemetryProvider = telemetryProvider;
+        _messageBus = messageBus;
+
+        if (_telemetryProvider.TracingEnabled || _telemetryProvider.MetricsEnabled)
+        {
+            _logger.LogDebug(
+                "StateStoreFactory created with telemetry instrumentation: tracing={TracingEnabled}, metrics={MetricsEnabled}",
+                _telemetryProvider.TracingEnabled, _telemetryProvider.MetricsEnabled);
+        }
+
+        if (_messageBus != null && _configuration.EnableErrorEventPublishing)
+        {
+            _logger.LogDebug(
+                "StateStoreFactory error event publishing enabled (dedup window: {WindowSeconds}s)",
+                _configuration.ErrorEventDeduplicationWindowSeconds);
+        }
+    }
+
+    /// <summary>
+    /// Creates an error publisher callback for a specific store and backend.
+    /// The callback handles deduplication to prevent event storms during infrastructure failures.
+    /// </summary>
+    /// <param name="storeName">Name of the store.</param>
+    /// <param name="backend">Backend type name for the dependency field.</param>
+    /// <returns>Callback that stores can invoke to publish errors, or null if publishing is disabled.</returns>
+    private StateErrorPublisherAsync? CreateErrorPublisher(string storeName, string backend)
+    {
+        // Return null if publishing is disabled or no message bus available
+        if (!_configuration.EnableErrorEventPublishing || _messageBus == null)
+        {
+            return null;
+        }
+
+        return async (store, operation, exception, key) =>
+        {
+            // Build dedup key: storeName + operation + errorType
+            var dedupKey = $"{store}:{operation}:{exception.GetType().Name}";
+            var windowSeconds = _configuration.ErrorEventDeduplicationWindowSeconds;
+            var now = DateTimeOffset.UtcNow;
+
+            // Check dedup cache - skip if we published this error recently
+            if (_errorDeduplicationCache.TryGetValue(dedupKey, out var lastPublished))
+            {
+                if (now - lastPublished < TimeSpan.FromSeconds(windowSeconds))
+                {
+                    _logger.LogDebug(
+                        "Skipping duplicate state error event for {DedupKey} (last published {Seconds:F1}s ago)",
+                        dedupKey, (now - lastPublished).TotalSeconds);
+                    return;
+                }
+            }
+
+            // Update cache before publishing to prevent races from publishing twice
+            _errorDeduplicationCache[dedupKey] = now;
+
+            // Publish error event with available context
+            // Note: We don't have HTTP endpoint or correlation context at this layer
+            await _messageBus.TryPublishErrorAsync(
+                serviceName: "state",
+                operation: operation,
+                errorType: exception.GetType().Name,
+                message: exception.Message,
+                dependency: backend,
+                endpoint: null,
+                severity: ServiceErrorEventSeverity.Error,
+                details: new { StoreName = store, Key = key, Backend = backend },
+                stack: exception.StackTrace);
+
+            _logger.LogDebug(
+                "Published state error event: {Operation} failed for store {Store} ({Backend})",
+                operation, store, backend);
+        };
     }
 
     private async Task EnsureInitializedAsync()
@@ -100,6 +246,35 @@ public sealed class StateStoreFactory : IStateStoreFactory, IAsyncDisposable
                 return;
             }
 
+            // SQLite mode: MySQL stores use SQLite, Redis stores use InMemory
+            if (_configuration.UseSqlite)
+            {
+                var dataPath = _configuration.SqliteDataPath ?? "./data/state";
+                Directory.CreateDirectory(dataPath);
+
+                var dbPath = Path.Combine(dataPath, "state.db");
+                var connectionString = $"Data Source={dbPath};Mode=ReadWriteCreate;Cache=Shared;";
+
+                _logger.LogInformation(
+                    "State store factory using SQLITE mode. Data will be persisted to {Path}",
+                    dbPath);
+
+                var optionsBuilder = new DbContextOptionsBuilder<StateDbContext>();
+                optionsBuilder.UseSqlite(connectionString);
+                _sqliteOptions = optionsBuilder.Options;
+
+                // Create schema if needed
+                await using var testContext = new StateDbContext(_sqliteOptions);
+                await testContext.Database.EnsureCreatedAsync();
+
+                // Enable WAL journal mode for better concurrent read performance
+                await testContext.Database.ExecuteSqlRawAsync("PRAGMA journal_mode=WAL;");
+
+                _logger.LogInformation("SQLite database initialized successfully at {Path}", dbPath);
+                _initialized = true;
+                return;
+            }
+
             // Initialize Redis if any store uses it
             var hasRedisStore = _configuration.Stores.Values.Any(s => s.Backend == StateBackend.Redis);
             if (hasRedisStore && !string.IsNullOrEmpty(_configuration.RedisConnectionString))
@@ -107,6 +282,13 @@ public sealed class StateStoreFactory : IStateStoreFactory, IAsyncDisposable
                 _logger.LogDebug("Connecting to Redis: {ConnectionString}",
                     _configuration.RedisConnectionString.Split(',')[0]); // Log only host
                 _redis = await ConnectionMultiplexer.ConnectAsync(_configuration.RedisConnectionString);
+
+                // Initialize thread-safe lazy RedisOperations (uses the established connection)
+                var redis = _redis; // Capture for closure
+                var loggerFactory = _loggerFactory;
+                _lazyRedisOperations = new Lazy<RedisOperations>(
+                    () => new RedisOperations(redis.GetDatabase(), loggerFactory.CreateLogger<RedisOperations>()),
+                    LazyThreadSafetyMode.ExecutionAndPublication);
 
                 // Auto-create search indexes for stores with EnableSearch=true
                 await CreateSearchIndexesAsync();
@@ -118,7 +300,7 @@ public sealed class StateStoreFactory : IStateStoreFactory, IAsyncDisposable
             {
                 var maxRetries = _configuration.ConnectionRetryCount;
                 var totalTimeoutSeconds = _configuration.ConnectionTimeoutSeconds;
-                var retryDelayMs = Math.Max(1000, (totalTimeoutSeconds * 1000) / Math.Max(1, maxRetries));
+                var retryDelayMs = Math.Max(_configuration.MinRetryDelayMs, (totalTimeoutSeconds * 1000) / Math.Max(1, maxRetries));
 
                 _logger.LogDebug(
                     "Initializing MySQL connection (timeout: {TotalTimeout}s, retries: {MaxRetries})",
@@ -201,6 +383,17 @@ public sealed class StateStoreFactory : IStateStoreFactory, IAsyncDisposable
     }
 
     /// <inheritdoc/>
+    /// <remarks>
+    /// <para>
+    /// INTENTIONAL QUIRK: This synchronous method may perform sync-over-async initialization
+    /// if called before <see cref="InitializeAsync"/> completes. A warning is logged when this occurs.
+    /// </para>
+    /// <para>
+    /// This is safe in ASP.NET Core's DI context (no SynchronizationContext that could cause deadlock)
+    /// but callers should prefer <see cref="GetStoreAsync{TValue}"/> or ensure InitializeAsync() is
+    /// called during application startup to avoid the sync-over-async path entirely.
+    /// </para>
+    /// </remarks>
     public IStateStore<TValue> GetStore<TValue>(string storeName)
         where TValue : class
     {
@@ -232,63 +425,148 @@ public sealed class StateStoreFactory : IStateStoreFactory, IAsyncDisposable
 
         return (IStateStore<TValue>)_storeCache.GetOrAdd(cacheKey, _ =>
         {
+            IStateStore<TValue> store;
+            string backend;
+
             // Use in-memory store when configured (for testing/minimal infrastructure)
             if (_configuration.UseInMemory)
             {
+                backend = "memory";
+                var errorPublisher = CreateErrorPublisher(storeName, backend);
                 var memoryLogger = _loggerFactory.CreateLogger<InMemoryStateStore<TValue>>();
-                return new InMemoryStateStore<TValue>(storeName, memoryLogger);
+                store = new InMemoryStateStore<TValue>(storeName, memoryLogger, errorPublisher);
             }
-
-            var storeConfig = _configuration.Stores[storeName];
-
-            if (storeConfig.Backend == StateBackend.Redis)
+            else if (_configuration.UseSqlite)
             {
-                if (_redis == null)
+                // SQLite mode: MySQL-configured stores use SQLite, Redis-configured stores use InMemory
+                var storeConfig = _configuration.Stores[storeName];
+
+                if (storeConfig.Backend == StateBackend.MySql)
                 {
-                    throw new InvalidOperationException("Redis connection not available");
+                    if (_sqliteOptions == null)
+                    {
+                        throw new InvalidOperationException("SQLite connection not available");
+                    }
+
+                    backend = "sqlite";
+                    var errorPublisher = CreateErrorPublisher(storeName, backend);
+                    var sqliteLogger = _loggerFactory.CreateLogger<SqliteStateStore<TValue>>();
+                    store = new SqliteStateStore<TValue>(
+                        _sqliteOptions,
+                        storeConfig.TableName ?? storeName,
+                        _configuration.InMemoryFallbackLimit,
+                        sqliteLogger,
+                        errorPublisher);
                 }
-
-                var keyPrefix = storeConfig.KeyPrefix ?? storeName;
-                var defaultTtl = storeConfig.DefaultTtlSeconds.HasValue
-                    ? TimeSpan.FromSeconds(storeConfig.DefaultTtlSeconds.Value)
-                    : (TimeSpan?)null;
-
-                // Use searchable store if search is enabled
-                if (storeConfig.EnableSearch)
+                else
                 {
-                    var searchLogger = _loggerFactory.CreateLogger<RedisSearchStateStore<TValue>>();
-                    return new RedisSearchStateStore<TValue>(
-                        _redis.GetDatabase(),
-                        keyPrefix,
-                        defaultTtl,
-                        searchLogger);
+                    // Redis and Memory stores use InMemory when in SQLite mode
+                    backend = "memory";
+                    var errorPublisher = CreateErrorPublisher(storeName, backend);
+                    var memoryLogger = _loggerFactory.CreateLogger<InMemoryStateStore<TValue>>();
+                    store = new InMemoryStateStore<TValue>(storeName, memoryLogger, errorPublisher);
                 }
-
-                var redisLogger = _loggerFactory.CreateLogger<RedisStateStore<TValue>>();
-                return new RedisStateStore<TValue>(
-                    _redis.GetDatabase(),
-                    keyPrefix,
-                    defaultTtl,
-                    redisLogger);
             }
-            else if (storeConfig.Backend == StateBackend.Memory)
+            else
             {
-                var memoryLogger = _loggerFactory.CreateLogger<InMemoryStateStore<TValue>>();
-                return new InMemoryStateStore<TValue>(storeName, memoryLogger);
-            }
-            else // MySql
-            {
-                if (_mysqlOptions == null)
-                {
-                    throw new InvalidOperationException("MySQL connection not available");
-                }
+                var storeConfig = _configuration.Stores[storeName];
 
-                var mysqlLogger = _loggerFactory.CreateLogger<MySqlStateStore<TValue>>();
-                return new MySqlStateStore<TValue>(
-                    _mysqlOptions,
-                    storeConfig.TableName ?? storeName,
-                    mysqlLogger);
+                if (storeConfig.Backend == StateBackend.Redis)
+                {
+                    if (_redis == null)
+                    {
+                        throw new InvalidOperationException("Redis connection not available");
+                    }
+
+                    backend = "redis";
+                    var errorPublisher = CreateErrorPublisher(storeName, backend);
+                    var keyPrefix = storeConfig.KeyPrefix ?? storeName;
+                    var defaultTtl = storeConfig.DefaultTtlSeconds.HasValue
+                        ? TimeSpan.FromSeconds(storeConfig.DefaultTtlSeconds.Value)
+                        : (TimeSpan?)null;
+
+                    // Use searchable store if search is enabled
+                    if (storeConfig.EnableSearch)
+                    {
+                        var searchLogger = _loggerFactory.CreateLogger<RedisSearchStateStore<TValue>>();
+                        store = new RedisSearchStateStore<TValue>(
+                            _redis.GetDatabase(),
+                            keyPrefix,
+                            defaultTtl,
+                            searchLogger,
+                            errorPublisher);
+                    }
+                    else
+                    {
+                        var redisLogger = _loggerFactory.CreateLogger<RedisStateStore<TValue>>();
+                        store = new RedisStateStore<TValue>(
+                            _redis.GetDatabase(),
+                            keyPrefix,
+                            defaultTtl,
+                            redisLogger,
+                            errorPublisher);
+                    }
+                }
+                else if (storeConfig.Backend == StateBackend.Memory)
+                {
+                    backend = "memory";
+                    var errorPublisher = CreateErrorPublisher(storeName, backend);
+                    var memoryLogger = _loggerFactory.CreateLogger<InMemoryStateStore<TValue>>();
+                    store = new InMemoryStateStore<TValue>(storeName, memoryLogger, errorPublisher);
+                }
+                else // MySql
+                {
+                    if (_mysqlOptions == null)
+                    {
+                        throw new InvalidOperationException("MySQL connection not available");
+                    }
+
+                    backend = "mysql";
+                    var errorPublisher = CreateErrorPublisher(storeName, backend);
+                    var mysqlLogger = _loggerFactory.CreateLogger<MySqlStateStore<TValue>>();
+                    store = new MySqlStateStore<TValue>(
+                        _mysqlOptions,
+                        storeConfig.TableName ?? storeName,
+                        _configuration.InMemoryFallbackLimit,
+                        mysqlLogger,
+                        errorPublisher);
+                }
             }
+
+            // Wrap with telemetry instrumentation if available
+            // Order matters: check most specific interface first
+            // Redis chain: searchable > cacheable > base
+            // MySQL chain: json-queryable > queryable > base
+            if (_telemetryProvider != null)
+            {
+                if (store is ISearchableStateStore<TValue> searchableStore)
+                {
+                    // Searchable stores get the searchable wrapper which extends cacheable wrapper
+                    store = _telemetryProvider.WrapSearchableStateStore(searchableStore, storeName, backend);
+                }
+                else if (store is ICacheableStateStore<TValue> cacheableStore)
+                {
+                    // Cacheable stores (Redis, InMemory) get the cacheable wrapper
+                    store = _telemetryProvider.WrapCacheableStateStore(cacheableStore, storeName, backend);
+                }
+                else if (store is IJsonQueryableStateStore<TValue> jsonQueryableStore)
+                {
+                    // JSON queryable stores (MySQL, SQLite) get the JSON queryable wrapper
+                    store = _telemetryProvider.WrapJsonQueryableStateStore(jsonQueryableStore, storeName, backend);
+                }
+                else if (store is IQueryableStateStore<TValue> queryableStore)
+                {
+                    // Queryable stores get the queryable wrapper
+                    store = _telemetryProvider.WrapQueryableStateStore(queryableStore, storeName, backend);
+                }
+                else
+                {
+                    // Base stores get the base wrapper
+                    store = _telemetryProvider.WrapStateStore(store, storeName, backend);
+                }
+            }
+
+            return store;
         });
     }
 
@@ -366,6 +644,58 @@ public sealed class StateStoreFactory : IStateStoreFactory, IAsyncDisposable
     }
 
     /// <inheritdoc/>
+    public ICacheableStateStore<TValue> GetCacheableStore<TValue>(string storeName)
+        where TValue : class
+    {
+        if (!HasStore(storeName))
+        {
+            throw new InvalidOperationException($"Store '{storeName}' is not configured");
+        }
+
+        // Get the effective backend (respecting UseInMemory override)
+        var backend = GetBackendType(storeName);
+
+        if (backend == StateBackend.MySql || backend == StateBackend.Sqlite)
+        {
+            throw new InvalidOperationException(
+                $"Store '{storeName}' uses {backend} backend which does not support Set/Sorted Set operations. " +
+                "Use Redis or InMemory backend for cacheable stores.");
+        }
+
+        var store = GetStore<TValue>(storeName);
+        return (ICacheableStateStore<TValue>)store;
+    }
+
+    /// <inheritdoc/>
+    public async Task<ICacheableStateStore<TValue>> GetCacheableStoreAsync<TValue>(string storeName, CancellationToken cancellationToken = default)
+        where TValue : class
+    {
+        if (!HasStore(storeName))
+        {
+            throw new InvalidOperationException($"Store '{storeName}' is not configured");
+        }
+
+        // Ensure connections are initialized asynchronously
+        if (!_initialized)
+        {
+            await EnsureInitializedAsync();
+        }
+
+        // Get the effective backend (respecting UseInMemory/UseSqlite override)
+        var backend = GetBackendType(storeName);
+
+        if (backend == StateBackend.MySql || backend == StateBackend.Sqlite)
+        {
+            throw new InvalidOperationException(
+                $"Store '{storeName}' uses {backend} backend which does not support Set/Sorted Set operations. " +
+                "Use Redis or InMemory backend for cacheable stores.");
+        }
+
+        var store = GetStoreInternal<TValue>(storeName);
+        return (ICacheableStateStore<TValue>)store;
+    }
+
+    /// <inheritdoc/>
     public bool SupportsSearch(string storeName)
     {
 
@@ -398,6 +728,12 @@ public sealed class StateStoreFactory : IStateStoreFactory, IAsyncDisposable
             throw new InvalidOperationException($"Store '{storeName}' is not configured");
         }
 
+        // SQLite mode: MySQL-configured stores report as Sqlite, Redis stores report as Memory
+        if (_configuration.UseSqlite)
+        {
+            return config.Backend == StateBackend.MySql ? StateBackend.Sqlite : StateBackend.Memory;
+        }
+
         return config.Backend;
     }
 
@@ -413,6 +749,109 @@ public sealed class StateStoreFactory : IStateStoreFactory, IAsyncDisposable
         return _configuration.Stores
             .Where(kvp => kvp.Value.Backend == backend)
             .Select(kvp => kvp.Key);
+    }
+
+    /// <inheritdoc/>
+    public IRedisOperations? GetRedisOperations()
+    {
+        // Return null when using in-memory or SQLite mode (no Redis available)
+        if (_configuration.UseInMemory || _configuration.UseSqlite)
+        {
+            _logger.LogDebug("GetRedisOperations returning null - running in {Mode} mode",
+                _configuration.UseInMemory ? "InMemory" : "SQLite");
+            return null;
+        }
+
+        // Ensure connections are initialized
+        if (!_initialized)
+        {
+            _logger.LogWarning(
+                "GetRedisOperations called before InitializeAsync - performing sync-over-async initialization. " +
+                "Consider calling InitializeAsync() at startup.");
+            EnsureInitializedAsync().GetAwaiter().GetResult();
+        }
+
+        // Return null if Redis is not available (Lazy not created during init)
+        if (_lazyRedisOperations == null)
+        {
+            _logger.LogDebug("GetRedisOperations returning null - Redis connection not available");
+            return null;
+        }
+
+        // Thread-safe lazy initialization via Lazy<T>
+        return _lazyRedisOperations.Value;
+    }
+
+    /// <inheritdoc/>
+    public async Task<long?> GetKeyCountAsync(string storeName, CancellationToken cancellationToken = default)
+    {
+        if (!HasStore(storeName))
+        {
+            throw new InvalidOperationException($"Store '{storeName}' is not configured");
+        }
+
+        var backend = GetBackendType(storeName);
+
+        switch (backend)
+        {
+            case StateBackend.Memory:
+                // InMemory: O(1) count from static dictionary
+                return InMemoryStateStore<object>.GetKeyCountForStore(storeName);
+
+            case StateBackend.MySql:
+                // MySQL: Efficient COUNT(*) with indexed StoreName column
+                if (!_initialized)
+                {
+                    await EnsureInitializedAsync();
+                }
+
+                if (_mysqlOptions == null)
+                {
+                    _logger.LogWarning("MySQL not configured, cannot get key count for store '{StoreName}'", storeName);
+                    return null;
+                }
+
+                await using (var context = new StateDbContext(_mysqlOptions))
+                {
+                    var count = await context.StateEntries
+                        .Where(e => e.StoreName == storeName)
+                        .LongCountAsync(cancellationToken);
+                    return count;
+                }
+
+            case StateBackend.Sqlite:
+                // SQLite: Efficient COUNT(*) with indexed StoreName column (same as MySQL)
+                if (!_initialized)
+                {
+                    await EnsureInitializedAsync();
+                }
+
+                if (_sqliteOptions == null)
+                {
+                    _logger.LogWarning("SQLite not configured, cannot get key count for store '{StoreName}'", storeName);
+                    return null;
+                }
+
+                await using (var sqliteContext = new StateDbContext(_sqliteOptions))
+                {
+                    var sqliteCount = await sqliteContext.StateEntries
+                        .Where(e => e.StoreName == storeName)
+                        .LongCountAsync(cancellationToken);
+                    return sqliteCount;
+                }
+
+            case StateBackend.Redis:
+                // Redis: SCAN is O(N) on total database keys - too slow for large databases
+                // Return null to indicate count is not efficiently available
+                _logger.LogDebug(
+                    "Key count not available for Redis store '{StoreName}' - SCAN is O(N) on total keys",
+                    storeName);
+                return null;
+
+            default:
+                _logger.LogWarning("Unknown backend type {Backend} for store '{StoreName}'", backend, storeName);
+                return null;
+        }
     }
 
     /// <summary>
@@ -481,9 +920,10 @@ public sealed class StateStoreFactory : IStateStoreFactory, IAsyncDisposable
             _redis = null;
         }
 
-        // Note: _mysqlOptions doesn't need disposal - it's just configuration.
-        // Each MySqlStateStore creates and disposes its own DbContext per operation.
+        // Note: _mysqlOptions/_sqliteOptions don't need disposal - they're just configuration.
+        // Each MySqlStateStore/SqliteStateStore creates and disposes its own DbContext per operation.
         _mysqlOptions = null;
+        _sqliteOptions = null;
 
         _storeCache.Clear();
         _initLock.Dispose();

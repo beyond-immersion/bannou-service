@@ -1,0 +1,431 @@
+openapi: 3.0.0
+info:
+  title: Gardener Service Configuration
+  description: |
+    Configuration properties for the Gardener service (L4 GameFeatures).
+    Controls garden orchestration, scenario selection algorithm, scenario lifecycle,
+    bond features, deployment phase defaults, seed integration, and background workers.
+
+    **SCHEMA MODIFICATION GATE**: STOP. Before modifying this schema, you MUST:
+    1. Read docs/reference/SCHEMA-RULES.md
+    2. State which section applies to your change
+    3. Only then proceed with edits
+    Edits without stating the applicable rule are FORBIDDEN.
+  version: 1.0.0
+
+x-service-configuration:
+  properties:
+    # =========================================================================
+    # Garden Orchestration
+    # =========================================================================
+
+    GardenTickIntervalMs:
+      type: integer
+      env: GARDENER_GARDEN_TICK_INTERVAL_MS
+      minimum: 1000
+      maximum: 60000
+      default: 5000
+      description: Milliseconds between garden orchestrator evaluation cycles
+
+    MaxActivePoisPerGarden:
+      type: integer
+      env: GARDENER_MAX_ACTIVE_POIS_PER_GARDEN
+      minimum: 1
+      maximum: 50
+      default: 8
+      description: Maximum concurrent POIs per player garden instance
+
+    PoiDefaultTtlMinutes:
+      type: integer
+      env: GARDENER_POI_DEFAULT_TTL_MINUTES
+      minimum: 1
+      maximum: 120
+      default: 10
+      description: Default time-to-live in minutes for spawned POIs before expiration
+
+    PoiSpawnRadiusMin:
+      type: number
+      format: float
+      env: GARDENER_POI_SPAWN_RADIUS_MIN
+      default: 50.0
+      description: Minimum distance from player to spawn a POI in garden space units
+
+    PoiSpawnRadiusMax:
+      type: number
+      format: float
+      env: GARDENER_POI_SPAWN_RADIUS_MAX
+      default: 200.0
+      description: Maximum distance from player to spawn a POI in garden space units
+
+    MinPoiSpacing:
+      type: number
+      format: float
+      env: GARDENER_MIN_POI_SPACING
+      default: 30.0
+      description: Minimum distance between any two POIs in garden space units
+
+    PoiDefaultIntensityRamp:
+      type: number
+      format: float
+      env: GARDENER_POI_DEFAULT_INTENSITY_RAMP
+      minimum: 0.0
+      maximum: 1.0
+      default: 0.5
+      description: Default initial intensity ramp value for spawned POIs (0.0-1.0)
+
+    PoiDefaultTriggerRadius:
+      type: number
+      format: float
+      env: GARDENER_POI_DEFAULT_TRIGGER_RADIUS
+      minimum: 1.0
+      default: 15.0
+      description: Default trigger radius for POI proximity detection in garden space units
+
+    HesitationDetectionThreshold:
+      type: number
+      format: float
+      env: GARDENER_HESITATION_DETECTION_THRESHOLD
+      minimum: 0.0
+      default: 0.1
+      description: Minimum distance movement for hesitation detection in garden space units
+
+    DiversitySeenPenalty:
+      type: number
+      format: float
+      env: GARDENER_DIVERSITY_SEEN_PENALTY
+      minimum: 0.0
+      maximum: 1.0
+      default: 0.2
+      description: Diversity score multiplier for recently completed scenarios (0 = never reoffered, 1 = no penalty)
+
+    ExplorationDistanceThreshold:
+      type: number
+      format: float
+      env: GARDENER_EXPLORATION_DISTANCE_THRESHOLD
+      minimum: 0.0
+      default: 500.0
+      description: Minimum total drift distance to classify a player as exploring
+
+    HesitantHesitationThreshold:
+      type: number
+      format: float
+      env: GARDENER_HESITANT_HESITATION_THRESHOLD
+      minimum: 0.0
+      maximum: 1.0
+      default: 0.6
+      description: Minimum hesitation ratio to classify a player as hesitant
+
+    ExplorationMaxHesitationRatio:
+      type: number
+      format: float
+      env: GARDENER_EXPLORATION_MAX_HESITATION_RATIO
+      minimum: 0.0
+      maximum: 1.0
+      default: 0.3
+      description: Maximum hesitation ratio to still classify a player as exploring
+
+    DirectedDistanceThreshold:
+      type: number
+      format: float
+      env: GARDENER_DIRECTED_DISTANCE_THRESHOLD
+      minimum: 0.0
+      default: 200.0
+      description: Minimum total drift distance to classify a player as directed
+
+    DirectedMaxHesitationRatio:
+      type: number
+      format: float
+      env: GARDENER_DIRECTED_MAX_HESITATION_RATIO
+      minimum: 0.0
+      maximum: 1.0
+      default: 0.15
+      description: Maximum hesitation ratio to classify a player as directed
+
+    ProximityTriggerMaxHesitationRatio:
+      type: number
+      format: float
+      env: GARDENER_PROXIMITY_TRIGGER_MAX_HESITATION_RATIO
+      minimum: 0.0
+      maximum: 1.0
+      default: 0.2
+      description: Maximum hesitation ratio for proximity-based POI trigger mode selection
+
+    HesitationRatioNormalizationFactor:
+      type: number
+      format: float
+      env: GARDENER_HESITATION_RATIO_NORMALIZATION_FACTOR
+      minimum: 1.0
+      default: 10.0
+      description: Divisor for normalizing hesitation count to a ratio against distance
+
+    # =========================================================================
+    # Narrative Scoring Tiers
+    # =========================================================================
+
+    NarrativeScoreHigh:
+      type: number
+      format: float
+      env: GARDENER_NARRATIVE_SCORE_HIGH
+      minimum: 0.0
+      maximum: 1.0
+      default: 0.9
+      description: Narrative score for strongest category-pattern match (e.g. exploring player + exploration scenario)
+
+    NarrativeScoreMediumHigh:
+      type: number
+      format: float
+      env: GARDENER_NARRATIVE_SCORE_MEDIUM_HIGH
+      minimum: 0.0
+      maximum: 1.0
+      default: 0.7
+      description: Narrative score for good category-pattern match (e.g. exploring player + narrative scenario)
+
+    NarrativeScoreMedium:
+      type: number
+      format: float
+      env: GARDENER_NARRATIVE_SCORE_MEDIUM
+      minimum: 0.0
+      maximum: 1.0
+      default: 0.6
+      description: Narrative score for moderate category-pattern match (e.g. exploring player + mixed scenario)
+
+    NarrativeScoreLow:
+      type: number
+      format: float
+      env: GARDENER_NARRATIVE_SCORE_LOW
+      minimum: 0.0
+      maximum: 1.0
+      default: 0.4
+      description: Narrative score for weak category-pattern match (e.g. exploring player + combat scenario)
+
+    NarrativeScoreNeutral:
+      type: number
+      format: float
+      env: GARDENER_NARRATIVE_SCORE_NEUTRAL
+      minimum: 0.0
+      maximum: 1.0
+      default: 0.5
+      description: Baseline narrative score when no player drift pattern is detected
+
+    ScenarioTemplateQueryPageSize:
+      type: integer
+      env: GARDENER_SCENARIO_TEMPLATE_QUERY_PAGE_SIZE
+      minimum: 10
+      maximum: 2000
+      default: 500
+      description: Maximum number of scenario templates to load per orchestrator evaluation cycle
+
+    ScenarioHistoryQueryPageSize:
+      type: integer
+      env: GARDENER_SCENARIO_HISTORY_QUERY_PAGE_SIZE
+      minimum: 10
+      maximum: 1000
+      default: 200
+      description: Maximum number of scenario history records to load per orchestrator evaluation cycle
+
+    # =========================================================================
+    # Scenario Selection Algorithm Weights
+    # =========================================================================
+
+    AffinityWeight:
+      type: number
+      format: float
+      env: GARDENER_AFFINITY_WEIGHT
+      minimum: 0.0
+      maximum: 1.0
+      default: 0.4
+      description: Weight for domain affinity in scenario scoring algorithm
+
+    DiversityWeight:
+      type: number
+      format: float
+      env: GARDENER_DIVERSITY_WEIGHT
+      minimum: 0.0
+      maximum: 1.0
+      default: 0.3
+      description: Weight for category diversity in scenario scoring algorithm
+
+    NarrativeWeight:
+      type: number
+      format: float
+      env: GARDENER_NARRATIVE_WEIGHT
+      minimum: 0.0
+      maximum: 1.0
+      default: 0.2
+      description: Weight for drift-pattern narrative response in scenario scoring
+
+    RandomWeight:
+      type: number
+      format: float
+      env: GARDENER_RANDOM_WEIGHT
+      minimum: 0.0
+      maximum: 1.0
+      default: 0.1
+      description: Weight for randomness and discovery in scenario scoring
+
+    RecentScenarioCooldownMinutes:
+      type: integer
+      env: GARDENER_RECENT_SCENARIO_COOLDOWN_MINUTES
+      minimum: 0
+      maximum: 1440
+      default: 30
+      description: Minutes before a completed scenario can be re-offered to the same player
+
+    # =========================================================================
+    # Scenario Instances
+    # =========================================================================
+
+    MaxConcurrentScenariosGlobal:
+      type: integer
+      env: GARDENER_MAX_CONCURRENT_SCENARIOS_GLOBAL
+      minimum: 1
+      default: 1000
+      description: Maximum total active scenario instances across all players
+
+    ScenarioTimeoutMinutes:
+      type: integer
+      env: GARDENER_SCENARIO_TIMEOUT_MINUTES
+      minimum: 5
+      maximum: 480
+      default: 60
+      description: Maximum scenario duration before forced completion in minutes
+
+    AbandonDetectionMinutes:
+      type: integer
+      env: GARDENER_ABANDON_DETECTION_MINUTES
+      minimum: 1
+      maximum: 60
+      default: 5
+      description: Minutes without player input before scenario is marked abandoned
+
+    GrowthAwardMultiplier:
+      type: number
+      format: float
+      env: GARDENER_GROWTH_AWARD_MULTIPLIER
+      minimum: 0.0
+      default: 1.0
+      description: Global multiplier applied to all growth awards from scenario completion
+
+    GrowthFullCompletionMaxRatio:
+      type: number
+      format: float
+      env: GARDENER_GROWTH_FULL_COMPLETION_MAX_RATIO
+      minimum: 0.1
+      default: 1.5
+      description: Maximum time ratio cap for full completion growth (overtime bonus cap)
+
+    GrowthFullCompletionMinRatio:
+      type: number
+      format: float
+      env: GARDENER_GROWTH_FULL_COMPLETION_MIN_RATIO
+      minimum: 0.0
+      maximum: 1.0
+      default: 0.5
+      description: Minimum time ratio floor for full completion growth (speed-run minimum)
+
+    GrowthPartialMaxRatio:
+      type: number
+      format: float
+      env: GARDENER_GROWTH_PARTIAL_MAX_RATIO
+      minimum: 0.0
+      maximum: 1.0
+      default: 0.5
+      description: Maximum time ratio cap for abandoned/timed-out scenario growth
+
+    DefaultEstimatedDurationMinutes:
+      type: integer
+      env: GARDENER_DEFAULT_ESTIMATED_DURATION_MINUTES
+      minimum: 1
+      default: 30
+      description: Fallback estimated duration for templates without an explicit value
+
+    # =========================================================================
+    # Bond Features
+    # =========================================================================
+
+    BondSharedGardenEnabled:
+      type: boolean
+      env: GARDENER_BOND_SHARED_GARDEN_ENABLED
+      default: true
+      description: Whether bonded players share a garden instance with merged POIs
+
+    BondScenarioPriority:
+      type: number
+      format: float
+      env: GARDENER_BOND_SCENARIO_PRIORITY
+      minimum: 1.0
+      default: 1.5
+      description: Scoring boost multiplier for bond-friendly scenarios when player is bonded
+
+    # =========================================================================
+    # Phase Defaults
+    # =========================================================================
+
+    DefaultPhase:
+      $ref: 'gardener-api.yaml#/components/schemas/DeploymentPhase'
+      env: GARDENER_DEFAULT_PHASE
+      default: Alpha
+      description: Starting deployment phase for new installations
+
+    # =========================================================================
+    # Seed Integration
+    # =========================================================================
+
+    SeedTypeCode:
+      type: string
+      env: GARDENER_SEED_TYPE_CODE
+      default: guardian
+      description: Which seed type code this gardener manages for player spirits
+
+    # =========================================================================
+    # Background Workers
+    # =========================================================================
+
+    ScenarioLifecycleWorkerIntervalSeconds:
+      type: integer
+      env: GARDENER_SCENARIO_LIFECYCLE_WORKER_INTERVAL_SECONDS
+      minimum: 5
+      maximum: 300
+      default: 30
+      description: Seconds between scenario lifecycle worker evaluation cycles
+
+    BackgroundServiceStartupDelaySeconds:
+      type: integer
+      env: GARDENER_BACKGROUND_SERVICE_STARTUP_DELAY_SECONDS
+      minimum: 0
+      maximum: 60
+      default: 5
+      description: Seconds to wait before starting background workers after service initialization
+
+    # =========================================================================
+    # Distributed Locking
+    # =========================================================================
+
+    DistributedLockTimeoutSeconds:
+      type: integer
+      env: GARDENER_DISTRIBUTED_LOCK_TIMEOUT_SECONDS
+      minimum: 5
+      maximum: 300
+      default: 30
+      description: Timeout in seconds for distributed lock acquisition on gardener operations
+
+    # =========================================================================
+    # POI Position Generation
+    # =========================================================================
+
+    PoiPositionMaxRetries:
+      type: integer
+      env: GARDENER_POI_POSITION_MAX_RETRIES
+      minimum: 1
+      maximum: 100
+      default: 10
+      description: Maximum rejection sampling attempts when generating a valid POI position
+
+    PoiVerticalDampeningFactor:
+      type: number
+      format: float
+      env: GARDENER_POI_VERTICAL_DAMPENING_FACTOR
+      minimum: 0.0
+      maximum: 1.0
+      default: 0.3
+      description: Y-axis scale factor for POI vertical distribution relative to horizontal spread

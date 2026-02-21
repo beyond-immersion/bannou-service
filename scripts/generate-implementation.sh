@@ -1,5 +1,20 @@
 #!/bin/bash
 
+# ⛔⛔⛔ AGENT MODIFICATION PROHIBITED ⛔⛔⛔
+# This script is part of Bannou's code generation pipeline.
+# DO NOT MODIFY without EXPLICIT user instructions to change code generation.
+#
+# Changes to generation scripts silently break builds across ALL 48 services.
+# An agent once changed namespace strings across 4 scripts in a single commit,
+# breaking every service. If you believe a change is needed:
+#   1. STOP and explain what you think is wrong
+#   2. Show the EXACT diff you propose
+#   3. Wait for EXPLICIT approval before touching ANY generation script
+#
+# This applies to: namespace strings, output paths, exclusion logic,
+# NSwag parameters, post-processing steps, and file naming conventions.
+# ⛔⛔⛔ AGENT MODIFICATION PROHIBITED ⛔⛔⛔
+
 # Generate default service implementation template (if it doesn't exist)
 # Usage: ./generate-implementation.sh <service-name> [schema-file]
 
@@ -33,6 +48,62 @@ if [ ! -f "$SCHEMA_FILE" ]; then
     exit 1
 fi
 
+# Extract x-service-layer from schema (defaults to GameFeatures if not specified)
+# Valid values: Infrastructure, AppFoundation, GameFoundation, AppFeatures, GameFeatures, Extensions
+SERVICE_LAYER=$(python3 -c "
+import yaml
+import sys
+
+try:
+    with open('$SCHEMA_FILE', 'r') as f:
+        schema = yaml.safe_load(f)
+
+    # x-service-layer can be specified as enum name or numeric value
+    layer = schema.get('x-service-layer', 'GameFeatures')
+
+    # Map numeric values to enum names
+    layer_map = {
+        0: 'Infrastructure',
+        100: 'AppFoundation',
+        200: 'GameFoundation',
+        300: 'AppFeatures',
+        400: 'GameFeatures',
+        500: 'Extensions'
+    }
+
+    # If numeric, convert to string
+    if isinstance(layer, int):
+        layer = layer_map.get(layer, 'GameFeatures')
+
+    # Validate the layer name
+    valid_layers = ['Infrastructure', 'AppFoundation', 'GameFoundation', 'AppFeatures', 'GameFeatures', 'Extensions']
+    if layer not in valid_layers:
+        print('GameFeatures', end='')  # Default fallback
+        sys.exit(0)
+
+    print(layer, end='')
+except Exception as e:
+    print('GameFeatures', end='')  # Default on error
+" 2>/dev/null || echo "GameFeatures")
+
+echo -e "  🏗️  Layer: $SERVICE_LAYER"
+
+# Check if schema declares x-references (needs IResourceClient injection)
+HAS_REFERENCES=$(python3 -c "
+import yaml
+try:
+    with open('$SCHEMA_FILE', 'r') as f:
+        schema = yaml.safe_load(f)
+    refs = schema.get('info', {}).get('x-references', [])
+    print('true' if refs else 'false', end='')
+except:
+    print('false', end='')
+" 2>/dev/null || echo "false")
+
+if [ "$HAS_REFERENCES" = "true" ]; then
+    echo -e "  🔗 x-references detected: will inject IResourceClient"
+fi
+
 # Check if implementation already exists
 if [ -f "$IMPLEMENTATION_FILE" ]; then
     echo -e "${YELLOW}📝 Service implementation already exists, skipping: $IMPLEMENTATION_FILE${NC}"
@@ -45,18 +116,61 @@ mkdir -p "$SERVICE_DIR"
 echo -e "${YELLOW}🔄 Creating service implementation template...${NC}"
 
 # Create service implementation template
-cat > "$IMPLEMENTATION_FILE" << EOF
-using BeyondImmersion.BannouService;
+# Build using directives (conditionally include Resource namespace)
+USING_DIRECTIVES="using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Events;
-using BeyondImmersion.BannouService.Messaging;
+using BeyondImmersion.BannouService.Messaging;"
+
+if [ "$HAS_REFERENCES" = "true" ]; then
+    USING_DIRECTIVES="$USING_DIRECTIVES
+using BeyondImmersion.BannouService.Resource;"
+fi
+
+USING_DIRECTIVES="$USING_DIRECTIVES
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
-using System.Runtime.CompilerServices;
+using Microsoft.Extensions.Logging;"
 
-[assembly: InternalsVisibleTo("lib-${SERVICE_NAME}.tests")]
+# Build fields and constructor (conditionally include IResourceClient)
+if [ "$HAS_REFERENCES" = "true" ]; then
+    FIELDS="    private readonly IMessageBus _messageBus;
+    private readonly IStateStoreFactory _stateStoreFactory;
+    private readonly IResourceClient _resourceClient;
+    private readonly ILogger<${SERVICE_PASCAL}Service> _logger;
+    private readonly ${SERVICE_PASCAL}ServiceConfiguration _configuration;"
+
+    CONSTRUCTOR_PARAMS="        IMessageBus messageBus,
+        IStateStoreFactory stateStoreFactory,
+        IResourceClient resourceClient,
+        ILogger<${SERVICE_PASCAL}Service> logger,
+        ${SERVICE_PASCAL}ServiceConfiguration configuration"
+
+    CONSTRUCTOR_BODY="        _messageBus = messageBus;
+        _stateStoreFactory = stateStoreFactory;
+        _resourceClient = resourceClient;
+        _logger = logger;
+        _configuration = configuration;"
+else
+    FIELDS="    private readonly IMessageBus _messageBus;
+    private readonly IStateStoreFactory _stateStoreFactory;
+    private readonly ILogger<${SERVICE_PASCAL}Service> _logger;
+    private readonly ${SERVICE_PASCAL}ServiceConfiguration _configuration;"
+
+    CONSTRUCTOR_PARAMS="        IMessageBus messageBus,
+        IStateStoreFactory stateStoreFactory,
+        ILogger<${SERVICE_PASCAL}Service> logger,
+        ${SERVICE_PASCAL}ServiceConfiguration configuration"
+
+    CONSTRUCTOR_BODY="        _messageBus = messageBus;
+        _stateStoreFactory = stateStoreFactory;
+        _logger = logger;
+        _configuration = configuration;"
+fi
+
+cat > "$IMPLEMENTATION_FILE" << EOF
+$USING_DIRECTIVES
 
 namespace BeyondImmersion.BannouService.$SERVICE_PASCAL;
 
@@ -80,36 +194,31 @@ namespace BeyondImmersion.BannouService.$SERVICE_PASCAL;
 /// </list>
 /// </para>
 /// <para>
+/// <b>MODELS:</b> Run <c>make print-models PLUGIN="${SERVICE_NAME}"</c> to view compact request/response model shapes.
+/// If print-models fails or generation has not been run, DO NOT proceed with implementation.
+/// Generate first (<c>cd scripts &amp;&amp; ./generate-service.sh ${SERVICE_NAME}</c>) or ask the developer how to continue.
+/// Never guess at model definitions.
+/// </para>
+/// <para>
 /// <b>RELATED FILES:</b>
 /// <list type="bullet">
-///   <item>Request/Response models: bannou-service/Generated/Models/${SERVICE_PASCAL}Models.cs</item>
-///   <item>Event models: bannou-service/Generated/Events/${SERVICE_PASCAL}EventsModels.cs</item>
-///   <item>Lifecycle events: bannou-service/Generated/Events/${SERVICE_PASCAL}LifecycleEvents.cs</item>
+///   <item>Internal data models: ${SERVICE_PASCAL}ServiceModels.cs (storage models, cache entries, internal DTOs)</item>
+///   <item>Event handlers: ${SERVICE_PASCAL}ServiceEvents.cs (event consumer registration and handlers)</item>
 ///   <item>Configuration: Generated/${SERVICE_PASCAL}ServiceConfiguration.cs</item>
-///   <item>State stores: bannou-service/Generated/StateStoreDefinitions.cs</item>
 /// </list>
 /// </para>
 /// </remarks>
-[BannouService("$SERVICE_NAME", typeof(I${SERVICE_PASCAL}Service), lifetime: ServiceLifetime.Scoped)]
+[BannouService("$SERVICE_NAME", typeof(I${SERVICE_PASCAL}Service), lifetime: ServiceLifetime.Scoped, layer: ServiceLayer.$SERVICE_LAYER)]
 public partial class ${SERVICE_PASCAL}Service : I${SERVICE_PASCAL}Service
 {
-    private readonly IMessageBus _messageBus;
-    private readonly IStateStoreFactory _stateStoreFactory;
-    private readonly ILogger<${SERVICE_PASCAL}Service> _logger;
-    private readonly ${SERVICE_PASCAL}ServiceConfiguration _configuration;
+$FIELDS
 
     private const string STATE_STORE = "${SERVICE_NAME}-statestore";
 
     public ${SERVICE_PASCAL}Service(
-        IMessageBus messageBus,
-        IStateStoreFactory stateStoreFactory,
-        ILogger<${SERVICE_PASCAL}Service> logger,
-        ${SERVICE_PASCAL}ServiceConfiguration configuration)
+$CONSTRUCTOR_PARAMS)
     {
-        _messageBus = messageBus;
-        _stateStoreFactory = stateStoreFactory;
-        _logger = logger;
-        _configuration = configuration;
+$CONSTRUCTOR_BODY
     }
 
 EOF
@@ -162,6 +271,7 @@ try:
         sys.exit(0)
 
     # Process each path and method
+    show_example_patterns = True
     for path, path_data in schema['paths'].items():
         for http_method, method_data in path_data.items():
             if not isinstance(method_data, dict):
@@ -177,9 +287,12 @@ try:
             if method_data.get('x-controller-only') is True:
                 continue
 
-            # Determine return type from responses
-            return_type = 'object'
+            # Determine return type from responses (mirrors generate-interface.sh logic)
+            return_type = None  # None means no response body (void-like)
+            has_content_response = False
+
             if 'responses' in method_data:
+                # Check for success responses with content (200, 201, 202)
                 success_responses = ['200', '201', '202']
                 for status_code in success_responses:
                     if status_code in method_data['responses']:
@@ -187,9 +300,9 @@ try:
                         if 'content' in response and 'application/json' in response['content']:
                             content_schema = response['content']['application/json'].get('schema', {})
                             if '\$ref' in content_schema:
-                                # Extract model name from reference
                                 ref_parts = content_schema['\$ref'].split('/')
                                 return_type = ref_parts[-1] if ref_parts else 'object'
+                                has_content_response = True
                             elif 'type' in content_schema:
                                 return_type = convert_openapi_type_to_csharp(
                                     content_schema['type'],
@@ -197,7 +310,12 @@ try:
                                     content_schema.get('nullable', False),
                                     content_schema.get('items')
                                 )
+                                has_content_response = True
                         break
+
+                # 204 No Content without prior content response is explicitly void
+                if '204' in method_data['responses'] and not has_content_response:
+                    return_type = None
 
             # Build parameter list
             param_parts = []
@@ -231,72 +349,83 @@ try:
 
             # Generate implementation method stub
             params_str = ', '.join(param_parts)
-            path_clean = path.lstrip('/')
 
-            print(f'''    /// <summary>
+            if return_type is None:
+                # Void-response endpoint (e.g., delete, 204 No Content)
+                print(f'''    /// <summary>
     /// Implementation of {method_name} operation.
     /// TODO: Implement business logic for this method.
     /// </summary>
-    public async Task<(StatusCodes, {return_type})> {method_name}Async({params_str})
+    public async Task<StatusCodes> {method_name}Async({params_str})
     {{
         _logger.LogInformation(\"Executing {method_name} operation\");
 
-        try
-        {{
-            // TODO: Implement your business logic here
-            throw new NotImplementedException(\"Method {method_name} not yet implemented\");
+        // TODO: Implement your business logic here
+        // Note: The generated controller wraps this method with try/catch for error handling.
+        // Do NOT add an outer try/catch here -- exceptions will be caught, logged, and
+        // published as error events by the controller automatically.
+        await Task.CompletedTask; // IMPLEMENTATION TENETS: async methods must contain await
+        throw new NotImplementedException(\"Method {method_name} not yet implemented\");
 
-            // Example patterns using infrastructure libs:
-            //
-            // For data retrieval (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // var data = await stateStore.GetAsync(key, cancellationToken);
-            // return data != null ? (StatusCodes.OK, data) : (StatusCodes.NotFound, default);
-            //
-            // For data creation (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // await stateStore.SaveAsync(key, newData, cancellationToken);
-            // return (StatusCodes.Created, newData);
-            //
-            // For data updates (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // var existing = await stateStore.GetAsync(key, cancellationToken);
-            // if (existing == null) return (StatusCodes.NotFound, default);
-            // await stateStore.SaveAsync(key, updatedData, cancellationToken);
-            // return (StatusCodes.OK, updatedData);
-            //
-            // For data deletion (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // await stateStore.DeleteAsync(key, cancellationToken);
-            // return (StatusCodes.NoContent, default);
-            //
-            // For event publishing (lib-messaging):
-            // await _messageBus.TryPublishAsync(\"topic.name\", eventModel, cancellationToken: cancellationToken);
-            //
-            // For calling other services (lib-mesh):
-            // Inject the specific client you need, e.g.: IAccountClient _accountClient
-            // var (status, result) = await _accountClient.GetAccountAsync(new GetAccountRequest { AccountId = id }, cancellationToken);
-            // if (status != StatusCodes.OK) return (status, default);
-            //
-            // For client event delivery (if request from WebSocket):
-            // Inject IClientEventPublisher _clientEventPublisher
-            // await _clientEventPublisher.PublishToSessionAsync(sessionId, new YourClientEvent {{ ... }}, cancellationToken);
-        }}
-        catch (Exception ex)
-        {{
-            _logger.LogError(ex, \"Error executing {method_name} operation\");
-            await _messageBus.TryPublishErrorAsync(
-                \"${SERVICE_NAME}\",
-                \"{method_name}\",
-                \"unexpected_exception\",
-                ex.Message,
-                dependency: null,
-                endpoint: \"{http_method}:/{path_clean}\",
-                details: null,
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, default);
-        }}
+        // Example: return StatusCodes.NoContent;
+    }}
+''')
+            else:
+                # Response-body endpoint
+                if show_example_patterns:
+                    show_example_patterns = False
+                    print(f'''    /// <summary>
+    /// Implementation of {method_name} operation.
+    /// TODO: Implement business logic for this method.
+    /// </summary>
+    public async Task<(StatusCodes, {return_type}?)> {method_name}Async({params_str})
+    {{
+        _logger.LogInformation(\"Executing {method_name} operation\");
+
+        // TODO: Implement your business logic here
+        // Note: The generated controller wraps this method with try/catch for error handling.
+        // Do NOT add an outer try/catch here -- exceptions will be caught, logged, and
+        // published as error events by the controller automatically.
+        await Task.CompletedTask; // IMPLEMENTATION TENETS: async methods must contain await
+        throw new NotImplementedException(\"Method {method_name} not yet implemented\");
+
+        // Example patterns using infrastructure libs:
+        //
+        // For data retrieval (lib-state):
+        // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
+        // var data = await stateStore.GetAsync(key, cancellationToken);
+        // return data != null ? (StatusCodes.OK, data) : (StatusCodes.NotFound, default);
+        //
+        // For data creation (lib-state):
+        // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
+        // await stateStore.SaveAsync(key, newData, cancellationToken);
+        // return (StatusCodes.Created, newData);
+        //
+        // For data updates (lib-state):
+        // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
+        // var existing = await stateStore.GetAsync(key, cancellationToken);
+        // if (existing == null) return (StatusCodes.NotFound, default);
+        // await stateStore.SaveAsync(key, updatedData, cancellationToken);
+        // return (StatusCodes.OK, updatedData);
+        //
+        // For data deletion (lib-state):
+        // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
+        // await stateStore.DeleteAsync(key, cancellationToken);
+        // return StatusCodes.NoContent;
+        //
+        // For event publishing (lib-messaging):
+        // await _messageBus.TryPublishAsync(\"topic.name\", eventModel, cancellationToken: cancellationToken);
+    }}
+''')
+                else:
+                    print(f'''    /// <summary>
+    /// Implementation of {method_name} operation.
+    /// </summary>
+    public async Task<(StatusCodes, {return_type}?)> {method_name}Async({params_str})
+    {{
+        // TODO: Implement {method_name}
+        await Task.CompletedTask;
+        throw new NotImplementedException(\"Method {method_name} not yet implemented\");
     }}
 ''')
 

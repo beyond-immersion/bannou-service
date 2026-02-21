@@ -1,0 +1,174 @@
+openapi: 3.0.0
+info:
+  title: Divine Service Configuration
+  description: |
+    Configuration properties for the Divine service (L4 GameFeatures).
+    Controls divinity economy costs, blessing integration codes, follower management,
+    attention mechanics, seed/actor integration, and background worker intervals.
+
+    **SCHEMA MODIFICATION GATE**: STOP. Before modifying this schema, you MUST:
+    1. Read docs/reference/SCHEMA-RULES.md
+    2. State which section applies to your change
+    3. Only then proceed with edits
+    Edits without stating the applicable rule are FORBIDDEN.
+  version: 1.0.0
+
+x-service-configuration:
+  properties:
+    # =========================================================================
+    # Divinity Economy
+    # =========================================================================
+
+    DivinityCurrencyCode:
+      type: string
+      env: DIVINE_DIVINITY_CURRENCY_CODE
+      default: divinity
+      description: Currency code used for divinity economy within each game service
+
+    DivinityCostMinor:
+      type: number
+      format: double
+      env: DIVINE_DIVINITY_COST_MINOR
+      minimum: 0.0
+      default: 10.0
+      description: Divinity cost for granting a Minor tier blessing
+
+    DivinityCostStandard:
+      type: number
+      format: double
+      env: DIVINE_DIVINITY_COST_STANDARD
+      minimum: 0.0
+      default: 50.0
+      description: Divinity cost for granting a Standard tier blessing
+
+    DivinityCostGreater:
+      type: number
+      format: double
+      env: DIVINE_DIVINITY_COST_GREATER
+      minimum: 0.0
+      default: 200.0
+      description: Divinity cost for granting a Greater tier blessing
+
+    DivinityCostSupreme:
+      type: number
+      format: double
+      env: DIVINE_DIVINITY_COST_SUPREME
+      minimum: 0.0
+      default: 1000.0
+      description: Divinity cost for granting a Supreme tier blessing
+
+    DivinityGenerationMultiplier:
+      type: number
+      format: double
+      env: DIVINE_DIVINITY_GENERATION_MULTIPLIER
+      minimum: 0.0
+      default: 1.0
+      description: Global multiplier applied to all divinity generation from mortal actions
+
+    # =========================================================================
+    # Blessing Integration
+    # =========================================================================
+
+    BlessingCollectionType:
+      type: string
+      env: DIVINE_BLESSING_COLLECTION_TYPE
+      default: divine_blessings
+      description: Collection type code for permanent blessings via lib-collection
+
+    BlessingStatusCategory:
+      type: string
+      env: DIVINE_BLESSING_STATUS_CATEGORY
+      default: divine_blessing
+      description: Status category code for temporary blessings via Status Inventory
+
+    MaxBlessingsPerEntity:
+      type: integer
+      env: DIVINE_MAX_BLESSINGS_PER_ENTITY
+      minimum: 1
+      maximum: 100
+      default: 10
+      description: Maximum active blessings an entity can hold simultaneously
+
+    # =========================================================================
+    # Follower Management
+    # =========================================================================
+
+    FollowerRelationshipTypeCode:
+      type: string
+      env: DIVINE_FOLLOWER_RELATIONSHIP_TYPE_CODE
+      default: deity_follower
+      description: Relationship type code for deity-to-character follower bonds
+
+    RivalryRelationshipTypeCode:
+      type: string
+      env: DIVINE_RIVALRY_RELATIONSHIP_TYPE_CODE
+      default: deity_rivalry
+      description: Relationship type code for deity-to-deity rivalry bonds
+
+    # =========================================================================
+    # Attention Mechanics
+    # =========================================================================
+
+    DefaultMaxAttentionSlots:
+      type: integer
+      env: DIVINE_DEFAULT_MAX_ATTENTION_SLOTS
+      minimum: 1
+      maximum: 1000
+      default: 10
+      description: Default maximum characters a deity can actively monitor simultaneously
+
+    AttentionDecayIntervalMinutes:
+      type: integer
+      env: DIVINE_ATTENTION_DECAY_INTERVAL_MINUTES
+      minimum: 1
+      maximum: 1440
+      default: 60
+      description: Minutes between attention slot decay evaluations for inactive followers
+
+    AttentionImpressionThreshold:
+      type: number
+      format: double
+      env: DIVINE_ATTENTION_IMPRESSION_THRESHOLD
+      minimum: 0.0
+      default: 0.1
+      description: Minimum cumulative impression below which an attention slot is freed during decay
+
+    # =========================================================================
+    # Seed Integration
+    # =========================================================================
+
+    DeitySeedTypeCode:
+      type: string
+      env: DIVINE_DEITY_SEED_TYPE_CODE
+      default: deity_domain
+      description: Seed type code for deity domain power growth
+
+    # =========================================================================
+    # Actor Integration
+    # =========================================================================
+
+    DeityActorTypeCode:
+      type: string
+      env: DIVINE_DEITY_ACTOR_TYPE_CODE
+      default: deity_watcher
+      description: Actor type code used when starting deity watcher actors via Puppetmaster
+
+    # =========================================================================
+    # Background Workers
+    # =========================================================================
+
+    AttentionWorkerIntervalSeconds:
+      type: integer
+      env: DIVINE_ATTENTION_WORKER_INTERVAL_SECONDS
+      minimum: 10
+      maximum: 600
+      default: 60
+      description: Seconds between attention decay worker evaluation cycles
+
+    DivinityGenerationWorkerIntervalSeconds:
+      type: integer
+      env: DIVINE_DIVINITY_GENERATION_WORKER_INTERVAL_SECONDS
+      minimum: 10
+      maximum: 600
+      default: 30
+      description: Seconds between divinity generation worker processing cycles

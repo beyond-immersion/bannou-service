@@ -459,6 +459,10 @@ public interface IServiceConfiguration
         // Example: ASSET_STORAGE_ACCESS_KEY (with ASSET_ prefix) -> StorageAccessKey
         var normalizedEnvVars = GetNormalizedEnvVars(envPrefix);
 
+        // Expand comma-delimited values for string[] properties into indexed keys
+        // so .NET's ConfigurationBinder can bind them as arrays
+        ExpandCommaDelimitedArrayValues(normalizedEnvVars, configurationType);
+
         IConfigurationBuilder configurationBuilder = new ConfigurationBuilder()
             .AddJsonFile("Config.json", true)
             .AddInMemoryCollection(normalizedEnvVars)
@@ -598,5 +602,37 @@ public interface IServiceConfiguration
         }
 
         return result;
+    }
+
+    /// <summary>
+    /// Expands comma-delimited environment variable values into indexed keys for array property binding.
+    /// .NET's ConfigurationBinder requires indexed keys (e.g., "Key:0", "Key:1") for array binding,
+    /// but environment variables are flat comma-delimited strings. This method bridges the gap by
+    /// detecting <c>string[]</c> properties on the target type and expanding matching values into indexed form.
+    /// </summary>
+    /// <param name="envVars">The normalized environment variable dictionary to modify in-place.</param>
+    /// <param name="configurationType">The configuration type to inspect for array properties.</param>
+    private static void ExpandCommaDelimitedArrayValues(IDictionary<string, string?> envVars, Type configurationType)
+    {
+        var arrayProperties = configurationType
+            .GetProperties(BindingFlags.Public | BindingFlags.Instance)
+            .Where(p => p.PropertyType == typeof(string[]))
+            .ToList();
+
+        foreach (var property in arrayProperties)
+        {
+            if (!envVars.TryGetValue(property.Name, out var rawValue) || string.IsNullOrEmpty(rawValue))
+                continue;
+
+            var values = rawValue.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+
+            // Replace the flat key with indexed keys that ConfigurationBinder understands
+            envVars.Remove(property.Name);
+
+            for (var i = 0; i < values.Length; i++)
+            {
+                envVars[$"{property.Name}:{i}"] = values[i];
+            }
+        }
     }
 }

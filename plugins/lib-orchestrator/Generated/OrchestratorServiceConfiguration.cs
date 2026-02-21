@@ -12,7 +12,7 @@
 //
 //     IMPLEMENTATION TENETS - Configuration-First:
 //     - Access configuration via dependency injection, never Environment.GetEnvironmentVariable.
-//     - ALL properties below MUST be referenced in OrchestratorService.cs (no dead config).
+//     - ALL properties below MUST be referenced somewhere in the plugin (no dead config).
 //     - Any hardcoded tunable (limit, timeout, threshold, capacity) in service code means
 //       a configuration property is MISSING - add it to the configuration schema.
 //     - If a property is unused, remove it from the configuration schema.
@@ -32,20 +32,6 @@ using BeyondImmersion.BannouService.Configuration;
 
 namespace BeyondImmersion.BannouService.Orchestrator;
 
-
-#pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
-/// <summary>
-/// Default container orchestration backend when not specified in deploy request
-/// </summary>
-public enum DefaultBackend
-{
-    Compose,
-    Swarm,
-    Portainer,
-    Kubernetes,
-}
-#pragma warning restore CS1591
-
 /// <summary>
 /// Configuration class for Orchestrator service.
 /// Properties are automatically bound from environment variables.
@@ -54,7 +40,7 @@ public enum DefaultBackend
 /// <para>
 /// <b>IMPLEMENTATION TENETS - Configuration-First:</b> Access configuration via dependency injection.
 /// Never use <c>Environment.GetEnvironmentVariable()</c> directly in service code.
-/// ALL properties in this class MUST be referenced in the service implementation.
+/// ALL properties in this class MUST be referenced somewhere in the plugin.
 /// If a property is unused, remove it from the configuration schema.
 /// </para>
 /// <para>
@@ -83,7 +69,7 @@ public class OrchestratorServiceConfiguration : IServiceConfiguration
     /// Default container orchestration backend when not specified in deploy request
     /// Environment variable: ORCHESTRATOR_DEFAULT_BACKEND
     /// </summary>
-    public DefaultBackend DefaultBackend { get; set; } = DefaultBackend.Compose;
+    public BackendType DefaultBackend { get; set; } = BackendType.Compose;
 
     /// <summary>
     /// Service heartbeat timeout in seconds

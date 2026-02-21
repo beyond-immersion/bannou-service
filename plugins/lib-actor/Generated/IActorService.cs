@@ -70,6 +70,16 @@ public partial interface IActorService : IBannouService
         Task<(StatusCodes, StopActorResponse?)> StopActorAsync(StopActorRequest body, CancellationToken cancellationToken = default(CancellationToken));
 
         /// <summary>
+        /// BindActorCharacter operation
+        /// </summary>
+        Task<(StatusCodes, ActorInstanceResponse?)> BindActorCharacterAsync(BindActorCharacterRequest body, CancellationToken cancellationToken = default(CancellationToken));
+
+        /// <summary>
+        /// CleanupByCharacter operation
+        /// </summary>
+        Task<(StatusCodes, CleanupByCharacterResponse?)> CleanupByCharacterAsync(CleanupByCharacterRequest body, CancellationToken cancellationToken = default(CancellationToken));
+
+        /// <summary>
         /// ListActors operation
         /// </summary>
         Task<(StatusCodes, ListActorsResponse?)> ListActorsAsync(ListActorsRequest body, CancellationToken cancellationToken = default(CancellationToken));

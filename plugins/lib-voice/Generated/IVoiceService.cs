@@ -64,4 +64,24 @@ public partial interface IVoiceService : IBannouService
         /// </summary>
         Task<StatusCodes> AnswerPeerAsync(AnswerPeerRequest body, CancellationToken cancellationToken = default(CancellationToken));
 
+        /// <summary>
+        /// RequestBroadcastConsent operation
+        /// </summary>
+        Task<(StatusCodes, BroadcastConsentStatus?)> RequestBroadcastConsentAsync(BroadcastConsentRequest body, CancellationToken cancellationToken = default(CancellationToken));
+
+        /// <summary>
+        /// RespondBroadcastConsent operation
+        /// </summary>
+        Task<(StatusCodes, BroadcastConsentStatus?)> RespondBroadcastConsentAsync(BroadcastConsentResponse body, CancellationToken cancellationToken = default(CancellationToken));
+
+        /// <summary>
+        /// StopBroadcast operation
+        /// </summary>
+        Task<StatusCodes> StopBroadcastAsync(StopBroadcastConsentRequest body, CancellationToken cancellationToken = default(CancellationToken));
+
+        /// <summary>
+        /// GetBroadcastStatus operation
+        /// </summary>
+        Task<(StatusCodes, BroadcastConsentStatus?)> GetBroadcastStatusAsync(BroadcastStatusRequest body, CancellationToken cancellationToken = default(CancellationToken));
+
 }

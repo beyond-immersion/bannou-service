@@ -344,6 +344,13 @@ public static class Program
             Logger.Log(LogLevel.Debug, null, "Resolving plugin services from DI container...");
             PluginLoader?.ResolveServices(webApp.Services);
 
+            // Validate variable provider registrations against schema definitions
+            if (PluginLoader != null && !PluginLoader.ValidateVariableProviders(webApp.Services))
+            {
+                Logger.Log(LogLevel.Error, null, "Variable provider validation failed - exiting application.");
+                return 1;
+            }
+
             // Initialize plugins
             if (PluginLoader != null)
             {
@@ -443,12 +450,12 @@ public static class Program
                 // Start periodic heartbeats now that we've confirmed connectivity
                 HeartbeatManager.StartPeriodicHeartbeats();
 
-                // Register service permissions now that Bannou pub/sub is confirmed ready
-                // This ensures permission registration events are delivered to the Permission service
+                // Register service permissions via DI-based IPermissionRegistry (push-based)
                 if (PluginLoader != null)
                 {
                     Logger.Log(LogLevel.Information, null, "Registering service permissions with Permission service...");
-                    if (!await PluginLoader.RegisterServicePermissionsAsync(Configuration.EffectiveAppId))
+                    var permissionRegistry = webApp.Services.GetService<IPermissionRegistry>();
+                    if (!await PluginLoader.RegisterServicePermissionsAsync(Configuration.EffectiveAppId, permissionRegistry))
                     {
                         Logger.Log(LogLevel.Error, null, "Service permission registration failed - exiting application.");
                         return 1;

@@ -30,7 +30,7 @@
     <ProjectReference Include="..\..\plugins\lib-connect\lib-connect.csproj" />
     <ProjectReference Include="..\..\plugins\lib-game-session\lib-game-session.csproj" />
     <ProjectReference Include="..\..\plugins\lib-character\lib-character.csproj" />
-    <ProjectReference Include="..\..\plugins\lib-relationship-type\lib-relationship-type.csproj" />
+    <ProjectReference Include="..\..\plugins\lib-relationship\lib-relationship.csproj" />
     <ProjectReference Include="..\..\plugins\lib-species\lib-species.csproj" />
     <ProjectReference Include="..\..\plugins\lib-permission\lib-permission.csproj" />
     <ProjectReference Include="..\..\plugins\lib-game-service\lib-game-service.csproj" />
@@ -46,6 +46,14 @@
     <ProjectReference Include="..\..\plugins\lib-achievement\lib-achievement.csproj" />
     <ProjectReference Include="..\..\plugins\lib-realm-history\lib-realm-history.csproj" />
     <ProjectReference Include="..\..\plugins\lib-character-history\lib-character-history.csproj" />
+    <ProjectReference Include="..\..\plugins\lib-currency\lib-currency.csproj" />
+    <ProjectReference Include="..\..\plugins\lib-inventory\lib-inventory.csproj" />
+    <ProjectReference Include="..\..\plugins\lib-item\lib-item.csproj" />
+    <ProjectReference Include="..\..\plugins\lib-contract\lib-contract.csproj" />
+    <ProjectReference Include="..\..\plugins\lib-escrow\lib-escrow.csproj" />
+    <ProjectReference Include="..\..\plugins\lib-character-encounter\lib-character-encounter.csproj" />
+    <ProjectReference Include="..\..\plugins\lib-scene\lib-scene.csproj" />
+    <ProjectReference Include="..\..\plugins\lib-character-personality\lib-character-personality.csproj" />
   </ItemGroup>
 
 </Project>

@@ -113,6 +113,196 @@ public partial class MeshEndpointDeregisteredEvent : BaseServiceEvent
 
 }
 
+/// <summary>
+/// Circuit breaker state for mesh endpoints
+/// </summary>
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public enum CircuitState
+{
+
+    [System.Runtime.Serialization.EnumMember(Value = @"Closed")]
+    Closed = 0,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"Open")]
+    Open = 1,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"HalfOpen")]
+    HalfOpen = 2,
+
+}
+#pragma warning restore CS1591
+
+/// <summary>
+/// Published when circuit breaker state changes for an app-id.
+/// <br/>Consumed by all mesh instances to update local caches.
+/// <br/>
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class MeshCircuitStateChangedEvent : BaseServiceEvent
+{
+
+    /// <summary>
+    /// The app-id whose circuit state changed
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("appId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string AppId { get; set; } = default!;
+
+    /// <summary>
+    /// The new circuit breaker state
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("newState")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public CircuitState NewState { get; set; } = default!;
+
+    /// <summary>
+    /// Previous circuit state (null for first state change)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("previousState")]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public CircuitState? PreviousState { get; set; } = default!;
+
+    /// <summary>
+    /// Current consecutive failure count
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("consecutiveFailures")]
+    [System.ComponentModel.DataAnnotations.Range(0, int.MaxValue)]
+    public int ConsecutiveFailures { get; set; } = default!;
+
+    /// <summary>
+    /// When the state change occurred
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("changedAt")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset ChangedAt { get; set; } = default!;
+
+    /// <summary>
+    /// When the circuit was opened (null if not Open state)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("openedAt")]
+    public System.DateTimeOffset? OpenedAt { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Published when a health check probe fails (before deregistration threshold is reached).
+/// <br/>Enables proactive monitoring - consumers can alert or prepare replacement instances.
+/// <br/>
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class MeshEndpointHealthCheckFailedEvent : BaseServiceEvent
+{
+
+    /// <summary>
+    /// Instance ID of the endpoint that failed health check
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("instanceId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid InstanceId { get; set; } = default!;
+
+    /// <summary>
+    /// App-id of the endpoint
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("appId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string AppId { get; set; } = default!;
+
+    /// <summary>
+    /// Current consecutive failure count
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("consecutiveFailures")]
+    [System.ComponentModel.DataAnnotations.Range(1, int.MaxValue)]
+    public int ConsecutiveFailures { get; set; } = default!;
+
+    /// <summary>
+    /// Configured threshold for deregistration (0 if disabled)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("failureThreshold")]
+    public int FailureThreshold { get; set; } = default!;
+
+    /// <summary>
+    /// Error message from the failed health check (if available)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("lastError")]
+    public string? LastError { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Reason why endpoint was marked as degraded
+/// </summary>
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public enum MeshEndpointDegradedEventReason
+{
+
+    [System.Runtime.Serialization.EnumMember(Value = @"MissedHeartbeat")]
+    MissedHeartbeat = 0,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"HighLoad")]
+    HighLoad = 1,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"HighConnectionCount")]
+    HighConnectionCount = 2,
+
+}
+#pragma warning restore CS1591
+
+/// <summary>
+/// Published when an endpoint transitions to Degraded status.
+/// <br/>Enables proactive orchestration - consumers can spin up replacements or rebalance.
+/// <br/>
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class MeshEndpointDegradedEvent : BaseServiceEvent
+{
+
+    /// <summary>
+    /// Instance ID of the degraded endpoint
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("instanceId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid InstanceId { get; set; } = default!;
+
+    /// <summary>
+    /// App-id of the endpoint
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("appId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string AppId { get; set; } = default!;
+
+    /// <summary>
+    /// Why the endpoint was marked as degraded
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("reason")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public MeshEndpointDegradedEventReason Reason { get; set; } = default!;
+
+    /// <summary>
+    /// Current load percentage (for HighLoad reason)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("loadPercent")]
+    public double? LoadPercent { get; set; } = default!;
+
+    /// <summary>
+    /// When the last heartbeat was received (for MissedHeartbeat reason)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("lastHeartbeatAt")]
+    public System.DateTimeOffset? LastHeartbeatAt { get; set; } = default!;
+
+}
+
 #pragma warning disable CS1591 // Enum members cannot have XML documentation
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public enum MeshEndpointDeregisteredEventReason

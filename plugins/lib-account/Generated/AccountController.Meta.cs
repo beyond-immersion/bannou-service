@@ -95,7 +95,9 @@ public partial class AccountController
                 "accounts",
                 "totalCount",
                 "page",
-                "pageSize"
+                "pageSize",
+                "hasNextPage",
+                "hasPreviousPage"
             ],
             "properties": {
                 "accounts": {
@@ -133,7 +135,6 @@ public partial class AccountController
             "additionalProperties": false,
             "required": [
                 "accountId",
-                "email",
                 "createdAt",
                 "emailVerified",
                 "roles"
@@ -147,7 +148,8 @@ public partial class AccountController
                 "email": {
                     "type": "string",
                     "format": "email",
-                    "description": "Email address associated with the account"
+                    "nullable": true,
+                    "description": "Email address associated with the account. Null for OAuth/Steam accounts without email."
                 },
                 "displayName": {
                     "type": "string",
@@ -193,6 +195,24 @@ public partial class AccountController
                     "additionalProperties": true,
                     "nullable": true,
                     "description": "Custom metadata associated with the account"
+                },
+                "mfaEnabled": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Whether multi-factor authentication is enabled for this account"
+                },
+                "mfaSecret": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Encrypted TOTP secret (AES-256-GCM ciphertext). Auth service encrypts and decrypts. Account stores opaque ciphertext."
+                },
+                "mfaRecoveryCodes": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "nullable": true,
+                    "description": "BCrypt-hashed single-use recovery codes. Auth service generates and verifies. Account stores opaque hashes."
                 }
             }
         },
@@ -312,14 +332,12 @@ public partial class AccountController
             "type": "object",
             "description": "Request to create a new account",
             "additionalProperties": false,
-            "required": [
-                "email"
-            ],
             "properties": {
                 "email": {
                     "type": "string",
                     "format": "email",
-                    "description": "Email address for the new account"
+                    "nullable": true,
+                    "description": "Email address for the new account. Null for OAuth/Steam accounts without email."
                 },
                 "passwordHash": {
                     "type": "string",
@@ -368,7 +386,6 @@ public partial class AccountController
             "additionalProperties": false,
             "required": [
                 "accountId",
-                "email",
                 "createdAt",
                 "emailVerified",
                 "roles"
@@ -382,7 +399,8 @@ public partial class AccountController
                 "email": {
                     "type": "string",
                     "format": "email",
-                    "description": "Email address associated with the account"
+                    "nullable": true,
+                    "description": "Email address associated with the account. Null for OAuth/Steam accounts without email."
                 },
                 "displayName": {
                     "type": "string",
@@ -428,6 +446,24 @@ public partial class AccountController
                     "additionalProperties": true,
                     "nullable": true,
                     "description": "Custom metadata associated with the account"
+                },
+                "mfaEnabled": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Whether multi-factor authentication is enabled for this account"
+                },
+                "mfaSecret": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Encrypted TOTP secret (AES-256-GCM ciphertext). Auth service encrypts and decrypts. Account stores opaque ciphertext."
+                },
+                "mfaRecoveryCodes": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "nullable": true,
+                    "description": "BCrypt-hashed single-use recovery codes. Auth service generates and verifies. Account stores opaque hashes."
                 }
             }
         },
@@ -573,7 +609,6 @@ public partial class AccountController
             "additionalProperties": false,
             "required": [
                 "accountId",
-                "email",
                 "createdAt",
                 "emailVerified",
                 "roles"
@@ -587,7 +622,8 @@ public partial class AccountController
                 "email": {
                     "type": "string",
                     "format": "email",
-                    "description": "Email address associated with the account"
+                    "nullable": true,
+                    "description": "Email address associated with the account. Null for OAuth/Steam accounts without email."
                 },
                 "displayName": {
                     "type": "string",
@@ -633,6 +669,24 @@ public partial class AccountController
                     "additionalProperties": true,
                     "nullable": true,
                     "description": "Custom metadata associated with the account"
+                },
+                "mfaEnabled": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Whether multi-factor authentication is enabled for this account"
+                },
+                "mfaSecret": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Encrypted TOTP secret (AES-256-GCM ciphertext). Auth service encrypts and decrypts. Account stores opaque ciphertext."
+                },
+                "mfaRecoveryCodes": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "nullable": true,
+                    "description": "BCrypt-hashed single-use recovery codes. Auth service generates and verifies. Account stores opaque hashes."
                 }
             }
         },
@@ -798,7 +852,6 @@ public partial class AccountController
             "additionalProperties": false,
             "required": [
                 "accountId",
-                "email",
                 "createdAt",
                 "emailVerified",
                 "roles"
@@ -812,7 +865,8 @@ public partial class AccountController
                 "email": {
                     "type": "string",
                     "format": "email",
-                    "description": "Email address associated with the account"
+                    "nullable": true,
+                    "description": "Email address associated with the account. Null for OAuth/Steam accounts without email."
                 },
                 "displayName": {
                     "type": "string",
@@ -858,6 +912,24 @@ public partial class AccountController
                     "additionalProperties": true,
                     "nullable": true,
                     "description": "Custom metadata associated with the account"
+                },
+                "mfaEnabled": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Whether multi-factor authentication is enabled for this account"
+                },
+                "mfaSecret": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Encrypted TOTP secret (AES-256-GCM ciphertext). Auth service encrypts and decrypts. Account stores opaque ciphertext."
+                },
+                "mfaRecoveryCodes": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "nullable": true,
+                    "description": "BCrypt-hashed single-use recovery codes. Auth service generates and verifies. Account stores opaque hashes."
                 }
             }
         },
@@ -1087,7 +1159,6 @@ public partial class AccountController
             "additionalProperties": false,
             "required": [
                 "accountId",
-                "email",
                 "createdAt",
                 "emailVerified",
                 "roles"
@@ -1101,7 +1172,8 @@ public partial class AccountController
                 "email": {
                     "type": "string",
                     "format": "email",
-                    "description": "Email address associated with the account"
+                    "nullable": true,
+                    "description": "Email address associated with the account. Null for OAuth/Steam accounts without email."
                 },
                 "displayName": {
                     "type": "string",
@@ -1147,6 +1219,24 @@ public partial class AccountController
                     "additionalProperties": true,
                     "nullable": true,
                     "description": "Custom metadata associated with the account"
+                },
+                "mfaEnabled": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Whether multi-factor authentication is enabled for this account"
+                },
+                "mfaSecret": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Encrypted TOTP secret (AES-256-GCM ciphertext). Auth service encrypts and decrypts. Account stores opaque ciphertext."
+                },
+                "mfaRecoveryCodes": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "nullable": true,
+                    "description": "BCrypt-hashed single-use recovery codes. Auth service generates and verifies. Account stores opaque hashes."
                 }
             }
         },
@@ -1709,7 +1799,6 @@ public partial class AccountController
             "additionalProperties": false,
             "required": [
                 "accountId",
-                "email",
                 "createdAt",
                 "emailVerified",
                 "roles"
@@ -1723,7 +1812,8 @@ public partial class AccountController
                 "email": {
                     "type": "string",
                     "format": "email",
-                    "description": "Email address associated with the account"
+                    "nullable": true,
+                    "description": "Email address associated with the account. Null for OAuth/Steam accounts without email."
                 },
                 "displayName": {
                     "type": "string",
@@ -1769,6 +1859,24 @@ public partial class AccountController
                     "additionalProperties": true,
                     "nullable": true,
                     "description": "Custom metadata associated with the account"
+                },
+                "mfaEnabled": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Whether multi-factor authentication is enabled for this account"
+                },
+                "mfaSecret": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Encrypted TOTP secret (AES-256-GCM ciphertext). Auth service encrypts and decrypts. Account stores opaque ciphertext."
+                },
+                "mfaRecoveryCodes": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "nullable": true,
+                    "description": "BCrypt-hashed single-use recovery codes. Auth service generates and verifies. Account stores opaque hashes."
                 }
             }
         },
@@ -1926,7 +2034,6 @@ public partial class AccountController
             "additionalProperties": false,
             "required": [
                 "accountId",
-                "email",
                 "createdAt",
                 "emailVerified",
                 "roles"
@@ -1940,7 +2047,8 @@ public partial class AccountController
                 "email": {
                     "type": "string",
                     "format": "email",
-                    "description": "Email address associated with the account"
+                    "nullable": true,
+                    "description": "Email address associated with the account. Null for OAuth/Steam accounts without email."
                 },
                 "displayName": {
                     "type": "string",
@@ -1986,6 +2094,24 @@ public partial class AccountController
                     "additionalProperties": true,
                     "nullable": true,
                     "description": "Custom metadata associated with the account"
+                },
+                "mfaEnabled": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Whether multi-factor authentication is enabled for this account"
+                },
+                "mfaSecret": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Encrypted TOTP secret (AES-256-GCM ciphertext). Auth service encrypts and decrypts. Account stores opaque ciphertext."
+                },
+                "mfaRecoveryCodes": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "nullable": true,
+                    "description": "BCrypt-hashed single-use recovery codes. Auth service generates and verifies. Account stores opaque hashes."
                 }
             }
         },
@@ -2183,6 +2309,108 @@ public partial class AccountController
 
     #endregion
 
+    #region Meta Endpoints for UpdateMfa
+
+    private static readonly string _UpdateMfa_RequestSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/UpdateMfaRequest",
+    "$defs": {
+        "UpdateMfaRequest": {
+            "type": "object",
+            "description": "Request to update MFA settings for an account",
+            "additionalProperties": false,
+            "required": [
+                "accountId",
+                "mfaEnabled"
+            ],
+            "properties": {
+                "accountId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "ID of the account to update"
+                },
+                "mfaEnabled": {
+                    "type": "boolean",
+                    "description": "Whether to enable or disable MFA"
+                },
+                "mfaSecret": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Encrypted TOTP secret (set when enabling, null when disabling)"
+                },
+                "mfaRecoveryCodes": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "nullable": true,
+                    "description": "BCrypt-hashed recovery codes (set when enabling, null when disabling)"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _UpdateMfa_ResponseSchema = """
+{}
+""";
+
+    private static readonly string _UpdateMfa_Info = """
+{
+    "summary": "Update MFA settings for an account",
+    "description": "Sets or clears MFA-related fields (mfaEnabled, mfaSecret, mfaRecoveryCodes) atomically.\nUsed by Auth service during MFA enable/disable flows. Auth owns the encryption logic;\nAccount stores the opaque encrypted data.\n",
+    "tags": [
+        "Account Management"
+    ],
+    "deprecated": false,
+    "operationId": "updateMfa"
+}
+""";
+
+    /// <summary>Returns endpoint information for UpdateMfa</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/account/mfa/update/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> UpdateMfa_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Account",
+            "POST",
+            "/account/mfa/update",
+            _UpdateMfa_Info));
+
+    /// <summary>Returns request schema for UpdateMfa</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/account/mfa/update/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> UpdateMfa_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Account",
+            "POST",
+            "/account/mfa/update",
+            "request-schema",
+            _UpdateMfa_RequestSchema));
+
+    /// <summary>Returns response schema for UpdateMfa</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/account/mfa/update/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> UpdateMfa_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Account",
+            "POST",
+            "/account/mfa/update",
+            "response-schema",
+            _UpdateMfa_ResponseSchema));
+
+    /// <summary>Returns full schema for UpdateMfa</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/account/mfa/update/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> UpdateMfa_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Account",
+            "POST",
+            "/account/mfa/update",
+            _UpdateMfa_Info,
+            _UpdateMfa_RequestSchema,
+            _UpdateMfa_ResponseSchema));
+
+    #endregion
+
     #region Meta Endpoints for BatchGetAccounts
 
     private static readonly string _BatchGetAccounts_RequestSchema = """
@@ -2259,7 +2487,6 @@ public partial class AccountController
             "additionalProperties": false,
             "required": [
                 "accountId",
-                "email",
                 "createdAt",
                 "emailVerified",
                 "roles"
@@ -2273,7 +2500,8 @@ public partial class AccountController
                 "email": {
                     "type": "string",
                     "format": "email",
-                    "description": "Email address associated with the account"
+                    "nullable": true,
+                    "description": "Email address associated with the account. Null for OAuth/Steam accounts without email."
                 },
                 "displayName": {
                     "type": "string",
@@ -2319,6 +2547,24 @@ public partial class AccountController
                     "additionalProperties": true,
                     "nullable": true,
                     "description": "Custom metadata associated with the account"
+                },
+                "mfaEnabled": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Whether multi-factor authentication is enabled for this account"
+                },
+                "mfaSecret": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Encrypted TOTP secret (AES-256-GCM ciphertext). Auth service encrypts and decrypts. Account stores opaque ciphertext."
+                },
+                "mfaRecoveryCodes": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "nullable": true,
+                    "description": "BCrypt-hashed single-use recovery codes. Auth service generates and verifies. Account stores opaque hashes."
                 }
             }
         },
@@ -2805,6 +3051,235 @@ public partial class AccountController
             _UpdateVerificationStatus_Info,
             _UpdateVerificationStatus_RequestSchema,
             _UpdateVerificationStatus_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for UpdateEmail
+
+    private static readonly string _UpdateEmail_RequestSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/UpdateEmailRequest",
+    "$defs": {
+        "UpdateEmailRequest": {
+            "type": "object",
+            "description": "Request to update an account's email address",
+            "additionalProperties": false,
+            "required": [
+                "accountId",
+                "newEmail"
+            ],
+            "properties": {
+                "accountId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "ID of the account to update"
+                },
+                "newEmail": {
+                    "type": "string",
+                    "format": "email",
+                    "description": "New email address for the account"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _UpdateEmail_ResponseSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/AccountResponse",
+    "$defs": {
+        "AccountResponse": {
+            "type": "object",
+            "description": "Account information response",
+            "additionalProperties": false,
+            "required": [
+                "accountId",
+                "createdAt",
+                "emailVerified",
+                "roles"
+            ],
+            "properties": {
+                "accountId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Unique identifier for the account"
+                },
+                "email": {
+                    "type": "string",
+                    "format": "email",
+                    "nullable": true,
+                    "description": "Email address associated with the account. Null for OAuth/Steam accounts without email."
+                },
+                "displayName": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Display name for the account"
+                },
+                "passwordHash": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "BCrypt hashed password for authentication"
+                },
+                "createdAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "Timestamp when the account was created"
+                },
+                "updatedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "Timestamp when the account was last updated"
+                },
+                "emailVerified": {
+                    "type": "boolean",
+                    "description": "Whether the email address has been verified"
+                },
+                "roles": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "description": "List of roles assigned to the account"
+                },
+                "authMethods": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/AuthMethodInfo"
+                    },
+                    "description": "List of authentication methods linked to the account"
+                },
+                "metadata": {
+                    "type": "object",
+                    "additionalProperties": true,
+                    "nullable": true,
+                    "description": "Custom metadata associated with the account"
+                },
+                "mfaEnabled": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Whether multi-factor authentication is enabled for this account"
+                },
+                "mfaSecret": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Encrypted TOTP secret (AES-256-GCM ciphertext). Auth service encrypts and decrypts. Account stores opaque ciphertext."
+                },
+                "mfaRecoveryCodes": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "nullable": true,
+                    "description": "BCrypt-hashed single-use recovery codes. Auth service generates and verifies. Account stores opaque hashes."
+                }
+            }
+        },
+        "AuthMethodInfo": {
+            "type": "object",
+            "description": "Information about a linked authentication method",
+            "additionalProperties": false,
+            "required": [
+                "provider",
+                "linkedAt"
+            ],
+            "properties": {
+                "methodId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Unique identifier for the authentication method"
+                },
+                "provider": {
+                    "$ref": "#/$defs/AuthProvider",
+                    "description": "Authentication provider type"
+                },
+                "externalId": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "External user ID from the authentication provider"
+                },
+                "displayName": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Display name from the authentication provider"
+                },
+                "linkedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "Timestamp when the authentication method was linked"
+                }
+            }
+        },
+        "AuthProvider": {
+            "type": "string",
+            "description": "All authentication provider types including email",
+            "enum": [
+                "email",
+                "google",
+                "discord",
+                "twitch",
+                "steam"
+            ]
+        }
+    }
+}
+""";
+
+    private static readonly string _UpdateEmail_Info = """
+{
+    "summary": "Update account email address",
+    "description": "",
+    "tags": [
+        "Account Management"
+    ],
+    "deprecated": false,
+    "operationId": "updateEmail"
+}
+""";
+
+    /// <summary>Returns endpoint information for UpdateEmail</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/account/email/update/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> UpdateEmail_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Account",
+            "POST",
+            "/account/email/update",
+            _UpdateEmail_Info));
+
+    /// <summary>Returns request schema for UpdateEmail</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/account/email/update/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> UpdateEmail_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Account",
+            "POST",
+            "/account/email/update",
+            "request-schema",
+            _UpdateEmail_RequestSchema));
+
+    /// <summary>Returns response schema for UpdateEmail</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/account/email/update/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> UpdateEmail_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Account",
+            "POST",
+            "/account/email/update",
+            "response-schema",
+            _UpdateEmail_ResponseSchema));
+
+    /// <summary>Returns full schema for UpdateEmail</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/account/email/update/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> UpdateEmail_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Account",
+            "POST",
+            "/account/email/update",
+            _UpdateEmail_Info,
+            _UpdateEmail_RequestSchema,
+            _UpdateEmail_ResponseSchema));
 
     #endregion
 }

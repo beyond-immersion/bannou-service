@@ -5,15 +5,18 @@ info:
     Configuration schema for Species service.
     Properties are bound to environment variables with BANNOU_ prefix.
 
-    **Schema Rules**: AI agents MUST review docs/reference/SCHEMA-RULES.md before
-    modifying this schema. Optional reference types require `nullable: true`.
+    **SCHEMA MODIFICATION GATE**: STOP. Before modifying this schema, you MUST:
+    1. Read docs/reference/SCHEMA-RULES.md
+    2. State which section applies to your change
+    3. Only then proceed with edits
+    Edits without stating the applicable rule are FORBIDDEN.
   version: 1.0.0
 paths: {}
 x-service-configuration:
   properties:
-    # Seed Operation Configuration
-    SeedPageSize:
+    # Merge Operation Configuration
+    MergePageSize:
       type: integer
-      description: Number of records to process per page during seed operations
-      env: SPECIES_SEED_PAGE_SIZE
+      description: Number of characters to process per page during species merge character migration
+      env: SPECIES_MERGE_PAGE_SIZE
       default: 100

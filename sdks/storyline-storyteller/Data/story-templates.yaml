@@ -1,0 +1,1221 @@
+# Story Templates for GOAP-based Narrative Composition
+# Phase 3 of the Storyline SDK implementation
+#
+# Sources:
+#   - STORY_TEMPLATE_ANALYSIS.md (6 design decisions)
+#   - emotional-arcs.yaml (Reagan arc definitions)
+#   - save-the-cat-beats.yaml (STC phase boundaries)
+#   - narrative-state.yaml (10 Life Value spectrums)
+#   - story-actions.yaml (46 GOAP actions)
+#   - story-grid-genres.yaml (12 genres with obligatory scenes)
+#
+# Design Principles:
+#   - 6 templates, one per Reagan arc (covers 94% of published stories)
+#   - Genre-agnostic: primary spectrum determined at composition time
+#   - Arc-shape-derived target states with STC validation anchors
+#   - Hybrid triggers: position floor + state ceiling for phase advancement
+#   - STC-derived phase boundaries with ±0.05 validation bands
+
+version: "1.0"
+source: "Reagan et al. (2016) + Blake Snyder Save the Cat + Story Grid"
+
+# =============================================================================
+# TEMPLATE ARCHITECTURE
+# =============================================================================
+
+architecture:
+  description: |
+    Story templates define the SHAPE of emotional progression through a narrative.
+    They are genre-agnostic - the primary spectrum is determined by genre selection
+    at composition time, not by the template itself.
+
+    Template = Arc Shape (Reagan) + Phase Boundaries (STC)
+    Composition = Template + Genre (primary spectrum) + [Secondary Genres]
+
+  components:
+    arc_shape:
+      description: "Mathematical curve from Reagan et al. (2016) emotional arc analysis"
+      source: "emotional-arcs.yaml"
+
+    phase_boundaries:
+      description: "Temporal positions derived from Save the Cat beat sheet"
+      source: "save-the-cat-beats.yaml"
+
+    target_states:
+      description: "Expected spectrum values at each phase, derived from arc shape"
+      source: "Arc shape function evaluated at phase midpoints"
+
+    transition_triggers:
+      description: "Hybrid conditions for phase advancement"
+      mechanism: "Position floor + State ceiling"
+
+# =============================================================================
+# PHASE TRANSITION SEMANTICS
+# =============================================================================
+
+transition_semantics:
+  description: |
+    Phases advance when BOTH conditions are met:
+    1. Position floor reached (prevents speed-running)
+    2. State ceiling satisfied (ensures narrative coherence)
+
+    Position ceiling provides fail-safe advancement to prevent deadlock.
+
+  advancement_logic: |
+    IF position >= floor AND state meets ceiling:
+        ADVANCE to next phase
+    ELIF position >= ceiling:
+        LOG WARNING "Forced advancement - state conditions unmet"
+        ADVANCE to next phase (prevent deadlock)
+
+  position:
+    floor:
+      description: "Earliest story position where phase can advance"
+      purpose: "Prevents speed-running through narrative beats"
+
+    ceiling:
+      description: "Latest story position where phase MUST advance"
+      purpose: "Prevents deadlock; ensures forward progress"
+
+    stc_center:
+      description: "Target position from Save the Cat beat timing"
+      tolerance: 0.05  # ±5% validation band
+
+  state:
+    primary_spectrum_target:
+      description: "Expected value on primary spectrum for this phase"
+      derivation: "Arc shape function evaluated at phase temporal midpoint"
+
+    obligatory_scenes_required:
+      description: "Scenes that should be satisfied before advancement"
+      validation: "Static check at composition time"
+
+# =============================================================================
+# THE SIX TEMPLATES
+# =============================================================================
+
+templates:
+
+  # ---------------------------------------------------------------------------
+  # RAGS TO RICHES (Monotonic Rise)
+  # ---------------------------------------------------------------------------
+
+  rags_to_riches:
+    id: 1
+    code: "RAGS_TO_RICHES"
+    name: "Rags to Riches"
+    arc_pattern: "up"  # monotonic increase
+    arc_emoji: "up"
+    arc_direction: "positive"  # ends higher than starts
+
+    description: |
+      Steady emotional ascent throughout the narrative. The protagonist
+      begins in a disadvantaged or diminished state and progressively
+      improves their situation, ending in triumph.
+
+    mathematical_form: "f(t) approximately = mt + c where m > 0"
+
+    compatible_genres:
+      # Genres whose subgenres include rags_to_riches in compatible_arcs
+      action: ["epic"]
+      crime: ["murder_mystery", "caper"]
+      love: ["courtship"]
+      war: ["pro_war"]
+      western_eastern: ["vengeance"]
+      performance: true  # All subgenres
+      worldview: ["maturation", "education"]
+      morality: ["redemption"]
+      status: ["sentimental", "admiration"]
+
+    phases:
+      # 4 phases for monotonic arcs
+
+      setup:
+        id: 1
+        name: "Setup / Ordinary World"
+        description: "Establish protagonist in diminished state"
+
+        position:
+          stc_center: 0.10      # Midpoint of setup phase
+          floor: 0.00           # Story start
+          ceiling: 0.15         # Must advance by 15%
+          validation_band: 0.05
+
+        target_state:
+          primary_spectrum: [0.20, 0.35]  # Low starting point
+          range_description: "Protagonist at disadvantage"
+
+        stc_beats_covered:
+          - opening_image
+          - theme_stated
+          - setup
+          - stasis_equals_death
+
+        scene_capacity: 2  # Guideline for obligatory scenes
+
+        transition:
+          position_floor: 0.10
+          position_ceiling: 0.18
+          state_requirements:
+            primary_spectrum_max: 0.40  # Must still be low
+
+      rising_action:
+        id: 2
+        name: "Rising Action / Fun and Games"
+        description: "Progressive improvement through effort and discovery"
+
+        position:
+          stc_center: 0.35
+          floor: 0.15
+          ceiling: 0.55
+          validation_band: 0.05
+
+        target_state:
+          primary_spectrum: [0.45, 0.60]  # Rising
+          range_description: "Situation improving"
+
+        stc_beats_covered:
+          - catalyst
+          - debate
+          - break_into_two
+          - b_story
+          - fun_and_games
+          - midpoint  # False victory common in rags_to_riches
+
+        scene_capacity: 3
+
+        transition:
+          position_floor: 0.45
+          position_ceiling: 0.60
+          state_requirements:
+            primary_spectrum_min: 0.45  # Must have risen
+
+      climax:
+        id: 3
+        name: "Climax / Break into Three"
+        description: "Final challenge and core event"
+
+        position:
+          stc_center: 0.75
+          floor: 0.55
+          ceiling: 0.88
+          validation_band: 0.05
+
+        target_state:
+          primary_spectrum: [0.65, 0.80]  # Near peak
+          range_description: "Approaching triumph"
+
+        stc_beats_covered:
+          - bad_guys_close_in  # Lighter complications in rise arc
+          - all_is_lost  # Brief dip before final push
+          - dark_night_of_the_soul
+          - break_into_three
+          - finale
+
+        scene_capacity: 2
+
+        transition:
+          position_floor: 0.85
+          position_ceiling: 0.95
+          state_requirements:
+            primary_spectrum_min: 0.60
+            core_event_completed: true
+
+      resolution:
+        id: 4
+        name: "Resolution / Final Image"
+        description: "New equilibrium at positive pole"
+
+        position:
+          stc_center: 0.97
+          floor: 0.88
+          ceiling: 1.00
+          validation_band: 0.03
+
+        target_state:
+          primary_spectrum: [0.80, 1.00]  # At or near positive pole
+          range_description: "Triumph achieved"
+
+        stc_beats_covered:
+          - final_image
+
+        scene_capacity: 0  # Resolution, no new obligatory scenes
+
+        transition: null  # Terminal phase
+
+  # ---------------------------------------------------------------------------
+  # TRAGEDY (Monotonic Fall)
+  # ---------------------------------------------------------------------------
+
+  tragedy:
+    id: 2
+    code: "TRAGEDY"
+    name: "Tragedy"
+    arc_pattern: "down"  # monotonic decrease
+    arc_emoji: "down"
+    arc_direction: "negative"  # ends lower than starts
+
+    description: |
+      Steady emotional decline throughout the narrative. The protagonist
+      begins in a favorable position and progressively deteriorates,
+      ending in catastrophe or loss.
+
+    mathematical_form: "f(t) approximately = -mt + c where m > 0"
+
+    compatible_genres:
+      horror: ["uncanny", "supernatural"]
+      crime: ["noir"]
+      love: ["obsession"]
+      war: ["anti_war"]
+      worldview: ["disillusionment"]
+      morality: ["punitive", "testing_surrender"]
+      status: ["tragic"]
+
+    phases:
+
+      setup:
+        id: 1
+        name: "Setup / Heights of Fortune"
+        description: "Establish protagonist in favorable position"
+
+        position:
+          stc_center: 0.10
+          floor: 0.00
+          ceiling: 0.15
+          validation_band: 0.05
+
+        target_state:
+          primary_spectrum: [0.60, 0.80]  # High starting point
+          range_description: "Protagonist at advantage"
+
+        stc_beats_covered:
+          - opening_image
+          - theme_stated
+          - setup
+          - stasis_equals_death  # Seeds of destruction present
+
+        scene_capacity: 2
+
+        transition:
+          position_floor: 0.10
+          position_ceiling: 0.18
+          state_requirements:
+            primary_spectrum_min: 0.55  # Must still be high
+
+      complications:
+        id: 2
+        name: "Complications / The Descent Begins"
+        description: "Cracks appear, situation begins to deteriorate"
+
+        position:
+          stc_center: 0.35
+          floor: 0.15
+          ceiling: 0.55
+          validation_band: 0.05
+
+        target_state:
+          primary_spectrum: [0.40, 0.55]  # Falling
+          range_description: "Situation worsening"
+
+        stc_beats_covered:
+          - catalyst  # The fatal error or seed of doom
+          - debate
+          - break_into_two
+          - b_story
+          - fun_and_games  # Ironic: protagonist unaware of doom
+          - midpoint  # False victory that will unravel
+
+        scene_capacity: 3
+
+        transition:
+          position_floor: 0.45
+          position_ceiling: 0.60
+          state_requirements:
+            primary_spectrum_max: 0.55  # Must have fallen
+
+      decline:
+        id: 3
+        name: "Decline / The Unraveling"
+        description: "Accelerating deterioration toward catastrophe"
+
+        position:
+          stc_center: 0.75
+          floor: 0.55
+          ceiling: 0.88
+          validation_band: 0.05
+
+        target_state:
+          primary_spectrum: [0.20, 0.40]  # Near bottom
+          range_description: "Approaching catastrophe"
+
+        stc_beats_covered:
+          - bad_guys_close_in
+          - all_is_lost
+          - dark_night_of_the_soul
+          - break_into_three  # Futile realization
+          - finale
+
+        scene_capacity: 2
+
+        transition:
+          position_floor: 0.85
+          position_ceiling: 0.95
+          state_requirements:
+            primary_spectrum_max: 0.35
+            core_event_completed: true
+
+      catastrophe:
+        id: 4
+        name: "Catastrophe / Final Image"
+        description: "New equilibrium at or near negative pole"
+
+        position:
+          stc_center: 0.97
+          floor: 0.88
+          ceiling: 1.00
+          validation_band: 0.03
+
+        target_state:
+          primary_spectrum: [0.00, 0.25]  # At or near negative pole
+          range_description: "Catastrophe complete"
+
+        stc_beats_covered:
+          - final_image
+
+        scene_capacity: 0
+
+        transition: null
+
+  # ---------------------------------------------------------------------------
+  # MAN IN HOLE (Fall-Rise / U-Shape)
+  # ---------------------------------------------------------------------------
+
+  man_in_hole:
+    id: 3
+    code: "MAN_IN_HOLE"
+    name: "Man in a Hole"
+    arc_pattern: "down_up"  # U-shaped
+    arc_emoji: "down_up"
+    arc_direction: "positive"  # ends higher than starts (usually)
+
+    description: |
+      Fall into trouble then recovery. The protagonist starts in a stable
+      state, falls into difficulty (the "hole"), struggles at the bottom,
+      discovers a solution, and climbs back to success. Most common arc
+      in popular fiction.
+
+    mathematical_form: "f(t) approximately = a(t - 0.5)^2 + c where a > 0"
+    nadir_position: [0.40, 0.60]  # Position of lowest point
+
+    compatible_genres:
+      action: ["adventure", "duel", "clock"]
+      horror: ["ambiguous"]
+      thriller: true  # All subgenres
+      crime: ["organized_crime", "courtroom", "prison"]
+      love: ["marriage"]
+      war: ["kinship"]
+      western_eastern: ["transition", "professional"]
+      performance: true
+      society: true
+      worldview: ["revelation"]
+      morality: ["testing_triumph"]
+      status: ["admiration"]
+
+    phases:
+      # 5 phases for two-inflection arcs
+
+      setup:
+        id: 1
+        name: "Setup / Stable World"
+        description: "Establish protagonist in stable but imperfect state"
+
+        position:
+          stc_center: 0.08
+          floor: 0.00
+          ceiling: 0.12
+          validation_band: 0.04
+
+        target_state:
+          primary_spectrum: [0.50, 0.70]  # Neutral to positive
+          range_description: "Stable but with room to fall"
+
+        stc_beats_covered:
+          - opening_image
+          - theme_stated
+          - setup
+
+        scene_capacity: 1
+
+        transition:
+          position_floor: 0.08
+          position_ceiling: 0.14
+          state_requirements:
+            primary_spectrum_min: 0.45
+
+      descent:
+        id: 2
+        name: "Descent / Into the Hole"
+        description: "Protagonist falls into difficulty"
+
+        position:
+          stc_center: 0.25
+          floor: 0.12
+          ceiling: 0.38
+          validation_band: 0.05
+
+        target_state:
+          primary_spectrum: [0.30, 0.45]  # Falling
+          range_description: "Situation worsening rapidly"
+
+        stc_beats_covered:
+          - stasis_equals_death
+          - catalyst
+          - debate
+          - break_into_two
+
+        scene_capacity: 2
+
+        transition:
+          position_floor: 0.30
+          position_ceiling: 0.42
+          state_requirements:
+            primary_spectrum_max: 0.45
+
+      nadir:
+        id: 3
+        name: "Nadir / Bottom of the Hole"
+        description: "Lowest point - protagonist at their worst"
+
+        position:
+          stc_center: 0.55
+          floor: 0.38
+          ceiling: 0.68
+          validation_band: 0.08
+
+        target_state:
+          primary_spectrum: [0.10, 0.30]  # Lowest point
+          range_description: "At rock bottom"
+
+        stc_beats_covered:
+          - b_story
+          - fun_and_games  # Ironic: trying failed approaches
+          - midpoint  # Often false defeat
+          - bad_guys_close_in
+          - all_is_lost  # The true nadir
+
+        scene_capacity: 3
+
+        transition:
+          position_floor: 0.65
+          position_ceiling: 0.75
+          state_requirements:
+            primary_spectrum_max: 0.35
+            # Core event often occurs here (hero_at_mercy)
+
+      ascent:
+        id: 4
+        name: "Ascent / Climbing Out"
+        description: "Discovery and rise from the hole"
+
+        position:
+          stc_center: 0.82
+          floor: 0.68
+          ceiling: 0.92
+          validation_band: 0.05
+
+        target_state:
+          primary_spectrum: [0.50, 0.75]  # Rising
+          range_description: "Recovery in progress"
+
+        stc_beats_covered:
+          - dark_night_of_the_soul
+          - break_into_three
+          - finale
+
+        scene_capacity: 2
+
+        transition:
+          position_floor: 0.88
+          position_ceiling: 0.95
+          state_requirements:
+            primary_spectrum_min: 0.50
+            core_event_completed: true
+
+      resolution:
+        id: 5
+        name: "Resolution / New Heights"
+        description: "Protagonist emerges stronger than before"
+
+        position:
+          stc_center: 0.97
+          floor: 0.92
+          ceiling: 1.00
+          validation_band: 0.03
+
+        target_state:
+          primary_spectrum: [0.70, 0.90]  # Higher than start
+          range_description: "Triumph through adversity"
+
+        stc_beats_covered:
+          - final_image
+
+        scene_capacity: 0
+
+        transition: null
+
+  # ---------------------------------------------------------------------------
+  # ICARUS (Rise-Fall / Inverted U)
+  # ---------------------------------------------------------------------------
+
+  icarus:
+    id: 4
+    code: "ICARUS"
+    name: "Icarus"
+    arc_pattern: "up_down"  # inverted U-shaped
+    arc_emoji: "up_down"
+    arc_direction: "negative"  # ends lower than starts
+
+    description: |
+      Rise then fall - the hubris narrative. The protagonist starts from
+      humble or ordinary beginnings, rises to success or power, reaches
+      a peak of triumph, then falls to their doom. Pride before the fall.
+
+    mathematical_form: "f(t) approximately = -a(t - 0.5)^2 + c where a > 0"
+    apex_position: [0.40, 0.60]  # Position of highest point
+
+    compatible_genres:
+      action: ["adventure", "duel", "clock"]
+      horror: ["uncanny", "supernatural"]
+      thriller: true
+      crime: ["noir", "organized_crime", "courtroom", "prison"]
+      love: ["obsession"]
+      war: ["anti_war", "kinship"]
+      western_eastern: ["transition", "professional"]
+      performance: true
+      society: true
+      worldview: ["disillusionment", "revelation"]
+      morality: ["punitive", "testing_triumph", "testing_surrender"]
+      status: ["pathetic"]
+
+    phases:
+
+      setup:
+        id: 1
+        name: "Setup / Humble Beginnings"
+        description: "Establish protagonist in ordinary or low state"
+
+        position:
+          stc_center: 0.08
+          floor: 0.00
+          ceiling: 0.12
+          validation_band: 0.04
+
+        target_state:
+          primary_spectrum: [0.30, 0.50]  # Low to neutral
+          range_description: "Ordinary or disadvantaged start"
+
+        stc_beats_covered:
+          - opening_image
+          - theme_stated
+          - setup
+
+        scene_capacity: 1
+
+        transition:
+          position_floor: 0.08
+          position_ceiling: 0.14
+          state_requirements:
+            primary_spectrum_max: 0.55
+
+      ascent:
+        id: 2
+        name: "Ascent / Rise to Power"
+        description: "Protagonist rises toward success/power"
+
+        position:
+          stc_center: 0.25
+          floor: 0.12
+          ceiling: 0.38
+          validation_band: 0.05
+
+        target_state:
+          primary_spectrum: [0.55, 0.75]  # Rising
+          range_description: "Success building"
+
+        stc_beats_covered:
+          - stasis_equals_death
+          - catalyst
+          - debate
+          - break_into_two
+
+        scene_capacity: 2
+
+        transition:
+          position_floor: 0.30
+          position_ceiling: 0.42
+          state_requirements:
+            primary_spectrum_min: 0.55
+
+      apex:
+        id: 3
+        name: "Apex / Peak of Triumph"
+        description: "Highest point - moment of greatest success"
+
+        position:
+          stc_center: 0.50
+          floor: 0.38
+          ceiling: 0.62
+          validation_band: 0.08
+
+        target_state:
+          primary_spectrum: [0.70, 0.90]  # Peak
+          range_description: "At the height of power"
+
+        stc_beats_covered:
+          - b_story
+          - fun_and_games
+          - midpoint  # False victory (believed to be real)
+
+        scene_capacity: 2
+
+        transition:
+          position_floor: 0.55
+          position_ceiling: 0.65
+          state_requirements:
+            primary_spectrum_min: 0.65
+
+      fall:
+        id: 4
+        name: "Fall / The Reckoning"
+        description: "Hubris leads to downfall"
+
+        position:
+          stc_center: 0.78
+          floor: 0.62
+          ceiling: 0.90
+          validation_band: 0.06
+
+        target_state:
+          primary_spectrum: [0.25, 0.45]  # Falling hard
+          range_description: "Everything unraveling"
+
+        stc_beats_covered:
+          - bad_guys_close_in
+          - all_is_lost
+          - dark_night_of_the_soul
+          - break_into_three  # Too late realization
+          - finale
+
+        scene_capacity: 3
+
+        transition:
+          position_floor: 0.88
+          position_ceiling: 0.95
+          state_requirements:
+            primary_spectrum_max: 0.40
+            core_event_completed: true
+
+      catastrophe:
+        id: 5
+        name: "Catastrophe / Final Fall"
+        description: "Complete destruction or loss"
+
+        position:
+          stc_center: 0.97
+          floor: 0.90
+          ceiling: 1.00
+          validation_band: 0.03
+
+        target_state:
+          primary_spectrum: [0.05, 0.30]  # Near negative pole
+          range_description: "Pride has fallen"
+
+        stc_beats_covered:
+          - final_image
+
+        scene_capacity: 0
+
+        transition: null
+
+  # ---------------------------------------------------------------------------
+  # CINDERELLA (Rise-Fall-Rise / W Inverted)
+  # ---------------------------------------------------------------------------
+
+  cinderella:
+    id: 5
+    code: "CINDERELLA"
+    name: "Cinderella"
+    arc_pattern: "up_down_up"  # complex rise-fall-rise
+    arc_emoji: "up_down_up"
+    arc_direction: "positive"  # ends at highest point
+
+    description: |
+      Rise, fall, rise again - the most satisfying arc according to
+      audience response data. The protagonist rises from hardship to
+      initial success, experiences a major setback, then achieves
+      ultimate triumph that exceeds the first victory.
+
+    mathematical_form: "Complex - combination of SVD modes 1 and 2"
+    first_peak_position: [0.30, 0.40]
+    valley_position: [0.60, 0.70]
+    final_rise: [0.85, 1.00]
+
+    compatible_genres:
+      action: ["adventure", "duel", "epic", "clock"]
+      horror: ["ambiguous"]
+      thriller: true
+      crime: ["murder_mystery", "caper", "organized_crime", "courtroom", "prison"]
+      love: ["courtship", "marriage"]
+      war: ["pro_war", "kinship"]
+      western_eastern: true
+      performance: true
+      society: true
+      worldview: ["revelation"]
+      morality: ["testing_triumph"]
+      status: ["sentimental"]
+
+    phases:
+
+      setup:
+        id: 1
+        name: "Setup / Initial Hardship"
+        description: "Establish protagonist in difficult circumstances"
+
+        position:
+          stc_center: 0.06
+          floor: 0.00
+          ceiling: 0.10
+          validation_band: 0.03
+
+        target_state:
+          primary_spectrum: [0.20, 0.40]  # Low starting point
+          range_description: "Disadvantaged beginning"
+
+        stc_beats_covered:
+          - opening_image
+          - theme_stated
+
+        scene_capacity: 1
+
+        transition:
+          position_floor: 0.06
+          position_ceiling: 0.12
+          state_requirements:
+            primary_spectrum_max: 0.45
+
+      first_rise:
+        id: 2
+        name: "First Rise / False Victory"
+        description: "Initial improvement that seems like success"
+
+        position:
+          stc_center: 0.28
+          floor: 0.10
+          ceiling: 0.38
+          validation_band: 0.06
+
+        target_state:
+          primary_spectrum: [0.60, 0.80]  # First peak
+          range_description: "Apparent success"
+
+        stc_beats_covered:
+          - setup
+          - stasis_equals_death
+          - catalyst
+          - debate
+          - break_into_two
+          - b_story
+          - fun_and_games
+
+        scene_capacity: 3
+
+        transition:
+          position_floor: 0.32
+          position_ceiling: 0.42
+          state_requirements:
+            primary_spectrum_min: 0.55
+
+      setback:
+        id: 3
+        name: "Setback / The Dark Reversal"
+        description: "Major reversal strips away first victory"
+
+        position:
+          stc_center: 0.58
+          floor: 0.38
+          ceiling: 0.72
+          validation_band: 0.08
+
+        target_state:
+          primary_spectrum: [0.20, 0.40]  # Valley
+          range_description: "All seems lost"
+
+        stc_beats_covered:
+          - midpoint  # False victory exposed
+          - bad_guys_close_in
+          - all_is_lost
+          - dark_night_of_the_soul
+
+        scene_capacity: 2
+
+        transition:
+          position_floor: 0.68
+          position_ceiling: 0.78
+          state_requirements:
+            primary_spectrum_max: 0.45
+
+      recovery:
+        id: 4
+        name: "Recovery / True Transformation"
+        description: "Protagonist applies lessons learned for genuine growth"
+
+        position:
+          stc_center: 0.82
+          floor: 0.72
+          ceiling: 0.92
+          validation_band: 0.05
+
+        target_state:
+          primary_spectrum: [0.55, 0.75]  # Rising again
+          range_description: "True growth emerging"
+
+        stc_beats_covered:
+          - break_into_three
+          - finale
+
+        scene_capacity: 2
+
+        transition:
+          position_floor: 0.88
+          position_ceiling: 0.95
+          state_requirements:
+            primary_spectrum_min: 0.55
+            core_event_completed: true
+
+      triumph:
+        id: 5
+        name: "Triumph / True Victory"
+        description: "Ultimate success exceeding first peak"
+
+        position:
+          stc_center: 0.97
+          floor: 0.92
+          ceiling: 1.00
+          validation_band: 0.03
+
+        target_state:
+          primary_spectrum: [0.80, 1.00]  # Higher than first peak
+          range_description: "Ultimate triumph"
+
+        stc_beats_covered:
+          - final_image
+
+        scene_capacity: 0
+
+        transition: null
+
+  # ---------------------------------------------------------------------------
+  # OEDIPUS (Fall-Rise-Fall / M-Shape)
+  # ---------------------------------------------------------------------------
+
+  oedipus:
+    id: 6
+    code: "OEDIPUS"
+    name: "Oedipus"
+    arc_pattern: "down_up_down"  # M-shaped
+    arc_emoji: "down_up_down"
+    arc_direction: "negative"  # ends at or near lowest point
+
+    description: |
+      Fall, rise, fall again - the complex tragedy. The protagonist
+      experiences initial misfortune, appears to recover or find hope,
+      only to have that hope crushed in a final catastrophe. The false
+      hope makes the ending more devastating.
+
+    mathematical_form: "Complex - inverted Cinderella (modes 1 and 2 negative)"
+    first_valley_position: [0.30, 0.40]
+    peak_position: [0.50, 0.60]
+    final_fall: [0.75, 1.00]
+
+    compatible_genres:
+      action: ["adventure", "duel", "clock"]
+      horror: ["uncanny", "supernatural", "ambiguous"]
+      thriller: true
+      crime: ["noir", "organized_crime", "courtroom", "prison"]
+      love: ["obsession", "marriage"]
+      war: ["anti_war", "kinship"]
+      western_eastern: ["transition", "professional"]
+      performance: true
+      society: true
+      worldview: ["disillusionment", "revelation"]
+      morality: ["punitive", "testing_surrender"]
+
+    phases:
+
+      setup:
+        id: 1
+        name: "Setup / Apparent Stability"
+        description: "Establish protagonist in seemingly stable state"
+
+        position:
+          stc_center: 0.06
+          floor: 0.00
+          ceiling: 0.10
+          validation_band: 0.03
+
+        target_state:
+          primary_spectrum: [0.55, 0.75]  # Neutral to positive
+          range_description: "Stable appearance, hidden doom"
+
+        stc_beats_covered:
+          - opening_image
+          - theme_stated
+
+        scene_capacity: 1
+
+        transition:
+          position_floor: 0.06
+          position_ceiling: 0.12
+          state_requirements:
+            primary_spectrum_min: 0.50
+
+      first_fall:
+        id: 2
+        name: "First Fall / Initial Crisis"
+        description: "First descent into trouble"
+
+        position:
+          stc_center: 0.28
+          floor: 0.10
+          ceiling: 0.38
+          validation_band: 0.06
+
+        target_state:
+          primary_spectrum: [0.25, 0.45]  # First valley
+          range_description: "Initial crisis"
+
+        stc_beats_covered:
+          - setup
+          - stasis_equals_death
+          - catalyst
+          - debate
+          - break_into_two
+
+        scene_capacity: 2
+
+        transition:
+          position_floor: 0.32
+          position_ceiling: 0.42
+          state_requirements:
+            primary_spectrum_max: 0.50
+
+      false_hope:
+        id: 3
+        name: "False Hope / The Reprieve"
+        description: "Apparent recovery that will prove illusory"
+
+        position:
+          stc_center: 0.52
+          floor: 0.38
+          ceiling: 0.62
+          validation_band: 0.08
+
+        target_state:
+          primary_spectrum: [0.50, 0.70]  # Peak (moderate)
+          range_description: "Hope appears but is false"
+
+        stc_beats_covered:
+          - b_story
+          - fun_and_games
+          - midpoint  # False victory that will be reversed
+
+        scene_capacity: 2
+
+        transition:
+          position_floor: 0.55
+          position_ceiling: 0.65
+          state_requirements:
+            primary_spectrum_min: 0.45
+
+      final_fall:
+        id: 4
+        name: "Final Fall / Hope Destroyed"
+        description: "The devastating reversal and descent to doom"
+
+        position:
+          stc_center: 0.78
+          floor: 0.62
+          ceiling: 0.92
+          validation_band: 0.06
+
+        target_state:
+          primary_spectrum: [0.15, 0.35]  # Falling to bottom
+          range_description: "Hope crushed, doom approaching"
+
+        stc_beats_covered:
+          - bad_guys_close_in
+          - all_is_lost
+          - dark_night_of_the_soul
+          - break_into_three  # Futile recognition
+          - finale
+
+        scene_capacity: 3
+
+        transition:
+          position_floor: 0.88
+          position_ceiling: 0.95
+          state_requirements:
+            primary_spectrum_max: 0.35
+            core_event_completed: true
+
+      tragedy:
+        id: 5
+        name: "Tragedy / Final Devastation"
+        description: "Complete catastrophe, worse than first fall"
+
+        position:
+          stc_center: 0.97
+          floor: 0.92
+          ceiling: 1.00
+          validation_band: 0.03
+
+        target_state:
+          primary_spectrum: [0.00, 0.20]  # At or below first valley
+          range_description: "Ultimate tragedy"
+
+        stc_beats_covered:
+          - final_image
+
+        scene_capacity: 0
+
+        transition: null
+
+# =============================================================================
+# COMPOSITION WORKFLOW
+# =============================================================================
+
+composition:
+  description: |
+    How to compose a story using a template.
+
+  workflow:
+    1_select_template:
+      description: "Choose template based on desired arc shape"
+      input: "Desired ending (positive/negative), complexity (4 or 5 phases)"
+      output: "Template ID"
+
+    2_select_genre:
+      description: "Choose primary genre (determines primary spectrum)"
+      input: "Content genre from story-grid-genres.yaml"
+      validation: "Check compatible_arcs includes selected template"
+      output: "Primary spectrum type, obligatory scenes list"
+
+    3_optional_secondary_genres:
+      description: "Add secondary genres for layering"
+      input: "Additional content genres"
+      output: "Secondary spectrum targets (author-specified)"
+
+    4_validate_coverage:
+      description: "Static validation at composition time"
+      checks:
+        - "All obligatory scenes can be satisfied by available actions"
+        - "Actions exist for each required scene"
+        - "No impossible action sequences"
+      failure: "Reject composition, report gaps"
+
+    5_generate_initial_state:
+      description: "Create starting NarrativeState"
+      input: "Template phase 1 target_state, genre primary spectrum"
+      output: "NarrativeState with primary spectrum value"
+
+    6_goap_planning:
+      description: "Plan actions for current phase"
+      input: "Current NarrativeState, phase target, available actions"
+      output: "Sequence of actions to reach phase target"
+
+# =============================================================================
+# VALIDATION RULES
+# =============================================================================
+
+validation:
+  composition_time:
+    description: "Checks performed when composition is created"
+
+    rules:
+      template_genre_compatibility:
+        description: "Genre subgenre must list template in compatible_arcs"
+        severity: "error"
+        message: "Genre {genre}.{subgenre} is not compatible with arc {template}"
+
+      obligatory_scene_coverage:
+        description: "Actions must exist to satisfy all genre obligatory scenes"
+        severity: "error"
+        message: "No action satisfies obligatory scene {scene} for genre {genre}"
+
+      action_sequence_feasibility:
+        description: "Valid GOAP path must exist through phase actions"
+        severity: "warning"
+        message: "No feasible action sequence for phase {phase}"
+
+  runtime:
+    description: "Checks during story execution"
+
+    rules:
+      phase_position_floor:
+        description: "Cannot advance phase before position floor"
+        severity: "block"
+
+      forced_advancement_warning:
+        description: "Log when position ceiling forces advancement"
+        severity: "warning"
+        message: "Forced phase advancement at position {position} - state conditions unmet"
+
+      core_event_requirement:
+        description: "Core event must occur before resolution phase"
+        severity: "error"
+
+# =============================================================================
+# REFERENCES
+# =============================================================================
+
+references:
+  primary:
+    - title: "The emotional arcs of stories are dominated by six basic shapes"
+      authors: ["Reagan, A.J.", "Mitchell, L.", "Kiley, D.", "Danforth, C.M.", "Dodds, P.S."]
+      year: 2016
+      journal: "EPJ Data Science"
+      notes: "Source for 6 arc shapes and coverage statistics"
+
+    - title: "Save the Cat! The Last Book on Screenwriting You'll Ever Need"
+      author: "Blake Snyder"
+      year: 2005
+      notes: "Source for phase boundaries and beat timing"
+
+    - title: "The Story Grid: What Good Editors Know"
+      author: "Shawn Coyne"
+      year: 2015
+      notes: "Source for genre compatibility and obligatory scenes"
+
+  schemas:
+    - "schemas/storyline/emotional-arcs.yaml"
+    - "schemas/storyline/save-the-cat-beats.yaml"
+    - "schemas/storyline/narrative-state.yaml"
+    - "schemas/storyline/story-grid-genres.yaml"
+    - "schemas/storyline/story-actions.yaml"
+    - "schemas/storyline/STORY_TEMPLATE_ANALYSIS.md"
+
+# =============================================================================
+# CHANGELOG
+# =============================================================================
+
+changelog:
+  - version: "1.0"
+    date: "2026-02-04"
+    changes:
+      - "Initial implementation of 6 Reagan arc templates"
+      - "Arc-shape-derived target states with STC anchors"
+      - "Hybrid phase triggers (position floor + state ceiling)"
+      - "STC-derived phase boundaries with validation bands"
+      - "Genre compatibility mappings from story-grid-genres.yaml"
+      - "Composition workflow definition"
+      - "Validation rules for composition-time and runtime"

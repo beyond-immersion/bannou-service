@@ -1,0 +1,34 @@
+openapi: 3.0.3
+info:
+  title: Character History Service Configuration
+  description: |
+    Configuration schema for Character History service.
+    Properties are bound to environment variables with CHARACTER_HISTORY_ prefix.
+
+    **SCHEMA MODIFICATION GATE**: STOP. Before modifying this schema, you MUST:
+    1. Read docs/reference/SCHEMA-RULES.md
+    2. State which section applies to your change
+    3. Only then proceed with edits
+    Edits without stating the applicable rule are FORBIDDEN.
+  version: 1.0.0
+paths: {}
+x-service-configuration:
+  properties:
+    # Cache Configuration
+    BackstoryCacheTtlSeconds:
+      type: integer
+      description: TTL in seconds for backstory cache entries. Backstory data is nearly immutable, so longer TTLs are appropriate.
+      default: 600
+      env: CHARACTER_HISTORY_BACKSTORY_CACHE_TTL_SECONDS
+    # Element Limits
+    MaxBackstoryElements:
+      type: integer
+      description: Maximum number of backstory elements allowed per character. Prevents unbounded growth from repeated AddBackstoryElement or SetBackstory calls. Returns BadRequest when limit would be exceeded.
+      default: 100
+      env: CHARACTER_HISTORY_MAX_BACKSTORY_ELEMENTS
+    # Concurrency Control
+    IndexLockTimeoutSeconds:
+      type: integer
+      description: Timeout in seconds for distributed locks during index and backstory write operations. Matches established patterns in Currency, Inventory, and Contract services.
+      default: 15
+      env: CHARACTER_HISTORY_INDEX_LOCK_TIMEOUT_SECONDS

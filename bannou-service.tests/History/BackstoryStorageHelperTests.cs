@@ -64,7 +64,29 @@ public class BackstoryStorageHelperTests : IClassFixture<CollectionFixture>
             });
     }
 
-    private BackstoryStorageConfiguration<TestBackstory, TestElement> CreateConfig(Mock<IStateStoreFactory> mockFactory)
+    private (Mock<IStateStoreFactory>, Mock<IStateStore<TestBackstory>>, Mock<IDistributedLockProvider>) CreateMocks()
+    {
+        var mockFactory = new Mock<IStateStoreFactory>();
+        var mockStore = new Mock<IStateStore<TestBackstory>>();
+        var mockLockProvider = new Mock<IDistributedLockProvider>();
+
+        mockFactory.Setup(f => f.GetStore<TestBackstory>(TestStateStoreName)).Returns(mockStore.Object);
+
+        // Default: lock provider succeeds
+        var successLock = new Mock<ILockResponse>();
+        successLock.Setup(l => l.Success).Returns(true);
+        mockLockProvider
+            .Setup(l => l.LockAsync(
+                It.IsAny<string>(), It.IsAny<string>(),
+                It.IsAny<string>(), It.IsAny<int>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(successLock.Object);
+
+        return (mockFactory, mockStore, mockLockProvider);
+    }
+
+    private BackstoryStorageConfiguration<TestBackstory, TestElement> CreateConfig(
+        Mock<IStateStoreFactory> mockFactory,
+        Mock<IDistributedLockProvider> mockLockProvider)
     {
         return new BackstoryStorageConfiguration<TestBackstory, TestElement>
         {
@@ -79,26 +101,18 @@ public class BackstoryStorageHelperTests : IClassFixture<CollectionFixture>
             GetCreatedAtUnix = b => b.CreatedAtUnix,
             SetCreatedAtUnix = (b, t) => b.CreatedAtUnix = t,
             GetUpdatedAtUnix = b => b.UpdatedAtUnix,
-            SetUpdatedAtUnix = (b, t) => b.UpdatedAtUnix = t
+            SetUpdatedAtUnix = (b, t) => b.UpdatedAtUnix = t,
+            LockProvider = mockLockProvider.Object,
+            LockTimeoutSeconds = 15
         };
-    }
-
-    private (Mock<IStateStoreFactory>, Mock<IStateStore<TestBackstory>>) CreateMocks()
-    {
-        var mockFactory = new Mock<IStateStoreFactory>();
-        var mockStore = new Mock<IStateStore<TestBackstory>>();
-
-        mockFactory.Setup(f => f.GetStore<TestBackstory>(TestStateStoreName)).Returns(mockStore.Object);
-
-        return (mockFactory, mockStore);
     }
 
     [Fact]
     public async Task GetAsync_WithValidId_ReturnsBackstory()
     {
         // Arrange
-        var (mockFactory, mockStore) = CreateMocks();
-        var helper = new BackstoryStorageHelper<TestBackstory, TestElement>(CreateConfig(mockFactory));
+        var (mockFactory, mockStore, mockLockProvider) = CreateMocks();
+        var helper = new BackstoryStorageHelper<TestBackstory, TestElement>(CreateConfig(mockFactory, mockLockProvider));
 
         var backstory = new TestBackstory
         {
@@ -128,8 +142,8 @@ public class BackstoryStorageHelperTests : IClassFixture<CollectionFixture>
     public async Task GetAsync_WithInvalidId_ReturnsNull()
     {
         // Arrange
-        var (mockFactory, mockStore) = CreateMocks();
-        var helper = new BackstoryStorageHelper<TestBackstory, TestElement>(CreateConfig(mockFactory));
+        var (mockFactory, mockStore, mockLockProvider) = CreateMocks();
+        var helper = new BackstoryStorageHelper<TestBackstory, TestElement>(CreateConfig(mockFactory, mockLockProvider));
 
         mockStore.Setup(s => s.GetAsync($"{KeyPrefix}non-existent", It.IsAny<CancellationToken>()))
             .ReturnsAsync((TestBackstory?)null);
@@ -142,21 +156,21 @@ public class BackstoryStorageHelperTests : IClassFixture<CollectionFixture>
     }
 
     [Fact]
-    public async Task GetAsync_WithEmptyId_ReturnsNull()
+    public async Task GetAsync_WithEmptyId_ThrowsArgumentNullException()
     {
-        var (mockFactory, _) = CreateMocks();
-        var helper = new BackstoryStorageHelper<TestBackstory, TestElement>(CreateConfig(mockFactory));
+        var (mockFactory, _, mockLockProvider) = CreateMocks();
+        var helper = new BackstoryStorageHelper<TestBackstory, TestElement>(CreateConfig(mockFactory, mockLockProvider));
 
-        var result = await helper.GetAsync("");
-        Assert.Null(result);
+        await Assert.ThrowsAsync<ArgumentNullException>(() =>
+            helper.GetAsync(""));
     }
 
     [Fact]
     public async Task SetAsync_NewBackstory_CreatesNew()
     {
         // Arrange
-        var (mockFactory, mockStore) = CreateMocks();
-        var helper = new BackstoryStorageHelper<TestBackstory, TestElement>(CreateConfig(mockFactory));
+        var (mockFactory, mockStore, mockLockProvider) = CreateMocks();
+        var helper = new BackstoryStorageHelper<TestBackstory, TestElement>(CreateConfig(mockFactory, mockLockProvider));
 
         mockStore.Setup(s => s.GetAsync($"{KeyPrefix}entity-1", It.IsAny<CancellationToken>()))
             .ReturnsAsync((TestBackstory?)null);
@@ -170,9 +184,11 @@ public class BackstoryStorageHelperTests : IClassFixture<CollectionFixture>
         var result = await helper.SetAsync("entity-1", elements, replaceExisting: false);
 
         // Assert
-        Assert.True(result.IsNew);
-        Assert.Equal("entity-1", result.Backstory.EntityId);
-        Assert.Single(result.Backstory.Elements);
+        Assert.True(result.LockAcquired);
+        Assert.NotNull(result.Value);
+        Assert.True(result.Value.IsNew);
+        Assert.Equal("entity-1", result.Value.Backstory.EntityId);
+        Assert.Single(result.Value.Backstory.Elements);
 
         mockStore.Verify(s => s.SaveAsync(
             $"{KeyPrefix}entity-1",
@@ -185,8 +201,8 @@ public class BackstoryStorageHelperTests : IClassFixture<CollectionFixture>
     public async Task SetAsync_ReplaceExisting_ReplacesAllElements()
     {
         // Arrange
-        var (mockFactory, mockStore) = CreateMocks();
-        var helper = new BackstoryStorageHelper<TestBackstory, TestElement>(CreateConfig(mockFactory));
+        var (mockFactory, mockStore, mockLockProvider) = CreateMocks();
+        var helper = new BackstoryStorageHelper<TestBackstory, TestElement>(CreateConfig(mockFactory, mockLockProvider));
 
         var existing = new TestBackstory
         {
@@ -212,22 +228,24 @@ public class BackstoryStorageHelperTests : IClassFixture<CollectionFixture>
         var result = await helper.SetAsync("entity-1", newElements, replaceExisting: true);
 
         // Assert
-        Assert.False(result.IsNew);
-        Assert.Single(result.Backstory.Elements);
-        Assert.Equal("brave", result.Backstory.Elements[0].Key);
-        Assert.Equal("New value", result.Backstory.Elements[0].Value);
-        Assert.Equal(0.9f, result.Backstory.Elements[0].Strength);
+        Assert.True(result.LockAcquired);
+        Assert.NotNull(result.Value);
+        Assert.False(result.Value.IsNew);
+        Assert.Single(result.Value.Backstory.Elements);
+        Assert.Equal("brave", result.Value.Backstory.Elements[0].Key);
+        Assert.Equal("New value", result.Value.Backstory.Elements[0].Value);
+        Assert.Equal(0.9f, result.Value.Backstory.Elements[0].Strength);
 
         // Original CreatedAtUnix should be preserved
-        Assert.Equal(1000000, result.Backstory.CreatedAtUnix);
+        Assert.Equal(1000000, result.Value.Backstory.CreatedAtUnix);
     }
 
     [Fact]
     public async Task SetAsync_Merge_UpdatesExistingAndAddsNew()
     {
         // Arrange
-        var (mockFactory, mockStore) = CreateMocks();
-        var helper = new BackstoryStorageHelper<TestBackstory, TestElement>(CreateConfig(mockFactory));
+        var (mockFactory, mockStore, mockLockProvider) = CreateMocks();
+        var helper = new BackstoryStorageHelper<TestBackstory, TestElement>(CreateConfig(mockFactory, mockLockProvider));
 
         var existing = new TestBackstory
         {
@@ -253,16 +271,18 @@ public class BackstoryStorageHelperTests : IClassFixture<CollectionFixture>
         var result = await helper.SetAsync("entity-1", newElements, replaceExisting: false);
 
         // Assert
-        Assert.False(result.IsNew);
-        Assert.Equal(2, result.Backstory.Elements.Count);
+        Assert.True(result.LockAcquired);
+        Assert.NotNull(result.Value);
+        Assert.False(result.Value.IsNew);
+        Assert.Equal(2, result.Value.Backstory.Elements.Count);
 
         // Existing element should be updated
-        var braveElement = result.Backstory.Elements.First(e => e.Key == "brave");
+        var braveElement = result.Value.Backstory.Elements.First(e => e.Key == "brave");
         Assert.Equal("Updated value", braveElement.Value);
         Assert.Equal(0.9f, braveElement.Strength);
 
         // New element should be added
-        var wiseElement = result.Backstory.Elements.First(e => e.Key == "wise");
+        var wiseElement = result.Value.Backstory.Elements.First(e => e.Key == "wise");
         Assert.Equal("New element", wiseElement.Value);
         Assert.Equal(0.7f, wiseElement.Strength);
     }
@@ -270,8 +290,8 @@ public class BackstoryStorageHelperTests : IClassFixture<CollectionFixture>
     [Fact]
     public async Task SetAsync_WithEmptyId_ThrowsArgumentNullException()
     {
-        var (mockFactory, _) = CreateMocks();
-        var helper = new BackstoryStorageHelper<TestBackstory, TestElement>(CreateConfig(mockFactory));
+        var (mockFactory, _, mockLockProvider) = CreateMocks();
+        var helper = new BackstoryStorageHelper<TestBackstory, TestElement>(CreateConfig(mockFactory, mockLockProvider));
 
         await Assert.ThrowsAsync<ArgumentNullException>(() =>
             helper.SetAsync("", new List<TestElement>(), replaceExisting: false));
@@ -281,8 +301,8 @@ public class BackstoryStorageHelperTests : IClassFixture<CollectionFixture>
     public async Task AddElementAsync_NewBackstory_CreatesWithSingleElement()
     {
         // Arrange
-        var (mockFactory, mockStore) = CreateMocks();
-        var helper = new BackstoryStorageHelper<TestBackstory, TestElement>(CreateConfig(mockFactory));
+        var (mockFactory, mockStore, mockLockProvider) = CreateMocks();
+        var helper = new BackstoryStorageHelper<TestBackstory, TestElement>(CreateConfig(mockFactory, mockLockProvider));
 
         mockStore.Setup(s => s.GetAsync($"{KeyPrefix}entity-1", It.IsAny<CancellationToken>()))
             .ReturnsAsync((TestBackstory?)null);
@@ -293,17 +313,19 @@ public class BackstoryStorageHelperTests : IClassFixture<CollectionFixture>
         var result = await helper.AddElementAsync("entity-1", element);
 
         // Assert
-        Assert.True(result.IsNew);
-        Assert.Single(result.Backstory.Elements);
-        Assert.Equal("brave", result.Backstory.Elements[0].Key);
+        Assert.True(result.LockAcquired);
+        Assert.NotNull(result.Value);
+        Assert.True(result.Value.IsNew);
+        Assert.Single(result.Value.Backstory.Elements);
+        Assert.Equal("brave", result.Value.Backstory.Elements[0].Key);
     }
 
     [Fact]
     public async Task AddElementAsync_ExistingBackstory_AddsNewElement()
     {
         // Arrange
-        var (mockFactory, mockStore) = CreateMocks();
-        var helper = new BackstoryStorageHelper<TestBackstory, TestElement>(CreateConfig(mockFactory));
+        var (mockFactory, mockStore, mockLockProvider) = CreateMocks();
+        var helper = new BackstoryStorageHelper<TestBackstory, TestElement>(CreateConfig(mockFactory, mockLockProvider));
 
         var existing = new TestBackstory
         {
@@ -325,16 +347,18 @@ public class BackstoryStorageHelperTests : IClassFixture<CollectionFixture>
         var result = await helper.AddElementAsync("entity-1", element);
 
         // Assert
-        Assert.False(result.IsNew);
-        Assert.Equal(2, result.Backstory.Elements.Count);
+        Assert.True(result.LockAcquired);
+        Assert.NotNull(result.Value);
+        Assert.False(result.Value.IsNew);
+        Assert.Equal(2, result.Value.Backstory.Elements.Count);
     }
 
     [Fact]
     public async Task AddElementAsync_ExistingElement_UpdatesIt()
     {
         // Arrange
-        var (mockFactory, mockStore) = CreateMocks();
-        var helper = new BackstoryStorageHelper<TestBackstory, TestElement>(CreateConfig(mockFactory));
+        var (mockFactory, mockStore, mockLockProvider) = CreateMocks();
+        var helper = new BackstoryStorageHelper<TestBackstory, TestElement>(CreateConfig(mockFactory, mockLockProvider));
 
         var existing = new TestBackstory
         {
@@ -356,17 +380,19 @@ public class BackstoryStorageHelperTests : IClassFixture<CollectionFixture>
         var result = await helper.AddElementAsync("entity-1", element);
 
         // Assert
-        Assert.False(result.IsNew);
-        Assert.Single(result.Backstory.Elements);
-        Assert.Equal("Updated value", result.Backstory.Elements[0].Value);
-        Assert.Equal(0.9f, result.Backstory.Elements[0].Strength);
+        Assert.True(result.LockAcquired);
+        Assert.NotNull(result.Value);
+        Assert.False(result.Value.IsNew);
+        Assert.Single(result.Value.Backstory.Elements);
+        Assert.Equal("Updated value", result.Value.Backstory.Elements[0].Value);
+        Assert.Equal(0.9f, result.Value.Backstory.Elements[0].Strength);
     }
 
     [Fact]
     public async Task AddElementAsync_WithEmptyId_ThrowsArgumentNullException()
     {
-        var (mockFactory, _) = CreateMocks();
-        var helper = new BackstoryStorageHelper<TestBackstory, TestElement>(CreateConfig(mockFactory));
+        var (mockFactory, _, mockLockProvider) = CreateMocks();
+        var helper = new BackstoryStorageHelper<TestBackstory, TestElement>(CreateConfig(mockFactory, mockLockProvider));
 
         await Assert.ThrowsAsync<ArgumentNullException>(() =>
             helper.AddElementAsync("", new TestElement()));
@@ -376,8 +402,8 @@ public class BackstoryStorageHelperTests : IClassFixture<CollectionFixture>
     public async Task DeleteAsync_ExistingBackstory_ReturnsTrue()
     {
         // Arrange
-        var (mockFactory, mockStore) = CreateMocks();
-        var helper = new BackstoryStorageHelper<TestBackstory, TestElement>(CreateConfig(mockFactory));
+        var (mockFactory, mockStore, mockLockProvider) = CreateMocks();
+        var helper = new BackstoryStorageHelper<TestBackstory, TestElement>(CreateConfig(mockFactory, mockLockProvider));
 
         var existing = new TestBackstory { EntityId = "entity-1" };
         mockStore.Setup(s => s.GetAsync($"{KeyPrefix}entity-1", It.IsAny<CancellationToken>()))
@@ -389,7 +415,8 @@ public class BackstoryStorageHelperTests : IClassFixture<CollectionFixture>
         var result = await helper.DeleteAsync("entity-1");
 
         // Assert
-        Assert.True(result);
+        Assert.True(result.LockAcquired);
+        Assert.True(result.Value);
         mockStore.Verify(s => s.DeleteAsync($"{KeyPrefix}entity-1", It.IsAny<CancellationToken>()), Times.Once);
     }
 
@@ -397,8 +424,8 @@ public class BackstoryStorageHelperTests : IClassFixture<CollectionFixture>
     public async Task DeleteAsync_NonExistentBackstory_ReturnsFalse()
     {
         // Arrange
-        var (mockFactory, mockStore) = CreateMocks();
-        var helper = new BackstoryStorageHelper<TestBackstory, TestElement>(CreateConfig(mockFactory));
+        var (mockFactory, mockStore, mockLockProvider) = CreateMocks();
+        var helper = new BackstoryStorageHelper<TestBackstory, TestElement>(CreateConfig(mockFactory, mockLockProvider));
 
         mockStore.Setup(s => s.GetAsync($"{KeyPrefix}entity-1", It.IsAny<CancellationToken>()))
             .ReturnsAsync((TestBackstory?)null);
@@ -407,26 +434,27 @@ public class BackstoryStorageHelperTests : IClassFixture<CollectionFixture>
         var result = await helper.DeleteAsync("entity-1");
 
         // Assert
-        Assert.False(result);
+        Assert.True(result.LockAcquired);
+        Assert.False(result.Value);
         mockStore.Verify(s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Fact]
-    public async Task DeleteAsync_WithEmptyId_ReturnsFalse()
+    public async Task DeleteAsync_WithEmptyId_ThrowsArgumentNullException()
     {
-        var (mockFactory, _) = CreateMocks();
-        var helper = new BackstoryStorageHelper<TestBackstory, TestElement>(CreateConfig(mockFactory));
+        var (mockFactory, _, mockLockProvider) = CreateMocks();
+        var helper = new BackstoryStorageHelper<TestBackstory, TestElement>(CreateConfig(mockFactory, mockLockProvider));
 
-        var result = await helper.DeleteAsync("");
-        Assert.False(result);
+        await Assert.ThrowsAsync<ArgumentNullException>(() =>
+            helper.DeleteAsync(""));
     }
 
     [Fact]
     public async Task ExistsAsync_ExistingBackstory_ReturnsTrue()
     {
         // Arrange
-        var (mockFactory, mockStore) = CreateMocks();
-        var helper = new BackstoryStorageHelper<TestBackstory, TestElement>(CreateConfig(mockFactory));
+        var (mockFactory, mockStore, mockLockProvider) = CreateMocks();
+        var helper = new BackstoryStorageHelper<TestBackstory, TestElement>(CreateConfig(mockFactory, mockLockProvider));
 
         mockStore.Setup(s => s.ExistsAsync($"{KeyPrefix}entity-1", It.IsAny<CancellationToken>()))
             .ReturnsAsync(true);
@@ -442,8 +470,8 @@ public class BackstoryStorageHelperTests : IClassFixture<CollectionFixture>
     public async Task ExistsAsync_NonExistentBackstory_ReturnsFalse()
     {
         // Arrange
-        var (mockFactory, mockStore) = CreateMocks();
-        var helper = new BackstoryStorageHelper<TestBackstory, TestElement>(CreateConfig(mockFactory));
+        var (mockFactory, mockStore, mockLockProvider) = CreateMocks();
+        var helper = new BackstoryStorageHelper<TestBackstory, TestElement>(CreateConfig(mockFactory, mockLockProvider));
 
         mockStore.Setup(s => s.ExistsAsync($"{KeyPrefix}entity-1", It.IsAny<CancellationToken>()))
             .ReturnsAsync(false);
@@ -456,13 +484,13 @@ public class BackstoryStorageHelperTests : IClassFixture<CollectionFixture>
     }
 
     [Fact]
-    public async Task ExistsAsync_WithEmptyId_ReturnsFalse()
+    public async Task ExistsAsync_WithEmptyId_ThrowsArgumentNullException()
     {
-        var (mockFactory, _) = CreateMocks();
-        var helper = new BackstoryStorageHelper<TestBackstory, TestElement>(CreateConfig(mockFactory));
+        var (mockFactory, _, mockLockProvider) = CreateMocks();
+        var helper = new BackstoryStorageHelper<TestBackstory, TestElement>(CreateConfig(mockFactory, mockLockProvider));
 
-        var result = await helper.ExistsAsync("");
-        Assert.False(result);
+        await Assert.ThrowsAsync<ArgumentNullException>(() =>
+            helper.ExistsAsync(""));
     }
 
     [Fact]

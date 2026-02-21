@@ -1,0 +1,258 @@
+openapi: 3.0.3
+info:
+  title: Worldstate Service Events Lifecycle Events
+  description: "Auto-generated lifecycle event schemas for worldstate service.\nDO NOT EDIT - This file is completely overwritten
+    by generate-lifecycle-events.py.\nSource of truth: worldstate-events.yaml x-lifecycle section."
+  version: 1.0.0
+paths: {}
+components:
+  schemas:
+    CalendarTemplateCreatedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+      type: object
+      additionalProperties: false
+      description: Published to calendar-template.created when a calendartemplate is created
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - templateCode
+      - gameServiceId
+      - gameHoursPerDay
+      - dayPeriods
+      - months
+      - seasons
+      - daysPerYear
+      - monthsPerYear
+      - seasonsPerYear
+      properties:
+        eventName:
+          type: string
+          default: calendar-template.created
+          description: 'Event type identifier: calendar-template.created'
+        templateCode: &id001
+          type: string
+          description: Unique code identifying this calendar template
+        gameServiceId: &id002
+          type: string
+          format: uuid
+          description: Game service this calendar template belongs to
+        gameHoursPerDay: &id003
+          type: integer
+          description: Number of game hours in one game day
+        dayPeriods: &id004
+          type: array
+          items:
+            $ref: '../worldstate-api.yaml#/components/schemas/DayPeriodDefinition'
+          description: Ordered list of day period definitions (e.g., dawn, morning, noon)
+        months: &id005
+          type: array
+          items:
+            $ref: '../worldstate-api.yaml#/components/schemas/MonthDefinition'
+          description: Ordered list of month definitions for this calendar
+        seasons: &id006
+          type: array
+          items:
+            $ref: '../worldstate-api.yaml#/components/schemas/SeasonDefinition'
+          description: Ordered list of season definitions for this calendar
+        daysPerYear: &id007
+          type: integer
+          description: Total number of game days in one game year
+        monthsPerYear: &id008
+          type: integer
+          description: Total number of months in one game year
+        seasonsPerYear: &id009
+          type: integer
+          description: Total number of seasons in one game year
+        eraLabels: &id010
+          type: array
+          nullable: true
+          items:
+            $ref: '../worldstate-api.yaml#/components/schemas/EraLabel'
+          description: Optional era label definitions for year-range naming
+    CalendarTemplateUpdatedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+      type: object
+      additionalProperties: false
+      description: Published to calendar-template.updated when a calendartemplate is updated
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - templateCode
+      - gameServiceId
+      - gameHoursPerDay
+      - dayPeriods
+      - months
+      - seasons
+      - daysPerYear
+      - monthsPerYear
+      - seasonsPerYear
+      - changedFields
+      properties:
+        eventName:
+          type: string
+          default: calendar-template.updated
+          description: 'Event type identifier: calendar-template.updated'
+        templateCode: *id001
+        gameServiceId: *id002
+        gameHoursPerDay: *id003
+        dayPeriods: *id004
+        months: *id005
+        seasons: *id006
+        daysPerYear: *id007
+        monthsPerYear: *id008
+        seasonsPerYear: *id009
+        eraLabels: *id010
+        changedFields:
+          type: array
+          items:
+            type: string
+          description: List of field names that were modified
+    CalendarTemplateDeletedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+      type: object
+      additionalProperties: false
+      description: Published to calendar-template.deleted when a calendartemplate is deleted
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - templateCode
+      - gameServiceId
+      - gameHoursPerDay
+      - dayPeriods
+      - months
+      - seasons
+      - daysPerYear
+      - monthsPerYear
+      - seasonsPerYear
+      properties:
+        eventName:
+          type: string
+          default: calendar-template.deleted
+          description: 'Event type identifier: calendar-template.deleted'
+        templateCode: *id001
+        gameServiceId: *id002
+        gameHoursPerDay: *id003
+        dayPeriods: *id004
+        months: *id005
+        seasons: *id006
+        daysPerYear: *id007
+        monthsPerYear: *id008
+        seasonsPerYear: *id009
+        eraLabels: *id010
+        deletedReason:
+          type: string
+          nullable: true
+          description: Optional reason for deletion (e.g., "Merged into {targetId}")
+    RealmConfigCreatedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+      type: object
+      additionalProperties: false
+      description: Published to realm-config.created when a realmconfig is created
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - realmId
+      - gameServiceId
+      - calendarTemplateCode
+      - currentTimeRatio
+      - downtimePolicy
+      - realmEpoch
+      properties:
+        eventName:
+          type: string
+          default: realm-config.created
+          description: 'Event type identifier: realm-config.created'
+        realmId: &id011
+          type: string
+          format: uuid
+          description: Unique identifier of the realm this config belongs to
+        gameServiceId: &id012
+          type: string
+          format: uuid
+          description: Game service this realm config is associated with
+        calendarTemplateCode: &id013
+          type: string
+          description: Code of the calendar template assigned to this realm
+        currentTimeRatio: &id014
+          type: number
+          format: float
+          description: Current game-seconds per real-second ratio
+        downtimePolicy: &id015
+          $ref: ../worldstate-api.yaml#/components/schemas/DowntimePolicy
+          description: Policy for handling game time during server downtime
+        realmEpoch: &id016
+          type: string
+          format: date-time
+          description: Real-world timestamp marking the start of this realm's game time
+    RealmConfigUpdatedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+      type: object
+      additionalProperties: false
+      description: Published to realm-config.updated when a realmconfig is updated
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - realmId
+      - gameServiceId
+      - calendarTemplateCode
+      - currentTimeRatio
+      - downtimePolicy
+      - realmEpoch
+      - changedFields
+      properties:
+        eventName:
+          type: string
+          default: realm-config.updated
+          description: 'Event type identifier: realm-config.updated'
+        realmId: *id011
+        gameServiceId: *id012
+        calendarTemplateCode: *id013
+        currentTimeRatio: *id014
+        downtimePolicy: *id015
+        realmEpoch: *id016
+        changedFields:
+          type: array
+          items:
+            type: string
+          description: List of field names that were modified
+    RealmConfigDeletedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+      type: object
+      additionalProperties: false
+      description: Published to realm-config.deleted when a realmconfig is deleted
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - realmId
+      - gameServiceId
+      - calendarTemplateCode
+      - currentTimeRatio
+      - downtimePolicy
+      - realmEpoch
+      properties:
+        eventName:
+          type: string
+          default: realm-config.deleted
+          description: 'Event type identifier: realm-config.deleted'
+        realmId: *id011
+        gameServiceId: *id012
+        calendarTemplateCode: *id013
+        currentTimeRatio: *id014
+        downtimePolicy: *id015
+        realmEpoch: *id016
+        deletedReason:
+          type: string
+          nullable: true
+          description: Optional reason for deletion (e.g., "Merged into {targetId}")

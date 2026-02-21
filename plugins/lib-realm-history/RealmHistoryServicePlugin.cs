@@ -1,4 +1,5 @@
 using BeyondImmersion.BannouService.Plugins;
+using BeyondImmersion.BannouService.Resource;
 using BeyondImmersion.BannouService.Services;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
@@ -91,12 +92,15 @@ public class RealmHistoryServicePlugin : BaseBannouPlugin
 
     /// <summary>
     /// Running phase - calls existing IBannouService lifecycle if present.
+    /// Also registers cleanup callbacks with lib-resource (must happen after all plugins are started).
     /// </summary>
     protected override async Task OnRunningAsync()
     {
         if (_service == null) return;
 
         Logger?.LogDebug("RealmHistory service running");
+
+        var serviceProvider = _serviceProvider ?? throw new InvalidOperationException("ServiceProvider not available during OnRunningAsync");
 
         try
         {
@@ -110,6 +114,31 @@ public class RealmHistoryServicePlugin : BaseBannouPlugin
         catch (Exception ex)
         {
             Logger?.LogWarning(ex, "Exception during RealmHistory service running phase");
+        }
+
+        // Register cleanup callbacks with lib-resource for realm reference tracking.
+        // IResourceClient is L1 infrastructure - must be available (fail-fast per TENETS).
+        using var scope = serviceProvider.CreateScope();
+        var resourceClient = scope.ServiceProvider.GetRequiredService<IResourceClient>();
+
+        var success = await RealmHistoryService.RegisterResourceCleanupCallbacksAsync(resourceClient, CancellationToken.None);
+        if (success)
+        {
+            Logger?.LogInformation("Registered realm cleanup callbacks with lib-resource");
+        }
+        else
+        {
+            Logger?.LogWarning("Failed to register some cleanup callbacks with lib-resource");
+        }
+
+        // Register compression callback (generated from x-compression-callback)
+        if (await RealmHistoryCompressionCallbacks.RegisterAsync(resourceClient, CancellationToken.None))
+        {
+            Logger?.LogInformation("Registered realm-history compression callback with lib-resource");
+        }
+        else
+        {
+            Logger?.LogWarning("Failed to register realm-history compression callback with lib-resource");
         }
     }
 

@@ -119,6 +119,42 @@ export class ActorProxy {
   }
 
   /**
+   * Bind an unbound actor to a character
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async bindActorCharacterAsync(
+    request: Schemas['BindActorCharacterRequest'],
+    channel: number = 0,
+    timeout?: number
+  ): Promise<ApiResponse<Schemas['ActorInstanceResponse']>> {
+    return this.client.invokeAsync<
+      Schemas['BindActorCharacterRequest'],
+      Schemas['ActorInstanceResponse']
+    >('/actor/bind-character', request, channel, timeout);
+  }
+
+  /**
+   * Cleanup actors referencing a deleted character
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async cleanupByCharacterAsync(
+    request: Schemas['CleanupByCharacterRequest'],
+    channel: number = 0,
+    timeout?: number
+  ): Promise<ApiResponse<Schemas['CleanupByCharacterResponse']>> {
+    return this.client.invokeAsync<
+      Schemas['CleanupByCharacterRequest'],
+      Schemas['CleanupByCharacterResponse']
+    >('/actor/cleanup-by-character', request, channel, timeout);
+  }
+
+  /**
    * Inject a perception event into an actor's queue (testing)
    * @param request - The request payload.
    * @param channel - Message channel for ordering (default 0).

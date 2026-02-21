@@ -187,6 +187,46 @@ export class ItemProxy {
   }
 
   /**
+   * Use an item (execute its behavior contract)
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async useItemAsync(
+    request: Schemas['UseItemRequest'],
+    channel: number = 0,
+    timeout?: number
+  ): Promise<ApiResponse<Schemas['UseItemResponse']>> {
+    return this.client.invokeAsync<Schemas['UseItemRequest'], Schemas['UseItemResponse']>(
+      '/item/use',
+      request,
+      channel,
+      timeout
+    );
+  }
+
+  /**
+   * Complete a specific step of a multi-step item use
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async useItemStepAsync(
+    request: Schemas['UseItemStepRequest'],
+    channel: number = 0,
+    timeout?: number
+  ): Promise<ApiResponse<Schemas['UseItemStepResponse']>> {
+    return this.client.invokeAsync<Schemas['UseItemStepRequest'], Schemas['UseItemStepResponse']>(
+      '/item/use-step',
+      request,
+      channel,
+      timeout
+    );
+  }
+
+  /**
    * List items in a container
    * @param request - The request payload.
    * @param channel - Message channel for ordering (default 0).

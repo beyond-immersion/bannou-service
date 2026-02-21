@@ -1,0 +1,1702 @@
+openapi: 3.0.0
+info:
+  title: Bannou Gardener Service API
+  description: |
+    Player experience orchestration service (L4 GameFeatures) for garden navigation,
+    scenario routing, progressive discovery, and deployment phase management.
+    Gardener is the player-side counterpart to Puppetmaster: where Puppetmaster
+    orchestrates what NPCs experience, Gardener orchestrates what players experience.
+
+    Primary consumer of lib-seed. Interprets seed capabilities as UX modules, uses
+    seed growth phases for scenario selection, and manages seed bonds as the pair
+    system described in PLAYER-VISION.md. Does NOT own seeds -- creates and grows
+    them via lib-seed's API.
+
+    **POST-Only API Pattern**: This API uses POST for all operations to support zero-copy
+    WebSocket routing. Path parameters are passed in request bodies instead of URLs.
+    See docs/BANNOU_DESIGN.md for architectural rationale.
+
+    **SCHEMA MODIFICATION GATE**: STOP. Before modifying this schema, you MUST:
+    1. Read docs/reference/SCHEMA-RULES.md
+    2. State which section applies to your change
+    3. Only then proceed with edits
+    Edits without stating the applicable rule are FORBIDDEN.
+  version: 1.0.0
+x-service-layer: GameFeatures
+
+servers:
+- url: http://localhost:5012
+  description: Bannou service endpoint (internal only)
+
+paths:
+  # =========================================================================
+  # Garden Management (4 endpoints)
+  # =========================================================================
+
+  /gardener/garden/enter:
+    post:
+      summary: Enter the garden
+      description: |
+        Creates a garden instance for the player. Finds or creates the player's
+        active guardian seed, initializes drift metrics, and returns the initial
+        garden state. First tick of the garden orchestrator spawns POIs.
+      operationId: enterGarden
+      tags:
+      - Garden Management
+      x-permissions:
+      - role: user
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EnterGardenRequest'
+      responses:
+        '200':
+          description: Garden instance created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GardenStateResponse'
+        '404':
+          description: No active seed found for account
+        '409':
+          description: Player already has an active garden instance
+
+  /gardener/garden/get:
+    post:
+      summary: Get current garden state
+      description: Returns the player's current garden instance with active POIs.
+      operationId: getGardenState
+      tags:
+      - Garden Management
+      x-permissions:
+      - role: user
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetGardenStateRequest'
+      responses:
+        '200':
+          description: Garden state retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GardenStateResponse'
+        '404':
+          description: Player is not in the garden
+
+  /gardener/garden/update-position:
+    post:
+      summary: Update player position in the garden
+      description: |
+        Updates the player's position and velocity in garden space. Accumulates
+        drift metrics and checks proximity triggers against active POIs.
+      operationId: updatePosition
+      tags:
+      - Garden Management
+      x-permissions:
+      - role: user
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdatePositionRequest'
+      responses:
+        '200':
+          description: Position updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PositionUpdateResponse'
+        '404':
+          description: Player is not in the garden
+
+  /gardener/garden/leave:
+    post:
+      summary: Leave the garden
+      description: |
+        Cleans up the garden instance, all associated POIs, and publishes a
+        garden-left event with session duration.
+      operationId: leaveGarden
+      tags:
+      - Garden Management
+      x-permissions:
+      - role: user
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LeaveGardenRequest'
+      responses:
+        '200':
+          description: Left the garden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LeaveGardenResponse'
+        '404':
+          description: Player is not in the garden
+
+  # =========================================================================
+  # POI Interaction (3 endpoints)
+  # =========================================================================
+
+  /gardener/poi/list:
+    post:
+      summary: List active POIs
+      description: Returns all active POIs for the player's current garden instance.
+      operationId: listPois
+      tags:
+      - POI Interaction
+      x-permissions:
+      - role: user
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ListPoisRequest'
+      responses:
+        '200':
+          description: POIs retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListPoisResponse'
+        '404':
+          description: Player is not in the garden
+
+  /gardener/poi/interact:
+    post:
+      summary: Interact with a POI
+      description: |
+        Triggers interaction with a POI. Result depends on the POI's trigger mode:
+        prompted POIs return scenario info with choices, proximity/interaction POIs
+        enter the scenario directly.
+      operationId: interactWithPoi
+      tags:
+      - POI Interaction
+      x-permissions:
+      - role: user
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InteractWithPoiRequest'
+      responses:
+        '200':
+          description: Interaction result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PoiInteractionResponse'
+        '400':
+          description: POI is expired or already interacted with
+        '404':
+          description: POI not found
+
+  /gardener/poi/decline:
+    post:
+      summary: Decline a POI
+      description: |
+        Marks a POI as declined. The template is added to the garden instance's
+        scenario history for diversity scoring.
+      operationId: declinePoi
+      tags:
+      - POI Interaction
+      x-permissions:
+      - role: user
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeclinePoiRequest'
+      responses:
+        '200':
+          description: POI declined
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeclinePoiResponse'
+        '400':
+          description: POI is not in Active status
+        '404':
+          description: POI not found
+
+  # =========================================================================
+  # Scenario Lifecycle (5 endpoints)
+  # =========================================================================
+
+  /gardener/scenario/enter:
+    post:
+      summary: Enter a scenario
+      description: |
+        Validates prerequisites, creates a game session, creates a scenario
+        instance, destroys the garden instance (player leaves the garden), and
+        publishes scenario-started events.
+      operationId: enterScenario
+      tags:
+      - Scenario Lifecycle
+      x-permissions:
+      - role: user
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EnterScenarioRequest'
+      responses:
+        '200':
+          description: Scenario entered
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ScenarioStateResponse'
+        '400':
+          description: Prerequisites not met or invalid template
+        '409':
+          description: Global scenario capacity reached
+
+  /gardener/scenario/get:
+    post:
+      summary: Get current scenario state
+      description: Returns the player's active scenario instance.
+      operationId: getScenarioState
+      tags:
+      - Scenario Lifecycle
+      x-permissions:
+      - role: user
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetScenarioStateRequest'
+      responses:
+        '200':
+          description: Scenario state retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ScenarioStateResponse'
+        '404':
+          description: No active scenario
+
+  /gardener/scenario/complete:
+    post:
+      summary: Complete a scenario
+      description: |
+        Calculates and awards growth per domain, closes the game session,
+        writes history, and returns the player to the garden.
+      operationId: completeScenario
+      tags:
+      - Scenario Lifecycle
+      x-permissions:
+      - role: user
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CompleteScenarioRequest'
+      responses:
+        '200':
+          description: Scenario completed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ScenarioCompletionResponse'
+        '404':
+          description: Scenario instance not found
+
+  /gardener/scenario/abandon:
+    post:
+      summary: Abandon a scenario
+      description: |
+        Awards partial growth proportional to time spent, cleans up the
+        game session, and writes history.
+      operationId: abandonScenario
+      tags:
+      - Scenario Lifecycle
+      x-permissions:
+      - role: user
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AbandonScenarioRequest'
+      responses:
+        '200':
+          description: Scenario abandoned
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AbandonScenarioResponse'
+        '404':
+          description: Scenario instance not found
+
+  /gardener/scenario/chain:
+    post:
+      summary: Chain to another scenario
+      description: |
+        Completes the current scenario with growth awards and immediately
+        creates a new scenario instance from the target template. Validates
+        chaining rules (leadsTo list, max chain depth).
+      operationId: chainScenario
+      tags:
+      - Scenario Lifecycle
+      x-permissions:
+      - role: user
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChainScenarioRequest'
+      responses:
+        '200':
+          description: Chained to new scenario
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ScenarioStateResponse'
+        '400':
+          description: Chaining rules not met or max chain depth exceeded
+        '404':
+          description: Current scenario or target template not found
+
+  # =========================================================================
+  # Scenario Template Management (6 endpoints)
+  # =========================================================================
+
+  /gardener/template/create:
+    post:
+      summary: Create a scenario template
+      description: Creates a new scenario template definition.
+      operationId: createTemplate
+      tags:
+      - Template Management
+      x-permissions:
+      - role: developer
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateTemplateRequest'
+      responses:
+        '200':
+          description: Template created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ScenarioTemplateResponse'
+        '409':
+          description: Template with this code already exists
+
+  /gardener/template/get:
+    post:
+      summary: Get scenario template by ID
+      description: Returns a scenario template by its unique identifier.
+      operationId: getTemplate
+      tags:
+      - Template Management
+      x-permissions:
+      - role: developer
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetTemplateRequest'
+      responses:
+        '200':
+          description: Template retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ScenarioTemplateResponse'
+        '404':
+          description: Template not found
+
+  /gardener/template/get-by-code:
+    post:
+      summary: Get scenario template by code
+      description: Returns a scenario template by its unique code string.
+      operationId: getTemplateByCode
+      tags:
+      - Template Management
+      x-permissions:
+      - role: developer
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetTemplateByCodeRequest'
+      responses:
+        '200':
+          description: Template retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ScenarioTemplateResponse'
+        '404':
+          description: Template not found
+
+  /gardener/template/list:
+    post:
+      summary: List scenario templates
+      description: Returns paginated scenario templates with optional filters.
+      operationId: listTemplates
+      tags:
+      - Template Management
+      x-permissions:
+      - role: developer
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ListTemplatesRequest'
+      responses:
+        '200':
+          description: Templates listed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListTemplatesResponse'
+
+  /gardener/template/update:
+    post:
+      summary: Update scenario template
+      description: Updates non-null fields of an existing template.
+      operationId: updateTemplate
+      tags:
+      - Template Management
+      x-permissions:
+      - role: developer
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateTemplateRequest'
+      responses:
+        '200':
+          description: Template updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ScenarioTemplateResponse'
+        '404':
+          description: Template not found
+
+  /gardener/template/deprecate:
+    post:
+      summary: Deprecate scenario template
+      description: Sets the template status to Deprecated, preventing new instances.
+      operationId: deprecateTemplate
+      tags:
+      - Template Management
+      x-permissions:
+      - role: developer
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeprecateTemplateRequest'
+      responses:
+        '200':
+          description: Template deprecated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ScenarioTemplateResponse'
+        '404':
+          description: Template not found
+
+  /gardener/template/delete:
+    post:
+      summary: Delete scenario template
+      description: >-
+        Permanently deletes a scenario template. Template must be in Deprecated
+        status before deletion. Publishes a scenario-template.deleted lifecycle event.
+      operationId: deleteTemplate
+      tags:
+      - Template Management
+      x-permissions:
+      - role: developer
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeleteTemplateRequest'
+      responses:
+        '200':
+          description: Template deleted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ScenarioTemplateResponse'
+        '404':
+          description: Template not found
+        '409':
+          description: Template is not in Deprecated status
+
+  # =========================================================================
+  # Deployment Phase (3 endpoints)
+  # =========================================================================
+
+  /gardener/phase/get:
+    post:
+      summary: Get deployment phase configuration
+      description: Returns the current deployment phase configuration. Creates defaults if none exists.
+      operationId: getPhaseConfig
+      tags:
+      - Deployment Phase
+      x-permissions:
+      - role: developer
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetPhaseConfigRequest'
+      responses:
+        '200':
+          description: Phase config retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PhaseConfigResponse'
+
+  /gardener/phase/update:
+    post:
+      summary: Update deployment phase configuration
+      description: Updates non-null fields of the phase configuration. Publishes phase-changed event if phase changes.
+      operationId: updatePhaseConfig
+      tags:
+      - Deployment Phase
+      x-permissions:
+      - role: developer
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdatePhaseConfigRequest'
+      responses:
+        '200':
+          description: Phase config updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PhaseConfigResponse'
+
+  /gardener/phase/get-metrics:
+    post:
+      summary: Get deployment phase metrics
+      description: Returns current counts of active garden instances, scenario instances, and capacity utilization.
+      operationId: getPhaseMetrics
+      tags:
+      - Deployment Phase
+      x-permissions:
+      - role: developer
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetPhaseMetricsRequest'
+      responses:
+        '200':
+          description: Phase metrics retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PhaseMetricsResponse'
+
+  # =========================================================================
+  # Bond Scenarios (2 endpoints)
+  # =========================================================================
+
+  /gardener/bond/enter-together:
+    post:
+      summary: Enter a scenario together with a bonded player
+      description: |
+        Both bonded players enter a shared scenario instance. Validates bond state,
+        both participants' garden instances, and template multiplayer support.
+      operationId: enterScenarioTogether
+      tags:
+      - Bond Scenarios
+      x-permissions:
+      - role: user
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EnterTogetherRequest'
+      responses:
+        '200':
+          description: Both players entered shared scenario
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ScenarioStateResponse'
+        '400':
+          description: One or both participants not in garden, or template does not support multiplayer
+        '404':
+          description: Bond not found
+
+  /gardener/bond/get-shared-garden:
+    post:
+      summary: Get shared garden state for bonded players
+      description: Returns the merged garden state for both bond participants including shared POIs.
+      operationId: getSharedGardenState
+      tags:
+      - Bond Scenarios
+      x-permissions:
+      - role: user
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetSharedGardenRequest'
+      responses:
+        '200':
+          description: Shared garden state retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SharedGardenStateResponse'
+        '404':
+          description: Bond not found or participants not in garden
+
+# ===========================================================================
+# Components
+# ===========================================================================
+
+components:
+  schemas:
+    # =========================================================================
+    # Enums (8 total)
+    # =========================================================================
+
+    DeploymentPhase:
+      type: string
+      enum: [Alpha, Beta, Release]
+      description: Current deployment phase for scenario availability gating
+
+    ConnectivityMode:
+      type: string
+      enum: [Isolated, WorldSlice, Persistent]
+      description: How a scenario instance connects to the broader game world
+
+    ScenarioCategory:
+      type: string
+      enum: [Combat, Crafting, Social, Trade, Exploration, Magic, Survival, Mixed, Narrative, Tutorial]
+      description: Primary gameplay category for a scenario template
+
+    PoiType:
+      type: string
+      enum: [Visual, Auditory, Environmental, Portal, Social]
+      description: Sensory presentation type for a point of interest in the garden
+
+    TriggerMode:
+      type: string
+      enum: [Proximity, Interaction, Prompted, Forced]
+      description: How a POI is triggered by the player
+
+    PoiStatus:
+      type: string
+      enum: [Active, Entered, Declined, Expired]
+      description: Current lifecycle status of a POI
+
+    ScenarioStatus:
+      type: string
+      enum: [Initializing, Active, Completing, Completed, Abandoned]
+      description: Current lifecycle status of a scenario instance
+
+    TemplateStatus:
+      type: string
+      enum: [Draft, Active, Deprecated]
+      description: Current lifecycle status of a scenario template
+
+    PoiInteractionResult:
+      type: string
+      enum: [ScenarioPrompt, ScenarioEnter, PoiUpdate, ChainOffer]
+      description: Outcome of interacting with a POI
+
+    ScenarioParticipantRole:
+      type: string
+      enum: [Primary, Partner]
+      description: Role of a participant within a scenario instance
+
+    # =========================================================================
+    # Shared Sub-Types
+    # =========================================================================
+
+    Vec3:
+      type: object
+      description: Three-dimensional spatial coordinates in garden space
+      required: [x, y, z]
+      properties:
+        x:
+          type: number
+          format: float
+          description: X coordinate in garden space units
+        y:
+          type: number
+          format: float
+          description: Y coordinate in garden space units
+        z:
+          type: number
+          format: float
+          description: Z coordinate in garden space units
+
+    PoiSummary:
+      type: object
+      description: POI state summary for client display
+      required: [poiId, position, poiType, triggerMode, triggerRadius, status]
+      properties:
+        poiId:
+          type: string
+          format: uuid
+          description: Unique identifier for this POI
+        position:
+          $ref: '#/components/schemas/Vec3'
+          description: POI position in garden space
+        poiType:
+          $ref: '#/components/schemas/PoiType'
+          description: Sensory presentation type
+        visualHint:
+          $ref: '#/components/schemas/ScenarioCategory'
+          nullable: true
+          description: Scenario category hint for client rendering
+        audioHint:
+          type: string
+          nullable: true
+          description: Audio hint identifier for client rendering
+        intensityRamp:
+          type: number
+          format: float
+          description: Current intensity ramp value (0.0-1.0)
+          default: 0.0
+        triggerMode:
+          $ref: '#/components/schemas/TriggerMode'
+          description: How this POI is triggered
+        triggerRadius:
+          type: number
+          format: float
+          description: Trigger radius in garden space units
+        scenarioTemplateId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Associated scenario template if this POI leads to a scenario
+        status:
+          $ref: '#/components/schemas/PoiStatus'
+          description: Current lifecycle status
+
+    DomainWeight:
+      type: object
+      description: Domain name and weight pair for scenario template growth weighting
+      required: [domain, weight]
+      properties:
+        domain:
+          type: string
+          description: Growth domain path (e.g. combat.melee, exploration.caves)
+        weight:
+          type: number
+          format: float
+          description: Weight applied to this domain on scenario completion
+
+    ScenarioPrerequisites:
+      type: object
+      description: Prerequisite requirements for entering a scenario
+      properties:
+        requiredDomains:
+          type: object
+          additionalProperties:
+            type: number
+            format: float
+          nullable: true
+          description: Minimum growth depth per domain (domain path to minimum depth)
+        requiredScenarios:
+          type: array
+          items:
+            type: string
+          nullable: true
+          description: Scenario template codes that must be completed first
+        excludedScenarios:
+          type: array
+          items:
+            type: string
+          nullable: true
+          description: Scenario template codes that disqualify the player
+
+    ScenarioChaining:
+      type: object
+      description: Chaining configuration for linking scenarios together
+      properties:
+        leadsTo:
+          type: array
+          items:
+            type: string
+          nullable: true
+          description: Template codes this scenario can chain into
+        chainProbabilities:
+          type: object
+          additionalProperties:
+            type: number
+            format: float
+          nullable: true
+          description: Per-code probability weights for chain selection
+        maxChainDepth:
+          type: integer
+          default: 3
+          description: Maximum chain depth allowed from the initial scenario
+
+    ScenarioMultiplayer:
+      type: object
+      description: Multiplayer configuration for group scenarios
+      required: [minPlayers, maxPlayers]
+      properties:
+        minPlayers:
+          type: integer
+          description: Minimum number of players required
+        maxPlayers:
+          type: integer
+          description: Maximum number of players allowed
+        matchmakingQueueCode:
+          type: string
+          nullable: true
+          description: Matchmaking queue code for automatic grouping
+        bondPreferred:
+          type: boolean
+          default: false
+          description: Whether bonded players receive a scoring boost for this scenario
+
+    ScenarioContent:
+      type: object
+      description: Content references linking a scenario template to game assets
+      properties:
+        behaviorDocumentId:
+          type: string
+          format: uuid
+          nullable: true
+          description: ABML behavior document ID for NPC orchestration
+        sceneDocumentId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Scene document ID for environment composition
+        realmId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Realm ID where this scenario takes place
+        locationCode:
+          type: string
+          nullable: true
+          description: Location code within the realm
+
+    BondedPlayerGardenState:
+      type: object
+      description: Per-player garden state within a shared bond garden
+      required: [seedId, accountId, position]
+      properties:
+        seedId:
+          type: string
+          format: uuid
+          description: Seed ID of the bonded player
+        accountId:
+          type: string
+          format: uuid
+          description: Account ID of the bonded player
+        position:
+          $ref: '#/components/schemas/Vec3'
+          description: Player position in shared garden space
+
+    # =========================================================================
+    # Request Models
+    # =========================================================================
+
+    EnterGardenRequest:
+      type: object
+      description: Request to enter the garden
+      required: [accountId, sessionId]
+      properties:
+        accountId:
+          type: string
+          format: uuid
+          description: Account entering the garden
+        sessionId:
+          type: string
+          format: uuid
+          description: Current WebSocket session ID
+
+    GetGardenStateRequest:
+      type: object
+      description: Request to get current garden state
+      required: [accountId]
+      properties:
+        accountId:
+          type: string
+          format: uuid
+          description: Account whose garden state to retrieve
+
+    UpdatePositionRequest:
+      type: object
+      description: Request to update player position in the garden
+      required: [accountId, position, velocity]
+      properties:
+        accountId:
+          type: string
+          format: uuid
+          description: Account whose position to update
+        position:
+          $ref: '#/components/schemas/Vec3'
+          description: New position in garden space
+        velocity:
+          $ref: '#/components/schemas/Vec3'
+          description: Current velocity vector
+
+    LeaveGardenRequest:
+      type: object
+      description: Request to leave the garden
+      required: [accountId]
+      properties:
+        accountId:
+          type: string
+          format: uuid
+          description: Account leaving the garden
+
+    ListPoisRequest:
+      type: object
+      description: Request to list active POIs
+      required: [accountId]
+      properties:
+        accountId:
+          type: string
+          format: uuid
+          description: Account whose POIs to list
+
+    InteractWithPoiRequest:
+      type: object
+      description: Request to interact with a POI
+      required: [accountId, poiId]
+      properties:
+        accountId:
+          type: string
+          format: uuid
+          description: Account interacting with the POI
+        poiId:
+          type: string
+          format: uuid
+          description: POI to interact with
+
+    DeclinePoiRequest:
+      type: object
+      description: Request to decline a POI
+      required: [accountId, poiId]
+      properties:
+        accountId:
+          type: string
+          format: uuid
+          description: Account declining the POI
+        poiId:
+          type: string
+          format: uuid
+          description: POI to decline
+
+    EnterScenarioRequest:
+      type: object
+      description: Request to enter a scenario
+      required: [accountId, scenarioTemplateId]
+      properties:
+        accountId:
+          type: string
+          format: uuid
+          description: Account entering the scenario
+        scenarioTemplateId:
+          type: string
+          format: uuid
+          description: Template to instantiate
+        poiId:
+          type: string
+          format: uuid
+          nullable: true
+          description: POI that triggered this scenario entry, if any
+        promptChoice:
+          type: string
+          nullable: true
+          description: Selected prompt choice for prompted POIs
+
+    GetScenarioStateRequest:
+      type: object
+      description: Request to get current scenario state
+      required: [accountId]
+      properties:
+        accountId:
+          type: string
+          format: uuid
+          description: Account whose scenario state to retrieve
+
+    CompleteScenarioRequest:
+      type: object
+      description: Request to complete a scenario
+      required: [accountId, scenarioInstanceId]
+      properties:
+        accountId:
+          type: string
+          format: uuid
+          description: Account completing the scenario
+        scenarioInstanceId:
+          type: string
+          format: uuid
+          description: Scenario instance to complete
+
+    AbandonScenarioRequest:
+      type: object
+      description: Request to abandon a scenario
+      required: [accountId, scenarioInstanceId]
+      properties:
+        accountId:
+          type: string
+          format: uuid
+          description: Account abandoning the scenario
+        scenarioInstanceId:
+          type: string
+          format: uuid
+          description: Scenario instance to abandon
+
+    ChainScenarioRequest:
+      type: object
+      description: Request to chain from one scenario to another
+      required: [accountId, currentScenarioInstanceId, targetTemplateId]
+      properties:
+        accountId:
+          type: string
+          format: uuid
+          description: Account chaining scenarios
+        currentScenarioInstanceId:
+          type: string
+          format: uuid
+          description: Currently active scenario instance
+        targetTemplateId:
+          type: string
+          format: uuid
+          description: Template to chain into
+
+    CreateTemplateRequest:
+      type: object
+      description: Request to create a scenario template
+      required: [code, displayName, description, category, domainWeights]
+      properties:
+        code:
+          type: string
+          description: Unique template code for reference
+        displayName:
+          type: string
+          description: Human-readable template name
+        description:
+          type: string
+          description: Template description
+        category:
+          $ref: '#/components/schemas/ScenarioCategory'
+          description: Primary gameplay category
+        subcategory:
+          type: string
+          nullable: true
+          description: Optional subcategory within the primary category
+        domainWeights:
+          type: array
+          items:
+            $ref: '#/components/schemas/DomainWeight'
+          description: Growth domain weights awarded on completion
+        minGrowthPhase:
+          type: string
+          nullable: true
+          description: Minimum seed growth phase for soft-gating scenario availability
+        connectivityMode:
+          $ref: '#/components/schemas/ConnectivityMode'
+          description: How this scenario connects to the game world
+          default: Isolated
+        allowedPhases:
+          type: array
+          nullable: true
+          items:
+            $ref: '#/components/schemas/DeploymentPhase'
+          description: >-
+            Deployment phases in which this template is available.
+            Null or empty means available in all phases.
+        maxConcurrentInstances:
+          type: integer
+          default: 100
+          description: Maximum concurrent active instances of this template
+        estimatedDurationMinutes:
+          type: integer
+          nullable: true
+          description: Estimated scenario duration in minutes
+        prerequisites:
+          $ref: '#/components/schemas/ScenarioPrerequisites'
+          nullable: true
+          description: Requirements that must be met before entering
+        chaining:
+          $ref: '#/components/schemas/ScenarioChaining'
+          nullable: true
+          description: Chaining configuration
+        multiplayer:
+          $ref: '#/components/schemas/ScenarioMultiplayer'
+          nullable: true
+          description: Multiplayer support configuration
+        content:
+          $ref: '#/components/schemas/ScenarioContent'
+          nullable: true
+          description: Game content references
+
+    GetTemplateRequest:
+      type: object
+      description: Request to get a template by ID
+      required: [scenarioTemplateId]
+      properties:
+        scenarioTemplateId:
+          type: string
+          format: uuid
+          description: Template ID to retrieve
+
+    GetTemplateByCodeRequest:
+      type: object
+      description: Request to get a template by code
+      required: [code]
+      properties:
+        code:
+          type: string
+          description: Template code to look up
+
+    ListTemplatesRequest:
+      type: object
+      description: Request to list templates with optional filters
+      properties:
+        category:
+          $ref: '#/components/schemas/ScenarioCategory'
+          nullable: true
+          description: Filter by category
+        connectivityMode:
+          $ref: '#/components/schemas/ConnectivityMode'
+          nullable: true
+          description: Filter by connectivity mode
+        deploymentPhase:
+          $ref: '#/components/schemas/DeploymentPhase'
+          nullable: true
+          description: Filter by deployment phase availability
+        status:
+          $ref: '#/components/schemas/TemplateStatus'
+          nullable: true
+          description: Filter by template status
+        page:
+          type: integer
+          default: 1
+          description: Page number (1-based)
+        pageSize:
+          type: integer
+          default: 50
+          description: Items per page
+
+    UpdateTemplateRequest:
+      type: object
+      description: Request to update a template (non-null fields are applied)
+      required: [scenarioTemplateId]
+      properties:
+        scenarioTemplateId:
+          type: string
+          format: uuid
+          description: Template ID to update
+        displayName:
+          type: string
+          nullable: true
+          description: Updated display name
+        description:
+          type: string
+          nullable: true
+          description: Updated description
+        domainWeights:
+          type: array
+          items:
+            $ref: '#/components/schemas/DomainWeight'
+          nullable: true
+          description: Updated domain weights
+        maxConcurrentInstances:
+          type: integer
+          nullable: true
+          description: Updated max concurrent instances
+        prerequisites:
+          $ref: '#/components/schemas/ScenarioPrerequisites'
+          nullable: true
+          description: Updated prerequisites
+        chaining:
+          $ref: '#/components/schemas/ScenarioChaining'
+          nullable: true
+          description: Updated chaining configuration
+        multiplayer:
+          $ref: '#/components/schemas/ScenarioMultiplayer'
+          nullable: true
+          description: Updated multiplayer configuration
+        content:
+          $ref: '#/components/schemas/ScenarioContent'
+          nullable: true
+          description: Updated content references
+
+    DeprecateTemplateRequest:
+      type: object
+      description: Request to deprecate a template
+      required: [scenarioTemplateId]
+      properties:
+        scenarioTemplateId:
+          type: string
+          format: uuid
+          description: Template ID to deprecate
+
+    DeleteTemplateRequest:
+      type: object
+      description: Request to permanently delete a deprecated template
+      required: [scenarioTemplateId]
+      properties:
+        scenarioTemplateId:
+          type: string
+          format: uuid
+          description: Template ID to delete
+
+    GetPhaseConfigRequest:
+      type: object
+      description: Request to get deployment phase configuration
+      properties: {}
+
+    UpdatePhaseConfigRequest:
+      type: object
+      description: Request to update deployment phase configuration (non-null fields applied)
+      properties:
+        currentPhase:
+          $ref: '#/components/schemas/DeploymentPhase'
+          nullable: true
+          description: New deployment phase
+        maxConcurrentScenariosGlobal:
+          type: integer
+          nullable: true
+          description: Updated global scenario capacity
+        persistentEntryEnabled:
+          type: boolean
+          nullable: true
+          description: Whether persistent world entry is enabled
+        gardenMinigamesEnabled:
+          type: boolean
+          nullable: true
+          description: Whether garden minigames are enabled
+
+    GetPhaseMetricsRequest:
+      type: object
+      description: Request to get phase metrics
+      properties: {}
+
+    EnterTogetherRequest:
+      type: object
+      description: Request for bonded players to enter a scenario together
+      required: [bondId, scenarioTemplateId]
+      properties:
+        bondId:
+          type: string
+          format: uuid
+          description: Bond ID linking the participants
+        scenarioTemplateId:
+          type: string
+          format: uuid
+          description: Template to instantiate for the bond
+
+    GetSharedGardenRequest:
+      type: object
+      description: Request to get shared garden state for bonded players
+      required: [bondId]
+      properties:
+        bondId:
+          type: string
+          format: uuid
+          description: Bond ID to look up shared garden state
+
+    # =========================================================================
+    # Response Models
+    # =========================================================================
+
+    GardenStateResponse:
+      type: object
+      description: Current garden instance state for a player
+      required: [gardenInstanceId, seedId, accountId, position, activePois]
+      properties:
+        gardenInstanceId:
+          type: string
+          format: uuid
+          description: Unique identifier for this garden instance
+        seedId:
+          type: string
+          format: uuid
+          description: Active seed for this garden session
+        accountId:
+          type: string
+          format: uuid
+          description: Account in the garden
+        position:
+          $ref: '#/components/schemas/Vec3'
+          description: Current player position
+        activePois:
+          type: array
+          items:
+            $ref: '#/components/schemas/PoiSummary'
+          description: Currently active POIs in this garden instance
+
+    PositionUpdateResponse:
+      type: object
+      description: Response to a position update
+      required: [acknowledged]
+      properties:
+        acknowledged:
+          type: boolean
+          description: Whether the position update was processed
+        triggeredPois:
+          type: array
+          items:
+            $ref: '#/components/schemas/PoiSummary'
+          nullable: true
+          description: POIs triggered by proximity to the new position
+
+    LeaveGardenResponse:
+      type: object
+      description: Response after leaving the garden
+      required: [accountId, sessionDurationSeconds]
+      properties:
+        accountId:
+          type: string
+          format: uuid
+          description: Account that left the garden
+        sessionDurationSeconds:
+          type: number
+          format: float
+          description: Total duration of the garden session in seconds
+
+    ListPoisResponse:
+      type: object
+      description: List of active POIs in a garden instance
+      required: [gardenInstanceId, pois]
+      properties:
+        gardenInstanceId:
+          type: string
+          format: uuid
+          description: Garden instance these POIs belong to
+        pois:
+          type: array
+          items:
+            $ref: '#/components/schemas/PoiSummary'
+          description: Active POIs
+
+    PoiInteractionResponse:
+      type: object
+      description: Result of interacting with a POI
+      required: [poiId, result]
+      properties:
+        poiId:
+          type: string
+          format: uuid
+          description: POI that was interacted with
+        result:
+          $ref: '#/components/schemas/PoiInteractionResult'
+          description: Interaction outcome
+        scenarioTemplateId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Associated template ID if result involves a scenario
+        promptText:
+          type: string
+          nullable: true
+          description: Prompt text for prompted POIs
+        promptChoices:
+          type: array
+          items:
+            type: string
+          nullable: true
+          description: Available choices for prompted POIs
+
+    DeclinePoiResponse:
+      type: object
+      description: Response after declining a POI
+      required: [poiId, acknowledged]
+      properties:
+        poiId:
+          type: string
+          format: uuid
+          description: POI that was declined
+        acknowledged:
+          type: boolean
+          description: Whether the decline was processed
+
+    ScenarioStateResponse:
+      type: object
+      description: Current state of a scenario instance
+      required: [scenarioInstanceId, scenarioTemplateId, gameSessionId, connectivityMode, status, createdAt, chainDepth]
+      properties:
+        scenarioInstanceId:
+          type: string
+          format: uuid
+          description: Unique identifier for this scenario instance
+        scenarioTemplateId:
+          type: string
+          format: uuid
+          description: Template this instance was created from
+        gameSessionId:
+          type: string
+          format: uuid
+          description: Backing game session ID
+        connectivityMode:
+          $ref: '#/components/schemas/ConnectivityMode'
+          description: How this scenario connects to the game world
+        status:
+          $ref: '#/components/schemas/ScenarioStatus'
+          description: Current lifecycle status
+        createdAt:
+          type: string
+          format: date-time
+          description: When this instance was created
+        chainedFrom:
+          type: string
+          format: uuid
+          nullable: true
+          description: Previous scenario instance if this was chained
+        chainDepth:
+          type: integer
+          default: 0
+          description: Current chain depth from the initial scenario
+
+    ScenarioCompletionResponse:
+      type: object
+      description: Response after completing a scenario
+      required: [scenarioInstanceId, growthAwarded, returnToGarden]
+      properties:
+        scenarioInstanceId:
+          type: string
+          format: uuid
+          description: Completed scenario instance ID
+        growthAwarded:
+          type: object
+          additionalProperties:
+            type: number
+            format: float
+          description: Growth awarded per domain
+        returnToGarden:
+          type: boolean
+          description: Whether the player should return to the garden
+
+    AbandonScenarioResponse:
+      type: object
+      description: Response after abandoning a scenario
+      required: [scenarioInstanceId, partialGrowthAwarded]
+      properties:
+        scenarioInstanceId:
+          type: string
+          format: uuid
+          description: Abandoned scenario instance ID
+        partialGrowthAwarded:
+          type: object
+          additionalProperties:
+            type: number
+            format: float
+          description: Partial growth awarded based on time spent
+
+    ScenarioTemplateResponse:
+      type: object
+      description: Full scenario template with all fields
+      required: [scenarioTemplateId, code, displayName, description, category, domainWeights, connectivityMode, allowedPhases, maxConcurrentInstances, status, createdAt, updatedAt]
+      properties:
+        scenarioTemplateId:
+          type: string
+          format: uuid
+          description: Unique identifier for this template
+        code:
+          type: string
+          description: Unique template code
+        displayName:
+          type: string
+          description: Human-readable name
+        description:
+          type: string
+          description: Template description
+        category:
+          $ref: '#/components/schemas/ScenarioCategory'
+          description: Primary gameplay category
+        subcategory:
+          type: string
+          nullable: true
+          description: Subcategory within the primary category
+        domainWeights:
+          type: array
+          items:
+            $ref: '#/components/schemas/DomainWeight'
+          description: Growth domain weights
+        minGrowthPhase:
+          type: string
+          nullable: true
+          description: Minimum seed growth phase
+        connectivityMode:
+          $ref: '#/components/schemas/ConnectivityMode'
+          description: World connectivity mode
+        allowedPhases:
+          type: array
+          items:
+            $ref: '#/components/schemas/DeploymentPhase'
+          description: Deployment phases where this template is available. Always contains explicit values (never empty).
+        maxConcurrentInstances:
+          type: integer
+          description: Maximum concurrent active instances
+        estimatedDurationMinutes:
+          type: integer
+          nullable: true
+          description: Estimated scenario duration in minutes
+        prerequisites:
+          $ref: '#/components/schemas/ScenarioPrerequisites'
+          nullable: true
+          description: Entry requirements
+        chaining:
+          $ref: '#/components/schemas/ScenarioChaining'
+          nullable: true
+          description: Chaining configuration
+        multiplayer:
+          $ref: '#/components/schemas/ScenarioMultiplayer'
+          nullable: true
+          description: Multiplayer support
+        content:
+          $ref: '#/components/schemas/ScenarioContent'
+          nullable: true
+          description: Content references
+        status:
+          $ref: '#/components/schemas/TemplateStatus'
+          description: Current lifecycle status
+        createdAt:
+          type: string
+          format: date-time
+          description: When this template was created
+        updatedAt:
+          type: string
+          format: date-time
+          description: When this template was last updated
+
+    ListTemplatesResponse:
+      type: object
+      description: Paginated list of scenario templates
+      required: [templates, totalCount, page, pageSize]
+      properties:
+        templates:
+          type: array
+          items:
+            $ref: '#/components/schemas/ScenarioTemplateResponse'
+          description: Templates on this page
+        totalCount:
+          type: integer
+          description: Total number of matching templates
+        page:
+          type: integer
+          description: Current page number
+        pageSize:
+          type: integer
+          description: Items per page
+
+    PhaseConfigResponse:
+      type: object
+      description: Current deployment phase configuration
+      required: [currentPhase, maxConcurrentScenariosGlobal, persistentEntryEnabled, gardenMinigamesEnabled]
+      properties:
+        currentPhase:
+          $ref: '#/components/schemas/DeploymentPhase'
+          description: Current deployment phase
+        maxConcurrentScenariosGlobal:
+          type: integer
+          description: Maximum total active scenario instances
+        persistentEntryEnabled:
+          type: boolean
+          description: Whether persistent world entry is enabled
+        gardenMinigamesEnabled:
+          type: boolean
+          description: Whether garden minigames are enabled
+
+    PhaseMetricsResponse:
+      type: object
+      description: Current deployment phase metrics
+      required: [currentPhase, activeGardenInstances, activeScenarioInstances, scenarioCapacityUtilization]
+      properties:
+        currentPhase:
+          $ref: '#/components/schemas/DeploymentPhase'
+          description: Current deployment phase
+        activeGardenInstances:
+          type: integer
+          description: Number of currently active garden instances
+        activeScenarioInstances:
+          type: integer
+          description: Number of currently active scenario instances
+        scenarioCapacityUtilization:
+          type: number
+          format: float
+          description: Ratio of active scenarios to global capacity (0.0-1.0)
+
+    SharedGardenStateResponse:
+      type: object
+      description: Shared garden state for bonded players
+      required: [bondId, participants, sharedPois]
+      properties:
+        bondId:
+          type: string
+          format: uuid
+          description: Bond linking the participants
+        participants:
+          type: array
+          items:
+            $ref: '#/components/schemas/BondedPlayerGardenState'
+          description: Per-player garden state
+        sharedPois:
+          type: array
+          items:
+            $ref: '#/components/schemas/PoiSummary'
+          description: POIs visible to all bond participants

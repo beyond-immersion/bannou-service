@@ -34,6 +34,7 @@ public partial class AuthController
                 "email": {
                     "type": "string",
                     "format": "email",
+                    "maxLength": 254,
                     "description": "Email address for authentication"
                 },
                 "password": {
@@ -93,41 +94,51 @@ public partial class AuthController
     private static readonly string _Login_ResponseSchema = """
 {
     "$schema": "http://json-schema.org/draft-07/schema#",
-    "$ref": "#/$defs/AuthResponse",
+    "$ref": "#/$defs/LoginResponse",
     "$defs": {
-        "AuthResponse": {
-            "description": "Successful authentication response containing tokens and session information",
+        "LoginResponse": {
             "type": "object",
+            "description": "Response from email/password login. May contain full tokens (no MFA) or a challenge token (MFA required).",
             "additionalProperties": false,
             "required": [
                 "accountId",
-                "accessToken",
-                "refreshToken",
-                "expiresIn",
-                "connectUrl"
+                "requiresMfa"
             ],
             "properties": {
                 "accountId": {
                     "type": "string",
                     "format": "uuid",
-                    "description": "Unique identifier for the authenticated account"
+                    "description": "Account ID (always present regardless of MFA status)"
+                },
+                "requiresMfa": {
+                    "type": "boolean",
+                    "description": "If true, client must complete MFA via /auth/mfa/verify before receiving tokens"
+                },
+                "mfaChallengeToken": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Short-lived challenge token for /auth/mfa/verify (only present when requiresMfa is true)"
                 },
                 "accessToken": {
                     "type": "string",
-                    "description": "JWT access token for API authentication"
+                    "nullable": true,
+                    "description": "JWT access token (only present when requiresMfa is false)"
                 },
                 "refreshToken": {
                     "type": "string",
-                    "description": "Token used to obtain new access tokens when the current one expires"
+                    "nullable": true,
+                    "description": "Refresh token (only present when requiresMfa is false)"
                 },
                 "expiresIn": {
                     "type": "integer",
-                    "description": "Seconds until access token expires"
+                    "nullable": true,
+                    "description": "Seconds until access token expires (only present when requiresMfa is false)"
                 },
                 "connectUrl": {
                     "type": "string",
                     "format": "uri",
-                    "description": "WebSocket endpoint for Connect service"
+                    "nullable": true,
+                    "description": "WebSocket connect URL (only present when requiresMfa is false)"
                 },
                 "roles": {
                     "type": "array",
@@ -135,12 +146,7 @@ public partial class AuthController
                         "type": "string"
                     },
                     "nullable": true,
-                    "description": "List of roles assigned to the authenticated user"
-                },
-                "requiresTwoFactor": {
-                    "type": "boolean",
-                    "default": false,
-                    "description": "Whether the user needs to complete two-factor authentication"
+                    "description": "Account roles (only present when requiresMfa is false)"
                 }
             }
         }
@@ -520,11 +526,6 @@ public partial class AuthController
                     },
                     "nullable": true,
                     "description": "List of roles assigned to the authenticated user"
-                },
-                "requiresTwoFactor": {
-                    "type": "boolean",
-                    "default": false,
-                    "description": "Whether the user needs to complete two-factor authentication"
                 }
             }
         }
@@ -603,7 +604,9 @@ public partial class AuthController
             "properties": {
                 "ticket": {
                     "type": "string",
-                    "description": "Hex-encoded Steam Session Ticket from ISteamUser::GetAuthTicketForWebApi().\ nClient converts ticket bytes to hex string: BitConverter.ToString(ticketData).Replace(\"-\", \"\")\n",
+                    "pattern": "^[0-9A-Fa-f]+$",
+                    "minLength": 16,
+                    "description": "Hex-encoded Steam Session Ticket from ISteamUser::GetAuthTicketForWebApi().\nClient converts ticket bytes to hex string: BitConverter.ToString(ticketData).Replace(\"-\", \"\")\n",
                     "example": "140000006A7B3C8E..."
                 },
                 "deviceInfo": {
@@ -696,11 +699,6 @@ public partial class AuthController
                     },
                     "nullable": true,
                     "description": "List of roles assigned to the authenticated user"
-                },
-                "requiresTwoFactor": {
-                    "type": "boolean",
-                    "default": false,
-                    "description": "Whether the user needs to complete two-factor authentication"
                 }
             }
         }
@@ -833,11 +831,6 @@ public partial class AuthController
                     },
                     "nullable": true,
                     "description": "List of roles assigned to the authenticated user"
-                },
-                "requiresTwoFactor": {
-                    "type": "boolean",
-                    "default": false,
-                    "description": "Whether the user needs to complete two-factor authentication"
                 }
             }
         }
@@ -917,7 +910,7 @@ public partial class AuthController
             "required": [
                 "valid",
                 "accountId",
-                "sessionId"
+                "sessionKey"
             ],
             "properties": {
                 "valid": {
@@ -929,10 +922,10 @@ public partial class AuthController
                     "format": "uuid",
                     "description": "Unique identifier for the account associated with the token"
                 },
-                "sessionId": {
+                "sessionKey": {
                     "type": "string",
                     "format": "uuid",
-                    "description": "Session identifier for WebSocket connections and service routing"
+                    "description": "Internal session key used by Connect service for WebSocket connection tracking and service routing"
                 },
                 "roles": {
                     "type": "array",
@@ -948,7 +941,7 @@ public partial class AuthController
                         "type": "string"
                     },
                     "nullable": true,
-                    "description": "Authorization strings from active subscriptions.\ nFormat: \"{stubName}:{state}\" (e.g., \"my-game:authorized\")\n"
+                    "description": "Authorization strings from active subscriptions.\nFormat: \"{stubName}:{state}\" (e.g., \"my-game:authorized\")\n"
                 },
                 "remainingTime": {
                     "type": "integer",
@@ -1340,6 +1333,208 @@ public partial class AuthController
 
     #endregion
 
+    #region Meta Endpoints for GetRevocationList
+
+    private static readonly string _GetRevocationList_RequestSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/GetRevocationListRequest",
+    "$defs": {
+        "GetRevocationListRequest": {
+            "type": "object",
+            "description": "Request to get current revocation list for edge provider synchronization or admin monitoring",
+            "additionalProperties": false,
+            "properties": {
+                "includeTokens": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Include token-level revocations (by JTI)"
+                },
+                "includeAccounts": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Include account-level revocations (all tokens before timestamp)"
+                },
+                "limit": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 1000,
+                    "default": 100,
+                    "description": "Maximum entries to return per category"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _GetRevocationList_ResponseSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/RevocationListResponse",
+    "$defs": {
+        "RevocationListResponse": {
+            "type": "object",
+            "description": "Current revocation list with token and account level entries",
+            "additionalProperties": false,
+            "required": [
+                "revokedTokens",
+                "revokedAccounts",
+                "failedPushCount"
+            ],
+            "properties": {
+                "revokedTokens": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/RevokedTokenEntry"
+                    },
+                    "description": "Token-level revocations (individual JTIs)"
+                },
+                "revokedAccounts": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/RevokedAccountEntry"
+                    },
+                    "description": "Account-level revocations (all tokens before timestamp)"
+                },
+                "failedPushCount": {
+                    "type": "integer",
+                    "description": "Number of pending failed pushes awaiting retry"
+                },
+                "totalTokenCount": {
+                    "type": "integer",
+                    "nullable": true,
+                    "description": "Total revoked tokens in store (may be null if count unavailable)"
+                }
+            }
+        },
+        "RevokedTokenEntry": {
+            "type": "object",
+            "description": "A single revoked token entry with expiration tracking",
+            "additionalProperties": false,
+            "required": [
+                "jti",
+                "accountId",
+                "revokedAt",
+                "expiresAt",
+                "reason"
+            ],
+            "properties": {
+                "jti": {
+                    "type": "string",
+                    "description": "JWT unique identifier (jti claim)"
+                },
+                "accountId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Account that owned the token"
+                },
+                "revokedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "When the token was revoked"
+                },
+                "expiresAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "When the revocation entry expires (matches original JWT expiry)"
+                },
+                "reason": {
+                    "type": "string",
+                    "description": "Revocation reason for audit trail"
+                }
+            }
+        },
+        "RevokedAccountEntry": {
+            "type": "object",
+            "description": "Account-level revocation entry that invalidates all tokens issued before a timestamp",
+            "additionalProperties": false,
+            "required": [
+                "accountId",
+                "issuedBefore",
+                "revokedAt",
+                "reason"
+            ],
+            "properties": {
+                "accountId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Account ID whose tokens are revoked"
+                },
+                "issuedBefore": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "Reject tokens issued before this timestamp"
+                },
+                "revokedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "When the revocation was created"
+                },
+                "reason": {
+                    "type": "string",
+                    "description": "Revocation reason for audit trail"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _GetRevocationList_Info = """
+{
+    "summary": "Get current token revocation list",
+    "description": "Returns the current list of revoked tokens and accounts for edge provider synchronization\nand administrative monitoring. Includes token-level revocations (by JTI) and account-level\nrevocations (all tokens issued before a timestamp).\n",
+    "tags": [
+        "Token Management"
+    ],
+    "deprecated": false,
+    "operationId": "getRevocationList"
+}
+""";
+
+    /// <summary>Returns endpoint information for GetRevocationList</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/auth/revocation-list/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetRevocationList_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Auth",
+            "POST",
+            "/auth/revocation-list",
+            _GetRevocationList_Info));
+
+    /// <summary>Returns request schema for GetRevocationList</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/auth/revocation-list/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetRevocationList_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Auth",
+            "POST",
+            "/auth/revocation-list",
+            "request-schema",
+            _GetRevocationList_RequestSchema));
+
+    /// <summary>Returns response schema for GetRevocationList</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/auth/revocation-list/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetRevocationList_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Auth",
+            "POST",
+            "/auth/revocation-list",
+            "response-schema",
+            _GetRevocationList_ResponseSchema));
+
+    /// <summary>Returns full schema for GetRevocationList</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/auth/revocation-list/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetRevocationList_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Auth",
+            "POST",
+            "/auth/revocation-list",
+            _GetRevocationList_Info,
+            _GetRevocationList_RequestSchema,
+            _GetRevocationList_ResponseSchema));
+
+    #endregion
+
     #region Meta Endpoints for RequestPasswordReset
 
     private static readonly string _RequestPasswordReset_RequestSchema = """
@@ -1358,6 +1553,7 @@ public partial class AuthController
                 "email": {
                     "type": "string",
                     "format": "email",
+                    "maxLength": 254,
                     "description": "Email address associated with the account to reset"
                 }
             }
@@ -1634,6 +1830,516 @@ public partial class AuthController
             _ListProviders_Info,
             _ListProviders_RequestSchema,
             _ListProviders_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for SetupMfa
+
+    private static readonly string _SetupMfa_RequestSchema = """
+{}
+""";
+
+    private static readonly string _SetupMfa_ResponseSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/MfaSetupResponse",
+    "$defs": {
+        "MfaSetupResponse": {
+            "type": "object",
+            "description": "MFA setup data containing TOTP URI for QR code and recovery codes",
+            "additionalProperties": false,
+            "required": [
+                "setupToken",
+                "totpUri",
+                "recoveryCodes"
+            ],
+            "properties": {
+                "setupToken": {
+                    "type": "string",
+                    "description": "Token to pass to /auth/mfa/enable to confirm setup"
+                },
+                "totpUri": {
+                    "type": "string",
+                    "description": "otpauth:// URI for authenticator app QR code scanning"
+                },
+                "recoveryCodes": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "description": "10 single-use recovery codes (shown only once, user must save them)"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _SetupMfa_Info = """
+{
+    "summary": "Initialize MFA setup",
+    "description": "Generates a TOTP secret and 10 recovery codes. Returns an otpauth:// URI for QR\ncode scanning and the recovery codes in plain text (shown only once). The setup is\nnot active until confirmed via /auth/mfa/enable with a valid TOTP code.\n",
+    "tags": [
+        "MFA"
+    ],
+    "deprecated": false,
+    "operationId": "setupMfa"
+}
+""";
+
+    /// <summary>Returns endpoint information for SetupMfa</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/auth/mfa/setup/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> SetupMfa_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Auth",
+            "POST",
+            "/auth/mfa/setup",
+            _SetupMfa_Info));
+
+    /// <summary>Returns request schema for SetupMfa</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/auth/mfa/setup/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> SetupMfa_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Auth",
+            "POST",
+            "/auth/mfa/setup",
+            "request-schema",
+            _SetupMfa_RequestSchema));
+
+    /// <summary>Returns response schema for SetupMfa</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/auth/mfa/setup/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> SetupMfa_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Auth",
+            "POST",
+            "/auth/mfa/setup",
+            "response-schema",
+            _SetupMfa_ResponseSchema));
+
+    /// <summary>Returns full schema for SetupMfa</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/auth/mfa/setup/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> SetupMfa_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Auth",
+            "POST",
+            "/auth/mfa/setup",
+            _SetupMfa_Info,
+            _SetupMfa_RequestSchema,
+            _SetupMfa_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for EnableMfa
+
+    private static readonly string _EnableMfa_RequestSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/MfaEnableRequest",
+    "$defs": {
+        "MfaEnableRequest": {
+            "type": "object",
+            "description": "Request to confirm MFA setup with a valid TOTP code proving authenticator is configured",
+            "additionalProperties": false,
+            "required": [
+                "setupToken",
+                "totpCode"
+            ],
+            "properties": {
+                "setupToken": {
+                    "type": "string",
+                    "description": "Setup token from /auth/mfa/setup response"
+                },
+                "totpCode": {
+                    "type": "string",
+                    "minLength": 6,
+                    "maxLength": 6,
+                    "pattern": "^\\d{6}$",
+                    "description": "6-digit TOTP code from authenticator app"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _EnableMfa_ResponseSchema = """
+{}
+""";
+
+    private static readonly string _EnableMfa_Info = """
+{
+    "summary": "Confirm MFA setup with TOTP code",
+    "description": "Verifies a TOTP code against the pending setup secret to prove the authenticator\napp is correctly configured. On success, persists MFA settings to the account and\nMFA is active for all subsequent password logins.\n",
+    "tags": [
+        "MFA"
+    ],
+    "deprecated": false,
+    "operationId": "enableMfa"
+}
+""";
+
+    /// <summary>Returns endpoint information for EnableMfa</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/auth/mfa/enable/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> EnableMfa_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Auth",
+            "POST",
+            "/auth/mfa/enable",
+            _EnableMfa_Info));
+
+    /// <summary>Returns request schema for EnableMfa</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/auth/mfa/enable/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> EnableMfa_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Auth",
+            "POST",
+            "/auth/mfa/enable",
+            "request-schema",
+            _EnableMfa_RequestSchema));
+
+    /// <summary>Returns response schema for EnableMfa</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/auth/mfa/enable/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> EnableMfa_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Auth",
+            "POST",
+            "/auth/mfa/enable",
+            "response-schema",
+            _EnableMfa_ResponseSchema));
+
+    /// <summary>Returns full schema for EnableMfa</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/auth/mfa/enable/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> EnableMfa_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Auth",
+            "POST",
+            "/auth/mfa/enable",
+            _EnableMfa_Info,
+            _EnableMfa_RequestSchema,
+            _EnableMfa_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for DisableMfa
+
+    private static readonly string _DisableMfa_RequestSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/MfaDisableRequest",
+    "$defs": {
+        "MfaDisableRequest": {
+            "type": "object",
+            "description": "Request to disable MFA. Exactly one of totpCode or recoveryCode must be provided.",
+            "additionalProperties": false,
+            "properties": {
+                "totpCode": {
+                    "type": "string",
+                    "nullable": true,
+                    "minLength": 6,
+                    "maxLength": 6,
+                    "pattern": "^\\d{6}$",
+                    "description": "Current 6-digit TOTP code from authenticator app"
+                },
+                "recoveryCode": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Single-use recovery code (format xxxx-xxxx)"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _DisableMfa_ResponseSchema = """
+{}
+""";
+
+    private static readonly string _DisableMfa_Info = """
+{
+    "summary": "Disable MFA for current account",
+    "description": "Disables MFA for the authenticated account. Requires a valid TOTP code or\nrecovery code to prevent unauthorized disable. Clears the TOTP secret and\nrecovery codes from the account.\n",
+    "tags": [
+        "MFA"
+    ],
+    "deprecated": false,
+    "operationId": "disableMfa"
+}
+""";
+
+    /// <summary>Returns endpoint information for DisableMfa</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/auth/mfa/disable/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> DisableMfa_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Auth",
+            "POST",
+            "/auth/mfa/disable",
+            _DisableMfa_Info));
+
+    /// <summary>Returns request schema for DisableMfa</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/auth/mfa/disable/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> DisableMfa_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Auth",
+            "POST",
+            "/auth/mfa/disable",
+            "request-schema",
+            _DisableMfa_RequestSchema));
+
+    /// <summary>Returns response schema for DisableMfa</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/auth/mfa/disable/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> DisableMfa_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Auth",
+            "POST",
+            "/auth/mfa/disable",
+            "response-schema",
+            _DisableMfa_ResponseSchema));
+
+    /// <summary>Returns full schema for DisableMfa</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/auth/mfa/disable/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> DisableMfa_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Auth",
+            "POST",
+            "/auth/mfa/disable",
+            _DisableMfa_Info,
+            _DisableMfa_RequestSchema,
+            _DisableMfa_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for AdminDisableMfa
+
+    private static readonly string _AdminDisableMfa_RequestSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/AdminDisableMfaRequest",
+    "$defs": {
+        "AdminDisableMfaRequest": {
+            "type": "object",
+            "description": "Admin request to forcefully disable MFA for a user account",
+            "additionalProperties": false,
+            "required": [
+                "accountId"
+            ],
+            "properties": {
+                "accountId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Account ID to disable MFA for"
+                },
+                "reason": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Administrative reason for disabling MFA (stored in audit event)"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _AdminDisableMfa_ResponseSchema = """
+{}
+""";
+
+    private static readonly string _AdminDisableMfa_Info = """
+{
+    "summary": "Admin override to disable MFA",
+    "description": "Allows administrators to disable MFA for any account without TOTP verification.\nFor account recovery when a user has lost their authenticator and all recovery codes.\n",
+    "tags": [
+        "MFA"
+    ],
+    "deprecated": false,
+    "operationId": "adminDisableMfa"
+}
+""";
+
+    /// <summary>Returns endpoint information for AdminDisableMfa</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/auth/mfa/admin-disable/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> AdminDisableMfa_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Auth",
+            "POST",
+            "/auth/mfa/admin-disable",
+            _AdminDisableMfa_Info));
+
+    /// <summary>Returns request schema for AdminDisableMfa</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/auth/mfa/admin-disable/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> AdminDisableMfa_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Auth",
+            "POST",
+            "/auth/mfa/admin-disable",
+            "request-schema",
+            _AdminDisableMfa_RequestSchema));
+
+    /// <summary>Returns response schema for AdminDisableMfa</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/auth/mfa/admin-disable/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> AdminDisableMfa_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Auth",
+            "POST",
+            "/auth/mfa/admin-disable",
+            "response-schema",
+            _AdminDisableMfa_ResponseSchema));
+
+    /// <summary>Returns full schema for AdminDisableMfa</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/auth/mfa/admin-disable/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> AdminDisableMfa_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Auth",
+            "POST",
+            "/auth/mfa/admin-disable",
+            _AdminDisableMfa_Info,
+            _AdminDisableMfa_RequestSchema,
+            _AdminDisableMfa_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for VerifyMfa
+
+    private static readonly string _VerifyMfa_RequestSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/MfaVerifyRequest",
+    "$defs": {
+        "MfaVerifyRequest": {
+            "type": "object",
+            "description": "Request to verify MFA during login. Exactly one of totpCode or recoveryCode must be provided.",
+            "additionalProperties": false,
+            "required": [
+                "challengeToken"
+            ],
+            "properties": {
+                "challengeToken": {
+                    "type": "string",
+                    "description": "Challenge token from LoginResponse when requiresMfa was true"
+                },
+                "totpCode": {
+                    "type": "string",
+                    "nullable": true,
+                    "minLength": 6,
+                    "maxLength": 6,
+                    "pattern": "^\\d{6}$",
+                    "description": "6-digit TOTP code from authenticator app"
+                },
+                "recoveryCode": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Single-use recovery code (format xxxx-xxxx)"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _VerifyMfa_ResponseSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/AuthResponse",
+    "$defs": {
+        "AuthResponse": {
+            "description": "Successful authentication response containing tokens and session information",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "accountId",
+                "accessToken",
+                "refreshToken",
+                "expiresIn",
+                "connectUrl"
+            ],
+            "properties": {
+                "accountId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Unique identifier for the authenticated account"
+                },
+                "accessToken": {
+                    "type": "string",
+                    "description": "JWT access token for API authentication"
+                },
+                "refreshToken": {
+                    "type": "string",
+                    "description": "Token used to obtain new access tokens when the current one expires"
+                },
+                "expiresIn": {
+                    "type": "integer",
+                    "description": "Seconds until access token expires"
+                },
+                "connectUrl": {
+                    "type": "string",
+                    "format": "uri",
+                    "description": "WebSocket endpoint for Connect service"
+                },
+                "roles": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "nullable": true,
+                    "description": "List of roles assigned to the authenticated user"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _VerifyMfa_Info = """
+{
+    "summary": "Verify MFA code during login",
+    "description": "Completes the MFA challenge issued during login by verifying a TOTP code or\nrecovery code. On success, returns full authentication tokens (same as a\nnon-MFA login would). The challenge token is single-use and has a configurable\nTTL (default 5 minutes).\n",
+    "tags": [
+        "MFA"
+    ],
+    "deprecated": false,
+    "operationId": "verifyMfa"
+}
+""";
+
+    /// <summary>Returns endpoint information for VerifyMfa</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/auth/mfa/verify/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> VerifyMfa_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Auth",
+            "POST",
+            "/auth/mfa/verify",
+            _VerifyMfa_Info));
+
+    /// <summary>Returns request schema for VerifyMfa</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/auth/mfa/verify/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> VerifyMfa_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Auth",
+            "POST",
+            "/auth/mfa/verify",
+            "request-schema",
+            _VerifyMfa_RequestSchema));
+
+    /// <summary>Returns response schema for VerifyMfa</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/auth/mfa/verify/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> VerifyMfa_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Auth",
+            "POST",
+            "/auth/mfa/verify",
+            "response-schema",
+            _VerifyMfa_ResponseSchema));
+
+    /// <summary>Returns full schema for VerifyMfa</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/auth/mfa/verify/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> VerifyMfa_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Auth",
+            "POST",
+            "/auth/mfa/verify",
+            _VerifyMfa_Info,
+            _VerifyMfa_RequestSchema,
+            _VerifyMfa_ResponseSchema));
 
     #endregion
 }

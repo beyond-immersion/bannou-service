@@ -40,6 +40,11 @@ public partial interface IConnectService : IBannouService
         Task<(StatusCodes, ClientCapabilitiesResponse?)> GetClientCapabilitiesAsync(GetClientCapabilitiesRequest body, CancellationToken cancellationToken = default(CancellationToken));
 
         /// <summary>
+        /// GetEndpointMeta operation
+        /// </summary>
+        Task<(StatusCodes, GetEndpointMetaResponse?)> GetEndpointMetaAsync(GetEndpointMetaRequest body, CancellationToken cancellationToken = default(CancellationToken));
+
+        /// <summary>
         /// GetAccountSessions operation
         /// </summary>
         Task<(StatusCodes, GetAccountSessionsResponse?)> GetAccountSessionsAsync(GetAccountSessionsRequest body, CancellationToken cancellationToken = default(CancellationToken));

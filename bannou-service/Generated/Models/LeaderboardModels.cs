@@ -145,7 +145,7 @@ public partial class CreateLeaderboardDefinitionRequest
     public bool IsPublic { get; set; } = true;
 
     /// <summary>
-    /// Additional leaderboard-specific metadata
+    /// Client-provided leaderboard-specific metadata. No Bannou plugin reads specific keys from this field by convention.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("metadata")]
     public object? Metadata { get; set; } = default!;
@@ -382,7 +382,7 @@ public partial class LeaderboardDefinitionResponse
     public System.DateTimeOffset CreatedAt { get; set; } = default!;
 
     /// <summary>
-    /// Additional metadata
+    /// Client-provided leaderboard-specific metadata. No Bannou plugin reads specific keys from this field by convention.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("metadata")]
     public object? Metadata { get; set; } = default!;
@@ -436,7 +436,7 @@ public partial class SubmitScoreRequest
     public double Score { get; set; } = default!;
 
     /// <summary>
-    /// Optional metadata about this score (e.g., how it was achieved)
+    /// Client-provided score metadata (e.g., how the score was achieved). No Bannou plugin reads specific keys from this field by convention.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("metadata")]
     public object? Metadata { get; set; } = default!;
@@ -835,7 +835,7 @@ public partial class LeaderboardEntry
     public string? DisplayName { get; set; } = default!;
 
     /// <summary>
-    /// Entry metadata
+    /// Client-provided entry metadata. No Bannou plugin reads specific keys from this field by convention.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("metadata")]
     public object? Metadata { get; set; } = default!;

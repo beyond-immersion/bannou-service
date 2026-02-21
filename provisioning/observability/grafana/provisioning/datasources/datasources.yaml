@@ -1,0 +1,46 @@
+# Grafana Datasource Provisioning for Bannou
+# Auto-configures Prometheus and Tempo datasources on startup
+
+apiVersion: 1
+
+datasources:
+  # Prometheus - metrics storage and querying
+  - name: Prometheus
+    type: prometheus
+    access: proxy
+    url: http://prometheus:9090
+    isDefault: true
+    editable: false
+    jsonData:
+      httpMethod: POST
+      exemplarTraceIdDestinations:
+        - name: traceID
+          datasourceUid: tempo
+
+  # Tempo - distributed tracing
+  - name: Tempo
+    type: tempo
+    access: proxy
+    url: http://tempo:3200
+    uid: tempo
+    editable: false
+    jsonData:
+      httpMethod: GET
+      tracesToLogsV2:
+        datasourceUid: ''
+        spanStartTimeShift: ''
+        spanEndTimeShift: ''
+        filterByTraceID: false
+        filterBySpanID: false
+      tracesToMetrics:
+        datasourceUid: Prometheus
+        spanStartTimeShift: ''
+        spanEndTimeShift: ''
+      serviceMap:
+        datasourceUid: Prometheus
+      nodeGraph:
+        enabled: true
+      search:
+        hide: false
+      lokiSearch:
+        datasourceUid: ''

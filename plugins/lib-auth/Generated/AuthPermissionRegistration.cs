@@ -17,7 +17,6 @@
 #nullable enable
 
 using BeyondImmersion.BannouService;
-using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.Logging;
 
@@ -37,26 +36,7 @@ public static class AuthPermissionRegistration
     /// <summary>
     /// Service version from OpenAPI schema.
     /// </summary>
-    public const string ServiceVersion = "1.0.0";
-
-    /// <summary>
-    /// Generates the ServiceRegistrationEvent containing all endpoint permissions.
-    /// </summary>
-    /// <param name="instanceId">The unique instance GUID for this bannou instance</param>
-    /// <param name="appId">The effective app ID for this service instance</param>
-    public static ServiceRegistrationEvent CreateRegistrationEvent(Guid instanceId, string appId)
-    {
-        return new ServiceRegistrationEvent
-        {
-            EventId = Guid.NewGuid(),
-            Timestamp = DateTimeOffset.UtcNow,
-            ServiceId = instanceId,
-            ServiceName = ServiceId,
-            Version = ServiceVersion,
-            AppId = appId,
-            Endpoints = GetEndpoints()
-        };
-    }
+    public const string ServiceVersion = "4.0.0";
 
     /// <summary>
     /// Gets the list of endpoints with their permission requirements.
@@ -217,6 +197,21 @@ public static class AuthPermissionRegistration
 
         endpoints.Add(new ServiceEndpoint
         {
+            Path = "/auth/revocation-list",
+            Method = ServiceEndpointMethod.POST,
+            Description = "getRevocationList",
+            Permissions = new List<PermissionRequirement>
+            {
+                new PermissionRequirement
+                {
+                    Role = "admin",
+                    RequiredStates = new Dictionary<string, string> {  }
+                },
+            }
+        });
+
+        endpoints.Add(new ServiceEndpoint
+        {
             Path = "/auth/password/reset",
             Method = ServiceEndpointMethod.POST,
             Description = "requestPasswordReset",
@@ -250,6 +245,81 @@ public static class AuthPermissionRegistration
             Path = "/auth/providers",
             Method = ServiceEndpointMethod.POST,
             Description = "listProviders",
+            Permissions = new List<PermissionRequirement>
+            {
+                new PermissionRequirement
+                {
+                    Role = "anonymous",
+                    RequiredStates = new Dictionary<string, string> {  }
+                },
+            }
+        });
+
+        endpoints.Add(new ServiceEndpoint
+        {
+            Path = "/auth/mfa/setup",
+            Method = ServiceEndpointMethod.POST,
+            Description = "setupMfa",
+            Permissions = new List<PermissionRequirement>
+            {
+                new PermissionRequirement
+                {
+                    Role = "user",
+                    RequiredStates = new Dictionary<string, string> {  }
+                },
+            }
+        });
+
+        endpoints.Add(new ServiceEndpoint
+        {
+            Path = "/auth/mfa/enable",
+            Method = ServiceEndpointMethod.POST,
+            Description = "enableMfa",
+            Permissions = new List<PermissionRequirement>
+            {
+                new PermissionRequirement
+                {
+                    Role = "user",
+                    RequiredStates = new Dictionary<string, string> {  }
+                },
+            }
+        });
+
+        endpoints.Add(new ServiceEndpoint
+        {
+            Path = "/auth/mfa/disable",
+            Method = ServiceEndpointMethod.POST,
+            Description = "disableMfa",
+            Permissions = new List<PermissionRequirement>
+            {
+                new PermissionRequirement
+                {
+                    Role = "user",
+                    RequiredStates = new Dictionary<string, string> {  }
+                },
+            }
+        });
+
+        endpoints.Add(new ServiceEndpoint
+        {
+            Path = "/auth/mfa/admin-disable",
+            Method = ServiceEndpointMethod.POST,
+            Description = "adminDisableMfa",
+            Permissions = new List<PermissionRequirement>
+            {
+                new PermissionRequirement
+                {
+                    Role = "admin",
+                    RequiredStates = new Dictionary<string, string> {  }
+                },
+            }
+        });
+
+        endpoints.Add(new ServiceEndpoint
+        {
+            Path = "/auth/mfa/verify",
+            Method = ServiceEndpointMethod.POST,
+            Description = "verifyMfa",
             Permissions = new List<PermissionRequirement>
             {
                 new PermissionRequirement
@@ -309,33 +379,28 @@ public static class AuthPermissionRegistration
         return matrix;
     }
 
+}
+
+/// <summary>
+/// Partial class overlay: registers Auth service permissions via DI registry.
+/// Generated from x-permissions sections in auth-api.yaml.
+/// Push-based: this service pushes its permission matrix TO the IPermissionRegistry.
+/// </summary>
+public partial class AuthService
+{
     /// <summary>
-    /// Registers service permissions via event publishing.
-    /// Should only be called after messaging infrastructure is confirmed.
+    /// Registers this service's permissions with the Permission service via DI registry.
+    /// Called by PluginLoader during startup with the resolved IPermissionRegistry.
     /// </summary>
-    /// <param name="messageBus">The message bus for publishing events</param>
-    /// <param name="appId">The effective app ID for this service instance</param>
-    /// <param name="logger">Optional logger for diagnostics</param>
-    public static async Task RegisterViaEventAsync(IMessageBus messageBus, string appId, ILogger? logger = null)
+    async Task IBannouService.RegisterServicePermissionsAsync(
+        string appId, IPermissionRegistry? registry)
     {
-        var registrationEvent = CreateRegistrationEvent(Program.ServiceGUID, appId);
-
-        var success = await messageBus.TryPublishAsync(
-            "permission.service-registered",
-            registrationEvent);
-
-        if (success)
+        if (registry != null)
         {
-            logger?.LogInformation(
-                "Published service registration event for {ServiceName} v{Version} with {EndpointCount} endpoints",
-                ServiceId, ServiceVersion, registrationEvent.Endpoints.Count);
-        }
-        else
-        {
-            logger?.LogWarning(
-                "Failed to publish service registration event for {ServiceId} (will be retried)",
-                ServiceId);
+            await registry.RegisterServiceAsync(
+                AuthPermissionRegistration.ServiceId,
+                AuthPermissionRegistration.ServiceVersion,
+                AuthPermissionRegistration.BuildPermissionMatrix());
         }
     }
-
 }

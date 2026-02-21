@@ -1,0 +1,97 @@
+openapi: 3.0.3
+info:
+  title: Account Service Events
+  description: |
+    AUTO-RESOLVED: Complex cross-file refs have been inlined for NSwag compatibility.
+    DO NOT EDIT - Regenerate with scripts/resolve-event-refs.py
+    Source: account-events.yaml
+
+    Event models for Account service RabbitMQ pub/sub via MassTransit.
+    Lifecycle events are auto-generated from x-lifecycle definition.
+
+    **SCHEMA MODIFICATION GATE**: STOP. Before modifying this schema, you MUST:
+    1. Read docs/reference/SCHEMA-RULES.md
+    2. State which section applies to your change
+    3. Only then proceed with edits
+    Edits without stating the applicable rule are FORBIDDEN.
+  version: 1.0.0
+  x-event-subscriptions: []  # Account service doesn't subscribe to external events
+  x-event-publications:
+    # Account lifecycle events (auto-generated from x-lifecycle)
+  - topic: account.created
+    event: AccountCreatedEvent
+    description: Published when a new account is created
+  - topic: account.updated
+    event: AccountUpdatedEvent
+    description: Published when an account is updated
+  - topic: account.deleted
+    event: AccountDeletedEvent
+    description: Published when an account is soft-deleted
+
+# Lifecycle events auto-generated from this definition
+# Output: schemas/Generated/account-lifecycle-events.yaml
+x-lifecycle:
+  Account:
+    model:
+      accountId: {type: string, format: uuid, primary: true, required: true, description: "Unique identifier for the account"}
+      email: {type: string, format: email, nullable: true, description: "Email address associated with the account. Null for
+          OAuth/Steam accounts without email."}
+      displayName: {type: string, nullable: true, description: "User-chosen display name for the account"}
+      emailVerified: {type: boolean, required: true, description: "Whether the email address has been verified"}
+      roles: {type: array, items: {type: string}, nullable: true, description: "List of roles assigned to the account"}      # NRT: Optional array MUST be nullable
+      authMethods:
+        type: array
+        nullable: true
+        description: "Authentication methods linked to the account. Useful for identifying OAuth accounts when email is null."
+        items:
+          $ref: '#/components/schemas/AuthMethodInfo'
+      createdAt: {type: string, format: date-time, required: true, description: "Timestamp when the account was created"}
+      updatedAt: {type: string, format: date-time, nullable: true, description: "Timestamp when the account was last updated"}    # NRT: Optional property MUST be nullable
+      metadata: {type: object, additionalProperties: true, nullable: true, description: "Additional metadata associated with
+          the account"}                                                                                                                       # NRT: Optional object MUST be nullable
+    sensitive: [passwordHash]
+
+paths: {}  # Events don't have HTTP paths
+
+# Note: AccountCreatedEvent, AccountUpdatedEvent, AccountDeletedEvent are auto-generated
+# from the x-lifecycle definition above. Do not define them manually here.
+# See: schemas/Generated/account-lifecycle-events.yaml for the generated events.
+
+components:
+  schemas:     # All account events are auto-generated from x-lifecycle
+    AuthMethodInfo:
+      type: object
+      description: Information about a linked authentication method
+      additionalProperties: false
+      required:
+      - provider
+      - linkedAt
+      properties:
+        methodId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Unique identifier for the authentication method
+        provider:
+          $ref: '#/components/schemas/AuthProvider'
+          description: Authentication provider type
+        externalId:
+          type: string
+          nullable: true
+          description: External user ID from the authentication provider
+        displayName:
+          type: string
+          nullable: true
+          description: Display name from the authentication provider
+        linkedAt:
+          type: string
+          format: date-time
+          description: Timestamp when the authentication method was linked
+
+    AuthProvider:
+      type: string
+      description: All authentication provider types including email
+      enum: [email, google, discord, twitch, steam]
+x-inlined-types:
+- AuthMethodInfo
+- AuthProvider

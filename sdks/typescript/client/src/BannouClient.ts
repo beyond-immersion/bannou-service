@@ -30,6 +30,8 @@ import {
   toByteArray,
   isResponse,
   getJsonPayload,
+  initializeDecompressor,
+  decompressPayload,
 } from './protocol/index.js';
 
 // Type definition for WebSocket (browser or Node.js)
@@ -753,6 +755,9 @@ export class BannouClient implements IBannouClient {
       return false;
     }
 
+    // Initialize Brotli decompressor for compressed server responses
+    await initializeDecompressor();
+
     // Determine WebSocket URL
     let wsUrl: string;
     if (this.connectUrl) {
@@ -885,7 +890,11 @@ export class BannouClient implements IBannouClient {
           return;
         }
 
-        const message = parse(bytes);
+        const parsed = parse(bytes);
+
+        // Decompress payload if the server set the Compressed flag
+        const message = decompressPayload(parsed);
+
         this.handleReceivedMessage(message);
       } catch {
         // Silently ignore malformed messages

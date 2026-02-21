@@ -3,8 +3,8 @@
 // Shared utility for evaluating action parameter values.
 // ═══════════════════════════════════════════════════════════════════════════
 
-using BeyondImmersion.BannouService.Abml.Expressions;
-using BeyondImmersion.BannouService.Abml.Runtime;
+using BeyondImmersion.Bannou.BehaviorExpressions.Expressions;
+using BeyondImmersion.Bannou.BehaviorExpressions.Runtime;
 using System.Globalization;
 
 namespace BeyondImmersion.BannouService.Abml.Execution;

@@ -3,13 +3,14 @@
 > **Plugin**: lib-game-session
 > **Schema**: schemas/game-session-api.yaml
 > **Version**: 2.0.0
+> **Layer**: GameFoundation
 > **State Store**: game-session-statestore (MySQL)
 
 ---
 
 ## Overview
 
-Hybrid lobby/matchmade game session management with subscription-driven shortcut publishing, voice integration, and real-time chat. Manages two session types: **lobby** sessions (persistent, per-game-service entry points auto-created for subscribed accounts) and **matchmade** sessions (pre-created by matchmaking with reservation tokens and TTL-based expiry). Integrates with Permission service for `in_game` state tracking, Voice service for room lifecycle, and Subscription service for account eligibility. Features distributed subscriber session tracking via ETag-based optimistic concurrency, publishes WebSocket shortcuts to connected clients enabling one-click game join, **per-game horizontal scaling** via `SupportedGameServices` partitioning, and **generic lobbies** for open catch-all entry points without subscription requirements.
+Hybrid lobby/matchmade game session management (L2 GameFoundation) with subscription-driven shortcut publishing and voice integration. Manages two session types: **lobby** sessions (persistent, per-game-service entry points auto-created for subscribed accounts) and **matchmade** sessions (pre-created by matchmaking with reservation tokens and TTL-based expiry). Integrates with Permission for `in_game` state tracking, Voice for room lifecycle, and Subscription for account eligibility. Publishes WebSocket shortcuts to connected clients for one-click game join and supports per-game horizontal scaling via `SupportedGameServices` partitioning.
 
 ---
 
@@ -22,11 +23,14 @@ Hybrid lobby/matchmade game session management with subscription-driven shortcut
 | lib-messaging (`IMessageBus`) | Publishing lifecycle and player events; error event publishing |
 | lib-messaging (`IEventConsumer`) | 4 event subscriptions (session lifecycle, subscription changes) |
 | lib-messaging (`IClientEventPublisher`) | Push shortcuts, chat messages, and cancellation notices to WebSocket sessions |
-| lib-voice (`IVoiceClient`) | Voice room create/join/leave/delete for sessions |
-| lib-permission (`IPermissionClient`) | Set/clear `game-session:in_game` state on join/leave |
-| lib-subscription (`ISubscriptionClient`) | Query account subscriptions for shortcut eligibility |
+| lib-voice (`IVoiceClient`) | Voice room create/join/leave/delete for sessions (**VIOLATION** - see below) |
 
-> **Refactoring Consideration**: This plugin injects 3 service clients individually. Consider whether `IServiceNavigator` would reduce constructor complexity, trading explicit dependencies for cleaner signatures. Currently favoring explicit injection for dependency clarity.
+> **⚠️ SERVICE HIERARCHY VIOLATION**: GameSession (L2 Game Foundation) depends on Voice (L4 Game Features). This is a **critical violation** - L2 services cannot depend on L4. GameSession currently creates/destroys voice rooms directly via `IVoiceClient`. **Remediation**: Voice should subscribe to `game-session.created` and `game-session.ended` events, creating rooms when `VoiceEnabled=true` and publishing `voice.room.created` for GameSession to optionally capture the room ID. This inverts the dependency to the correct direction (L4 → L2).
+| lib-permission (`IPermissionClient`) | Set/clear `game-session:in_game` state on join/leave |
+| lib-subscription (`ISubscriptionClient`) | Query account subscriptions for shortcut eligibility and startup cache warmup |
+| lib-connect (`IConnectClient`) | Query connected sessions for an account on `subscription.updated` events |
+
+> **Refactoring Consideration**: This plugin injects 4 service clients individually. Consider whether `IServiceNavigator` would reduce constructor complexity, trading explicit dependencies for cleaner signatures. Currently favoring explicit injection for dependency clarity.
 
 ---
 
@@ -34,8 +38,8 @@ Hybrid lobby/matchmade game session management with subscription-driven shortcut
 
 | Dependent | Relationship |
 |-----------|-------------|
-| lib-matchmaking | Creates matchmade sessions with reservations; calls `PublishJoinShortcutAsync` |
-| lib-analytics | References `IGameSessionClient` for session context |
+| lib-matchmaking | Creates matchmade sessions with reservations via `IGameSessionClient.CreateGameSessionAsync`; calls `PublishJoinShortcutAsync` to notify players |
+| lib-analytics | Uses `IGameSessionClient` for session context queries |
 
 ---
 
@@ -59,22 +63,21 @@ Hybrid lobby/matchmade game session management with subscription-driven shortcut
 | Topic | Event Type | Trigger |
 |-------|-----------|---------|
 | `game-session.created` | `GameSessionCreatedEvent` | New session created (lobby or matchmade) |
-| `game-session.updated` | `GameSessionUpdatedEvent` | Session state changes |
-| `game-session.deleted` | `GameSessionDeletedEvent` | Session removed |
+| `game-session.updated` | `GameSessionUpdatedEvent` | **Not currently published** (constant defined but unused) |
+| `game-session.deleted` | `GameSessionDeletedEvent` | **Not currently published** (constant defined but unused) |
 | `game-session.player-joined` | `GameSessionPlayerJoinedEvent` | Player joins a session |
 | `game-session.player-left` | `GameSessionPlayerLeftEvent` | Player leaves or is kicked (includes `Kicked` flag) |
 | `game-session.action.performed` | `GameSessionActionPerformedEvent` | Game action executed in session |
 | `game-session.session-cancelled` | `SessionCancelledServerEvent` | Matchmade session cancelled due to expired reservations |
-| `permission.session-state-changed` | `SessionStateChangeEvent` | Player enters/exits game session (triggers permission recompilation) |
 
 ### Consumed Events
 
-| Topic | Event Type | Handler |
-|-------|-----------|---------|
-| `session.connected` | `SessionConnectedEvent` | Tracks session, publishes join shortcuts for subscribed accounts |
-| `session.disconnected` | `SessionDisconnectedEvent` | Removes session from subscriber tracking |
-| `session.reconnected` | `SessionReconnectedEvent` | Re-publishes shortcuts (treated same as new connection) |
-| `subscription.updated` | `SubscriptionUpdatedEvent` | Updates subscription cache, publishes/revokes shortcuts |
+| Topic | Event Type | Handler | Action |
+|-------|-----------|---------|--------|
+| `session.connected` | `SessionConnectedEvent` | `HandleSessionConnectedAsync` | Tracks session, fetches subscriptions if not cached, publishes join shortcuts for subscribed accounts |
+| `session.disconnected` | `SessionDisconnectedEvent` | `HandleSessionDisconnectedAsync` | Removes session from subscriber tracking (only if authenticated) |
+| `session.reconnected` | `SessionReconnectedEvent` | `HandleSessionReconnectedAsync` | Re-publishes shortcuts (treated same as new connection) |
+| `subscription.updated` | `SubscriptionUpdatedEvent` | `HandleSubscriptionUpdatedAsync` | Updates subscription cache, queries Connect for all account sessions, publishes/revokes shortcuts |
 
 ---
 
@@ -210,7 +213,7 @@ User connects → session.connected event
 | Service | Lifetime | Role |
 |---------|----------|------|
 | `ILogger<GameSessionService>` | Scoped | Structured logging |
-| `GameSessionServiceConfiguration` | Singleton | All 12 config properties |
+| `GameSessionServiceConfiguration` | Singleton | Typed configuration for all 12 service properties |
 | `IStateStoreFactory` | Singleton | MySQL state store access |
 | `IMessageBus` | Scoped | Event publishing and error events |
 | `IEventConsumer` | Scoped | Event handler registration |
@@ -218,6 +221,7 @@ User connects → session.connected event
 | `IVoiceClient` | Scoped | Voice room lifecycle |
 | `IPermissionClient` | Scoped | Permission state management |
 | `ISubscriptionClient` | Scoped | Account subscription queries |
+| `IConnectClient` | Scoped | Query connected sessions per account |
 | `IDistributedLockProvider` | Singleton | Session-level distributed locks |
 | `GameSessionStartupService` | Hosted (BackgroundService) | Subscription cache warmup on startup |
 | `ReservationCleanupService` | Hosted (BackgroundService) | Periodic expired reservation cleanup |
@@ -352,6 +356,8 @@ Subscription Cache Architecture
 
 1. **Actions endpoint echoes data**: `PerformGameActionAsync` publishes an event and returns the action data back without any game-specific logic. Actual game state mutation would need to be implemented per game type.
 2. **No player-in-session validation for actions**: The Actions endpoint checks lobby exists and isn't finished, but doesn't verify the requesting player is actually in the session (relies on permission-based access control instead).
+3. **Lifecycle events not published**: `SESSION_UPDATED_TOPIC` and `SESSION_DELETED_TOPIC` constants are defined (lines 50-51) but never used. The `game-session.updated` and `game-session.deleted` events declared in the schema are not published anywhere in the service.
+<!-- AUDIT:NEEDS_DESIGN:2026-02-01:https://github.com/beyond-immersion/bannou-service/issues/224 -->
 
 ---
 
@@ -366,11 +372,9 @@ Subscription Cache Architecture
 
 ## Known Quirks & Caveats
 
-### Bugs
+### Bugs (Fix Immediately)
 
-*T25 violations have been moved to `docs/plugins/DEEP_DIVE_CLEANUP.md` for tracking.*
-
-No other bugs identified.
+1. ~~**Kick does not clear permission state**~~: **FIXED** (2026-01-31) - `KickPlayerAsync` now calls `_permissionClient.ClearSessionStateAsync` using the kicked player's WebSocket session ID (`playerToKick.SessionId`) before saving the session. Error handling matches the pattern in Leave methods (best-effort with logging and error event publishing).
 
 ### Intentional Quirks
 
@@ -386,20 +390,28 @@ No other bugs identified.
 
 6. **Lock owner is random GUID per call**: Lock calls use `Guid.NewGuid().ToString()` as the lock owner. This means the same service instance cannot extend or re-acquire its own lock - each call gets a new identity.
 
-### Design Considerations
+### Design Considerations (Requires Planning)
 
-1. **T5 (Inline event models)**: `SessionCancelledClientEvent` and `SessionCancelledServerEvent` are defined inline. Should be defined in schema files and generated.
+1. **Inline event models not in schema**: `SessionCancelledClientEvent` and `SessionCancelledServerEvent` are defined as `internal class` in `ReservationCleanupService.cs` (lines 254-270). Should be defined in schema files and generated per FOUNDATION TENETS. These are used for the `game-session.session-cancelled` server event and the client-facing cancellation notification.
 
-2. **T21 (SupportedGameServices fallback)**: Code has `?? new[]` fallback despite configuration having a default. Should either remove fallback or throw on null.
+2. **Session list is a single key**: All session IDs are stored in one `session-list` key (a `List<string>`). Listing loads ALL IDs then loads each session individually. No database-level pagination. With thousands of sessions, this becomes a bottleneck.
 
-3. **Session list is a single key**: All session IDs are stored in one `session-list` key (a `List<string>`). Listing loads ALL IDs then loads each session individually. No database-level pagination. With thousands of sessions, this becomes a bottleneck.
+3. **No cleanup of finished lobbies from session-list**: When a lobby's status becomes `Finished`, it remains in the `session-list` key. The cleanup service only handles matchmade session reservations, not lobby lifecycle.
 
-4. **No cleanup of finished lobbies from session-list**: When a lobby's status becomes `Finished`, it remains in the `session-list` key. The cleanup service only handles matchmade session reservations, not lobby lifecycle.
+4. **Join validates subscriber session but Leave does not**: `JoinGameSessionAsync` calls `IsValidSubscriberSessionAsync` to verify authorization, but leave operations only check player membership in the session. A player whose subscription expires while in a game can still leave.
 
-5. **Join validates subscriber session but Leave does not**: `JoinGameSessionAsync` calls `IsValidSubscriberSessionAsync` to verify authorization, but leave operations only check player membership in the session. A player whose subscription expires while in a game can still leave.
+5. **CleanupSessionModel duplicates fields**: The `ReservationCleanupService` defines its own minimal model classes (`CleanupSessionModel`, `CleanupReservationModel`, `CleanupPlayerModel`) rather than using the main `GameSessionModel`. Changes to the main model may not be reflected in cleanup logic.
 
-6. **CleanupSessionModel duplicates fields**: The `ReservationCleanupService` defines its own minimal model classes (`CleanupSessionModel`, `CleanupReservationModel`, `CleanupPlayerModel`) rather than using the main `GameSessionModel`. Changes to the main model may not be reflected in cleanup logic.
+6. **Move action special-cased for empty data**: `Move` is the only action type allowed to have null `ActionData`. Other actions log a debug message but proceed anyway, making the validation ineffective.
 
-7. **Move action special-cased for empty data**: `Move` is the only action type allowed to have null `ActionData`. Other actions log a debug message but proceed anyway, making the validation ineffective.
+7. **Actions endpoint validates session existence, not player membership**: `PerformGameActionAsync` verifies the lobby exists and isn't finished but never checks if the requesting `AccountId` is actually a player in the session. Relies entirely on permission-based access control.
 
-8. **Actions endpoint validates session existence, not player membership**: `PerformGameActionAsync` verifies the lobby exists and isn't finished but never checks if the requesting `AccountId` is actually a player in the session. Relies entirely on permission-based access control.
+---
+
+## Work Tracking
+
+*This section tracks active development work. Markers are managed by `/audit-plugin` workflow.*
+
+### Completed
+
+- **2026-01-31**: Fixed "Kick does not clear permission state" bug - added permission clearing to `KickPlayerAsync` matching the Leave methods.

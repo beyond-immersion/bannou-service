@@ -3,13 +3,14 @@
 > **Plugin**: lib-permission
 > **Schema**: schemas/permission-api.yaml
 > **Version**: 3.0.0
+> **Layer**: AppFoundation
 > **State Store**: permission-statestore (Redis)
 
 ---
 
 ## Overview
 
-Redis-backed RBAC permission system for WebSocket services. Manages per-session capability manifests compiled from a multi-dimensional permission matrix (service x state x role -> allowed endpoints). Services register their permission matrices on startup; the Permission service recompiles affected session capabilities whenever roles, states, or registrations change and pushes updates to connected clients via `IClientEventPublisher`. Features idempotent registration (SHA-256 hash comparison), distributed locks for concurrent registration safety, and in-memory caching (`ConcurrentDictionary`) for compiled session capabilities.
+Redis-backed RBAC permission system (L1 AppFoundation) for WebSocket services. Manages per-session capability manifests compiled from a multi-dimensional permission matrix (service x state x role -> allowed endpoints). Services register their permission matrices on startup; the Permission service recompiles affected session capabilities whenever roles, states, or registrations change and pushes updates to connected clients via the Connect service's per-session RabbitMQ queues.
 
 ---
 
@@ -17,10 +18,9 @@ Redis-backed RBAC permission system for WebSocket services. Manages per-session 
 
 | Dependency | Usage |
 |------------|-------|
-| lib-state (`IStateStoreFactory`) | Redis persistence for session states, permissions, matrix data, indexes |
-| lib-state (`IDistributedLockProvider`) | Distributed locks for concurrent service registration |
+| lib-state (`IStateStoreFactory`) | Redis persistence for session states, permissions, matrix data, indexes; `ICacheableStateStore<string>` for atomic set operations on session/service tracking sets |
 | lib-messaging (`IMessageBus`) | Error event publishing |
-| lib-messaging (`IEventConsumer`) | 5 event subscriptions (session lifecycle, state changes, registrations) |
+| lib-messaging (`IEventConsumer`) | 3 event subscriptions (session lifecycle) |
 | lib-messaging (`IClientEventPublisher`) | Push capability updates to WebSocket sessions |
 
 ---
@@ -30,7 +30,11 @@ Redis-backed RBAC permission system for WebSocket services. Manages per-session 
 | Dependent | Relationship |
 |-----------|-------------|
 | lib-connect | Validates API access for WebSocket messages; receives capability updates for connected sessions |
-| All services (via generated permission registration) | Register their x-permissions matrix on startup via `ServiceRegistrationEvent` |
+| lib-game-session | Calls `IPermissionClient.UpdateSessionStateAsync` to set `in_game` state when players join/leave |
+| lib-matchmaking | Calls `IPermissionClient.UpdateSessionStateAsync` to set `in_match` state during matchmaking |
+| lib-voice | Calls `IPermissionClient.UpdateSessionStateAsync` to set voice call states (`ringing`, `in_call`) |
+| lib-chat | Calls `IPermissionClient.UpdateSessionStateAsync` for chat room state management |
+| All services (via generated permission registration) | Register their x-permissions matrix on startup via `IPermissionRegistry` DI interface |
 
 ---
 
@@ -40,15 +44,16 @@ Redis-backed RBAC permission system for WebSocket services. Manages per-session 
 
 | Key Pattern | Data Type | Purpose |
 |-------------|-----------|---------|
-| `active_sessions` | `HashSet<string>` | All sessions that have ever connected |
-| `active_connections` | `HashSet<string>` | Sessions with active WebSocket connections (safe to publish to) |
-| `registered_services` | `HashSet<string>` | List of all services that have registered permissions |
+| `active_sessions` | Redis Set (atomic `SADD`/`SREM`) | All sessions that have ever connected |
+| `active_connections` | Redis Set (atomic `SADD`/`SREM`) | Sessions with active WebSocket connections (safe to publish to) |
+| `registered_services` | Redis Set (atomic `SADD`/`SREM`) | List of all services that have registered permissions |
 | `service-registered:{serviceId}` | Registration object | Individual service registration marker with timestamp |
 | `session:{sessionId}:states` | `Dictionary<string, string>` | Per-session state map (role, service states) |
 | `session:{sessionId}:permissions` | `Dictionary<string, object>` | Compiled permission set (service -> endpoint list + version) |
 | `permissions:{service}:{state}:{role}` | `HashSet<string>` | Permission matrix entries (allowed endpoints for combination) |
-| `permission_versions` | `Dictionary<string, string>` | Service version tracking |
+| `permission_versions:{serviceId}` | `Dictionary<string, string>` | Per-service version tracking (contains `version` key) |
 | `permission_hash:{serviceId}` | `string` | SHA-256 hash for idempotent registration detection |
+| `service-states:{serviceId}` | `HashSet<string>` | Set of state names registered by each service (for dynamic endpoint discovery) |
 
 ---
 
@@ -66,8 +71,6 @@ No traditional topic-based event publications. Capability updates go directly to
 
 | Topic | Event Type | Handler |
 |-------|-----------|---------|
-| `permission.service-registered` | `ServiceRegistrationEvent` | Builds permission matrix from endpoint data, registers with system |
-| `permission.session-state-changed` | `SessionStateChangeEvent` | Triggers recompilation when service state changes |
 | `session.updated` | `SessionUpdatedEvent` | Role/authorization changes from Auth service |
 | `session.connected` | `SessionConnectedEvent` | Adds to activeConnections, triggers initial capability delivery |
 | `session.disconnected` | `SessionDisconnectedEvent` | Removes from activeConnections |
@@ -76,11 +79,12 @@ No traditional topic-based event publications. Capability updates go directly to
 
 ## Configuration
 
-| Property | Env Var | Default | Purpose |
-|----------|---------|---------|---------|
-| `LockMaxRetries` | `PERMISSION_LOCK_MAX_RETRIES` | `10` | Maximum retries for acquiring distributed lock |
-| `LockBaseDelayMs` | `PERMISSION_LOCK_BASE_DELAY_MS` | `100` | Base delay between lock retries (exponential backoff) |
-| `LockExpirySeconds` | `PERMISSION_LOCK_EXPIRY_SECONDS` | `30` | Distributed lock expiration time |
+| Property | Type | Default | Range | Env Var | Description |
+|----------|------|---------|-------|---------|-------------|
+| `MaxConcurrentRecompilations` | int | 50 | 1-500 | `PERMISSION_MAX_CONCURRENT_RECOMPILATIONS` | Bounds parallel session recompilations during service registration |
+| `PermissionCacheTtlSeconds` | int | 0 | 0-86400 | `PERMISSION_CACHE_TTL_SECONDS` | In-memory cache TTL in seconds. 0 disables (cache never expires). Recommended non-zero: 300 (5 min). Safety net against lost RabbitMQ events |
+| `SessionDataTtlSeconds` | int | 86400 | 0-604800 | `PERMISSION_SESSION_DATA_TTL_SECONDS` | Redis TTL for session data keys. Handles orphaned session cleanup. 0 disables. Default 86400 (24h) |
+| `RoleHierarchy` | string[] | `["anonymous", "user", "developer", "admin"]` | - | `PERMISSION_ROLE_HIERARCHY` | Ordered role hierarchy from lowest to highest privilege (comma-separated in env var) |
 
 ---
 
@@ -89,12 +93,12 @@ No traditional topic-based event publications. Capability updates go directly to
 | Service | Lifetime | Role |
 |---------|----------|------|
 | `ILogger<PermissionService>` | Singleton | Structured logging |
-| `PermissionServiceConfiguration` | Singleton | All 3 config properties |
-| `IStateStoreFactory` | Singleton | Redis state operations |
+| `PermissionServiceConfiguration` | Singleton | Service configuration |
+| `IStateStoreFactory` | Singleton | Redis state operations (`IStateStore<T>` + `ICacheableStateStore<string>`) |
 | `IMessageBus` | Scoped (injected) | Error event publishing |
-| `IDistributedLockProvider` | Singleton | Distributed lock acquisition |
 | `IClientEventPublisher` | Scoped (injected) | Session-specific capability push |
 | `IEventConsumer` | Scoped (injected) | Event handler registration |
+| `IPermissionRegistry` | Singleton (via plugin) | Push-based permission registration interface (backed by PermissionService singleton, registered in PermissionServicePlugin) |
 
 Service lifetime is **Singleton** (shared across all requests).
 
@@ -112,12 +116,12 @@ Service lifetime is **Singleton** (shared across all requests).
 
 ### Service Management (2 endpoints)
 
-- **RegisterServicePermissions** (`/permission/register-service`): Complex registration flow:
+- **RegisterServicePermissions** (`/permission/register-service`): Registration flow:
   1. Computes SHA-256 hash of permission data for idempotency
-  2. Skips if hash unchanged AND service already registered
+  2. Skips if hash unchanged AND service already registered (atomic `SISMEMBER` check)
   3. Stores matrix entries in Redis (service:state:role -> endpoints)
-  4. Acquires distributed lock with exponential backoff + jitter for registered_services list update
-  5. Recompiles ALL active sessions outside lock scope (prevents lock timeout)
+  4. Atomically adds service to registered_services set (`SADD` - multi-instance safe)
+  5. Recompiles ALL active sessions in parallel (`SemaphoreSlim`-bounded `Task.WhenAll`, configurable via `MaxConcurrentRecompilations`)
   6. Stores new hash for future idempotency checks
 
 - **GetRegisteredServices** (`/permission/services/list`): Lists all registered services with their registration info. Used by test infrastructure to poll for service readiness.
@@ -137,24 +141,19 @@ Service lifetime is **Singleton** (shared across all requests).
 Permission Compilation Flow
 ==============================
 
-  Service Startup → publishes ServiceRegistrationEvent
+  PluginLoader Startup → IPermissionRegistry.RegisterServiceAsync(serviceId, version, matrix)
        │
        ▼
-  HandleServiceRegistrationAsync
+  RegisterServicePermissionsAsync
        │
-       ├──► Build State->Role->Methods matrix from x-permissions
+       ├── Hash unchanged? → Skip (idempotent)
        │
-       └──► RegisterServicePermissionsAsync
-                │
-                ├── Hash unchanged? → Skip (idempotent)
-                │
-                ├── Store matrix: permissions:{service}:{state}:{role} → [endpoints]
-                │
-                ├── Lock: registered_services_lock (with retry/backoff)
-                │    └── Add serviceId to registered_services set
-                │
-                └── For each active session:
-                     └── RecompileSessionPermissionsAsync
+       ├── Store matrix: permissions:{service}:{state}:{role} → [endpoints]
+       │
+       ├── Atomic SADD: Add serviceId to registered_services set
+       │
+       └── For each active session:
+            └── RecompileSessionPermissionsAsync
 
 
 Session Permission Recompilation
@@ -162,7 +161,7 @@ Session Permission Recompilation
 
   RecompileSessionPermissionsAsync(sessionId, states, reason)
        │
-       ├── role = states["role"] (default: "user")
+       ├── role = states["role"] (default: "anonymous")
        │
        ├── For each registered service:
        │    ├── Relevant states: ["default"] + session states
@@ -207,10 +206,7 @@ None. The service is feature-complete for its scope.
 
 ## Potential Extensions
 
-1. **Permission TTL**: Auto-expire session permissions after configurable period, forcing recompilation on next access.
-2. **Fine-grained caching**: Cache compiled permissions per-service instead of per-session for more granular invalidation.
-3. **Permission delegation**: Allow services to grant temporary elevated permissions to specific sessions.
-4. **Audit trail**: Log permission checks and changes for security auditing.
+None identified. Previous extensions were either implemented (Permission TTL → config properties) or rejected as unnecessary (fine-grained caching, permission delegation, audit trail).
 
 ---
 
@@ -218,7 +214,9 @@ None. The service is feature-complete for its scope.
 
 ### Bugs
 
-None identified.
+1. ~~**Inconsistent default role between connection and update paths**~~: **FIXED** (2026-02-11) - Unified all four default-role locations to return `"anonymous"` when roles are null/empty: `DetermineHighestRoleFromEvent` (two returns), `RecompileSessionPermissionsAsync` (`GetValueOrDefault`), and `GetSessionInfoAsync` (`GetValueOrDefault`). Sessions with no roles now consistently get anonymous-level permissions across all code paths.
+
+2. ~~**Static ROLE_ORDER array**~~: **FIXED** (2026-02-11) - Replaced hardcoded `ROLE_ORDER` with `_configuration.RoleHierarchy` config property (default `["anonymous", "user", "developer", "admin"]`). Set via `PERMISSION_ROLE_HIERARCHY` env var as comma-separated string. T21 compliance fix.
 
 ### Intentional Quirks
 
@@ -226,16 +224,19 @@ None identified.
 
 2. **ValidateApiAccess never uses cache**: Unlike `GetCapabilities` which uses the in-memory cache, `ValidateApiAccess` always reads from Redis. This ensures validation uses the latest compiled permissions at the cost of latency.
 
-3. **No cache invalidation on session disconnect**: When a session disconnects, it's removed from `active_connections` but the in-memory cache entry remains until the session is garbage-collected or a new recompilation overwrites it.
+3. **No cache invalidation on session disconnect**: When a session disconnects, it's removed from `active_connections` but the in-memory cache entry remains until the session is garbage-collected or a new recompilation overwrites it. Broader fix planned via `ISessionActivityListener` DI interface with heartbeat-driven TTL refresh. See [GH#392](https://github.com/beyond-immersion/bannou-service/issues/392).
+<!-- AUDIT:NEEDS_DESIGN:2026-02-11:https://github.com/beyond-immersion/bannou-service/issues/392 -->
 
-4. **Static ROLE_ORDER array**: The role hierarchy is hardcoded as `["anonymous", "user", "developer", "admin"]`. Adding new roles requires code changes, not configuration.
+4. ~~**GetRegisteredServices endpoint count is approximate**~~: **FIXED** (2026-02-11) - `GetRegisteredServicesAsync` now reads dynamically stored per-service state names from `service-states:{serviceId}` Redis keys instead of using a hardcoded array. States are saved during `RegisterServicePermissionsAsync` from the permission matrix keys. Previously used `["authenticated", "default", "lobby", "in_game"]` which included fake states and missed real ones (voice: `ringing`/`in_room`/`consent_pending`, matchmaking: `in_queue`/`match_pending`, chat: `in_room`).
 
 ### Design Considerations
 
-1. **Full session recompilation on service registration**: Every time a service registers, ALL active sessions are recompiled. With many concurrent sessions and frequent service restarts, this generates O(sessions * services) Redis operations.
+None active. Previous considerations were either fixed (parallel recompilation via `SemaphoreSlim`, atomic set operations via `ICacheableStateStore`) or closed as non-issues (individual key strategy is correct at current scale).
 
-2. **Permission matrix stored as individual keys**: Each `service:state:role` combination is a separate Redis key. For 40 services with 3 states and 4 roles, this is 480 keys. Queries during recompilation read many keys per session.
+---
 
-3. **Read-modify-write on session sets**: `activeConnections`/`activeSessions` set operations without distributed locks. Multiple instances could overwrite each other's additions/removals. Requires atomic set operations in lib-state or distributed lock refactoring.
+## Work Tracking
 
-4. **Anonymous type for registration info**: `registrationInfo` uses anonymous type which cannot be reliably deserialized. Should define a typed `ServiceRegistrationInfo` POCO class.
+### Completed
+- **2026-02-11**: Fixed hardcoded states array in `GetRegisteredServicesAsync`. Now dynamically reads per-service states from Redis, stored during registration.
+- **2026-02-11**: Issue #389. Replaced hardcoded `ROLE_ORDER` with `RoleHierarchy` config property. T21 compliance fix.

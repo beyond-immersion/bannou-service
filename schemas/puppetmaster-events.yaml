@@ -1,0 +1,133 @@
+openapi: 3.0.3
+info:
+  title: Puppetmaster Service Events
+  description: |
+    Event models for Puppetmaster RabbitMQ pub/sub.
+
+    **SCHEMA MODIFICATION GATE**: STOP. Before modifying this schema, you MUST:
+    1. Read docs/reference/SCHEMA-RULES.md
+    2. State which section applies to your change
+    3. Only then proceed with edits
+    Edits without stating the applicable rule are FORBIDDEN.
+  version: 1.0.0
+
+  # Phase 2d: Subscribe to realm lifecycle events to auto-start watchers
+  x-event-subscriptions:
+    - topic: realm.created
+      event: RealmCreatedEvent
+      handler: HandleRealmCreated
+    - topic: realm.deleted
+      event: RealmDeletedEvent
+      handler: HandleRealmDeleted
+    - topic: realm.updated
+      event: RealmUpdatedEvent
+      handler: HandleRealmUpdated
+    - topic: behavior.updated
+      event: BehaviorUpdatedEvent
+      handler: HandleBehaviorUpdated
+    - topic: actor.instance.deleted
+      event: ActorInstanceDeletedEvent
+      handler: HandleActorDeleted
+  x-event-publications:
+    - topic: puppetmaster.behavior.invalidated
+      event: BehaviorInvalidatedEvent
+      description: Published when behavior documents are invalidated from cache
+    - topic: puppetmaster.watcher.started
+      event: WatcherStartedEvent
+      description: Published when a regional watcher is started
+    - topic: puppetmaster.watcher.stopped
+      event: WatcherStoppedEvent
+      description: Published when a regional watcher is stopped
+
+servers: []
+
+paths: {}
+
+components:
+  schemas:
+    BehaviorInvalidatedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
+      type: object
+      additionalProperties: false
+      description: Event published when behavior documents are invalidated from cache
+      required:
+        - invalidatedCount
+      properties:
+        eventName:
+          type: string
+          default: "puppetmaster.behavior.invalidated"
+          description: Event type identifier for behavior cache invalidation
+        behaviorRef:
+          type: string
+          nullable: true
+          description: Specific behavior that was invalidated, or null if all were invalidated
+        invalidatedCount:
+          type: integer
+          description: Number of behaviors invalidated
+
+    WatcherStartedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
+      type: object
+      additionalProperties: false
+      description: Event published when a regional watcher is started
+      required:
+        - watcherId
+        - realmId
+        - watcherType
+      properties:
+        eventName:
+          type: string
+          default: "puppetmaster.watcher.started"
+          description: Event type identifier for watcher started
+        watcherId:
+          type: string
+          format: uuid
+          description: Unique identifier for the watcher instance
+        realmId:
+          type: string
+          format: uuid
+          description: Realm the watcher monitors
+        watcherType:
+          type: string
+          description: Type of watcher (e.g., "regional", "dungeon", "event")
+        behaviorRef:
+          type: string
+          nullable: true
+          description: Behavior document reference used by this watcher
+        actorId:
+          type: string
+          nullable: true
+          description: Actor instance ID running this watcher's behavior
+
+    WatcherStoppedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
+      type: object
+      additionalProperties: false
+      description: Event published when a regional watcher is stopped
+      required:
+        - watcherId
+        - realmId
+        - watcherType
+      properties:
+        eventName:
+          type: string
+          default: "puppetmaster.watcher.stopped"
+          description: Event type identifier for watcher stopped
+        watcherId:
+          type: string
+          format: uuid
+          description: Unique identifier for the watcher instance
+        realmId:
+          type: string
+          format: uuid
+          description: Realm the watcher was monitoring
+        watcherType:
+          type: string
+          description: Type of watcher
+        reason:
+          type: string
+          nullable: true
+          description: Reason for stopping (manual, error, realm deleted, etc.)

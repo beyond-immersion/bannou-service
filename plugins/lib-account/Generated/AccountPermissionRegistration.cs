@@ -17,7 +17,6 @@
 #nullable enable
 
 using BeyondImmersion.BannouService;
-using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.Logging;
 
@@ -37,26 +36,7 @@ public static class AccountPermissionRegistration
     /// <summary>
     /// Service version from OpenAPI schema.
     /// </summary>
-    public const string ServiceVersion = "1.0.0";
-
-    /// <summary>
-    /// Generates the ServiceRegistrationEvent containing all endpoint permissions.
-    /// </summary>
-    /// <param name="instanceId">The unique instance GUID for this bannou instance</param>
-    /// <param name="appId">The effective app ID for this service instance</param>
-    public static ServiceRegistrationEvent CreateRegistrationEvent(Guid instanceId, string appId)
-    {
-        return new ServiceRegistrationEvent
-        {
-            EventId = Guid.NewGuid(),
-            Timestamp = DateTimeOffset.UtcNow,
-            ServiceId = instanceId,
-            ServiceName = ServiceId,
-            Version = ServiceVersion,
-            AppId = appId,
-            Endpoints = GetEndpoints()
-        };
-    }
+    public const string ServiceVersion = "2.0.0";
 
     /// <summary>
     /// Gets the list of endpoints with their permission requirements.
@@ -247,6 +227,21 @@ public static class AccountPermissionRegistration
 
         endpoints.Add(new ServiceEndpoint
         {
+            Path = "/account/mfa/update",
+            Method = ServiceEndpointMethod.POST,
+            Description = "updateMfa",
+            Permissions = new List<PermissionRequirement>
+            {
+                new PermissionRequirement
+                {
+                    Role = "user",
+                    RequiredStates = new Dictionary<string, string> {  }
+                },
+            }
+        });
+
+        endpoints.Add(new ServiceEndpoint
+        {
             Path = "/account/batch-get",
             Method = ServiceEndpointMethod.POST,
             Description = "batchGetAccounts",
@@ -305,6 +300,21 @@ public static class AccountPermissionRegistration
             }
         });
 
+        endpoints.Add(new ServiceEndpoint
+        {
+            Path = "/account/email/update",
+            Method = ServiceEndpointMethod.POST,
+            Description = "updateEmail",
+            Permissions = new List<PermissionRequirement>
+            {
+                new PermissionRequirement
+                {
+                    Role = "admin",
+                    RequiredStates = new Dictionary<string, string> {  }
+                },
+            }
+        });
+
         return endpoints;
     }
 
@@ -354,33 +364,28 @@ public static class AccountPermissionRegistration
         return matrix;
     }
 
+}
+
+/// <summary>
+/// Partial class overlay: registers Account service permissions via DI registry.
+/// Generated from x-permissions sections in account-api.yaml.
+/// Push-based: this service pushes its permission matrix TO the IPermissionRegistry.
+/// </summary>
+public partial class AccountService
+{
     /// <summary>
-    /// Registers service permissions via event publishing.
-    /// Should only be called after messaging infrastructure is confirmed.
+    /// Registers this service's permissions with the Permission service via DI registry.
+    /// Called by PluginLoader during startup with the resolved IPermissionRegistry.
     /// </summary>
-    /// <param name="messageBus">The message bus for publishing events</param>
-    /// <param name="appId">The effective app ID for this service instance</param>
-    /// <param name="logger">Optional logger for diagnostics</param>
-    public static async Task RegisterViaEventAsync(IMessageBus messageBus, string appId, ILogger? logger = null)
+    async Task IBannouService.RegisterServicePermissionsAsync(
+        string appId, IPermissionRegistry? registry)
     {
-        var registrationEvent = CreateRegistrationEvent(Program.ServiceGUID, appId);
-
-        var success = await messageBus.TryPublishAsync(
-            "permission.service-registered",
-            registrationEvent);
-
-        if (success)
+        if (registry != null)
         {
-            logger?.LogInformation(
-                "Published service registration event for {ServiceName} v{Version} with {EndpointCount} endpoints",
-                ServiceId, ServiceVersion, registrationEvent.Endpoints.Count);
-        }
-        else
-        {
-            logger?.LogWarning(
-                "Failed to publish service registration event for {ServiceId} (will be retried)",
-                ServiceId);
+            await registry.RegisterServiceAsync(
+                AccountPermissionRegistration.ServiceId,
+                AccountPermissionRegistration.ServiceVersion,
+                AccountPermissionRegistration.BuildPermissionMatrix());
         }
     }
-
 }

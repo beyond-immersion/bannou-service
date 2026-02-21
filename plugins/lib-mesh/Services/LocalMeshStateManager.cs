@@ -82,6 +82,7 @@ public sealed class LocalMeshStateManager : IMeshStateManager
         EndpointStatus status,
         float loadPercent,
         int currentConnections,
+        ICollection<string>? issues,
         int ttlSeconds)
     {
         _logger.LogDebug("Heartbeat ignored in local mode: {AppId}:{InstanceId}", appId, instanceId);

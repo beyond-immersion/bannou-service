@@ -59,8 +59,8 @@ public partial class SearchIndexService : ISearchIndexService
 
         // Load document list from state store
         var docListKey = $"ns-docs:{namespaceId}";
-        var listStore = _stateStoreFactory.GetStore<List<Guid>>(StateStoreDefinitions.Documentation);
-        var documentIds = await listStore.GetAsync(docListKey, cancellationToken);
+        var setStore = _stateStoreFactory.GetStore<HashSet<Guid>>(StateStoreDefinitions.Documentation);
+        var documentIds = await setStore.GetAsync(docListKey, cancellationToken);
 
         if (documentIds == null || documentIds.Count == 0)
         {

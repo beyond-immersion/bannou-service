@@ -62,7 +62,9 @@ examples/
 
 | Directory | PackageId | Description |
 |-----------|-----------|-------------|
-| `core/` | `BeyondImmersion.Bannou.Core` | Shared types (BannouJson, ApiException, base events) |
+| `core/` | `BeyondImmersion.Bannou.Core` | Shared types (BannouJson, DiscriminatedRecordConverter, ApiException, base events) |
+| `behavior-compiler/` | `BeyondImmersion.Bannou.BehaviorCompiler` | ABML parser and behavior document compilation |
+| `behavior-expressions/` | `BeyondImmersion.Bannou.BehaviorExpressions` | Register-based expression VM with variable scopes, functions, and templates |
 | `client/` | `BeyondImmersion.Bannou.Client` | WebSocket client for game clients |
 | `client-voice/` | `BeyondImmersion.Bannou.Client.Voice` | P2P voice chat with SIP/RTP scaling |
 | `server/` | `BeyondImmersion.Bannou.Server` | Server SDK with mesh service clients |
@@ -86,6 +88,10 @@ BeyondImmersion.Bannou.{Feature}[.{SubFeature}]
 
 Examples:
 - `BeyondImmersion.Bannou.Core`
+- `BeyondImmersion.Bannou.BehaviorCompiler`
+- `BeyondImmersion.Bannou.BehaviorExpressions`
+- `BeyondImmersion.Bannou.BehaviorExpressions.Compiler`
+- `BeyondImmersion.Bannou.BehaviorExpressions.Runtime`
 - `BeyondImmersion.Bannou.Client`
 - `BeyondImmersion.Bannou.Client.Voice`
 - `BeyondImmersion.Bannou.AssetBundler`
@@ -146,7 +152,7 @@ When creating a new SDK package:
 2. **Create csproj** with all three identifiers aligned (PackageId, RootNamespace, AssemblyName)
 3. **Add to SDK solution** using `dotnet sln sdks/bannou-sdks.sln add sdks/{name}/{name}.csproj`
 4. **Create test project** in `sdks/{name}.tests/` with matching conventions
-5. **Update documentation** in `docs/guides/SDKs.md`
+5. **Update documentation** in `docs/guides/SDK-OVERVIEW.md`
 
 ## Building and Testing SDKs
 

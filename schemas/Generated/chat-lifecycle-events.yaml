@@ -1,0 +1,261 @@
+openapi: 3.0.3
+info:
+  title: Chat Service Events Lifecycle Events
+  description: "Auto-generated lifecycle event schemas for chat service.\nDO NOT EDIT - This file is completely overwritten
+    by generate-lifecycle-events.py.\nSource of truth: chat-events.yaml x-lifecycle section."
+  version: 1.0.0
+paths: {}
+components:
+  schemas:
+    ChatRoomCreatedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+      type: object
+      additionalProperties: false
+      description: Published to chat-room.created when a chatroom is created
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - roomId
+      - roomTypeCode
+      - status
+      - participantCount
+      - maxParticipants
+      - isArchived
+      - createdAt
+      properties:
+        eventName:
+          type: string
+          default: chat-room.created
+          description: 'Event type identifier: chat-room.created'
+        roomId: &id001
+          type: string
+          format: uuid
+          description: "Unique identifier for the chat room"
+        roomTypeCode: &id002
+          type: string
+          description: "Room type code that determines message format and validation rules"
+        sessionId: &id003
+          type: string
+          format: uuid
+          nullable: true
+          description: "Connect session ID if this is a companion room"
+        contractId: &id004
+          type: string
+          format: uuid
+          nullable: true
+          description: "Governing contract instance ID if contract-bound"
+        displayName: &id005
+          type: string
+          nullable: true
+          description: "Human-readable room display name"
+        status: &id006
+          $ref: ../chat-api.yaml#/components/schemas/ChatRoomStatus
+          description: "Current room lifecycle status"
+        participantCount: &id007
+          type: integer
+          description: "Current number of participants in the room"
+        maxParticipants: &id008
+          type: integer
+          description: "Maximum allowed participants in the room"
+        isArchived: &id009
+          type: boolean
+          description: "Whether the room has been archived via Resource"
+        createdAt: &id010
+          type: string
+          format: date-time
+          description: "When the room was created"
+    ChatRoomUpdatedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+      type: object
+      additionalProperties: false
+      description: Published to chat-room.updated when a chatroom is updated
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - roomId
+      - roomTypeCode
+      - status
+      - participantCount
+      - maxParticipants
+      - isArchived
+      - createdAt
+      - changedFields
+      properties:
+        eventName:
+          type: string
+          default: chat-room.updated
+          description: 'Event type identifier: chat-room.updated'
+        roomId: *id001
+        roomTypeCode: *id002
+        sessionId: *id003
+        contractId: *id004
+        displayName: *id005
+        status: *id006
+        participantCount: *id007
+        maxParticipants: *id008
+        isArchived: *id009
+        createdAt: *id010
+        changedFields:
+          type: array
+          items:
+            type: string
+          description: List of field names that were modified
+    ChatRoomDeletedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+      type: object
+      additionalProperties: false
+      description: Published to chat-room.deleted when a chatroom is deleted
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - roomId
+      - roomTypeCode
+      - status
+      - participantCount
+      - maxParticipants
+      - isArchived
+      - createdAt
+      properties:
+        eventName:
+          type: string
+          default: chat-room.deleted
+          description: 'Event type identifier: chat-room.deleted'
+        roomId: *id001
+        roomTypeCode: *id002
+        sessionId: *id003
+        contractId: *id004
+        displayName: *id005
+        status: *id006
+        participantCount: *id007
+        maxParticipants: *id008
+        isArchived: *id009
+        createdAt: *id010
+        deletedReason:
+          type: string
+          nullable: true
+          description: Optional reason for deletion (e.g., "Merged into {targetId}")
+    ChatRoomTypeCreatedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+      type: object
+      additionalProperties: false
+      description: Published to chat-room-type.created when a chatroomtype is created
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - code
+      - displayName
+      - messageFormat
+      - persistenceMode
+      - allowAnonymousSenders
+      - status
+      - createdAt
+      properties:
+        eventName:
+          type: string
+          default: chat-room-type.created
+          description: 'Event type identifier: chat-room-type.created'
+        code: &id011
+          type: string
+          description: "Unique room type code within game service scope"
+        displayName: &id012
+          type: string
+          description: "Human-readable room type name"
+        gameServiceId: &id013
+          type: string
+          format: uuid
+          nullable: true
+          description: "Game service scope (null for global built-in types)"
+        messageFormat: &id014
+          $ref: ../chat-api.yaml#/components/schemas/MessageFormat
+          description: "Message format this room type accepts"
+        persistenceMode: &id015
+          $ref: ../chat-api.yaml#/components/schemas/PersistenceMode
+          description: "Whether messages are ephemeral (Redis) or persistent (MySQL)"
+        allowAnonymousSenders: &id016
+          type: boolean
+          description: "Whether messages can be sent without sender identity"
+        status: &id017
+          $ref: ../chat-api.yaml#/components/schemas/RoomTypeStatus
+          description: "Current lifecycle status of the room type"
+        createdAt: &id018
+          type: string
+          format: date-time
+          description: "When the room type was registered"
+    ChatRoomTypeUpdatedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+      type: object
+      additionalProperties: false
+      description: Published to chat-room-type.updated when a chatroomtype is updated
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - code
+      - displayName
+      - messageFormat
+      - persistenceMode
+      - allowAnonymousSenders
+      - status
+      - createdAt
+      - changedFields
+      properties:
+        eventName:
+          type: string
+          default: chat-room-type.updated
+          description: 'Event type identifier: chat-room-type.updated'
+        code: *id011
+        displayName: *id012
+        gameServiceId: *id013
+        messageFormat: *id014
+        persistenceMode: *id015
+        allowAnonymousSenders: *id016
+        status: *id017
+        createdAt: *id018
+        changedFields:
+          type: array
+          items:
+            type: string
+          description: List of field names that were modified
+    ChatRoomTypeDeletedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+      type: object
+      additionalProperties: false
+      description: Published to chat-room-type.deleted when a chatroomtype is deleted
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - code
+      - displayName
+      - messageFormat
+      - persistenceMode
+      - allowAnonymousSenders
+      - status
+      - createdAt
+      properties:
+        eventName:
+          type: string
+          default: chat-room-type.deleted
+          description: 'Event type identifier: chat-room-type.deleted'
+        code: *id011
+        displayName: *id012
+        gameServiceId: *id013
+        messageFormat: *id014
+        persistenceMode: *id015
+        allowAnonymousSenders: *id016
+        status: *id017
+        createdAt: *id018
+        deletedReason:
+          type: string
+          nullable: true
+          description: Optional reason for deletion (e.g., "Merged into {targetId}")

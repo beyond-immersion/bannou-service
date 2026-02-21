@@ -5,8 +5,11 @@ info:
     Configuration schema for Messaging service.
     Properties are bound to environment variables with BANNOU_ prefix.
 
-    **Schema Rules**: AI agents MUST review docs/reference/SCHEMA-RULES.md before
-    modifying this schema. Optional reference types require `nullable: true`.
+    **SCHEMA MODIFICATION GATE**: STOP. Before modifying this schema, you MUST:
+    1. Read docs/reference/SCHEMA-RULES.md
+    2. State which section applies to your change
+    3. Only then proceed with edits
+    Edits without stating the applicable rule are FORBIDDEN.
 
   version: 1.0.0
 paths: {}
@@ -52,7 +55,7 @@ x-service-configuration:
       default: "bannou"
     EnablePublisherConfirms:
       type: boolean
-      description: Enable RabbitMQ publisher confirms for reliability
+      description: Enable RabbitMQ publisher confirms for reliability. When enabled, BasicPublishAsync waits for broker confirmation (RabbitMQ.Client 7.x pattern).
       env: MESSAGING_ENABLE_CONFIRMS
       default: true
     ConnectionRetryCount:
@@ -65,6 +68,32 @@ x-service-configuration:
       description: Delay between connection retry attempts in milliseconds
       env: MESSAGING_CONNECTION_RETRY_DELAY_MS
       default: 1000
+    ConnectionMaxBackoffMs:
+      type: integer
+      description: Maximum backoff delay for connection retries in milliseconds
+      env: MESSAGING_CONNECTION_MAX_BACKOFF_MS
+      default: 60000
+    ChannelPoolSize:
+      type: integer
+      description: Maximum number of channels in the publisher channel pool
+      env: MESSAGING_CHANNEL_POOL_SIZE
+      default: 100
+      minimum: 10
+      maximum: 500
+    MaxConcurrentChannelCreation:
+      type: integer
+      description: Maximum concurrent channel creation requests (backpressure semaphore count)
+      env: MESSAGING_MAX_CONCURRENT_CHANNEL_CREATION
+      default: 50
+      minimum: 10
+      maximum: 200
+    MaxTotalChannels:
+      type: integer
+      description: Hard limit on total active channels per connection (RabbitMQ typically allows 2048)
+      env: MESSAGING_MAX_TOTAL_CHANNELS
+      default: 1000
+      minimum: 100
+      maximum: 2000
     # Subscription Settings
     DefaultPrefetchCount:
       type: integer
@@ -81,16 +110,46 @@ x-service-configuration:
       description: Dead letter exchange name for failed messages
       env: MESSAGING_DEAD_LETTER_EXCHANGE
       default: "bannou-dlx"
+    DeadLetterMaxLength:
+      type: integer
+      description: Maximum messages in dead letter queue before oldest dropped
+      env: MESSAGING_DEAD_LETTER_MAX_LENGTH
+      default: 100000
+      minimum: 1000
+      maximum: 10000000
+    DeadLetterTtlMs:
+      type: integer
+      description: Time-to-live for dead letter messages in milliseconds (default 7 days)
+      env: MESSAGING_DEAD_LETTER_TTL_MS
+      default: 604800000
+      minimum: 3600000
+      maximum: 2592000000
+    DeadLetterOverflowBehavior:
+      type: string
+      description: Behavior when DLX queue exceeds max length (drop-head drops oldest, reject-publish blocks new messages)
+      env: MESSAGING_DEAD_LETTER_OVERFLOW_BEHAVIOR
+      default: "drop-head"
     RetryMaxAttempts:
       type: integer
-      description: Maximum retry attempts before dead-lettering
+      description: Maximum retry attempts before discarding message to dead-letter topic
       env: MESSAGING_RETRY_MAX_ATTEMPTS
-      default: 3
+      default: 5
+      minimum: 1
+      maximum: 20
     RetryDelayMs:
       type: integer
-      description: Delay between retry attempts in milliseconds
+      description: Base delay between retry attempts in milliseconds (doubles with each retry)
       env: MESSAGING_RETRY_DELAY_MS
       default: 5000
+      minimum: 100
+      maximum: 60000
+    RetryMaxBackoffMs:
+      type: integer
+      description: Maximum backoff delay between retries in milliseconds (caps exponential growth)
+      env: MESSAGING_RETRY_MAX_BACKOFF_MS
+      default: 60000
+      minimum: 1000
+      maximum: 300000
 
     # Retry Buffer Settings (for handling transient publish failures)
     RetryBufferEnabled:
@@ -100,19 +159,51 @@ x-service-configuration:
       default: true
     RetryBufferMaxSize:
       type: integer
-      description: Maximum number of messages in retry buffer before node crash
+      description: Maximum number of messages in retry buffer before node crash (500k = ~5s at 100k msg/sec)
       env: MESSAGING_RETRY_BUFFER_MAX_SIZE
-      default: 10000
+      default: 500000
+      minimum: 10000
+      maximum: 2000000
     RetryBufferMaxAgeSeconds:
       type: integer
-      description: Maximum age of buffered messages before node crash (prevents stale events)
+      description: Maximum age of buffered messages before node crash (gives operators time to respond)
       env: MESSAGING_RETRY_BUFFER_MAX_AGE_SECONDS
-      default: 300
+      default: 600
+      minimum: 60
+      maximum: 1800
     RetryBufferIntervalSeconds:
       type: integer
       description: Interval between retry attempts for buffered messages
       env: MESSAGING_RETRY_BUFFER_INTERVAL_SECONDS
       default: 5
+    RetryBufferBackpressureThreshold:
+      type: number
+      description: When buffer reaches this percentage full, start rejecting new publishes (0.0-1.0)
+      env: MESSAGING_RETRY_BUFFER_BACKPRESSURE_THRESHOLD
+      default: 0.8
+      minimum: 0.5
+      maximum: 0.95
+
+    # Publish Batching Settings (for high-throughput scenarios)
+    EnablePublishBatching:
+      type: boolean
+      description: Enable batched publishing for high-throughput scenarios. When enabled, messages are queued and sent in batches to reduce broker overhead.
+      env: MESSAGING_ENABLE_PUBLISH_BATCHING
+      default: false
+    PublishBatchSize:
+      type: integer
+      description: Maximum number of messages to batch before sending. Batch is flushed when this size is reached.
+      env: MESSAGING_PUBLISH_BATCH_SIZE
+      default: 100
+      minimum: 10
+      maximum: 1000
+    PublishBatchTimeoutMs:
+      type: integer
+      description: Maximum delay in milliseconds before flushing a partial batch. Ensures low-throughput periods don't accumulate stale messages.
+      env: MESSAGING_PUBLISH_BATCH_TIMEOUT_MS
+      default: 10
+      minimum: 1
+      maximum: 100
 
     # HTTP Callback Settings (for dynamic subscriptions)
     CallbackRetryMaxAttempts:
@@ -126,22 +217,9 @@ x-service-configuration:
       env: MESSAGING_CALLBACK_RETRY_DELAY_MS
       default: 1000
 
-    # Feature Flags
-    UseMassTransit:
-      type: boolean
-      description: Use MassTransit wrapper (true) or direct RabbitMQ.Client (false)
-      env: MESSAGING_USE_MASSTRANSIT
-      default: true
-    EnableMetrics:
-      type: boolean
-      description: Enable message bus metrics collection
-      env: MESSAGING_ENABLE_METRICS
-      default: true
-    EnableTracing:
-      type: boolean
-      description: Enable distributed tracing for messages
-      env: MESSAGING_ENABLE_TRACING
-      default: true
+    # Note: Telemetry (metrics/tracing) is controlled centrally via lib-telemetry configuration.
+    # When lib-telemetry is enabled, it automatically instruments messaging operations via ITelemetryProvider.
+    # When disabled or not loaded, instrumentation is skipped entirely (zero overhead).
 
     # Subscription Recovery Service Configuration
     SubscriptionTtlRefreshIntervalHours:

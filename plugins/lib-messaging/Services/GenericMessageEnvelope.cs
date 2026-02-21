@@ -38,6 +38,10 @@ public class GenericMessageEnvelope : IBannouEvent
     /// <summary>
     /// The topic/routing key this message was published to.
     /// </summary>
+    /// <remarks>
+    /// Default empty string is for deserialization only - callers should always set this
+    /// via the constructor. An empty topic is not a sentinel for "absent" - it's invalid.
+    /// </remarks>
     [JsonPropertyName("topic")]
     public string Topic { get; set; } = string.Empty;
 
@@ -45,12 +49,20 @@ public class GenericMessageEnvelope : IBannouEvent
     /// The serialized JSON payload of the message.
     /// Stored as string to avoid MassTransit's System.Object restriction.
     /// </summary>
+    /// <remarks>
+    /// Default "{}" represents an empty JSON object, which is a valid payload.
+    /// This is NOT a sentinel - empty object is a legitimate value.
+    /// </remarks>
     [JsonPropertyName("payloadJson")]
     public string PayloadJson { get; set; } = "{}";
 
     /// <summary>
     /// Content type of the payload (typically "application/json").
     /// </summary>
+    /// <remarks>
+    /// Default "application/json" is the most common content type.
+    /// This is a valid default, NOT a sentinel for "absent".
+    /// </remarks>
     [JsonPropertyName("contentType")]
     public string ContentType { get; set; } = "application/json";
 

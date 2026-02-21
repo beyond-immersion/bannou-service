@@ -6,8 +6,11 @@ info:
     Configuration options for the Actor service.
     Controls deployment mode, pool node management, and default behavior parameters.
 
-    **Schema Rules**: AI agents MUST review docs/reference/SCHEMA-RULES.md before
-    modifying this schema. Optional reference types require `nullable: true`.
+    **SCHEMA MODIFICATION GATE**: STOP. Before modifying this schema, you MUST:
+    1. Read docs/reference/SCHEMA-RULES.md
+    2. State which section applies to your change
+    3. Only then proceed with edits
+    Edits without stating the applicable rule are FORBIDDEN.
 
 servers: []
 
@@ -226,23 +229,6 @@ x-service-configuration:
       env: ACTOR_QUERY_OPTIONS_DEFAULT_MAX_AGE_MS
       default: 5000
       description: Default max age in milliseconds for cached query options
-
-    # === Actor Data Caching (Tier 2) ===
-    PersonalityCacheTtlMinutes:
-      type: integer
-      env: ACTOR_PERSONALITY_CACHE_TTL_MINUTES
-      default: 5
-      description: TTL in minutes for cached personality data
-    EncounterCacheTtlMinutes:
-      type: integer
-      env: ACTOR_ENCOUNTER_CACHE_TTL_MINUTES
-      default: 5
-      description: TTL in minutes for cached encounter data
-    MaxEncounterResultsPerQuery:
-      type: integer
-      env: ACTOR_MAX_ENCOUNTER_RESULTS_PER_QUERY
-      default: 50
-      description: Maximum encounter results returned per query
 
     # === Memory Store Retry Configuration (Tier 3) ===
     MemoryStoreMaxRetries:

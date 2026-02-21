@@ -5,12 +5,14 @@ using BeyondImmersion.BannouService.ClientEvents;
 using BeyondImmersion.BannouService.Configuration;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Services;
+using BeyondImmersion.BannouService.State;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
@@ -24,16 +26,14 @@ namespace BeyondImmersion.BannouService.Permission;
 /// Permission service - authoritative source for all permission mappings and session capabilities.
 /// Uses lib-state for atomic operations and Redis-backed data structures.
 /// </summary>
-[BannouService("permission", typeof(IPermissionService), lifetime: ServiceLifetime.Singleton)]
-public partial class PermissionService : IPermissionService
+[BannouService("permission", typeof(IPermissionService), lifetime: ServiceLifetime.Singleton, layer: ServiceLayer.AppFoundation)]
+public partial class PermissionService : IPermissionService, IPermissionRegistry
 {
     private readonly ILogger<PermissionService> _logger;
     private readonly PermissionServiceConfiguration _configuration;
     private readonly IStateStoreFactory _stateStoreFactory;
     private readonly IMessageBus _messageBus;
-    private readonly IDistributedLockProvider _lockProvider;
     private readonly IClientEventPublisher _clientEventPublisher;
-    private static readonly string[] ROLE_ORDER = new[] { "anonymous", "user", "developer", "admin" };
 
     // State key patterns
     private const string ACTIVE_SESSIONS_KEY = "active_sessions";
@@ -44,8 +44,8 @@ public partial class PermissionService : IPermissionService
     private const string SESSION_PERMISSIONS_KEY = "session:{0}:permissions";
     private const string PERMISSION_MATRIX_KEY = "permissions:{0}:{1}:{2}"; // service:state:role
     private const string PERMISSION_VERSION_KEY = "permission_versions";
-    private const string SERVICE_LOCK_KEY = "lock:service-registration:{0}";
     private const string PERMISSION_HASH_KEY = "permission_hash:{0}"; // Stores hash of service permission data for idempotent registration
+    private const string SERVICE_STATES_KEY = "service-states:{0}"; // Stores set of states registered by a service (for endpoint discovery)
 
     // Cache for compiled permissions (in-memory cache with lib-state backing)
     private readonly ConcurrentDictionary<string, CapabilityResponse> _sessionCapabilityCache;
@@ -55,7 +55,6 @@ public partial class PermissionService : IPermissionService
         PermissionServiceConfiguration configuration,
         IStateStoreFactory stateStoreFactory,
         IMessageBus messageBus,
-        IDistributedLockProvider lockProvider,
         IClientEventPublisher clientEventPublisher,
         IEventConsumer eventConsumer)
     {
@@ -63,7 +62,6 @@ public partial class PermissionService : IPermissionService
         _configuration = configuration;
         _stateStoreFactory = stateStoreFactory;
         _messageBus = messageBus;
-        _lockProvider = lockProvider;
         _clientEventPublisher = clientEventPublisher;
         _sessionCapabilityCache = new ConcurrentDictionary<string, CapabilityResponse>();
 
@@ -115,85 +113,92 @@ public partial class PermissionService : IPermissionService
         CapabilityRequest body,
         CancellationToken cancellationToken = default)
     {
-        try
-        {
-            _logger.LogDebug("Getting capabilities for session {SessionId}", body.SessionId);
+        _logger.LogDebug("Getting capabilities for session {SessionId}", body.SessionId);
 
-            // Check in-memory cache first
-            var sessionIdStr = body.SessionId.ToString();
-            if (_sessionCapabilityCache.TryGetValue(sessionIdStr, out var cachedResponse))
+        // Check in-memory cache first
+        var sessionIdStr = body.SessionId.ToString();
+        if (_sessionCapabilityCache.TryGetValue(sessionIdStr, out var cachedResponse))
+        {
+            // Check in-memory cache TTL (0 = disabled, cache never expires)
+            if (_configuration.PermissionCacheTtlSeconds > 0)
+            {
+                var age = DateTimeOffset.UtcNow - cachedResponse.GeneratedAt;
+                if (age.TotalSeconds > _configuration.PermissionCacheTtlSeconds)
+                {
+                    _logger.LogDebug(
+                        "Cached capabilities for session {SessionId} expired (age: {AgeSeconds}s, TTL: {TtlSeconds}s), refreshing from Redis",
+                        body.SessionId, (int)age.TotalSeconds, _configuration.PermissionCacheTtlSeconds);
+                    _sessionCapabilityCache.TryRemove(sessionIdStr, out _);
+                    // Fall through to Redis read below
+                }
+                else
+                {
+                    _logger.LogDebug("Returning cached capabilities for session {SessionId}", body.SessionId);
+                    return (StatusCodes.OK, cachedResponse);
+                }
+            }
+            else
             {
                 _logger.LogDebug("Returning cached capabilities for session {SessionId}", body.SessionId);
                 return (StatusCodes.OK, cachedResponse);
             }
-
-            // Get compiled permissions from state store
-            var permissionsKey = string.Format(SESSION_PERMISSIONS_KEY, sessionIdStr);
-            var permissionsData = await _stateStoreFactory.GetStore<Dictionary<string, object>>(StateStoreDefinitions.Permission)
-                .GetAsync(permissionsKey, cancellationToken);
-
-            if (permissionsData == null || permissionsData.Count == 0)
-            {
-                _logger.LogDebug("No permissions found for session {SessionId}", body.SessionId);
-                return (StatusCodes.NotFound, null);
-            }
-
-            // Parse permissions data
-            var permissions = new Dictionary<string, ICollection<string>>();
-            var version = 0;
-            var generatedAt = DateTimeOffset.UtcNow;
-
-            foreach (var item in permissionsData)
-            {
-                if (item.Value == null)
-                    continue;
-
-                if (item.Key == "version")
-                {
-                    int.TryParse(item.Value.ToString(), out version);
-                }
-                else if (item.Key == "generated_at")
-                {
-                    DateTimeOffset.TryParse(item.Value.ToString(), out generatedAt);
-                }
-                else
-                {
-                    // Parse JSON array of endpoints
-                    var jsonElement = (JsonElement)item.Value;
-                    var endpoints = BannouJson.Deserialize<List<string>>(jsonElement.GetRawText());
-                    if (endpoints != null)
-                    {
-                        permissions[item.Key] = endpoints;
-                    }
-                }
-            }
-
-            var response = new CapabilityResponse
-            {
-                SessionId = body.SessionId,
-                Permissions = permissions,
-                GeneratedAt = generatedAt
-            };
-
-            // Cache the response for future requests
-            _sessionCapabilityCache[sessionIdStr] = response;
-
-            _logger.LogDebug("Retrieved capabilities for session {SessionId} with {ServiceCount} services",
-                body.SessionId, permissions.Count);
-
-            return (StatusCodes.OK, response);
         }
-        catch (Exception ex)
+
+        // Get compiled permissions from state store
+        var permissionsKey = string.Format(SESSION_PERMISSIONS_KEY, sessionIdStr);
+        var permissionsData = await _stateStoreFactory.GetStore<Dictionary<string, object>>(StateStoreDefinitions.Permission)
+            .GetAsync(permissionsKey, cancellationToken);
+
+        if (permissionsData == null || permissionsData.Count == 0)
         {
-            _logger.LogError(ex, "Error getting capabilities for session {SessionId}", body.SessionId);
-            await PublishErrorEventAsync(
-                "GetCapabilities",
-                "dependency_failure",
-                ex.Message,
-                dependency: "state",
-                details: new { body.SessionId });
-            return (StatusCodes.InternalServerError, null);
+            _logger.LogDebug("No permissions found for session {SessionId}", body.SessionId);
+            return (StatusCodes.NotFound, null);
         }
+
+        // Parse permissions data
+        var permissions = new Dictionary<string, ICollection<string>>();
+        var version = 0;
+        var generatedAt = DateTimeOffset.UtcNow;
+
+        foreach (var item in permissionsData)
+        {
+            if (item.Value == null)
+                continue;
+
+            if (item.Key == "version")
+            {
+                int.TryParse(item.Value.ToString(), out version);
+            }
+            else if (item.Key == "generated_at")
+            {
+                DateTimeOffset.TryParse(item.Value.ToString(), out generatedAt);
+            }
+            else
+            {
+                // Parse JSON array of endpoints
+                var jsonElement = (JsonElement)item.Value;
+                var endpoints = BannouJson.Deserialize<List<string>>(jsonElement.GetRawText());
+                if (endpoints != null)
+                {
+                    permissions[item.Key] = endpoints;
+                }
+            }
+        }
+
+        var response = new CapabilityResponse
+        {
+            SessionId = body.SessionId,
+            Permissions = permissions,
+            GeneratedAt = generatedAt
+        };
+
+        // Cache the response for future requests
+        _sessionCapabilityCache[sessionIdStr] = response;
+
+        _logger.LogDebug("Retrieved capabilities for session {SessionId} with {ServiceCount} services",
+            body.SessionId, permissions.Count);
+
+        return (StatusCodes.OK, response);
     }
 
     /// <summary>
@@ -203,307 +208,204 @@ public partial class PermissionService : IPermissionService
         ValidationRequest body,
         CancellationToken cancellationToken = default)
     {
-        try
+        _logger.LogDebug("Validating API access for session {SessionId}, service {ServiceId}, endpoint {Endpoint}",
+            body.SessionId, body.ServiceId, body.Endpoint);
+
+        // Get session permissions from state store
+        var permissionsKey = string.Format(SESSION_PERMISSIONS_KEY, body.SessionId);
+        var permissionsData = await _stateStoreFactory.GetStore<Dictionary<string, object>>(StateStoreDefinitions.Permission)
+            .GetAsync(permissionsKey, cancellationToken);
+
+        if (permissionsData == null || !permissionsData.ContainsKey(body.ServiceId))
         {
-            _logger.LogDebug("Validating API access for session {SessionId}, service {ServiceId}, endpoint {Endpoint}",
-                body.SessionId, body.ServiceId, body.Endpoint);
-
-            // Get session permissions from state store
-            var permissionsKey = string.Format(SESSION_PERMISSIONS_KEY, body.SessionId);
-            var permissionsData = await _stateStoreFactory.GetStore<Dictionary<string, object>>(StateStoreDefinitions.Permission)
-                .GetAsync(permissionsKey, cancellationToken);
-
-            if (permissionsData == null || !permissionsData.ContainsKey(body.ServiceId))
-            {
-                _logger.LogDebug("No permissions found for session {SessionId} service {ServiceId}",
-                    body.SessionId, body.ServiceId);
-                return (StatusCodes.OK, new ValidationResponse
-                {
-                    Allowed = false,
-                    SessionId = body.SessionId
-                });
-            }
-
-            // Parse allowed endpoints
-            var jsonElement = (JsonElement)permissionsData[body.ServiceId];
-            var allowedEndpoints = BannouJson.Deserialize<List<string>>(jsonElement.GetRawText());
-            var allowed = allowedEndpoints?.Contains(body.Endpoint) ?? false;
-
-            _logger.LogDebug("API access validation result for session {SessionId}: {Allowed}",
-                body.SessionId, allowed);
-
+            _logger.LogDebug("No permissions found for session {SessionId} service {ServiceId}",
+                body.SessionId, body.ServiceId);
             return (StatusCodes.OK, new ValidationResponse
             {
-                Allowed = allowed,
+                Allowed = false,
                 SessionId = body.SessionId
             });
         }
-        catch (Exception ex)
+
+        // Parse allowed endpoints
+        var jsonElement = (JsonElement)permissionsData[body.ServiceId];
+        var allowedEndpoints = BannouJson.Deserialize<List<string>>(jsonElement.GetRawText());
+        var allowed = allowedEndpoints?.Contains(body.Endpoint) ?? false;
+
+        _logger.LogDebug("API access validation result for session {SessionId}: {Allowed}",
+            body.SessionId, allowed);
+
+        return (StatusCodes.OK, new ValidationResponse
         {
-            _logger.LogError(ex, "Error validating API access for session {SessionId}", body.SessionId);
-            await PublishErrorEventAsync(
-                "ValidateApiAccess",
-                "dependency_failure",
-                ex.Message,
-                dependency: "state",
-                details: new { body.SessionId, body.ServiceId, body.Endpoint });
-            return (StatusCodes.InternalServerError, null);
-        }
+            Allowed = allowed,
+            SessionId = body.SessionId
+        });
     }
 
     /// <summary>
     /// Register service permission matrix and trigger recompilation for all active sessions.
-    /// Uses lib-state atomic transactions to prevent race conditions.
+    /// Uses ICacheableStateStore atomic set operations for multi-instance safety.
     /// </summary>
     public async Task<(StatusCodes, RegistrationResponse?)> RegisterServicePermissionsAsync(
         ServicePermissionMatrix body,
         CancellationToken cancellationToken = default)
     {
-        try
+        _logger.LogDebug("Registering service permissions for {ServiceId} version {Version}",
+            body.ServiceId, body.Version);
+
+        // IDEMPOTENT CHECK: Compute hash of incoming data and compare to stored hash
+        // If the hash matches AND service is already registered, skip entirely
+        var newHash = ComputePermissionDataHash(body);
+        var hashKey = string.Format(PERMISSION_HASH_KEY, body.ServiceId);
+        var storedHash = await _stateStoreFactory.GetStore<string>(StateStoreDefinitions.Permission)
+            .GetAsync(hashKey, cancellationToken);
+
+        // Atomic membership check - no read-modify-write needed
+        var cacheStore = _stateStoreFactory.GetCacheableStore<string>(StateStoreDefinitions.Permission);
+        var isServiceAlreadyRegistered = await cacheStore.SetContainsAsync<string>(REGISTERED_SERVICES_KEY, body.ServiceId, cancellationToken);
+
+        if (storedHash != null && storedHash == newHash && isServiceAlreadyRegistered)
         {
-            _logger.LogDebug("Registering service permissions for {ServiceId} version {Version}",
-                body.ServiceId, body.Version);
-
-            // IDEMPOTENT CHECK: Compute hash of incoming data and compare to stored hash
-            // If the hash matches AND service is already registered, skip entirely
-            var newHash = ComputePermissionDataHash(body);
-            var hashKey = string.Format(PERMISSION_HASH_KEY, body.ServiceId);
-            var storedHash = await _stateStoreFactory.GetStore<string>(StateStoreDefinitions.Permission)
-                .GetAsync(hashKey, cancellationToken);
-
-            // Also check if service is in registered_services (might be cleared independently of hash)
-            var registeredServices = await _stateStoreFactory.GetStore<HashSet<string>>(StateStoreDefinitions.Permission)
-                .GetAsync(REGISTERED_SERVICES_KEY, cancellationToken) ?? new HashSet<string>();
-            var isServiceAlreadyRegistered = registeredServices.Contains(body.ServiceId);
-
-            if (storedHash != null && storedHash == newHash && isServiceAlreadyRegistered)
-            {
-                _logger.LogDebug("Service {ServiceId} registration skipped - permission data unchanged and service already registered (hash: {Hash})",
-                    body.ServiceId, newHash[..8] + "...");
-                return (StatusCodes.OK, new RegistrationResponse
-                {
-                    ServiceId = body.ServiceId,
-                    Registered = true,
-                    AffectedSessions = 0,
-                    Message = "Permissions unchanged (idempotent)"
-                });
-            }
-
-            // Log why we're proceeding
-            if (storedHash == null)
-            {
-                _logger.LogInformation("Service {ServiceId} first-time registration (no stored hash), proceeding",
-                    body.ServiceId);
-            }
-            else if (storedHash != newHash)
-            {
-                _logger.LogInformation("Service {ServiceId} permission data has changed (hash mismatch), proceeding with registration",
-                    body.ServiceId);
-            }
-            else if (!isServiceAlreadyRegistered)
-            {
-                _logger.LogInformation("Service {ServiceId} hash matches but not in registered_services, proceeding to ensure consistency",
-                    body.ServiceId);
-            }
-
-            // Update permission matrix - save each permission set
-            var hashSetStore = _stateStoreFactory.GetStore<HashSet<string>>(StateStoreDefinitions.Permission);
-            if (body.Permissions != null)
-            {
-                _logger.LogDebug("Processing {PermissionCount} permission states for {ServiceId}",
-                    body.Permissions.Count, body.ServiceId);
-
-                foreach (var stateEntry in body.Permissions)
-                {
-                    var stateName = stateEntry.Key;
-                    var statePermissions = stateEntry.Value;
-
-                    foreach (var roleEntry in statePermissions)
-                    {
-                        var roleName = roleEntry.Key;
-                        var methods = roleEntry.Value;
-
-                        var matrixKey = string.Format(PERMISSION_MATRIX_KEY,
-                            body.ServiceId,
-                            stateName,
-                            roleName);
-
-                        // Get existing endpoints and merge with new ones
-                        var existingEndpoints = await hashSetStore.GetAsync(matrixKey, cancellationToken) ?? new HashSet<string>();
-
-                        foreach (var method in methods)
-                        {
-                            existingEndpoints.Add(method);
-                        }
-
-                        await hashSetStore.SaveAsync(matrixKey, existingEndpoints, cancellationToken: cancellationToken);
-                    }
-                }
-            }
-            else
-            {
-                _logger.LogWarning("No permissions to register for {ServiceId}", body.ServiceId);
-            }
-
-            // Update service version (wrap in object for state store compatibility)
-            await _stateStoreFactory.GetStore<Dictionary<string, string>>(StateStoreDefinitions.Permission)
-                .SaveAsync($"{PERMISSION_VERSION_KEY}:{body.ServiceId}", new Dictionary<string, string> { ["version"] = body.Version }, cancellationToken: cancellationToken);
-
-            // Track this service using individual key pattern (race-condition safe)
-            // Each service has its own key, eliminating the need to modify a shared list
-            var serviceRegisteredKey = string.Format(SERVICE_REGISTERED_KEY, body.ServiceId);
-            var registrationInfo = new ServiceRegistrationInfo
-            {
-                ServiceId = body.ServiceId,
-                Version = body.Version,
-                RegisteredAtUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds()
-            };
-            await _stateStoreFactory.GetStore<ServiceRegistrationInfo>(StateStoreDefinitions.Permission)
-                .SaveAsync(serviceRegisteredKey, registrationInfo, cancellationToken: cancellationToken);
-            _logger.LogInformation("Stored individual registration marker for {ServiceId} at key {Key}", body.ServiceId, serviceRegisteredKey);
-
-            // Update the centralized registered_services list (enables "list all registered services" queries)
-            // Uses Redis-based distributed lock to prevent race conditions when multiple services register concurrently
-            // NO FALLBACK - if lock fails after retries, registration fails. We don't mask failures with alternative paths.
-            // RETRY IS NOT A FALLBACK - retrying lock acquisition is the correct approach for handling lock contention.
-            const string LOCK_RESOURCE = "registered_services_lock";
-            var lockOwnerId = $"{body.ServiceId}-{Guid.NewGuid():N}";
-
-            // Acquire distributed lock with retry to handle concurrent registration contention
-            // Lock contention is expected when multiple services register simultaneously (e.g., during tests or startup)
-            var maxRetries = _configuration.LockMaxRetries;
-            var baseDelayMs = _configuration.LockBaseDelayMs;
-            ILockResponse? serviceLock = null;
-
-            for (int attempt = 0; attempt < maxRetries; attempt++)
-            {
-                try
-                {
-                    serviceLock = await _lockProvider.LockAsync(
-                        StateStoreDefinitions.Permission,
-                        LOCK_RESOURCE,
-                        lockOwnerId,
-                        expiryInSeconds: _configuration.LockExpirySeconds,  // Lock expires after configured seconds if not released
-                        cancellationToken: cancellationToken);
-
-                    if (serviceLock.Success)
-                    {
-                        if (attempt > 0)
-                        {
-                            _logger.LogDebug("Acquired lock for {ServiceId} on attempt {Attempt}", body.ServiceId, attempt + 1);
-                        }
-                        break;
-                    }
-
-                    // Lock is held by another process - wait with exponential backoff and jitter
-                    var delayMs = baseDelayMs * (1 << Math.Min(attempt, 5)) + Random.Shared.Next(0, 50);
-                    _logger.LogDebug("Lock contention for {ServiceId}, attempt {Attempt}/{MaxRetries}, waiting {DelayMs}ms",
-                        body.ServiceId, attempt + 1, maxRetries, delayMs);
-                    await Task.Delay(delayMs, cancellationToken);
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogWarning(ex, "Exception on lock attempt {Attempt} for {ServiceId}", attempt + 1, body.ServiceId);
-                    if (attempt == maxRetries - 1)
-                    {
-                        _logger.LogError(ex, "Exception while acquiring distributed lock for {ServiceId} after {MaxRetries} attempts. " +
-                            "Lock store: {LockStore}, Resource: {LockResource}, Owner: {LockOwner}",
-                            body.ServiceId, maxRetries, StateStoreDefinitions.Permission, LOCK_RESOURCE, lockOwnerId);
-                        await PublishErrorEventAsync("RegisterServicePermissions", ex.GetType().Name, ex.Message, dependency: "state", details: new { body.ServiceId, LockStore = StateStoreDefinitions.Permission, LockResource = LOCK_RESOURCE });
-                        return (StatusCodes.InternalServerError, null);
-                    }
-                    // Brief delay before retry on exception
-                    await Task.Delay(baseDelayMs, cancellationToken);
-                }
-            }
-
-            // Null check for safety - serviceLock should never be null after the loop
-            // but we handle it explicitly to satisfy null safety requirements
-            if (serviceLock == null)
-            {
-                _logger.LogError("Lock response was null for {ServiceId} - this should never happen", body.ServiceId);
-                await PublishErrorEventAsync("RegisterServicePermissions", "lock_null", "Lock acquisition returned null response", dependency: "state", details: new { body.ServiceId });
-                return (StatusCodes.InternalServerError, null);
-            }
-
-            await using (serviceLock)
-            {
-                if (!serviceLock.Success)
-                {
-                    _logger.LogError("Failed to acquire distributed lock for {ServiceId} after {MaxRetries} attempts - " +
-                        "cannot safely update registered services. This indicates persistent lock contention or Redis issues.",
-                        body.ServiceId, maxRetries);
-                    await PublishErrorEventAsync("RegisterServicePermissions", "lock_failed", $"Failed to acquire distributed lock after {maxRetries} attempts", dependency: "state", details: new { body.ServiceId, MaxRetries = maxRetries });
-                    return (StatusCodes.InternalServerError, null);
-                }
-
-                _logger.LogInformation("Acquired lock for {ServiceId} to update registered services", body.ServiceId);
-
-                // Now we have exclusive access - safe to read-modify-write
-                // CRITICAL: Keep lock scope minimal to avoid timeout during concurrent registrations
-                var registeredServicesStore = _stateStoreFactory.GetStore<HashSet<string>>(StateStoreDefinitions.Permission);
-                var lockedServices = await registeredServicesStore.GetAsync(REGISTERED_SERVICES_KEY, cancellationToken) ?? new HashSet<string>();
-
-                _logger.LogInformation("Current registered services (locked): {Services}",
-                    string.Join(", ", lockedServices));
-
-                if (!lockedServices.Contains(body.ServiceId))
-                {
-                    lockedServices.Add(body.ServiceId);
-                    await registeredServicesStore.SaveAsync(REGISTERED_SERVICES_KEY, lockedServices, cancellationToken: cancellationToken);
-                    _logger.LogInformation("Successfully added {ServiceId} to registered services list. Now: {Services}",
-                        body.ServiceId, string.Join(", ", lockedServices));
-                }
-                else
-                {
-                    _logger.LogInformation("Service {ServiceId} already in registered services list", body.ServiceId);
-                }
-            } // End of await using (serviceLock) - release lock BEFORE expensive session recompilation
-
-            // Session recompilation happens OUTSIDE the lock to prevent lock timeouts
-            // during concurrent service registrations at startup
-            var registeredStore = _stateStoreFactory.GetStore<HashSet<string>>(StateStoreDefinitions.Permission);
-            var activeSessions = await registeredStore.GetAsync(ACTIVE_SESSIONS_KEY, cancellationToken) ?? new HashSet<string>();
-
-            // Recompile permissions for all active sessions
-            var recompiledCount = 0;
-            foreach (var sessionId in activeSessions)
-            {
-                await RecompileSessionPermissionsAsync(sessionId, "service_registered");
-                recompiledCount++;
-            }
-
-            _logger.LogInformation("Service {ServiceId} registered successfully, recompiled {Count} sessions",
-                body.ServiceId, recompiledCount);
-
-            // Note: RecompileSessionPermissionsAsync already handles publishing via PublishCapabilityUpdateAsync,
-            // which checks activeConnections before publishing to avoid RabbitMQ crashes
-
-            // Store the new hash for idempotent registration detection
-            await _stateStoreFactory.GetStore<string>(StateStoreDefinitions.Permission)
-                .SaveAsync(hashKey, newHash, cancellationToken: cancellationToken);
-            _logger.LogDebug("Stored permission hash for {ServiceId}: {Hash}",
+            _logger.LogDebug("Service {ServiceId} registration skipped - permission data unchanged and service already registered (hash: {Hash})",
                 body.ServiceId, newHash[..8] + "...");
-
             return (StatusCodes.OK, new RegistrationResponse
             {
                 ServiceId = body.ServiceId,
                 Registered = true,
-                AffectedSessions = recompiledCount,
-                Message = $"Registered {body.Permissions?.Count ?? 0} permission rules, recompiled {recompiledCount} sessions"
+                AffectedSessions = 0,
+                Message = "Permissions unchanged (idempotent)"
             });
         }
-        catch (Exception ex)
+
+        // Log why we're proceeding
+        if (storedHash == null)
         {
-            _logger.LogError(ex, "Error registering service permissions for {ServiceId}", body.ServiceId);
-            await PublishErrorEventAsync(
-                "RegisterServicePermissions",
-                "dependency_failure",
-                ex.Message,
-                dependency: "lib-state",
-                details: new { body.ServiceId });
-            return (StatusCodes.InternalServerError, null);
+            _logger.LogInformation("Service {ServiceId} first-time registration (no stored hash), proceeding",
+                body.ServiceId);
         }
+        else if (storedHash != newHash)
+        {
+            _logger.LogInformation("Service {ServiceId} permission data has changed (hash mismatch), proceeding with registration",
+                body.ServiceId);
+        }
+        else if (!isServiceAlreadyRegistered)
+        {
+            _logger.LogInformation("Service {ServiceId} hash matches but not in registered_services, proceeding to ensure consistency",
+                body.ServiceId);
+        }
+
+        // Update permission matrix - save each permission set
+        var hashSetStore = _stateStoreFactory.GetStore<HashSet<string>>(StateStoreDefinitions.Permission);
+        if (body.Permissions != null)
+        {
+            _logger.LogDebug("Processing {PermissionCount} permission states for {ServiceId}",
+                body.Permissions.Count, body.ServiceId);
+
+            foreach (var stateEntry in body.Permissions)
+            {
+                var stateName = stateEntry.Key;
+                var statePermissions = stateEntry.Value;
+
+                foreach (var roleEntry in statePermissions)
+                {
+                    var roleName = roleEntry.Key;
+                    var methods = roleEntry.Value;
+
+                    var matrixKey = string.Format(PERMISSION_MATRIX_KEY,
+                        body.ServiceId,
+                        stateName,
+                        roleName);
+
+                    // Get existing endpoints and merge with new ones
+                    var existingEndpoints = await hashSetStore.GetAsync(matrixKey, cancellationToken) ?? new HashSet<string>();
+
+                    foreach (var method in methods)
+                    {
+                        existingEndpoints.Add(method);
+                    }
+
+                    await hashSetStore.SaveAsync(matrixKey, existingEndpoints, cancellationToken: cancellationToken);
+                }
+            }
+
+            // Store the set of states this service registered for dynamic endpoint discovery
+            // (replaces hardcoded state list in GetRegisteredServicesAsync)
+            var serviceStatesKey = string.Format(SERVICE_STATES_KEY, body.ServiceId);
+            await hashSetStore.SaveAsync(serviceStatesKey, new HashSet<string>(body.Permissions.Keys), cancellationToken: cancellationToken);
+        }
+        else
+        {
+            _logger.LogWarning("No permissions to register for {ServiceId}", body.ServiceId);
+        }
+
+        // Update service version (wrap in object for state store compatibility)
+        await _stateStoreFactory.GetStore<Dictionary<string, string>>(StateStoreDefinitions.Permission)
+            .SaveAsync($"{PERMISSION_VERSION_KEY}:{body.ServiceId}", new Dictionary<string, string> { ["version"] = body.Version }, cancellationToken: cancellationToken);
+
+        // Track this service using individual key pattern (race-condition safe)
+        // Each service has its own key, eliminating the need to modify a shared list
+        var serviceRegisteredKey = string.Format(SERVICE_REGISTERED_KEY, body.ServiceId);
+        var registrationInfo = new ServiceRegistrationInfo
+        {
+            ServiceId = body.ServiceId,
+            Version = body.Version,
+            RegisteredAtUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds()
+        };
+        await _stateStoreFactory.GetStore<ServiceRegistrationInfo>(StateStoreDefinitions.Permission)
+            .SaveAsync(serviceRegisteredKey, registrationInfo, cancellationToken: cancellationToken);
+        _logger.LogInformation("Stored individual registration marker for {ServiceId} at key {Key}", body.ServiceId, serviceRegisteredKey);
+
+        // Atomic add to registered_services set - no lock needed, SADD is inherently atomic
+        var added = await cacheStore.AddToSetAsync<string>(REGISTERED_SERVICES_KEY, body.ServiceId, cancellationToken: cancellationToken);
+        _logger.LogInformation("Service {ServiceId} {Action} registered services list",
+            body.ServiceId, added ? "added to" : "already in");
+
+        // Recompile permissions for all active sessions (parallel with configurable concurrency)
+        var activeSessions = await cacheStore.GetSetAsync<string>(ACTIVE_SESSIONS_KEY, cancellationToken);
+
+        var recompiledCount = 0;
+        var stopwatch = Stopwatch.StartNew();
+
+        if (activeSessions.Count > 0)
+        {
+            using var semaphore = new SemaphoreSlim(_configuration.MaxConcurrentRecompilations);
+            var tasks = activeSessions.Select(async sessionId =>
+            {
+                await semaphore.WaitAsync(cancellationToken);
+                try
+                {
+                    await RecompileSessionPermissionsAsync(sessionId, "service_registered");
+                    Interlocked.Increment(ref recompiledCount);
+                }
+                finally
+                {
+                    semaphore.Release();
+                }
+            });
+            // RecompileSessionPermissionsAsync handles its own exceptions (logged + error event published)
+            // so Task.WhenAll won't throw -- individual session failures don't abort the batch
+            await Task.WhenAll(tasks);
+        }
+
+        stopwatch.Stop();
+
+        _logger.LogInformation(
+            "Service {ServiceId} registered successfully, recompiled {Count} sessions in {ElapsedMs}ms (concurrency: {Concurrency})",
+            body.ServiceId, recompiledCount, stopwatch.ElapsedMilliseconds, _configuration.MaxConcurrentRecompilations);
+
+        // Store the new hash for idempotent registration detection
+        await _stateStoreFactory.GetStore<string>(StateStoreDefinitions.Permission)
+            .SaveAsync(hashKey, newHash, cancellationToken: cancellationToken);
+        _logger.LogDebug("Stored permission hash for {ServiceId}: {Hash}",
+            body.ServiceId, newHash[..8] + "...");
+
+        return (StatusCodes.OK, new RegistrationResponse
+        {
+            ServiceId = body.ServiceId,
+            Registered = true,
+            AffectedSessions = recompiledCount,
+            Message = $"Registered {body.Permissions?.Count ?? 0} permission rules, recompiled {recompiledCount} sessions"
+        });
     }
 
     /// <summary>
@@ -514,64 +416,48 @@ public partial class PermissionService : IPermissionService
         SessionStateUpdate body,
         CancellationToken cancellationToken = default)
     {
-        try
+        _logger.LogDebug("Updating session {SessionId} state for service {ServiceId}: {OldState} → {NewState}",
+            body.SessionId, body.ServiceId, body.PreviousState, body.NewState);
+
+        var statesKey = string.Format(SESSION_STATES_KEY, body.SessionId);
+        var permissionsKey = string.Format(SESSION_PERMISSIONS_KEY, body.SessionId);
+
+        // Get current session states
+        var sessionStates = await _stateStoreFactory.GetStore<Dictionary<string, string>>(StateStoreDefinitions.Permission)
+            .GetAsync(statesKey, cancellationToken) ?? new Dictionary<string, string>();
+
+        // Get current permissions data for version increment
+        var permissionsData = await _stateStoreFactory.GetStore<Dictionary<string, object>>(StateStoreDefinitions.Permission)
+            .GetAsync(permissionsKey, cancellationToken) ?? new Dictionary<string, object>();
+
+        // Update session state
+        sessionStates[body.ServiceId] = body.NewState;
+
+        // Increment version
+        var currentVersion = 0;
+        if (permissionsData.ContainsKey("version"))
         {
-            _logger.LogDebug("Updating session {SessionId} state for service {ServiceId}: {OldState} → {NewState}",
-                body.SessionId, body.ServiceId, body.PreviousState, body.NewState);
-
-            var statesKey = string.Format(SESSION_STATES_KEY, body.SessionId);
-            var permissionsKey = string.Format(SESSION_PERMISSIONS_KEY, body.SessionId);
-
-            // Get current session states
-            var sessionStates = await _stateStoreFactory.GetStore<Dictionary<string, string>>(StateStoreDefinitions.Permission)
-                .GetAsync(statesKey, cancellationToken) ?? new Dictionary<string, string>();
-
-            // Get current permissions data for version increment
-            var permissionsData = await _stateStoreFactory.GetStore<Dictionary<string, object>>(StateStoreDefinitions.Permission)
-                .GetAsync(permissionsKey, cancellationToken) ?? new Dictionary<string, object>();
-
-            // Update session state
-            sessionStates[body.ServiceId] = body.NewState;
-
-            // Increment version
-            var currentVersion = 0;
-            if (permissionsData.ContainsKey("version"))
-            {
-                int.TryParse(permissionsData["version"]?.ToString(), out currentVersion);
-            }
-            var newVersion = currentVersion + 1;
-
-            // Get active sessions
-            var hashSetStore = _stateStoreFactory.GetStore<HashSet<string>>(StateStoreDefinitions.Permission);
-            var activeSessions = await hashSetStore.GetAsync(ACTIVE_SESSIONS_KEY, cancellationToken) ?? new HashSet<string>();
-            activeSessions.Add(body.SessionId.ToString());
-
-            // Save session state and active sessions
-            await _stateStoreFactory.GetStore<Dictionary<string, string>>(StateStoreDefinitions.Permission)
-                .SaveAsync(statesKey, sessionStates, cancellationToken: cancellationToken);
-            await hashSetStore.SaveAsync(ACTIVE_SESSIONS_KEY, activeSessions, cancellationToken: cancellationToken);
-
-            // Recompile session permissions using the states we already have
-            // (avoids read-after-write consistency issues by not re-reading from state store)
-            await RecompileSessionPermissionsAsync(body.SessionId.ToString(), sessionStates, "session_state_changed");
-
-            return (StatusCodes.OK, new SessionUpdateResponse
-            {
-                SessionId = body.SessionId,
-                Message = $"Updated {body.ServiceId} state to {body.NewState}, version {newVersion}"
-            });
+            int.TryParse(permissionsData["version"]?.ToString(), out currentVersion);
         }
-        catch (Exception ex)
+        var newVersion = currentVersion + 1;
+
+        // Atomic add to activeSessions - SADD is inherently safe for concurrent access
+        var cacheStore = _stateStoreFactory.GetCacheableStore<string>(StateStoreDefinitions.Permission);
+        await cacheStore.AddToSetAsync<string>(ACTIVE_SESSIONS_KEY, body.SessionId.ToString(), cancellationToken: cancellationToken);
+
+        // Save session state (with Redis TTL for orphaned session cleanup)
+        await _stateStoreFactory.GetStore<Dictionary<string, string>>(StateStoreDefinitions.Permission)
+            .SaveAsync(statesKey, sessionStates, options: GetSessionDataStateOptions(), cancellationToken: cancellationToken);
+
+        // Recompile session permissions using the states we already have
+        // (avoids read-after-write consistency issues by not re-reading from state store)
+        await RecompileSessionPermissionsAsync(body.SessionId.ToString(), sessionStates, "session_state_changed");
+
+        return (StatusCodes.OK, new SessionUpdateResponse
         {
-            _logger.LogError(ex, "Error updating session state for {SessionId}", body.SessionId);
-            await PublishErrorEventAsync(
-                "UpdateSessionState",
-                "dependency_failure",
-                ex.Message,
-                dependency: "lib-state",
-                details: new { body.SessionId, body.ServiceId, body.NewState });
-            return (StatusCodes.InternalServerError, null);
-        }
+            SessionId = body.SessionId,
+            Message = $"Updated {body.ServiceId} state to {body.NewState}, version {newVersion}"
+        });
     }
 
     /// <summary>
@@ -581,51 +467,35 @@ public partial class PermissionService : IPermissionService
         SessionRoleUpdate body,
         CancellationToken cancellationToken = default)
     {
-        try
+        _logger.LogDebug("Updating session {SessionId} role: {OldRole} → {NewRole}",
+            body.SessionId, body.PreviousRole, body.NewRole);
+
+        var statesKey = string.Format(SESSION_STATES_KEY, body.SessionId);
+
+        // Get current session states
+        var sessionStates = await _stateStoreFactory.GetStore<Dictionary<string, string>>(StateStoreDefinitions.Permission)
+            .GetAsync(statesKey, cancellationToken) ?? new Dictionary<string, string>();
+
+        // Update role
+        sessionStates["role"] = body.NewRole;
+
+        // Atomic add to activeSessions - SADD is inherently safe for concurrent access
+        var cacheStore = _stateStoreFactory.GetCacheableStore<string>(StateStoreDefinitions.Permission);
+        await cacheStore.AddToSetAsync<string>(ACTIVE_SESSIONS_KEY, body.SessionId.ToString(), cancellationToken: cancellationToken);
+
+        // Save session states (with Redis TTL for orphaned session cleanup)
+        await _stateStoreFactory.GetStore<Dictionary<string, string>>(StateStoreDefinitions.Permission)
+            .SaveAsync(statesKey, sessionStates, options: GetSessionDataStateOptions(), cancellationToken: cancellationToken);
+
+        // Recompile all permissions for this session using the states we already have
+        // (avoids read-after-write consistency issues by not re-reading from state store)
+        await RecompileSessionPermissionsAsync(body.SessionId.ToString(), sessionStates, "role_changed");
+
+        return (StatusCodes.OK, new SessionUpdateResponse
         {
-            _logger.LogDebug("Updating session {SessionId} role: {OldRole} → {NewRole}",
-                body.SessionId, body.PreviousRole, body.NewRole);
-
-            var statesKey = string.Format(SESSION_STATES_KEY, body.SessionId);
-
-            // Get current session states
-            var sessionStates = await _stateStoreFactory.GetStore<Dictionary<string, string>>(StateStoreDefinitions.Permission)
-                .GetAsync(statesKey, cancellationToken) ?? new Dictionary<string, string>();
-
-            // Update role
-            sessionStates["role"] = body.NewRole;
-
-            // Get active sessions
-            var hashSetStore = _stateStoreFactory.GetStore<HashSet<string>>(StateStoreDefinitions.Permission);
-            var activeSessions = await hashSetStore.GetAsync(ACTIVE_SESSIONS_KEY, cancellationToken) ?? new HashSet<string>();
-            activeSessions.Add(body.SessionId.ToString());
-
-            // Save session states and active sessions
-            await _stateStoreFactory.GetStore<Dictionary<string, string>>(StateStoreDefinitions.Permission)
-                .SaveAsync(statesKey, sessionStates, cancellationToken: cancellationToken);
-            await hashSetStore.SaveAsync(ACTIVE_SESSIONS_KEY, activeSessions, cancellationToken: cancellationToken);
-
-            // Recompile all permissions for this session using the states we already have
-            // (avoids read-after-write consistency issues by not re-reading from state store)
-            await RecompileSessionPermissionsAsync(body.SessionId.ToString(), sessionStates, "role_changed");
-
-            return (StatusCodes.OK, new SessionUpdateResponse
-            {
-                SessionId = body.SessionId,
-                Message = $"Updated role to {body.NewRole}"
-            });
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error updating session role for {SessionId}", body.SessionId);
-            await PublishErrorEventAsync(
-                "UpdateSessionRole",
-                "dependency_failure",
-                ex.Message,
-                dependency: "state",
-                details: new { body.SessionId, body.NewRole });
-            return (StatusCodes.InternalServerError, null);
-        }
+            SessionId = body.SessionId,
+            Message = $"Updated role to {body.NewRole}"
+        });
     }
 
     /// <summary>
@@ -637,110 +507,96 @@ public partial class PermissionService : IPermissionService
         ClearSessionStateRequest body,
         CancellationToken cancellationToken = default)
     {
-        try
+        var statesKey = string.Format(SESSION_STATES_KEY, body.SessionId);
+
+        // Get current session states
+        var statesStore = _stateStoreFactory.GetStore<Dictionary<string, string>>(StateStoreDefinitions.Permission);
+        var sessionStates = await statesStore.GetAsync(statesKey, cancellationToken);
+
+        // If no states exist, nothing to clear
+        if (sessionStates == null || sessionStates.Count == 0)
         {
-            var statesKey = string.Format(SESSION_STATES_KEY, body.SessionId);
+            _logger.LogDebug("No states to clear for session {SessionId}", body.SessionId);
 
-            // Get current session states
-            var statesStore = _stateStoreFactory.GetStore<Dictionary<string, string>>(StateStoreDefinitions.Permission);
-            var sessionStates = await statesStore.GetAsync(statesKey, cancellationToken);
-
-            // If no states exist, nothing to clear
-            if (sessionStates == null || sessionStates.Count == 0)
+            return (StatusCodes.OK, new SessionUpdateResponse
             {
-                _logger.LogDebug("No states to clear for session {SessionId}", body.SessionId);
+                SessionId = body.SessionId,
+                PermissionsChanged = false,
+                Message = "No states were set for this session"
+            });
+        }
 
-                return (StatusCodes.OK, new SessionUpdateResponse
-                {
-                    SessionId = body.SessionId,
-                    PermissionsChanged = false,
-                    Message = "No states were set for this session"
-                });
-            }
+        // If serviceId is null, clear ALL states for the session
+        if (string.IsNullOrEmpty(body.ServiceId))
+        {
+            var stateCount = sessionStates.Count;
+            _logger.LogDebug("Clearing all {StateCount} states for session {SessionId}",
+                stateCount, body.SessionId);
 
-            // If serviceId is null, clear ALL states for the session
-            if (string.IsNullOrEmpty(body.ServiceId))
-            {
-                var stateCount = sessionStates.Count;
-                _logger.LogDebug("Clearing all {StateCount} states for session {SessionId}",
-                    stateCount, body.SessionId);
-
-                sessionStates.Clear();
-                await statesStore.SaveAsync(statesKey, sessionStates, cancellationToken: cancellationToken);
-                await RecompileSessionPermissionsAsync(body.SessionId.ToString(), sessionStates, "session_state_cleared_all");
-
-                return (StatusCodes.OK, new SessionUpdateResponse
-                {
-                    SessionId = body.SessionId,
-                    PermissionsChanged = true,
-                    Message = $"Cleared all {stateCount} states for session"
-                });
-            }
-
-            // Clear specific service state
-            if (!sessionStates.ContainsKey(body.ServiceId))
-            {
-                _logger.LogDebug("No state to clear for session {SessionId}, service {ServiceId}",
-                    body.SessionId, body.ServiceId);
-
-                return (StatusCodes.OK, new SessionUpdateResponse
-                {
-                    SessionId = body.SessionId,
-                    PermissionsChanged = false,
-                    Message = $"No state was set for service {body.ServiceId}"
-                });
-            }
-
-            var currentState = sessionStates[body.ServiceId];
-
-            // If states list is provided and non-empty, check if current state matches
-            if (body.States != null && body.States.Count > 0)
-            {
-                if (!body.States.Contains(currentState))
-                {
-                    _logger.LogDebug(
-                        "State '{CurrentState}' for session {SessionId}, service {ServiceId} does not match filter {States}",
-                        currentState, body.SessionId, body.ServiceId, string.Join(", ", body.States));
-
-                    return (StatusCodes.OK, new SessionUpdateResponse
-                    {
-                        SessionId = body.SessionId,
-                        PermissionsChanged = false,
-                        Message = $"Current state '{currentState}' does not match filter; not cleared"
-                    });
-                }
-            }
-
-            _logger.LogDebug("Clearing state '{CurrentState}' for session {SessionId}, service {ServiceId}",
-                currentState, body.SessionId, body.ServiceId);
-
-            // Remove the state
-            sessionStates.Remove(body.ServiceId);
-
-            // Save updated session states
-            await statesStore.SaveAsync(statesKey, sessionStates, cancellationToken: cancellationToken);
-
-            // Recompile session permissions
-            await RecompileSessionPermissionsAsync(body.SessionId.ToString(), sessionStates, "session_state_cleared");
+            sessionStates.Clear();
+            await statesStore.SaveAsync(statesKey, sessionStates, options: GetSessionDataStateOptions(), cancellationToken: cancellationToken);
+            await RecompileSessionPermissionsAsync(body.SessionId.ToString(), sessionStates, "session_state_cleared_all");
 
             return (StatusCodes.OK, new SessionUpdateResponse
             {
                 SessionId = body.SessionId,
                 PermissionsChanged = true,
-                Message = $"Cleared state '{currentState}' for service {body.ServiceId}"
+                Message = $"Cleared all {stateCount} states for session"
             });
         }
-        catch (Exception ex)
+
+        // Clear specific service state
+        if (!sessionStates.ContainsKey(body.ServiceId))
         {
-            _logger.LogError(ex, "Error clearing session state for {SessionId}", body.SessionId);
-            await PublishErrorEventAsync(
-                "ClearSessionState",
-                "dependency_failure",
-                ex.Message,
-                dependency: "state",
-                details: new { body.SessionId, body.ServiceId });
-            return (StatusCodes.InternalServerError, null);
+            _logger.LogDebug("No state to clear for session {SessionId}, service {ServiceId}",
+                body.SessionId, body.ServiceId);
+
+            return (StatusCodes.OK, new SessionUpdateResponse
+            {
+                SessionId = body.SessionId,
+                PermissionsChanged = false,
+                Message = $"No state was set for service {body.ServiceId}"
+            });
         }
+
+        var currentState = sessionStates[body.ServiceId];
+
+        // If states list is provided and non-empty, check if current state matches
+        if (body.States != null && body.States.Count > 0)
+        {
+            if (!body.States.Contains(currentState))
+            {
+                _logger.LogDebug(
+                    "State '{CurrentState}' for session {SessionId}, service {ServiceId} does not match filter {States}",
+                    currentState, body.SessionId, body.ServiceId, string.Join(", ", body.States));
+
+                return (StatusCodes.OK, new SessionUpdateResponse
+                {
+                    SessionId = body.SessionId,
+                    PermissionsChanged = false,
+                    Message = $"Current state '{currentState}' does not match filter; not cleared"
+                });
+            }
+        }
+
+        _logger.LogDebug("Clearing state '{CurrentState}' for session {SessionId}, service {ServiceId}",
+            currentState, body.SessionId, body.ServiceId);
+
+        // Remove the state
+        sessionStates.Remove(body.ServiceId);
+
+        // Save updated session states (with Redis TTL for orphaned session cleanup)
+        await statesStore.SaveAsync(statesKey, sessionStates, options: GetSessionDataStateOptions(), cancellationToken: cancellationToken);
+
+        // Recompile session permissions
+        await RecompileSessionPermissionsAsync(body.SessionId.ToString(), sessionStates, "session_state_cleared");
+
+        return (StatusCodes.OK, new SessionUpdateResponse
+        {
+            SessionId = body.SessionId,
+            PermissionsChanged = true,
+            Message = $"Cleared state '{currentState}' for service {body.ServiceId}"
+        });
     }
 
     /// <summary>
@@ -750,77 +606,63 @@ public partial class PermissionService : IPermissionService
         SessionInfoRequest body,
         CancellationToken cancellationToken = default)
     {
-        try
+        _logger.LogDebug("Getting session info for {SessionId}", body.SessionId);
+
+        var statesKey = string.Format(SESSION_STATES_KEY, body.SessionId);
+        var permissionsKey = string.Format(SESSION_PERMISSIONS_KEY, body.SessionId);
+
+        // Get session states and permissions concurrently
+        var statesTask = _stateStoreFactory.GetStore<Dictionary<string, string>>(StateStoreDefinitions.Permission)
+            .GetAsync(statesKey, cancellationToken);
+        var permissionsTask = _stateStoreFactory.GetStore<Dictionary<string, object>>(StateStoreDefinitions.Permission)
+            .GetAsync(permissionsKey, cancellationToken);
+
+        await Task.WhenAll(statesTask, permissionsTask);
+
+        var states = await statesTask ?? new Dictionary<string, string>();
+        var permissionsData = await permissionsTask ?? new Dictionary<string, object>();
+
+        if (states.Count == 0)
         {
-            _logger.LogDebug("Getting session info for {SessionId}", body.SessionId);
+            _logger.LogDebug("No session info found for {SessionId}", body.SessionId);
+            return (StatusCodes.NotFound, null);
+        }
 
-            var statesKey = string.Format(SESSION_STATES_KEY, body.SessionId);
-            var permissionsKey = string.Format(SESSION_PERMISSIONS_KEY, body.SessionId);
+        // Parse permissions data
+        var permissions = new Dictionary<string, ICollection<string>>();
+        var version = 0;
 
-            // Get session states and permissions concurrently
-            var statesTask = _stateStoreFactory.GetStore<Dictionary<string, string>>(StateStoreDefinitions.Permission)
-                .GetAsync(statesKey, cancellationToken);
-            var permissionsTask = _stateStoreFactory.GetStore<Dictionary<string, object>>(StateStoreDefinitions.Permission)
-                .GetAsync(permissionsKey, cancellationToken);
+        foreach (var item in permissionsData)
+        {
+            if (item.Value == null)
+                continue;
 
-            await Task.WhenAll(statesTask, permissionsTask);
-
-            var states = await statesTask ?? new Dictionary<string, string>();
-            var permissionsData = await permissionsTask ?? new Dictionary<string, object>();
-
-            if (states.Count == 0)
+            if (item.Key == "version")
             {
-                _logger.LogDebug("No session info found for {SessionId}", body.SessionId);
-                return (StatusCodes.NotFound, null);
+                int.TryParse(item.Value.ToString(), out version);
             }
-
-            // Parse permissions data
-            var permissions = new Dictionary<string, ICollection<string>>();
-            var version = 0;
-
-            foreach (var item in permissionsData)
+            else if (item.Key != "generated_at")
             {
-                if (item.Value == null)
-                    continue;
-
-                if (item.Key == "version")
+                var jsonElement = (JsonElement)item.Value;
+                var endpoints = BannouJson.Deserialize<List<string>>(jsonElement.GetRawText());
+                if (endpoints != null)
                 {
-                    int.TryParse(item.Value.ToString(), out version);
-                }
-                else if (item.Key != "generated_at")
-                {
-                    var jsonElement = (JsonElement)item.Value;
-                    var endpoints = BannouJson.Deserialize<List<string>>(jsonElement.GetRawText());
-                    if (endpoints != null)
-                    {
-                        permissions[item.Key] = endpoints;
-                    }
+                    permissions[item.Key] = endpoints;
                 }
             }
-
-            var sessionInfo = new SessionInfo
-            {
-                SessionId = body.SessionId,
-                States = states,
-                Role = states.GetValueOrDefault("role", "user"),
-                Permissions = permissions,
-                Version = version,
-                LastUpdated = DateTimeOffset.UtcNow
-            };
-
-            return (StatusCodes.OK, sessionInfo);
         }
-        catch (Exception ex)
+
+        var sessionInfo = new SessionInfo
         {
-            _logger.LogError(ex, "Error getting session info for {SessionId}", body.SessionId);
-            await PublishErrorEventAsync(
-                "GetSessionInfo",
-                "dependency_failure",
-                ex.Message,
-                dependency: "state",
-                details: new { body.SessionId });
-            return (StatusCodes.InternalServerError, null);
-        }
+            SessionId = body.SessionId,
+            States = states,
+            Role = states.GetValueOrDefault("role", "anonymous"),
+            Permissions = permissions,
+            Version = version,
+            LastUpdated = DateTimeOffset.UtcNow
+        };
+
+        return (StatusCodes.OK, sessionInfo);
     }
 
     /// <summary>
@@ -872,7 +714,7 @@ public partial class PermissionService : IPermissionService
                 return;
             }
 
-            var role = sessionStates.GetValueOrDefault("role", "user");
+            var role = sessionStates.GetValueOrDefault("role", "anonymous");
             _logger.LogDebug("Recompiling permissions for session {SessionId}, role: {Role}, reason: {Reason}",
                 sessionId, role, reason);
 
@@ -880,8 +722,9 @@ public partial class PermissionService : IPermissionService
             var compiledPermissions = new Dictionary<string, HashSet<string>>();
 
             // First, get all registered services and check "default" state permissions for the role
+            var cacheStore = _stateStoreFactory.GetCacheableStore<string>(StateStoreDefinitions.Permission);
             var hashSetStore = _stateStoreFactory.GetStore<HashSet<string>>(StateStoreDefinitions.Permission);
-            var registeredServices = await hashSetStore.GetAsync(REGISTERED_SERVICES_KEY) ?? new HashSet<string>();
+            var registeredServices = await cacheStore.GetSetAsync<string>(REGISTERED_SERVICES_KEY);
 
             _logger.LogDebug("Found {Count} registered services: {Services}",
                 registeredServices.Count, string.Join(", ", registeredServices));
@@ -903,7 +746,7 @@ public partial class PermissionService : IPermissionService
                     var maxRoleByEndpoint = new Dictionary<string, int>();
 
                     // Walk all roles to find the highest required role for each endpoint in this state
-                    foreach (var roleName in ROLE_ORDER)
+                    foreach (var roleName in _configuration.RoleHierarchy)
                     {
                         var matrixKey = string.Format(PERMISSION_MATRIX_KEY, serviceId, stateKey, roleName);
                         var endpoints = await hashSetStore.GetAsync(matrixKey);
@@ -915,7 +758,7 @@ public partial class PermissionService : IPermissionService
 
                         foreach (var endpoint in endpoints)
                         {
-                            var priority = Array.IndexOf(ROLE_ORDER, roleName);
+                            var priority = Array.IndexOf(_configuration.RoleHierarchy, roleName);
                             maxRoleByEndpoint[endpoint] = maxRoleByEndpoint.TryGetValue(endpoint, out var existing)
                                 ? Math.Max(existing, priority)
                                 : priority;
@@ -923,7 +766,7 @@ public partial class PermissionService : IPermissionService
                     }
 
                     // Allow endpoints where session role meets or exceeds highest required
-                    var sessionPriority = Array.IndexOf(ROLE_ORDER, role);
+                    var sessionPriority = Array.IndexOf(_configuration.RoleHierarchy, role);
                     foreach (var kvp in maxRoleByEndpoint)
                     {
                         if (sessionPriority < kvp.Value)
@@ -961,7 +804,7 @@ public partial class PermissionService : IPermissionService
             newPermissionData["version"] = newVersion;
             newPermissionData["generated_at"] = DateTimeOffset.UtcNow.ToString();
 
-            await permissionsStore.SaveAsync(permissionsKey, newPermissionData);
+            await permissionsStore.SaveAsync(permissionsKey, newPermissionData, options: GetSessionDataStateOptions());
 
             // Clear in-memory cache after write
             _sessionCapabilityCache.TryRemove(sessionId, out _);
@@ -1009,10 +852,10 @@ public partial class PermissionService : IPermissionService
             // Skip this check when called from HandleSessionConnectedAsync (we just added the session)
             if (!skipActiveConnectionsCheck)
             {
-                var activeConnections = await _stateStoreFactory.GetStore<HashSet<string>>(StateStoreDefinitions.Permission)
-                    .GetAsync(ACTIVE_CONNECTIONS_KEY) ?? new HashSet<string>();
+                var cacheStore = _stateStoreFactory.GetCacheableStore<string>(StateStoreDefinitions.Permission);
+                var isConnected = await cacheStore.SetContainsAsync<string>(ACTIVE_CONNECTIONS_KEY, sessionId);
 
-                if (!activeConnections.Contains(sessionId))
+                if (!isConnected)
                 {
                     _logger.LogDebug("Skipping capability publish for session {SessionId} - not in activeConnections (reason: {Reason})",
                         sessionId, reason);
@@ -1077,101 +920,119 @@ public partial class PermissionService : IPermissionService
     /// </summary>
     public async Task<(StatusCodes, RegisteredServicesResponse?)> GetRegisteredServicesAsync(ListServicesRequest body, CancellationToken cancellationToken = default)
     {
-        try
+        _logger.LogDebug("Getting list of registered services");
+
+        // Get all registered service IDs via atomic set read
+        var cacheStore = _stateStoreFactory.GetCacheableStore<string>(StateStoreDefinitions.Permission);
+        var registeredServiceIds = await cacheStore.GetSetAsync<string>(REGISTERED_SERVICES_KEY, cancellationToken);
+
+        _logger.LogDebug("Found {Count} registered services: {Services}",
+            registeredServiceIds.Count, string.Join(", ", registeredServiceIds));
+
+        var services = new List<RegisteredServiceInfo>();
+        var registrationStore = _stateStoreFactory.GetStore<ServiceRegistrationInfo>(StateStoreDefinitions.Permission);
+        var hashSetStore = _stateStoreFactory.GetStore<HashSet<string>>(StateStoreDefinitions.Permission);
+
+        foreach (var serviceId in registeredServiceIds)
         {
-            _logger.LogDebug("Getting list of registered services");
+            // Get individual registration info for this service
+            var serviceRegisteredKey = string.Format(SERVICE_REGISTERED_KEY, serviceId);
+            var registrationData = await registrationStore.GetAsync(serviceRegisteredKey, cancellationToken);
 
-            // Get all registered service IDs
-            var hashSetStore = _stateStoreFactory.GetStore<HashSet<string>>(StateStoreDefinitions.Permission);
-            var registeredServiceIds = await hashSetStore.GetAsync(REGISTERED_SERVICES_KEY, cancellationToken) ?? new HashSet<string>();
+            // Count endpoints for this service by scanning permission matrix keys
+            // We look for all state/role combinations and sum unique endpoints
+            var endpointCount = 0;
+            var uniqueEndpoints = new HashSet<string>();
 
-            _logger.LogDebug("Found {Count} registered services: {Services}",
-                registeredServiceIds.Count, string.Join(", ", registeredServiceIds));
+            // Read the actual states this service registered (stored during RegisterServicePermissionsAsync)
+            var serviceStatesKey = string.Format(SERVICE_STATES_KEY, serviceId);
+            var registeredStates = await hashSetStore.GetAsync(serviceStatesKey, cancellationToken);
+            var states = registeredStates ?? new HashSet<string> { "default" };
+            var roles = _configuration.RoleHierarchy;
 
-            var services = new List<RegisteredServiceInfo>();
-            var registrationStore = _stateStoreFactory.GetStore<ServiceRegistrationInfo>(StateStoreDefinitions.Permission);
-
-            foreach (var serviceId in registeredServiceIds)
+            foreach (var state in states)
             {
-                // Get individual registration info for this service
-                var serviceRegisteredKey = string.Format(SERVICE_REGISTERED_KEY, serviceId);
-                var registrationData = await registrationStore.GetAsync(serviceRegisteredKey, cancellationToken);
-
-                // Count endpoints for this service by scanning permission matrix keys
-                // We look for all state/role combinations and sum unique endpoints
-                var endpointCount = 0;
-                var uniqueEndpoints = new HashSet<string>();
-
-                // Check common states and roles
-                var states = new[] { "authenticated", "default", "lobby", "in_game" };
-                var roles = new[] { "user", "admin", "anonymous" };
-
-                foreach (var state in states)
+                foreach (var role in roles)
                 {
-                    foreach (var role in roles)
-                    {
-                        var matrixKey = string.Format(PERMISSION_MATRIX_KEY, serviceId, state, role);
-                        var endpoints = await hashSetStore.GetAsync(matrixKey, cancellationToken);
+                    var matrixKey = string.Format(PERMISSION_MATRIX_KEY, serviceId, state, role);
+                    var endpoints = await hashSetStore.GetAsync(matrixKey, cancellationToken);
 
-                        if (endpoints != null)
+                    if (endpoints != null)
+                    {
+                        foreach (var endpoint in endpoints)
                         {
-                            foreach (var endpoint in endpoints)
-                            {
-                                uniqueEndpoints.Add(endpoint);
-                            }
+                            uniqueEndpoints.Add(endpoint);
                         }
                     }
                 }
-                endpointCount = uniqueEndpoints.Count;
-
-                // Extract registration data from typed model
-                var version = registrationData?.Version ?? "";
-                var registeredAt = registrationData?.RegisteredAtUnix > 0
-                    ? DateTimeOffset.FromUnixTimeSeconds(registrationData.RegisteredAtUnix)
-                    : DateTimeOffset.UtcNow;
-
-                services.Add(new RegisteredServiceInfo
-                {
-                    ServiceId = serviceId,
-                    ServiceName = serviceId, // Use serviceId as name if not stored separately
-                    Version = version,
-                    RegisteredAt = registeredAt,
-                    EndpointCount = endpointCount
-                });
             }
+            endpointCount = uniqueEndpoints.Count;
 
-            _logger.LogDebug("Returning {Count} registered services", services.Count);
+            // Extract registration data from typed model
+            var version = registrationData?.Version ?? "";
+            var registeredAt = registrationData?.RegisteredAtUnix > 0
+                ? DateTimeOffset.FromUnixTimeSeconds(registrationData.RegisteredAtUnix)
+                : DateTimeOffset.UtcNow;
 
-            return (StatusCodes.OK, new RegisteredServicesResponse
+            services.Add(new RegisteredServiceInfo
             {
-                Services = services,
-                Timestamp = DateTimeOffset.UtcNow
+                ServiceId = serviceId,
+                ServiceName = serviceId, // Use serviceId as name if not stored separately
+                Version = version,
+                RegisteredAt = registeredAt,
+                EndpointCount = endpointCount
             });
         }
-        catch (Exception ex)
+
+        _logger.LogDebug("Returning {Count} registered services", services.Count);
+
+        return (StatusCodes.OK, new RegisteredServicesResponse
         {
-            _logger.LogError(ex, "Error getting registered services");
-            await PublishErrorEventAsync(
-                "GetRegisteredServices",
-                "dependency_failure",
-                ex.Message,
-                dependency: "state",
-                details: null);
-            return (StatusCodes.InternalServerError, null);
-        }
+            Services = services,
+            Timestamp = DateTimeOffset.UtcNow
+        });
     }
 
     #region Permission Registration
 
     /// <summary>
-    /// Registers this service's API permissions with the Permission service on startup.
-    /// Even though Permission service publishes to itself, this follows the same pattern
-    /// as other services for consistency.
+    /// IPermissionRegistry implementation: receives permission matrices from other services
+    /// via direct DI call (push-based). Converts generic dictionary types to the generated
+    /// ServicePermissionMatrix model and delegates to the existing API registration method
+    /// which handles idempotency, Redis storage, and session recompilation.
     /// </summary>
-    public async Task RegisterServicePermissionsAsync(string appId)
+    async Task IPermissionRegistry.RegisterServiceAsync(
+        string serviceId,
+        string version,
+        Dictionary<string, IDictionary<string, ICollection<string>>> permissionMatrix)
     {
-        _logger.LogDebug("Registering Permission service permissions...");
-        await PermissionPermissionRegistration.RegisterViaEventAsync(_messageBus, appId, _logger);
+        // Convert from generic dictionary types to generated ServicePermissionMatrix model types
+        // BuildPermissionMatrix returns Dictionary<string, IDictionary<string, ICollection<string>>>
+        // but ServicePermissionMatrix.Permissions is IDictionary<string, StatePermissions>
+        var permissions = new Dictionary<string, StatePermissions>();
+        foreach (var (stateKey, roleMap) in permissionMatrix)
+        {
+            var statePermissions = new StatePermissions();
+            foreach (var (role, methods) in roleMap)
+            {
+                statePermissions[role] = new System.Collections.ObjectModel.Collection<string>(methods.ToList());
+            }
+            permissions[stateKey] = statePermissions;
+        }
+
+        var body = new ServicePermissionMatrix
+        {
+            ServiceId = serviceId,
+            Version = version,
+            Permissions = permissions
+        };
+
+        var (status, _) = await RegisterServicePermissionsAsync(body);
+        if (status != StatusCodes.OK)
+        {
+            throw new InvalidOperationException(
+                $"Permission registration failed for {serviceId}: status {status}");
+        }
     }
 
     #endregion
@@ -1230,29 +1091,20 @@ public partial class PermissionService : IPermissionService
                 }
             }
 
-            // Store session states
-            await statesStore.SaveAsync(statesKey, sessionStates, cancellationToken: cancellationToken);
+            // Store session states (with Redis TTL for orphaned session cleanup)
+            await statesStore.SaveAsync(statesKey, sessionStates, options: GetSessionDataStateOptions(), cancellationToken: cancellationToken);
 
-            // Add to activeConnections (sessions with WebSocket connections where exchange exists)
-            var hashSetStore = _stateStoreFactory.GetStore<HashSet<string>>(StateStoreDefinitions.Permission);
-            var activeConnections = await hashSetStore.GetAsync(ACTIVE_CONNECTIONS_KEY, cancellationToken) ?? new HashSet<string>();
-
-            if (!activeConnections.Contains(sessionId))
+            // Atomic add to activeConnections and activeSessions - SADD is inherently safe for concurrent access
+            var cacheStore = _stateStoreFactory.GetCacheableStore<string>(StateStoreDefinitions.Permission);
+            var addedToConnections = await cacheStore.AddToSetAsync<string>(ACTIVE_CONNECTIONS_KEY, sessionId, cancellationToken: cancellationToken);
+            if (addedToConnections)
             {
-                activeConnections.Add(sessionId);
-                await hashSetStore.SaveAsync(ACTIVE_CONNECTIONS_KEY, activeConnections, cancellationToken: cancellationToken);
+                var connectionCount = await cacheStore.SetCountAsync(ACTIVE_CONNECTIONS_KEY, cancellationToken);
                 _logger.LogDebug("Added session {SessionId} to active connections. Total: {Count}",
-                    sessionId, activeConnections.Count);
+                    sessionId, connectionCount);
             }
 
-            // Also ensure session is in activeSessions for state tracking
-            var activeSessions = await hashSetStore.GetAsync(ACTIVE_SESSIONS_KEY, cancellationToken) ?? new HashSet<string>();
-
-            if (!activeSessions.Contains(sessionId))
-            {
-                activeSessions.Add(sessionId);
-                await hashSetStore.SaveAsync(ACTIVE_SESSIONS_KEY, activeSessions, cancellationToken: cancellationToken);
-            }
+            await cacheStore.AddToSetAsync<string>(ACTIVE_SESSIONS_KEY, sessionId, cancellationToken: cancellationToken);
 
             // Compile and publish initial capabilities for this session using the states we just built
             // This overload avoids read-after-write consistency issues
@@ -1294,28 +1146,20 @@ public partial class PermissionService : IPermissionService
             _logger.LogDebug("Handling session disconnected: {SessionId}, Reconnectable: {Reconnectable}",
                 sessionId, reconnectable);
 
-            // Remove from activeConnections (no longer has WebSocket/exchange)
-            var hashSetStore = _stateStoreFactory.GetStore<HashSet<string>>(StateStoreDefinitions.Permission);
-            var activeConnections = await hashSetStore.GetAsync(ACTIVE_CONNECTIONS_KEY, cancellationToken) ?? new HashSet<string>();
-
-            if (activeConnections.Contains(sessionId))
+            // Atomic remove from activeConnections - SREM is inherently safe for concurrent access
+            var cacheStore = _stateStoreFactory.GetCacheableStore<string>(StateStoreDefinitions.Permission);
+            var removed = await cacheStore.RemoveFromSetAsync<string>(ACTIVE_CONNECTIONS_KEY, sessionId, cancellationToken);
+            if (removed)
             {
-                activeConnections.Remove(sessionId);
-                await hashSetStore.SaveAsync(ACTIVE_CONNECTIONS_KEY, activeConnections, cancellationToken: cancellationToken);
+                var remainingCount = await cacheStore.SetCountAsync(ACTIVE_CONNECTIONS_KEY, cancellationToken);
                 _logger.LogDebug("Removed session {SessionId} from active connections. Remaining: {Count}",
-                    sessionId, activeConnections.Count);
+                    sessionId, remainingCount);
             }
 
             // If not reconnectable, also remove from activeSessions and clear session state
             if (!reconnectable)
             {
-                var activeSessions = await hashSetStore.GetAsync(ACTIVE_SESSIONS_KEY, cancellationToken) ?? new HashSet<string>();
-
-                if (activeSessions.Contains(sessionId))
-                {
-                    activeSessions.Remove(sessionId);
-                    await hashSetStore.SaveAsync(ACTIVE_SESSIONS_KEY, activeSessions, cancellationToken: cancellationToken);
-                }
+                await cacheStore.RemoveFromSetAsync<string>(ACTIVE_SESSIONS_KEY, sessionId, cancellationToken);
 
                 // Clear session state and permissions cache
                 await ClearSessionStateAsync(new ClearSessionStateRequest { SessionId = Guid.Parse(sessionId) }, cancellationToken);
@@ -1343,6 +1187,18 @@ public partial class PermissionService : IPermissionService
     #endregion
 
     #region Helper Methods
+
+    /// <summary>
+    /// Creates StateOptions with Redis TTL for session data if configured.
+    /// Returns null when SessionDataTtlSeconds is 0 (disabled).
+    /// </summary>
+    private StateOptions? GetSessionDataStateOptions()
+    {
+        if (_configuration.SessionDataTtlSeconds <= 0)
+            return null;
+
+        return new StateOptions { Ttl = _configuration.SessionDataTtlSeconds };
+    }
 
     /// <summary>
     /// Determines the highest priority role from a collection of roles.

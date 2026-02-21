@@ -1,0 +1,43 @@
+openapi: 3.0.3
+info:
+  title: Realm History Service Configuration
+  description: |
+    Configuration schema for Realm History service.
+    Properties are bound to environment variables with REALM_HISTORY_ prefix.
+
+    **SCHEMA MODIFICATION GATE**: STOP. Before modifying this schema, you MUST:
+    1. Read docs/reference/SCHEMA-RULES.md
+    2. State which section applies to your change
+    3. Only then proceed with edits
+    Edits without stating the applicable rule are FORBIDDEN.
+  version: 1.0.0
+paths: {}
+x-service-configuration:
+  properties:
+    # Element Limits
+    MaxLoreElements:
+      type: integer
+      description: Maximum number of lore elements allowed per realm. Prevents unbounded growth from repeated AddLoreElement or SetLore calls. Returns BadRequest when limit would be exceeded.
+      default: 100
+      env: REALM_HISTORY_MAX_LORE_ELEMENTS
+    # Archive Summary Limits
+    ArchiveSummaryMaxLorePoints:
+      type: integer
+      description: Maximum number of key lore points to include in archive text summaries generated during realm compression. Higher values produce more detailed archives.
+      minimum: 1
+      maximum: 50
+      default: 10
+      env: REALM_HISTORY_ARCHIVE_SUMMARY_MAX_LORE_POINTS
+    ArchiveSummaryMaxHistoricalEvents:
+      type: integer
+      description: Maximum number of major historical events to include in archive text summaries generated during realm compression. Higher values produce more detailed archives.
+      minimum: 1
+      maximum: 50
+      default: 10
+      env: REALM_HISTORY_ARCHIVE_SUMMARY_MAX_HISTORICAL_EVENTS
+    # Concurrency Control
+    IndexLockTimeoutSeconds:
+      type: integer
+      description: Timeout in seconds for distributed locks during index and lore write operations. Matches established patterns in Currency, Inventory, and Contract services.
+      default: 15
+      env: REALM_HISTORY_INDEX_LOCK_TIMEOUT_SECONDS

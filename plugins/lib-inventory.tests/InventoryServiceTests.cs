@@ -198,7 +198,7 @@ public class InventoryServiceTests : ServiceTestBase<InventoryServiceConfigurati
             It.Is<InventoryContainerCreatedEvent>(e =>
                 e.OwnerId == request.OwnerId &&
                 e.ContainerType == request.ContainerType &&
-                e.ConstraintModel == ContainerConstraintModel.SlotOnly.ToString()),
+                e.ConstraintModel == ContainerConstraintModel.SlotOnly),
             It.IsAny<CancellationToken>()), Times.Once);
     }
 
@@ -1372,7 +1372,7 @@ public class InventoryServiceTests : ServiceTestBase<InventoryServiceConfigurati
             .ReturnsAsync(container);
         _mockItemClient
             .Setup(c => c.GetItemInstanceAsync(It.IsAny<GetItemInstanceRequest>(), It.IsAny<CancellationToken>()))
-            .ThrowsAsync(new ApiException("Not found", 404, "", new Dictionary<string, IEnumerable<string>>(), null));
+            .ThrowsAsync(new ApiException("Not found", 404));
 
         var request = new AddItemRequest { InstanceId = Guid.NewGuid(), ContainerId = containerId };
 
@@ -1805,7 +1805,7 @@ public class InventoryServiceTests : ServiceTestBase<InventoryServiceConfigurati
         // CreateItemInstance fails
         _mockItemClient
             .Setup(c => c.CreateItemInstanceAsync(It.IsAny<CreateItemInstanceRequest>(), It.IsAny<CancellationToken>()))
-            .ThrowsAsync(new ApiException("Failed", 500, "", new Dictionary<string, IEnumerable<string>>(), null));
+            .ThrowsAsync(new ApiException("Failed", 500));
 
         var request = new SplitStackRequest { InstanceId = instanceId, Quantity = 3 };
 

@@ -79,6 +79,24 @@ public sealed class ConnectProxy
     }
 
     /// <summary>
+    /// Permission-gated proxy for endpoint metadata
+    /// </summary>
+    /// <param name="request">The request payload.</param>
+    /// <param name="channel">Message channel for ordering (default 0).</param>
+    /// <param name="timeout">Request timeout.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>ApiResponse containing GetEndpointMetaResponse on success.</returns>
+    public Task<ApiResponse<GetEndpointMetaResponse>> GetEndpointMetaAsync(
+        GetEndpointMetaRequest request,
+        ushort channel = 0,
+        TimeSpan? timeout = null,
+        CancellationToken cancellationToken = default)
+    {
+        return _client.InvokeAsync<GetEndpointMetaRequest, GetEndpointMetaResponse>(
+            "/connect/get-endpoint-meta", request, channel, timeout, cancellationToken);
+    }
+
+    /// <summary>
     /// Get all active WebSocket sessions for an account
     /// </summary>
     /// <param name="request">The request payload.</param>

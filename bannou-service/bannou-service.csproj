@@ -32,7 +32,10 @@
 
   <ItemGroup>
     <!-- Common packages transitively available to all plugins via ServiceLib.targets -->
+    <PackageReference Include="AWSSDK.SimpleEmailV2" Version="4.*" />
+    <PackageReference Include="MailKit" Version="4.*" />
     <PackageReference Include="Microsoft.AspNetCore.Mvc.Core" Version="2.3.0" />
+    <PackageReference Include="SendGrid" Version="9.*" />
     <PackageReference Include="System.ComponentModel.Annotations" Version="5.0.0" />
 
     <PackageReference Include="DotNetEnv" Version="3.1.1" />
@@ -59,6 +62,8 @@
     <PackageReference Include="Parlot" Version="1.5.6" />
     <PackageReference Include="Fluid.Core" Version="2.31.0" />
     <PackageReference Include="YamlDotNet" Version="16.3.0" />
+    <!-- Redis types for IRedisOperations escape hatch interface -->
+    <PackageReference Include="StackExchange.Redis" Version="2.10.1" />
   </ItemGroup>
 
   <ItemGroup>
@@ -66,9 +71,13 @@
   </ItemGroup>
 
   <!-- Shared core types (events, JSON, exceptions) -->
+  <!-- Only Core + SDKs whose types appear in generated models via x-sdk-type -->
+  <!-- Domain-specific SDKs (storyline, etc.) are referenced by their wrapping plugins only -->
   <ItemGroup>
     <ProjectReference Include="../sdks/core/BeyondImmersion.Bannou.Core.csproj" />
     <ProjectReference Include="../sdks/music-theory/BeyondImmersion.Bannou.MusicTheory.csproj" />
+    <ProjectReference Include="../sdks/behavior-compiler/BeyondImmersion.Bannou.BehaviorCompiler.csproj" />
+    <ProjectReference Include="../sdks/behavior-expressions/BeyondImmersion.Bannou.BehaviorExpressions.csproj" />
   </ItemGroup>
 
 

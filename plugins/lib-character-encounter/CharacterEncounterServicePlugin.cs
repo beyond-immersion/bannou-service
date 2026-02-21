@@ -1,4 +1,9 @@
+using BeyondImmersion.BannouService.CharacterEncounter.Caching;
+using BeyondImmersion.BannouService.CharacterEncounter.Providers;
+using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Plugins;
+using BeyondImmersion.BannouService.Providers;
+using BeyondImmersion.BannouService.Resource;
 using BeyondImmersion.BannouService.Services;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
@@ -31,8 +36,16 @@ public class CharacterEncounterServicePlugin : BaseBannouPlugin
         // Configuration registration is now handled centrally by PluginLoader based on [ServiceConfiguration] attributes
         // No need to register CharacterEncounterServiceConfiguration here
 
-        // Add any service-specific dependencies
-        // The generated clients should already be registered by AddAllBannouServiceClients()
+        // Register encounter data cache (singleton for cross-request caching)
+        services.AddSingleton<IEncounterDataCache, EncounterDataCache>();
+
+        // Register variable provider factory for Actor to discover via DI
+        // Enables dependency inversion: Actor (L2) consumes providers without knowing about CharacterEncounter (L3)
+        services.AddSingleton<IVariableProviderFactory, EncountersProviderFactory>();
+
+        // Register the memory decay scheduler background service
+        // This only activates when MemoryDecayMode is set to Scheduled
+        services.AddHostedService<MemoryDecaySchedulerService>();
 
         Logger?.LogDebug("Service dependencies configured");
     }
@@ -91,12 +104,15 @@ public class CharacterEncounterServicePlugin : BaseBannouPlugin
 
     /// <summary>
     /// Running phase - calls existing IBannouService lifecycle if present.
+    /// Also registers cleanup callbacks with lib-resource (must happen after all plugins are started).
     /// </summary>
     protected override async Task OnRunningAsync()
     {
         if (_service == null) return;
 
         Logger?.LogDebug("CharacterEncounter service running");
+
+        var serviceProvider = _serviceProvider ?? throw new InvalidOperationException("ServiceProvider not available during OnRunningAsync");
 
         try
         {
@@ -110,6 +126,51 @@ public class CharacterEncounterServicePlugin : BaseBannouPlugin
         catch (Exception ex)
         {
             Logger?.LogWarning(ex, "Exception during CharacterEncounter service running phase");
+        }
+
+        // Register cleanup callbacks with lib-resource for character reference tracking.
+        // IResourceClient is L1 infrastructure - must be available (fail-fast per TENETS).
+        using var resourceScope = serviceProvider.CreateScope();
+        var resourceClient = resourceScope.ServiceProvider.GetRequiredService<IResourceClient>();
+
+        var success = await CharacterEncounterService.RegisterResourceCleanupCallbacksAsync(resourceClient, CancellationToken.None);
+        if (success)
+        {
+            Logger?.LogInformation("Registered character cleanup callbacks with lib-resource");
+        }
+        else
+        {
+            Logger?.LogWarning("Failed to register some cleanup callbacks with lib-resource");
+        }
+
+        // Register compression callback (generated from x-compression-callback)
+        if (await CharacterEncounterCompressionCallbacks.RegisterAsync(resourceClient, CancellationToken.None))
+        {
+            Logger?.LogInformation("Registered character-encounter compression callback with lib-resource");
+        }
+        else
+        {
+            Logger?.LogWarning("Failed to register character-encounter compression callback with lib-resource");
+        }
+
+        // Register event templates for emit_event: ABML action (generated from x-event-template)
+        try
+        {
+            using var scope = serviceProvider.CreateScope();
+            var eventTemplateRegistry = scope.ServiceProvider.GetService<IEventTemplateRegistry>();
+            if (eventTemplateRegistry != null)
+            {
+                CharacterEncounterEventTemplates.RegisterAll(eventTemplateRegistry);
+                Logger?.LogInformation("Registered character-encounter event templates");
+            }
+            else
+            {
+                Logger?.LogDebug("IEventTemplateRegistry not available - event templates not registered");
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger?.LogWarning(ex, "Failed to register event templates");
         }
     }
 

@@ -22,6 +22,8 @@ public static class StateStoreDefinitions
     #region Store Name Constants
 
     // Account Service
+    /// <summary>Distributed locks for account email uniqueness during creation</summary>
+    public const string AccountLock = "account-lock";
     /// <summary>Persistent account data</summary>
     public const string Account = "account-statestore";
 
@@ -42,12 +44,8 @@ public static class StateStoreDefinitions
     public const string ActorState = "actor-state";
     /// <summary>Actor template definitions</summary>
     public const string ActorTemplates = "actor-templates";
-    /// <summary>Agent memory and cognitive state</summary>
-    public const string AgentMemories = "agent-memories";
 
     // Analytics Service
-    /// <summary>Event buffer and legacy controller history (Redis for backward compatibility)</summary>
-    public const string AnalyticsHistory = "analytics-history";
     /// <summary>Controller possession history for queryable audit trails (MySQL for server-side filtering)</summary>
     public const string AnalyticsHistoryData = "analytics-history-data";
     /// <summary>Glicko-2 skill ratings</summary>
@@ -66,12 +64,18 @@ public static class StateStoreDefinitions
     // Auth Service
     /// <summary>Session and token state (ephemeral)</summary>
     public const string Auth = "auth-statestore";
+    /// <summary>Edge revocation tracking for CDN/firewall layer blocking</summary>
+    public const string EdgeRevocation = "edge-revocation-statestore";
 
     // Behavior Service
+    /// <summary>Cognition pipeline memory storage (used by lib-behavior's ActorLocalMemoryStore)</summary>
+    public const string AgentMemories = "agent-memories";
     /// <summary>Behavior metadata and compiled definitions</summary>
     public const string Behavior = "behavior-statestore";
 
     // Character Service
+    /// <summary>Distributed locks for character update and compression operations</summary>
+    public const string CharacterLock = "character-lock";
     /// <summary>Persistent character data</summary>
     public const string Character = "character-statestore";
 
@@ -86,6 +90,36 @@ public static class StateStoreDefinitions
     // CharacterPersonality Service
     /// <summary>Character personality traits and combat preferences</summary>
     public const string CharacterPersonality = "character-personality-statestore";
+
+    // Chat Service
+    /// <summary>Ban records (durable, queryable by roomId/participant)</summary>
+    public const string ChatBans = "chat-bans";
+    /// <summary>Distributed locks for room and participant modifications</summary>
+    public const string ChatLock = "chat-lock";
+    /// <summary>Persistent message history for durable rooms</summary>
+    public const string ChatMessages = "chat-messages";
+    /// <summary>Ephemeral message buffer for non-persistent rooms (TTL-based)</summary>
+    public const string ChatMessagesEphemeral = "chat-messages-ephemeral";
+    /// <summary>Active participant tracking (room membership, mute state, last activity)</summary>
+    public const string ChatParticipants = "chat-participants";
+    /// <summary>Room type definitions (durable, queryable by code/gameServiceId)</summary>
+    public const string ChatRoomTypes = "chat-room-types";
+    /// <summary>Chat room records (durable, queryable by type/session/status)</summary>
+    public const string ChatRooms = "chat-rooms";
+    /// <summary>Active room state cache (participant lists, room metadata)</summary>
+    public const string ChatRoomsCache = "chat-rooms-cache";
+
+    // Collection Service
+    /// <summary>Area-to-theme mappings for dynamic content selection</summary>
+    public const string CollectionAreaContentConfigs = "collection-area-content-configs";
+    /// <summary>Collection state cache (unlocked entries per collection)</summary>
+    public const string CollectionCache = "collection-cache";
+    /// <summary>Entry template definitions per collection type and game service</summary>
+    public const string CollectionEntryTemplates = "collection-entry-templates";
+    /// <summary>Per-owner collection containers linking entities to collection types</summary>
+    public const string CollectionInstances = "collection-instances";
+    /// <summary>Distributed locks for collection mutations and grant operations</summary>
+    public const string CollectionLock = "collection-lock";
 
     // Connect Service
     /// <summary>WebSocket session state</summary>
@@ -113,6 +147,18 @@ public static class StateStoreDefinitions
     /// <summary>Wallet ownership and status</summary>
     public const string CurrencyWallets = "currency-wallets";
 
+    // Divine Service
+    /// <summary>Active attention slot tracking per deity (ephemeral, high-frequency reads)</summary>
+    public const string DivineAttention = "divine-attention";
+    /// <summary>Blessing grant records linking deities to characters via items (durable, queryable)</summary>
+    public const string DivineBlessings = "divine-blessings";
+    /// <summary>Deity entity records (durable, queryable by game service, domain, status)</summary>
+    public const string DivineDeities = "divine-deities";
+    /// <summary>Pending divinity generation events awaiting batch processing (ephemeral queue)</summary>
+    public const string DivineDivinityEvents = "divine-divinity-events";
+    /// <summary>Distributed locks for deity and blessing mutations</summary>
+    public const string DivineLock = "divine-lock";
+
     // Documentation Service
     /// <summary>Documentation content and metadata</summary>
     public const string Documentation = "documentation-statestore";
@@ -133,6 +179,20 @@ public static class StateStoreDefinitions
     /// <summary>Token hash validation (hashed tokens to escrow/party info)</summary>
     public const string EscrowTokens = "escrow-tokens";
 
+    // Faction Service
+    /// <summary>Faction lookup and norm resolution cache (frequently read, TTL-based)</summary>
+    public const string FactionCache = "faction-cache";
+    /// <summary>Distributed locks for faction, membership, and territory mutations</summary>
+    public const string FactionLock = "faction-lock";
+    /// <summary>Faction membership records linking characters to factions with roles</summary>
+    public const string FactionMembership = "faction-membership-statestore";
+    /// <summary>Behavioral norm definitions per faction (durable, queryable by violation type)</summary>
+    public const string FactionNorm = "faction-norm-statestore";
+    /// <summary>Faction entity records (durable, queryable by realm/game service/status)</summary>
+    public const string Faction = "faction-statestore";
+    /// <summary>Territory claim records linking factions to controlled locations</summary>
+    public const string FactionTerritory = "faction-territory-statestore";
+
     // GameService Service
     /// <summary>Game service registry</summary>
     public const string GameService = "game-service-statestore";
@@ -140,6 +200,22 @@ public static class StateStoreDefinitions
     // GameSession Service
     /// <summary>Game session state and history</summary>
     public const string GameSession = "game-session-statestore";
+
+    // Gardener Service
+    /// <summary>Active garden instance state per player (ephemeral, TTL-based)</summary>
+    public const string GardenerGardenInstances = "gardener-garden-instances";
+    /// <summary>Distributed locks for garden orchestration and scenario mutations</summary>
+    public const string GardenerLock = "gardener-lock";
+    /// <summary>Deployment phase configuration and transition history (durable)</summary>
+    public const string GardenerPhaseConfig = "gardener-phase-config";
+    /// <summary>Active POI state within garden instances (ephemeral, TTL-based)</summary>
+    public const string GardenerPois = "gardener-pois";
+    /// <summary>Completed scenario history per player (durable, queryable for cooldown)</summary>
+    public const string GardenerScenarioHistory = "gardener-scenario-history";
+    /// <summary>Active scenario instance state (ephemeral, keyed by instance ID)</summary>
+    public const string GardenerScenarioInstances = "gardener-scenario-instances";
+    /// <summary>Scenario template definitions (durable, queryable by category/status)</summary>
+    public const string GardenerScenarioTemplates = "gardener-scenario-templates";
 
     // Inventory Service
     /// <summary>Container state and item list cache</summary>
@@ -169,7 +245,27 @@ public static class StateStoreDefinitions
     /// <summary>Season history and archives</summary>
     public const string LeaderboardSeason = "leaderboard-season";
 
+    // License Service
+    /// <summary>Board state cache (unlocked license positions per board)</summary>
+    public const string LicenseBoardCache = "license-board-cache";
+    /// <summary>Board template definitions with grid layout and contract references</summary>
+    public const string LicenseBoardTemplates = "license-board-templates";
+    /// <summary>Character board instances linking characters to board templates</summary>
+    public const string LicenseBoards = "license-boards";
+    /// <summary>License definitions (nodes) per board template with grid positions</summary>
+    public const string LicenseDefinitions = "license-definitions";
+    /// <summary>Distributed locks for board mutations and unlock operations</summary>
+    public const string LicenseLock = "license-lock";
+
     // Location Service
+    /// <summary>Location lookup cache for frequently-accessed locations</summary>
+    public const string LocationCache = "location-cache";
+    /// <summary>Ephemeral entity-to-location bindings with TTL for presence tracking</summary>
+    public const string LocationEntityPresence = "location-entity-presence";
+    /// <summary>Redis Sets tracking which entities are at each location</summary>
+    public const string LocationEntitySet = "location-entity-set";
+    /// <summary>Distributed locks for concurrent index modifications</summary>
+    public const string LocationLock = "location-lock";
     /// <summary>Location hierarchy and metadata</summary>
     public const string Location = "location-statestore";
 
@@ -184,6 +280,8 @@ public static class StateStoreDefinitions
     // Mesh Service
     /// <summary>App-ID to instance-ID mapping index</summary>
     public const string MeshAppidIndex = "mesh-appid-index";
+    /// <summary>Distributed circuit breaker state for cross-instance failure tracking</summary>
+    public const string MeshCircuitBreaker = "mesh-circuit-breaker";
     /// <summary>Service endpoint registration and health status</summary>
     public const string MeshEndpoints = "mesh-endpoints";
     /// <summary>Global endpoint index for discovery</summary>
@@ -199,6 +297,18 @@ public static class StateStoreDefinitions
     /// <summary>Style definitions (celtic, jazz, baroque, etc.)</summary>
     public const string MusicStyles = "music-styles";
 
+    // Obligation Service
+    /// <summary>Action tag to violation type code mappings (durable, queryable)</summary>
+    public const string ObligationActionMappings = "obligation-action-mappings";
+    /// <summary>Cached obligation manifests per character (ephemeral, event-driven invalidation)</summary>
+    public const string ObligationCache = "obligation-cache";
+    /// <summary>Violation report idempotency key deduplication</summary>
+    public const string ObligationIdempotency = "obligation-idempotency";
+    /// <summary>Distributed locks for obligation cache rebuild operations</summary>
+    public const string ObligationLock = "obligation-lock";
+    /// <summary>Violation history records (durable, queryable by character/contract/type)</summary>
+    public const string ObligationViolations = "obligation-violations";
+
     // Orchestrator Service
     /// <summary>Configuration version and metadata</summary>
     public const string OrchestratorConfig = "orchestrator-config";
@@ -213,6 +323,22 @@ public static class StateStoreDefinitions
     /// <summary>Permission cache and session capabilities</summary>
     public const string Permission = "permission-statestore";
 
+    // Quest Service
+    /// <summary>Character to active quest instance mapping</summary>
+    public const string QuestCharacterIndex = "quest-character-index";
+    /// <summary>Per-character quest cooldown tracking</summary>
+    public const string QuestCooldown = "quest-cooldown";
+    /// <summary>Quest definition read-through cache</summary>
+    public const string QuestDefinitionCache = "quest-definition-cache";
+    /// <summary>Quest definitions with contract template IDs and metadata</summary>
+    public const string QuestDefinition = "quest-definition-statestore";
+    /// <summary>Idempotency keys for accept/complete operations</summary>
+    public const string QuestIdempotency = "quest-idempotency";
+    /// <summary>Quest instances with status and party information</summary>
+    public const string QuestInstance = "quest-instance-statestore";
+    /// <summary>Real-time objective progress tracking</summary>
+    public const string QuestObjectiveProgress = "quest-objective-progress";
+
     // Realm Service
     /// <summary>Realm definitions and configuration</summary>
     public const string Realm = "realm-statestore";
@@ -222,12 +348,26 @@ public static class StateStoreDefinitions
     public const string RealmHistory = "realm-history-statestore";
 
     // Relationship Service
+    /// <summary>Distributed locks for composite uniqueness and index modifications</summary>
+    public const string RelationshipLock = "relationship-lock";
     /// <summary>Entity relationships</summary>
     public const string Relationship = "relationship-statestore";
-
-    // RelationshipType Service
     /// <summary>Relationship type definitions</summary>
     public const string RelationshipType = "relationship-type-statestore";
+
+    // Resource Service
+    /// <summary>Compressed archive bundles (durable storage for long-term archival)</summary>
+    public const string ResourceArchives = "resource-archives";
+    /// <summary>Cleanup callback definitions per resource type</summary>
+    public const string ResourceCleanup = "resource-cleanup";
+    /// <summary>Compression callback definitions and callback index sets</summary>
+    public const string ResourceCompress = "resource-compress";
+    /// <summary>Grace period timestamps for resources with zero references</summary>
+    public const string ResourceGrace = "resource-grace";
+    /// <summary>Reference counts and source tracking per resource</summary>
+    public const string ResourceRefcounts = "resource-refcounts";
+    /// <summary>Ephemeral snapshots of living resources (TTL-based auto-expiry for storyline/actor consumption)</summary>
+    public const string ResourceSnapshots = "resource-snapshots";
 
     // SaveLoad Service
     /// <summary>Recently accessed save data cache</summary>
@@ -245,6 +385,20 @@ public static class StateStoreDefinitions
     /// <summary>Hierarchical scene composition storage</summary>
     public const string Scene = "scene-statestore";
 
+    // Seed Service
+    /// <summary>Bond records between seeds (durable)</summary>
+    public const string SeedBonds = "seed-bonds-statestore";
+    /// <summary>Computed capability manifests (cached, frequently read)</summary>
+    public const string SeedCapabilitiesCache = "seed-capabilities-cache";
+    /// <summary>Growth domain records per seed (durable, queryable)</summary>
+    public const string SeedGrowth = "seed-growth-statestore";
+    /// <summary>Distributed locks for seed modifications</summary>
+    public const string SeedLock = "seed-lock";
+    /// <summary>Seed entity records (durable, queryable by owner/type)</summary>
+    public const string Seed = "seed-statestore";
+    /// <summary>Registered seed type definitions (durable, admin-managed)</summary>
+    public const string SeedTypeDefinitions = "seed-type-definitions-statestore";
+
     // Species Service
     /// <summary>Species definitions</summary>
     public const string Species = "species-statestore";
@@ -253,6 +407,38 @@ public static class StateStoreDefinitions
     /// <summary>Test store with RedisSearch enabled</summary>
     public const string TestSearch = "test-search-statestore";
 
+    // Status Service
+    /// <summary>Active status cache per entity (fast lookup, rebuilt from instances on miss)</summary>
+    public const string StatusActiveCache = "status-active-cache";
+    /// <summary>Status container records mapping entities to inventory containers (durable)</summary>
+    public const string StatusContainers = "status-containers";
+    /// <summary>Status instance records with metadata (durable, queryable by entity/source/category)</summary>
+    public const string StatusInstances = "status-instances";
+    /// <summary>Distributed locks for status mutations and template updates</summary>
+    public const string StatusLock = "status-lock";
+    /// <summary>Cached seed-derived effects per entity (invalidated on capability.updated events)</summary>
+    public const string StatusSeedEffectsCache = "status-seed-effects-cache";
+    /// <summary>Status template definitions (durable, queryable by category/code/gameServiceId)</summary>
+    public const string StatusTemplates = "status-templates";
+
+    // Storyline Service
+    /// <summary>Plan index by realm for list queries</summary>
+    public const string StorylinePlanIndex = "storyline-plan-index";
+    /// <summary>Cached composed storyline plans (ephemeral, TTL from config)</summary>
+    public const string StorylinePlans = "storyline-plans";
+    /// <summary>Active scenario tracking per character (set membership)</summary>
+    public const string StorylineScenarioActive = "storyline-scenario-active";
+    /// <summary>Scenario definition read-through cache (TTL from config)</summary>
+    public const string StorylineScenarioCache = "storyline-scenario-cache";
+    /// <summary>Per-character scenario cooldowns with TTL-based auto-expiry</summary>
+    public const string StorylineScenarioCooldown = "storyline-scenario-cooldown";
+    /// <summary>Durable scenario template definitions with conditions and mutations</summary>
+    public const string StorylineScenarioDefinitions = "storyline-scenario-definitions";
+    /// <summary>Scenario execution history with outcome tracking</summary>
+    public const string StorylineScenarioExecutions = "storyline-scenario-executions";
+    /// <summary>Scenario trigger idempotency keys for deduplication</summary>
+    public const string StorylineScenarioIdempotency = "storyline-scenario-idempotency";
+
     // Subscription Service
     /// <summary>User subscriptions to game services</summary>
     public const string Subscription = "subscription-statestore";
@@ -260,6 +446,14 @@ public static class StateStoreDefinitions
     // Voice Service
     /// <summary>Voice room and peer state</summary>
     public const string Voice = "voice-statestore";
+
+    // Worldstate Service
+    /// <summary>Calendar template definitions and per-realm worldstate configuration (durable, queryable)</summary>
+    public const string WorldstateCalendar = "worldstate-calendar";
+    /// <summary>Time ratio change history per realm for elapsed game-time computation (append-only, compacted)</summary>
+    public const string WorldstateRatioHistory = "worldstate-ratio-history";
+    /// <summary>Current game time per realm (hot reads, updated every ClockTickIntervalSeconds)</summary>
+    public const string WorldstateRealmClock = "worldstate-realm-clock";
 
     #endregion
 
@@ -272,6 +466,7 @@ public static class StateStoreDefinitions
     public static readonly IReadOnlyDictionary<string, StoreConfiguration> Configurations =
         new Dictionary<string, StoreConfiguration>
         {
+            [AccountLock] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "account:lock" },
             [Account] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "account_statestore" },
             [AchievementDefinition] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "ach:def" },
             [AchievementProgress] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "ach:prog" },
@@ -281,7 +476,6 @@ public static class StateStoreDefinitions
             [ActorState] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "actor:state" },
             [ActorTemplates] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "actor:tpl" },
             [AgentMemories] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "agent:mem" },
-            [AnalyticsHistory] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "analytics:hist" },
             [AnalyticsHistoryData] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "analytics_history_data" },
             [AnalyticsRating] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "analytics:rating" },
             [AnalyticsSummary] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "analytics:sum" },
@@ -292,10 +486,24 @@ public static class StateStoreDefinitions
             [Behavior] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "behavior" },
             [CharacterEncounter] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "character_encounter_statestore" },
             [CharacterHistory] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "character_history_statestore" },
+            [CharacterLock] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "character:lock" },
             [CharacterPersonality] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "character_personality_statestore" },
             [Character] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "character_statestore" },
+            [ChatBans] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "chat_bans" },
+            [ChatLock] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "chat:lock" },
+            [ChatMessages] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "chat_messages" },
+            [ChatMessagesEphemeral] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "chat:msg" },
+            [ChatParticipants] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "chat:part" },
+            [ChatRoomTypes] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "chat_room_types" },
+            [ChatRooms] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "chat_rooms" },
+            [ChatRoomsCache] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "chat:room" },
+            [CollectionAreaContentConfigs] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "collection_area_content_configs" },
+            [CollectionCache] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "collection:state" },
+            [CollectionEntryTemplates] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "collection_entry_templates" },
+            [CollectionInstances] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "collection_instances" },
+            [CollectionLock] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "collection:lock" },
             [Connect] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "connect" },
-            [Contract] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "contract" },
+            [Contract] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "contract", EnableSearch = true },
             [CurrencyBalanceCache] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "currency:balance" },
             [CurrencyBalances] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "currency_balances" },
             [CurrencyDefinitions] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "currency_definitions" },
@@ -304,7 +512,13 @@ public static class StateStoreDefinitions
             [CurrencyIdempotency] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "currency:idemp" },
             [CurrencyTransactions] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "currency_transactions" },
             [CurrencyWallets] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "currency_wallets" },
-            [Documentation] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "doc" },
+            [DivineAttention] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "divine:attention" },
+            [DivineBlessings] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "divine_blessings" },
+            [DivineDeities] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "divine_deities" },
+            [DivineDivinityEvents] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "divine:divevt" },
+            [DivineLock] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "divine:lock" },
+            [Documentation] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "doc", EnableSearch = true },
+            [EdgeRevocation] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "auth:edge" },
             [EscrowActiveValidation] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "escrow:validate" },
             [EscrowAgreements] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "escrow_agreements" },
             [EscrowHandlerRegistry] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "escrow_handler_registry" },
@@ -312,8 +526,21 @@ public static class StateStoreDefinitions
             [EscrowPartyPending] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "escrow:pending" },
             [EscrowStatusIndex] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "escrow:status" },
             [EscrowTokens] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "escrow:token" },
+            [FactionCache] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "faction:cache" },
+            [FactionLock] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "faction:lock" },
+            [FactionMembership] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "faction_membership_statestore" },
+            [FactionNorm] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "faction_norm_statestore" },
+            [Faction] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "faction_statestore" },
+            [FactionTerritory] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "faction_territory_statestore" },
             [GameService] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "game_service_statestore" },
             [GameSession] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "game_session_statestore" },
+            [GardenerGardenInstances] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "gardener:garden" },
+            [GardenerLock] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "gardener:lock" },
+            [GardenerPhaseConfig] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "gardener_phase_config" },
+            [GardenerPois] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "gardener:poi" },
+            [GardenerScenarioHistory] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "gardener_scenario_history" },
+            [GardenerScenarioInstances] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "gardener:scenario" },
+            [GardenerScenarioTemplates] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "gardener_scenario_templates" },
             [InventoryContainerCache] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "inv:cont" },
             [InventoryContainerStore] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "inventory_container_store" },
             [InventoryLock] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "inv:lock" },
@@ -325,34 +552,86 @@ public static class StateStoreDefinitions
             [LeaderboardDefinition] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "lb:def" },
             [LeaderboardRanking] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "lb:rank" },
             [LeaderboardSeason] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "leaderboard_season" },
+            [LicenseBoardCache] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "license:board" },
+            [LicenseBoardTemplates] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "license_board_templates" },
+            [LicenseBoards] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "license_boards" },
+            [LicenseDefinitions] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "license_definitions" },
+            [LicenseLock] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "license:lock" },
+            [LocationCache] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "location" },
+            [LocationEntityPresence] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "location:presence" },
+            [LocationEntitySet] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "location:entities" },
+            [LocationLock] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "location:lock" },
             [Location] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "location_statestore" },
             [Mapping] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "mapping" },
             [Matchmaking] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "mm" },
             [MeshAppidIndex] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "mesh:appid" },
+            [MeshCircuitBreaker] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "mesh:cb" },
             [MeshEndpoints] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "mesh:endpoint" },
             [MeshGlobalIndex] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "mesh:idx" },
             [MessagingExternalSubs] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "msg:subs" },
             [MusicCompositions] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "music:comp" },
             [MusicStyles] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "music_styles" },
+            [ObligationActionMappings] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "obligation_action_mappings" },
+            [ObligationCache] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "obligation:cache" },
+            [ObligationIdempotency] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "obligation:idemp" },
+            [ObligationLock] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "obligation:lock" },
+            [ObligationViolations] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "obligation_violations" },
             [OrchestratorConfig] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "orch:cfg" },
             [OrchestratorHeartbeats] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "orch:hb" },
             [OrchestratorRoutings] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "orch:rt" },
             [Orchestrator] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "orch" },
             [Permission] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "permission" },
+            [QuestCharacterIndex] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "quest:char" },
+            [QuestCooldown] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "quest:cd" },
+            [QuestDefinitionCache] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "quest:def" },
+            [QuestDefinition] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "quest_definition_statestore" },
+            [QuestIdempotency] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "quest:idem" },
+            [QuestInstance] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "quest_instance_statestore" },
+            [QuestObjectiveProgress] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "quest:prog" },
             [RealmHistory] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "realm_history_statestore" },
             [Realm] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "realm_statestore" },
+            [RelationshipLock] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "relationship:lock" },
             [Relationship] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "relationship_statestore" },
             [RelationshipType] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "relationship_type_statestore" },
+            [ResourceArchives] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "resource_archives" },
+            [ResourceCleanup] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "resource:cleanup" },
+            [ResourceCompress] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "resource:compress" },
+            [ResourceGrace] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "resource:grace" },
+            [ResourceRefcounts] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "resource:ref" },
+            [ResourceSnapshots] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "resource:snapshot" },
             [SaveLoadCache] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "saveload:cache" },
             [SaveLoadPending] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "saveload:pending" },
             [SaveLoadSchemas] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "save_load_schemas" },
             [SaveLoadSlots] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "save_load_slots" },
             [SaveLoadVersions] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "save_load_versions" },
             [Scene] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "scene_statestore" },
+            [SeedBonds] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "seed_bonds_statestore" },
+            [SeedCapabilitiesCache] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "seed:cap" },
+            [SeedGrowth] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "seed_growth_statestore" },
+            [SeedLock] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "seed:lock" },
+            [Seed] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "seed_statestore" },
+            [SeedTypeDefinitions] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "seed_type_definitions_statestore" },
             [Species] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "species_statestore" },
+            [StatusActiveCache] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "status:active" },
+            [StatusContainers] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "status_containers" },
+            [StatusInstances] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "status_instances" },
+            [StatusLock] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "status:lock" },
+            [StatusSeedEffectsCache] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "status:seed" },
+            [StatusTemplates] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "status_templates" },
+            [StorylinePlanIndex] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "storyline:idx" },
+            [StorylinePlans] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "storyline:plan" },
+            [StorylineScenarioActive] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "storyline:scenario:active" },
+            [StorylineScenarioCache] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "storyline:scenario:cache" },
+            [StorylineScenarioCooldown] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "storyline:scenario:cd" },
+            [StorylineScenarioDefinitions] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "storyline_scenario_definitions" },
+            [StorylineScenarioExecutions] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "storyline_scenario_executions" },
+            [StorylineScenarioIdempotency] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "storyline:scenario:idemp" },
             [Subscription] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "subscription_statestore" },
             [TestSearch] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "test-search", EnableSearch = true },
             [Voice] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "voice" },
+            [WorldstateCalendar] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "worldstate_calendar" },
+            [WorldstateRatioHistory] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "worldstate_ratio_history" },
+            [WorldstateRealmClock] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "worldstate:clock" },
         };
 
     #endregion
@@ -365,6 +644,7 @@ public static class StateStoreDefinitions
     public static readonly IReadOnlyDictionary<string, StoreMetadata> Metadata =
         new Dictionary<string, StoreMetadata>
         {
+            [AccountLock] = new StoreMetadata("Account", "Distributed locks for account email uniqueness during creation", "redis"),
             [Account] = new StoreMetadata("Account", "Persistent account data", "mysql"),
             [AchievementDefinition] = new StoreMetadata("Achievement", "Achievement definitions", "redis"),
             [AchievementProgress] = new StoreMetadata("Achievement", "Player achievement progress", "redis"),
@@ -373,8 +653,7 @@ public static class StateStoreDefinitions
             [ActorPoolNodes] = new StoreMetadata("Actor", "Actor pool node assignments", "redis"),
             [ActorState] = new StoreMetadata("Actor", "Runtime actor state", "redis"),
             [ActorTemplates] = new StoreMetadata("Actor", "Actor template definitions", "redis"),
-            [AgentMemories] = new StoreMetadata("Actor", "Agent memory and cognitive state", "redis"),
-            [AnalyticsHistory] = new StoreMetadata("Analytics", "Event buffer and legacy controller history (Redis for backward compatibility)", "redis"),
+            [AgentMemories] = new StoreMetadata("Behavior", "Cognition pipeline memory storage (used by lib-behavior's ActorLocalMemoryStore)", "redis"),
             [AnalyticsHistoryData] = new StoreMetadata("Analytics", "Controller possession history for queryable audit trails (MySQL for server-side filtering)", "mysql"),
             [AnalyticsRating] = new StoreMetadata("Analytics", "Glicko-2 skill ratings", "redis"),
             [AnalyticsSummary] = new StoreMetadata("Analytics", "Event buffer, session mappings, and resolution caches for analytics ingestion", "redis"),
@@ -385,8 +664,22 @@ public static class StateStoreDefinitions
             [Behavior] = new StoreMetadata("Behavior", "Behavior metadata and compiled definitions", "redis"),
             [CharacterEncounter] = new StoreMetadata("CharacterEncounter", "Encounter records and participant perspectives", "mysql"),
             [CharacterHistory] = new StoreMetadata("CharacterHistory", "Character historical events and backstory", "mysql"),
+            [CharacterLock] = new StoreMetadata("Character", "Distributed locks for character update and compression operations", "redis"),
             [CharacterPersonality] = new StoreMetadata("CharacterPersonality", "Character personality traits and combat preferences", "mysql"),
             [Character] = new StoreMetadata("Character", "Persistent character data", "mysql"),
+            [ChatBans] = new StoreMetadata("Chat", "Ban records (durable, queryable by roomId/participant)", "mysql"),
+            [ChatLock] = new StoreMetadata("Chat", "Distributed locks for room and participant modifications", "redis"),
+            [ChatMessages] = new StoreMetadata("Chat", "Persistent message history for durable rooms", "mysql"),
+            [ChatMessagesEphemeral] = new StoreMetadata("Chat", "Ephemeral message buffer for non-persistent rooms (TTL-based)", "redis"),
+            [ChatParticipants] = new StoreMetadata("Chat", "Active participant tracking (room membership, mute state, last activity)", "redis"),
+            [ChatRoomTypes] = new StoreMetadata("Chat", "Room type definitions (durable, queryable by code/gameServiceId)", "mysql"),
+            [ChatRooms] = new StoreMetadata("Chat", "Chat room records (durable, queryable by type/session/status)", "mysql"),
+            [ChatRoomsCache] = new StoreMetadata("Chat", "Active room state cache (participant lists, room metadata)", "redis"),
+            [CollectionAreaContentConfigs] = new StoreMetadata("Collection", "Area-to-theme mappings for dynamic content selection", "mysql"),
+            [CollectionCache] = new StoreMetadata("Collection", "Collection state cache (unlocked entries per collection)", "redis"),
+            [CollectionEntryTemplates] = new StoreMetadata("Collection", "Entry template definitions per collection type and game service", "mysql"),
+            [CollectionInstances] = new StoreMetadata("Collection", "Per-owner collection containers linking entities to collection types", "mysql"),
+            [CollectionLock] = new StoreMetadata("Collection", "Distributed locks for collection mutations and grant operations", "redis"),
             [Connect] = new StoreMetadata("Connect", "WebSocket session state", "redis"),
             [Contract] = new StoreMetadata("Contract", "Contract templates, instances, breaches, and indexes", "redis"),
             [CurrencyBalanceCache] = new StoreMetadata("Currency", "Real-time balance lookups (cached, refreshed on access)", "redis"),
@@ -397,7 +690,13 @@ public static class StateStoreDefinitions
             [CurrencyIdempotency] = new StoreMetadata("Currency", "Idempotency key deduplication", "redis"),
             [CurrencyTransactions] = new StoreMetadata("Currency", "Immutable transaction history", "mysql"),
             [CurrencyWallets] = new StoreMetadata("Currency", "Wallet ownership and status", "mysql"),
+            [DivineAttention] = new StoreMetadata("Divine", "Active attention slot tracking per deity (ephemeral, high-frequency reads)", "redis"),
+            [DivineBlessings] = new StoreMetadata("Divine", "Blessing grant records linking deities to characters via items (durable, queryable)", "mysql"),
+            [DivineDeities] = new StoreMetadata("Divine", "Deity entity records (durable, queryable by game service, domain, status)", "mysql"),
+            [DivineDivinityEvents] = new StoreMetadata("Divine", "Pending divinity generation events awaiting batch processing (ephemeral queue)", "redis"),
+            [DivineLock] = new StoreMetadata("Divine", "Distributed locks for deity and blessing mutations", "redis"),
             [Documentation] = new StoreMetadata("Documentation", "Documentation content and metadata", "redis"),
+            [EdgeRevocation] = new StoreMetadata("Auth", "Edge revocation tracking for CDN/firewall layer blocking", "redis"),
             [EscrowActiveValidation] = new StoreMetadata("Escrow", "Track active escrows requiring periodic validation", "redis"),
             [EscrowAgreements] = new StoreMetadata("Escrow", "Main escrow agreement records", "mysql"),
             [EscrowHandlerRegistry] = new StoreMetadata("Escrow", "Custom asset type handler registrations", "mysql"),
@@ -405,8 +704,21 @@ public static class StateStoreDefinitions
             [EscrowPartyPending] = new StoreMetadata("Escrow", "Count pending escrows per party for limits", "redis"),
             [EscrowStatusIndex] = new StoreMetadata("Escrow", "Escrow IDs by status (sorted set for expiration/validation)", "redis"),
             [EscrowTokens] = new StoreMetadata("Escrow", "Token hash validation (hashed tokens to escrow/party info)", "redis"),
+            [FactionCache] = new StoreMetadata("Faction", "Faction lookup and norm resolution cache (frequently read, TTL-based)", "redis"),
+            [FactionLock] = new StoreMetadata("Faction", "Distributed locks for faction, membership, and territory mutations", "redis"),
+            [FactionMembership] = new StoreMetadata("Faction", "Faction membership records linking characters to factions with roles", "mysql"),
+            [FactionNorm] = new StoreMetadata("Faction", "Behavioral norm definitions per faction (durable, queryable by violation type)", "mysql"),
+            [Faction] = new StoreMetadata("Faction", "Faction entity records (durable, queryable by realm/game service/status)", "mysql"),
+            [FactionTerritory] = new StoreMetadata("Faction", "Territory claim records linking factions to controlled locations", "mysql"),
             [GameService] = new StoreMetadata("GameService", "Game service registry", "mysql"),
             [GameSession] = new StoreMetadata("GameSession", "Game session state and history", "mysql"),
+            [GardenerGardenInstances] = new StoreMetadata("Gardener", "Active garden instance state per player (ephemeral, TTL-based)", "redis"),
+            [GardenerLock] = new StoreMetadata("Gardener", "Distributed locks for garden orchestration and scenario mutations", "redis"),
+            [GardenerPhaseConfig] = new StoreMetadata("Gardener", "Deployment phase configuration and transition history (durable)", "mysql"),
+            [GardenerPois] = new StoreMetadata("Gardener", "Active POI state within garden instances (ephemeral, TTL-based)", "redis"),
+            [GardenerScenarioHistory] = new StoreMetadata("Gardener", "Completed scenario history per player (durable, queryable for cooldown)", "mysql"),
+            [GardenerScenarioInstances] = new StoreMetadata("Gardener", "Active scenario instance state (ephemeral, keyed by instance ID)", "redis"),
+            [GardenerScenarioTemplates] = new StoreMetadata("Gardener", "Scenario template definitions (durable, queryable by category/status)", "mysql"),
             [InventoryContainerCache] = new StoreMetadata("Inventory", "Container state and item list cache", "redis"),
             [InventoryContainerStore] = new StoreMetadata("Inventory", "Container definitions (persistent)", "mysql"),
             [InventoryLock] = new StoreMetadata("Inventory", "Distributed locks for concurrent modifications", "redis"),
@@ -418,34 +730,86 @@ public static class StateStoreDefinitions
             [LeaderboardDefinition] = new StoreMetadata("Leaderboard", "Leaderboard definitions and metadata", "redis"),
             [LeaderboardRanking] = new StoreMetadata("Leaderboard", "Real-time ranking data (sorted sets)", "redis"),
             [LeaderboardSeason] = new StoreMetadata("Leaderboard", "Season history and archives", "mysql"),
+            [LicenseBoardCache] = new StoreMetadata("License", "Board state cache (unlocked license positions per board)", "redis"),
+            [LicenseBoardTemplates] = new StoreMetadata("License", "Board template definitions with grid layout and contract references", "mysql"),
+            [LicenseBoards] = new StoreMetadata("License", "Character board instances linking characters to board templates", "mysql"),
+            [LicenseDefinitions] = new StoreMetadata("License", "License definitions (nodes) per board template with grid positions", "mysql"),
+            [LicenseLock] = new StoreMetadata("License", "Distributed locks for board mutations and unlock operations", "redis"),
+            [LocationCache] = new StoreMetadata("Location", "Location lookup cache for frequently-accessed locations", "redis"),
+            [LocationEntityPresence] = new StoreMetadata("Location", "Ephemeral entity-to-location bindings with TTL for presence tracking", "redis"),
+            [LocationEntitySet] = new StoreMetadata("Location", "Redis Sets tracking which entities are at each location", "redis"),
+            [LocationLock] = new StoreMetadata("Location", "Distributed locks for concurrent index modifications", "redis"),
             [Location] = new StoreMetadata("Location", "Location hierarchy and metadata", "mysql"),
             [Mapping] = new StoreMetadata("Mapping", "Spatial map data and channels", "redis"),
             [Matchmaking] = new StoreMetadata("Matchmaking", "Matchmaking queue and ticket state", "redis"),
             [MeshAppidIndex] = new StoreMetadata("Mesh", "App-ID to instance-ID mapping index", "redis"),
+            [MeshCircuitBreaker] = new StoreMetadata("Mesh", "Distributed circuit breaker state for cross-instance failure tracking", "redis"),
             [MeshEndpoints] = new StoreMetadata("Mesh", "Service endpoint registration and health status", "redis"),
             [MeshGlobalIndex] = new StoreMetadata("Mesh", "Global endpoint index for discovery", "redis"),
             [MessagingExternalSubs] = new StoreMetadata("Messaging", "External subscription recovery data", "redis"),
             [MusicCompositions] = new StoreMetadata("Music", "Cached generated compositions", "redis"),
             [MusicStyles] = new StoreMetadata("Music", "Style definitions (celtic, jazz, baroque, etc.)", "mysql"),
+            [ObligationActionMappings] = new StoreMetadata("Obligation", "Action tag to violation type code mappings (durable, queryable)", "mysql"),
+            [ObligationCache] = new StoreMetadata("Obligation", "Cached obligation manifests per character (ephemeral, event-driven invalidation)", "redis"),
+            [ObligationIdempotency] = new StoreMetadata("Obligation", "Violation report idempotency key deduplication", "redis"),
+            [ObligationLock] = new StoreMetadata("Obligation", "Distributed locks for obligation cache rebuild operations", "redis"),
+            [ObligationViolations] = new StoreMetadata("Obligation", "Violation history records (durable, queryable by character/contract/type)", "mysql"),
             [OrchestratorConfig] = new StoreMetadata("Orchestrator", "Configuration version and metadata", "redis"),
             [OrchestratorHeartbeats] = new StoreMetadata("Orchestrator", "Service heartbeat tracking", "redis"),
             [OrchestratorRoutings] = new StoreMetadata("Orchestrator", "Service-to-app-id routing tables", "redis"),
             [Orchestrator] = new StoreMetadata("Orchestrator", "Primary orchestrator state", "redis"),
             [Permission] = new StoreMetadata("Permission", "Permission cache and session capabilities", "redis"),
+            [QuestCharacterIndex] = new StoreMetadata("Quest", "Character to active quest instance mapping", "redis"),
+            [QuestCooldown] = new StoreMetadata("Quest", "Per-character quest cooldown tracking", "redis"),
+            [QuestDefinitionCache] = new StoreMetadata("Quest", "Quest definition read-through cache", "redis"),
+            [QuestDefinition] = new StoreMetadata("Quest", "Quest definitions with contract template IDs and metadata", "mysql"),
+            [QuestIdempotency] = new StoreMetadata("Quest", "Idempotency keys for accept/complete operations", "redis"),
+            [QuestInstance] = new StoreMetadata("Quest", "Quest instances with status and party information", "mysql"),
+            [QuestObjectiveProgress] = new StoreMetadata("Quest", "Real-time objective progress tracking", "redis"),
             [RealmHistory] = new StoreMetadata("RealmHistory", "Realm historical events and lore", "mysql"),
             [Realm] = new StoreMetadata("Realm", "Realm definitions and configuration", "mysql"),
+            [RelationshipLock] = new StoreMetadata("Relationship", "Distributed locks for composite uniqueness and index modifications", "redis"),
             [Relationship] = new StoreMetadata("Relationship", "Entity relationships", "mysql"),
-            [RelationshipType] = new StoreMetadata("RelationshipType", "Relationship type definitions", "mysql"),
+            [RelationshipType] = new StoreMetadata("Relationship", "Relationship type definitions", "mysql"),
+            [ResourceArchives] = new StoreMetadata("Resource", "Compressed archive bundles (durable storage for long-term archival)", "mysql"),
+            [ResourceCleanup] = new StoreMetadata("Resource", "Cleanup callback definitions per resource type", "redis"),
+            [ResourceCompress] = new StoreMetadata("Resource", "Compression callback definitions and callback index sets", "redis"),
+            [ResourceGrace] = new StoreMetadata("Resource", "Grace period timestamps for resources with zero references", "redis"),
+            [ResourceRefcounts] = new StoreMetadata("Resource", "Reference counts and source tracking per resource", "redis"),
+            [ResourceSnapshots] = new StoreMetadata("Resource", "Ephemeral snapshots of living resources (TTL-based auto-expiry for storyline/actor consumption)", "redis"),
             [SaveLoadCache] = new StoreMetadata("SaveLoad", "Recently accessed save data cache", "redis"),
             [SaveLoadPending] = new StoreMetadata("SaveLoad", "Pending save operations", "redis"),
             [SaveLoadSchemas] = new StoreMetadata("SaveLoad", "Registered save data schemas", "mysql"),
             [SaveLoadSlots] = new StoreMetadata("SaveLoad", "Save slot metadata and ownership", "mysql"),
             [SaveLoadVersions] = new StoreMetadata("SaveLoad", "Save version history", "mysql"),
             [Scene] = new StoreMetadata("Scene", "Hierarchical scene composition storage", "mysql"),
+            [SeedBonds] = new StoreMetadata("Seed", "Bond records between seeds (durable)", "mysql"),
+            [SeedCapabilitiesCache] = new StoreMetadata("Seed", "Computed capability manifests (cached, frequently read)", "redis"),
+            [SeedGrowth] = new StoreMetadata("Seed", "Growth domain records per seed (durable, queryable)", "mysql"),
+            [SeedLock] = new StoreMetadata("Seed", "Distributed locks for seed modifications", "redis"),
+            [Seed] = new StoreMetadata("Seed", "Seed entity records (durable, queryable by owner/type)", "mysql"),
+            [SeedTypeDefinitions] = new StoreMetadata("Seed", "Registered seed type definitions (durable, admin-managed)", "mysql"),
             [Species] = new StoreMetadata("Species", "Species definitions", "mysql"),
+            [StatusActiveCache] = new StoreMetadata("Status", "Active status cache per entity (fast lookup, rebuilt from instances on miss)", "redis"),
+            [StatusContainers] = new StoreMetadata("Status", "Status container records mapping entities to inventory containers (durable)", "mysql"),
+            [StatusInstances] = new StoreMetadata("Status", "Status instance records with metadata (durable, queryable by entity/source/category)", "mysql"),
+            [StatusLock] = new StoreMetadata("Status", "Distributed locks for status mutations and template updates", "redis"),
+            [StatusSeedEffectsCache] = new StoreMetadata("Status", "Cached seed-derived effects per entity (invalidated on capability.updated events)", "redis"),
+            [StatusTemplates] = new StoreMetadata("Status", "Status template definitions (durable, queryable by category/code/gameServiceId)", "mysql"),
+            [StorylinePlanIndex] = new StoreMetadata("Storyline", "Plan index by realm for list queries", "redis"),
+            [StorylinePlans] = new StoreMetadata("Storyline", "Cached composed storyline plans (ephemeral, TTL from config)", "redis"),
+            [StorylineScenarioActive] = new StoreMetadata("Storyline", "Active scenario tracking per character (set membership)", "redis"),
+            [StorylineScenarioCache] = new StoreMetadata("Storyline", "Scenario definition read-through cache (TTL from config)", "redis"),
+            [StorylineScenarioCooldown] = new StoreMetadata("Storyline", "Per-character scenario cooldowns with TTL-based auto-expiry", "redis"),
+            [StorylineScenarioDefinitions] = new StoreMetadata("Storyline", "Durable scenario template definitions with conditions and mutations", "mysql"),
+            [StorylineScenarioExecutions] = new StoreMetadata("Storyline", "Scenario execution history with outcome tracking", "mysql"),
+            [StorylineScenarioIdempotency] = new StoreMetadata("Storyline", "Scenario trigger idempotency keys for deduplication", "redis"),
             [Subscription] = new StoreMetadata("Subscription", "User subscriptions to game services", "mysql"),
             [TestSearch] = new StoreMetadata("State", "Test store with RedisSearch enabled", "redis"),
             [Voice] = new StoreMetadata("Voice", "Voice room and peer state", "redis"),
+            [WorldstateCalendar] = new StoreMetadata("Worldstate", "Calendar template definitions and per-realm worldstate configuration (durable, queryable)", "mysql"),
+            [WorldstateRatioHistory] = new StoreMetadata("Worldstate", "Time ratio change history per realm for elapsed game-time computation (append-only, compacted)", "mysql"),
+            [WorldstateRealmClock] = new StoreMetadata("Worldstate", "Current game time per realm (hot reads, updated every ClockTickIntervalSeconds)", "redis"),
         };
 
     #endregion

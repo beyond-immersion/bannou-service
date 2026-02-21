@@ -21,8 +21,7 @@ public class BannouSessionManager : ISessionManager
     // Key prefixes - MUST be unique across all services to avoid key collisions
     // (mesh prefixes keys with app-id, not component name, so all components share key namespace)
     private const string SESSION_KEY_PREFIX = "ws-session:";
-    private const string SESSION_MAPPINGS_KEY_PREFIX = "ws-mappings:";
-    private const string SESSION_HEARTBEAT_KEY_PREFIX = "heartbeat:";
+    internal const string SESSION_HEARTBEAT_KEY_PREFIX = "heartbeat:";
     private const string RECONNECTION_TOKEN_KEY_PREFIX = "reconnect:";
     private const string ACCOUNT_SESSIONS_KEY_PREFIX = "account-sessions:";
 
@@ -42,71 +41,6 @@ public class BannouSessionManager : ISessionManager
         _configuration = configuration;
         _logger = logger;
     }
-
-    #region Service Mappings
-
-    /// <inheritdoc />
-    public async Task SetSessionServiceMappingsAsync(
-        string sessionId,
-        Dictionary<string, Guid> serviceMappings,
-        TimeSpan? ttl = null)
-    {
-        try
-        {
-            var key = SESSION_MAPPINGS_KEY_PREFIX + sessionId;
-            var ttlTimeSpan = ttl ?? TimeSpan.FromSeconds(_configuration.SessionTtlSeconds);
-
-            var store = _stateStoreFactory.GetStore<Dictionary<string, Guid>>(StateStoreDefinitions.Connect);
-            await store.SaveAsync(key, serviceMappings, new StateOptions { Ttl = (int)ttlTimeSpan.TotalSeconds });
-
-            _logger.LogDebug("Stored service mappings for session {SessionId}", sessionId);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Failed to store session service mappings for {SessionId}", sessionId);
-            await _messageBus.TryPublishErrorAsync(
-                "connect",
-                "SetSessionServiceMappings",
-                ex.GetType().Name,
-                ex.Message,
-                dependency: "state",
-                stack: ex.StackTrace);
-            throw;
-        }
-    }
-
-    /// <inheritdoc />
-    public async Task<Dictionary<string, Guid>?> GetSessionServiceMappingsAsync(string sessionId)
-    {
-        try
-        {
-            var key = SESSION_MAPPINGS_KEY_PREFIX + sessionId;
-            var store = _stateStoreFactory.GetStore<Dictionary<string, Guid>>(StateStoreDefinitions.Connect);
-            var mappings = await store.GetAsync(key);
-
-            if (mappings == null)
-            {
-                return null;
-            }
-
-            _logger.LogDebug("Retrieved service mappings for session {SessionId}", sessionId);
-            return mappings;
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Failed to retrieve session service mappings for {SessionId}", sessionId);
-            await _messageBus.TryPublishErrorAsync(
-                "connect",
-                "GetSessionServiceMappings",
-                ex.GetType().Name,
-                ex.Message,
-                dependency: "state",
-                stack: ex.StackTrace);
-            throw; // Don't mask state store failures - null should mean "not found", not "error"
-        }
-    }
-
-    #endregion
 
     #region Connection State
 
@@ -417,18 +351,15 @@ public class BannouSessionManager : ISessionManager
         {
             // Remove all session-related keys in parallel
             var sessionKey = SESSION_KEY_PREFIX + sessionId;
-            var mappingsKey = SESSION_MAPPINGS_KEY_PREFIX + sessionId;
             var heartbeatKey = SESSION_HEARTBEAT_KEY_PREFIX + sessionId;
 
             // Get stores for each type
             var connectionStore = _stateStoreFactory.GetStore<ConnectionStateData>(StateStoreDefinitions.Connect);
-            var mappingsStore = _stateStoreFactory.GetStore<Dictionary<string, Guid>>(StateStoreDefinitions.Connect);
             var heartbeatStore = _stateStoreFactory.GetStore<SessionHeartbeat>(StateStoreDefinitions.Connect);
 
             var deleteTasks = new[]
             {
                 connectionStore.DeleteAsync(sessionKey),
-                mappingsStore.DeleteAsync(mappingsKey),
                 heartbeatStore.DeleteAsync(heartbeatKey)
             };
 
@@ -501,17 +432,14 @@ public class BannouSessionManager : ISessionManager
         try
         {
             var key = ACCOUNT_SESSIONS_KEY_PREFIX + accountId.ToString("N");
-            var store = _stateStoreFactory.GetStore<HashSet<string>>(StateStoreDefinitions.Connect);
+            var cacheStore = _stateStoreFactory.GetCacheableStore<string>(StateStoreDefinitions.Connect);
 
-            // Get existing sessions or create new set
-            var existingSessions = await store.GetAsync(key) ?? new HashSet<string>();
-            existingSessions.Add(sessionId);
+            // Atomic SADD operation - no read-modify-write race condition
+            await cacheStore.AddToSetAsync(key, sessionId,
+                new StateOptions { Ttl = _configuration.SessionTtlSeconds });
 
-            // Save with TTL matching session TTL
-            await store.SaveAsync(key, existingSessions, new StateOptions { Ttl = _configuration.SessionTtlSeconds });
-
-            _logger.LogDebug("Added session {SessionId} to account {AccountId} index (total: {Count})",
-                sessionId, accountId, existingSessions.Count);
+            _logger.LogDebug("Added session {SessionId} to account {AccountId} index",
+                sessionId, accountId);
         }
         catch (Exception ex)
         {
@@ -536,27 +464,22 @@ public class BannouSessionManager : ISessionManager
         try
         {
             var key = ACCOUNT_SESSIONS_KEY_PREFIX + accountId.ToString("N");
-            var store = _stateStoreFactory.GetStore<HashSet<string>>(StateStoreDefinitions.Connect);
+            var cacheStore = _stateStoreFactory.GetCacheableStore<string>(StateStoreDefinitions.Connect);
 
-            var existingSessions = await store.GetAsync(key);
-            if (existingSessions == null || existingSessions.Count == 0)
+            // Atomic SREM operation - no read-modify-write race condition
+            await cacheStore.RemoveFromSetAsync(key, sessionId);
+
+            // Check if set is now empty and clean up
+            var remaining = await cacheStore.SetCountAsync(key);
+            if (remaining == 0)
             {
-                return;
-            }
-
-            existingSessions.Remove(sessionId);
-
-            if (existingSessions.Count == 0)
-            {
-                // Clean up empty sets
-                await store.DeleteAsync(key);
+                await cacheStore.DeleteSetAsync(key);
                 _logger.LogDebug("Removed last session from account {AccountId} index, deleted key", accountId);
             }
             else
             {
-                await store.SaveAsync(key, existingSessions, new StateOptions { Ttl = _configuration.SessionTtlSeconds });
                 _logger.LogDebug("Removed session {SessionId} from account {AccountId} index (remaining: {Count})",
-                    sessionId, accountId, existingSessions.Count);
+                    sessionId, accountId, remaining);
             }
         }
         catch (Exception ex)
@@ -582,10 +505,48 @@ public class BannouSessionManager : ISessionManager
         try
         {
             var key = ACCOUNT_SESSIONS_KEY_PREFIX + accountId.ToString("N");
-            var store = _stateStoreFactory.GetStore<HashSet<string>>(StateStoreDefinitions.Connect);
+            var cacheStore = _stateStoreFactory.GetCacheableStore<string>(StateStoreDefinitions.Connect);
 
-            var sessions = await store.GetAsync(key);
-            return sessions ?? new HashSet<string>();
+            // Get all session IDs from the atomic Redis set
+            var sessions = await cacheStore.GetSetAsync<string>(key);
+            if (sessions.Count == 0)
+            {
+                return new HashSet<string>();
+            }
+
+            // Filter stale sessions by cross-referencing heartbeat data.
+            // Heartbeat keys have a 5-minute TTL (HeartbeatTtlSeconds) and are updated
+            // every 30 seconds during active connections. Missing heartbeat = dead session.
+            var heartbeatStore = _stateStoreFactory.GetStore<SessionHeartbeat>(StateStoreDefinitions.Connect);
+            var liveSessions = new HashSet<string>();
+            var staleSessions = new List<string>();
+
+            foreach (var sessionId in sessions)
+            {
+                var heartbeatKey = SESSION_HEARTBEAT_KEY_PREFIX + sessionId;
+                var heartbeat = await heartbeatStore.GetAsync(heartbeatKey);
+                if (heartbeat != null)
+                {
+                    liveSessions.Add(sessionId);
+                }
+                else
+                {
+                    staleSessions.Add(sessionId);
+                }
+            }
+
+            // Lazily clean up stale entries from the set
+            if (staleSessions.Count > 0)
+            {
+                _logger.LogDebug("Cleaning {StaleCount} stale sessions from account {AccountId} index",
+                    staleSessions.Count, accountId);
+                foreach (var staleSessionId in staleSessions)
+                {
+                    await cacheStore.RemoveFromSetAsync(key, staleSessionId);
+                }
+            }
+
+            return liveSessions;
         }
         catch (Exception ex)
         {

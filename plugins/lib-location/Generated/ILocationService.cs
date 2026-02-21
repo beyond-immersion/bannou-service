@@ -65,6 +65,11 @@ public partial interface ILocationService : IBannouService
         Task<(StatusCodes, LocationListResponse?)> GetLocationAncestorsAsync(GetLocationAncestorsRequest body, CancellationToken cancellationToken = default(CancellationToken));
 
         /// <summary>
+        /// ValidateTerritory operation
+        /// </summary>
+        Task<(StatusCodes, ValidateTerritoryResponse?)> ValidateTerritoryAsync(ValidateTerritoryRequest body, CancellationToken cancellationToken = default(CancellationToken));
+
+        /// <summary>
         /// GetLocationDescendants operation
         /// </summary>
         Task<(StatusCodes, LocationListResponse?)> GetLocationDescendantsAsync(GetLocationDescendantsRequest body, CancellationToken cancellationToken = default(CancellationToken));
@@ -95,6 +100,11 @@ public partial interface ILocationService : IBannouService
         Task<StatusCodes> DeleteLocationAsync(DeleteLocationRequest body, CancellationToken cancellationToken = default(CancellationToken));
 
         /// <summary>
+        /// TransferLocationToRealm operation
+        /// </summary>
+        Task<(StatusCodes, LocationResponse?)> TransferLocationToRealmAsync(TransferLocationToRealmRequest body, CancellationToken cancellationToken = default(CancellationToken));
+
+        /// <summary>
         /// DeprecateLocation operation
         /// </summary>
         Task<(StatusCodes, LocationResponse?)> DeprecateLocationAsync(DeprecateLocationRequest body, CancellationToken cancellationToken = default(CancellationToken));
@@ -110,8 +120,33 @@ public partial interface ILocationService : IBannouService
         Task<(StatusCodes, LocationExistsResponse?)> LocationExistsAsync(LocationExistsRequest body, CancellationToken cancellationToken = default(CancellationToken));
 
         /// <summary>
+        /// QueryLocationsByPosition operation
+        /// </summary>
+        Task<(StatusCodes, LocationListResponse?)> QueryLocationsByPositionAsync(QueryLocationsByPositionRequest body, CancellationToken cancellationToken = default(CancellationToken));
+
+        /// <summary>
         /// SeedLocations operation
         /// </summary>
         Task<(StatusCodes, SeedLocationsResponse?)> SeedLocationsAsync(SeedLocationsRequest body, CancellationToken cancellationToken = default(CancellationToken));
+
+        /// <summary>
+        /// ReportEntityPosition operation
+        /// </summary>
+        Task<(StatusCodes, ReportEntityPositionResponse?)> ReportEntityPositionAsync(ReportEntityPositionRequest body, CancellationToken cancellationToken = default(CancellationToken));
+
+        /// <summary>
+        /// GetEntityLocation operation
+        /// </summary>
+        Task<(StatusCodes, GetEntityLocationResponse?)> GetEntityLocationAsync(GetEntityLocationRequest body, CancellationToken cancellationToken = default(CancellationToken));
+
+        /// <summary>
+        /// ListEntitiesAtLocation operation
+        /// </summary>
+        Task<(StatusCodes, ListEntitiesAtLocationResponse?)> ListEntitiesAtLocationAsync(ListEntitiesAtLocationRequest body, CancellationToken cancellationToken = default(CancellationToken));
+
+        /// <summary>
+        /// ClearEntityPosition operation
+        /// </summary>
+        Task<(StatusCodes, ClearEntityPositionResponse?)> ClearEntityPositionAsync(ClearEntityPositionRequest body, CancellationToken cancellationToken = default(CancellationToken));
 
 }

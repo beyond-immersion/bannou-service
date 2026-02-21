@@ -3,13 +3,14 @@
 > **Plugin**: lib-state
 > **Schema**: schemas/state-api.yaml
 > **Version**: 1.0.0
+> **Layer**: Infrastructure
 > **State Store**: Self (manages all state stores for the platform)
 
 ---
 
 ## Overview
 
-The State service is the infrastructure abstraction layer that provides all Bannou services with access to Redis and MySQL backends through a unified API. It operates in a dual role: (1) as the `IStateStoreFactory` infrastructure library used by all services for state persistence, and (2) as an HTTP API providing direct state access for debugging and administration. Supports Redis (ephemeral/session data), MySQL (durable/queryable data), and InMemory (testing) backends with optimistic concurrency via ETags, TTL support, sorted sets, and JSON path queries.
+The State service (L0 Infrastructure) provides all Bannou services with unified access to Redis and MySQL backends through a repository-pattern API. Operates in a dual role: as the `IStateStoreFactory` infrastructure library used by every service for state persistence, and as an HTTP API for debugging and administration. Supports three backends (Redis for ephemeral/session data, MySQL for durable/queryable data, InMemory for testing) with optimistic concurrency via ETags, TTL support, and specialized interfaces for cache operations, LINQ queries, JSON path queries, and full-text search. See the Interface Hierarchy section for the full interface tree and backend support matrix.
 
 ---
 
@@ -21,7 +22,7 @@ The State service is the infrastructure abstraction layer that provides all Bann
 | NRedisStack 0.13.1 | Redis JSON and search (FT) commands |
 | Pomelo.EntityFrameworkCore.MySql 9.0.0 | MySQL via EF Core |
 | Microsoft.EntityFrameworkCore 9.0.0 | ORM and change tracking |
-| lib-messaging (`IMessageBus`) | Error event publishing |
+| lib-messaging (`IMessageBus`) | Error event publishing via `TryPublishErrorAsync` |
 
 ---
 
@@ -31,8 +32,10 @@ The State service is the infrastructure abstraction layer that provides all Bann
 |-----------|-------------|
 | Every service | Uses `IStateStoreFactory.GetStore<T>()` for typed state access |
 | lib-leaderboard | Uses sorted set operations for rankings |
-| lib-permission | Uses Redis store with distributed locks |
+| lib-permission | Uses Redis store with distributed locks via `IDistributedLockProvider` |
 | lib-asset | Uses Redis for uploads, MySQL for metadata |
+| lib-currency | Uses Redis cache with MySQL backing for wallets/holds |
+| lib-inventory | Uses Redis cache with MySQL backing for containers |
 
 All services depend on state infrastructure. The HTTP API (`IStateClient`) is used for debugging/admin only.
 
@@ -42,25 +45,27 @@ All services depend on state infrastructure. The HTTP API (`IStateClient`) is us
 
 **Self-managed**: This plugin defines and manages all state stores across Bannou.
 
-**Store Registry**: `schemas/state-stores.yaml` (560 lines, ~35 stores)
+**Store Registry**: `schemas/state-stores.yaml` (~107 stores as of 2026-02)
 
 ### Backend Distribution
 
 | Backend | Count | Use Case |
 |---------|-------|----------|
-| Redis | ~10 | Sessions, caches, ephemeral state, leaderboards |
-| MySQL | ~25 | Durable entity data, queryable records |
+| Redis | ~70 | Sessions, caches, ephemeral state, leaderboards, locks, indexes |
+| MySQL | ~37 | Durable entity data, queryable records, archives |
 | Memory | 0 (runtime only) | Testing with `UseInMemory=true` |
 
 ### Key Structure (Redis)
 
 | Pattern | Purpose |
 |---------|---------|
-| `{prefix}:{key}` | Primary value storage |
-| `{prefix}:{key}:meta` | Hash with version + updated timestamp |
-| `{prefix}:set:{key}` | Set members |
-| `{prefix}:zset:{key}` | Sorted set (score-based) |
-| `{storeName}-idx` | FT search index (auto-created) |
+| `{prefix}:{key}` | Primary value storage (STRING or JSON depending on store type) |
+| `{prefix}:{key}:meta` | Hash with `version` and `updated` timestamp |
+| `{prefix}:set:{key}` | Set members (SET type) |
+| `{prefix}:zset:{key}` | Sorted set for rankings (ZSET type) |
+| `{prefix}:counter:{key}` | Atomic counter (STRING with INCR/DECR) |
+| `{prefix}:hash:{key}` | Hash for field-value pairs (HASH type) |
+| `{storeName}-idx` | FT search index (auto-created for EnableSearch stores) |
 
 ### Key Structure (MySQL)
 
@@ -69,7 +74,7 @@ All services depend on state infrastructure. The HTTP API (`IStateClient`) is us
 | `StoreName` | VARCHAR(255) | Part of composite PK |
 | `Key` | VARCHAR(255) | Part of composite PK |
 | `ValueJson` | LONGTEXT | JSON-serialized value |
-| `ETag` | VARCHAR(64) | SHA256[0:12] hash |
+| `ETag` | VARCHAR(64) | SHA256[0:12] base64 hash |
 | `Version` | INT | Concurrency token |
 | `CreatedAt` / `UpdatedAt` | TIMESTAMP | Audit timestamps |
 
@@ -95,14 +100,23 @@ This plugin does not consume external events.
 | `RedisConnectionString` | `STATE_REDIS_CONNECTION_STRING` | `"bannou-redis:6379"` | Redis host:port |
 | `MySqlConnectionString` | `STATE_MYSQL_CONNECTION_STRING` | `"server=bannou-mysql;..."` | Full MySQL connection string |
 | `ConnectionTimeoutSeconds` | `STATE_CONNECTION_TIMEOUT_SECONDS` | `60` | Database connection timeout |
+| `ConnectionRetryCount` | `STATE_CONNECTION_RETRY_COUNT` | `10` | Max MySQL connection retry attempts |
+| `MinRetryDelayMs` | `STATE_MIN_RETRY_DELAY_MS` | `1000` | Min delay between MySQL retry attempts |
+| `InMemoryFallbackLimit` | `STATE_INMEMORY_FALLBACK_LIMIT` | `10000` | Max entries for in-memory query fallback (throws if exceeded) |
+| `EnableErrorEventPublishing` | `STATE_ENABLE_ERROR_EVENT_PUBLISHING` | `true` | Publish error events when state store operations fail |
+| `ErrorEventDeduplicationWindowSeconds` | `STATE_ERROR_EVENT_DEDUPLICATION_WINDOW_SECONDS` | `60` | Time window for deduplicating identical error events |
 
-### Unused Configuration Properties
+**Note:** `DefaultConsistency`, `EnableMetrics`, and `EnableTracing` were removed as dead config. Telemetry is now controlled centrally via lib-telemetry. Consistency is specified per-request via `StateOptions.Consistency`.
 
-| Property | Env Var | Default | Notes |
-|----------|---------|---------|-------|
-| `DefaultConsistency` | `STATE_DEFAULT_CONSISTENCY` | `Strong` | Defined but never evaluated in service code |
-| `EnableMetrics` | `STATE_ENABLE_METRICS` | `true` | Feature flag, never implemented |
-| `EnableTracing` | `STATE_ENABLE_TRACING` | `true` | Feature flag, never implemented |
+### Error Event Publishing
+
+When infrastructure errors occur (Redis connection failures, timeouts, etc.), the state stores can publish `ServiceErrorEvent` messages via `IMessageBus.TryPublishErrorAsync`. This provides observability into state store health without impacting caller latency.
+
+**Deduplication**: To prevent event storms during infrastructure failures, events are deduplicated using a key-based time window. Events with the same `storeName + operation + errorType` are published at most once per deduplication window (default: 60 seconds).
+
+**Fire-and-Forget**: Error publishing is non-blocking (`_ = _errorPublisher?.Invoke(...)`) and does not affect the exception behavior - stores still throw as before.
+
+**Disable**: Set `STATE_ENABLE_ERROR_EVENT_PUBLISHING=false` to disable error event publishing entirely.
 
 ---
 
@@ -111,11 +125,34 @@ This plugin does not consume external events.
 | Service | Lifetime | Role |
 |---------|----------|------|
 | `IStateStoreFactory` | Singleton | Creates typed store instances, manages connections |
-| `StateStoreFactory` | Singleton | Implementation with Redis/MySQL initialization |
-| `IDistributedLockProvider` | Singleton | Redis-backed distributed mutex |
+| `StateStoreFactory` | Singleton | Implementation with Redis/MySQL initialization and store caching |
+| `IDistributedLockProvider` | Singleton | Distributed mutex using Redis (SET NX EX) with InMemory fallback |
+| `RedisDistributedLockProvider` | Singleton | Uses `IRedisOperations` for Lua-based safe unlock, falls back to in-memory locks |
+| `IRedisOperations` | - | Low-level Redis ops (Lua scripts, transactions only); obtained via `GetRedisOperations()` |
+| `RedisOperations` | Internal | Shares `ConnectionMultiplexer` with state stores |
+| `RedisLuaScripts` | Static | Loads and caches Lua scripts from embedded resources (`Scripts/*.lua`) |
 | `StateService` | Scoped | HTTP API implementation |
 
-Service lifetime is **Scoped** for the HTTP API, **Singleton** for the factory.
+### Factory Methods
+
+| Method | Returns | Description |
+|--------|---------|-------------|
+| `GetStore<T>(name)` | `IStateStore<T>` | Basic CRUD operations (all backends) |
+| `GetStoreAsync<T>(name)` | `IStateStore<T>` | Async version, avoids sync-over-async |
+| `GetCacheableStore<T>(name)` | `ICacheableStateStore<T>` | Set, Sorted Set, Counter, Hash ops (throws for MySQL) |
+| `GetCacheableStoreAsync<T>(name)` | `ICacheableStateStore<T>` | Async version |
+| `GetSearchableStore<T>(name)` | `ISearchableStateStore<T>` | Full-text search (RedisSearch only) |
+| `GetRedisOperations()` | `IRedisOperations?` | Lua scripts, transactions only; null when `UseInMemory=true` |
+| `GetKeyCountAsync(name)` | `long?` | Key count for store (O(1) InMemory, COUNT MySQL, null Redis) |
+
+### Store Implementation Classes
+
+| Class | Backend | Implements | Features |
+|-------|---------|------------|----------|
+| `RedisStateStore<T>` | Redis | `ICacheableStateStore<T>` | String ops, sets, sorted sets, counters, hashes, TTL |
+| `RedisSearchStateStore<T>` | Redis | `ICacheableStateStore<T>`, `ISearchableStateStore<T>` | JSON storage, FT search, sets, sorted sets, counters, hashes |
+| `MySqlStateStore<T>` | MySQL | `IQueryableStateStore<T>`, `IJsonQueryableStateStore<T>` | EF Core, JSON path queries (no sets/sorted sets/counters/hashes) |
+| `InMemoryStateStore<T>` | Memory | `ICacheableStateStore<T>` | Static shared stores, sets, sorted sets, counters, hashes, TTL via lazy cleanup |
 
 ---
 
@@ -123,115 +160,183 @@ Service lifetime is **Scoped** for the HTTP API, **Singleton** for the factory.
 
 ### Get (`/state/get`)
 
-Returns value with ETag for concurrent-safe retrieval. Uses `GetWithETagAsync()` internally. Returns NotFound if store doesn't exist. Includes `StateMetadata` in response.
+Returns value with ETag for concurrent-safe retrieval. Uses `GetWithETagAsync()` internally. Returns NotFound if store doesn't exist or key not found.
 
 ### Save (`/state/save`)
 
-Supports optimistic concurrency via ETag in `StateOptions`. If ETag provided and mismatches, returns 409 Conflict. TTL support for Redis stores. Uses Redis transactions for atomicity.
+Supports optimistic concurrency via ETag in `StateOptions`. If ETag provided and mismatches, returns 409 Conflict via `TrySaveAsync()`. TTL support for Redis stores. Uses Redis transactions for atomicity in `RedisStateStore`.
 
 ### Delete (`/state/delete`)
 
-Boolean response indicates deletion success. Returns false if key not found.
+Boolean response indicates deletion success. Returns false if key not found. Deletes both value and metadata keys in Redis.
 
 ### Query (`/state/query`)
 
-Routes to MySQL for conditions-based queries (JSON path expressions) or Redis Search if enabled. Returns BadRequest if Redis search not supported for the store. MySQL uses `JSON_EXTRACT`, `JSON_UNQUOTE`, and `JSON_CONTAINS_PATH` functions. Supports operators: equals, notEquals, greaterThan, lessThan, contains, in, exists, notExists, fullText.
+Routes to MySQL for conditions-based queries (JSON path expressions) or Redis Search if enabled. Returns BadRequest if Redis search not supported for the store. MySQL uses `JSON_EXTRACT`, `JSON_UNQUOTE`, and `JSON_CONTAINS_PATH` functions. Supports operators: equals, notEquals, greaterThan, lessThan, contains, startsWith, endsWith, in, exists, notExists, fullText.
 
 ### Bulk Get (`/state/bulk-get`)
 
-Uses `GetBulkAsync()` for efficient multi-key retrieval. Returns per-key `Found` flags. Redis uses MGET; MySQL uses multi-key query.
+Uses `GetBulkAsync()` for efficient multi-key retrieval. Returns per-key `Found` flags. Redis uses MGET; MySQL uses multi-key IN query.
+
+### Bulk Exists (`/state/bulk-exists`)
+
+Checks existence of multiple keys in a single operation. Returns a set of keys that exist. Redis uses EXISTS command; MySQL uses IN query on StoreName+Key.
+
+### Bulk Delete (`/state/bulk-delete`)
+
+Deletes multiple keys in a single operation. Returns count of keys actually deleted. Uses transactions/batching for efficiency.
 
 ### List Stores (`/state/list-stores`)
 
-Returns registered store names with backend info. Optional backend filter (Redis/MySQL). KeyCount always null (not implemented).
+Returns registered store names with backend info. Optional backend filter (Redis/MySQL). `KeyCount` is backend-dependent: O(1) for InMemory, COUNT(*) query for MySQL, null for Redis (SCAN is O(N) on total keys).
 
 ---
 
 ## Visual Aid
 
 ```
-State Store Architecture
-==========================
+State Store Architecture (Interface Hierarchy)
+==============================================
 
-  Service Code                StateStoreFactory              Backends
-  ============                ================              ========
+  Service Code                     StateStoreFactory
+  ============                     ================
 
-  _stateStoreFactory          GetStore<T>(name)
-  .GetStore<T>()  ──────────► ┌─────────────┐
-                               │ Store Cache  │
-                               │ (Concurrent  │
-                               │  Dictionary) │
-                               └──────┬──────┘
-                                      │
-                    ┌─────────────────┼─────────────────┐
-                    │                 │                  │
-              ┌─────▼─────┐    ┌─────▼──────┐    ┌─────▼─────┐
-              │RedisState  │    │RedisSearch │    │MySqlState │
-              │Store<T>    │    │StateStore  │    │Store<T>   │
-              │            │    │<T>         │    │           │
-              │ String ops │    │ JSON ops   │    │ EF Core   │
-              │ Set ops    │    │ FT search  │    │ JSON query│
-              │ ZSet ops   │    │ All Redis  │    │ No sets   │
-              │ TTL support│    │ ops +search│    │ No zsets  │
-              └─────┬──────┘    └─────┬──────┘    └─────┬─────┘
-                    │                 │                  │
-              ┌─────▼─────┐    ┌─────▼──────┐    ┌─────▼─────┐
-              │   Redis    │    │   Redis    │    │   MySQL   │
-              │  (single   │    │  + FT idx  │    │ StateEntry│
-              │ connection)│    │            │    │  table    │
-              └────────────┘    └────────────┘    └───────────┘
+  GetStore<T>()         ─────────► IStateStore<T>          (all backends)
+  GetCacheableStore<T>() ────────► ICacheableStateStore<T> (Redis/Memory)
+  GetSearchableStore<T>() ───────► ISearchableStateStore<T>(RedisSearch)
+  GetRedisOperations()   ────────► IRedisOperations?       (Redis only)
+
+  Interface Hierarchy:
+  ===================
+
+    IStateStore<T>  ◄────────────── Core CRUD (all backends)
+         │
+         ├── ICacheableStateStore<T>  ◄── Sets, Sorted Sets, Counters, Hashes
+         │        │                        (Redis, InMemory)
+         │        ├── RedisStateStore<T>     (full support)
+         │        ├── InMemoryStateStore<T>  (full support)
+         │        │
+         │        └── ISearchableStateStore<T> ◄── Full-text search (extends Cacheable)
+         │                 └── RedisSearchStateStore<T>  (Cacheable + FT search)
+         │
+         └── IQueryableStateStore<T>  ◄── LINQ queries
+                  │                        (MySQL only)
+                  └── IJsonQueryableStateStore<T>
+                           └── MySqlStateStore<T>
+
+    IRedisOperations  ◄────────────── Lua scripts, transactions
+         └── RedisOperations            (Redis only, null if InMemory)
+
+  Backend Layout:
+  ===============
+
+    ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
+    │ RedisStateStore │    │RedisSearchStore │    │  MySqlStateStore│
+    │ + ICacheable    │    │ + ICacheable    │    │ + IQueryable    │
+    │ (Sets+ZSets+    │    │ + ISearchable   │    │ + IJsonQueryable│
+    │  Counters+Hash) │    │ (full support)  │    │                 │
+    └────────┬────────┘    └────────┬────────┘    └────────┬────────┘
+             │                      │                      │
+    ┌────────▼────────┐    ┌────────▼────────┐    ┌────────▼────────┐
+    │     Redis       │    │   Redis + FT    │    │      MySQL      │
+    │  (String/Sets)  │    │   (JSON/Index)  │    │   (StateEntry)  │
+    └─────────────────┘    └─────────────────┘    └─────────────────┘
 ```
 
 ---
 
 ## Stubs & Unimplemented Features
 
-1. **KeyCount in ListStores**: Always returns null. Would require DBSIZE for Redis or COUNT for MySQL.
-2. **DefaultConsistency**: Config property exists but consistency mode is not evaluated anywhere.
-3. **Metrics/Tracing**: Config flags exist but no instrumentation implemented.
-4. **State change events**: Considered but rejected as too expensive per-operation.
+None.
 
 ---
 
 ## Potential Extensions
 
-1. **Store-level metrics**: Track operation counts, latencies per store for capacity planning.
-2. **TTL support for MySQL**: Currently Redis-only. MySQL stores never expire data.
-3. **Bulk save operation**: Currently only bulk-get exists. Bulk save would help seed operations.
-4. **Store migration tooling**: Move data between Redis and MySQL backends without downtime.
+1. **Store migration tooling**: Move data between Redis and MySQL backends without downtime.
+   <!-- AUDIT:NEEDS_DESIGN:2026-01-31:https://github.com/beyond-immersion/bannou-service/issues/190 -->
+
+---
+
+## Interface Hierarchy
+
+```
+IStateStore<T>                    - Core CRUD (all backends)
+├── ICacheableStateStore<T>       - Sets, Sorted Sets, Counters, Hashes (Redis + InMemory)
+│   └── ISearchableStateStore<T>  - Full-text search (extends Cacheable)
+├── IQueryableStateStore<T>       - LINQ queries (MySQL only)
+│   └── IJsonQueryableStateStore<T> - JSON path queries (MySQL only)
+
+IRedisOperations                  - Low-level Redis access (Lua scripts, transactions)
+```
+
+**Key Design**: `ISearchableStateStore<T>` extends `ICacheableStateStore<T>` because all searchable stores are Redis-based and therefore support all cacheable operations (sets, sorted sets, counters, hashes). This ensures proper telemetry instrumentation for all operations when using searchable stores.
+
+**Backend Support Matrix**:
+
+| Interface | Redis | MySQL | InMemory | RedisSearch |
+|-----------|:-----:|:-----:|:--------:|:-----------:|
+| `IStateStore<T>` | ✅ | ✅ | ✅ | ✅ |
+| `ICacheableStateStore<T>` (Sets) | ✅ | ❌ | ✅ | ✅ |
+| `ICacheableStateStore<T>` (Sorted Sets) | ✅ | ❌ | ✅ | ✅ |
+| `ICacheableStateStore<T>` (Counters) | ✅ | ❌ | ✅ | ✅ |
+| `ICacheableStateStore<T>` (Hashes) | ✅ | ❌ | ✅ | ✅ |
+| `IQueryableStateStore<T>` | ❌ | ✅ | ❌ | ❌ |
+| `IJsonQueryableStateStore<T>` | ❌ | ✅ | ❌ | ❌ |
+| `ISearchableStateStore<T>` | ❌ | ❌ | ❌ | ✅ |
+| `IRedisOperations` | ✅ | ❌ | ❌ | ❌ |
 
 ---
 
 ## Known Quirks & Caveats
 
-### Bugs
+### Bugs (Fix Immediately)
 
-None identified.
+None currently identified.
 
-### Intentional Quirks
+### Intentional Quirks (Documented Behavior)
 
-1. **Sync-over-async in GetStore()**: `StateStoreFactory.GetStore<T>()` calls `.GetAwaiter().GetResult()` if initialization hasn't completed. This supports services that call GetStore in constructors but can deadlock in async contexts. Prefer `GetStoreAsync<T>()`.
+1. **Sync-over-async in GetStore()**: `StateStoreFactory.GetStore<T>()` calls `.GetAwaiter().GetResult()` if initialization hasn't completed. This supports services that call GetStore in constructors but can deadlock in async contexts. A warning is logged when this occurs. Prefer `GetStoreAsync<T>()` or call `InitializeAsync()` at startup.
 
-2. **ETag format inconsistency**: Redis uses a `long` version counter as ETag. MySQL uses `SHA256(json)[0:12]` (base64). Same logical concept, different formats across backends.
+2. **ETag format inconsistency**: Redis uses a `long` version counter as ETag (incremented on each save). MySQL uses `SHA256(json)[0:12]` (base64). Same logical concept, different formats across backends. Services should treat ETags as opaque strings.
 
-3. **Shared static stores in InMemory mode**: `InMemoryStateStore` uses static `ConcurrentDictionary` instances. `GetStore<TypeA>("store")` and `GetStore<TypeB>("store")` see the same underlying data. Enables cross-type access but can cause test pollution.
+3. **Shared static stores in InMemory mode**: `InMemoryStateStore` uses static `ConcurrentDictionary` instances keyed by store name. `GetStore<TypeA>("store")` and `GetStore<TypeB>("store")` see the same underlying data (serialized as JSON). Enables cross-type access but can cause test pollution if not cleared between tests.
 
-4. **MySQL JSON query operators**: `Contains` uses `LIKE %value%`, `FullText` also uses `LIKE %value%`. These are simplified implementations, not true full-text search on MySQL.
+4. **MySQL JSON query operators**: `Contains` and `FullText` both use `LIKE %value%`. These are simplified implementations, not true full-text search on MySQL.
 
-### Design Considerations
+5. ~~**TrySaveAsync empty ETag semantics differ by backend**~~: **FIXED** (2026-02-07) - InMemoryStateStore now matches Redis/MySQL semantics: empty ETag means "create new entry if it doesn't exist" with atomic conflict detection via `TryAdd`.
 
-1. **Unused config properties**: `DefaultConsistency`, `EnableMetrics`, `EnableTracing` are defined but never evaluated. Should be wired up or removed per IMPLEMENTATION TENETS.
+6. **RedisSearchStateStore falls back to string storage**: The `GetAsync` and `GetWithETagAsync` methods catch `WRONGTYPE` errors and fall back to `StringGet` for backwards compatibility with keys stored as strings before search was enabled.
 
-2. **MySQL query loads all into memory**: `JsonQueryPagedAsync` builds SQL with WHERE/ORDER BY/LIMIT but the result mapping still deserializes all matching rows. For very large result sets this could be memory-intensive.
+7. **No state change events**: The State service intentionally does not publish lifecycle events (StateChanged, StoreMigration, StoreHealth) for state mutations. This was a deliberate design decision because publishing events for every save/delete operation would be prohibitively expensive given the high operation volume across all services. Error events are still published via `TryPublishErrorAsync` for operational visibility. See `schemas/state-events.yaml` for documentation of this decision.
 
-3. **No store-level access control**: Any service can access any store via `IStateStoreFactory.GetStore<T>(anyName)`. No enforcement of store ownership. Relies on convention (services only access their own stores).
+8. **No store-level access control**: Any service can access any store via `IStateStoreFactory.GetStore<T>(anyName)`. This is intentional - enforcement was considered and rejected for these reasons:
+   - All services are in the same trust boundary (same codebase, same deployment)
+   - Adding access control would require ambient context or passed parameters to identify the "current service" at call time
+   - Significant performance overhead for every state store access
+   - Would break the clean DI pattern where services just inject `IStateStoreFactory`
+   - The generated `StateStoreDefinitions` constants guide correct usage via convention
+   - This is internal infrastructure, not an external API requiring authorization
 
-4. **Set operation support varies by backend**: Redis supports sets and sorted sets. MySQL throws `NotSupportedException`. InMemory supports sets but not sorted sets. Services must know their backend to use these features.
+9. **Asymmetric connection retry between MySQL and Redis**: MySQL initialization retries up to `ConnectionRetryCount` times with configurable delay. Redis initialization does not retry. This is intentional: StackExchange.Redis has built-in auto-reconnect functionality that handles connection failures and reconnection automatically. EF Core/MySQL does not have this capability, so explicit retry logic is required for MySQL only.
 
-5. **Connection initialization retry**: MySQL initialization retries up to `ConnectionRetryCount` times with configurable delay. Redis initialization does not retry (relies on StackExchange.Redis auto-reconnect).
+10. **MySQL expression translator limitations**: `QueryAsync` and `QueryPagedAsync` attempt to translate LINQ expressions to SQL-level `JSON_EXTRACT` queries. Supported patterns include:
+    - Simple comparisons: `x.Field == value`, `x.Field != value`, `x.Field > value`
+    - Null comparisons: `x.Field == null`, `x.Field != null`
+    - String operations: `x.Field.Contains("s")`, `x.Field.StartsWith("s")`, `x.Field.EndsWith("s")`
+    - Collection membership: `ids.Contains(x.Id)` (generates SQL `IN` clause)
+    - Boolean property access: `x.IsActive` (treats as `x.IsActive == true`)
 
-6. **Hardcoded retry delay minimum**: The retry delay uses a hardcoded minimum of 1000ms in `StateStoreFactory.cs:121`. Should be a configuration property (`MinRetryDelayMs`).
+    Unsupported patterns fall back to in-memory filtering with a configurable limit (`InMemoryFallbackLimit`, default 10000). Exceeding this limit throws `InvalidOperationException` to prevent OOM. Use `JsonQueryAsync` with explicit `QueryCondition` objects for complex queries on large datasets.
 
-7. **ConnectionRetryCount not in schema**: `ConnectionRetryCount` has a hardcoded default of `10` in `StateStoreFactoryConfiguration` but is not exposed in the configuration schema. Should be added to `state-configuration.yaml`.
+11. **MySQL stores reject TTL requests**: Passing `StateOptions.Ttl` to `SaveAsync` or `SaveBulkAsync` on a MySQL store throws `InvalidOperationException`. This is by design: MySQL stores are for durable/queryable data that should not auto-expire. For ephemeral data requiring TTL, use a Redis-backed store instead. This enforces the architectural separation between Redis (ephemeral/session) and MySQL (durable/queryable) data.
 
-8. **Infrastructure-level error events**: `RedisDistributedLockProvider.LockAsync` catches exceptions and logs them but does not call `TryPublishErrorAsync`. Injecting `IMessageBus` into infrastructure code requires careful consideration of circular dependencies and whether infrastructure libs should publish events at all.
+### Design Considerations (Requires Planning)
+
+None currently identified.
+
+---
+
+## Work Tracking
+
+This section tracks active development work on items from the quirks/bugs lists above.

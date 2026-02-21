@@ -9,7 +9,7 @@ instructions when working with Codex or other coding agents.
 - `docs/reference/TENETS.md` - non-negotiable development rules
 - `docs/BANNOU_DESIGN.md` - architecture and design philosophy
 - `Makefile` - authoritative commands and patterns
-- `docs/guides/TESTING.md` - required for any testing work
+- `docs/operations/TESTING.md` - required for any testing work
 
 ## Non-Negotiable Rules (highlights)
 
@@ -32,7 +32,7 @@ instructions when working with Codex or other coding agents.
 ## Verification
 
 - Do not claim completion until the user confirms `dotnet build` succeeded.
-- For any testing-related task, first read `docs/guides/TESTING.md` in full and respond with:
+- For any testing-related task, first read `docs/operations/TESTING.md` in full and respond with:
   "I have referred to the service testing document."
  - Leave test execution to the user unless explicitly requested.
 

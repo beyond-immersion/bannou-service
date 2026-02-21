@@ -6,7 +6,7 @@
  *
  * @example
  * ```typescript
- * const flags = MessageFlags.Binary | MessageFlags.HighPriority;
+ * const flags = MessageFlags.Binary | MessageFlags.Event;
  * ```
  */
 export const MessageFlags = {
@@ -20,20 +20,22 @@ export const MessageFlags = {
    */
   Binary: 0x01,
 
-  /**
-   * Message payload is encrypted
-   */
-  Encrypted: 0x02,
+  // Bit 0x02 is reserved (originally Encrypted, removed).
+  // Bit 0x08 is reserved (originally HighPriority, removed).
+  // Values are preserved to avoid shifting existing flag assignments.
+
+  /** Reserved for future use. Do not assign. */
+  Reserved0x02: 0x02,
 
   /**
-   * Message payload is compressed (gzip)
+   * Payload is Brotli-compressed. Client must decompress before parsing.
+   * Only set on server-to-client messages when compression is enabled and
+   * payload exceeds the configured size threshold.
    */
   Compressed: 0x04,
 
-  /**
-   * Deliver at high priority, skip to front of queues
-   */
-  HighPriority: 0x08,
+  /** Reserved for future use. Do not assign. */
+  Reserved0x08: 0x08,
 
   /**
    * Fire-and-forget message, no response expected
@@ -94,4 +96,11 @@ export function isMeta(flags: number): boolean {
  */
 export function isBinary(flags: number): boolean {
   return hasFlag(flags, MessageFlags.Binary);
+}
+
+/**
+ * Check if payload is Brotli-compressed.
+ */
+export function isCompressed(flags: number): boolean {
+  return hasFlag(flags, MessageFlags.Compressed);
 }

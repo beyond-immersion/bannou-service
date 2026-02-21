@@ -42,11 +42,10 @@ public partial interface IVoiceClient
     /// <param name="body">The body parameter.</param>
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
-    /// Create voice room for a game session
+    /// Create a new voice room
     /// </summary>
     /// <remarks>
-    /// Creates a new voice room associated with a game session.
-    /// <br/>Called by GameSession service when creating a session with voice enabled.
+    /// Creates a new voice room associated with a session. Any service can call this.
     /// <br/>Returns room ID and initial configuration.
     /// </remarks>
     /// <returns>Voice room created successfully</returns>
@@ -60,7 +59,6 @@ public partial interface IVoiceClient
     /// </summary>
     /// <remarks>
     /// Retrieves current state of a voice room including participant list.
-    /// <br/>Called by GameSession service to check room status.
     /// </remarks>
     /// <returns>Voice room retrieved successfully</returns>
     /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
@@ -72,8 +70,8 @@ public partial interface IVoiceClient
     /// Join voice room and register SIP endpoint
     /// </summary>
     /// <remarks>
-    /// Registers a participant's SIP endpoint with the voice room.
-    /// <br/>Called by GameSession service when a player joins a session.
+    /// Registers a participant in the voice room. If AdHocRoomsEnabled and room
+    /// <br/>doesn't exist, auto-creates it.
     /// <br/>Returns connection info and current peer list for P2P mode,
     /// <br/>or RTP server details for scaled mode.
     /// </remarks>
@@ -87,8 +85,7 @@ public partial interface IVoiceClient
     /// Leave voice room
     /// </summary>
     /// <remarks>
-    /// Removes a participant from the voice room and notifies other peers.
-    /// <br/>Called by GameSession service when a player leaves a session.
+    /// Removes a participant from the voice room.
     /// </remarks>
     /// <returns>Successfully left voice room</returns>
     /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
@@ -101,7 +98,6 @@ public partial interface IVoiceClient
     /// </summary>
     /// <remarks>
     /// Deletes a voice room and notifies all participants.
-    /// <br/>Called by GameSession service when a session is deleted.
     /// </remarks>
     /// <returns>Voice room deleted successfully</returns>
     /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
@@ -137,6 +133,55 @@ public partial interface IVoiceClient
     /// <returns>SDP answer processed, peer notified</returns>
     /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
     System.Threading.Tasks.Task AnswerPeerAsync(AnswerPeerRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
+    /// <param name="body">The body parameter.</param>
+    /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+    /// <summary>
+    /// Request broadcast consent from all room participants
+    /// </summary>
+    /// <remarks>
+    /// Initiates the broadcast consent flow. All current room participants receive a VoiceBroadcastConsentRequestEvent. Broadcasting only starts after all participants consent. If ANY participant declines, the broadcast request is denied.
+    /// <br/>This endpoint is the ONLY way to initiate voice room broadcasting. lib-stream subscribes to the resulting approval/decline events.
+    /// </remarks>
+    /// <returns>Consent request sent to all participants</returns>
+    /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+    System.Threading.Tasks.Task<BroadcastConsentStatus> RequestBroadcastConsentAsync(BroadcastConsentRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
+    /// <param name="body">The body parameter.</param>
+    /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+    /// <summary>
+    /// Respond to a broadcast consent request
+    /// </summary>
+    /// <remarks>
+    /// Called by each participant to consent or decline broadcasting. When all participants consent, lib-voice publishes voice.room.broadcast.approved. If any participant declines, lib-voice publishes voice.room.broadcast.declined.
+    /// </remarks>
+    /// <returns>Consent response recorded</returns>
+    /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+    System.Threading.Tasks.Task<BroadcastConsentStatus> RespondBroadcastConsentAsync(BroadcastConsentResponse body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
+    /// <param name="body">The body parameter.</param>
+    /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+    /// <summary>
+    /// Stop broadcasting from a voice room
+    /// </summary>
+    /// <remarks>
+    /// Any participant can stop an active broadcast at any time. This is equivalent to revoking consent. Publishes voice.room.broadcast.stopped with reason ConsentRevoked.
+    /// </remarks>
+    /// <returns>Broadcast stopped</returns>
+    /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+    System.Threading.Tasks.Task StopBroadcastAsync(StopBroadcastConsentRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
+    /// <param name="body">The body parameter.</param>
+    /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+    /// <summary>
+    /// Get broadcast status for a voice room
+    /// </summary>
+    /// <remarks>
+    /// Returns the current broadcast state: whether consent is pending, active, or inactive.
+    /// </remarks>
+    /// <returns>Broadcast status</returns>
+    /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+    System.Threading.Tasks.Task<BroadcastConsentStatus> GetBroadcastStatusAsync(BroadcastStatusRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 }
 
 /// <summary>
@@ -280,11 +325,10 @@ public partial class VoiceClient : IVoiceClient, BeyondImmersion.BannouService.S
     /// <param name="body">The body parameter.</param>
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
-    /// Create voice room for a game session
+    /// Create a new voice room
     /// </summary>
     /// <remarks>
-    /// Creates a new voice room associated with a game session.
-    /// <br/>Called by GameSession service when creating a session with voice enabled.
+    /// Creates a new voice room associated with a session. Any service can call this.
     /// <br/>Returns room ID and initial configuration.
     /// </remarks>
     /// <returns>Voice room created successfully</returns>
@@ -381,7 +425,6 @@ public partial class VoiceClient : IVoiceClient, BeyondImmersion.BannouService.S
     /// </summary>
     /// <remarks>
     /// Retrieves current state of a voice room including participant list.
-    /// <br/>Called by GameSession service to check room status.
     /// </remarks>
     /// <returns>Voice room retrieved successfully</returns>
     /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
@@ -470,8 +513,8 @@ public partial class VoiceClient : IVoiceClient, BeyondImmersion.BannouService.S
     /// Join voice room and register SIP endpoint
     /// </summary>
     /// <remarks>
-    /// Registers a participant's SIP endpoint with the voice room.
-    /// <br/>Called by GameSession service when a player joins a session.
+    /// Registers a participant in the voice room. If AdHocRoomsEnabled and room
+    /// <br/>doesn't exist, auto-creates it.
     /// <br/>Returns connection info and current peer list for P2P mode,
     /// <br/>or RTP server details for scaled mode.
     /// </remarks>
@@ -574,8 +617,7 @@ public partial class VoiceClient : IVoiceClient, BeyondImmersion.BannouService.S
     /// Leave voice room
     /// </summary>
     /// <remarks>
-    /// Removes a participant from the voice room and notifies other peers.
-    /// <br/>Called by GameSession service when a player leaves a session.
+    /// Removes a participant from the voice room.
     /// </remarks>
     /// <returns>Successfully left voice room</returns>
     /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
@@ -659,7 +701,6 @@ public partial class VoiceClient : IVoiceClient, BeyondImmersion.BannouService.S
     /// </summary>
     /// <remarks>
     /// Deletes a voice room and notifies all participants.
-    /// <br/>Called by GameSession service when a session is deleted.
     /// </remarks>
     /// <returns>Voice room deleted successfully</returns>
     /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
@@ -894,6 +935,363 @@ public partial class VoiceClient : IVoiceClient, BeyondImmersion.BannouService.S
                     {
                         string responseText_ = ( response_.Content == null ) ? string.Empty : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
                         throw new BeyondImmersion.Bannou.Core.ApiException("Peer or room not found", status_, responseText_, headers_, null);
+                    }
+                    else
+                    {
+                        var responseData_ = response_.Content == null ? null : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
+                        throw new BeyondImmersion.Bannou.Core.ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
+                    }
+                }
+                finally
+                {
+                    if (disposeResponse_)
+                        response_.Dispose();
+                }
+            }
+            finally
+            {
+                // Clear headers after request (one-time use)
+                ClearHeaders();
+            }
+        }
+    }
+
+    /// <param name="body">The body parameter.</param>
+    /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+    /// <summary>
+    /// Request broadcast consent from all room participants
+    /// </summary>
+    /// <remarks>
+    /// Initiates the broadcast consent flow. All current room participants receive a VoiceBroadcastConsentRequestEvent. Broadcasting only starts after all participants consent. If ANY participant declines, the broadcast request is denied.
+    /// <br/>This endpoint is the ONLY way to initiate voice room broadcasting. lib-stream subscribes to the resulting approval/decline events.
+    /// </remarks>
+    /// <returns>Consent request sent to all participants</returns>
+    /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+    public virtual async System.Threading.Tasks.Task<BroadcastConsentStatus> RequestBroadcastConsentAsync(BroadcastConsentRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    {
+        if (body == null)
+            throw new System.ArgumentNullException("body");
+
+        // Build method path (without base URL - mesh client handles endpoint resolution)
+        var urlBuilder_ = new System.Text.StringBuilder();
+        // Operation Path: "voice/room/broadcast/request"
+        urlBuilder_.Append("voice/room/broadcast/request");
+
+        var methodPath_ = urlBuilder_.ToString().TrimStart('/');
+        var appId_ = _resolver.GetAppIdForService(ServiceName);
+
+        // Create HTTP request via mesh client
+        using (var request_ = _meshClient.CreateInvokeMethodRequest(
+            new System.Net.Http.HttpMethod("POST"),
+            appId_,
+            methodPath_))
+        {
+            var json_ = BeyondImmersion.Bannou.Core.BannouJson.SerializeToUtf8Bytes(body);
+            var content_ = new System.Net.Http.ByteArrayContent(json_);
+            content_.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse("application/json");
+            request_.Content = content_;
+            request_.Headers.Accept.Add(System.Net.Http.Headers.MediaTypeWithQualityHeaderValue.Parse("application/json"));
+
+            // Apply custom headers
+            ApplyHeaders(request_);
+
+            try
+            {
+                var response_ = await _meshClient.InvokeMethodWithResponseAsync(request_, cancellationToken).ConfigureAwait(false);
+                var disposeResponse_ = true;
+                try
+                {
+                    var headers_ = new System.Collections.Generic.Dictionary<string, System.Collections.Generic.IEnumerable<string>>();
+                    foreach (var item_ in response_.Headers)
+                        headers_[item_.Key] = item_.Value;
+                    if (response_.Content != null && response_.Content.Headers != null)
+                    {
+                        foreach (var item_ in response_.Content.Headers)
+                            headers_[item_.Key] = item_.Value;
+                    }
+
+                    var status_ = (int)response_.StatusCode;
+                    if (status_ == 200)
+                    {
+                        var objectResponse_ = await ReadObjectResponseAsync<BroadcastConsentStatus>(response_, headers_, cancellationToken).ConfigureAwait(false);
+                        if (objectResponse_.Object == null)
+                        {
+                            throw new BeyondImmersion.Bannou.Core.ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
+                        }
+                        return objectResponse_.Object;
+                    }
+                    else
+                    if (status_ == 404)
+                    {
+                        string responseText_ = ( response_.Content == null ) ? string.Empty : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
+                        throw new BeyondImmersion.Bannou.Core.ApiException("Room not found", status_, responseText_, headers_, null);
+                    }
+                    else
+                    if (status_ == 409)
+                    {
+                        string responseText_ = ( response_.Content == null ) ? string.Empty : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
+                        throw new BeyondImmersion.Bannou.Core.ApiException("Broadcast already active or consent pending", status_, responseText_, headers_, null);
+                    }
+                    else
+                    {
+                        var responseData_ = response_.Content == null ? null : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
+                        throw new BeyondImmersion.Bannou.Core.ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
+                    }
+                }
+                finally
+                {
+                    if (disposeResponse_)
+                        response_.Dispose();
+                }
+            }
+            finally
+            {
+                // Clear headers after request (one-time use)
+                ClearHeaders();
+            }
+        }
+    }
+
+    /// <param name="body">The body parameter.</param>
+    /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+    /// <summary>
+    /// Respond to a broadcast consent request
+    /// </summary>
+    /// <remarks>
+    /// Called by each participant to consent or decline broadcasting. When all participants consent, lib-voice publishes voice.room.broadcast.approved. If any participant declines, lib-voice publishes voice.room.broadcast.declined.
+    /// </remarks>
+    /// <returns>Consent response recorded</returns>
+    /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+    public virtual async System.Threading.Tasks.Task<BroadcastConsentStatus> RespondBroadcastConsentAsync(BroadcastConsentResponse body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    {
+        if (body == null)
+            throw new System.ArgumentNullException("body");
+
+        // Build method path (without base URL - mesh client handles endpoint resolution)
+        var urlBuilder_ = new System.Text.StringBuilder();
+        // Operation Path: "voice/room/broadcast/consent"
+        urlBuilder_.Append("voice/room/broadcast/consent");
+
+        var methodPath_ = urlBuilder_.ToString().TrimStart('/');
+        var appId_ = _resolver.GetAppIdForService(ServiceName);
+
+        // Create HTTP request via mesh client
+        using (var request_ = _meshClient.CreateInvokeMethodRequest(
+            new System.Net.Http.HttpMethod("POST"),
+            appId_,
+            methodPath_))
+        {
+            var json_ = BeyondImmersion.Bannou.Core.BannouJson.SerializeToUtf8Bytes(body);
+            var content_ = new System.Net.Http.ByteArrayContent(json_);
+            content_.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse("application/json");
+            request_.Content = content_;
+            request_.Headers.Accept.Add(System.Net.Http.Headers.MediaTypeWithQualityHeaderValue.Parse("application/json"));
+
+            // Apply custom headers
+            ApplyHeaders(request_);
+
+            try
+            {
+                var response_ = await _meshClient.InvokeMethodWithResponseAsync(request_, cancellationToken).ConfigureAwait(false);
+                var disposeResponse_ = true;
+                try
+                {
+                    var headers_ = new System.Collections.Generic.Dictionary<string, System.Collections.Generic.IEnumerable<string>>();
+                    foreach (var item_ in response_.Headers)
+                        headers_[item_.Key] = item_.Value;
+                    if (response_.Content != null && response_.Content.Headers != null)
+                    {
+                        foreach (var item_ in response_.Content.Headers)
+                            headers_[item_.Key] = item_.Value;
+                    }
+
+                    var status_ = (int)response_.StatusCode;
+                    if (status_ == 200)
+                    {
+                        var objectResponse_ = await ReadObjectResponseAsync<BroadcastConsentStatus>(response_, headers_, cancellationToken).ConfigureAwait(false);
+                        if (objectResponse_.Object == null)
+                        {
+                            throw new BeyondImmersion.Bannou.Core.ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
+                        }
+                        return objectResponse_.Object;
+                    }
+                    else
+                    if (status_ == 404)
+                    {
+                        string responseText_ = ( response_.Content == null ) ? string.Empty : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
+                        throw new BeyondImmersion.Bannou.Core.ApiException("Room not found or no pending consent request", status_, responseText_, headers_, null);
+                    }
+                    else
+                    {
+                        var responseData_ = response_.Content == null ? null : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
+                        throw new BeyondImmersion.Bannou.Core.ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
+                    }
+                }
+                finally
+                {
+                    if (disposeResponse_)
+                        response_.Dispose();
+                }
+            }
+            finally
+            {
+                // Clear headers after request (one-time use)
+                ClearHeaders();
+            }
+        }
+    }
+
+    /// <param name="body">The body parameter.</param>
+    /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+    /// <summary>
+    /// Stop broadcasting from a voice room
+    /// </summary>
+    /// <remarks>
+    /// Any participant can stop an active broadcast at any time. This is equivalent to revoking consent. Publishes voice.room.broadcast.stopped with reason ConsentRevoked.
+    /// </remarks>
+    /// <returns>Broadcast stopped</returns>
+    /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+    public virtual async System.Threading.Tasks.Task StopBroadcastAsync(StopBroadcastConsentRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    {
+        if (body == null)
+            throw new System.ArgumentNullException("body");
+
+        // Build method path (without base URL - mesh client handles endpoint resolution)
+        var urlBuilder_ = new System.Text.StringBuilder();
+        // Operation Path: "voice/room/broadcast/stop"
+        urlBuilder_.Append("voice/room/broadcast/stop");
+
+        var methodPath_ = urlBuilder_.ToString().TrimStart('/');
+        var appId_ = _resolver.GetAppIdForService(ServiceName);
+
+        // Create HTTP request via mesh client
+        using (var request_ = _meshClient.CreateInvokeMethodRequest(
+            new System.Net.Http.HttpMethod("POST"),
+            appId_,
+            methodPath_))
+        {
+            var json_ = BeyondImmersion.Bannou.Core.BannouJson.SerializeToUtf8Bytes(body);
+            var content_ = new System.Net.Http.ByteArrayContent(json_);
+            content_.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse("application/json");
+            request_.Content = content_;
+
+            // Apply custom headers
+            ApplyHeaders(request_);
+
+            try
+            {
+                var response_ = await _meshClient.InvokeMethodWithResponseAsync(request_, cancellationToken).ConfigureAwait(false);
+                var disposeResponse_ = true;
+                try
+                {
+                    var headers_ = new System.Collections.Generic.Dictionary<string, System.Collections.Generic.IEnumerable<string>>();
+                    foreach (var item_ in response_.Headers)
+                        headers_[item_.Key] = item_.Value;
+                    if (response_.Content != null && response_.Content.Headers != null)
+                    {
+                        foreach (var item_ in response_.Content.Headers)
+                            headers_[item_.Key] = item_.Value;
+                    }
+
+                    var status_ = (int)response_.StatusCode;
+                    if (status_ == 200)
+                    {
+                        return;
+                    }
+                    else
+                    if (status_ == 404)
+                    {
+                        string responseText_ = ( response_.Content == null ) ? string.Empty : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
+                        throw new BeyondImmersion.Bannou.Core.ApiException("Room not found or not broadcasting", status_, responseText_, headers_, null);
+                    }
+                    else
+                    {
+                        var responseData_ = response_.Content == null ? null : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
+                        throw new BeyondImmersion.Bannou.Core.ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
+                    }
+                }
+                finally
+                {
+                    if (disposeResponse_)
+                        response_.Dispose();
+                }
+            }
+            finally
+            {
+                // Clear headers after request (one-time use)
+                ClearHeaders();
+            }
+        }
+    }
+
+    /// <param name="body">The body parameter.</param>
+    /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+    /// <summary>
+    /// Get broadcast status for a voice room
+    /// </summary>
+    /// <remarks>
+    /// Returns the current broadcast state: whether consent is pending, active, or inactive.
+    /// </remarks>
+    /// <returns>Broadcast status</returns>
+    /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+    public virtual async System.Threading.Tasks.Task<BroadcastConsentStatus> GetBroadcastStatusAsync(BroadcastStatusRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    {
+        if (body == null)
+            throw new System.ArgumentNullException("body");
+
+        // Build method path (without base URL - mesh client handles endpoint resolution)
+        var urlBuilder_ = new System.Text.StringBuilder();
+        // Operation Path: "voice/room/broadcast/status"
+        urlBuilder_.Append("voice/room/broadcast/status");
+
+        var methodPath_ = urlBuilder_.ToString().TrimStart('/');
+        var appId_ = _resolver.GetAppIdForService(ServiceName);
+
+        // Create HTTP request via mesh client
+        using (var request_ = _meshClient.CreateInvokeMethodRequest(
+            new System.Net.Http.HttpMethod("POST"),
+            appId_,
+            methodPath_))
+        {
+            var json_ = BeyondImmersion.Bannou.Core.BannouJson.SerializeToUtf8Bytes(body);
+            var content_ = new System.Net.Http.ByteArrayContent(json_);
+            content_.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse("application/json");
+            request_.Content = content_;
+            request_.Headers.Accept.Add(System.Net.Http.Headers.MediaTypeWithQualityHeaderValue.Parse("application/json"));
+
+            // Apply custom headers
+            ApplyHeaders(request_);
+
+            try
+            {
+                var response_ = await _meshClient.InvokeMethodWithResponseAsync(request_, cancellationToken).ConfigureAwait(false);
+                var disposeResponse_ = true;
+                try
+                {
+                    var headers_ = new System.Collections.Generic.Dictionary<string, System.Collections.Generic.IEnumerable<string>>();
+                    foreach (var item_ in response_.Headers)
+                        headers_[item_.Key] = item_.Value;
+                    if (response_.Content != null && response_.Content.Headers != null)
+                    {
+                        foreach (var item_ in response_.Content.Headers)
+                            headers_[item_.Key] = item_.Value;
+                    }
+
+                    var status_ = (int)response_.StatusCode;
+                    if (status_ == 200)
+                    {
+                        var objectResponse_ = await ReadObjectResponseAsync<BroadcastConsentStatus>(response_, headers_, cancellationToken).ConfigureAwait(false);
+                        if (objectResponse_.Object == null)
+                        {
+                            throw new BeyondImmersion.Bannou.Core.ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
+                        }
+                        return objectResponse_.Object;
+                    }
+                    else
+                    if (status_ == 404)
+                    {
+                        string responseText_ = ( response_.Content == null ) ? string.Empty : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
+                        throw new BeyondImmersion.Bannou.Core.ApiException("Room not found", status_, responseText_, headers_, null);
                     }
                     else
                     {

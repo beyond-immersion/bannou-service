@@ -2,6 +2,7 @@ using BeyondImmersion.BannouService.Plugins;
 using BeyondImmersion.BannouService.Services;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
 namespace BeyondImmersion.BannouService.Escrow;
@@ -30,6 +31,10 @@ public class EscrowServicePlugin : BaseBannouPlugin
 
         // Configuration registration is now handled centrally by PluginLoader based on [ServiceConfiguration] attributes
         // No need to register EscrowServiceConfiguration here
+
+        // Register background services
+        services.AddSingleton<IHostedService, EscrowConfirmationTimeoutService>();
+        services.AddSingleton<IHostedService, EscrowExpirationService>();
 
         // Add any service-specific dependencies
         // The generated clients should already be registered by AddAllBannouServiceClients()

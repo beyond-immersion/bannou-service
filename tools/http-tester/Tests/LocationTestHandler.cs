@@ -39,8 +39,13 @@ public class LocationTestHandler : BaseHttpTestHandler
         new ServiceTest(TestDeprecateLocation, "DeprecateLocation", "Location", "Test deprecating a location"),
         new ServiceTest(TestUndeprecateLocation, "UndeprecateLocation", "Location", "Test restoring a deprecated location"),
 
-        // Validation endpoint
+        // Validation endpoints
         new ServiceTest(TestLocationExists, "LocationExists", "Location", "Test location existence check"),
+        new ServiceTest(TestValidateTerritoryExclusivePass, "ValidateTerritory_ExclusivePass", "Location", "Test territory validation - exclusive mode passes when outside territory"),
+        new ServiceTest(TestValidateTerritoryExclusiveFail, "ValidateTerritory_ExclusiveFail", "Location", "Test territory validation - exclusive mode fails when inside territory"),
+        new ServiceTest(TestValidateTerritoryInclusivePass, "ValidateTerritory_InclusivePass", "Location", "Test territory validation - inclusive mode passes when inside territory"),
+        new ServiceTest(TestValidateTerritoryInclusiveFail, "ValidateTerritory_InclusiveFail", "Location", "Test territory validation - inclusive mode fails when outside territory"),
+        new ServiceTest(TestValidateTerritoryNotFound, "ValidateTerritory_NotFound", "Location", "Test territory validation - 404 for non-existent location"),
 
         // Error handling
         new ServiceTest(TestGetNonExistentLocation, "GetNonExistentLocation", "Location", "Test 404 for non-existent location"),
@@ -662,6 +667,184 @@ public class LocationTestHandler : BaseHttpTestHandler
 
             return TestResult.Successful("Location existence check passed");
         }, "Check location existence");
+
+    private static async Task<TestResult> TestValidateTerritoryExclusivePass(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
+        {
+            var locationClient = GetServiceClient<ILocationClient>();
+
+            var realm = await CreateTestRealmAsync("LOC_TEST", "Location", "TERR_EX_PASS");
+
+            // Create two unrelated locations
+            var territoryLocation = await locationClient.CreateLocationAsync(new CreateLocationRequest
+            {
+                Code = $"TERR_ZONE_{DateTime.Now.Ticks}",
+                Name = "Territory Zone",
+                RealmId = realm.RealmId,
+                LocationType = LocationType.REGION
+            });
+
+            var outsideLocation = await locationClient.CreateLocationAsync(new CreateLocationRequest
+            {
+                Code = $"OUTSIDE_LOC_{DateTime.Now.Ticks}",
+                Name = "Outside Location",
+                RealmId = realm.RealmId,
+                LocationType = LocationType.CITY
+                // No parent - not related to territory
+            });
+
+            // Validate: exclusive mode should PASS because location is NOT inside territory
+            var response = await locationClient.ValidateTerritoryAsync(new ValidateTerritoryRequest
+            {
+                LocationId = outsideLocation.LocationId,
+                TerritoryLocationIds = new List<Guid> { territoryLocation.LocationId },
+                TerritoryMode = TerritoryMode.Exclusive
+            });
+
+            if (!response.IsValid)
+                return TestResult.Failed($"Expected valid (outside exclusive territory), got invalid: {response.ViolationReason}");
+
+            return TestResult.Successful("Exclusive territory validation passed (location outside territory)");
+        }, "Validate territory - exclusive pass");
+
+    private static async Task<TestResult> TestValidateTerritoryExclusiveFail(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
+        {
+            var locationClient = GetServiceClient<ILocationClient>();
+
+            var realm = await CreateTestRealmAsync("LOC_TEST", "Location", "TERR_EX_FAIL");
+
+            // Create parent territory
+            var territoryLocation = await locationClient.CreateLocationAsync(new CreateLocationRequest
+            {
+                Code = $"TERR_PARENT_{DateTime.Now.Ticks}",
+                Name = "Territory Parent",
+                RealmId = realm.RealmId,
+                LocationType = LocationType.REGION
+            });
+
+            // Create child location inside the territory
+            var insideLocation = await locationClient.CreateLocationAsync(new CreateLocationRequest
+            {
+                Code = $"INSIDE_LOC_{DateTime.Now.Ticks}",
+                Name = "Inside Location",
+                RealmId = realm.RealmId,
+                LocationType = LocationType.CITY,
+                ParentLocationId = territoryLocation.LocationId
+            });
+
+            // Validate: exclusive mode should FAIL because location IS inside territory
+            var response = await locationClient.ValidateTerritoryAsync(new ValidateTerritoryRequest
+            {
+                LocationId = insideLocation.LocationId,
+                TerritoryLocationIds = new List<Guid> { territoryLocation.LocationId },
+                TerritoryMode = TerritoryMode.Exclusive
+            });
+
+            if (response.IsValid)
+                return TestResult.Failed("Expected invalid (inside exclusive territory), got valid");
+
+            if (response.MatchedTerritoryId != territoryLocation.LocationId)
+                return TestResult.Failed($"Expected matched territory {territoryLocation.LocationId}, got {response.MatchedTerritoryId}");
+
+            return TestResult.Successful($"Exclusive territory validation failed correctly: {response.ViolationReason}");
+        }, "Validate territory - exclusive fail");
+
+    private static async Task<TestResult> TestValidateTerritoryInclusivePass(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
+        {
+            var locationClient = GetServiceClient<ILocationClient>();
+
+            var realm = await CreateTestRealmAsync("LOC_TEST", "Location", "TERR_IN_PASS");
+
+            // Create parent territory
+            var territoryLocation = await locationClient.CreateLocationAsync(new CreateLocationRequest
+            {
+                Code = $"TERR_INCL_{DateTime.Now.Ticks}",
+                Name = "Inclusive Territory",
+                RealmId = realm.RealmId,
+                LocationType = LocationType.REGION
+            });
+
+            // Create child location inside the territory
+            var insideLocation = await locationClient.CreateLocationAsync(new CreateLocationRequest
+            {
+                Code = $"INCL_LOC_{DateTime.Now.Ticks}",
+                Name = "Inside Location",
+                RealmId = realm.RealmId,
+                LocationType = LocationType.CITY,
+                ParentLocationId = territoryLocation.LocationId
+            });
+
+            // Validate: inclusive mode should PASS because location IS inside territory
+            var response = await locationClient.ValidateTerritoryAsync(new ValidateTerritoryRequest
+            {
+                LocationId = insideLocation.LocationId,
+                TerritoryLocationIds = new List<Guid> { territoryLocation.LocationId },
+                TerritoryMode = TerritoryMode.Inclusive
+            });
+
+            if (!response.IsValid)
+                return TestResult.Failed($"Expected valid (inside inclusive territory), got invalid: {response.ViolationReason}");
+
+            if (response.MatchedTerritoryId != territoryLocation.LocationId)
+                return TestResult.Failed($"Expected matched territory {territoryLocation.LocationId}, got {response.MatchedTerritoryId}");
+
+            return TestResult.Successful("Inclusive territory validation passed (location inside territory)");
+        }, "Validate territory - inclusive pass");
+
+    private static async Task<TestResult> TestValidateTerritoryInclusiveFail(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
+        {
+            var locationClient = GetServiceClient<ILocationClient>();
+
+            var realm = await CreateTestRealmAsync("LOC_TEST", "Location", "TERR_IN_FAIL");
+
+            // Create two unrelated locations
+            var territoryLocation = await locationClient.CreateLocationAsync(new CreateLocationRequest
+            {
+                Code = $"TERR_OTHER_{DateTime.Now.Ticks}",
+                Name = "Territory Zone",
+                RealmId = realm.RealmId,
+                LocationType = LocationType.REGION
+            });
+
+            var outsideLocation = await locationClient.CreateLocationAsync(new CreateLocationRequest
+            {
+                Code = $"OUTSIDE_INCL_{DateTime.Now.Ticks}",
+                Name = "Outside Location",
+                RealmId = realm.RealmId,
+                LocationType = LocationType.CITY
+                // No parent - not related to territory
+            });
+
+            // Validate: inclusive mode should FAIL because location is NOT inside territory
+            var response = await locationClient.ValidateTerritoryAsync(new ValidateTerritoryRequest
+            {
+                LocationId = outsideLocation.LocationId,
+                TerritoryLocationIds = new List<Guid> { territoryLocation.LocationId },
+                TerritoryMode = TerritoryMode.Inclusive
+            });
+
+            if (response.IsValid)
+                return TestResult.Failed("Expected invalid (outside inclusive territory), got valid");
+
+            return TestResult.Successful($"Inclusive territory validation failed correctly: {response.ViolationReason}");
+        }, "Validate territory - inclusive fail");
+
+    private static async Task<TestResult> TestValidateTerritoryNotFound(ITestClient client, string[] args) =>
+        await ExecuteExpectingStatusAsync(
+            async () =>
+            {
+                var locationClient = GetServiceClient<ILocationClient>();
+                await locationClient.ValidateTerritoryAsync(new ValidateTerritoryRequest
+                {
+                    LocationId = Guid.NewGuid(), // Non-existent location
+                    TerritoryLocationIds = new List<Guid> { Guid.NewGuid() }
+                });
+            },
+            404,
+            "Validate territory - not found");
 
     private static async Task<TestResult> TestGetNonExistentLocation(ITestClient client, string[] args) =>
         await

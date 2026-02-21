@@ -12,7 +12,7 @@
 
 using Xunit;
 using ClientRuntime = BeyondImmersion.Bannou.Client.Behavior.Runtime;
-using Compiler = BeyondImmersion.Bannou.Behavior.Compiler;
+using Compiler = BeyondImmersion.Bannou.BehaviorCompiler.Compiler;
 
 namespace BeyondImmersion.Bannou.Client.Integration.Tests.Behavior;
 

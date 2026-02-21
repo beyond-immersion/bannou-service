@@ -36,7 +36,7 @@ public sealed class CognitionBuilderTests
         // Assert
         Assert.NotNull(pipeline);
         Assert.Equal(CognitionTemplates.HumanoidBase, pipeline.TemplateId);
-        Assert.Equal(5, pipeline.Stages.Count);
+        Assert.Equal(6, pipeline.Stages.Count);
     }
 
     [Fact]
@@ -71,7 +71,7 @@ public sealed class CognitionBuilderTests
 
         // Assert
         Assert.NotNull(pipeline);
-        Assert.Equal(5, pipeline.Stages.Count);
+        Assert.Equal(6, pipeline.Stages.Count);
 
         var filterStage = pipeline.Stages.First(s => s.Name == CognitionStages.Filter);
         var attentionHandler = filterStage.Handlers.First(h => h.Id == "attention_filter");

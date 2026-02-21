@@ -5,8 +5,11 @@ info:
     Configuration schema for Character Personality service.
     Properties are bound to environment variables with CHARACTER_PERSONALITY_ prefix.
 
-    **Schema Rules**: AI agents MUST review docs/reference/SCHEMA-RULES.md before
-    modifying this schema. Optional reference types require `nullable: true`.
+    **SCHEMA MODIFICATION GATE**: STOP. Before modifying this schema, you MUST:
+    1. Read docs/reference/SCHEMA-RULES.md
+    2. State which section applies to your change
+    3. Only then proceed with edits
+    Edits without stating the applicable rule are FORBIDDEN.
   version: 1.0.0
 paths: {}
 x-service-configuration:
@@ -27,6 +30,13 @@ x-service-configuration:
       description: Minimum magnitude of trait change per evolution event
       default: 0.02
       env: CHARACTER_PERSONALITY_MIN_TRAIT_SHIFT
+
+    # Cache Configuration
+    CacheTtlMinutes:
+      type: integer
+      description: TTL in minutes for personality and combat preferences cache entries
+      default: 5
+      env: CHARACTER_PERSONALITY_CACHE_TTL_MINUTES
 
     # Batch and Concurrency Configuration
     MaxBatchSize:

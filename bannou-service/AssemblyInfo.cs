@@ -5,3 +5,4 @@ using System.Runtime.CompilerServices;
 [assembly: InternalsVisibleTo("bannou-service.tests")]
 [assembly: InternalsVisibleTo("lib-testing")]
 [assembly: InternalsVisibleTo("test-utilities")]
+[assembly: InternalsVisibleTo("lib-behavior.tests")]

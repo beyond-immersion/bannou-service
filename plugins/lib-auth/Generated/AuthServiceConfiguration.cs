@@ -12,7 +12,7 @@
 //
 //     IMPLEMENTATION TENETS - Configuration-First:
 //     - Access configuration via dependency injection, never Environment.GetEnvironmentVariable.
-//     - ALL properties below MUST be referenced in AuthService.cs (no dead config).
+//     - ALL properties below MUST be referenced somewhere in the plugin (no dead config).
 //     - Any hardcoded tunable (limit, timeout, threshold, capacity) in service code means
 //       a configuration property is MISSING - add it to the configuration schema.
 //     - If a property is unused, remove it from the configuration schema.
@@ -40,7 +40,7 @@ namespace BeyondImmersion.BannouService.Auth;
 /// <para>
 /// <b>IMPLEMENTATION TENETS - Configuration-First:</b> Access configuration via dependency injection.
 /// Never use <c>Environment.GetEnvironmentVariable()</c> directly in service code.
-/// ALL properties in this class MUST be referenced in the service implementation.
+/// ALL properties in this class MUST be referenced somewhere in the plugin.
 /// If a property is unused, remove it from the configuration schema.
 /// </para>
 /// <para>
@@ -162,6 +162,79 @@ public class AuthServiceConfiguration : IServiceConfiguration
     public string? SteamAppId { get; set; }
 
     /// <summary>
+    /// Email delivery provider (none=console logging, sendgrid=SendGrid API, smtp=SMTP via MailKit, ses=AWS SES v2)
+    /// Environment variable: AUTH_EMAIL_PROVIDER
+    /// </summary>
+    public EmailProvider EmailProvider { get; set; } = EmailProvider.None;
+
+    /// <summary>
+    /// Sender email address for outgoing emails. Required when EmailProvider is not 'none'.
+    /// Environment variable: AUTH_EMAIL_FROM_ADDRESS
+    /// </summary>
+    public string? EmailFromAddress { get; set; }
+
+    /// <summary>
+    /// Display name for the sender in outgoing emails (e.g., 'Bannou Support'). Optional.
+    /// Environment variable: AUTH_EMAIL_FROM_NAME
+    /// </summary>
+    public string? EmailFromName { get; set; }
+
+    /// <summary>
+    /// SendGrid API key. Required when EmailProvider is 'sendgrid'.
+    /// Environment variable: AUTH_SENDGRID_API_KEY
+    /// </summary>
+    public string? SendGridApiKey { get; set; }
+
+    /// <summary>
+    /// AWS access key ID for SES API authentication. Required when EmailProvider is 'ses'.
+    /// Environment variable: AUTH_SES_ACCESS_KEY_ID
+    /// </summary>
+    public string? SesAccessKeyId { get; set; }
+
+    /// <summary>
+    /// AWS secret access key for SES API authentication. Required when EmailProvider is 'ses'.
+    /// Environment variable: AUTH_SES_SECRET_ACCESS_KEY
+    /// </summary>
+    public string? SesSecretAccessKey { get; set; }
+
+    /// <summary>
+    /// AWS region for SES API (e.g., us-east-1, eu-west-1). SES must be configured in this region.
+    /// Environment variable: AUTH_SES_REGION
+    /// </summary>
+    public string SesRegion { get; set; } = "us-east-1";
+
+    /// <summary>
+    /// SMTP server hostname. Required when EmailProvider is 'smtp'.
+    /// Environment variable: AUTH_SMTP_HOST
+    /// </summary>
+    public string? SmtpHost { get; set; }
+
+    /// <summary>
+    /// SMTP server port (587 for STARTTLS, 465 for implicit SSL, 25 for unencrypted).
+    /// Environment variable: AUTH_SMTP_PORT
+    /// </summary>
+    [ConfigRange(Minimum = 1, Maximum = 65535)]
+    public int SmtpPort { get; set; } = 587;
+
+    /// <summary>
+    /// SMTP authentication username. Optional if server allows anonymous relay.
+    /// Environment variable: AUTH_SMTP_USERNAME
+    /// </summary>
+    public string? SmtpUsername { get; set; }
+
+    /// <summary>
+    /// SMTP authentication password. Optional if server allows anonymous relay.
+    /// Environment variable: AUTH_SMTP_PASSWORD
+    /// </summary>
+    public string? SmtpPassword { get; set; }
+
+    /// <summary>
+    /// Use SSL/TLS when connecting to SMTP server. When true with port 587, uses STARTTLS.
+    /// Environment variable: AUTH_SMTP_USE_SSL
+    /// </summary>
+    public bool SmtpUseSsl { get; set; } = true;
+
+    /// <summary>
     /// Password reset token expiration time in minutes
     /// Environment variable: AUTH_PASSWORD_RESET_TOKEN_TTL_MINUTES
     /// </summary>
@@ -174,6 +247,20 @@ public class AuthServiceConfiguration : IServiceConfiguration
     public string? PasswordResetBaseUrl { get; set; }
 
     /// <summary>
+    /// Maximum failed login attempts before lockout. After this many consecutive failures for an email, further attempts return 429 until the lockout expires.
+    /// Environment variable: AUTH_MAX_LOGIN_ATTEMPTS
+    /// </summary>
+    [ConfigRange(Minimum = 1, Maximum = 100)]
+    public int MaxLoginAttempts { get; set; } = 5;
+
+    /// <summary>
+    /// Duration in minutes to lock out an email after exceeding MaxLoginAttempts. The lockout counter resets on successful login.
+    /// Environment variable: AUTH_LOGIN_LOCKOUT_MINUTES
+    /// </summary>
+    [ConfigRange(Minimum = 1, Maximum = 1440)]
+    public int LoginLockoutMinutes { get; set; } = 15;
+
+    /// <summary>
     /// BCrypt work factor for password hashing. Higher values are more secure but slower. Existing hashes at lower factors continue to validate.
     /// Environment variable: AUTH_BCRYPT_WORK_FACTOR
     /// </summary>
@@ -184,5 +271,74 @@ public class AuthServiceConfiguration : IServiceConfiguration
     /// Environment variable: AUTH_SESSION_TOKEN_TTL_DAYS
     /// </summary>
     public int SessionTokenTtlDays { get; set; } = 7;
+
+    /// <summary>
+    /// Master switch for edge-layer token revocation. When enabled, revoked tokens are pushed to configured edge providers for CDN/firewall-level blocking. Disabled by default.
+    /// Environment variable: AUTH_EDGE_REVOCATION_ENABLED
+    /// </summary>
+    public bool EdgeRevocationEnabled { get; set; } = false;
+
+    /// <summary>
+    /// Timeout in seconds for edge provider push operations. Operations exceeding this timeout are logged and added to the failed-pushes retry set.
+    /// Environment variable: AUTH_EDGE_REVOCATION_TIMEOUT_SECONDS
+    /// </summary>
+    [ConfigRange(Minimum = 1, Maximum = 30)]
+    public int EdgeRevocationTimeoutSeconds { get; set; } = 5;
+
+    /// <summary>
+    /// Maximum retry attempts for failed edge pushes before giving up and logging an error.
+    /// Environment variable: AUTH_EDGE_REVOCATION_MAX_RETRY_ATTEMPTS
+    /// </summary>
+    [ConfigRange(Minimum = 1, Maximum = 10)]
+    public int EdgeRevocationMaxRetryAttempts { get; set; } = 3;
+
+    /// <summary>
+    /// Enable CloudFlare Workers KV edge revocation. Requires CloudflareAccountId, CloudflareKvNamespaceId, and CloudflareApiToken to be configured.
+    /// Environment variable: AUTH_CLOUDFLARE_EDGE_ENABLED
+    /// </summary>
+    public bool CloudflareEdgeEnabled { get; set; } = false;
+
+    /// <summary>
+    /// CloudFlare account ID for KV API access. Required when CloudflareEdgeEnabled is true.
+    /// Environment variable: AUTH_CLOUDFLARE_ACCOUNT_ID
+    /// </summary>
+    public string? CloudflareAccountId { get; set; }
+
+    /// <summary>
+    /// CloudFlare KV namespace ID where revoked tokens are stored. Create via CloudFlare dashboard or API.
+    /// Environment variable: AUTH_CLOUDFLARE_KV_NAMESPACE_ID
+    /// </summary>
+    public string? CloudflareKvNamespaceId { get; set; }
+
+    /// <summary>
+    /// CloudFlare API token with Workers KV write permissions. Use a scoped token with only KV Edit permission for security.
+    /// Environment variable: AUTH_CLOUDFLARE_API_TOKEN
+    /// </summary>
+    public string? CloudflareApiToken { get; set; }
+
+    /// <summary>
+    /// Enable OpenResty/NGINX edge revocation verification. When enabled, the OpenResty Lua scripts read revocation entries directly from Redis (auth:edge prefix) to block revoked tokens at the edge layer before requests reach upstream services.
+    /// Environment variable: AUTH_OPENRESTY_EDGE_ENABLED
+    /// </summary>
+    public bool OpenrestyEdgeEnabled { get; set; } = false;
+
+    /// <summary>
+    /// AES-256-GCM encryption key for TOTP secrets at rest. Required when MFA is used. Must be at least 32 characters. Throws InvalidOperationException at runtime if null when MFA setup is attempted.
+    /// Environment variable: AUTH_MFA_ENCRYPTION_KEY
+    /// </summary>
+    public string? MfaEncryptionKey { get; set; }
+
+    /// <summary>
+    /// Issuer name displayed in authenticator apps (appears as service name in Google Authenticator, Authy, etc.)
+    /// Environment variable: AUTH_MFA_ISSUER_NAME
+    /// </summary>
+    public string MfaIssuerName { get; set; } = "Bannou";
+
+    /// <summary>
+    /// TTL in minutes for MFA challenge tokens issued during login and MFA setup tokens during enrollment
+    /// Environment variable: AUTH_MFA_CHALLENGE_TTL_MINUTES
+    /// </summary>
+    [ConfigRange(Minimum = 1, Maximum = 30)]
+    public int MfaChallengeTtlMinutes { get; set; } = 5;
 
 }

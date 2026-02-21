@@ -103,4 +103,11 @@ public interface ISipEndpointRegistry
     Task<List<ParticipantRegistration>> ClearRoomAsync(
         Guid roomId,
         CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Gets all room IDs that are currently tracked (have or had participants).
+    /// Used by background eviction worker to scan for stale participants and empty rooms.
+    /// </summary>
+    /// <returns>Collection of tracked room IDs.</returns>
+    IReadOnlyCollection<Guid> GetAllTrackedRoomIds();
 }

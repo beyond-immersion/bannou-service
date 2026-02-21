@@ -22,20 +22,28 @@ public partial class ApiException : System.Exception
     /// </summary>
     public System.Collections.Generic.IReadOnlyDictionary<string, System.Collections.Generic.IEnumerable<string>> Headers { get; private set; }
 
+    private static readonly System.Collections.Generic.IReadOnlyDictionary<string, System.Collections.Generic.IEnumerable<string>> EmptyHeaders =
+        new System.Collections.Generic.Dictionary<string, System.Collections.Generic.IEnumerable<string>>();
+
     /// <summary>
     /// Creates a new ApiException with the specified details.
     /// </summary>
     /// <param name="message">Error message describing the failure.</param>
     /// <param name="statusCode">HTTP status code of the error response.</param>
-    /// <param name="response">Raw response body content.</param>
-    /// <param name="headers">Response headers from the failed request.</param>
-    /// <param name="innerException">Inner exception that caused this failure.</param>
-    public ApiException(string message, int statusCode, string? response, System.Collections.Generic.IReadOnlyDictionary<string, System.Collections.Generic.IEnumerable<string>> headers, System.Exception? innerException)
+    /// <param name="response">Raw response body content (optional, defaults to null).</param>
+    /// <param name="headers">Response headers from the failed request (optional, defaults to empty).</param>
+    /// <param name="innerException">Inner exception that caused this failure (optional).</param>
+    public ApiException(
+        string message,
+        int statusCode,
+        string? response = null,
+        System.Collections.Generic.IReadOnlyDictionary<string, System.Collections.Generic.IEnumerable<string>>? headers = null,
+        System.Exception? innerException = null)
         : base(message + "\n\nStatus: " + statusCode + "\nResponse: \n" + ((response == null) ? "(null)" : response.Substring(0, response.Length >= 512 ? 512 : response.Length)), innerException)
     {
         StatusCode = statusCode;
         Response = response;
-        Headers = headers;
+        Headers = headers ?? EmptyHeaders;
     }
 
     /// <inheritdoc/>
@@ -66,7 +74,17 @@ public partial class ApiException<TResult> : ApiException
     /// <param name="headers">Response headers from the failed request.</param>
     /// <param name="result">Typed error result from the API.</param>
     /// <param name="innerException">Inner exception that caused this failure.</param>
-    public ApiException(string message, int statusCode, string? response, System.Collections.Generic.IReadOnlyDictionary<string, System.Collections.Generic.IEnumerable<string>> headers, TResult result, System.Exception? innerException)
+    /// <remarks>
+    /// Parameter order maintained for backwards compatibility with generated clients.
+    /// For the non-generic ApiException, use the simplified constructor with optional parameters.
+    /// </remarks>
+    public ApiException(
+        string message,
+        int statusCode,
+        string? response,
+        System.Collections.Generic.IReadOnlyDictionary<string, System.Collections.Generic.IEnumerable<string>>? headers,
+        TResult result,
+        System.Exception? innerException)
         : base(message, statusCode, response, headers, innerException)
     {
         Result = result;

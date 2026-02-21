@@ -4,22 +4,9 @@
 // Implementations provided by lib-behavior plugin.
 // ═══════════════════════════════════════════════════════════════════════════
 
-namespace BeyondImmersion.BannouService.Behavior;
+using BeyondImmersion.Bannou.BehaviorCompiler.Archetypes;
 
-/// <summary>
-/// A single Intent emission targeting a specific channel.
-/// </summary>
-/// <param name="Channel">The logical channel name (e.g., "combat", "movement").</param>
-/// <param name="Intent">The intent identifier (e.g., "attack", "walk").</param>
-/// <param name="Urgency">Urgency value 0.0-1.0 for merge priority.</param>
-/// <param name="Target">Optional target entity ID.</param>
-/// <param name="Data">Additional emission data.</param>
-public sealed record IntentEmission(
-    string Channel,
-    string Intent,
-    float Urgency,
-    Guid? Target = null,
-    IReadOnlyDictionary<string, object>? Data = null);
+namespace BeyondImmersion.BannouService.Behavior;
 
 /// <summary>
 /// Context for intent emission, providing entity and archetype information.

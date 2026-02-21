@@ -36,9 +36,9 @@ public interface IAuthController : BeyondImmersion.BannouService.Controllers.IBa
     /// </summary>
 
 
-    /// <returns>Login successful</returns>
+    /// <returns>Login successful or MFA challenge issued</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<AuthResponse>> LoginAsync(LoginRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<LoginResponse>> LoginAsync(LoginRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
     /// <summary>
     /// Register new user account
@@ -151,6 +151,20 @@ public interface IAuthController : BeyondImmersion.BannouService.Controllers.IBa
     System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> TerminateSessionAsync(string jwt, TerminateSessionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
     /// <summary>
+    /// Get current token revocation list
+    /// </summary>
+
+    /// <remarks>
+    /// Returns the current list of revoked tokens and accounts for edge provider synchronization
+    /// <br/>and administrative monitoring. Includes token-level revocations (by JTI) and account-level
+    /// <br/>revocations (all tokens issued before a timestamp).
+    /// </remarks>
+
+    /// <returns>Revocation list retrieved</returns>
+
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RevocationListResponse>> GetRevocationListAsync(GetRevocationListRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
+    /// <summary>
     /// Request password reset
     /// </summary>
 
@@ -182,6 +196,84 @@ public interface IAuthController : BeyondImmersion.BannouService.Controllers.IBa
 
     System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ProvidersResponse>> ListProvidersAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
+    /// <summary>
+    /// Initialize MFA setup
+    /// </summary>
+
+    /// <remarks>
+    /// Generates a TOTP secret and 10 recovery codes. Returns an otpauth:// URI for QR
+    /// <br/>code scanning and the recovery codes in plain text (shown only once). The setup is
+    /// <br/>not active until confirmed via /auth/mfa/enable with a valid TOTP code.
+    /// </remarks>
+
+    /// <param name="jwt">JWT access token</param>
+
+    /// <returns>MFA setup initiated</returns>
+
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<MfaSetupResponse>> SetupMfaAsync(string jwt, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
+    /// <summary>
+    /// Confirm MFA setup with TOTP code
+    /// </summary>
+
+    /// <remarks>
+    /// Verifies a TOTP code against the pending setup secret to prove the authenticator
+    /// <br/>app is correctly configured. On success, persists MFA settings to the account and
+    /// <br/>MFA is active for all subsequent password logins.
+    /// </remarks>
+
+    /// <param name="jwt">JWT access token</param>
+
+
+    /// <returns>MFA enabled successfully</returns>
+
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> EnableMfaAsync(string jwt, MfaEnableRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
+    /// <summary>
+    /// Disable MFA for current account
+    /// </summary>
+
+    /// <remarks>
+    /// Disables MFA for the authenticated account. Requires a valid TOTP code or
+    /// <br/>recovery code to prevent unauthorized disable. Clears the TOTP secret and
+    /// <br/>recovery codes from the account.
+    /// </remarks>
+
+    /// <param name="jwt">JWT access token</param>
+
+
+    /// <returns>MFA disabled successfully</returns>
+
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> DisableMfaAsync(string jwt, MfaDisableRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
+    /// <summary>
+    /// Admin override to disable MFA
+    /// </summary>
+
+    /// <remarks>
+    /// Allows administrators to disable MFA for any account without TOTP verification.
+    /// <br/>For account recovery when a user has lost their authenticator and all recovery codes.
+    /// </remarks>
+
+    /// <returns>MFA disabled by admin</returns>
+
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> AdminDisableMfaAsync(AdminDisableMfaRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
+    /// <summary>
+    /// Verify MFA code during login
+    /// </summary>
+
+    /// <remarks>
+    /// Completes the MFA challenge issued during login by verifying a TOTP code or
+    /// <br/>recovery code. On success, returns full authentication tokens (same as a
+    /// <br/>non-MFA login would). The challenge token is single-use and has a configurable
+    /// <br/>TTL (default 5 minutes).
+    /// </remarks>
+
+    /// <returns>MFA verified, tokens issued</returns>
+
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<AuthResponse>> VerifyMfaAsync(MfaVerifyRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 }
 
 [System.CodeDom.Compiler.GeneratedCode("NSwag", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
@@ -189,10 +281,12 @@ public interface IAuthController : BeyondImmersion.BannouService.Controllers.IBa
 public partial class AuthController : Microsoft.AspNetCore.Mvc.ControllerBase
 {
     private IAuthService _implementation;
+    private BeyondImmersion.BannouService.Services.ITelemetryProvider _telemetryProvider;
 
-    public AuthController(IAuthService implementation)
+    public AuthController(IAuthService implementation, BeyondImmersion.BannouService.Services.ITelemetryProvider telemetryProvider)
     {
         _implementation = implementation;
+        _telemetryProvider = telemetryProvider;
     }
 
     /// <summary>
@@ -234,14 +328,46 @@ public partial class AuthController : Microsoft.AspNetCore.Mvc.ControllerBase
     /// <summary>
     /// Login with email/password
     /// </summary>
-    /// <returns>Login successful</returns>
+    /// <returns>Login successful or MFA challenge issued</returns>
     [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("auth/login")]
 
-    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<AuthResponse>> Login([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] LoginRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<LoginResponse>> Login([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] LoginRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
-        var (statusCode, result) = await _implementation.LoginAsync(body, cancellationToken);
-        return ConvertToActionResult(statusCode, result);
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.auth",
+            "AuthController.Login",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "auth/login");
+        try
+        {
+
+            var (statusCode, result) = await _implementation.LoginAsync(body, cancellationToken);
+            return ConvertToActionResult(statusCode, result);
+        }
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<AuthController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:auth/login");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
+            return StatusCode(503);
+        }
+        catch (System.Exception ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<AuthController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogError(logger_, ex_, "Unexpected error in {Endpoint}", "post:auth/login");
+            var messageBus_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<BeyondImmersion.BannouService.Services.IMessageBus>(HttpContext.RequestServices);
+            await messageBus_.TryPublishErrorAsync(
+                "auth",
+                "Login",
+                "unexpected_exception",
+                ex_.Message,
+                endpoint: "post:auth/login",
+                stack: ex_.StackTrace,
+                cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
+            return StatusCode(500);
+        }
     }
 
     /// <summary>
@@ -253,8 +379,40 @@ public partial class AuthController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RegisterResponse>> Register([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] RegisterRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
-        var (statusCode, result) = await _implementation.RegisterAsync(body, cancellationToken);
-        return ConvertToActionResult(statusCode, result);
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.auth",
+            "AuthController.Register",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "auth/register");
+        try
+        {
+
+            var (statusCode, result) = await _implementation.RegisterAsync(body, cancellationToken);
+            return ConvertToActionResult(statusCode, result);
+        }
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<AuthController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:auth/register");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
+            return StatusCode(503);
+        }
+        catch (System.Exception ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<AuthController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogError(logger_, ex_, "Unexpected error in {Endpoint}", "post:auth/register");
+            var messageBus_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<BeyondImmersion.BannouService.Services.IMessageBus>(HttpContext.RequestServices);
+            await messageBus_.TryPublishErrorAsync(
+                "auth",
+                "Register",
+                "unexpected_exception",
+                ex_.Message,
+                endpoint: "post:auth/register",
+                stack: ex_.StackTrace,
+                cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
+            return StatusCode(500);
+        }
     }
 
     // Endpoint InitOAuth requires manual implementation in partial class.
@@ -276,8 +434,40 @@ public partial class AuthController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<AuthResponse>> CompleteOAuth([Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] Provider provider, [Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] OAuthCallbackRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
-        var (statusCode, result) = await _implementation.CompleteOAuthAsync(provider, body, cancellationToken);
-        return ConvertToActionResult(statusCode, result);
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.auth",
+            "AuthController.CompleteOAuth",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "auth/oauth/{provider}/callback");
+        try
+        {
+
+            var (statusCode, result) = await _implementation.CompleteOAuthAsync(provider, body, cancellationToken);
+            return ConvertToActionResult(statusCode, result);
+        }
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<AuthController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:auth/oauth/{provider}/callback");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
+            return StatusCode(503);
+        }
+        catch (System.Exception ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<AuthController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogError(logger_, ex_, "Unexpected error in {Endpoint}", "post:auth/oauth/{provider}/callback");
+            var messageBus_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<BeyondImmersion.BannouService.Services.IMessageBus>(HttpContext.RequestServices);
+            await messageBus_.TryPublishErrorAsync(
+                "auth",
+                "CompleteOAuth",
+                "unexpected_exception",
+                ex_.Message,
+                endpoint: "post:auth/oauth/{provider}/callback",
+                stack: ex_.StackTrace,
+                cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
+            return StatusCode(500);
+        }
     }
 
     /// <summary>
@@ -294,8 +484,40 @@ public partial class AuthController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<AuthResponse>> VerifySteamAuth([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] SteamVerifyRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
-        var (statusCode, result) = await _implementation.VerifySteamAuthAsync(body, cancellationToken);
-        return ConvertToActionResult(statusCode, result);
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.auth",
+            "AuthController.VerifySteamAuth",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "auth/steam/verify");
+        try
+        {
+
+            var (statusCode, result) = await _implementation.VerifySteamAuthAsync(body, cancellationToken);
+            return ConvertToActionResult(statusCode, result);
+        }
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<AuthController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:auth/steam/verify");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
+            return StatusCode(503);
+        }
+        catch (System.Exception ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<AuthController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogError(logger_, ex_, "Unexpected error in {Endpoint}", "post:auth/steam/verify");
+            var messageBus_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<BeyondImmersion.BannouService.Services.IMessageBus>(HttpContext.RequestServices);
+            await messageBus_.TryPublishErrorAsync(
+                "auth",
+                "VerifySteamAuth",
+                "unexpected_exception",
+                ex_.Message,
+                endpoint: "post:auth/steam/verify",
+                stack: ex_.StackTrace,
+                cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
+            return StatusCode(500);
+        }
     }
 
     /// <summary>
@@ -312,8 +534,40 @@ public partial class AuthController : Microsoft.AspNetCore.Mvc.ControllerBase
         if (string.IsNullOrEmpty(jwt))
             return Unauthorized("Missing or invalid Authorization header");
 
-        var (statusCode, result) = await _implementation.RefreshTokenAsync(jwt, body, cancellationToken);
-        return ConvertToActionResult(statusCode, result);
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.auth",
+            "AuthController.RefreshToken",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "auth/refresh");
+        try
+        {
+
+            var (statusCode, result) = await _implementation.RefreshTokenAsync(jwt, body, cancellationToken);
+            return ConvertToActionResult(statusCode, result);
+        }
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<AuthController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:auth/refresh");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
+            return StatusCode(503);
+        }
+        catch (System.Exception ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<AuthController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogError(logger_, ex_, "Unexpected error in {Endpoint}", "post:auth/refresh");
+            var messageBus_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<BeyondImmersion.BannouService.Services.IMessageBus>(HttpContext.RequestServices);
+            await messageBus_.TryPublishErrorAsync(
+                "auth",
+                "RefreshToken",
+                "unexpected_exception",
+                ex_.Message,
+                endpoint: "post:auth/refresh",
+                stack: ex_.StackTrace,
+                cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
+            return StatusCode(500);
+        }
     }
 
     /// <summary>
@@ -330,8 +584,40 @@ public partial class AuthController : Microsoft.AspNetCore.Mvc.ControllerBase
         if (string.IsNullOrEmpty(jwt))
             return Unauthorized("Missing or invalid Authorization header");
 
-        var (statusCode, result) = await _implementation.ValidateTokenAsync(jwt, cancellationToken);
-        return ConvertToActionResult(statusCode, result);
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.auth",
+            "AuthController.ValidateToken",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "auth/validate");
+        try
+        {
+
+            var (statusCode, result) = await _implementation.ValidateTokenAsync(jwt, cancellationToken);
+            return ConvertToActionResult(statusCode, result);
+        }
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<AuthController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:auth/validate");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
+            return StatusCode(503);
+        }
+        catch (System.Exception ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<AuthController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogError(logger_, ex_, "Unexpected error in {Endpoint}", "post:auth/validate");
+            var messageBus_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<BeyondImmersion.BannouService.Services.IMessageBus>(HttpContext.RequestServices);
+            await messageBus_.TryPublishErrorAsync(
+                "auth",
+                "ValidateToken",
+                "unexpected_exception",
+                ex_.Message,
+                endpoint: "post:auth/validate",
+                stack: ex_.StackTrace,
+                cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
+            return StatusCode(500);
+        }
     }
 
     /// <summary>
@@ -348,8 +634,40 @@ public partial class AuthController : Microsoft.AspNetCore.Mvc.ControllerBase
         if (string.IsNullOrEmpty(jwt))
             return Unauthorized("Missing or invalid Authorization header");
 
-        var statusCode = await _implementation.LogoutAsync(jwt, body, cancellationToken);
-        return ConvertToActionResult(statusCode);
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.auth",
+            "AuthController.Logout",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "auth/logout");
+        try
+        {
+
+            var statusCode = await _implementation.LogoutAsync(jwt, body, cancellationToken);
+            return ConvertToActionResult(statusCode);
+        }
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<AuthController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:auth/logout");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
+            return StatusCode(503);
+        }
+        catch (System.Exception ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<AuthController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogError(logger_, ex_, "Unexpected error in {Endpoint}", "post:auth/logout");
+            var messageBus_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<BeyondImmersion.BannouService.Services.IMessageBus>(HttpContext.RequestServices);
+            await messageBus_.TryPublishErrorAsync(
+                "auth",
+                "Logout",
+                "unexpected_exception",
+                ex_.Message,
+                endpoint: "post:auth/logout",
+                stack: ex_.StackTrace,
+                cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
+            return StatusCode(500);
+        }
     }
 
     /// <summary>
@@ -366,8 +684,40 @@ public partial class AuthController : Microsoft.AspNetCore.Mvc.ControllerBase
         if (string.IsNullOrEmpty(jwt))
             return Unauthorized("Missing or invalid Authorization header");
 
-        var (statusCode, result) = await _implementation.GetSessionsAsync(jwt, cancellationToken);
-        return ConvertToActionResult(statusCode, result);
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.auth",
+            "AuthController.GetSessions",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "auth/sessions/list");
+        try
+        {
+
+            var (statusCode, result) = await _implementation.GetSessionsAsync(jwt, cancellationToken);
+            return ConvertToActionResult(statusCode, result);
+        }
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<AuthController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:auth/sessions/list");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
+            return StatusCode(503);
+        }
+        catch (System.Exception ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<AuthController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogError(logger_, ex_, "Unexpected error in {Endpoint}", "post:auth/sessions/list");
+            var messageBus_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<BeyondImmersion.BannouService.Services.IMessageBus>(HttpContext.RequestServices);
+            await messageBus_.TryPublishErrorAsync(
+                "auth",
+                "GetSessions",
+                "unexpected_exception",
+                ex_.Message,
+                endpoint: "post:auth/sessions/list",
+                stack: ex_.StackTrace,
+                cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
+            return StatusCode(500);
+        }
     }
 
     /// <summary>
@@ -384,8 +734,90 @@ public partial class AuthController : Microsoft.AspNetCore.Mvc.ControllerBase
         if (string.IsNullOrEmpty(jwt))
             return Unauthorized("Missing or invalid Authorization header");
 
-        var statusCode = await _implementation.TerminateSessionAsync(jwt, body, cancellationToken);
-        return ConvertToActionResult(statusCode);
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.auth",
+            "AuthController.TerminateSession",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "auth/sessions/terminate");
+        try
+        {
+
+            var statusCode = await _implementation.TerminateSessionAsync(jwt, body, cancellationToken);
+            return ConvertToActionResult(statusCode);
+        }
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<AuthController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:auth/sessions/terminate");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
+            return StatusCode(503);
+        }
+        catch (System.Exception ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<AuthController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogError(logger_, ex_, "Unexpected error in {Endpoint}", "post:auth/sessions/terminate");
+            var messageBus_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<BeyondImmersion.BannouService.Services.IMessageBus>(HttpContext.RequestServices);
+            await messageBus_.TryPublishErrorAsync(
+                "auth",
+                "TerminateSession",
+                "unexpected_exception",
+                ex_.Message,
+                endpoint: "post:auth/sessions/terminate",
+                stack: ex_.StackTrace,
+                cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
+            return StatusCode(500);
+        }
+    }
+
+    /// <summary>
+    /// Get current token revocation list
+    /// </summary>
+    /// <remarks>
+    /// Returns the current list of revoked tokens and accounts for edge provider synchronization
+    /// <br/>and administrative monitoring. Includes token-level revocations (by JTI) and account-level
+    /// <br/>revocations (all tokens issued before a timestamp).
+    /// </remarks>
+    /// <returns>Revocation list retrieved</returns>
+    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("auth/revocation-list")]
+
+    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RevocationListResponse>> GetRevocationList([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] GetRevocationListRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    {
+
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.auth",
+            "AuthController.GetRevocationList",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "auth/revocation-list");
+        try
+        {
+
+            var (statusCode, result) = await _implementation.GetRevocationListAsync(body, cancellationToken);
+            return ConvertToActionResult(statusCode, result);
+        }
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<AuthController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:auth/revocation-list");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
+            return StatusCode(503);
+        }
+        catch (System.Exception ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<AuthController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogError(logger_, ex_, "Unexpected error in {Endpoint}", "post:auth/revocation-list");
+            var messageBus_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<BeyondImmersion.BannouService.Services.IMessageBus>(HttpContext.RequestServices);
+            await messageBus_.TryPublishErrorAsync(
+                "auth",
+                "GetRevocationList",
+                "unexpected_exception",
+                ex_.Message,
+                endpoint: "post:auth/revocation-list",
+                stack: ex_.StackTrace,
+                cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
+            return StatusCode(500);
+        }
     }
 
     /// <summary>
@@ -397,8 +829,40 @@ public partial class AuthController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> RequestPasswordReset([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] PasswordResetRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
-        var statusCode = await _implementation.RequestPasswordResetAsync(body, cancellationToken);
-        return ConvertToActionResult(statusCode);
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.auth",
+            "AuthController.RequestPasswordReset",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "auth/password/reset");
+        try
+        {
+
+            var statusCode = await _implementation.RequestPasswordResetAsync(body, cancellationToken);
+            return ConvertToActionResult(statusCode);
+        }
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<AuthController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:auth/password/reset");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
+            return StatusCode(503);
+        }
+        catch (System.Exception ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<AuthController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogError(logger_, ex_, "Unexpected error in {Endpoint}", "post:auth/password/reset");
+            var messageBus_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<BeyondImmersion.BannouService.Services.IMessageBus>(HttpContext.RequestServices);
+            await messageBus_.TryPublishErrorAsync(
+                "auth",
+                "RequestPasswordReset",
+                "unexpected_exception",
+                ex_.Message,
+                endpoint: "post:auth/password/reset",
+                stack: ex_.StackTrace,
+                cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
+            return StatusCode(500);
+        }
     }
 
     /// <summary>
@@ -410,8 +874,40 @@ public partial class AuthController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> ConfirmPasswordReset([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] PasswordResetConfirmRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
-        var statusCode = await _implementation.ConfirmPasswordResetAsync(body, cancellationToken);
-        return ConvertToActionResult(statusCode);
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.auth",
+            "AuthController.ConfirmPasswordReset",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "auth/password/confirm");
+        try
+        {
+
+            var statusCode = await _implementation.ConfirmPasswordResetAsync(body, cancellationToken);
+            return ConvertToActionResult(statusCode);
+        }
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<AuthController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:auth/password/confirm");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
+            return StatusCode(503);
+        }
+        catch (System.Exception ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<AuthController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogError(logger_, ex_, "Unexpected error in {Endpoint}", "post:auth/password/confirm");
+            var messageBus_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<BeyondImmersion.BannouService.Services.IMessageBus>(HttpContext.RequestServices);
+            await messageBus_.TryPublishErrorAsync(
+                "auth",
+                "ConfirmPasswordReset",
+                "unexpected_exception",
+                ex_.Message,
+                endpoint: "post:auth/password/confirm",
+                stack: ex_.StackTrace,
+                cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
+            return StatusCode(500);
+        }
     }
 
     /// <summary>
@@ -428,8 +924,305 @@ public partial class AuthController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ProvidersResponse>> ListProviders(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
-        var (statusCode, result) = await _implementation.ListProvidersAsync(cancellationToken);
-        return ConvertToActionResult(statusCode, result);
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.auth",
+            "AuthController.ListProviders",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "auth/providers");
+        try
+        {
+
+            var (statusCode, result) = await _implementation.ListProvidersAsync(cancellationToken);
+            return ConvertToActionResult(statusCode, result);
+        }
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<AuthController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:auth/providers");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
+            return StatusCode(503);
+        }
+        catch (System.Exception ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<AuthController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogError(logger_, ex_, "Unexpected error in {Endpoint}", "post:auth/providers");
+            var messageBus_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<BeyondImmersion.BannouService.Services.IMessageBus>(HttpContext.RequestServices);
+            await messageBus_.TryPublishErrorAsync(
+                "auth",
+                "ListProviders",
+                "unexpected_exception",
+                ex_.Message,
+                endpoint: "post:auth/providers",
+                stack: ex_.StackTrace,
+                cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
+            return StatusCode(500);
+        }
+    }
+
+    /// <summary>
+    /// Initialize MFA setup
+    /// </summary>
+    /// <remarks>
+    /// Generates a TOTP secret and 10 recovery codes. Returns an otpauth:// URI for QR
+    /// <br/>code scanning and the recovery codes in plain text (shown only once). The setup is
+    /// <br/>not active until confirmed via /auth/mfa/enable with a valid TOTP code.
+    /// </remarks>
+    /// <param name="jwt">JWT access token</param>
+    /// <returns>MFA setup initiated</returns>
+    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("auth/mfa/setup")]
+
+    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<MfaSetupResponse>> SetupMfa(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    {
+
+        var jwt = HttpContext.ExtractBearerToken();
+        if (string.IsNullOrEmpty(jwt))
+            return Unauthorized("Missing or invalid Authorization header");
+
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.auth",
+            "AuthController.SetupMfa",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "auth/mfa/setup");
+        try
+        {
+
+            var (statusCode, result) = await _implementation.SetupMfaAsync(jwt, cancellationToken);
+            return ConvertToActionResult(statusCode, result);
+        }
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<AuthController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:auth/mfa/setup");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
+            return StatusCode(503);
+        }
+        catch (System.Exception ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<AuthController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogError(logger_, ex_, "Unexpected error in {Endpoint}", "post:auth/mfa/setup");
+            var messageBus_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<BeyondImmersion.BannouService.Services.IMessageBus>(HttpContext.RequestServices);
+            await messageBus_.TryPublishErrorAsync(
+                "auth",
+                "SetupMfa",
+                "unexpected_exception",
+                ex_.Message,
+                endpoint: "post:auth/mfa/setup",
+                stack: ex_.StackTrace,
+                cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
+            return StatusCode(500);
+        }
+    }
+
+    /// <summary>
+    /// Confirm MFA setup with TOTP code
+    /// </summary>
+    /// <remarks>
+    /// Verifies a TOTP code against the pending setup secret to prove the authenticator
+    /// <br/>app is correctly configured. On success, persists MFA settings to the account and
+    /// <br/>MFA is active for all subsequent password logins.
+    /// </remarks>
+    /// <param name="jwt">JWT access token</param>
+    /// <returns>MFA enabled successfully</returns>
+    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("auth/mfa/enable")]
+
+    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> EnableMfa([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] MfaEnableRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    {
+
+        var jwt = HttpContext.ExtractBearerToken();
+        if (string.IsNullOrEmpty(jwt))
+            return Unauthorized("Missing or invalid Authorization header");
+
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.auth",
+            "AuthController.EnableMfa",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "auth/mfa/enable");
+        try
+        {
+
+            var statusCode = await _implementation.EnableMfaAsync(jwt, body, cancellationToken);
+            return ConvertToActionResult(statusCode);
+        }
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<AuthController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:auth/mfa/enable");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
+            return StatusCode(503);
+        }
+        catch (System.Exception ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<AuthController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogError(logger_, ex_, "Unexpected error in {Endpoint}", "post:auth/mfa/enable");
+            var messageBus_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<BeyondImmersion.BannouService.Services.IMessageBus>(HttpContext.RequestServices);
+            await messageBus_.TryPublishErrorAsync(
+                "auth",
+                "EnableMfa",
+                "unexpected_exception",
+                ex_.Message,
+                endpoint: "post:auth/mfa/enable",
+                stack: ex_.StackTrace,
+                cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
+            return StatusCode(500);
+        }
+    }
+
+    /// <summary>
+    /// Disable MFA for current account
+    /// </summary>
+    /// <remarks>
+    /// Disables MFA for the authenticated account. Requires a valid TOTP code or
+    /// <br/>recovery code to prevent unauthorized disable. Clears the TOTP secret and
+    /// <br/>recovery codes from the account.
+    /// </remarks>
+    /// <param name="jwt">JWT access token</param>
+    /// <returns>MFA disabled successfully</returns>
+    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("auth/mfa/disable")]
+
+    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> DisableMfa([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] MfaDisableRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    {
+
+        var jwt = HttpContext.ExtractBearerToken();
+        if (string.IsNullOrEmpty(jwt))
+            return Unauthorized("Missing or invalid Authorization header");
+
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.auth",
+            "AuthController.DisableMfa",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "auth/mfa/disable");
+        try
+        {
+
+            var statusCode = await _implementation.DisableMfaAsync(jwt, body, cancellationToken);
+            return ConvertToActionResult(statusCode);
+        }
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<AuthController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:auth/mfa/disable");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
+            return StatusCode(503);
+        }
+        catch (System.Exception ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<AuthController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogError(logger_, ex_, "Unexpected error in {Endpoint}", "post:auth/mfa/disable");
+            var messageBus_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<BeyondImmersion.BannouService.Services.IMessageBus>(HttpContext.RequestServices);
+            await messageBus_.TryPublishErrorAsync(
+                "auth",
+                "DisableMfa",
+                "unexpected_exception",
+                ex_.Message,
+                endpoint: "post:auth/mfa/disable",
+                stack: ex_.StackTrace,
+                cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
+            return StatusCode(500);
+        }
+    }
+
+    /// <summary>
+    /// Admin override to disable MFA
+    /// </summary>
+    /// <remarks>
+    /// Allows administrators to disable MFA for any account without TOTP verification.
+    /// <br/>For account recovery when a user has lost their authenticator and all recovery codes.
+    /// </remarks>
+    /// <returns>MFA disabled by admin</returns>
+    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("auth/mfa/admin-disable")]
+
+    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> AdminDisableMfa([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] AdminDisableMfaRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    {
+
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.auth",
+            "AuthController.AdminDisableMfa",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "auth/mfa/admin-disable");
+        try
+        {
+
+            var statusCode = await _implementation.AdminDisableMfaAsync(body, cancellationToken);
+            return ConvertToActionResult(statusCode);
+        }
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<AuthController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:auth/mfa/admin-disable");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
+            return StatusCode(503);
+        }
+        catch (System.Exception ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<AuthController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogError(logger_, ex_, "Unexpected error in {Endpoint}", "post:auth/mfa/admin-disable");
+            var messageBus_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<BeyondImmersion.BannouService.Services.IMessageBus>(HttpContext.RequestServices);
+            await messageBus_.TryPublishErrorAsync(
+                "auth",
+                "AdminDisableMfa",
+                "unexpected_exception",
+                ex_.Message,
+                endpoint: "post:auth/mfa/admin-disable",
+                stack: ex_.StackTrace,
+                cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
+            return StatusCode(500);
+        }
+    }
+
+    /// <summary>
+    /// Verify MFA code during login
+    /// </summary>
+    /// <remarks>
+    /// Completes the MFA challenge issued during login by verifying a TOTP code or
+    /// <br/>recovery code. On success, returns full authentication tokens (same as a
+    /// <br/>non-MFA login would). The challenge token is single-use and has a configurable
+    /// <br/>TTL (default 5 minutes).
+    /// </remarks>
+    /// <returns>MFA verified, tokens issued</returns>
+    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("auth/mfa/verify")]
+
+    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<AuthResponse>> VerifyMfa([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] MfaVerifyRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    {
+
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.auth",
+            "AuthController.VerifyMfa",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "auth/mfa/verify");
+        try
+        {
+
+            var (statusCode, result) = await _implementation.VerifyMfaAsync(body, cancellationToken);
+            return ConvertToActionResult(statusCode, result);
+        }
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<AuthController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:auth/mfa/verify");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
+            return StatusCode(503);
+        }
+        catch (System.Exception ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<AuthController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogError(logger_, ex_, "Unexpected error in {Endpoint}", "post:auth/mfa/verify");
+            var messageBus_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<BeyondImmersion.BannouService.Services.IMessageBus>(HttpContext.RequestServices);
+            await messageBus_.TryPublishErrorAsync(
+                "auth",
+                "VerifyMfa",
+                "unexpected_exception",
+                ex_.Message,
+                endpoint: "post:auth/mfa/verify",
+                stack: ex_.StackTrace,
+                cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
+            return StatusCode(500);
+        }
     }
 
 }

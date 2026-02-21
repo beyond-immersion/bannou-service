@@ -3,10 +3,11 @@
 // Tests for GOAP A* planner implementation.
 // ═══════════════════════════════════════════════════════════════════════════
 
-using BeyondImmersion.Bannou.Behavior.Goap;
+using BeyondImmersion.Bannou.BehaviorCompiler.Goap;
+using BeyondImmersion.BannouService.Behavior.Goap;
 using Xunit;
 
-using InternalGoapGoal = BeyondImmersion.Bannou.Behavior.Goap.GoapGoal;
+using InternalGoapGoal = BeyondImmersion.Bannou.BehaviorCompiler.Goap.GoapGoal;
 
 namespace BeyondImmersion.BannouService.Behavior.Tests.Goap;
 
@@ -562,7 +563,7 @@ public class GoapPlannerTests
         };
 
         // Use actual high-urgency planning options from CognitionConstants
-        var options = BeyondImmersion.Bannou.Behavior.Cognition.UrgencyBasedPlanningOptions
+        var options = BeyondImmersion.BannouService.Abml.Cognition.UrgencyBasedPlanningOptions
             .FromUrgency(0.9f) // High urgency
             .ToPlanningOptions();
 

@@ -103,7 +103,7 @@ public class StateStoreDefinitionsRegressionTests
         // Analytics
         Assert.Equal("analytics-summary", StateStoreDefinitions.AnalyticsSummary);
         Assert.Equal("analytics-rating", StateStoreDefinitions.AnalyticsRating);
-        Assert.Equal("analytics-history", StateStoreDefinitions.AnalyticsHistory);
+        Assert.Equal("analytics-history-data", StateStoreDefinitions.AnalyticsHistoryData);
 
         // Save/Load
         Assert.Equal("save-load-slots", StateStoreDefinitions.SaveLoadSlots);

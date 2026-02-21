@@ -3,13 +3,14 @@
 > **Plugin**: lib-character-encounter
 > **Schema**: schemas/character-encounter-api.yaml
 > **Version**: 1.0.0
+> **Layer**: GameFeatures
 > **State Stores**: character-encounter-statestore (MySQL)
 
 ---
 
 ## Overview
 
-Character encounter tracking service for memorable interactions between characters. Manages the lifecycle of encounters (shared interaction records) and perspectives (individual participant views), enabling dialogue triggers ("We've met before..."), grudges/alliances ("You killed my brother!"), quest hooks ("The merchant you saved has a job"), and NPC memory. Implements a multi-participant design where each encounter has one shared record with N perspectives (one per participant), scaling linearly O(N) for group events. Features time-based memory decay applied lazily on access (not via background jobs), weighted sentiment aggregation across encounter histories, configurable encounter type codes (6 built-in + custom), automatic encounter pruning per-character and per-pair limits, and ETag-based optimistic concurrency for perspective updates. All state is maintained via manual index management (character, pair, location, global, custom-type) since the state store does not support prefix queries.
+Character encounter tracking service (L4 GameFeatures) for memorable interactions between characters, enabling NPC memory, dialogue triggers, grudges/alliances, and quest hooks. Manages encounters (shared interaction records) with per-participant perspectives, time-based memory decay, weighted sentiment aggregation, and configurable encounter type codes. Features automatic pruning per-character and per-pair limits, and provides `${encounters.*}` ABML variables to the Actor service's behavior system via the Variable Provider Factory pattern.
 
 ---
 
@@ -19,7 +20,8 @@ Character encounter tracking service for memorable interactions between characte
 |------------|-------|
 | lib-state (`IStateStoreFactory`) | MySQL persistence for encounters, perspectives, and all indexes |
 | lib-messaging (`IMessageBus`) | Publishing encounter lifecycle events; error event publishing |
-| lib-messaging (`IEventConsumer`) | Consuming `character.deleted` events for cleanup |
+| lib-character (`ICharacterClient`) | Validating participant character IDs exist on RecordEncounter |
+| lib-resource (`IResourceClient`) | Registering cleanup and compression callbacks on startup |
 
 ---
 
@@ -49,6 +51,8 @@ Character encounter tracking service for memorable interactions between characte
 | `loc-idx-{locationId}` | `LocationIndexData` | List of encounter IDs at a location |
 | `global-char-idx` | `GlobalCharacterIndexData` | All character IDs with encounter data (for bulk decay) |
 | `custom-type-idx` | `CustomTypeIndexData` | All custom encounter type codes (for enumeration) |
+| `type-enc-idx-{CODE}` | `TypeEncounterIndexData` | List of encounter IDs using this type code (for type-in-use validation) |
+| `enc-pers-idx-{encounterId}` | `EncounterPerspectiveIndexData` | List of perspective IDs for an encounter (enables O(1) perspective lookup) |
 
 ---
 
@@ -66,9 +70,7 @@ Character encounter tracking service for memorable interactions between characte
 
 ### Consumed Events
 
-| Topic | Event Type | Handler |
-|-------|-----------|---------|
-| `character.deleted` | `CharacterDeletedEvent` | `OnCharacterDeletedAsync` - deletes all encounters and perspectives involving the deleted character |
+None. Character deletion cleanup is handled via lib-resource cleanup callbacks (registered at startup via `x-references` / `CharacterEncounterReferenceTracking`), not event subscriptions.
 
 ---
 
@@ -76,9 +78,10 @@ Character encounter tracking service for memorable interactions between characte
 
 | Property | Env Var | Default | Purpose |
 |----------|---------|---------|---------|
-| `ServerSalt` | `CHARACTER_ENCOUNTER_SERVER_SALT` | `bannou-dev-encounter-salt-change-in-production` | Shared server salt for GUID generation |
 | `MemoryDecayEnabled` | `CHARACTER_ENCOUNTER_MEMORY_DECAY_ENABLED` | `true` | Enable/disable memory decay system |
 | `MemoryDecayMode` | `CHARACTER_ENCOUNTER_MEMORY_DECAY_MODE` | `lazy` | Decay mode: 'lazy' (on access) or 'scheduled' |
+| `ScheduledDecayCheckIntervalMinutes` | `CHARACTER_ENCOUNTER_SCHEDULED_DECAY_CHECK_INTERVAL_MINUTES` | `60` | Minutes between scheduled decay checks (only when mode is 'scheduled') |
+| `ScheduledDecayStartupDelaySeconds` | `CHARACTER_ENCOUNTER_SCHEDULED_DECAY_STARTUP_DELAY_SECONDS` | `30` | Startup delay before first scheduled decay check |
 | `MemoryDecayIntervalHours` | `CHARACTER_ENCOUNTER_MEMORY_DECAY_INTERVAL_HOURS` | `24` | Hours per decay interval |
 | `MemoryDecayRate` | `CHARACTER_ENCOUNTER_MEMORY_DECAY_RATE` | `0.05` | Strength reduction per interval (0.0-1.0) |
 | `MemoryFadeThreshold` | `CHARACTER_ENCOUNTER_MEMORY_FADE_THRESHOLD` | `0.1` | Strength below which memories are forgotten |
@@ -94,6 +97,10 @@ Character encounter tracking service for memorable interactions between characte
 | `SentimentShiftMemorable` | `CHARACTER_ENCOUNTER_SENTIMENT_SHIFT_MEMORABLE` | `0.1` | Default shift for MEMORABLE outcome |
 | `SentimentShiftTransformative` | `CHARACTER_ENCOUNTER_SENTIMENT_SHIFT_TRANSFORMATIVE` | `0.3` | Default shift for TRANSFORMATIVE outcome |
 | `SeedBuiltInTypesOnStartup` | `CHARACTER_ENCOUNTER_SEED_BUILTIN_TYPES_ON_STARTUP` | `true` | Auto-seed built-in types on startup |
+| `EncounterCacheTtlMinutes` | `CHARACTER_ENCOUNTER_CACHE_TTL_MINUTES` | `5` | TTL in minutes for the in-memory encounter data cache |
+| `EncounterCacheMaxResultsPerQuery` | `CHARACTER_ENCOUNTER_CACHE_MAX_RESULTS_PER_QUERY` | `50` | Max encounter results loaded per cache query |
+| `MaxParticipantsPerEncounter` | `CHARACTER_ENCOUNTER_MAX_PARTICIPANTS_PER_ENCOUNTER` | `20` | Max participants per encounter (caps O(N^2) pair index creation) |
+| `DuplicateTimestampToleranceMinutes` | `CHARACTER_ENCOUNTER_DUPLICATE_TIMESTAMP_TOLERANCE_MINUTES` | `5` | Time window in minutes for duplicate encounter detection |
 
 ---
 
@@ -102,12 +109,16 @@ Character encounter tracking service for memorable interactions between characte
 | Service | Lifetime | Role |
 |---------|----------|------|
 | `ILogger<CharacterEncounterService>` | Scoped | Structured logging |
-| `CharacterEncounterServiceConfiguration` | Singleton | All 18 config properties |
+| `CharacterEncounterServiceConfiguration` | Singleton | All 22 config properties |
 | `IStateStoreFactory` | Singleton | MySQL state store access for all data types |
 | `IMessageBus` | Scoped | Event publishing and error events |
-| `IEventConsumer` | Scoped | Event subscription registration |
+| `ICharacterClient` | Scoped | Cross-service character validation |
+| `IResourceClient` | *(plugin startup)* | Cleanup/compression callback registration via generated `CharacterEncounterCompressionCallbacks` and `CharacterEncounterReferenceTracking` (not injected into service constructor) |
+| `IEncounterDataCache` | Singleton | In-memory cache for encounter queries (configurable TTL via `EncounterCacheTtlMinutes`), used by Actor's EncountersProvider; injected into service for cache invalidation on writes |
+| `EncountersProviderFactory` | Singleton | `IVariableProviderFactory` implementation for Actor's `${encounters.*}` ABML variables |
+| `MemoryDecaySchedulerService` | Hosted | Background service for scheduled memory decay (only active when MemoryDecayMode is 'scheduled') |
 
-Service lifetime is **Scoped** (per-request). No background services. No distributed locks used.
+Service lifetime is **Scoped** (per-request). One background service: `MemoryDecaySchedulerService` (conditionally active). Three singleton helpers: configuration, encounter cache (reads TTL and max results from configuration), and variable provider factory. No distributed locks used. Cache invalidation is both TTL-based and explicit: the service calls `Invalidate(characterId)` after all write operations (RecordEncounter, UpdatePerspective, RefreshMemory, DeleteEncounter, DeleteByCharacter) to ensure Actor behavior sees fresh data immediately.
 
 ---
 
@@ -119,12 +130,12 @@ Service lifetime is **Scoped** (per-request). No background services. No distrib
 - **GetEncounterType** (`/character-encounter/type/get`): Looks up by uppercased code. If not found, checks if it is a built-in type and auto-seeds it on demand (lazy seeding pattern). Returns NotFound for truly unknown codes.
 - **ListEncounterTypes** (`/character-encounter/type/list`): Ensures built-in types are seeded first. Builds key list from built-in codes plus custom type index. Loads each type individually. Applies filters: `includeInactive`, `builtInOnly`, `customOnly`. Sorts by sortOrder then code.
 - **UpdateEncounterType** (`/character-encounter/type/update`): Partial update semantics (null fields unchanged). Built-in types can only have description and defaultEmotionalImpact updated; rejects name or sortOrder changes. No event published.
-- **DeleteEncounterType** (`/character-encounter/type/delete`): Rejects deletion of built-in types (returns BadRequest). Performs soft-delete by marking `IsActive = false`. Removes from custom type index. Does NOT validate whether encounters reference this type.
+- **DeleteEncounterType** (`/character-encounter/type/delete`): Rejects deletion of built-in types (returns BadRequest). Validates type is not in use via `type-enc-idx-{CODE}` lookup (returns 409 Conflict if encounters exist). Performs soft-delete by marking `IsActive = false`. Removes from custom type index.
 - **SeedEncounterTypes** (`/character-encounter/type/seed`): Idempotent operation. Iterates built-in types. Creates if missing. If `forceReset=true`, overwrites existing built-in types with default values. Reports created/updated/skipped counts.
 
 ### Recording (1 endpoint)
 
-- **RecordEncounter** (`/character-encounter/record`): Validates minimum 2 participants. Validates encounter type exists (auto-seeds built-in types). Validates type is active. Deduplicates participant IDs. Creates encounter record. Creates perspective per participant (uses provided perspectives or generates defaults from outcome). Default emotional impact derived from encounter type or outcome. Default sentiment shift derived from outcome enum. Updates character index, pair indexes (O(N^2) pairs), and location index. Enforces `MaxEncountersPerCharacter` and `MaxEncountersPerPair` by pruning oldest. Publishes `encounter.recorded` event.
+- **RecordEncounter** (`/character-encounter/record`): Validates minimum 2 participants. Validates encounter type exists (auto-seeds built-in types). Validates type is active. Deduplicates participant IDs. **Checks for duplicate encounters** (same participants, type, and timestamp within `DuplicateTimestampToleranceMinutes` - returns 409 Conflict). **Validates all participant characters exist** via `ICharacterClient` (returns 404 if any not found). Creates encounter record. Adds to `type-enc-idx-{CODE}` for type-in-use tracking. Creates perspective per participant (uses provided perspectives or generates defaults from outcome). Default emotional impact derived from encounter type or outcome. Default sentiment shift derived from outcome enum. Updates character index, pair indexes (O(N^2) pairs), and location index. Enforces `MaxEncountersPerCharacter` and `MaxEncountersPerPair` by pruning oldest. Publishes `encounter.recorded` event.
 
 ### Queries (6 endpoints)
 
@@ -133,11 +144,11 @@ Service lifetime is **Scoped** (per-request). No background services. No distrib
 - **QueryByLocation** (`/character-encounter/query/by-location`): Loads location index. Loads each encounter. Applies type filter and fromTimestamp filter (no toTimestamp). Loads perspectives for each. Sorts descending, paginates.
 - **HasMet** (`/character-encounter/has-met`): Fast boolean check via pair index only. Returns encounter count. Does NOT apply memory decay or load encounter details. O(1) index lookup.
 - **GetSentiment** (`/character-encounter/get-sentiment`): Loads pair encounters. For each: finds the querying character's perspective, weights sentiment shift by memory strength. Calculates weighted average sentiment (clamped to [-1, +1]). Tracks emotion frequency counts. Returns dominant emotion (most frequent) and aggregate sentiment. Returns 0 sentiment with 0 encounter count if no encounters exist.
-- **BatchGetSentiment** (`/character-encounter/batch-get`): Validates batch size against `MaxBatchSize`. Iterates target IDs calling `GetSentimentAsync` for each. No parallel execution. Returns list of sentiment responses.
+- **BatchGetSentiment** (`/character-encounter/batch-get`): Validates batch size against `MaxBatchSize`. Parallelizes sentiment calculations via `Task.WhenAll`. Returns list of sentiment responses.
 
 ### Perspectives (3 endpoints)
 
-- **GetPerspective** (`/character-encounter/get-perspective`): Finds perspective by encounter+character (scans character index). Applies lazy decay before returning. Returns NotFound if perspective does not exist.
+- **GetPerspective** (`/character-encounter/get-perspective`): Finds perspective by encounter+character via `enc-pers-idx-{encounterId}` for O(1) lookup. Applies lazy decay before returning. Returns NotFound if perspective does not exist.
 - **UpdatePerspective** (`/character-encounter/update-perspective`): Finds perspective, re-loads with ETag for optimistic concurrency. Applies partial updates (emotionalImpact, sentimentShift, rememberedAs). Uses `TrySaveAsync` with ETag; returns Conflict on concurrent modification. Publishes `encounter.perspective.updated` with previous and new values.
 - **RefreshMemory** (`/character-encounter/refresh-memory`): Finds perspective, re-loads with ETag. Adds boost amount (request-provided or config default) to memory strength. Clamps to [0, 1]. Uses ETag concurrency. Publishes `encounter.memory.refreshed`. Counteracts memory decay.
 
@@ -146,6 +157,25 @@ Service lifetime is **Scoped** (per-request). No background services. No distrib
 - **DeleteEncounter** (`/character-encounter/delete`): Hard delete. Deletes all perspectives for the encounter. Deletes encounter record. Cleans up pair indexes and location index. Publishes `encounter.deleted` with `deletedByCharacterCleanup = false`.
 - **DeleteByCharacter** (`/character-encounter/delete-by-character`): Loads all perspective IDs for the character. Deletes each perspective. For each unique encounter: deletes remaining perspectives, deletes encounter, cleans up pair and location indexes. Publishes `encounter.deleted` per encounter with `deletedByCharacterCleanup = true`. Reports total encounters and perspectives deleted.
 - **DecayMemories** (`/character-encounter/decay-memories`): Respects `MemoryDecayEnabled` flag. Targets specific character or all characters (via global index). Loads each perspective with ETag. Calculates decay amount based on elapsed intervals. Supports `dryRun` mode. Uses ETag concurrency (skips on conflict). Publishes `encounter.memory.faded` for perspectives crossing the fade threshold.
+
+### Compression Support (2 endpoints)
+
+Centralized compression via the Resource service (L1). CharacterEncounter registers compression callbacks at startup, enabling the Resource service to gather encounter and perspective data during character archival.
+
+- **GetCompressData** (`/character-encounter/get-compress-data`): Returns all encounters and perspectives for a character, bundled for archival. Loads perspectives via the character index (`char-idx-{characterId}`), then loads corresponding encounter records and all participant perspectives. Computes aggregate sentiment per target character on-the-fly. Returns `CharacterEncounterArchive` (extends `ResourceArchiveBase`) containing character ID, encounter count, encounters list, and aggregate sentiment map. Returns 404 if no data exists (empty index). GZip-compressed with Base64 encoding during archival by the Resource service.
+
+- **RestoreFromArchive** (`/character-encounter/restore-from-archive`): Accepts Base64-encoded GZip-compressed JSON (`CharacterEncounterArchive`). Decompresses and deserializes using `BannouJson`. Restores encounters idempotently (skips if encounter already exists). Restores perspectives only for the archived character (not other participants). Rebuilds all indexes (character, pair, location, type-encounter, encounter-perspective). Returns success status with counts of restored encounters and perspectives.
+
+**Callback Registration** (in plugin startup via generated code from `x-compression-callback`):
+```csharp
+// In CharacterEncounterServicePlugin.OnRunningAsync:
+// Uses generated CharacterEncounterCompressionCallbacks.RegisterAsync()
+// Registers with priority 30 (after personality at 10, history at 20)
+// ResourceType: "character", SourceType: "character-encounter"
+// CompressEndpoint: /character-encounter/get-compress-data
+// DecompressEndpoint: /character-encounter/restore-from-archive
+await CharacterEncounterCompressionCallbacks.RegisterAsync(resourceClient, ct);
+```
 
 ---
 
@@ -273,56 +303,61 @@ Encounter Lifecycle & Pruning
   Deletion flows:
     DeleteEncounter:       1 encounter + N perspectives + indexes
     DeleteByCharacter:     All encounters involving character + all their perspectives
-    character.deleted:     Triggers DeleteByCharacter via event consumer
+    lib-resource cleanup:  Character deletion triggers DeleteByCharacter via cleanup callback
 
 
 Index Architecture
 ====================
 
-  +-----------------------+      +--------------------+
-  | global-char-idx       |      | custom-type-idx    |
-  | [charA, charB, ...]   |      | [HEALING, ...]     |
-  +-----------+-----------+      +--------------------+
-              |
-   +----------+----------+
-   |                     |
-   v                     v
-  +------------------+  +------------------+
-  | char-idx-charA   |  | char-idx-charB   |
-  | [pA1, pA2, ...]  |  | [pB1, pB2, ...]  |
-  +--------+---------+  +------------------+
-           |
-           v
+  +-----------------------+      +--------------------+     +----------------------+
+  | global-char-idx       |      | custom-type-idx    |     | type-enc-idx-{CODE}  |
+  | [charA, charB, ...]   |      | [HEALING, ...]     |     | [enc1, enc2, ...]    |
+  +-----------+-----------+      +--------------------+     +----------------------+
+              |                                                        |
+   +----------+----------+                                             |
+   |                     |                                             |
+   v                     v                                             |
+  +------------------+  +------------------+                           |
+  | char-idx-charA   |  | char-idx-charB   |                           |
+  | [pA1, pA2, ...]  |  | [pB1, pB2, ...]  |                           |
+  +--------+---------+  +------------------+                           |
+           |                                                           |
+           v                                                           |
   +-------------------+     +------------------+     +------------------+
   | pers-pA1          |     | enc-{id}         |     | pair-idx-A:B     |
   | encounterId       |---->| participants     |<----| [enc1, enc2,...] |
   | emotionalImpact   |     | type, outcome    |     +------------------+
-  | memoryStrength    |     | realm, location  |
-  | sentimentShift    |     +------------------+     +------------------+
-  +-------------------+                              | loc-idx-{locId}  |
-                                                     | [enc1, enc2,...] |
-                                                     +------------------+
+  | memoryStrength    |     | realm, location  |<----+
+  | sentimentShift    |     +--------+---------+     +------------------+
+  +-------------------+              |               | loc-idx-{locId}  |
+           ^                         |               | [enc1, enc2,...] |
+           |                         v               +------------------+
+           |              +------------------------+
+           +--------------| enc-pers-idx-{encId}   |
+                          | [pA1, pB1, pC1, ...]   |
+                          +------------------------+
+                          Enables O(1) lookup of all
+                          perspectives for an encounter
 ```
 
 ---
 
 ## Stubs & Unimplemented Features
 
-1. **Scheduled decay mode**: The `MemoryDecayMode` configuration accepts "scheduled" but only "lazy" mode is implemented. No background service exists to periodically process decay. The `DecayMemories` admin endpoint partially fills this gap but must be called externally.
-2. **Duplicate encounter detection**: The API schema documents a 409 response for "Duplicate encounter (same participants, timestamp, and type)" but the implementation does not check for duplicates. Recording the same encounter twice creates two separate records.
-3. **Delete type with encounters validation**: The schema documents a 409 response for "Cannot delete - type is in use by encounters" but the implementation does not validate whether any encounters reference the type before soft-deleting it.
-4. **Character existence validation**: The schema documents a 404 response for "One or more characters not found" on RecordEncounter, but the implementation does not call any character service to validate participant IDs exist.
+No stubs or unimplemented features remain.
 
 ---
 
 ## Potential Extensions
 
-1. **Background decay worker**: Implement a hosted service that periodically calls `DecayMemories` for all characters, enabling the "scheduled" mode path and reducing lazy decay latency on first access.
-2. **Encounter deduplication**: Add duplicate detection based on (participantIds, timestamp, typeCode) tuple to prevent recording the same event multiple times.
-3. **Encounter aggregation**: Pre-compute and cache sentiment values per character pair, updating on encounter record/delete/perspective-update to avoid O(N) computation on every GetSentiment call.
-4. **Location-based encounter proximity**: Integrate with location hierarchy to find encounters "near" a location (ancestor/descendant queries).
-5. **Memory decay curves**: Support non-linear decay (exponential, logarithmic) via configurable decay function, allowing traumatic encounters to persist longer than casual ones.
-6. **Encounter archival**: Instead of hard-deleting pruned encounters, move them to a compressed archive format for historical queries.
+1. **Encounter aggregation**: Pre-compute and cache sentiment values per character pair, updating on encounter record/delete/perspective-update to avoid O(N) computation on every GetSentiment call.
+<!-- AUDIT:NEEDS_DESIGN:2026-02-06:https://github.com/beyond-immersion/bannou-service/issues/312 -->
+2. **Location-based encounter proximity**: Integrate with location hierarchy to find encounters "near" a location (ancestor/descendant queries).
+<!-- AUDIT:NEEDS_DESIGN:2026-02-06:https://github.com/beyond-immersion/bannou-service/issues/313 -->
+3. **Memory decay curves**: Support non-linear decay (exponential, logarithmic) via configurable decay function, allowing traumatic encounters to persist longer than casual ones.
+<!-- AUDIT:NEEDS_DESIGN:2026-02-07:https://github.com/beyond-immersion/bannou-service/issues/314 -->
+4. **Encounter archival**: Instead of hard-deleting pruned encounters, move them to a compressed archive format for historical queries.
+<!-- AUDIT:NEEDS_DESIGN:2026-02-07:https://github.com/beyond-immersion/bannou-service/issues/315 -->
 
 ---
 
@@ -330,7 +365,11 @@ Index Architecture
 
 ### Bugs (Fix Immediately)
 
-No bugs identified.
+1. ~~**Dead configuration: `ServerSalt` defined but never used (IMPLEMENTATION TENETS - T21)**~~: **FIXED** (2026-02-09) - Removed `ServerSalt` from `character-encounter-configuration.yaml` and regenerated. The service uses `Guid.NewGuid()` for all GUID generation and relies on timestamp-based duplicate detection via `DuplicateTimestampToleranceMinutes`, making salted GUIDs unnecessary.
+
+2. ~~**Hardcoded cache TTL in EncounterDataCache (IMPLEMENTATION TENETS - T21)**~~: **FIXED** (2026-02-09) - Added `EncounterCacheTtlMinutes` (default 5) and `EncounterCacheMaxResultsPerQuery` (default 50) to configuration schema. `EncounterDataCache` now reads both from injected `CharacterEncounterServiceConfiguration` instead of hardcoded constants.
+
+3. ~~**EncounterDataCache never explicitly invalidated**~~: **FIXED** (2026-02-09) - Injected `IEncounterDataCache` into `CharacterEncounterService` constructor and added `Invalidate(characterId)` calls after all write operations: RecordEncounter (all participants), UpdatePerspective, RefreshMemory, DeleteEncounter (all participants), and DeleteByCharacter (all affected characters including other participants of deleted encounters). Cache is now invalidated immediately on writes so Actor behavior sees fresh data.
 
 ### Intentional Quirks
 
@@ -342,22 +381,33 @@ No bugs identified.
 
 4. **Lazy decay has write side effects**: When loading perspectives for queries (QueryByCharacter, QueryBetween, QueryByLocation), lazy decay is applied to each perspective. This means read-only queries have write side effects (updating MemoryStrength and LastDecayedAtUnix in the store).
 
+5. **Index updates use 3-attempt ETag retry loops**: All index update methods (character index, pair index, location index, custom type index) use `GetWithETagAsync` + `TrySaveAsync` with a 3-attempt retry pattern. Concurrent modifications are detected via ETag mismatch and retried. Individual retries are logged at Debug level. After 3 failures, the operation continues silently (best-effort index consistency) - there is no escalation to Warning level on final failure, which could hide index corruption under high contention.
+
+6. **Lazy decay concurrent modifications silently skipped**: During bulk lazy decay in queries, if a perspective's ETag has changed between read and write (concurrent modification), the decay update is silently skipped with no logging. The perspective will be decayed on the next access instead.
+
 ### Design Considerations (Requires Planning)
 
-1. **N+1 query pattern everywhere**: All query operations (QueryByCharacter, QueryBetween, QueryByLocation) load perspectives and encounters individually by key. A character with 1000 encounters generates thousands of state store calls per query. The pair index and character index approach mitigates this for lookups but not for loading.
+1. ~~**No pagination for GetAllPerspectiveIdsAsync**~~: **FIXED** (2026-02-09) - Refactored `DecayMemoriesAsync` to iterate per-character instead of collecting all perspective IDs into a single list. Memory is now bounded to one character's perspectives at a time. Removed the dead `GetAllPerspectiveIdsAsync` method. Pattern matches `MemoryDecaySchedulerService` which already iterated per-character.
 
-2. **No pagination for GetAllPerspectiveIdsAsync**: The `DecayMemories` endpoint with no characterId specified loads ALL perspective IDs from ALL characters via the global index. With many characters and encounters, this could exhaust memory. The code comments acknowledge this: "in production, this would need batching."
+2. ~~**Pair index combinatorial explosion**~~: **FIXED** (2026-02-09) - Added `MaxParticipantsPerEncounter` config property (default: 20, range 2-100) and server-side validation in `RecordEncounterAsync` rejecting requests exceeding the limit. With 20 participants, max pair indexes per encounter is 190, which is a reasonable upper bound. Also added `maxItems: 100` to schema `participantIds` as a hard ceiling. The O(N^2) behavior is inherent to the pair index design but is now bounded.
 
-3. **Pair index combinatorial explosion**: For a group encounter with N participants, N*(N-1)/2 pair indexes are created/updated. A 10-participant encounter creates 45 pair index entries. This is documented as O(N^2) in the schema.
+3. **No transactionality**: Recording an encounter involves multiple sequential writes (encounter, perspectives, character indexes, pair indexes, location index). If the service crashes mid-operation, indexes can become inconsistent with actual data.
 
-4. **No transactionality**: Recording an encounter involves multiple sequential writes (encounter, perspectives, character indexes, pair indexes, location index). If the service crashes mid-operation, indexes can become inconsistent with actual data.
+4. **Lazy decay write amplification**: Every read of a perspective older than one decay interval triggers a write-back. High-read workloads on stale data will generate significant write traffic. The `encounter.memory.faded` event is also published on read paths.
 
-5. **Lazy decay write amplification**: Every read of a perspective older than one decay interval triggers a write-back. High-read workloads on stale data will generate significant write traffic. The `encounter.memory.faded` event is also published on read paths.
+5. **Global character index unbounded growth**: The `global-char-idx` list grows without bound as new characters encounter each other. Even after `DeleteByCharacter` removes a character, the global index is cleaned up, but during active operation this list could contain tens of thousands of character IDs.
 
-6. **BatchGetSentiment is sequential**: The batch endpoint calls `GetSentimentAsync` in a loop. Each call does its own pair index lookup and perspective scanning. No parallelism or batching optimization. With MaxBatchSize=100 targets and many encounters per pair, this could be very slow.
+---
 
-7. **Global character index unbounded growth**: The `global-char-idx` list grows without bound as new characters encounter each other. Even after `DeleteByCharacter` removes a character, the global index is cleaned up, but during active operation this list could contain tens of thousands of character IDs.
+## Work Tracking
 
-8. **FindPerspective scans character index**: Finding a specific perspective by (encounterId, characterId) requires loading the character's entire perspective index and then loading each perspective until finding one matching the encounter. There is no direct encounter-to-perspective index.
+This section tracks active development work on items from the quirks/bugs lists above. Items here are managed by the `/audit-plugin` workflow and should not be manually edited except to add new tracking markers.
 
-9. ~~**Index operations are not atomic**~~: **FIXED**: All index update methods now use `GetWithETagAsync` + `TrySaveAsync` with 3-attempt retry loops. Concurrent modifications are detected via ETag mismatch and retried, preventing lost updates under high concurrency.
+### Completed
+
+- **Bug #1 - Dead `ServerSalt` config**: Removed from schema (2026-02-09). Service uses random GUIDs, not salted.
+- **Bug #2 - Hardcoded cache TTL and max results**: Added `EncounterCacheTtlMinutes` and `EncounterCacheMaxResultsPerQuery` config properties (2026-02-09). Cache now reads from configuration.
+- **Bug #3 - EncounterDataCache never explicitly invalidated**: Injected `IEncounterDataCache` into service constructor and added `Invalidate()` calls in all write methods (2026-02-09). Actor behavior now sees fresh data immediately after writes.
+- **Design #1 - No pagination for GetAllPerspectiveIdsAsync**: Refactored `DecayMemoriesAsync` to iterate per-character (2026-02-09). Memory bounded to one character's perspectives at a time. Removed dead `GetAllPerspectiveIdsAsync` method.
+- **Design #2 - Pair index combinatorial explosion**: Added `MaxParticipantsPerEncounter` config property (default: 20) and server-side validation (2026-02-09). O(N^2) pair index creation now bounded by configurable limit.
+- **Issue #379 - Migrate cleanup from character.deleted event to lib-resource**: Removed redundant `character.deleted` event subscription (2026-02-11). Cleanup now exclusively via lib-resource cleanup callbacks registered at startup. Removed `IEventConsumer` dependency and `CharacterEncounterServiceEvents.cs`.

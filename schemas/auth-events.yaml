@@ -5,8 +5,11 @@ info:
     Event models for Auth service RabbitMQ pub/sub via MassTransit.
     Contains auth-specific events and subscription/publication declarations.
 
-    **Schema Rules**: AI agents MUST review docs/reference/SCHEMA-RULES.md before
-    modifying this schema. Optional reference types require `nullable: true`.
+    **SCHEMA MODIFICATION GATE**: STOP. Before modifying this schema, you MUST:
+    1. Read docs/reference/SCHEMA-RULES.md
+    2. State which section applies to your change
+    3. Only then proceed with edits
+    Edits without stating the applicable rule are FORBIDDEN.
   version: 1.0.0
   x-event-subscriptions:
     # Account lifecycle events from Account service
@@ -16,10 +19,6 @@ info:
     - topic: account.updated
       event: AccountUpdatedEvent
       handler: HandleAccountUpdated
-    # Subscription changes from Subscription service
-    - topic: subscription.updated
-      event: SubscriptionUpdatedEvent
-      handler: HandleSubscriptionUpdated
   x-event-publications:
     # Session lifecycle events published by Auth service
     - topic: session.invalidated
@@ -47,6 +46,19 @@ info:
     - topic: auth.password-reset.successful
       event: AuthPasswordResetSuccessfulEvent
       description: Published when a password reset is successfully completed
+    # MFA audit events
+    - topic: auth.mfa.enabled
+      event: AuthMfaEnabledEvent
+      description: Published when MFA is enabled for an account
+    - topic: auth.mfa.disabled
+      event: AuthMfaDisabledEvent
+      description: Published when MFA is disabled for an account (self or admin)
+    - topic: auth.mfa.verified
+      event: AuthMfaVerifiedEvent
+      description: Published when MFA verification succeeds during login
+    - topic: auth.mfa.failed
+      event: AuthMfaFailedEvent
+      description: Published when MFA verification fails during login
 
 paths: {}  # Events don't have HTTP paths
 
@@ -86,7 +98,7 @@ components:
 
     SessionInvalidatedEventReason:
       type: string
-      enum: [logout, account_deleted, security_revocation, admin_action, session_expired]
+      enum: [Logout, AccountDeleted, SecurityRevocation, AdminAction, SessionExpired]
       description: Reason for session invalidation
 
     SessionUpdatedEvent:
@@ -128,7 +140,7 @@ components:
 
     SessionUpdatedEventReason:
       type: string
-      enum: [role_changed, authorization_changed, subscription_changed]
+      enum: [RoleChanged, AuthorizationChanged, SubscriptionChanged]
       description: Reason for session update
 
     # ==========================================================================
@@ -198,7 +210,7 @@ components:
 
     AuthLoginFailedReason:
       type: string
-      enum: [invalid_credentials, account_disabled, account_locked, account_not_found]
+      enum: [InvalidCredentials, AccountDisabled, AccountLocked, AccountNotFound, RateLimited]
       description: Reason why the login attempt failed
 
     AuthRegistrationSuccessfulEvent:
@@ -315,3 +327,107 @@ components:
           type: string
           nullable: true
           description: IP address of the password reset request
+
+    # ==========================================================================
+    # MFA Audit Events
+    # ==========================================================================
+
+    AuthMfaEnabledEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
+      type: object
+      additionalProperties: false
+      description: Published when MFA is successfully enabled for an account
+      required:
+        - accountId
+      properties:
+        accountId:
+          type: string
+          format: uuid
+          description: ID of the account that enabled MFA
+
+    AuthMfaDisabledEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
+      type: object
+      additionalProperties: false
+      description: Published when MFA is disabled for an account
+      required:
+        - accountId
+        - disabledBy
+      properties:
+        accountId:
+          type: string
+          format: uuid
+          description: ID of the account whose MFA was disabled
+        disabledBy:
+          $ref: '#/components/schemas/MfaDisabledBy'
+          description: Who triggered the MFA disable
+        adminReason:
+          type: string
+          nullable: true
+          description: Administrative reason (only when disabledBy is Admin)
+
+    MfaDisabledBy:
+      type: string
+      enum: [Self, Admin]
+      description: Who triggered the MFA disable action
+
+    AuthMfaVerifiedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
+      type: object
+      additionalProperties: false
+      description: Published when MFA verification succeeds during login
+      required:
+        - accountId
+        - method
+        - sessionId
+      properties:
+        accountId:
+          type: string
+          format: uuid
+          description: ID of the account that completed MFA verification
+        method:
+          $ref: '#/components/schemas/MfaVerificationMethod'
+          description: Method used for MFA verification
+        sessionId:
+          type: string
+          format: uuid
+          description: ID of the session created after successful MFA
+        recoveryCodesRemaining:
+          type: integer
+          nullable: true
+          description: Recovery codes remaining after use (only when method is RecoveryCode)
+
+    MfaVerificationMethod:
+      type: string
+      enum: [Totp, RecoveryCode]
+      description: Method used for MFA verification
+
+    AuthMfaFailedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
+      type: object
+      additionalProperties: false
+      description: Published when MFA verification fails during login
+      required:
+        - accountId
+        - method
+        - reason
+      properties:
+        accountId:
+          type: string
+          format: uuid
+          description: ID of the account that failed MFA
+        method:
+          $ref: '#/components/schemas/MfaVerificationMethod'
+          description: Method attempted
+        reason:
+          $ref: '#/components/schemas/MfaFailedReason'
+          description: Why MFA verification failed
+
+    MfaFailedReason:
+      type: string
+      enum: [InvalidCode, ExpiredChallenge, NoRecoveryCodesRemaining]
+      description: Reason for MFA verification failure

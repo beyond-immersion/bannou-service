@@ -149,4 +149,254 @@ public sealed class RelationshipProxy
         return _client.SendEventAsync<EndRelationshipRequest>(
             "/relationship/end", request, channel, cancellationToken);
     }
+
+    /// <summary>
+    /// Cleanup relationships referencing a deleted entity
+    /// </summary>
+    /// <param name="request">The request payload.</param>
+    /// <param name="channel">Message channel for ordering (default 0).</param>
+    /// <param name="timeout">Request timeout.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>ApiResponse containing CleanupByEntityResponse on success.</returns>
+    public Task<ApiResponse<CleanupByEntityResponse>> CleanupByEntityAsync(
+        CleanupByEntityRequest request,
+        ushort channel = 0,
+        TimeSpan? timeout = null,
+        CancellationToken cancellationToken = default)
+    {
+        return _client.InvokeAsync<CleanupByEntityRequest, CleanupByEntityResponse>(
+            "/relationship/cleanup-by-entity", request, channel, timeout, cancellationToken);
+    }
+
+    /// <summary>
+    /// Get relationship type by ID
+    /// </summary>
+    /// <param name="request">The request payload.</param>
+    /// <param name="channel">Message channel for ordering (default 0).</param>
+    /// <param name="timeout">Request timeout.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>ApiResponse containing RelationshipTypeResponse on success.</returns>
+    public Task<ApiResponse<RelationshipTypeResponse>> GetRelationshipTypeAsync(
+        GetRelationshipTypeRequest request,
+        ushort channel = 0,
+        TimeSpan? timeout = null,
+        CancellationToken cancellationToken = default)
+    {
+        return _client.InvokeAsync<GetRelationshipTypeRequest, RelationshipTypeResponse>(
+            "/relationship-type/get", request, channel, timeout, cancellationToken);
+    }
+
+    /// <summary>
+    /// Get relationship type by code
+    /// </summary>
+    /// <param name="request">The request payload.</param>
+    /// <param name="channel">Message channel for ordering (default 0).</param>
+    /// <param name="timeout">Request timeout.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>ApiResponse containing RelationshipTypeResponse on success.</returns>
+    public Task<ApiResponse<RelationshipTypeResponse>> GetRelationshipTypeByCodeAsync(
+        GetRelationshipTypeByCodeRequest request,
+        ushort channel = 0,
+        TimeSpan? timeout = null,
+        CancellationToken cancellationToken = default)
+    {
+        return _client.InvokeAsync<GetRelationshipTypeByCodeRequest, RelationshipTypeResponse>(
+            "/relationship-type/get-by-code", request, channel, timeout, cancellationToken);
+    }
+
+    /// <summary>
+    /// List all relationship types
+    /// </summary>
+    /// <param name="request">The request payload.</param>
+    /// <param name="channel">Message channel for ordering (default 0).</param>
+    /// <param name="timeout">Request timeout.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>ApiResponse containing RelationshipTypeListResponse on success.</returns>
+    public Task<ApiResponse<RelationshipTypeListResponse>> ListRelationshipTypesAsync(
+        ListRelationshipTypesRequest request,
+        ushort channel = 0,
+        TimeSpan? timeout = null,
+        CancellationToken cancellationToken = default)
+    {
+        return _client.InvokeAsync<ListRelationshipTypesRequest, RelationshipTypeListResponse>(
+            "/relationship-type/list", request, channel, timeout, cancellationToken);
+    }
+
+    /// <summary>
+    /// Get child types for a parent type
+    /// </summary>
+    /// <param name="request">The request payload.</param>
+    /// <param name="channel">Message channel for ordering (default 0).</param>
+    /// <param name="timeout">Request timeout.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>ApiResponse containing RelationshipTypeListResponse on success.</returns>
+    public Task<ApiResponse<RelationshipTypeListResponse>> GetChildRelationshipTypesAsync(
+        GetChildRelationshipTypesRequest request,
+        ushort channel = 0,
+        TimeSpan? timeout = null,
+        CancellationToken cancellationToken = default)
+    {
+        return _client.InvokeAsync<GetChildRelationshipTypesRequest, RelationshipTypeListResponse>(
+            "/relationship-type/get-children", request, channel, timeout, cancellationToken);
+    }
+
+    /// <summary>
+    /// Check if type matches ancestor in hierarchy
+    /// </summary>
+    /// <param name="request">The request payload.</param>
+    /// <param name="channel">Message channel for ordering (default 0).</param>
+    /// <param name="timeout">Request timeout.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>ApiResponse containing MatchesHierarchyResponse on success.</returns>
+    public Task<ApiResponse<MatchesHierarchyResponse>> MatchesHierarchyAsync(
+        MatchesHierarchyRequest request,
+        ushort channel = 0,
+        TimeSpan? timeout = null,
+        CancellationToken cancellationToken = default)
+    {
+        return _client.InvokeAsync<MatchesHierarchyRequest, MatchesHierarchyResponse>(
+            "/relationship-type/matches-hierarchy", request, channel, timeout, cancellationToken);
+    }
+
+    /// <summary>
+    /// Get all ancestors of a relationship type
+    /// </summary>
+    /// <param name="request">The request payload.</param>
+    /// <param name="channel">Message channel for ordering (default 0).</param>
+    /// <param name="timeout">Request timeout.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>ApiResponse containing RelationshipTypeListResponse on success.</returns>
+    public Task<ApiResponse<RelationshipTypeListResponse>> GetAncestorsAsync(
+        GetAncestorsRequest request,
+        ushort channel = 0,
+        TimeSpan? timeout = null,
+        CancellationToken cancellationToken = default)
+    {
+        return _client.InvokeAsync<GetAncestorsRequest, RelationshipTypeListResponse>(
+            "/relationship-type/get-ancestors", request, channel, timeout, cancellationToken);
+    }
+
+    /// <summary>
+    /// Create new relationship type
+    /// </summary>
+    /// <param name="request">The request payload.</param>
+    /// <param name="channel">Message channel for ordering (default 0).</param>
+    /// <param name="timeout">Request timeout.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>ApiResponse containing RelationshipTypeResponse on success.</returns>
+    public Task<ApiResponse<RelationshipTypeResponse>> CreateRelationshipTypeAsync(
+        CreateRelationshipTypeRequest request,
+        ushort channel = 0,
+        TimeSpan? timeout = null,
+        CancellationToken cancellationToken = default)
+    {
+        return _client.InvokeAsync<CreateRelationshipTypeRequest, RelationshipTypeResponse>(
+            "/relationship-type/create", request, channel, timeout, cancellationToken);
+    }
+
+    /// <summary>
+    /// Update relationship type
+    /// </summary>
+    /// <param name="request">The request payload.</param>
+    /// <param name="channel">Message channel for ordering (default 0).</param>
+    /// <param name="timeout">Request timeout.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>ApiResponse containing RelationshipTypeResponse on success.</returns>
+    public Task<ApiResponse<RelationshipTypeResponse>> UpdateRelationshipTypeAsync(
+        UpdateRelationshipTypeRequest request,
+        ushort channel = 0,
+        TimeSpan? timeout = null,
+        CancellationToken cancellationToken = default)
+    {
+        return _client.InvokeAsync<UpdateRelationshipTypeRequest, RelationshipTypeResponse>(
+            "/relationship-type/update", request, channel, timeout, cancellationToken);
+    }
+
+    /// <summary>
+    /// Delete relationship type
+    /// </summary>
+    /// <param name="request">The request payload.</param>
+    /// <param name="channel">Message channel for ordering (default 0).</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Task that completes when the event is sent.</returns>
+    public Task DeleteRelationshipTypeEventAsync(
+        DeleteRelationshipTypeRequest request,
+        ushort channel = 0,
+        CancellationToken cancellationToken = default)
+    {
+        return _client.SendEventAsync<DeleteRelationshipTypeRequest>(
+            "/relationship-type/delete", request, channel, cancellationToken);
+    }
+
+    /// <summary>
+    /// Deprecate a relationship type
+    /// </summary>
+    /// <param name="request">The request payload.</param>
+    /// <param name="channel">Message channel for ordering (default 0).</param>
+    /// <param name="timeout">Request timeout.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>ApiResponse containing RelationshipTypeResponse on success.</returns>
+    public Task<ApiResponse<RelationshipTypeResponse>> DeprecateRelationshipTypeAsync(
+        DeprecateRelationshipTypeRequest request,
+        ushort channel = 0,
+        TimeSpan? timeout = null,
+        CancellationToken cancellationToken = default)
+    {
+        return _client.InvokeAsync<DeprecateRelationshipTypeRequest, RelationshipTypeResponse>(
+            "/relationship-type/deprecate", request, channel, timeout, cancellationToken);
+    }
+
+    /// <summary>
+    /// Restore a deprecated relationship type
+    /// </summary>
+    /// <param name="request">The request payload.</param>
+    /// <param name="channel">Message channel for ordering (default 0).</param>
+    /// <param name="timeout">Request timeout.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>ApiResponse containing RelationshipTypeResponse on success.</returns>
+    public Task<ApiResponse<RelationshipTypeResponse>> UndeprecateRelationshipTypeAsync(
+        UndeprecateRelationshipTypeRequest request,
+        ushort channel = 0,
+        TimeSpan? timeout = null,
+        CancellationToken cancellationToken = default)
+    {
+        return _client.InvokeAsync<UndeprecateRelationshipTypeRequest, RelationshipTypeResponse>(
+            "/relationship-type/undeprecate", request, channel, timeout, cancellationToken);
+    }
+
+    /// <summary>
+    /// Merge a deprecated type into another type
+    /// </summary>
+    /// <param name="request">The request payload.</param>
+    /// <param name="channel">Message channel for ordering (default 0).</param>
+    /// <param name="timeout">Request timeout.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>ApiResponse containing MergeRelationshipTypeResponse on success.</returns>
+    public Task<ApiResponse<MergeRelationshipTypeResponse>> MergeRelationshipTypeAsync(
+        MergeRelationshipTypeRequest request,
+        ushort channel = 0,
+        TimeSpan? timeout = null,
+        CancellationToken cancellationToken = default)
+    {
+        return _client.InvokeAsync<MergeRelationshipTypeRequest, MergeRelationshipTypeResponse>(
+            "/relationship-type/merge", request, channel, timeout, cancellationToken);
+    }
+
+    /// <summary>
+    /// Seed relationship types from configuration
+    /// </summary>
+    /// <param name="request">The request payload.</param>
+    /// <param name="channel">Message channel for ordering (default 0).</param>
+    /// <param name="timeout">Request timeout.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>ApiResponse containing SeedRelationshipTypesResponse on success.</returns>
+    public Task<ApiResponse<SeedRelationshipTypesResponse>> SeedRelationshipTypesAsync(
+        SeedRelationshipTypesRequest request,
+        ushort channel = 0,
+        TimeSpan? timeout = null,
+        CancellationToken cancellationToken = default)
+    {
+        return _client.InvokeAsync<SeedRelationshipTypesRequest, SeedRelationshipTypesResponse>(
+            "/relationship-type/seed", request, channel, timeout, cancellationToken);
+    }
 }

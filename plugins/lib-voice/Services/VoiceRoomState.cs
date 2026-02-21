@@ -12,7 +12,7 @@ public class VoiceRoomData
     public Guid RoomId { get; set; }
 
     /// <summary>
-    /// Associated game session ID.
+    /// Associated session ID (any service can create a voice room for a session).
     /// </summary>
     public Guid SessionId { get; set; }
 
@@ -40,6 +40,47 @@ public class VoiceRoomData
     /// RTP server URI (only set when in scaled tier).
     /// </summary>
     public string? RtpServerUri { get; set; }
+
+    // Broadcast consent tracking
+
+    /// <summary>
+    /// Current broadcast consent state for this room.
+    /// </summary>
+    public BroadcastConsentState BroadcastState { get; set; } = BroadcastConsentState.Inactive;
+
+    /// <summary>
+    /// Session ID of the participant who requested broadcast consent.
+    /// </summary>
+    public Guid? BroadcastRequestedBy { get; set; }
+
+    /// <summary>
+    /// Session IDs that have consented to broadcasting.
+    /// </summary>
+    public HashSet<Guid> BroadcastConsentedSessions { get; set; } = new();
+
+    /// <summary>
+    /// When the broadcast consent request was initiated (for timeout tracking).
+    /// </summary>
+    public DateTimeOffset? BroadcastRequestedAt { get; set; }
+
+    // Room mode
+
+    /// <summary>
+    /// If true, room auto-deletes when empty after grace period.
+    /// </summary>
+    public bool AutoCleanup { get; set; }
+
+    /// <summary>
+    /// Optional room password for access control.
+    /// </summary>
+    public string? Password { get; set; }
+
+    // Participant tracking enhancement
+
+    /// <summary>
+    /// When the last participant left (for grace period tracking on auto-cleanup rooms).
+    /// </summary>
+    public DateTimeOffset? LastParticipantLeftAt { get; set; }
 }
 
 /// <summary>

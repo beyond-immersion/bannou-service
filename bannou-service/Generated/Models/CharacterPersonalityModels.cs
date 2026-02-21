@@ -778,6 +778,177 @@ public partial class EvolveCombatRequest
 
 }
 
+/// <summary>
+/// Request to cleanup all personality data for a deleted character
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class CleanupByCharacterRequest
+{
+
+    /// <summary>
+    /// ID of the character that was deleted
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("characterId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid CharacterId { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Response from character cleanup operation
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class CleanupByCharacterResponse
+{
+
+    /// <summary>
+    /// Whether personality traits were found and deleted
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("personalityDeleted")]
+    public bool PersonalityDeleted { get; set; } = default!;
+
+    /// <summary>
+    /// Whether combat preferences were found and deleted
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("combatPreferencesDeleted")]
+    public bool CombatPreferencesDeleted { get; set; } = default!;
+
+    /// <summary>
+    /// Whether cleanup completed successfully
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("success")]
+    public bool Success { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Request to get personality data for compression
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class GetCompressDataRequest
+{
+
+    /// <summary>
+    /// ID of the character to get compress data for
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("characterId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid CharacterId { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Complete personality data for archive storage and storyline SDK consumption.
+/// <br/>Inherits base archive properties from ResourceArchiveBase.
+/// <br/>The characterId field equals resourceId for convenience.
+/// <br/>
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class CharacterPersonalityArchive : ResourceArchiveBase
+{
+
+    /// <summary>
+    /// Character this data belongs to (equals resourceId)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("characterId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid CharacterId { get; set; } = default!;
+
+    /// <summary>
+    /// Whether personality traits exist
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("hasPersonality")]
+    public bool HasPersonality { get; set; } = default!;
+
+    /// <summary>
+    /// Personality traits (null if hasPersonality=false)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("personality")]
+    public PersonalityResponse? Personality { get; set; } = default!;
+
+    /// <summary>
+    /// Whether combat preferences exist
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("hasCombatPreferences")]
+    public bool HasCombatPreferences { get; set; } = default!;
+
+    /// <summary>
+    /// Combat preferences (null if hasCombatPreferences=false)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("combatPreferences")]
+    public CombatPreferencesResponse? CombatPreferences { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Request to restore personality data from archive
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class RestoreFromArchiveRequest
+{
+
+    /// <summary>
+    /// ID of the character to restore data for
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("characterId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid CharacterId { get; set; } = default!;
+
+    /// <summary>
+    /// Base64-encoded gzipped CharacterPersonalityArchive JSON
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("data")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string Data { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Result of restoration from archive
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class RestoreFromArchiveResponse
+{
+
+    /// <summary>
+    /// Character data was restored for
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("characterId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid CharacterId { get; set; } = default!;
+
+    /// <summary>
+    /// Whether personality traits were restored
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("personalityRestored")]
+    public bool PersonalityRestored { get; set; } = default!;
+
+    /// <summary>
+    /// Whether combat preferences were restored
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("combatPreferencesRestored")]
+    public bool CombatPreferencesRestored { get; set; } = default!;
+
+    /// <summary>
+    /// Whether restoration completed successfully
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("success")]
+    public bool Success { get; set; } = default!;
+
+    /// <summary>
+    /// Error details if restoration failed
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("errorMessage")]
+    public string? ErrorMessage { get; set; } = default!;
+
+}
+
 
 
 #pragma warning restore  108

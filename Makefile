@@ -11,6 +11,9 @@
 help: ## Show this help message
 	@scripts/show-help.sh
 
+list: ## List all target names (pipe to grep: make list | grep -i 'test')
+	@grep -E '^[a-zA-Z0-9_-]+:' Makefile | cut -d: -f1 | sort
+
 all: ## Complete development cycle - clean, generate, format, build, test, docker build, infrastructure test
 	@echo "🚀 Running complete development cycle..."
 	@$(MAKE) clean
@@ -78,11 +81,24 @@ inspect-type: ## Inspect a type. Usage: make inspect-type TYPE="IChannel" PKG="R
 inspect-method: ## Inspect a method. Usage: make inspect-method METHOD="IChannel.BasicPublishAsync" PKG="RabbitMQ.Client"
 	@dotnet run --project tools/bannou-inspect -- method "$(METHOD)" --package "$(PKG)"
 
+inspect-constructor: ## Inspect constructors. Usage: make inspect-constructor TYPE="ConnectionFactory" PKG="RabbitMQ.Client"
+	@dotnet run --project tools/bannou-inspect -- constructor "$(TYPE)" --package "$(PKG)"
+
 inspect-search: ## Search for types. Usage: make inspect-search PATTERN="*Connection*" PKG="RabbitMQ.Client"
 	@dotnet run --project tools/bannou-inspect -- search "$(PATTERN)" --package "$(PKG)"
 
 inspect-list: ## List all types in a package. Usage: make inspect-list PKG="RabbitMQ.Client"
 	@dotnet run --project tools/bannou-inspect -- list-types --package "$(PKG)"
+
+# =============================================================================
+# MODEL SHAPE INSPECTOR
+# =============================================================================
+# Print compact model shapes (~6x smaller than schemas or generated C# code).
+# Useful for understanding all models for a service without loading full files.
+# =============================================================================
+
+print-models: ## Print compact model shapes. Usage: make print-models PLUGIN="character"
+	@python3 scripts/print-model-shapes.py "$(PLUGIN)"
 
 build-compose: ## Build Docker containers (all services)
 	if [ ! -f .env ]; then touch .env; fi
@@ -380,6 +396,7 @@ validate-compose-services:
 generate:
 	@echo "🔧 Generating everything: projects, service files, client SDKs, documentation"
 	scripts/generate-all-services.sh
+	scripts/generate-storyline-archives.sh
 	scripts/generate-client-sdk.sh
 	@$(MAKE) generate-sdk-ts
 	@$(MAKE) generate-unreal-sdk

@@ -4,9 +4,9 @@
 // =============================================================================
 
 using BeyondImmersion.Bannou.Behavior.Cognition;
-using BeyondImmersion.Bannou.Behavior.Goap;
-using BeyondImmersion.Bannou.Behavior.Handlers;
-using BeyondImmersion.BannouService.Abml.Documents.Actions;
+using BeyondImmersion.Bannou.BehaviorCompiler.Documents.Actions;
+using BeyondImmersion.Bannou.BehaviorCompiler.Goap;
+using BeyondImmersion.BannouService.Abml.Cognition.Handlers;
 using BeyondImmersion.BannouService.Abml.Execution;
 using BeyondImmersion.BannouService.TestUtilities;
 using Microsoft.Extensions.DependencyInjection;
@@ -39,23 +39,16 @@ namespace BeyondImmersion.BannouService.Behavior.Tests.Handlers;
 public class TriggerGoapReplanHandlerTests : CognitionHandlerTestBase
 {
     private readonly Mock<IGoapPlanner> _mockPlanner;
-    private readonly Mock<IServiceScopeFactory> _mockScopeFactory;
     private readonly Mock<ILogger<TriggerGoapReplanHandler>> _mockLogger;
     private readonly TriggerGoapReplanHandler _handler;
 
     public TriggerGoapReplanHandlerTests()
     {
         _mockPlanner = new Mock<IGoapPlanner>();
-        _mockScopeFactory = new Mock<IServiceScopeFactory>();
         _mockLogger = new Mock<ILogger<TriggerGoapReplanHandler>>();
 
-        // Setup empty scope that returns null for bundle manager (tests don't use it)
-        var mockScope = new Mock<IServiceScope>();
-        var mockServiceProvider = new Mock<IServiceProvider>();
-        mockScope.Setup(s => s.ServiceProvider).Returns(mockServiceProvider.Object);
-        _mockScopeFactory.Setup(f => f.CreateScope()).Returns(mockScope.Object);
-
-        _handler = new TriggerGoapReplanHandler(_mockPlanner.Object, _mockScopeFactory.Object, _mockLogger.Object);
+        // Handler no longer needs IServiceScopeFactory - it's "dumb" and receives all data via parameters/scope
+        _handler = new TriggerGoapReplanHandler(_mockPlanner.Object, _mockLogger.Object);
     }
 
     #region Constructor Tests
@@ -399,7 +392,7 @@ public class TriggerGoapReplanHandlerTests : CognitionHandlerTestBase
     public async Task ExecuteAsync_WithFullContext_InvokesPlanner()
     {
         // Provide complete context: goal object, actions, and world state
-        var goal = BeyondImmersion.Bannou.Behavior.Goap.GoapGoal.FromMetadata("attack", 50, new Dictionary<string, string>
+        var goal = BeyondImmersion.Bannou.BehaviorCompiler.Goap.GoapGoal.FromMetadata("attack", 50, new Dictionary<string, string>
         {
             { "target_eliminated", "== true" }
         });
@@ -422,7 +415,7 @@ public class TriggerGoapReplanHandlerTests : CognitionHandlerTestBase
         _mockPlanner
             .Setup(p => p.PlanAsync(
                 It.IsAny<WorldState>(),
-                It.IsAny<BeyondImmersion.Bannou.Behavior.Goap.GoapGoal>(),
+                It.IsAny<BeyondImmersion.Bannou.BehaviorCompiler.Goap.GoapGoal>(),
                 It.IsAny<IReadOnlyList<GoapAction>>(),
                 It.IsAny<PlanningOptions>(),
                 It.IsAny<CancellationToken>()))
@@ -443,7 +436,7 @@ public class TriggerGoapReplanHandlerTests : CognitionHandlerTestBase
         _mockPlanner.Verify(
             p => p.PlanAsync(
                 It.IsAny<WorldState>(),
-                It.IsAny<BeyondImmersion.Bannou.Behavior.Goap.GoapGoal>(),
+                It.IsAny<BeyondImmersion.Bannou.BehaviorCompiler.Goap.GoapGoal>(),
                 It.IsAny<IReadOnlyList<GoapAction>>(),
                 It.IsAny<PlanningOptions>(),
                 It.IsAny<CancellationToken>()),
@@ -459,7 +452,7 @@ public class TriggerGoapReplanHandlerTests : CognitionHandlerTestBase
     [Fact]
     public async Task ExecuteAsync_PlannerReturnsNull_NoPlanMessage()
     {
-        var goal = BeyondImmersion.Bannou.Behavior.Goap.GoapGoal.FromMetadata("impossible", 50, new Dictionary<string, string>
+        var goal = BeyondImmersion.Bannou.BehaviorCompiler.Goap.GoapGoal.FromMetadata("impossible", 50, new Dictionary<string, string>
         {
             { "impossible_condition", "== true" }
         });
@@ -475,7 +468,7 @@ public class TriggerGoapReplanHandlerTests : CognitionHandlerTestBase
         _mockPlanner
             .Setup(p => p.PlanAsync(
                 It.IsAny<WorldState>(),
-                It.IsAny<BeyondImmersion.Bannou.Behavior.Goap.GoapGoal>(),
+                It.IsAny<BeyondImmersion.Bannou.BehaviorCompiler.Goap.GoapGoal>(),
                 It.IsAny<IReadOnlyList<GoapAction>>(),
                 It.IsAny<PlanningOptions>(),
                 It.IsAny<CancellationToken>()))
@@ -515,7 +508,7 @@ public class TriggerGoapReplanHandlerTests : CognitionHandlerTestBase
         _mockPlanner.Verify(
             p => p.PlanAsync(
                 It.IsAny<WorldState>(),
-                It.IsAny<BeyondImmersion.Bannou.Behavior.Goap.GoapGoal>(),
+                It.IsAny<BeyondImmersion.Bannou.BehaviorCompiler.Goap.GoapGoal>(),
                 It.IsAny<IReadOnlyList<GoapAction>>(),
                 It.IsAny<PlanningOptions>(),
                 It.IsAny<CancellationToken>()),

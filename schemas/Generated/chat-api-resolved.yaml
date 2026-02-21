@@ -1,0 +1,1901 @@
+openapi: 3.0.0
+info:
+  title: Chat Service API
+  version: 1.0.0
+  description: >
+    Typed message channel service (L1 AppFoundation) providing universal
+    communication primitives. Channel type determines valid message formats:
+    text, sentiment, emoji, or custom-validated payloads. Supports contract-
+    governed room lifecycles, Connect companion rooms, and moderation primitives.
+    Internal-only, never internet-facing.
+
+    **SCHEMA MODIFICATION GATE**: STOP. Before modifying this schema, you MUST:
+    1. Read docs/reference/SCHEMA-RULES.md
+    2. State which section applies to your change
+    3. Only then proceed with edits
+    Edits without stating the applicable rule are FORBIDDEN.
+x-service-layer: AppFoundation
+
+servers:
+- url: http://localhost:5012
+
+paths:
+  # ==========================================================================
+  # Room Type Management
+  # ==========================================================================
+
+  /chat/type/register:
+    post:
+      operationId: RegisterRoomType
+      summary: Register a new room type
+      description: >
+        Registers a new room type definition. Room types are a dynamic registry
+        of string codes. Built-in types (text, sentiment, emoji) are pre-registered
+        on startup. Custom types are added via this endpoint. Returns conflict
+        if code already exists for the given game service scope.
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterRoomTypeRequest'
+      responses:
+        '200':
+          description: Room type registered successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RoomTypeResponse'
+
+  /chat/type/get:
+    post:
+      operationId: GetRoomType
+      summary: Get room type by code
+      description: Returns the room type definition for the specified code and optional game service scope.
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetRoomTypeRequest'
+      responses:
+        '200':
+          description: Room type found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RoomTypeResponse'
+
+  /chat/type/list:
+    post:
+      operationId: ListRoomTypes
+      summary: List room types with filters
+      description: Returns room types matching the specified filters with pagination.
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ListRoomTypesRequest'
+      responses:
+        '200':
+          description: Room types returned
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListRoomTypesResponse'
+
+  /chat/type/update:
+    post:
+      operationId: UpdateRoomType
+      summary: Update a room type definition
+      description: Updates mutable fields of a room type definition. Cannot change code or message format.
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateRoomTypeRequest'
+      responses:
+        '200':
+          description: Room type updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RoomTypeResponse'
+
+  /chat/type/deprecate:
+    post:
+      operationId: DeprecateRoomType
+      summary: Soft-deprecate a room type
+      description: Sets the room type status to Deprecated. Existing rooms continue to work but no new rooms can be 
+        created with this type.
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeprecateRoomTypeRequest'
+      responses:
+        '200':
+          description: Room type deprecated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RoomTypeResponse'
+
+  # ==========================================================================
+  # Room Management
+  # ==========================================================================
+
+  /chat/room/create:
+    post:
+      operationId: CreateRoom
+      summary: Create a chat room
+      description: >
+        Creates a new chat room of the specified type. Optionally associates
+        a governing contract that drives room lifecycle (lock, archive, delete)
+        on contract state changes.
+      x-permissions:
+      - role: user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateRoomRequest'
+      responses:
+        '200':
+          description: Room created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChatRoomResponse'
+
+  /chat/room/get:
+    post:
+      operationId: GetRoom
+      summary: Get room by ID
+      description: Returns the chat room metadata for the specified room ID.
+      x-permissions:
+      - role: user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetRoomRequest'
+      responses:
+        '200':
+          description: Room found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChatRoomResponse'
+
+  /chat/room/list:
+    post:
+      operationId: ListRooms
+      summary: List rooms with filters
+      description: Returns rooms matching the specified filters with pagination.
+      x-permissions:
+      - role: user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ListRoomsRequest'
+      responses:
+        '200':
+          description: Rooms returned
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListRoomsResponse'
+
+  /chat/room/update:
+    post:
+      operationId: UpdateRoom
+      summary: Update room settings
+      description: Updates mutable room settings. Caller must be the room owner.
+      x-permissions:
+      - role: user
+        states:
+          chat: in_room
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateRoomRequest'
+      responses:
+        '200':
+          description: Room updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChatRoomResponse'
+
+  /chat/room/delete:
+    post:
+      operationId: DeleteRoom
+      summary: Delete a room
+      description: Deletes a room, removing all participants and messages. Caller must be the room owner or the room 
+        must be empty.
+      x-permissions:
+      - role: user
+        states:
+          chat: in_room
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeleteRoomRequest'
+      responses:
+        '200':
+          description: Room deleted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChatRoomResponse'
+
+  /chat/room/archive:
+    post:
+      operationId: ArchiveRoom
+      summary: Archive a room to Resource
+      description: Archives a persistent room via lib-resource, preserving message history and metadata. Room is marked 
+        as archived after successful archival.
+      x-permissions:
+      - role: user
+        states:
+          chat: in_room
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ArchiveRoomRequest'
+      responses:
+        '200':
+          description: Room archived
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChatRoomResponse'
+
+  # ==========================================================================
+  # Participant Management
+  # ==========================================================================
+
+  /chat/room/join:
+    post:
+      operationId: JoinRoom
+      summary: Join a chat room
+      description: >
+        Joins the caller to the specified room. For companion rooms in AutoJoinLazy
+        or Manual mode, the room is created on-the-fly if it does not yet exist.
+        Returns conflict if the room is full or forbidden if the caller is banned.
+      x-permissions:
+      - role: user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/JoinRoomRequest'
+      responses:
+        '200':
+          description: Joined room
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChatRoomResponse'
+
+  /chat/room/leave:
+    post:
+      operationId: LeaveRoom
+      summary: Leave a chat room
+      description: Removes the caller from the room. If the owner leaves, promotes the next moderator or oldest member.
+      x-permissions:
+      - role: user
+        states:
+          chat: in_room
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LeaveRoomRequest'
+      responses:
+        '200':
+          description: Left room
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChatRoomResponse'
+
+  /chat/room/participants:
+    post:
+      operationId: ListParticipants
+      summary: List room participants
+      description: Returns all current participants in the room with their roles and status.
+      x-permissions:
+      - role: user
+        states:
+          chat: in_room
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ListParticipantsRequest'
+      responses:
+        '200':
+          description: Participants returned
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ParticipantsResponse'
+
+  /chat/room/participant/kick:
+    post:
+      operationId: KickParticipant
+      summary: Remove a participant from the room
+      description: Kicks a participant from the room. Caller must be Owner or Moderator with higher role than target.
+      x-permissions:
+      - role: user
+        states:
+          chat: in_room
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/KickParticipantRequest'
+      responses:
+        '200':
+          description: Participant kicked
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChatRoomResponse'
+
+  /chat/room/participant/ban:
+    post:
+      operationId: BanParticipant
+      summary: Ban a participant from the room
+      description: Bans a participant. If currently in the room, they are kicked first. Optionally set a duration; null 
+        means permanent.
+      x-permissions:
+      - role: user
+        states:
+          chat: in_room
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BanParticipantRequest'
+      responses:
+        '200':
+          description: Participant banned
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChatRoomResponse'
+
+  /chat/room/participant/unban:
+    post:
+      operationId: UnbanParticipant
+      summary: Unban a participant
+      description: Removes a ban record for a participant. Caller must be Owner or Moderator.
+      x-permissions:
+      - role: user
+        states:
+          chat: in_room
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UnbanParticipantRequest'
+      responses:
+        '200':
+          description: Participant unbanned
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChatRoomResponse'
+
+  /chat/room/participant/mute:
+    post:
+      operationId: MuteParticipant
+      summary: Mute a participant
+      description: Mutes a participant, preventing them from sending messages. Optionally set a duration; null means 
+        permanent.
+      x-permissions:
+      - role: user
+        states:
+          chat: in_room
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MuteParticipantRequest'
+      responses:
+        '200':
+          description: Participant muted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChatRoomResponse'
+
+  # ==========================================================================
+  # Message Operations
+  # ==========================================================================
+
+  /chat/message/send:
+    post:
+      operationId: SendMessage
+      summary: Send a message to a room
+      description: >
+        Sends a message to the specified room. Content is validated against
+        the room type's message format and validator config. For AutoJoinLazy
+        companion rooms, the room is created and the sender auto-joined if
+        the room does not yet exist.
+      x-permissions:
+      - role: user
+        states:
+          chat: in_room
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SendMessageRequest'
+      responses:
+        '200':
+          description: Message sent
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChatMessageResponse'
+
+  /chat/message/send-batch:
+    post:
+      operationId: SendMessageBatch
+      summary: Send multiple messages
+      description: Sends multiple messages to a room atomically. Intended for bulk sentiment pushes from higher-layer 
+        services.
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SendMessageBatchRequest'
+      responses:
+        '200':
+          description: Messages sent
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SendMessageBatchResponse'
+
+  /chat/message/history:
+    post:
+      operationId: GetMessageHistory
+      summary: Get message history
+      description: Returns paginated message history for a room, ordered by timestamp descending. Uses cursor-based 
+        pagination.
+      x-permissions:
+      - role: user
+        states:
+          chat: in_room
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MessageHistoryRequest'
+      responses:
+        '200':
+          description: Messages returned
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageHistoryResponse'
+
+  /chat/message/delete:
+    post:
+      operationId: DeleteMessage
+      summary: Delete a message
+      description: Deletes a specific message. Caller must be the message sender, room Owner, or Moderator.
+      x-permissions:
+      - role: user
+        states:
+          chat: in_room
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeleteMessageRequest'
+      responses:
+        '200':
+          description: Message deleted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChatMessageResponse'
+
+  /chat/message/pin:
+    post:
+      operationId: PinMessage
+      summary: Pin a message
+      description: Pins a message in the room. Caller must be Owner or Moderator. Returns conflict if max pinned 
+        messages reached.
+      x-permissions:
+      - role: user
+        states:
+          chat: in_room
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PinMessageRequest'
+      responses:
+        '200':
+          description: Message pinned
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChatMessageResponse'
+
+  /chat/message/unpin:
+    post:
+      operationId: UnpinMessage
+      summary: Unpin a message
+      description: Unpins a previously pinned message. Caller must be Owner or Moderator.
+      x-permissions:
+      - role: user
+        states:
+          chat: in_room
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UnpinMessageRequest'
+      responses:
+        '200':
+          description: Message unpinned
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChatMessageResponse'
+
+  /chat/message/search:
+    post:
+      operationId: SearchMessages
+      summary: Full-text search in persistent rooms
+      description: Searches message content in persistent rooms using MySQL full-text search. Not available for 
+        ephemeral rooms.
+      x-permissions:
+      - role: user
+        states:
+          chat: in_room
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SearchMessagesRequest'
+      responses:
+        '200':
+          description: Search results returned
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SearchMessagesResponse'
+
+  # ==========================================================================
+  # Admin/Debug
+  # ==========================================================================
+
+  /chat/admin/rooms:
+    post:
+      operationId: AdminListRooms
+      summary: List all rooms system-wide
+      description: Returns all rooms across the system for administrative purposes. Supports filtering by status and 
+        type.
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdminListRoomsRequest'
+      responses:
+        '200':
+          description: Rooms returned
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListRoomsResponse'
+
+  /chat/admin/stats:
+    post:
+      operationId: AdminGetStats
+      summary: Room and message statistics
+      description: Returns system-wide chat statistics for monitoring and debugging.
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdminGetStatsRequest'
+      responses:
+        '200':
+          description: Statistics returned
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminStatsResponse'
+
+  /chat/admin/cleanup:
+    post:
+      operationId: AdminForceCleanup
+      summary: Force cleanup of idle rooms
+      description: Triggers an immediate idle room cleanup cycle, bypassing the normal interval.
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdminForceCleanupRequest'
+      responses:
+        '200':
+          description: Cleanup executed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminCleanupResponse'
+
+components:
+  schemas:
+    # ==========================================================================
+    # Enums
+    # ==========================================================================
+
+    MessageFormat:
+      type: string
+      description: Determines what kind of content a room accepts
+      enum:
+      - Text
+      - Sentiment
+      - Emoji
+      - Custom
+
+    PersistenceMode:
+      type: string
+      description: Whether room messages are stored in Redis (TTL) or MySQL (durable)
+      enum:
+      - Ephemeral
+      - Persistent
+
+    RoomTypeStatus:
+      type: string
+      description: Lifecycle status of a room type definition
+      enum:
+      - Active
+      - Deprecated
+
+    ChatRoomStatus:
+      type: string
+      description: Current state of a chat room
+      enum:
+      - Active
+      - Locked
+      - Archived
+
+    ChatParticipantRole:
+      type: string
+      description: Participant role within a chat room determining moderation privileges
+      enum:
+      - Owner
+      - Moderator
+      - Member
+      - ReadOnly
+
+    ContractRoomAction:
+      type: string
+      description: Action to take on a contract-governed room when contract state changes
+      enum:
+      - Continue
+      - Lock
+      - Archive
+      - Delete
+
+    ChatRoomLockReason:
+      type: string
+      description: Reason why a chat room was locked
+      enum:
+      - ContractFulfilled
+      - ContractBreachDetected
+      - ContractTerminated
+      - ContractExpired
+      - Manual
+
+    # ==========================================================================
+    # Validator Config (shared across request/response)
+    # ==========================================================================
+
+    ValidatorConfig:
+      type: object
+      additionalProperties: false
+      description: Validation rules applied to messages in rooms of this type
+      properties:
+        maxMessageLength:
+          type: integer
+          nullable: true
+          description: Maximum message length in characters for text and custom formats
+        allowedPattern:
+          type: string
+          nullable: true
+          description: Regex pattern for content validation
+        allowedValues:
+          type: array
+          nullable: true
+          description: Whitelist of allowed values (emoji codes, etc.)
+          items:
+            type: string
+            description: An allowed value
+        requiredFields:
+          type: array
+          nullable: true
+          description: Required JSON fields for Custom format messages
+          items:
+            type: string
+            description: A required field name
+        jsonSchema:
+          type: string
+          nullable: true
+          description: Full JSON Schema string for complex Custom format validation
+
+    # ==========================================================================
+    # Room Type Requests/Responses
+    # ==========================================================================
+
+    RegisterRoomTypeRequest:
+      type: object
+      additionalProperties: false
+      description: Request to register a new room type definition
+      required:
+      - code
+      - displayName
+      - messageFormat
+      - persistenceMode
+      - allowAnonymousSenders
+      properties:
+        code:
+          type: string
+          description: Unique room type code (e.g., "text", "guild_board", "trade_posting")
+        displayName:
+          type: string
+          description: Human-readable name for the room type
+        description:
+          type: string
+          nullable: true
+          description: Optional description of the room type
+        gameServiceId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Game service scope (null for global types)
+        messageFormat:
+          $ref: '#/components/schemas/MessageFormat'
+          description: Content format this room type accepts
+        validatorConfig:
+          allOf:
+          - $ref: '#/components/schemas/ValidatorConfig'
+          nullable: true
+          description: Validation rules for messages (null uses format defaults)
+        persistenceMode:
+          $ref: '#/components/schemas/PersistenceMode'
+          description: Message storage mode (ephemeral or persistent)
+        defaultMaxParticipants:
+          type: integer
+          nullable: true
+          description: Default participant limit (null uses service default)
+        retentionDays:
+          type: integer
+          nullable: true
+          description: Message retention in days (null uses service default)
+        defaultContractTemplateId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Default contract template for rooms of this type
+        allowAnonymousSenders:
+          type: boolean
+          description: Whether null senderId is allowed in messages
+        rateLimitPerMinute:
+          type: integer
+          nullable: true
+          description: Messages per minute per participant (null uses service default)
+        metadata:
+          type: string
+          nullable: true
+          description: Arbitrary JSON metadata for client rendering hints
+
+    GetRoomTypeRequest:
+      type: object
+      additionalProperties: false
+      description: Request to retrieve a room type by code
+      required:
+      - code
+      properties:
+        code:
+          type: string
+          description: Room type code to look up
+        gameServiceId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Game service scope (null for global types)
+
+    ListRoomTypesRequest:
+      type: object
+      additionalProperties: false
+      description: Request to list room types with optional filters and pagination
+      properties:
+        gameServiceId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Filter by game service scope
+        messageFormat:
+          allOf:
+          - $ref: '#/components/schemas/MessageFormat'
+          nullable: true
+          description: Filter by message format
+        status:
+          allOf:
+          - $ref: '#/components/schemas/RoomTypeStatus'
+          nullable: true
+          description: Filter by status
+        page:
+          type: integer
+          default: 0
+          description: Page number (zero-based)
+        pageSize:
+          type: integer
+          default: 20
+          description: Number of items per page
+
+    UpdateRoomTypeRequest:
+      type: object
+      additionalProperties: false
+      description: Request to update room type properties (null fields left unchanged)
+      required:
+      - code
+      properties:
+        code:
+          type: string
+          description: Room type code to update
+        gameServiceId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Game service scope for the type
+        displayName:
+          type: string
+          nullable: true
+          description: Updated display name
+        description:
+          type: string
+          nullable: true
+          description: Updated description
+        validatorConfig:
+          allOf:
+          - $ref: '#/components/schemas/ValidatorConfig'
+          nullable: true
+          description: Updated validation rules
+        defaultMaxParticipants:
+          type: integer
+          nullable: true
+          description: Updated default participant limit
+        retentionDays:
+          type: integer
+          nullable: true
+          description: Updated message retention in days
+        defaultContractTemplateId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Updated default contract template
+        allowAnonymousSenders:
+          type: boolean
+          nullable: true
+          description: Updated anonymous sender policy
+        rateLimitPerMinute:
+          type: integer
+          nullable: true
+          description: Updated rate limit
+        metadata:
+          type: string
+          nullable: true
+          description: Updated JSON metadata
+
+    DeprecateRoomTypeRequest:
+      type: object
+      additionalProperties: false
+      description: Request to deprecate a room type (prevents new room creation)
+      required:
+      - code
+      properties:
+        code:
+          type: string
+          description: Room type code to deprecate
+        gameServiceId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Game service scope for the type
+
+    RoomTypeResponse:
+      type: object
+      additionalProperties: false
+      description: Room type definition with current configuration and status
+      required:
+      - code
+      - displayName
+      - messageFormat
+      - persistenceMode
+      - allowAnonymousSenders
+      - status
+      - createdAt
+      properties:
+        code:
+          type: string
+          description: Unique room type code
+        displayName:
+          type: string
+          description: Human-readable name
+        description:
+          type: string
+          nullable: true
+          description: Room type description
+        gameServiceId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Game service scope (null for global)
+        messageFormat:
+          $ref: '#/components/schemas/MessageFormat'
+          description: Content format accepted by this room type
+        validatorConfig:
+          allOf:
+          - $ref: '#/components/schemas/ValidatorConfig'
+          nullable: true
+          description: Active validation rules
+        persistenceMode:
+          $ref: '#/components/schemas/PersistenceMode'
+          description: Message storage mode
+        defaultMaxParticipants:
+          type: integer
+          nullable: true
+          description: Default participant limit
+        retentionDays:
+          type: integer
+          nullable: true
+          description: Message retention in days
+        defaultContractTemplateId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Default contract template ID
+        allowAnonymousSenders:
+          type: boolean
+          description: Whether anonymous senders are allowed
+        rateLimitPerMinute:
+          type: integer
+          nullable: true
+          description: Messages per minute limit
+        metadata:
+          type: string
+          nullable: true
+          description: Arbitrary JSON metadata
+        status:
+          $ref: '#/components/schemas/RoomTypeStatus'
+          description: Current lifecycle status of the room type
+        createdAt:
+          type: string
+          format: date-time
+          description: When the room type was created
+        updatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When the room type was last updated
+
+    ListRoomTypesResponse:
+      type: object
+      additionalProperties: false
+      description: Paginated list of room type definitions
+      required:
+      - items
+      - totalCount
+      - page
+      - pageSize
+      properties:
+        items:
+          type: array
+          description: Room type definitions matching the filter
+          items:
+            $ref: '#/components/schemas/RoomTypeResponse'
+        totalCount:
+          type: integer
+          description: Total number of matching room types
+        page:
+          type: integer
+          description: Current page number
+        pageSize:
+          type: integer
+          description: Items per page
+
+    # ==========================================================================
+    # Room Requests/Responses
+    # ==========================================================================
+
+    CreateRoomRequest:
+      type: object
+      additionalProperties: false
+      description: Request to create a new chat room
+      required:
+      - roomTypeCode
+      properties:
+        roomTypeCode:
+          type: string
+          description: Room type code determining message format and validation
+        sessionId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Connect session ID for companion rooms
+        contractId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Governing contract ID for lifecycle management
+        displayName:
+          type: string
+          nullable: true
+          description: Human-readable room name
+        maxParticipants:
+          type: integer
+          nullable: true
+          description: Participant limit override (null uses type default)
+        contractFulfilledAction:
+          allOf:
+          - $ref: '#/components/schemas/ContractRoomAction'
+          nullable: true
+          description: Action when governing contract is fulfilled (null uses service default)
+        contractBreachAction:
+          allOf:
+          - $ref: '#/components/schemas/ContractRoomAction'
+          nullable: true
+          description: Action when governing contract is breached (null uses service default)
+        contractTerminatedAction:
+          allOf:
+          - $ref: '#/components/schemas/ContractRoomAction'
+          nullable: true
+          description: Action when governing contract is terminated (null uses service default)
+        contractExpiredAction:
+          allOf:
+          - $ref: '#/components/schemas/ContractRoomAction'
+          nullable: true
+          description: Action when governing contract expires (null uses service default)
+        metadata:
+          type: string
+          nullable: true
+          description: Arbitrary JSON metadata for client rendering hints
+
+    GetRoomRequest:
+      type: object
+      additionalProperties: false
+      description: Request to retrieve a room by ID
+      required:
+      - roomId
+      properties:
+        roomId:
+          type: string
+          format: uuid
+          description: Room ID to look up
+
+    ListRoomsRequest:
+      type: object
+      additionalProperties: false
+      description: Request to list rooms with optional filters and pagination
+      properties:
+        roomTypeCode:
+          type: string
+          nullable: true
+          description: Filter by room type code
+        sessionId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Filter by Connect session ID
+        status:
+          allOf:
+          - $ref: '#/components/schemas/ChatRoomStatus'
+          nullable: true
+          description: Filter by room status
+        page:
+          type: integer
+          default: 0
+          description: Page number (zero-based)
+        pageSize:
+          type: integer
+          default: 20
+          description: Number of items per page
+
+    UpdateRoomRequest:
+      type: object
+      additionalProperties: false
+      description: Request to update room properties (null fields left unchanged)
+      required:
+      - roomId
+      properties:
+        roomId:
+          type: string
+          format: uuid
+          description: Room ID to update
+        displayName:
+          type: string
+          nullable: true
+          description: Updated room name
+        maxParticipants:
+          type: integer
+          nullable: true
+          description: Updated participant limit
+        metadata:
+          type: string
+          nullable: true
+          description: Updated JSON metadata
+
+    DeleteRoomRequest:
+      type: object
+      additionalProperties: false
+      description: Request to permanently delete a room and all its messages
+      required:
+      - roomId
+      properties:
+        roomId:
+          type: string
+          format: uuid
+          description: Room ID to delete
+
+    ArchiveRoomRequest:
+      type: object
+      additionalProperties: false
+      description: Request to archive a room (makes it read-only)
+      required:
+      - roomId
+      properties:
+        roomId:
+          type: string
+          format: uuid
+          description: Room ID to archive
+
+    ChatRoomResponse:
+      type: object
+      additionalProperties: false
+      description: Chat room details including status and participant count
+      required:
+      - roomId
+      - roomTypeCode
+      - status
+      - participantCount
+      - isArchived
+      - createdAt
+      properties:
+        roomId:
+          type: string
+          format: uuid
+          description: Unique room identifier
+        roomTypeCode:
+          type: string
+          description: Room type code
+        sessionId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Connect session ID if companion room
+        contractId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Governing contract ID
+        displayName:
+          type: string
+          nullable: true
+          description: Human-readable room name
+        status:
+          $ref: '#/components/schemas/ChatRoomStatus'
+          description: Current room status
+        participantCount:
+          type: integer
+          description: Current number of participants
+        maxParticipants:
+          type: integer
+          nullable: true
+          description: Maximum participant limit
+        isArchived:
+          type: boolean
+          description: Whether the room has been archived
+        createdAt:
+          type: string
+          format: date-time
+          description: When the room was created
+        metadata:
+          type: string
+          nullable: true
+          description: Arbitrary JSON metadata
+
+    ListRoomsResponse:
+      type: object
+      additionalProperties: false
+      description: Paginated list of chat rooms
+      required:
+      - items
+      - totalCount
+      - page
+      - pageSize
+      properties:
+        items:
+          type: array
+          description: Rooms matching the filter
+          items:
+            $ref: '#/components/schemas/ChatRoomResponse'
+        totalCount:
+          type: integer
+          description: Total number of matching rooms
+        page:
+          type: integer
+          description: Current page number
+        pageSize:
+          type: integer
+          description: Items per page
+
+    # ==========================================================================
+    # Participant Requests/Responses
+    # ==========================================================================
+
+    JoinRoomRequest:
+      type: object
+      additionalProperties: false
+      description: Request to join a chat room as a participant
+      required:
+      - roomId
+      properties:
+        roomId:
+          type: string
+          format: uuid
+          description: Room ID to join
+        senderType:
+          type: string
+          nullable: true
+          description: Opaque sender type identifier (e.g., "session", "character", "system")
+        senderId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Sender entity ID (nullable for anonymous)
+        displayName:
+          type: string
+          nullable: true
+          description: Human-readable display name
+        role:
+          allOf:
+          - $ref: '#/components/schemas/ChatParticipantRole'
+          nullable: true
+          description: Requested role (defaults to Member if not specified)
+
+    LeaveRoomRequest:
+      type: object
+      additionalProperties: false
+      description: Request to leave a chat room
+      required:
+      - roomId
+      properties:
+        roomId:
+          type: string
+          format: uuid
+          description: Room ID to leave
+
+    ListParticipantsRequest:
+      type: object
+      additionalProperties: false
+      description: Request to list participants in a room
+      required:
+      - roomId
+      properties:
+        roomId:
+          type: string
+          format: uuid
+          description: Room ID to list participants for
+
+    ParticipantInfo:
+      type: object
+      additionalProperties: false
+      description: Details about a chat room participant
+      required:
+      - sessionId
+      - role
+      - joinedAt
+      - isMuted
+      properties:
+        sessionId:
+          type: string
+          format: uuid
+          description: Participant Connect session ID
+        senderType:
+          type: string
+          nullable: true
+          description: Opaque sender type
+        senderId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Sender entity ID
+        displayName:
+          type: string
+          nullable: true
+          description: Display name
+        role:
+          $ref: '#/components/schemas/ChatParticipantRole'
+          description: Participant role in the room
+        joinedAt:
+          type: string
+          format: date-time
+          description: When the participant joined
+        isMuted:
+          type: boolean
+          description: Whether the participant is currently muted
+
+    ParticipantsResponse:
+      type: object
+      additionalProperties: false
+      description: List of participants in a room
+      required:
+      - roomId
+      - participants
+      properties:
+        roomId:
+          type: string
+          format: uuid
+          description: Room ID
+        participants:
+          type: array
+          description: Current room participants
+          items:
+            $ref: '#/components/schemas/ParticipantInfo'
+
+    KickParticipantRequest:
+      type: object
+      additionalProperties: false
+      description: Request to remove a participant from a room
+      required:
+      - roomId
+      - targetSessionId
+      properties:
+        roomId:
+          type: string
+          format: uuid
+          description: Room ID
+        targetSessionId:
+          type: string
+          format: uuid
+          description: Session ID of participant to kick
+        reason:
+          type: string
+          nullable: true
+          description: Optional reason for the kick
+
+    BanParticipantRequest:
+      type: object
+      additionalProperties: false
+      description: Request to ban a participant from a room
+      required:
+      - roomId
+      - targetSessionId
+      properties:
+        roomId:
+          type: string
+          format: uuid
+          description: Room ID
+        targetSessionId:
+          type: string
+          format: uuid
+          description: Session ID of participant to ban
+        reason:
+          type: string
+          nullable: true
+          description: Optional reason for the ban
+        durationMinutes:
+          type: integer
+          nullable: true
+          description: Ban duration in minutes (null for permanent)
+
+    UnbanParticipantRequest:
+      type: object
+      additionalProperties: false
+      description: Request to remove a ban for a participant
+      required:
+      - roomId
+      - targetSessionId
+      properties:
+        roomId:
+          type: string
+          format: uuid
+          description: Room ID
+        targetSessionId:
+          type: string
+          format: uuid
+          description: Session ID of participant to unban
+
+    MuteParticipantRequest:
+      type: object
+      additionalProperties: false
+      description: Request to mute a participant in a room
+      required:
+      - roomId
+      - targetSessionId
+      properties:
+        roomId:
+          type: string
+          format: uuid
+          description: Room ID
+        targetSessionId:
+          type: string
+          format: uuid
+          description: Session ID of participant to mute
+        durationMinutes:
+          type: integer
+          nullable: true
+          description: Mute duration in minutes (null for permanent)
+
+    # ==========================================================================
+    # Message Requests/Responses
+    # ==========================================================================
+
+    SendMessageContent:
+      type: object
+      additionalProperties: false
+      description: >
+        Message content discriminated by the room message format.
+        Exactly one content field group must be set, matching the room type format.
+      properties:
+        text:
+          type: string
+          nullable: true
+          description: Text content (for Text format rooms)
+        sentimentCategory:
+          allOf:
+          - $ref: '#/components/schemas/SentimentCategory'
+          nullable: true
+          description: Sentiment category (for Sentiment format rooms)
+        sentimentIntensity:
+          type: number
+          format: float
+          nullable: true
+          minimum: 0.0
+          maximum: 1.0
+          description: Sentiment intensity 0.0-1.0 (for Sentiment format rooms)
+        emojiCode:
+          type: string
+          nullable: true
+          description: Emoji code (Unicode or custom) for Emoji format rooms
+        emojiSetId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Custom emoji set reference (null for Unicode)
+        customPayload:
+          type: string
+          nullable: true
+          description: JSON string validated against room type validator config (for Custom format rooms)
+
+    SendMessageRequest:
+      type: object
+      additionalProperties: false
+      description: Request to send a message to a chat room
+      required:
+      - roomId
+      - content
+      properties:
+        roomId:
+          type: string
+          format: uuid
+          description: Room ID to send the message to
+        content:
+          $ref: '#/components/schemas/SendMessageContent'
+          description: Message content matching the room format
+        senderType:
+          type: string
+          nullable: true
+          description: Opaque sender type for this message
+        senderId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Sender entity ID
+        displayName:
+          type: string
+          nullable: true
+          description: Sender display name for this message
+
+    SendMessageBatchRequest:
+      type: object
+      additionalProperties: false
+      description: Request to send multiple messages to a room atomically
+      required:
+      - roomId
+      - messages
+      properties:
+        roomId:
+          type: string
+          format: uuid
+          description: Room ID to send messages to
+        messages:
+          type: array
+          description: Messages to send atomically
+          items:
+            $ref: '#/components/schemas/BatchMessageEntry'
+
+    BatchMessageEntry:
+      type: object
+      additionalProperties: false
+      description: Individual message entry in a batch send operation
+      required:
+      - content
+      properties:
+        content:
+          $ref: '#/components/schemas/SendMessageContent'
+          description: Message content matching the room format
+        senderType:
+          type: string
+          nullable: true
+          description: Opaque sender type
+        senderId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Sender entity ID
+        displayName:
+          type: string
+          nullable: true
+          description: Sender display name
+
+    SendMessageBatchResponse:
+      type: object
+      additionalProperties: false
+      description: Result of a batch message send operation
+      required:
+      - messageCount
+      properties:
+        messageCount:
+          type: integer
+          description: Number of messages sent
+
+    ChatMessageResponse:
+      type: object
+      additionalProperties: false
+      description: A chat message with metadata and content
+      required:
+      - messageId
+      - roomId
+      - timestamp
+      - roomTypeCode
+      - isPinned
+      properties:
+        messageId:
+          type: string
+          format: uuid
+          description: Unique message identifier
+        roomId:
+          type: string
+          format: uuid
+          description: Room the message belongs to
+        senderType:
+          type: string
+          nullable: true
+          description: Opaque sender type
+        senderId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Sender entity ID
+        displayName:
+          type: string
+          nullable: true
+          description: Sender display name
+        timestamp:
+          type: string
+          format: date-time
+          description: When the message was sent
+        roomTypeCode:
+          type: string
+          description: Room type code for this message
+        content:
+          allOf:
+          - $ref: '#/components/schemas/SendMessageContent'
+          nullable: true
+          description: Message content (null for deleted messages)
+        isPinned:
+          type: boolean
+          description: Whether the message is pinned
+
+    MessageHistoryRequest:
+      type: object
+      additionalProperties: false
+      description: Request to retrieve message history for a room with cursor pagination
+      required:
+      - roomId
+      properties:
+        roomId:
+          type: string
+          format: uuid
+          description: Room ID to get history for
+        before:
+          type: string
+          nullable: true
+          description: Cursor for pagination (message ID to fetch before)
+        limit:
+          type: integer
+          default: 50
+          description: Maximum number of messages to return
+
+    MessageHistoryResponse:
+      type: object
+      additionalProperties: false
+      description: Paginated message history with cursor for next page
+      required:
+      - messages
+      - hasMore
+      properties:
+        messages:
+          type: array
+          description: Messages in reverse chronological order
+          items:
+            $ref: '#/components/schemas/ChatMessageResponse'
+        hasMore:
+          type: boolean
+          description: Whether more messages exist before the returned set
+        nextCursor:
+          type: string
+          nullable: true
+          description: Cursor for fetching the next page
+
+    DeleteMessageRequest:
+      type: object
+      additionalProperties: false
+      description: Request to delete a message from a room
+      required:
+      - roomId
+      - messageId
+      properties:
+        roomId:
+          type: string
+          format: uuid
+          description: Room the message belongs to
+        messageId:
+          type: string
+          format: uuid
+          description: Message ID to delete
+
+    PinMessageRequest:
+      type: object
+      additionalProperties: false
+      description: Request to pin a message in a room
+      required:
+      - roomId
+      - messageId
+      properties:
+        roomId:
+          type: string
+          format: uuid
+          description: Room the message belongs to
+        messageId:
+          type: string
+          format: uuid
+          description: Message ID to pin
+
+    UnpinMessageRequest:
+      type: object
+      additionalProperties: false
+      description: Request to unpin a message in a room
+      required:
+      - roomId
+      - messageId
+      properties:
+        roomId:
+          type: string
+          format: uuid
+          description: Room the message belongs to
+        messageId:
+          type: string
+          format: uuid
+          description: Message ID to unpin
+
+    SearchMessagesRequest:
+      type: object
+      additionalProperties: false
+      description: Request to full-text search messages in a persistent room
+      required:
+      - roomId
+      - query
+      properties:
+        roomId:
+          type: string
+          format: uuid
+          description: Room ID to search in (must be a persistent room)
+        query:
+          type: string
+          description: Full-text search query string
+        limit:
+          type: integer
+          default: 20
+          description: Maximum number of results to return
+
+    SearchMessagesResponse:
+      type: object
+      additionalProperties: false
+      description: Full-text search results with total match count
+      required:
+      - messages
+      - totalMatches
+      properties:
+        messages:
+          type: array
+          description: Messages matching the search query
+          items:
+            $ref: '#/components/schemas/ChatMessageResponse'
+        totalMatches:
+          type: integer
+          description: Total number of matching messages
+
+    # ==========================================================================
+    # Admin Requests/Responses
+    # ==========================================================================
+
+    AdminListRoomsRequest:
+      type: object
+      additionalProperties: false
+      description: Admin request to list all rooms with filters and pagination
+      properties:
+        roomTypeCode:
+          type: string
+          nullable: true
+          description: Filter by room type
+        status:
+          allOf:
+          - $ref: '#/components/schemas/ChatRoomStatus'
+          nullable: true
+          description: Filter by status
+        page:
+          type: integer
+          default: 0
+          description: Page number (zero-based)
+        pageSize:
+          type: integer
+          default: 50
+          description: Number of items per page
+
+    AdminGetStatsRequest:
+      type: object
+      additionalProperties: false
+      description: Empty request body for stats endpoint
+      properties: {}
+
+    AdminStatsResponse:
+      type: object
+      additionalProperties: false
+      description: System-wide chat statistics for admin monitoring
+      required:
+      - totalRooms
+      - activeRooms
+      - lockedRooms
+      - archivedRooms
+      - totalParticipants
+      - totalRoomTypes
+      properties:
+        totalRooms:
+          type: integer
+          description: Total number of rooms in the system
+        activeRooms:
+          type: integer
+          description: Number of active rooms
+        lockedRooms:
+          type: integer
+          description: Number of locked rooms
+        archivedRooms:
+          type: integer
+          description: Number of archived rooms
+        totalParticipants:
+          type: integer
+          description: Total participants across all rooms
+        totalRoomTypes:
+          type: integer
+          description: Total registered room types
+
+    AdminForceCleanupRequest:
+      type: object
+      additionalProperties: false
+      description: Empty request body for force cleanup
+      properties: {}
+
+    AdminCleanupResponse:
+      type: object
+      additionalProperties: false
+      description: Result of admin-triggered idle room cleanup
+      required:
+      - cleanedRooms
+      - archivedRooms
+      - deletedRooms
+      properties:
+        cleanedRooms:
+          type: integer
+          description: Total rooms processed by cleanup
+        archivedRooms:
+          type: integer
+          description: Number of rooms archived
+        deletedRooms:
+          type: integer
+          description: Number of rooms deleted
+    SentimentCategory:
+      type: string
+      description: >
+        Standardized sentiment categories for anonymous audience and reaction data.
+        Used by lib-chat for sentiment room messages and lib-stream for platform
+        audience processing. Designed for privacy-safe communication where text
+        content is inappropriate or unnecessary.
+      enum:
+      - Excited
+      - Supportive
+      - Critical
+      - Curious
+      - Surprised
+      - Amused
+      - Bored
+      - Hostile
+
+    # ==========================================================================
+    # Permission Metadata Types
+    # ==========================================================================
+
+x-inlined-types:
+- SentimentCategory

@@ -3,11 +3,11 @@
 // Tree-walking interpreter for ABML documents.
 // ═══════════════════════════════════════════════════════════════════════════
 
-using BeyondImmersion.BannouService.Abml.Documents;
-using BeyondImmersion.BannouService.Abml.Documents.Actions;
-using BeyondImmersion.BannouService.Abml.Expressions;
-using BeyondImmersion.BannouService.Abml.Parser;
-using BeyondImmersion.BannouService.Abml.Runtime;
+using BeyondImmersion.Bannou.BehaviorCompiler.Documents;
+using BeyondImmersion.Bannou.BehaviorCompiler.Documents.Actions;
+using BeyondImmersion.Bannou.BehaviorCompiler.Parser;
+using BeyondImmersion.Bannou.BehaviorExpressions.Expressions;
+using BeyondImmersion.Bannou.BehaviorExpressions.Runtime;
 
 namespace BeyondImmersion.BannouService.Abml.Execution;
 
@@ -283,7 +283,7 @@ public sealed class DocumentExecutor : IDocumentExecutor
                     }
 
                     // Execute the target flow (tail call)
-                    return await ExecuteFlowAsync(targetFlow, context, ct);
+                    return await ExecuteFlowAsync((Flow)targetFlow, context, ct);
 
                 case ReturnResult:
                 case CompleteResult:

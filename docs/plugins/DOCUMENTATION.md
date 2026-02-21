@@ -3,13 +3,14 @@
 > **Plugin**: lib-documentation
 > **Schema**: schemas/documentation-api.yaml
 > **Version**: 1.0.0
+> **Layer**: AppFeatures
 > **State Stores**: documentation-statestore (Redis)
 
 ---
 
 ## Overview
 
-Knowledge base API designed for AI agents (SignalWire SWAIG, OpenAI function calling, Claude tool use) with full-text search, natural language query, and voice-friendly summaries. Manages documentation within namespaces, supporting manual CRUD operations and automated git repository synchronization. Features a trashcan (soft-delete with TTL-based expiration), namespace-scoped search indexes (dual implementation: Redis Search FT.* when available, in-memory ConcurrentDictionary fallback), YAML frontmatter parsing for git-synced content, archive creation via Asset Service bundle uploads, and browser-facing GET endpoints that render markdown to HTML (unusual exception to Bannou's POST-only pattern). Two background services handle startup index rebuilding and periodic repository sync scheduling. All mutations to repository-bound namespaces are rejected (403 Forbidden) unless the binding is disabled, enforcing git as the single source of truth for bound namespaces.
+Knowledge base API (L3 AppFeatures) designed for AI agents (SignalWire SWAIG, OpenAI function calling, Claude tool use) with full-text search, natural language query, and voice-friendly summaries. Manages documentation within namespaces, supporting manual CRUD and automated git repository synchronization (git-bound namespaces reject mutations, enforcing git as single source of truth). Features browser-facing GET endpoints that render markdown to HTML (unusual exception to Bannou's POST-only pattern). Two background services handle index rebuilding and periodic repository sync.
 
 ---
 
@@ -35,17 +36,17 @@ Knowledge base API designed for AI agents (SignalWire SWAIG, OpenAI function cal
 
 ## State Storage
 
-**Stores**: 1 state store (single Redis store with key prefix `doc`)
+**Stores**: 1 state store (single Redis store with key prefix `doc`, Redis Search enabled)
 
-| Store | Backend | Purpose |
-|-------|---------|---------|
-| `documentation-statestore` | Redis | All document data, indexes, bindings, trashcan, archives |
+| Store | Backend | Search | Purpose |
+|-------|---------|--------|---------|
+| `documentation-statestore` | Redis | FT.* | All document data, indexes, bindings, trashcan, archives |
 
 | Key Pattern | Data Type | Purpose |
 |-------------|-----------|---------|
 | `{namespaceId}:{documentId}` | `StoredDocument` | Document content and metadata (note: DOC_KEY_PREFIX is empty; store adds `doc:` prefix) |
 | `slug-idx:{namespaceId}:{slug}` | `string` (GUID) | Slug-to-document-ID lookup index |
-| `ns-docs:{namespaceId}` | `List<Guid>` / `HashSet<Guid>` | All document IDs in a namespace (for pagination and rebuild). **Note**: add/remove methods use `List<Guid>`, but delete-orphans/restore/count methods use `HashSet<Guid>` — see Bug #4. |
+| `ns-docs:{namespaceId}` | `HashSet<Guid>` | All document IDs in a namespace (for pagination and rebuild). Uses HashSet for uniqueness guarantees. |
 | `ns-trash:{namespaceId}` | `List<Guid>` | Trashcan document ID list per namespace |
 | `trash:{namespaceId}:{documentId}` | `TrashedDocument` | Soft-deleted document with TTL metadata |
 | `repo-binding:{namespaceId}` | `RepositoryBinding` | Repository binding configuration for a namespace |
@@ -93,8 +94,6 @@ This plugin does not consume external events. Per schema: `x-event-subscriptions
 | `MinRelevanceScore` | `DOCUMENTATION_MIN_RELEVANCE_SCORE` | `0.3` | Default minimum relevance for query results |
 | `MaxSearchResults` | `DOCUMENTATION_MAX_SEARCH_RESULTS` | `20` | Maximum search/query results returned |
 | `MaxImportDocuments` | `DOCUMENTATION_MAX_IMPORT_DOCUMENTS` | `0` | Max documents per import (0 = unlimited) |
-| `AiEnhancementsEnabled` | `DOCUMENTATION_AI_ENHANCEMENTS_ENABLED` | `false` | Enable AI-powered semantic search (future) |
-| `AiEmbeddingsModel` | `DOCUMENTATION_AI_EMBEDDINGS_MODEL` | (null) | Embeddings model when AI enabled |
 | `GitStoragePath` | `DOCUMENTATION_GIT_STORAGE_PATH` | `/tmp/bannou-git-repos` | Local path for cloned repositories |
 | `GitStorageCleanupHours` | `DOCUMENTATION_GIT_STORAGE_CLEANUP_HOURS` | `24` | Hours before orphaned repos are cleaned up |
 | `GitCloneTimeoutSeconds` | `DOCUMENTATION_GIT_CLONE_TIMEOUT_SECONDS` | `300` | Git clone/pull timeout |
@@ -118,7 +117,7 @@ This plugin does not consume external events. Per schema: `x-event-subscriptions
 | Service | Lifetime | Role |
 |---------|----------|------|
 | `ILogger<DocumentationService>` | Scoped | Structured logging |
-| `DocumentationServiceConfiguration` | Singleton | All 27 configuration properties |
+| `DocumentationServiceConfiguration` | Singleton | All 25 configuration properties (24 service-specific + ForceServiceId) |
 | `IStateStoreFactory` | Singleton | Redis state store access for all data |
 | `IDistributedLockProvider` | Singleton | Sync operation locking |
 | `IMessageBus` | Scoped | Event publishing (lifecycle, analytics, errors) |
@@ -379,9 +378,9 @@ Archive System
 
 ## Stubs & Unimplemented Features
 
-1. **AI-powered semantic search**: Configuration properties `AiEnhancementsEnabled` and `AiEmbeddingsModel` exist but the query/search implementations use the same inverted-index keyword matching. The `QueryAsync` method on `SearchIndexService` is identical to `SearchAsync` with an added relevance score filter. No embeddings generation, vector storage, or semantic similarity is implemented.
+1. ~~**AI-powered semantic search stub config**~~: **FIXED** (2026-01-31) - Removed dead configuration properties `AiEnhancementsEnabled` and `AiEmbeddingsModel` that were never referenced in service code (T21 violation). The query/search implementations both use inverted-index keyword matching. The `QueryAsync` method is identical to `SearchAsync` with an added relevance score filter. This is the correct current behavior; semantic search remains a potential future extension (see Potential Extensions below).
 
-2. **RedisSearchIndexService**: A `RedisSearchIndexService` class exists and is registered when `stateStoreFactory.SupportsSearch()` returns true, but the in-memory `SearchIndexService` fallback is the common code path. The Redis Search (FT.*) integration is partially implemented for environments with RediSearch module.
+2. ~~**RedisSearchIndexService configuration**~~: **FIXED** (2026-02-01) - Added `enableSearch: true` to `documentation-statestore` in `state-stores.yaml`. The `RedisSearchIndexService` was fully implemented but never used because the store lacked the search flag. With this configuration, Redis Search (FT.*) will be used when available; the in-memory `SearchIndexService` fallback remains for environments without RediSearch module.
 
 3. **Voice summary generation**: `GenerateVoiceSummary()` strips markdown and truncates the first paragraph. No actual NLG, TTS-optimization, or prosody considerations are applied - it is a simple text extraction.
 
@@ -393,7 +392,7 @@ Archive System
 
 ## Potential Extensions
 
-1. **Semantic search with embeddings**: Implement the `AiEnhancementsEnabled` path using vector embeddings for document content. Store embeddings in Redis Vector Similarity Search (VSS) and use cosine similarity for natural language queries.
+1. **Semantic search with embeddings**: Implement vector embeddings for document content. Store embeddings in Redis Vector Similarity Search (VSS) and use cosine similarity for natural language queries in `QueryAsync`. Blocker: requires choosing an embedding provider and adding the HTTP client dependency — no external AI service integration exists in Bannou yet. Configuration properties (`AiEnhancementsEnabled`, `AiEmbeddingsModel`) were previously defined but removed as a T21 violation (never wired); they would need to be re-added to the schema when implementation begins. Note: this is a **retrieval** optimization (matching queries to existing documents), not content generation — it does not conflict with the formal-theory-over-AI principle (see [WHY-DOESNT-BANNOU-USE-AI-FOR-CONTENT-GENERATION.md](../../faqs/WHY-DOESNT-BANNOU-USE-AI-FOR-CONTENT-GENERATION.md)).
 
 2. **Webhook-triggered sync**: Add webhook endpoint for git push notifications (GitHub/GitLab webhooks) to trigger immediate sync instead of waiting for the scheduler interval.
 
@@ -409,9 +408,9 @@ Archive System
 
 ## Known Quirks & Caveats
 
-### Bugs
+### Bugs (Fix Immediately)
 
-No bugs identified.
+1. ~~**Type mismatch for `ns-docs:{namespaceId}` key**~~: **FIXED** (2026-01-31) - Standardized on `HashSet<Guid>` for namespace document lists in both `DocumentationService.GetNamespaceStatsAsync` and `SearchIndexService.RebuildIndexAsync`. Trashcan (`ns-trash:`) intentionally uses `List<Guid>` for different semantics (order preservation).
 
 ### Intentional Quirks
 
@@ -425,11 +424,11 @@ No bugs identified.
 
 ### Design Considerations
 
-1. **T16 (ViewDocumentBySlugAsync return type)**: Returns `(StatusCodes, object?)` instead of the standard `(StatusCodes, TResponse?)` pattern. This is a browser-facing endpoint (T15 exception) that returns HTML. Low priority since the endpoint is exceptional by design, but could define a `ViewDocumentResponse` type for consistency.
+1. ~~**T16 (ViewDocumentBySlugAsync return type)**~~: **FIXED** (2026-01-31) - Changed return type from `(StatusCodes, object?)` to `(StatusCodes, string?)` for proper type safety. The method always returns HTML string content, so the typed return accurately reflects this. Removed unnecessary cast in controller.
 
 2. **Single Redis store for all data**: All document data, indexes, trashcan, bindings, and archives share one `documentation-statestore`. A very active namespace with many documents could create key-space pressure. No TTL is set on document keys themselves.
 
-3. **N+1 query pattern in ListDocuments and ListTrashcan**: Both endpoints fetch document IDs from an index, then individually fetch each document from the state store. Large result sets generate many sequential Redis calls.
+3. ~~**N+1 query pattern in ListDocuments and ListTrashcan**~~: **FIXED** (2026-01-31) - Both methods now use `GetBulkAsync` for single-call bulk retrieval. `ListTrashcanAsync` also uses `DeleteBulkAsync` to batch-delete expired items instead of individual deletes.
 
 4. **Git operations on local filesystem**: `GitSyncService` clones repositories to `GitStoragePath` on the container's filesystem. In multi-instance deployments, each instance clones independently. The distributed lock prevents concurrent syncs of the same namespace, but disk usage is per-instance.
 
@@ -448,3 +447,21 @@ No bugs identified.
 11. **LastUpdated sampling is incomplete**: `GetNamespaceStats` only samples the first 10 document IDs from the namespace list to find `lastUpdated`. Newer documents further in the list are missed. Consider maintaining a `LastUpdatedAt` field on a namespace metadata record.
 
 12. **Search index retains stale terms on document update**: `NamespaceIndex.AddDocument()` replaces the document and adds new terms, but does NOT remove old terms no longer in the updated content. Searching for removed terms still returns the document. Fix requires maintaining a term-to-document reverse index or removing the old document's terms before re-indexing.
+
+---
+
+## Work Tracking
+
+This section tracks active development work on items from the quirks/bugs lists above. Items here are managed by the `/audit-plugin` workflow.
+
+### Completed
+
+- **2026-01-31**: Fixed type mismatch for `ns-docs:{namespaceId}` key. Standardized on `HashSet<Guid>` for namespace document lists in `DocumentationService.GetNamespaceStatsAsync` and `SearchIndexService.RebuildIndexAsync`. Trashcan keys (`ns-trash:`) intentionally continue using `List<Guid>`.
+
+- **2026-01-31**: Fixed N+1 query pattern in `ListDocumentsAsync` and `ListTrashcanAsync`. Both methods now use `GetBulkAsync` for bulk document retrieval instead of individual `GetAsync` calls in loops. `ListTrashcanAsync` also uses `DeleteBulkAsync` to batch-delete expired items.
+
+- **2026-01-31**: Fixed `ViewDocumentBySlugAsync` return type from `(StatusCodes, object?)` to `(StatusCodes, string?)`. The method always returns HTML string content, so the typed return accurately reflects this. Removed unnecessary cast in `DocumentationController.ViewDocumentBySlug`.
+
+- **2026-01-31**: Removed dead configuration properties `AiEnhancementsEnabled` and `AiEmbeddingsModel` from schema (T21 violation - never referenced in service code). Updated tests to remove assertions for removed properties. Semantic search remains a potential future extension.
+
+- **2026-02-01**: Enabled Redis Search for documentation by adding `enableSearch: true` to `documentation-statestore` in `state-stores.yaml`. The `RedisSearchIndexService` was fully implemented but never activated because the store lacked the search configuration flag. With this fix, Redis Search (FT.*) will be used when the RediSearch module is available.

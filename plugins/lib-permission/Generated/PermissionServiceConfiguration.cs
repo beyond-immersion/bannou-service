@@ -12,7 +12,7 @@
 //
 //     IMPLEMENTATION TENETS - Configuration-First:
 //     - Access configuration via dependency injection, never Environment.GetEnvironmentVariable.
-//     - ALL properties below MUST be referenced in PermissionService.cs (no dead config).
+//     - ALL properties below MUST be referenced somewhere in the plugin (no dead config).
 //     - Any hardcoded tunable (limit, timeout, threshold, capacity) in service code means
 //       a configuration property is MISSING - add it to the configuration schema.
 //     - If a property is unused, remove it from the configuration schema.
@@ -40,7 +40,7 @@ namespace BeyondImmersion.BannouService.Permission;
 /// <para>
 /// <b>IMPLEMENTATION TENETS - Configuration-First:</b> Access configuration via dependency injection.
 /// Never use <c>Environment.GetEnvironmentVariable()</c> directly in service code.
-/// ALL properties in this class MUST be referenced in the service implementation.
+/// ALL properties in this class MUST be referenced somewhere in the plugin.
 /// If a property is unused, remove it from the configuration schema.
 /// </para>
 /// <para>
@@ -54,21 +54,30 @@ public class PermissionServiceConfiguration : IServiceConfiguration
     public Guid? ForceServiceId { get; set; }
 
     /// <summary>
-    /// Maximum retries for acquiring distributed lock
-    /// Environment variable: PERMISSION_LOCK_MAX_RETRIES
+    /// Maximum number of concurrent session recompilations during service registration (bounds parallel Redis operations)
+    /// Environment variable: PERMISSION_MAX_CONCURRENT_RECOMPILATIONS
     /// </summary>
-    public int LockMaxRetries { get; set; } = 10;
+    [ConfigRange(Minimum = 1, Maximum = 500)]
+    public int MaxConcurrentRecompilations { get; set; } = 50;
 
     /// <summary>
-    /// Base delay in ms between lock retry attempts (exponential backoff applied)
-    /// Environment variable: PERMISSION_LOCK_BASE_DELAY_MS
+    /// In-memory permission cache TTL in seconds. Cached capabilities older than this are refreshed from Redis on next access. 0 disables TTL (cache never expires). Recommended non-zero value is 300 (5 minutes). Acts as a safety net against lost event-driven recompilation triggers.
+    /// Environment variable: PERMISSION_CACHE_TTL_SECONDS
     /// </summary>
-    public int LockBaseDelayMs { get; set; } = 100;
+    [ConfigRange(Minimum = 0, Maximum = 86400)]
+    public int PermissionCacheTtlSeconds { get; set; } = 0;
 
     /// <summary>
-    /// Distributed lock expiration time in seconds
-    /// Environment variable: PERMISSION_LOCK_EXPIRY_SECONDS
+    /// Redis TTL in seconds for session permission data keys (states and compiled permissions). Handles cleanup of orphaned data from sessions that disconnect without proper cleanup. 0 disables Redis TTL. Default 86400 (24 hours). Maximum 604800 (7 days).
+    /// Environment variable: PERMISSION_SESSION_DATA_TTL_SECONDS
     /// </summary>
-    public int LockExpirySeconds { get; set; } = 30;
+    [ConfigRange(Minimum = 0, Maximum = 604800)]
+    public int SessionDataTtlSeconds { get; set; } = 86400;
+
+    /// <summary>
+    /// Ordered role hierarchy from lowest to highest privilege. Index determines priority for permission compilation (comma-separated in env var).
+    /// Environment variable: PERMISSION_ROLE_HIERARCHY
+    /// </summary>
+    public string[] RoleHierarchy { get; set; } = ["anonymous", "user", "developer", "admin"];
 
 }

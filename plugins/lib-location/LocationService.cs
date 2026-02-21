@@ -3,7 +3,9 @@ using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Realm;
+using BeyondImmersion.BannouService.Resource;
 using BeyondImmersion.BannouService.Services;
+using BeyondImmersion.BannouService.State;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
@@ -14,7 +16,7 @@ namespace BeyondImmersion.BannouService.Location;
 /// Manages location definitions - places within realms with hierarchical organization.
 /// Locations are partitioned by realm for scalability.
 /// </summary>
-[BannouService("location", typeof(ILocationService), lifetime: ServiceLifetime.Scoped)]
+[BannouService("location", typeof(ILocationService), lifetime: ServiceLifetime.Scoped, layer: ServiceLayer.GameFoundation)]
 public partial class LocationService : ILocationService
 {
     private readonly IStateStoreFactory _stateStoreFactory;
@@ -22,6 +24,8 @@ public partial class LocationService : ILocationService
     private readonly ILogger<LocationService> _logger;
     private readonly LocationServiceConfiguration _configuration;
     private readonly IRealmClient _realmClient;
+    private readonly IDistributedLockProvider _lockProvider;
+    private readonly IResourceClient _resourceClient;
 
     private const string LOCATION_KEY_PREFIX = "location:";
     private const string CODE_INDEX_PREFIX = "code-index:";
@@ -35,13 +39,17 @@ public partial class LocationService : ILocationService
         ILogger<LocationService> logger,
         LocationServiceConfiguration configuration,
         IRealmClient realmClient,
-        IEventConsumer eventConsumer)
+        IEventConsumer eventConsumer,
+        IDistributedLockProvider lockProvider,
+        IResourceClient resourceClient)
     {
         _stateStoreFactory = stateStoreFactory;
         _messageBus = messageBus;
         _logger = logger;
         _configuration = configuration;
         _realmClient = realmClient;
+        _lockProvider = lockProvider;
+        _resourceClient = resourceClient;
 
         // Register event handlers via partial class (LocationServiceEvents.cs)
         ((IBannouService)this).RegisterEventConsumers(eventConsumer);
@@ -55,6 +63,17 @@ public partial class LocationService : ILocationService
     private static string BuildParentIndexKey(Guid realmId, Guid parentId) => $"{PARENT_INDEX_PREFIX}{realmId}:{parentId}";
     private static string BuildRootLocationsKey(Guid realmId) => $"{ROOT_LOCATIONS_PREFIX}{realmId}";
 
+    private const string ENTITY_LOCATION_PREFIX = "entity-location:";
+    private const string LOCATION_ENTITIES_PREFIX = "location-entities:";
+    private const string LOCATION_ENTITIES_INDEX_KEY = "location-entities:__index__";
+
+    private static string BuildEntityLocationKey(string entityType, Guid entityId)
+        => $"{ENTITY_LOCATION_PREFIX}{entityType}:{entityId}";
+    private static string BuildLocationEntitiesKey(Guid locationId)
+        => $"{LOCATION_ENTITIES_PREFIX}{locationId}";
+    private static string BuildEntitySetMember(string entityType, Guid entityId)
+        => $"{entityType}:{entityId}";
+
     #endregion
 
     #region Read Operations
@@ -62,507 +81,565 @@ public partial class LocationService : ILocationService
     /// <inheritdoc />
     public async Task<(StatusCodes, LocationResponse?)> GetLocationAsync(GetLocationRequest body, CancellationToken cancellationToken = default)
     {
-        try
+        _logger.LogDebug("Getting location by ID: {LocationId}", body.LocationId);
+
+        var locationKey = BuildLocationKey(body.LocationId);
+        var model = await GetLocationWithCacheAsync(locationKey, cancellationToken);
+
+        if (model == null)
         {
-            _logger.LogDebug("Getting location by ID: {LocationId}", body.LocationId);
-
-            var locationKey = BuildLocationKey(body.LocationId);
-            var model = await _stateStoreFactory.GetStore<LocationModel>(StateStoreDefinitions.Location).GetAsync(locationKey, cancellationToken);
-
-            if (model == null)
-            {
-                return (StatusCodes.NotFound, null);
-            }
-
-            return (StatusCodes.OK, MapToResponse(model));
+            return (StatusCodes.NotFound, null);
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error getting location {LocationId}", body.LocationId);
-            await _messageBus.TryPublishErrorAsync(
-                "location", "GetLocation", "unexpected_exception", ex.Message,
-                dependency: "state", endpoint: "post:/location/get",
-                details: null, stack: ex.StackTrace, cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
+
+        return (StatusCodes.OK, MapToResponse(model));
     }
 
     /// <inheritdoc />
     public async Task<(StatusCodes, LocationResponse?)> GetLocationByCodeAsync(GetLocationByCodeRequest body, CancellationToken cancellationToken = default)
     {
-        try
+        _logger.LogDebug("Getting location by code: {Code} in realm {RealmId}", body.Code, body.RealmId);
+
+        var code = body.Code.ToUpperInvariant();
+        var codeIndexKey = BuildCodeIndexKey(body.RealmId, code);
+        var locationId = await _stateStoreFactory.GetStore<string>(StateStoreDefinitions.Location).GetAsync(codeIndexKey, cancellationToken);
+
+        if (string.IsNullOrEmpty(locationId))
         {
-            _logger.LogDebug("Getting location by code: {Code} in realm {RealmId}", body.Code, body.RealmId);
-
-            var code = body.Code.ToUpperInvariant();
-            var codeIndexKey = BuildCodeIndexKey(body.RealmId, code);
-            var locationId = await _stateStoreFactory.GetStore<string>(StateStoreDefinitions.Location).GetAsync(codeIndexKey, cancellationToken);
-
-            if (string.IsNullOrEmpty(locationId))
-            {
-                return (StatusCodes.NotFound, null);
-            }
-
-            if (!Guid.TryParse(locationId, out var parsedLocationId))
-            {
-                _logger.LogWarning("Invalid location ID in code index for code {Code} in realm {RealmId}: {LocationId}", body.Code, body.RealmId, locationId);
-                return (StatusCodes.NotFound, null);
-            }
-
-            var locationKey = BuildLocationKey(parsedLocationId);
-            var model = await _stateStoreFactory.GetStore<LocationModel>(StateStoreDefinitions.Location).GetAsync(locationKey, cancellationToken);
-
-            if (model == null)
-            {
-                return (StatusCodes.NotFound, null);
-            }
-
-            return (StatusCodes.OK, MapToResponse(model));
+            return (StatusCodes.NotFound, null);
         }
-        catch (Exception ex)
+
+        if (!Guid.TryParse(locationId, out var parsedLocationId))
         {
-            _logger.LogError(ex, "Error getting location by code {Code} in realm {RealmId}", body.Code, body.RealmId);
-            await _messageBus.TryPublishErrorAsync(
-                "location", "GetLocationByCode", "unexpected_exception", ex.Message,
-                dependency: "state", endpoint: "post:/location/get-by-code",
-                details: null, stack: ex.StackTrace, cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
+            _logger.LogWarning("Invalid location ID in code index for code {Code} in realm {RealmId}: {LocationId}", body.Code, body.RealmId, locationId);
+            return (StatusCodes.NotFound, null);
         }
+
+        var locationKey = BuildLocationKey(parsedLocationId);
+        var model = await GetLocationWithCacheAsync(locationKey, cancellationToken);
+
+        if (model == null)
+        {
+            return (StatusCodes.NotFound, null);
+        }
+
+        return (StatusCodes.OK, MapToResponse(model));
     }
 
     /// <inheritdoc />
     public async Task<(StatusCodes, LocationListResponse?)> ListLocationsAsync(ListLocationsRequest body, CancellationToken cancellationToken = default)
     {
-        try
+        _logger.LogDebug("Listing locations with filters - RealmId: {RealmId}, LocationType: {LocationType}, IncludeDeprecated: {IncludeDeprecated}",
+            body.RealmId, body.LocationType, body.IncludeDeprecated);
+
+        var realmIndexKey = BuildRealmIndexKey(body.RealmId);
+        var locationIds = await _stateStoreFactory.GetStore<List<Guid>>(StateStoreDefinitions.Location).GetAsync(realmIndexKey, cancellationToken) ?? new List<Guid>();
+        var allLocations = await LoadLocationsByIdsAsync(locationIds, cancellationToken);
+
+        // Apply filters
+        var filtered = allLocations.AsEnumerable();
+
+        if (!body.IncludeDeprecated)
         {
-            _logger.LogDebug("Listing locations with filters - RealmId: {RealmId}, LocationType: {LocationType}, IncludeDeprecated: {IncludeDeprecated}",
-                body.RealmId, body.LocationType, body.IncludeDeprecated);
-
-            var realmIndexKey = BuildRealmIndexKey(body.RealmId);
-            var locationIds = await _stateStoreFactory.GetStore<List<Guid>>(StateStoreDefinitions.Location).GetAsync(realmIndexKey, cancellationToken) ?? new List<Guid>();
-            var allLocations = await LoadLocationsByIdsAsync(locationIds, cancellationToken);
-
-            // Apply filters
-            var filtered = allLocations.AsEnumerable();
-
-            if (!body.IncludeDeprecated)
-            {
-                filtered = filtered.Where(l => !l.IsDeprecated);
-            }
-
-            if (body.LocationType.HasValue)
-            {
-                filtered = filtered.Where(l => l.LocationType == body.LocationType.Value);
-            }
-
-            var filteredList = filtered.ToList();
-            var totalCount = filteredList.Count;
-
-            // Apply pagination
-            var page = body.Page;
-            var pageSize = body.PageSize;
-            var pagedList = filteredList
-                .Skip((page - 1) * pageSize)
-                .Take(pageSize)
-                .Select(MapToResponse)
-                .ToList();
-
-            return (StatusCodes.OK, new LocationListResponse
-            {
-                Locations = pagedList,
-                TotalCount = totalCount,
-                Page = page,
-                PageSize = pageSize,
-                HasNextPage = page * pageSize < totalCount,
-                HasPreviousPage = page > 1
-            });
+            filtered = filtered.Where(l => !l.IsDeprecated);
         }
-        catch (Exception ex)
+
+        if (body.LocationType.HasValue)
         {
-            _logger.LogError(ex, "Error listing locations");
-            await _messageBus.TryPublishErrorAsync(
-                "location", "ListLocations", "unexpected_exception", ex.Message,
-                dependency: "state", endpoint: "post:/location/list",
-                details: null, stack: ex.StackTrace, cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
+            filtered = filtered.Where(l => l.LocationType == body.LocationType.Value);
         }
+
+        var filteredList = filtered.ToList();
+        var totalCount = filteredList.Count;
+
+        // Apply pagination
+        var page = body.Page;
+        var pageSize = body.PageSize;
+        var pagedList = filteredList
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .Select(MapToResponse)
+            .ToList();
+
+        return (StatusCodes.OK, new LocationListResponse
+        {
+            Locations = pagedList,
+            TotalCount = totalCount,
+            Page = page,
+            PageSize = pageSize,
+            HasNextPage = page * pageSize < totalCount,
+            HasPreviousPage = page > 1
+        });
     }
 
     /// <inheritdoc />
     public async Task<(StatusCodes, LocationListResponse?)> ListLocationsByRealmAsync(ListLocationsByRealmRequest body, CancellationToken cancellationToken = default)
     {
-        try
+        _logger.LogDebug("Listing locations by realm: {RealmId}", body.RealmId);
+
+        var realmIndexKey = BuildRealmIndexKey(body.RealmId);
+        var locationIds = await _stateStoreFactory.GetStore<List<Guid>>(StateStoreDefinitions.Location).GetAsync(realmIndexKey, cancellationToken) ?? new List<Guid>();
+
+        if (locationIds.Count == 0)
         {
-            _logger.LogDebug("Listing locations by realm: {RealmId}", body.RealmId);
-
-            var realmIndexKey = BuildRealmIndexKey(body.RealmId);
-            var locationIds = await _stateStoreFactory.GetStore<List<Guid>>(StateStoreDefinitions.Location).GetAsync(realmIndexKey, cancellationToken) ?? new List<Guid>();
-
-            if (locationIds.Count == 0)
-            {
-                return (StatusCodes.OK, new LocationListResponse
-                {
-                    Locations = new List<LocationResponse>(),
-                    TotalCount = 0,
-                    Page = body.Page,
-                    PageSize = body.PageSize
-                });
-            }
-
-            var locations = await LoadLocationsByIdsAsync(locationIds, cancellationToken);
-
-            // Apply filters
-            var filtered = locations.AsEnumerable();
-
-            if (!body.IncludeDeprecated)
-            {
-                filtered = filtered.Where(l => !l.IsDeprecated);
-            }
-
-            if (body.LocationType.HasValue)
-            {
-                filtered = filtered.Where(l => l.LocationType == body.LocationType.Value);
-            }
-
-            var filteredList = filtered.ToList();
-            var totalCount = filteredList.Count;
-
-            // Apply pagination
-            var page = body.Page;
-            var pageSize = body.PageSize;
-            var pagedList = filteredList
-                .Skip((page - 1) * pageSize)
-                .Take(pageSize)
-                .Select(MapToResponse)
-                .ToList();
-
             return (StatusCodes.OK, new LocationListResponse
             {
-                Locations = pagedList,
-                TotalCount = totalCount,
-                Page = page,
-                PageSize = pageSize,
-                HasNextPage = page * pageSize < totalCount,
-                HasPreviousPage = page > 1
+                Locations = new List<LocationResponse>(),
+                TotalCount = 0,
+                Page = body.Page,
+                PageSize = body.PageSize
             });
         }
-        catch (Exception ex)
+
+        var locations = await LoadLocationsByIdsAsync(locationIds, cancellationToken);
+
+        // Apply filters
+        var filtered = locations.AsEnumerable();
+
+        if (!body.IncludeDeprecated)
         {
-            _logger.LogError(ex, "Error listing locations for realm {RealmId}", body.RealmId);
-            await _messageBus.TryPublishErrorAsync(
-                "location", "ListLocationsByRealm", "unexpected_exception", ex.Message,
-                dependency: "state", endpoint: "post:/location/list-by-realm",
-                details: null, stack: ex.StackTrace, cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
+            filtered = filtered.Where(l => !l.IsDeprecated);
         }
+
+        if (body.LocationType.HasValue)
+        {
+            filtered = filtered.Where(l => l.LocationType == body.LocationType.Value);
+        }
+
+        var filteredList = filtered.ToList();
+        var totalCount = filteredList.Count;
+
+        // Apply pagination
+        var page = body.Page;
+        var pageSize = body.PageSize;
+        var pagedList = filteredList
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .Select(MapToResponse)
+            .ToList();
+
+        return (StatusCodes.OK, new LocationListResponse
+        {
+            Locations = pagedList,
+            TotalCount = totalCount,
+            Page = page,
+            PageSize = pageSize,
+            HasNextPage = page * pageSize < totalCount,
+            HasPreviousPage = page > 1
+        });
     }
 
     /// <inheritdoc />
     public async Task<(StatusCodes, LocationListResponse?)> ListLocationsByParentAsync(ListLocationsByParentRequest body, CancellationToken cancellationToken = default)
     {
-        try
+        _logger.LogDebug("Listing locations by parent: {ParentLocationId}", body.ParentLocationId);
+
+        // First get the parent location to determine the realm
+        var parentKey = BuildLocationKey(body.ParentLocationId);
+        var parentModel = await _stateStoreFactory.GetStore<LocationModel>(StateStoreDefinitions.Location).GetAsync(parentKey, cancellationToken);
+
+        if (parentModel == null)
         {
-            _logger.LogDebug("Listing locations by parent: {ParentLocationId}", body.ParentLocationId);
+            return (StatusCodes.NotFound, null);
+        }
 
-            // First get the parent location to determine the realm
-            var parentKey = BuildLocationKey(body.ParentLocationId);
-            var parentModel = await _stateStoreFactory.GetStore<LocationModel>(StateStoreDefinitions.Location).GetAsync(parentKey, cancellationToken);
+        var parentIndexKey = BuildParentIndexKey(parentModel.RealmId, body.ParentLocationId);
+        var childIds = await _stateStoreFactory.GetStore<List<Guid>>(StateStoreDefinitions.Location).GetAsync(parentIndexKey, cancellationToken) ?? new List<Guid>();
 
-            if (parentModel == null)
-            {
-                return (StatusCodes.NotFound, null);
-            }
-
-            var parentIndexKey = BuildParentIndexKey(parentModel.RealmId, body.ParentLocationId);
-            var childIds = await _stateStoreFactory.GetStore<List<Guid>>(StateStoreDefinitions.Location).GetAsync(parentIndexKey, cancellationToken) ?? new List<Guid>();
-
-            if (childIds.Count == 0)
-            {
-                return (StatusCodes.OK, new LocationListResponse
-                {
-                    Locations = new List<LocationResponse>(),
-                    TotalCount = 0,
-                    Page = body.Page,
-                    PageSize = body.PageSize
-                });
-            }
-
-            var locations = await LoadLocationsByIdsAsync(childIds, cancellationToken);
-
-            // Apply filters
-            var filtered = locations.AsEnumerable();
-
-            if (!body.IncludeDeprecated)
-            {
-                filtered = filtered.Where(l => !l.IsDeprecated);
-            }
-
-            if (body.LocationType.HasValue)
-            {
-                filtered = filtered.Where(l => l.LocationType == body.LocationType.Value);
-            }
-
-            var filteredList = filtered.ToList();
-            var totalCount = filteredList.Count;
-
-            // Apply pagination
-            var page = body.Page;
-            var pageSize = body.PageSize;
-            var pagedList = filteredList
-                .Skip((page - 1) * pageSize)
-                .Take(pageSize)
-                .Select(MapToResponse)
-                .ToList();
-
+        if (childIds.Count == 0)
+        {
             return (StatusCodes.OK, new LocationListResponse
             {
-                Locations = pagedList,
-                TotalCount = totalCount,
-                Page = page,
-                PageSize = pageSize,
-                HasNextPage = page * pageSize < totalCount,
-                HasPreviousPage = page > 1
+                Locations = new List<LocationResponse>(),
+                TotalCount = 0,
+                Page = body.Page,
+                PageSize = body.PageSize
             });
         }
-        catch (Exception ex)
+
+        var locations = await LoadLocationsByIdsAsync(childIds, cancellationToken);
+
+        // Apply filters
+        var filtered = locations.AsEnumerable();
+
+        if (!body.IncludeDeprecated)
         {
-            _logger.LogError(ex, "Error listing locations by parent {ParentLocationId}", body.ParentLocationId);
-            await _messageBus.TryPublishErrorAsync(
-                "location", "ListLocationsByParent", "unexpected_exception", ex.Message,
-                dependency: "state", endpoint: "post:/location/list-by-parent",
-                details: null, stack: ex.StackTrace, cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
+            filtered = filtered.Where(l => !l.IsDeprecated);
         }
+
+        if (body.LocationType.HasValue)
+        {
+            filtered = filtered.Where(l => l.LocationType == body.LocationType.Value);
+        }
+
+        var filteredList = filtered.ToList();
+        var totalCount = filteredList.Count;
+
+        // Apply pagination
+        var page = body.Page;
+        var pageSize = body.PageSize;
+        var pagedList = filteredList
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .Select(MapToResponse)
+            .ToList();
+
+        return (StatusCodes.OK, new LocationListResponse
+        {
+            Locations = pagedList,
+            TotalCount = totalCount,
+            Page = page,
+            PageSize = pageSize,
+            HasNextPage = page * pageSize < totalCount,
+            HasPreviousPage = page > 1
+        });
     }
 
     /// <inheritdoc />
     public async Task<(StatusCodes, LocationListResponse?)> ListRootLocationsAsync(ListRootLocationsRequest body, CancellationToken cancellationToken = default)
     {
-        try
+        _logger.LogDebug("Listing root locations for realm: {RealmId}", body.RealmId);
+
+        var rootKey = BuildRootLocationsKey(body.RealmId);
+        var rootIds = await _stateStoreFactory.GetStore<List<Guid>>(StateStoreDefinitions.Location).GetAsync(rootKey, cancellationToken) ?? new List<Guid>();
+
+        if (rootIds.Count == 0)
         {
-            _logger.LogDebug("Listing root locations for realm: {RealmId}", body.RealmId);
-
-            var rootKey = BuildRootLocationsKey(body.RealmId);
-            var rootIds = await _stateStoreFactory.GetStore<List<Guid>>(StateStoreDefinitions.Location).GetAsync(rootKey, cancellationToken) ?? new List<Guid>();
-
-            if (rootIds.Count == 0)
-            {
-                return (StatusCodes.OK, new LocationListResponse
-                {
-                    Locations = new List<LocationResponse>(),
-                    TotalCount = 0,
-                    Page = body.Page,
-                    PageSize = body.PageSize
-                });
-            }
-
-            var locations = await LoadLocationsByIdsAsync(rootIds, cancellationToken);
-
-            // Apply filters
-            var filtered = locations.AsEnumerable();
-
-            if (!body.IncludeDeprecated)
-            {
-                filtered = filtered.Where(l => !l.IsDeprecated);
-            }
-
-            if (body.LocationType.HasValue)
-            {
-                filtered = filtered.Where(l => l.LocationType == body.LocationType.Value);
-            }
-
-            var filteredList = filtered.ToList();
-            var totalCount = filteredList.Count;
-
-            // Apply pagination
-            var page = body.Page;
-            var pageSize = body.PageSize;
-            var pagedList = filteredList
-                .Skip((page - 1) * pageSize)
-                .Take(pageSize)
-                .Select(MapToResponse)
-                .ToList();
-
             return (StatusCodes.OK, new LocationListResponse
             {
-                Locations = pagedList,
-                TotalCount = totalCount,
-                Page = page,
-                PageSize = pageSize,
-                HasNextPage = page * pageSize < totalCount,
-                HasPreviousPage = page > 1
+                Locations = new List<LocationResponse>(),
+                TotalCount = 0,
+                Page = body.Page,
+                PageSize = body.PageSize
             });
         }
-        catch (Exception ex)
+
+        var locations = await LoadLocationsByIdsAsync(rootIds, cancellationToken);
+
+        // Apply filters
+        var filtered = locations.AsEnumerable();
+
+        if (!body.IncludeDeprecated)
         {
-            _logger.LogError(ex, "Error listing root locations for realm {RealmId}", body.RealmId);
-            await _messageBus.TryPublishErrorAsync(
-                "location", "ListRootLocations", "unexpected_exception", ex.Message,
-                dependency: "state", endpoint: "post:/location/list-root",
-                details: null, stack: ex.StackTrace, cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
+            filtered = filtered.Where(l => !l.IsDeprecated);
         }
+
+        if (body.LocationType.HasValue)
+        {
+            filtered = filtered.Where(l => l.LocationType == body.LocationType.Value);
+        }
+
+        var filteredList = filtered.ToList();
+        var totalCount = filteredList.Count;
+
+        // Apply pagination
+        var page = body.Page;
+        var pageSize = body.PageSize;
+        var pagedList = filteredList
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .Select(MapToResponse)
+            .ToList();
+
+        return (StatusCodes.OK, new LocationListResponse
+        {
+            Locations = pagedList,
+            TotalCount = totalCount,
+            Page = page,
+            PageSize = pageSize,
+            HasNextPage = page * pageSize < totalCount,
+            HasPreviousPage = page > 1
+        });
     }
 
     /// <inheritdoc />
     public async Task<(StatusCodes, LocationListResponse?)> GetLocationAncestorsAsync(GetLocationAncestorsRequest body, CancellationToken cancellationToken = default)
     {
-        try
+        _logger.LogDebug("Getting ancestors for location: {LocationId}", body.LocationId);
+
+        var locationKey = BuildLocationKey(body.LocationId);
+        var model = await _stateStoreFactory.GetStore<LocationModel>(StateStoreDefinitions.Location).GetAsync(locationKey, cancellationToken);
+
+        if (model == null)
         {
-            _logger.LogDebug("Getting ancestors for location: {LocationId}", body.LocationId);
+            return (StatusCodes.NotFound, null);
+        }
 
-            var locationKey = BuildLocationKey(body.LocationId);
-            var model = await _stateStoreFactory.GetStore<LocationModel>(StateStoreDefinitions.Location).GetAsync(locationKey, cancellationToken);
+        var ancestors = new List<LocationModel>();
+        var currentParentId = model.ParentLocationId;
+        var maxDepth = _configuration.MaxAncestorDepth;
+        var depth = 0;
 
-            if (model == null)
+        while (currentParentId.HasValue && depth < maxDepth)
+        {
+            var parentKey = BuildLocationKey(currentParentId.Value);
+            var parentModel = await _stateStoreFactory.GetStore<LocationModel>(StateStoreDefinitions.Location).GetAsync(parentKey, cancellationToken);
+
+            if (parentModel == null)
             {
-                return (StatusCodes.NotFound, null);
+                _logger.LogWarning("Ancestor walk for location {LocationId} found missing parent {ParentId} at depth {Depth}",
+                    body.LocationId, currentParentId.Value, depth);
+                break;
             }
 
-            var ancestors = new List<LocationModel>();
-            var currentParentId = model.ParentLocationId;
-            var maxDepth = _configuration.MaxAncestorDepth;
-            var depth = 0;
+            ancestors.Add(parentModel);
+            currentParentId = parentModel.ParentLocationId;
+            depth++;
+        }
 
-            while (currentParentId.HasValue && depth < maxDepth)
+        return (StatusCodes.OK, new LocationListResponse
+        {
+            Locations = ancestors.Select(MapToResponse).ToList(),
+            TotalCount = ancestors.Count,
+            Page = 1,
+            PageSize = ancestors.Count
+        });
+    }
+
+    /// <summary>
+    /// Validates a location against territory boundaries.
+    /// Used by Contract service's clause type handler system for territory validation.
+    /// </summary>
+    /// <param name="body">Territory validation request with location and boundaries.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Validation result indicating if location passes territory check.</returns>
+    public async Task<(StatusCodes, ValidateTerritoryResponse?)> ValidateTerritoryAsync(
+        ValidateTerritoryRequest body,
+        CancellationToken cancellationToken = default)
+    {
+        _logger.LogDebug("Validating territory for location {LocationId} against {TerritoryCount} territories, mode: {Mode}",
+            body.LocationId, body.TerritoryLocationIds?.Count ?? 0, body.TerritoryMode);
+
+        // Get location to verify it exists
+        var locationKey = BuildLocationKey(body.LocationId);
+        var location = await _stateStoreFactory.GetStore<LocationModel>(StateStoreDefinitions.Location)
+            .GetAsync(locationKey, cancellationToken);
+
+        if (location == null)
+        {
+            return (StatusCodes.NotFound, null);
+        }
+
+        // Build hierarchy set (location + all ancestors)
+        var locationHierarchy = new HashSet<Guid> { body.LocationId };
+
+        var currentParentId = location.ParentLocationId;
+        var maxDepth = _configuration.MaxAncestorDepth;
+        var depth = 0;
+
+        while (currentParentId.HasValue && depth < maxDepth)
+        {
+            locationHierarchy.Add(currentParentId.Value);
+
+            var parentKey = BuildLocationKey(currentParentId.Value);
+            var parentModel = await _stateStoreFactory.GetStore<LocationModel>(StateStoreDefinitions.Location)
+                .GetAsync(parentKey, cancellationToken);
+
+            if (parentModel == null)
             {
-                var parentKey = BuildLocationKey(currentParentId.Value);
-                var parentModel = await _stateStoreFactory.GetStore<LocationModel>(StateStoreDefinitions.Location).GetAsync(parentKey, cancellationToken);
-
-                if (parentModel == null)
-                {
-                    _logger.LogWarning("Ancestor walk for location {LocationId} found missing parent {ParentId} at depth {Depth}",
-                        body.LocationId, currentParentId.Value, depth);
-                    break;
-                }
-
-                ancestors.Add(parentModel);
-                currentParentId = parentModel.ParentLocationId;
-                depth++;
+                break;
             }
 
-            return (StatusCodes.OK, new LocationListResponse
+            currentParentId = parentModel.ParentLocationId;
+            depth++;
+        }
+
+        // Check for overlap with territory
+        var territorySet = body.TerritoryLocationIds?.ToHashSet() ?? new HashSet<Guid>();
+        Guid? matchedTerritory = null;
+
+        foreach (var territoryId in territorySet)
+        {
+            if (locationHierarchy.Contains(territoryId))
             {
-                Locations = ancestors.Select(MapToResponse).ToList(),
-                TotalCount = ancestors.Count,
-                Page = 1,
-                PageSize = ancestors.Count
+                matchedTerritory = territoryId;
+                break;
+            }
+        }
+
+        var hasOverlap = matchedTerritory.HasValue;
+        var mode = body.TerritoryMode ?? TerritoryMode.Exclusive;
+
+        // Evaluate based on mode
+        if (mode == TerritoryMode.Exclusive && hasOverlap)
+        {
+            return (StatusCodes.OK, new ValidateTerritoryResponse
+            {
+                IsValid = false,
+                ViolationReason = "Location overlaps with exclusive territory",
+                MatchedTerritoryId = matchedTerritory
             });
         }
-        catch (Exception ex)
+
+        if (mode == TerritoryMode.Inclusive && !hasOverlap)
         {
-            _logger.LogError(ex, "Error getting ancestors for location {LocationId}", body.LocationId);
-            await _messageBus.TryPublishErrorAsync(
-                "location", "GetLocationAncestors", "unexpected_exception", ex.Message,
-                dependency: "state", endpoint: "post:/location/get-ancestors",
-                details: null, stack: ex.StackTrace, cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
+            return (StatusCodes.OK, new ValidateTerritoryResponse
+            {
+                IsValid = false,
+                ViolationReason = "Location is outside inclusive territory",
+                MatchedTerritoryId = null
+            });
         }
+
+        return (StatusCodes.OK, new ValidateTerritoryResponse
+        {
+            IsValid = true,
+            ViolationReason = null,
+            MatchedTerritoryId = hasOverlap ? matchedTerritory : null
+        });
     }
 
     /// <inheritdoc />
     public async Task<(StatusCodes, LocationListResponse?)> GetLocationDescendantsAsync(GetLocationDescendantsRequest body, CancellationToken cancellationToken = default)
     {
-        try
+        _logger.LogDebug("Getting descendants for location: {LocationId}, maxDepth: {MaxDepth}", body.LocationId, body.MaxDepth);
+
+        var locationKey = BuildLocationKey(body.LocationId);
+        var model = await _stateStoreFactory.GetStore<LocationModel>(StateStoreDefinitions.Location).GetAsync(locationKey, cancellationToken);
+
+        if (model == null)
         {
-            _logger.LogDebug("Getting descendants for location: {LocationId}, maxDepth: {MaxDepth}", body.LocationId, body.MaxDepth);
-
-            var locationKey = BuildLocationKey(body.LocationId);
-            var model = await _stateStoreFactory.GetStore<LocationModel>(StateStoreDefinitions.Location).GetAsync(locationKey, cancellationToken);
-
-            if (model == null)
-            {
-                return (StatusCodes.NotFound, null);
-            }
-
-            var maxDepth = body.MaxDepth ?? _configuration.DefaultDescendantMaxDepth;
-            var descendants = new List<LocationModel>();
-            await CollectDescendantsAsync(body.LocationId, model.RealmId, descendants, 0, maxDepth, cancellationToken);
-
-            // Apply filters
-            var filtered = descendants.AsEnumerable();
-
-            if (!body.IncludeDeprecated)
-            {
-                filtered = filtered.Where(l => !l.IsDeprecated);
-            }
-
-            if (body.LocationType.HasValue)
-            {
-                filtered = filtered.Where(l => l.LocationType == body.LocationType.Value);
-            }
-
-            var filteredList = filtered.ToList();
-            var totalCount = filteredList.Count;
-
-            // Apply pagination
-            var page = body.Page;
-            var pageSize = body.PageSize;
-            var pagedList = filteredList
-                .Skip((page - 1) * pageSize)
-                .Take(pageSize)
-                .Select(MapToResponse)
-                .ToList();
-
-            return (StatusCodes.OK, new LocationListResponse
-            {
-                Locations = pagedList,
-                TotalCount = totalCount,
-                Page = page,
-                PageSize = pageSize,
-                HasNextPage = page * pageSize < totalCount,
-                HasPreviousPage = page > 1
-            });
+            return (StatusCodes.NotFound, null);
         }
-        catch (Exception ex)
+
+        var maxDepth = body.MaxDepth ?? _configuration.DefaultDescendantMaxDepth;
+        var descendants = new List<LocationModel>();
+        await CollectDescendantsAsync(body.LocationId, model.RealmId, descendants, 0, maxDepth, cancellationToken);
+
+        // Apply filters
+        var filtered = descendants.AsEnumerable();
+
+        if (!body.IncludeDeprecated)
         {
-            _logger.LogError(ex, "Error getting descendants for location {LocationId}", body.LocationId);
-            await _messageBus.TryPublishErrorAsync(
-                "location", "GetLocationDescendants", "unexpected_exception", ex.Message,
-                dependency: "state", endpoint: "post:/location/get-descendants",
-                details: null, stack: ex.StackTrace, cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
+            filtered = filtered.Where(l => !l.IsDeprecated);
         }
+
+        if (body.LocationType.HasValue)
+        {
+            filtered = filtered.Where(l => l.LocationType == body.LocationType.Value);
+        }
+
+        var filteredList = filtered.ToList();
+        var totalCount = filteredList.Count;
+
+        // Apply pagination
+        var page = body.Page;
+        var pageSize = body.PageSize;
+        var pagedList = filteredList
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .Select(MapToResponse)
+            .ToList();
+
+        return (StatusCodes.OK, new LocationListResponse
+        {
+            Locations = pagedList,
+            TotalCount = totalCount,
+            Page = page,
+            PageSize = pageSize,
+            HasNextPage = page * pageSize < totalCount,
+            HasPreviousPage = page > 1
+        });
     }
 
     /// <inheritdoc />
     public async Task<(StatusCodes, LocationExistsResponse?)> LocationExistsAsync(LocationExistsRequest body, CancellationToken cancellationToken = default)
     {
-        try
+        _logger.LogDebug("Checking if location exists: {LocationId}", body.LocationId);
+
+        var locationKey = BuildLocationKey(body.LocationId);
+        var model = await _stateStoreFactory.GetStore<LocationModel>(StateStoreDefinitions.Location).GetAsync(locationKey, cancellationToken);
+
+        if (model == null)
         {
-            _logger.LogDebug("Checking if location exists: {LocationId}", body.LocationId);
-
-            var locationKey = BuildLocationKey(body.LocationId);
-            var model = await _stateStoreFactory.GetStore<LocationModel>(StateStoreDefinitions.Location).GetAsync(locationKey, cancellationToken);
-
-            if (model == null)
-            {
-                return (StatusCodes.OK, new LocationExistsResponse
-                {
-                    Exists = false,
-                    IsActive = false,
-                    LocationId = null,
-                    RealmId = null
-                });
-            }
-
             return (StatusCodes.OK, new LocationExistsResponse
             {
-                Exists = true,
-                IsActive = !model.IsDeprecated,
-                LocationId = model.LocationId,
-                RealmId = model.RealmId
+                Exists = false,
+                IsActive = false,
+                LocationId = null,
+                RealmId = null
             });
         }
-        catch (Exception ex)
+
+        return (StatusCodes.OK, new LocationExistsResponse
         {
-            _logger.LogError(ex, "Error checking if location exists {LocationId}", body.LocationId);
-            await _messageBus.TryPublishErrorAsync(
-                "location", "LocationExists", "unexpected_exception", ex.Message,
-                dependency: "state", endpoint: "post:/location/exists",
-                details: null, stack: ex.StackTrace, cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
+            Exists = true,
+            IsActive = !model.IsDeprecated,
+            LocationId = model.LocationId,
+            RealmId = model.RealmId
+        });
+    }
+
+    /// <inheritdoc />
+    public async Task<(StatusCodes, LocationListResponse?)> QueryLocationsByPositionAsync(QueryLocationsByPositionRequest body, CancellationToken cancellationToken = default)
+    {
+        _logger.LogDebug("Querying locations by position in realm {RealmId}: ({X}, {Y}, {Z})",
+            body.RealmId, body.Position.X, body.Position.Y, body.Position.Z);
+
+        // Load all location IDs from realm index
+        var realmIndexKey = BuildRealmIndexKey(body.RealmId);
+        var locationIds = await _stateStoreFactory.GetStore<List<Guid>>(StateStoreDefinitions.Location)
+            .GetAsync(realmIndexKey, cancellationToken) ?? new List<Guid>();
+
+        if (locationIds.Count == 0)
+        {
+            return (StatusCodes.OK, new LocationListResponse
+            {
+                Locations = new List<LocationResponse>(),
+                TotalCount = 0,
+                Page = body.Page,
+                PageSize = body.PageSize,
+                HasNextPage = false,
+                HasPreviousPage = false
+            });
         }
+
+        // Bulk load location models
+        var store = _stateStoreFactory.GetStore<LocationModel>(StateStoreDefinitions.Location);
+        var matchingModels = new List<LocationModel>();
+
+        foreach (var locationId in locationIds)
+        {
+            var locationKey = BuildLocationKey(locationId);
+            var model = await GetLocationWithCacheAsync(locationKey, cancellationToken);
+
+            if (model is null) continue;
+
+            // Filter: must have bounds and boundsPrecision != none
+            if (model.Bounds is null || model.BoundsPrecision == BoundsPrecision.None)
+                continue;
+
+            // Filter: optionally by maxDepth
+            if (body.MaxDepth.HasValue && model.Depth > body.MaxDepth.Value)
+                continue;
+
+            // AABB containment check
+            if (body.Position.X >= model.Bounds.MinX && body.Position.X <= model.Bounds.MaxX &&
+                body.Position.Y >= model.Bounds.MinY && body.Position.Y <= model.Bounds.MaxY &&
+                body.Position.Z >= model.Bounds.MinZ && body.Position.Z <= model.Bounds.MaxZ)
+            {
+                matchingModels.Add(model);
+            }
+        }
+
+        // Sort by depth descending (most specific first)
+        matchingModels.Sort((a, b) => b.Depth.CompareTo(a.Depth));
+
+        // Paginate
+        var totalCount = matchingModels.Count;
+        var page = body.Page;
+        var pageSize = body.PageSize;
+        var skip = (page - 1) * pageSize;
+        var pagedResults = matchingModels.Skip(skip).Take(pageSize).Select(MapToResponse).ToList();
+
+        return (StatusCodes.OK, new LocationListResponse
+        {
+            Locations = pagedResults,
+            TotalCount = totalCount,
+            Page = page,
+            PageSize = pageSize,
+            HasNextPage = skip + pageSize < totalCount,
+            HasPreviousPage = page > 1
+        });
     }
 
     #endregion
@@ -572,486 +649,499 @@ public partial class LocationService : ILocationService
     /// <inheritdoc />
     public async Task<(StatusCodes, LocationResponse?)> CreateLocationAsync(CreateLocationRequest body, CancellationToken cancellationToken = default)
     {
-        try
-        {
-            _logger.LogDebug("Creating location with code: {Code} in realm {RealmId}", body.Code, body.RealmId);
+        _logger.LogDebug("Creating location with code: {Code} in realm {RealmId}", body.Code, body.RealmId);
 
-            // Validate realm exists and is active
-            var realmExistsResponse = await _realmClient.RealmExistsAsync(new RealmExistsRequest { RealmId = body.RealmId }, cancellationToken);
-            if (realmExistsResponse == null || !realmExistsResponse.Exists || !realmExistsResponse.IsActive)
+        // Validate realm exists and is active
+        var realmExistsResponse = await _realmClient.RealmExistsAsync(new RealmExistsRequest { RealmId = body.RealmId }, cancellationToken);
+        if (realmExistsResponse == null || !realmExistsResponse.Exists || !realmExistsResponse.IsActive)
+        {
+            _logger.LogWarning("Cannot create location - realm {RealmId} does not exist or is not active", body.RealmId);
+            return (StatusCodes.BadRequest, null);
+        }
+
+        // Check for duplicate code in realm
+        var code = body.Code.ToUpperInvariant();
+        var codeIndexKey = BuildCodeIndexKey(body.RealmId, code);
+        var existingId = await _stateStoreFactory.GetStore<string>(StateStoreDefinitions.Location).GetAsync(codeIndexKey, cancellationToken);
+
+        if (!string.IsNullOrEmpty(existingId))
+        {
+            _logger.LogWarning("Location with code {Code} already exists in realm {RealmId}", body.Code, body.RealmId);
+            return (StatusCodes.Conflict, null);
+        }
+
+        // If parent specified, validate it exists in same realm and get depth
+        var depth = 0;
+        if (body.ParentLocationId.HasValue)
+        {
+            var parentKey = BuildLocationKey(body.ParentLocationId.Value);
+            var parentModel = await _stateStoreFactory.GetStore<LocationModel>(StateStoreDefinitions.Location).GetAsync(parentKey, cancellationToken);
+
+            if (parentModel == null)
             {
-                _logger.LogWarning("Cannot create location - realm {RealmId} does not exist or is not active", body.RealmId);
+                _logger.LogWarning("Parent location {ParentLocationId} does not exist", body.ParentLocationId);
                 return (StatusCodes.BadRequest, null);
             }
 
-            // Check for duplicate code in realm
-            var code = body.Code.ToUpperInvariant();
-            var codeIndexKey = BuildCodeIndexKey(body.RealmId, code);
-            var existingId = await _stateStoreFactory.GetStore<string>(StateStoreDefinitions.Location).GetAsync(codeIndexKey, cancellationToken);
-
-            if (!string.IsNullOrEmpty(existingId))
+            if (parentModel.RealmId != body.RealmId)
             {
-                _logger.LogWarning("Location with code {Code} already exists in realm {RealmId}", body.Code, body.RealmId);
-                return (StatusCodes.Conflict, null);
+                _logger.LogWarning("Parent location {ParentLocationId} is in a different realm", body.ParentLocationId);
+                return (StatusCodes.BadRequest, null);
             }
 
-            // If parent specified, validate it exists in same realm and get depth
-            var depth = 0;
-            if (body.ParentLocationId.HasValue)
-            {
-                var parentKey = BuildLocationKey(body.ParentLocationId.Value);
-                var parentModel = await _stateStoreFactory.GetStore<LocationModel>(StateStoreDefinitions.Location).GetAsync(parentKey, cancellationToken);
-
-                if (parentModel == null)
-                {
-                    _logger.LogWarning("Parent location {ParentLocationId} does not exist", body.ParentLocationId);
-                    return (StatusCodes.BadRequest, null);
-                }
-
-                if (parentModel.RealmId != body.RealmId)
-                {
-                    _logger.LogWarning("Parent location {ParentLocationId} is in a different realm", body.ParentLocationId);
-                    return (StatusCodes.BadRequest, null);
-                }
-
-                depth = parentModel.Depth + 1;
-            }
-
-            var locationId = Guid.NewGuid();
-            var now = DateTimeOffset.UtcNow;
-
-            var model = new LocationModel
-            {
-                LocationId = locationId,
-                RealmId = body.RealmId,
-                Code = code,
-                Name = body.Name,
-                Description = body.Description,
-                LocationType = body.LocationType,
-                ParentLocationId = body.ParentLocationId,
-                Depth = depth,
-                IsDeprecated = false,
-                DeprecatedAt = null,
-                DeprecationReason = null,
-                Metadata = body.Metadata,
-                CreatedAt = now,
-                UpdatedAt = now
-            };
-
-            // Save the model
-            var locationKey = BuildLocationKey(locationId);
-            await _stateStoreFactory.GetStore<LocationModel>(StateStoreDefinitions.Location).SaveAsync(locationKey, model, cancellationToken: cancellationToken);
-
-            // Update code index (maps code string -> locationId string, state store reference type constraint)
-            await _stateStoreFactory.GetStore<string>(StateStoreDefinitions.Location).SaveAsync(codeIndexKey, locationId.ToString(), cancellationToken: cancellationToken);
-
-            // Update realm index
-            await AddToRealmIndexAsync(body.RealmId, locationId, cancellationToken);
-
-            // Update parent or root index
-            if (body.ParentLocationId.HasValue)
-            {
-                await AddToParentIndexAsync(body.RealmId, body.ParentLocationId.Value, locationId, cancellationToken);
-            }
-            else
-            {
-                await AddToRootLocationsAsync(body.RealmId, locationId, cancellationToken);
-            }
-
-            // Publish event
-            await PublishLocationCreatedEventAsync(model, cancellationToken);
-
-            _logger.LogDebug("Created location {LocationId} with code {Code} in realm {RealmId}", locationId, body.Code, body.RealmId);
-            return (StatusCodes.OK, MapToResponse(model));
+            depth = parentModel.Depth + 1;
         }
-        catch (ApiException ex)
+
+        var locationId = Guid.NewGuid();
+        var now = DateTimeOffset.UtcNow;
+
+        var model = new LocationModel
         {
-            _logger.LogError(ex, "Realm service error creating location {Code}: {StatusCode}", body.Code, ex.StatusCode);
-            await _messageBus.TryPublishErrorAsync(
-                "location", "CreateLocation", "realm_service_error", ex.Message,
-                dependency: "realm", endpoint: "post:/location/create",
-                details: null, stack: ex.StackTrace, cancellationToken: cancellationToken);
-            return ((StatusCodes)ex.StatusCode, null);
-        }
-        catch (Exception ex)
+            LocationId = locationId,
+            RealmId = body.RealmId,
+            Code = code,
+            Name = body.Name,
+            Description = body.Description,
+            LocationType = body.LocationType,
+            ParentLocationId = body.ParentLocationId,
+            Depth = depth,
+            IsDeprecated = false,
+            DeprecatedAt = null,
+            DeprecationReason = null,
+            Bounds = body.Bounds,
+            BoundsPrecision = body.BoundsPrecision ?? BoundsPrecision.None,
+            CoordinateMode = body.CoordinateMode ?? CoordinateMode.Inherit,
+            LocalOrigin = body.LocalOrigin,
+            Metadata = body.Metadata,
+            CreatedAt = now,
+            UpdatedAt = now
+        };
+
+        // Save the model
+        var locationKey = BuildLocationKey(locationId);
+        await _stateStoreFactory.GetStore<LocationModel>(StateStoreDefinitions.Location).SaveAsync(locationKey, model, cancellationToken: cancellationToken);
+
+        // Update code index (maps code string -> locationId string, state store reference type constraint)
+        await _stateStoreFactory.GetStore<string>(StateStoreDefinitions.Location).SaveAsync(codeIndexKey, locationId.ToString(), cancellationToken: cancellationToken);
+
+        // Update realm index
+        await AddToRealmIndexAsync(body.RealmId, locationId, cancellationToken);
+
+        // Update parent or root index
+        if (body.ParentLocationId.HasValue)
         {
-            _logger.LogError(ex, "Error creating location {Code}", body.Code);
-            await _messageBus.TryPublishErrorAsync(
-                "location", "CreateLocation", "unexpected_exception", ex.Message,
-                dependency: "state", endpoint: "post:/location/create",
-                details: null, stack: ex.StackTrace, cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
+            await AddToParentIndexAsync(body.RealmId, body.ParentLocationId.Value, locationId, cancellationToken);
         }
+        else
+        {
+            await AddToRootLocationsAsync(body.RealmId, locationId, cancellationToken);
+        }
+
+        // Populate cache
+        await PopulateLocationCacheAsync(locationKey, model, cancellationToken);
+
+        // Publish event
+        await PublishLocationCreatedEventAsync(model, cancellationToken);
+
+        _logger.LogDebug("Created location {LocationId} with code {Code} in realm {RealmId}", locationId, body.Code, body.RealmId);
+        return (StatusCodes.OK, MapToResponse(model));
     }
 
     /// <inheritdoc />
     public async Task<(StatusCodes, LocationResponse?)> UpdateLocationAsync(UpdateLocationRequest body, CancellationToken cancellationToken = default)
     {
-        try
+        _logger.LogDebug("Updating location: {LocationId}", body.LocationId);
+
+        var locationKey = BuildLocationKey(body.LocationId);
+        var model = await _stateStoreFactory.GetStore<LocationModel>(StateStoreDefinitions.Location).GetAsync(locationKey, cancellationToken);
+
+        if (model == null)
         {
-            _logger.LogDebug("Updating location: {LocationId}", body.LocationId);
-
-            var locationKey = BuildLocationKey(body.LocationId);
-            var model = await _stateStoreFactory.GetStore<LocationModel>(StateStoreDefinitions.Location).GetAsync(locationKey, cancellationToken);
-
-            if (model == null)
-            {
-                return (StatusCodes.NotFound, null);
-            }
-
-            // Track changed fields and apply updates
-            var changedFields = new List<string>();
-
-            if (!string.IsNullOrEmpty(body.Name) && body.Name != model.Name)
-            {
-                model.Name = body.Name;
-                changedFields.Add("name");
-            }
-
-            if (body.Description != null && body.Description != model.Description)
-            {
-                model.Description = body.Description;
-                changedFields.Add("description");
-            }
-
-            if (body.LocationType.HasValue && body.LocationType.Value != model.LocationType)
-            {
-                model.LocationType = body.LocationType.Value;
-                changedFields.Add("locationType");
-            }
-
-            if (body.Metadata != null)
-            {
-                model.Metadata = body.Metadata;
-                changedFields.Add("metadata");
-            }
-
-            if (changedFields.Count > 0)
-            {
-                model.UpdatedAt = DateTimeOffset.UtcNow;
-
-                // Save updated model
-                await _stateStoreFactory.GetStore<LocationModel>(StateStoreDefinitions.Location).SaveAsync(locationKey, model, cancellationToken: cancellationToken);
-
-                // Publish event
-                await PublishLocationUpdatedEventAsync(model, changedFields, cancellationToken);
-            }
-
-            _logger.LogDebug("Updated location {LocationId}, changed fields: {ChangedFields}", body.LocationId, changedFields);
-            return (StatusCodes.OK, MapToResponse(model));
+            return (StatusCodes.NotFound, null);
         }
-        catch (Exception ex)
+
+        // Track changed fields and apply updates
+        var changedFields = new List<string>();
+
+        if (!string.IsNullOrEmpty(body.Name) && body.Name != model.Name)
         {
-            _logger.LogError(ex, "Error updating location {LocationId}", body.LocationId);
-            await _messageBus.TryPublishErrorAsync(
-                "location", "UpdateLocation", "unexpected_exception", ex.Message,
-                dependency: "state", endpoint: "post:/location/update",
-                details: null, stack: ex.StackTrace, cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
+            model.Name = body.Name;
+            changedFields.Add("name");
         }
+
+        if (body.Description != null && body.Description != model.Description)
+        {
+            model.Description = body.Description;
+            changedFields.Add("description");
+        }
+
+        if (body.LocationType.HasValue && body.LocationType.Value != model.LocationType)
+        {
+            model.LocationType = body.LocationType.Value;
+            changedFields.Add("locationType");
+        }
+
+        if (body.Bounds != null)
+        {
+            model.Bounds = body.Bounds;
+            changedFields.Add("bounds");
+        }
+
+        if (body.BoundsPrecision.HasValue && body.BoundsPrecision.Value != model.BoundsPrecision)
+        {
+            model.BoundsPrecision = body.BoundsPrecision.Value;
+            changedFields.Add("boundsPrecision");
+        }
+
+        if (body.CoordinateMode.HasValue && body.CoordinateMode.Value != model.CoordinateMode)
+        {
+            model.CoordinateMode = body.CoordinateMode.Value;
+            changedFields.Add("coordinateMode");
+        }
+
+        if (body.LocalOrigin != null)
+        {
+            model.LocalOrigin = body.LocalOrigin;
+            changedFields.Add("localOrigin");
+        }
+
+        if (body.Metadata != null)
+        {
+            model.Metadata = body.Metadata;
+            changedFields.Add("metadata");
+        }
+
+        if (changedFields.Count > 0)
+        {
+            model.UpdatedAt = DateTimeOffset.UtcNow;
+
+            // Save updated model
+            await _stateStoreFactory.GetStore<LocationModel>(StateStoreDefinitions.Location).SaveAsync(locationKey, model, cancellationToken: cancellationToken);
+
+            // Update cache
+            await PopulateLocationCacheAsync(locationKey, model, cancellationToken);
+
+            // Publish event
+            await PublishLocationUpdatedEventAsync(model, changedFields, cancellationToken);
+        }
+
+        _logger.LogDebug("Updated location {LocationId}, changed fields: {ChangedFields}", body.LocationId, changedFields);
+        return (StatusCodes.OK, MapToResponse(model));
     }
 
     /// <inheritdoc />
     public async Task<(StatusCodes, LocationResponse?)> SetLocationParentAsync(SetLocationParentRequest body, CancellationToken cancellationToken = default)
     {
-        try
+        _logger.LogDebug("Setting parent for location: {LocationId} to {ParentLocationId}", body.LocationId, body.ParentLocationId);
+
+        var locationKey = BuildLocationKey(body.LocationId);
+        var model = await _stateStoreFactory.GetStore<LocationModel>(StateStoreDefinitions.Location).GetAsync(locationKey, cancellationToken);
+
+        if (model == null)
         {
-            _logger.LogDebug("Setting parent for location: {LocationId} to {ParentLocationId}", body.LocationId, body.ParentLocationId);
+            return (StatusCodes.NotFound, null);
+        }
 
-            var locationKey = BuildLocationKey(body.LocationId);
-            var model = await _stateStoreFactory.GetStore<LocationModel>(StateStoreDefinitions.Location).GetAsync(locationKey, cancellationToken);
-
-            if (model == null)
-            {
-                return (StatusCodes.NotFound, null);
-            }
-
-            // Skip if parent is already set to the requested value
-            if (model.ParentLocationId == body.ParentLocationId)
-            {
-                return (StatusCodes.OK, MapToResponse(model));
-            }
-
-            // Get new parent
-            var newParentKey = BuildLocationKey(body.ParentLocationId);
-            var newParentModel = await _stateStoreFactory.GetStore<LocationModel>(StateStoreDefinitions.Location).GetAsync(newParentKey, cancellationToken);
-
-            if (newParentModel == null)
-            {
-                _logger.LogWarning("New parent location {ParentLocationId} does not exist", body.ParentLocationId);
-                return (StatusCodes.BadRequest, null);
-            }
-
-            // Validate same realm
-            if (newParentModel.RealmId != model.RealmId)
-            {
-                _logger.LogWarning("New parent location {ParentLocationId} is in a different realm", body.ParentLocationId);
-                return (StatusCodes.BadRequest, null);
-            }
-
-            // Prevent circular reference
-            if (await IsDescendantOfAsync(body.ParentLocationId, body.LocationId, model.RealmId, cancellationToken))
-            {
-                _logger.LogWarning("Cannot set parent - would create circular reference");
-                return (StatusCodes.BadRequest, null);
-            }
-
-            var oldParentId = model.ParentLocationId;
-            var oldDepth = model.Depth;
-            var newDepth = newParentModel.Depth + 1;
-
-            // Update parent and depth
-            model.ParentLocationId = body.ParentLocationId;
-            model.Depth = newDepth;
-            model.UpdatedAt = DateTimeOffset.UtcNow;
-
-            await _stateStoreFactory.GetStore<LocationModel>(StateStoreDefinitions.Location).SaveAsync(locationKey, model, cancellationToken: cancellationToken);
-
-            // Update indexes
-            if (!oldParentId.HasValue)
-            {
-                await RemoveFromRootLocationsAsync(model.RealmId, body.LocationId, cancellationToken);
-            }
-            else
-            {
-                await RemoveFromParentIndexAsync(model.RealmId, oldParentId.Value, body.LocationId, cancellationToken);
-            }
-
-            await AddToParentIndexAsync(model.RealmId, body.ParentLocationId, body.LocationId, cancellationToken);
-
-            // Update descendant depths if depth changed
-            if (newDepth != oldDepth)
-            {
-                await UpdateDescendantDepthsAsync(body.LocationId, model.RealmId, newDepth - oldDepth, cancellationToken);
-            }
-
-            // Publish event with changed fields
-            var changedFields = new List<string> { "parentLocationId", "depth" };
-            await PublishLocationUpdatedEventAsync(model, changedFields, cancellationToken);
-
-            _logger.LogDebug("Set parent of location {LocationId} to {ParentLocationId}", body.LocationId, body.ParentLocationId);
+        // Skip if parent is already set to the requested value
+        if (model.ParentLocationId == body.ParentLocationId)
+        {
             return (StatusCodes.OK, MapToResponse(model));
         }
-        catch (Exception ex)
+
+        // Get new parent
+        var newParentKey = BuildLocationKey(body.ParentLocationId);
+        var newParentModel = await _stateStoreFactory.GetStore<LocationModel>(StateStoreDefinitions.Location).GetAsync(newParentKey, cancellationToken);
+
+        if (newParentModel == null)
         {
-            _logger.LogError(ex, "Error setting parent for location {LocationId}", body.LocationId);
-            await _messageBus.TryPublishErrorAsync(
-                "location", "SetLocationParent", "unexpected_exception", ex.Message,
-                dependency: "state", endpoint: "post:/location/set-parent",
-                details: null, stack: ex.StackTrace, cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
+            _logger.LogWarning("New parent location {ParentLocationId} does not exist", body.ParentLocationId);
+            return (StatusCodes.BadRequest, null);
         }
+
+        // Validate same realm
+        if (newParentModel.RealmId != model.RealmId)
+        {
+            _logger.LogWarning("New parent location {ParentLocationId} is in a different realm", body.ParentLocationId);
+            return (StatusCodes.BadRequest, null);
+        }
+
+        // Prevent circular reference
+        if (await IsDescendantOfAsync(body.ParentLocationId, body.LocationId, model.RealmId, cancellationToken))
+        {
+            _logger.LogWarning("Cannot set parent - would create circular reference");
+            return (StatusCodes.BadRequest, null);
+        }
+
+        var oldParentId = model.ParentLocationId;
+        var oldDepth = model.Depth;
+        var newDepth = newParentModel.Depth + 1;
+
+        // Update parent and depth
+        model.ParentLocationId = body.ParentLocationId;
+        model.Depth = newDepth;
+        model.UpdatedAt = DateTimeOffset.UtcNow;
+
+        await _stateStoreFactory.GetStore<LocationModel>(StateStoreDefinitions.Location).SaveAsync(locationKey, model, cancellationToken: cancellationToken);
+
+        // Update indexes
+        if (!oldParentId.HasValue)
+        {
+            await RemoveFromRootLocationsAsync(model.RealmId, body.LocationId, cancellationToken);
+        }
+        else
+        {
+            await RemoveFromParentIndexAsync(model.RealmId, oldParentId.Value, body.LocationId, cancellationToken);
+        }
+
+        await AddToParentIndexAsync(model.RealmId, body.ParentLocationId, body.LocationId, cancellationToken);
+
+        // Update descendant depths if depth changed
+        if (newDepth != oldDepth)
+        {
+            await UpdateDescendantDepthsAsync(body.LocationId, model.RealmId, newDepth - oldDepth, cancellationToken);
+        }
+
+        // Update cache
+        await PopulateLocationCacheAsync(locationKey, model, cancellationToken);
+
+        // Publish event with changed fields
+        var changedFields = new List<string> { "parentLocationId", "depth" };
+        await PublishLocationUpdatedEventAsync(model, changedFields, cancellationToken);
+
+        _logger.LogDebug("Set parent of location {LocationId} to {ParentLocationId}", body.LocationId, body.ParentLocationId);
+        return (StatusCodes.OK, MapToResponse(model));
     }
 
     /// <inheritdoc />
     public async Task<(StatusCodes, LocationResponse?)> RemoveLocationParentAsync(RemoveLocationParentRequest body, CancellationToken cancellationToken = default)
     {
-        try
+        _logger.LogDebug("Removing parent from location: {LocationId}", body.LocationId);
+
+        var locationKey = BuildLocationKey(body.LocationId);
+        var model = await _stateStoreFactory.GetStore<LocationModel>(StateStoreDefinitions.Location).GetAsync(locationKey, cancellationToken);
+
+        if (model == null)
         {
-            _logger.LogDebug("Removing parent from location: {LocationId}", body.LocationId);
+            return (StatusCodes.NotFound, null);
+        }
 
-            var locationKey = BuildLocationKey(body.LocationId);
-            var model = await _stateStoreFactory.GetStore<LocationModel>(StateStoreDefinitions.Location).GetAsync(locationKey, cancellationToken);
-
-            if (model == null)
-            {
-                return (StatusCodes.NotFound, null);
-            }
-
-            if (!model.ParentLocationId.HasValue)
-            {
-                // Already a root location
-                return (StatusCodes.OK, MapToResponse(model));
-            }
-
-            var oldParentId = model.ParentLocationId;
-            var oldDepth = model.Depth;
-
-            // Make it a root location
-            model.ParentLocationId = null;
-            model.Depth = 0;
-            model.UpdatedAt = DateTimeOffset.UtcNow;
-
-            await _stateStoreFactory.GetStore<LocationModel>(StateStoreDefinitions.Location).SaveAsync(locationKey, model, cancellationToken: cancellationToken);
-
-            // Update indexes
-            await RemoveFromParentIndexAsync(model.RealmId, oldParentId.Value, body.LocationId, cancellationToken);
-            await AddToRootLocationsAsync(model.RealmId, body.LocationId, cancellationToken);
-
-            // Update descendant depths
-            if (oldDepth != 0)
-            {
-                await UpdateDescendantDepthsAsync(body.LocationId, model.RealmId, -oldDepth, cancellationToken);
-            }
-
-            // Publish event with changed fields
-            var changedFields = new List<string> { "parentLocationId", "depth" };
-            await PublishLocationUpdatedEventAsync(model, changedFields, cancellationToken);
-
-            _logger.LogDebug("Removed parent from location {LocationId}", body.LocationId);
+        if (!model.ParentLocationId.HasValue)
+        {
+            // Already a root location
             return (StatusCodes.OK, MapToResponse(model));
         }
-        catch (Exception ex)
+
+        var oldParentId = model.ParentLocationId;
+        var oldDepth = model.Depth;
+
+        // Make it a root location
+        model.ParentLocationId = null;
+        model.Depth = 0;
+        model.UpdatedAt = DateTimeOffset.UtcNow;
+
+        await _stateStoreFactory.GetStore<LocationModel>(StateStoreDefinitions.Location).SaveAsync(locationKey, model, cancellationToken: cancellationToken);
+
+        // Update indexes
+        await RemoveFromParentIndexAsync(model.RealmId, oldParentId.Value, body.LocationId, cancellationToken);
+        await AddToRootLocationsAsync(model.RealmId, body.LocationId, cancellationToken);
+
+        // Update descendant depths
+        if (oldDepth != 0)
         {
-            _logger.LogError(ex, "Error removing parent from location {LocationId}", body.LocationId);
-            await _messageBus.TryPublishErrorAsync(
-                "location", "RemoveLocationParent", "unexpected_exception", ex.Message,
-                dependency: "state", endpoint: "post:/location/remove-parent",
-                details: null, stack: ex.StackTrace, cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
+            await UpdateDescendantDepthsAsync(body.LocationId, model.RealmId, -oldDepth, cancellationToken);
         }
+
+        // Update cache
+        await PopulateLocationCacheAsync(locationKey, model, cancellationToken);
+
+        // Publish event with changed fields
+        var changedFields = new List<string> { "parentLocationId", "depth" };
+        await PublishLocationUpdatedEventAsync(model, changedFields, cancellationToken);
+
+        _logger.LogDebug("Removed parent from location {LocationId}", body.LocationId);
+        return (StatusCodes.OK, MapToResponse(model));
     }
 
     /// <inheritdoc />
     public async Task<StatusCodes> DeleteLocationAsync(DeleteLocationRequest body, CancellationToken cancellationToken = default)
     {
+        _logger.LogDebug("Deleting location: {LocationId}", body.LocationId);
+
+        var locationKey = BuildLocationKey(body.LocationId);
+        var model = await _stateStoreFactory.GetStore<LocationModel>(StateStoreDefinitions.Location).GetAsync(locationKey, cancellationToken);
+
+        if (model == null)
+        {
+            return StatusCodes.NotFound;
+        }
+
+        // Check for children
+        var parentIndexKey = BuildParentIndexKey(model.RealmId, body.LocationId);
+        var childIds = await _stateStoreFactory.GetStore<List<Guid>>(StateStoreDefinitions.Location).GetAsync(parentIndexKey, cancellationToken) ?? new List<Guid>();
+
+        if (childIds.Count > 0)
+        {
+            _logger.LogWarning("Cannot delete location {LocationId} - has {ChildCount} children", body.LocationId, childIds.Count);
+            return StatusCodes.Conflict;
+        }
+
+        // Check for external references via lib-resource (L1 - allowed per SERVICE_HIERARCHY)
+        // L3/L4 services like CharacterEncounter register their location references with lib-resource
         try
         {
-            _logger.LogDebug("Deleting location: {LocationId}", body.LocationId);
+            var resourceCheck = await _resourceClient.CheckReferencesAsync(
+                new CheckReferencesRequest
+                {
+                    ResourceType = "location",
+                    ResourceId = body.LocationId
+                }, cancellationToken);
 
-            var locationKey = BuildLocationKey(body.LocationId);
-            var model = await _stateStoreFactory.GetStore<LocationModel>(StateStoreDefinitions.Location).GetAsync(locationKey, cancellationToken);
-
-            if (model == null)
+            if (resourceCheck != null && resourceCheck.RefCount > 0)
             {
-                return StatusCodes.NotFound;
+                var sourceTypes = resourceCheck.Sources != null
+                    ? string.Join(", ", resourceCheck.Sources.Select(s => s.SourceType))
+                    : "unknown";
+                _logger.LogWarning(
+                    "Cannot delete location {LocationId} - has {RefCount} external references from: {SourceTypes}",
+                    body.LocationId, resourceCheck.RefCount, sourceTypes);
+
+                // Execute cleanup callbacks (CASCADE/DETACH) before proceeding
+                var cleanupResult = await _resourceClient.ExecuteCleanupAsync(
+                    new ExecuteCleanupRequest
+                    {
+                        ResourceType = "location",
+                        ResourceId = body.LocationId,
+                        CleanupPolicy = CleanupPolicy.ALL_REQUIRED
+                    }, cancellationToken);
+
+                if (!cleanupResult.Success)
+                {
+                    _logger.LogWarning(
+                        "Cleanup blocked for location {LocationId}: {Reason}",
+                        body.LocationId, cleanupResult.AbortReason ?? "cleanup failed");
+                    return StatusCodes.Conflict;
+                }
             }
-
-            // Check for children
-            var parentIndexKey = BuildParentIndexKey(model.RealmId, body.LocationId);
-            var childIds = await _stateStoreFactory.GetStore<List<Guid>>(StateStoreDefinitions.Location).GetAsync(parentIndexKey, cancellationToken) ?? new List<Guid>();
-
-            if (childIds.Count > 0)
-            {
-                _logger.LogWarning("Cannot delete location {LocationId} - has {ChildCount} children", body.LocationId, childIds.Count);
-                return StatusCodes.Conflict;
-            }
-
-            // Delete the location
-            await _stateStoreFactory.GetStore<LocationModel>(StateStoreDefinitions.Location).DeleteAsync(locationKey, cancellationToken);
-
-            // Clean up code index
-            var codeIndexKey = BuildCodeIndexKey(model.RealmId, model.Code);
-            await _stateStoreFactory.GetStore<string>(StateStoreDefinitions.Location).DeleteAsync(codeIndexKey, cancellationToken);
-
-            // Remove from realm index
-            await RemoveFromRealmIndexAsync(model.RealmId, body.LocationId, cancellationToken);
-
-            // Remove from parent or root index
-            if (!model.ParentLocationId.HasValue)
-            {
-                await RemoveFromRootLocationsAsync(model.RealmId, body.LocationId, cancellationToken);
-            }
-            else
-            {
-                await RemoveFromParentIndexAsync(model.RealmId, model.ParentLocationId.Value, body.LocationId, cancellationToken);
-            }
-
-            // Publish event
-            await PublishLocationDeletedEventAsync(model, cancellationToken);
-
-            _logger.LogDebug("Deleted location {LocationId}", body.LocationId);
-            return StatusCodes.OK;
         }
-        catch (Exception ex)
+        catch (ApiException ex) when (ex.StatusCode == 404)
         {
-            _logger.LogError(ex, "Error deleting location {LocationId}", body.LocationId);
-            await _messageBus.TryPublishErrorAsync(
-                "location", "DeleteLocation", "unexpected_exception", ex.Message,
-                dependency: "state", endpoint: "post:/location/delete",
-                details: null, stack: ex.StackTrace, cancellationToken: cancellationToken);
-            return StatusCodes.InternalServerError;
+            // No references registered - this is normal
+            _logger.LogDebug("No lib-resource references found for location {LocationId}", body.LocationId);
         }
+        catch (ApiException ex)
+        {
+            // lib-resource unavailable - fail closed to protect referential integrity
+            _logger.LogError(ex,
+                "lib-resource unavailable when checking references for location {LocationId}, blocking deletion for safety",
+                body.LocationId);
+            await _messageBus.TryPublishErrorAsync(
+                "location", "DeleteLocation", "resource_service_unavailable",
+                $"lib-resource unavailable when checking references for location {body.LocationId}",
+                dependency: "resource", endpoint: "post:/location/delete",
+                details: null, stack: ex.StackTrace, cancellationToken: cancellationToken);
+            return StatusCodes.ServiceUnavailable;
+        }
+
+        // Delete the location
+        await _stateStoreFactory.GetStore<LocationModel>(StateStoreDefinitions.Location).DeleteAsync(locationKey, cancellationToken);
+
+        // Clean up code index
+        var codeIndexKey = BuildCodeIndexKey(model.RealmId, model.Code);
+        await _stateStoreFactory.GetStore<string>(StateStoreDefinitions.Location).DeleteAsync(codeIndexKey, cancellationToken);
+
+        // Remove from realm index
+        await RemoveFromRealmIndexAsync(model.RealmId, body.LocationId, cancellationToken);
+
+        // Remove from parent or root index
+        if (!model.ParentLocationId.HasValue)
+        {
+            await RemoveFromRootLocationsAsync(model.RealmId, body.LocationId, cancellationToken);
+        }
+        else
+        {
+            await RemoveFromParentIndexAsync(model.RealmId, model.ParentLocationId.Value, body.LocationId, cancellationToken);
+        }
+
+        // Invalidate cache
+        await InvalidateLocationCacheAsync(locationKey, cancellationToken);
+
+        // Publish event
+        await PublishLocationDeletedEventAsync(model, cancellationToken);
+
+        _logger.LogDebug("Deleted location {LocationId}", body.LocationId);
+        return StatusCodes.OK;
     }
 
     /// <inheritdoc />
     public async Task<(StatusCodes, LocationResponse?)> DeprecateLocationAsync(DeprecateLocationRequest body, CancellationToken cancellationToken = default)
     {
-        try
+        _logger.LogDebug("Deprecating location: {LocationId}", body.LocationId);
+
+        var locationKey = BuildLocationKey(body.LocationId);
+        var model = await _stateStoreFactory.GetStore<LocationModel>(StateStoreDefinitions.Location).GetAsync(locationKey, cancellationToken);
+
+        if (model == null)
         {
-            _logger.LogDebug("Deprecating location: {LocationId}", body.LocationId);
-
-            var locationKey = BuildLocationKey(body.LocationId);
-            var model = await _stateStoreFactory.GetStore<LocationModel>(StateStoreDefinitions.Location).GetAsync(locationKey, cancellationToken);
-
-            if (model == null)
-            {
-                return (StatusCodes.NotFound, null);
-            }
-
-            if (model.IsDeprecated)
-            {
-                return (StatusCodes.Conflict, null);
-            }
-
-            model.IsDeprecated = true;
-            model.DeprecatedAt = DateTimeOffset.UtcNow;
-            model.DeprecationReason = body.Reason;
-            model.UpdatedAt = DateTimeOffset.UtcNow;
-
-            await _stateStoreFactory.GetStore<LocationModel>(StateStoreDefinitions.Location).SaveAsync(locationKey, model, cancellationToken: cancellationToken);
-
-            // Publish event with changed fields
-            var changedFields = new List<string> { "isDeprecated", "deprecatedAt", "deprecationReason" };
-            await PublishLocationUpdatedEventAsync(model, changedFields, cancellationToken);
-
-            _logger.LogDebug("Deprecated location {LocationId}", body.LocationId);
-            return (StatusCodes.OK, MapToResponse(model));
+            return (StatusCodes.NotFound, null);
         }
-        catch (Exception ex)
+
+        if (model.IsDeprecated)
         {
-            _logger.LogError(ex, "Error deprecating location {LocationId}", body.LocationId);
-            await _messageBus.TryPublishErrorAsync(
-                "location", "DeprecateLocation", "unexpected_exception", ex.Message,
-                dependency: "state", endpoint: "post:/location/deprecate",
-                details: null, stack: ex.StackTrace, cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
+            return (StatusCodes.Conflict, null);
         }
+
+        model.IsDeprecated = true;
+        model.DeprecatedAt = DateTimeOffset.UtcNow;
+        model.DeprecationReason = body.Reason;
+        model.UpdatedAt = DateTimeOffset.UtcNow;
+
+        await _stateStoreFactory.GetStore<LocationModel>(StateStoreDefinitions.Location).SaveAsync(locationKey, model, cancellationToken: cancellationToken);
+
+        // Update cache
+        await PopulateLocationCacheAsync(locationKey, model, cancellationToken);
+
+        // Publish event with changed fields
+        var changedFields = new List<string> { "isDeprecated", "deprecatedAt", "deprecationReason" };
+        await PublishLocationUpdatedEventAsync(model, changedFields, cancellationToken);
+
+        _logger.LogDebug("Deprecated location {LocationId}", body.LocationId);
+        return (StatusCodes.OK, MapToResponse(model));
     }
 
     /// <inheritdoc />
     public async Task<(StatusCodes, LocationResponse?)> UndeprecateLocationAsync(UndeprecateLocationRequest body, CancellationToken cancellationToken = default)
     {
-        try
+        _logger.LogDebug("Undeprecating location: {LocationId}", body.LocationId);
+
+        var locationKey = BuildLocationKey(body.LocationId);
+        var model = await _stateStoreFactory.GetStore<LocationModel>(StateStoreDefinitions.Location).GetAsync(locationKey, cancellationToken);
+
+        if (model == null)
         {
-            _logger.LogDebug("Undeprecating location: {LocationId}", body.LocationId);
-
-            var locationKey = BuildLocationKey(body.LocationId);
-            var model = await _stateStoreFactory.GetStore<LocationModel>(StateStoreDefinitions.Location).GetAsync(locationKey, cancellationToken);
-
-            if (model == null)
-            {
-                return (StatusCodes.NotFound, null);
-            }
-
-            if (!model.IsDeprecated)
-            {
-                return (StatusCodes.BadRequest, null);
-            }
-
-            model.IsDeprecated = false;
-            model.DeprecatedAt = null;
-            model.DeprecationReason = null;
-            model.UpdatedAt = DateTimeOffset.UtcNow;
-
-            await _stateStoreFactory.GetStore<LocationModel>(StateStoreDefinitions.Location).SaveAsync(locationKey, model, cancellationToken: cancellationToken);
-
-            // Publish event with changed fields
-            var changedFields = new List<string> { "isDeprecated", "deprecatedAt", "deprecationReason" };
-            await PublishLocationUpdatedEventAsync(model, changedFields, cancellationToken);
-
-            _logger.LogDebug("Undeprecated location {LocationId}", body.LocationId);
-            return (StatusCodes.OK, MapToResponse(model));
+            return (StatusCodes.NotFound, null);
         }
-        catch (Exception ex)
+
+        if (!model.IsDeprecated)
         {
-            _logger.LogError(ex, "Error undeprecating location {LocationId}", body.LocationId);
-            await _messageBus.TryPublishErrorAsync(
-                "location", "UndeprecateLocation", "unexpected_exception", ex.Message,
-                dependency: "state", endpoint: "post:/location/undeprecate",
-                details: null, stack: ex.StackTrace, cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
+            return (StatusCodes.BadRequest, null);
         }
+
+        model.IsDeprecated = false;
+        model.DeprecatedAt = null;
+        model.DeprecationReason = null;
+        model.UpdatedAt = DateTimeOffset.UtcNow;
+
+        await _stateStoreFactory.GetStore<LocationModel>(StateStoreDefinitions.Location).SaveAsync(locationKey, model, cancellationToken: cancellationToken);
+
+        // Update cache
+        await PopulateLocationCacheAsync(locationKey, model, cancellationToken);
+
+        // Publish event with changed fields
+        var changedFields = new List<string> { "isDeprecated", "deprecatedAt", "deprecationReason" };
+        await PublishLocationUpdatedEventAsync(model, changedFields, cancellationToken);
+
+        _logger.LogDebug("Undeprecated location {LocationId}", body.LocationId);
+        return (StatusCodes.OK, MapToResponse(model));
     }
 
     /// <inheritdoc />
@@ -1065,7 +1155,6 @@ public partial class LocationService : ILocationService
         var skipped = 0;
         var errors = new List<string>();
 
-        try
         {
             // Build a map of realm codes to realm IDs
             var realmCodeToId = new Dictionary<string, Guid>(StringComparer.OrdinalIgnoreCase);
@@ -1121,6 +1210,10 @@ public partial class LocationService : ILocationService
                             existingModel.Name = seedLocation.Name;
                             if (seedLocation.Description != null) existingModel.Description = seedLocation.Description;
                             existingModel.LocationType = seedLocation.LocationType;
+                            if (seedLocation.Bounds != null) existingModel.Bounds = seedLocation.Bounds;
+                            if (seedLocation.BoundsPrecision.HasValue) existingModel.BoundsPrecision = seedLocation.BoundsPrecision.Value;
+                            if (seedLocation.CoordinateMode.HasValue) existingModel.CoordinateMode = seedLocation.CoordinateMode.Value;
+                            if (seedLocation.LocalOrigin != null) existingModel.LocalOrigin = seedLocation.LocalOrigin;
                             if (seedLocation.Metadata != null) existingModel.Metadata = seedLocation.Metadata;
                             existingModel.UpdatedAt = DateTimeOffset.UtcNow;
 
@@ -1146,6 +1239,10 @@ public partial class LocationService : ILocationService
                         RealmId = realmId,
                         LocationType = seedLocation.LocationType,
                         ParentLocationId = null, // Set later in second pass
+                        Bounds = seedLocation.Bounds,
+                        BoundsPrecision = seedLocation.BoundsPrecision,
+                        CoordinateMode = seedLocation.CoordinateMode,
+                        LocalOrigin = seedLocation.LocalOrigin,
                         Metadata = seedLocation.Metadata
                     };
 
@@ -1206,24 +1303,365 @@ public partial class LocationService : ILocationService
                 Errors = errors
             });
         }
-        catch (ApiException ex)
+    }
+
+    /// <summary>
+    /// Transfer a location from its current realm to a different realm.
+    /// Updates all realm-scoped indexes. The location becomes a root in the target realm
+    /// (parent cleared). Caller is responsible for tree ordering and re-parenting.
+    /// </summary>
+    public async Task<(StatusCodes, LocationResponse?)> TransferLocationToRealmAsync(
+        TransferLocationToRealmRequest body,
+        CancellationToken cancellationToken = default)
+    {
+        _logger.LogDebug("Transferring location {LocationId} to realm {TargetRealmId}",
+            body.LocationId, body.TargetRealmId);
+
+        var locationKey = BuildLocationKey(body.LocationId);
+        var model = await _stateStoreFactory.GetStore<LocationModel>(StateStoreDefinitions.Location)
+            .GetAsync(locationKey, cancellationToken);
+
+        if (model == null)
         {
-            _logger.LogError(ex, "Realm service error seeding locations (created={Created}, updated={Updated}, skipped={Skipped}): {StatusCode}",
-                created, updated, skipped, ex.StatusCode);
-            await _messageBus.TryPublishErrorAsync(
-                "location", "SeedLocations", "realm_service_error", ex.Message,
-                dependency: "realm", endpoint: "post:/location/seed",
-                details: null, stack: ex.StackTrace, cancellationToken: cancellationToken);
-            return ((StatusCodes)ex.StatusCode, null);
+            _logger.LogDebug("Location not found for transfer: {LocationId}", body.LocationId);
+            return (StatusCodes.NotFound, null);
+        }
+
+        // No-op if already in target realm (idempotent)
+        if (model.RealmId == body.TargetRealmId)
+        {
+            return (StatusCodes.OK, MapToResponse(model));
+        }
+
+        // Validate target realm exists and is active
+        var realmExistsResponse = await _realmClient.RealmExistsAsync(
+            new RealmExistsRequest { RealmId = body.TargetRealmId }, cancellationToken);
+
+        if (realmExistsResponse == null || !realmExistsResponse.Exists || !realmExistsResponse.IsActive)
+        {
+            _logger.LogWarning("Cannot transfer location - target realm {TargetRealmId} does not exist or is not active",
+                body.TargetRealmId);
+            return (StatusCodes.NotFound, null);
+        }
+
+        // Check code uniqueness in target realm
+        var targetCodeIndexKey = BuildCodeIndexKey(body.TargetRealmId, model.Code);
+        var existingId = await _stateStoreFactory.GetStore<string>(StateStoreDefinitions.Location)
+            .GetAsync(targetCodeIndexKey, cancellationToken);
+
+        if (!string.IsNullOrEmpty(existingId))
+        {
+            _logger.LogWarning(
+                "Cannot transfer location {LocationId} - target realm {TargetRealmId} already has location with code {Code}",
+                body.LocationId, body.TargetRealmId, model.Code);
+            return (StatusCodes.Conflict, null);
+        }
+
+        var oldRealmId = model.RealmId;
+        var oldParentId = model.ParentLocationId;
+
+        // Remove from source realm indexes
+        var sourceCodeIndexKey = BuildCodeIndexKey(oldRealmId, model.Code);
+        await _stateStoreFactory.GetStore<string>(StateStoreDefinitions.Location)
+            .DeleteAsync(sourceCodeIndexKey, cancellationToken);
+        await RemoveFromRealmIndexAsync(oldRealmId, body.LocationId, cancellationToken);
+
+        if (oldParentId.HasValue)
+        {
+            await RemoveFromParentIndexAsync(oldRealmId, oldParentId.Value, body.LocationId, cancellationToken);
+        }
+        else
+        {
+            await RemoveFromRootLocationsAsync(oldRealmId, body.LocationId, cancellationToken);
+        }
+
+        // Update model: new realm, become root, depth 0
+        model.RealmId = body.TargetRealmId;
+        model.ParentLocationId = null;
+        model.Depth = 0;
+        model.UpdatedAt = DateTimeOffset.UtcNow;
+
+        // Save updated model
+        await _stateStoreFactory.GetStore<LocationModel>(StateStoreDefinitions.Location)
+            .SaveAsync(locationKey, model, cancellationToken: cancellationToken);
+
+        // Add to target realm indexes
+        await _stateStoreFactory.GetStore<string>(StateStoreDefinitions.Location)
+            .SaveAsync(targetCodeIndexKey, body.LocationId.ToString(), cancellationToken: cancellationToken);
+        await AddToRealmIndexAsync(body.TargetRealmId, body.LocationId, cancellationToken);
+        await AddToRootLocationsAsync(body.TargetRealmId, body.LocationId, cancellationToken);
+
+        // Invalidate cache
+        await InvalidateLocationCacheAsync(locationKey, cancellationToken);
+
+        // Publish update event
+        var changedFields = new List<string> { "realmId", "parentLocationId", "depth" };
+        await PublishLocationUpdatedEventAsync(model, changedFields, cancellationToken);
+
+        _logger.LogInformation(
+            "Transferred location {LocationId} ({Code}) from realm {OldRealmId} to realm {NewRealmId}",
+            body.LocationId, model.Code, oldRealmId, body.TargetRealmId);
+
+        return (StatusCodes.OK, MapToResponse(model));
+    }
+
+    #endregion
+
+    #region Entity Presence Operations
+
+    /// <inheritdoc />
+    public async Task<(StatusCodes, ReportEntityPositionResponse?)> ReportEntityPositionAsync(
+        ReportEntityPositionRequest body, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            _logger.LogDebug("Reporting entity position: {EntityType}:{EntityId} at location {LocationId}",
+                body.EntityType, body.EntityId, body.LocationId);
+
+            // Validate the target location exists
+            var locationKey = BuildLocationKey(body.LocationId);
+            var location = await GetLocationWithCacheAsync(locationKey, cancellationToken);
+            if (location is null)
+            {
+                _logger.LogDebug("Location {LocationId} not found for entity position report", body.LocationId);
+                return (StatusCodes.NotFound, null);
+            }
+
+            var entityLocationKey = BuildEntityLocationKey(body.EntityType, body.EntityId);
+            var presenceStore = _stateStoreFactory.GetStore<EntityPresenceModel>(StateStoreDefinitions.LocationEntityPresence);
+            var ttl = _configuration.EntityPresenceTtlSeconds;
+            var realmId = body.RealmId ?? location.RealmId;
+
+            Guid? arrivedAt = null;
+            Guid? departedFrom = null;
+
+            // Determine if location changed
+            Guid? previousLocationId = body.PreviousLocationId;
+
+            if (previousLocationId is null)
+            {
+                // Fallback path: read current value to detect change
+                var existing = await presenceStore.GetAsync(entityLocationKey, cancellationToken);
+                previousLocationId = existing?.LocationId;
+            }
+
+            var locationChanged = previousLocationId != body.LocationId;
+
+            // Save the new presence with TTL
+            var presenceModel = new EntityPresenceModel
+            {
+                EntityId = body.EntityId,
+                EntityType = body.EntityType,
+                LocationId = body.LocationId,
+                RealmId = realmId,
+                ReportedAt = DateTimeOffset.UtcNow,
+                ReportedBy = body.ReportedBy
+            };
+            await presenceStore.SaveAsync(entityLocationKey, presenceModel,
+                new StateOptions { Ttl = ttl }, cancellationToken);
+
+            // Update entity sets and publish events on location change
+            if (locationChanged)
+            {
+                var entitySetStore = _stateStoreFactory.GetCacheableStore<string>(StateStoreDefinitions.LocationEntitySet);
+                var entityMember = BuildEntitySetMember(body.EntityType, body.EntityId);
+
+                // Add to new location's entity set
+                var newLocationSetKey = BuildLocationEntitiesKey(body.LocationId);
+                await entitySetStore.AddToSetAsync(newLocationSetKey, entityMember, cancellationToken: cancellationToken);
+
+                // Track this location in the index set for cleanup worker discovery
+                await entitySetStore.AddToSetAsync(LOCATION_ENTITIES_INDEX_KEY, body.LocationId.ToString(), cancellationToken: cancellationToken);
+
+                // Remove from old location's entity set if there was a previous location
+                if (previousLocationId.HasValue)
+                {
+                    var oldLocationSetKey = BuildLocationEntitiesKey(previousLocationId.Value);
+                    await entitySetStore.RemoveFromSetAsync(oldLocationSetKey, entityMember, cancellationToken);
+
+                    departedFrom = previousLocationId.Value;
+                    await PublishEntityDepartedEventAsync(body.EntityType, body.EntityId, previousLocationId.Value, cancellationToken);
+                }
+
+                arrivedAt = body.LocationId;
+                await PublishEntityArrivedEventAsync(body.EntityType, body.EntityId, body.LocationId, realmId, body.ReportedBy, cancellationToken);
+            }
+
+            return (StatusCodes.OK, new ReportEntityPositionResponse
+            {
+                Recorded = true,
+                ArrivedAt = arrivedAt,
+                DepartedFrom = departedFrom
+            });
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error seeding locations (created={Created}, updated={Updated}, skipped={Skipped})",
-                created, updated, skipped);
+            _logger.LogError(ex, "Failed to report entity position for {EntityType}:{EntityId}",
+                body.EntityType, body.EntityId);
             await _messageBus.TryPublishErrorAsync(
-                "location", "SeedLocations", "unexpected_exception", ex.Message,
-                dependency: "state", endpoint: "post:/location/seed",
-                details: null, stack: ex.StackTrace, cancellationToken: cancellationToken);
+                "location", "ReportEntityPosition", ex.GetType().Name, ex.Message);
+            return (StatusCodes.InternalServerError, null);
+        }
+    }
+
+    /// <inheritdoc />
+    public async Task<(StatusCodes, GetEntityLocationResponse?)> GetEntityLocationAsync(
+        GetEntityLocationRequest body, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            _logger.LogDebug("Getting entity location: {EntityType}:{EntityId}", body.EntityType, body.EntityId);
+
+            var entityLocationKey = BuildEntityLocationKey(body.EntityType, body.EntityId);
+            var presenceStore = _stateStoreFactory.GetStore<EntityPresenceModel>(StateStoreDefinitions.LocationEntityPresence);
+            var model = await presenceStore.GetAsync(entityLocationKey, cancellationToken);
+
+            if (model is null)
+            {
+                return (StatusCodes.OK, new GetEntityLocationResponse { Found = false });
+            }
+
+            return (StatusCodes.OK, new GetEntityLocationResponse
+            {
+                Found = true,
+                LocationId = model.LocationId,
+                RealmId = model.RealmId,
+                EntityType = model.EntityType,
+                EntityId = model.EntityId,
+                ReportedAt = model.ReportedAt,
+                ReportedBy = model.ReportedBy
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to get entity location for {EntityType}:{EntityId}",
+                body.EntityType, body.EntityId);
+            await _messageBus.TryPublishErrorAsync(
+                "location", "GetEntityLocation", ex.GetType().Name, ex.Message);
+            return (StatusCodes.InternalServerError, null);
+        }
+    }
+
+    /// <inheritdoc />
+    public async Task<(StatusCodes, ListEntitiesAtLocationResponse?)> ListEntitiesAtLocationAsync(
+        ListEntitiesAtLocationRequest body, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            _logger.LogDebug("Listing entities at location {LocationId}", body.LocationId);
+
+            var entitySetStore = _stateStoreFactory.GetCacheableStore<string>(StateStoreDefinitions.LocationEntitySet);
+            var locationSetKey = BuildLocationEntitiesKey(body.LocationId);
+            var members = await entitySetStore.GetSetAsync<string>(locationSetKey, cancellationToken);
+
+            // Parse members into entityType:entityId pairs
+            var parsed = new List<(string EntityType, Guid EntityId)>();
+            foreach (var member in members)
+            {
+                var separatorIndex = member.LastIndexOf(':');
+                if (separatorIndex <= 0) continue;
+
+                var entityType = member[..separatorIndex];
+                if (!Guid.TryParse(member[(separatorIndex + 1)..], out var entityId)) continue;
+
+                // Apply entity type filter if specified
+                if (body.EntityType is not null && !string.Equals(entityType, body.EntityType, StringComparison.OrdinalIgnoreCase))
+                    continue;
+
+                parsed.Add((entityType, entityId));
+            }
+
+            var totalCount = parsed.Count;
+
+            // Apply pagination
+            var page = Math.Max(1, body.Page);
+            var pageSize = Math.Min(
+                Math.Max(1, body.PageSize),
+                _configuration.MaxEntitiesPerLocationQuery);
+            var skip = (page - 1) * pageSize;
+            var paged = parsed.Skip(skip).Take(pageSize).ToList();
+
+            // Hydrate each entry from the presence store for metadata
+            var presenceStore = _stateStoreFactory.GetStore<EntityPresenceModel>(StateStoreDefinitions.LocationEntityPresence);
+            var entries = new List<EntityPresenceEntry>();
+
+            foreach (var (entityType, entityId) in paged)
+            {
+                var entityLocationKey = BuildEntityLocationKey(entityType, entityId);
+                var presence = await presenceStore.GetAsync(entityLocationKey, cancellationToken);
+
+                entries.Add(new EntityPresenceEntry
+                {
+                    EntityType = entityType,
+                    EntityId = entityId,
+                    ReportedAt = presence?.ReportedAt,
+                    ReportedBy = presence?.ReportedBy
+                });
+            }
+
+            return (StatusCodes.OK, new ListEntitiesAtLocationResponse
+            {
+                Entities = entries,
+                TotalCount = totalCount,
+                LocationId = body.LocationId
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to list entities at location {LocationId}", body.LocationId);
+            await _messageBus.TryPublishErrorAsync(
+                "location", "ListEntitiesAtLocation", ex.GetType().Name, ex.Message);
+            return (StatusCodes.InternalServerError, null);
+        }
+    }
+
+    /// <inheritdoc />
+    public async Task<(StatusCodes, ClearEntityPositionResponse?)> ClearEntityPositionAsync(
+        ClearEntityPositionRequest body, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            _logger.LogDebug("Clearing entity position: {EntityType}:{EntityId}", body.EntityType, body.EntityId);
+
+            var entityLocationKey = BuildEntityLocationKey(body.EntityType, body.EntityId);
+            var presenceStore = _stateStoreFactory.GetStore<EntityPresenceModel>(StateStoreDefinitions.LocationEntityPresence);
+
+            // Get current presence to know which location to clean up
+            var existing = await presenceStore.GetAsync(entityLocationKey, cancellationToken);
+
+            if (existing is null)
+            {
+                return (StatusCodes.OK, new ClearEntityPositionResponse
+                {
+                    Cleared = false,
+                    PreviousLocationId = null
+                });
+            }
+
+            // Delete the presence key
+            await presenceStore.DeleteAsync(entityLocationKey, cancellationToken);
+
+            // Remove from location's entity set
+            var entitySetStore = _stateStoreFactory.GetCacheableStore<string>(StateStoreDefinitions.LocationEntitySet);
+            var locationSetKey = BuildLocationEntitiesKey(existing.LocationId);
+            var entityMember = BuildEntitySetMember(body.EntityType, body.EntityId);
+            await entitySetStore.RemoveFromSetAsync(locationSetKey, entityMember, cancellationToken);
+
+            // Publish departure event
+            await PublishEntityDepartedEventAsync(body.EntityType, body.EntityId, existing.LocationId, cancellationToken);
+
+            return (StatusCodes.OK, new ClearEntityPositionResponse
+            {
+                Cleared = true,
+                PreviousLocationId = existing.LocationId
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to clear entity position for {EntityType}:{EntityId}",
+                body.EntityType, body.EntityId);
+            await _messageBus.TryPublishErrorAsync(
+                "location", "ClearEntityPosition", ex.GetType().Name, ex.Message);
             return (StatusCodes.InternalServerError, null);
         }
     }
@@ -1234,14 +1672,48 @@ public partial class LocationService : ILocationService
 
     private async Task<List<LocationModel>> LoadLocationsByIdsAsync(List<Guid> locationIds, CancellationToken cancellationToken)
     {
-        var results = new List<LocationModel>();
+        if (locationIds.Count == 0)
+        {
+            return new List<LocationModel>();
+        }
+
+        var keysList = locationIds.Select(BuildLocationKey).ToList();
+
+        // Try cache first with bulk get
+        var cacheStore = _stateStoreFactory.GetStore<LocationModel>(StateStoreDefinitions.LocationCache);
+        var cachedResult = await cacheStore.GetBulkAsync(keysList, cancellationToken);
+
+        // Find cache misses
+        var missedKeys = keysList.Where(k => !cachedResult.ContainsKey(k)).ToList();
+
+        // Fetch misses from persistent store
+        Dictionary<string, LocationModel> fetchedFromStore = new();
+        if (missedKeys.Count > 0)
+        {
+            var persistentStore = _stateStoreFactory.GetStore<LocationModel>(StateStoreDefinitions.Location);
+            var bulkResult = await persistentStore.GetBulkAsync(missedKeys, cancellationToken);
+            fetchedFromStore = new Dictionary<string, LocationModel>(bulkResult);
+
+            // Populate cache for fetched items
+            foreach (var kvp in fetchedFromStore)
+            {
+                await cacheStore.SaveAsync(kvp.Key, kvp.Value,
+                    new StateOptions { Ttl = _configuration.CacheTtlSeconds }, cancellationToken);
+            }
+        }
+
+        // Combine cached and fetched, preserving order from input list
+        var results = new List<LocationModel>(locationIds.Count);
         foreach (var id in locationIds)
         {
             var key = BuildLocationKey(id);
-            var model = await _stateStoreFactory.GetStore<LocationModel>(StateStoreDefinitions.Location).GetAsync(key, cancellationToken);
-            if (model != null)
+            if (cachedResult.TryGetValue(key, out var cachedModel))
             {
-                results.Add(model);
+                results.Add(cachedModel);
+            }
+            else if (fetchedFromStore.TryGetValue(key, out var fetchedModel))
+            {
+                results.Add(fetchedModel);
             }
         }
         return results;
@@ -1250,6 +1722,21 @@ public partial class LocationService : ILocationService
     private async Task AddToRealmIndexAsync(Guid realmId, Guid locationId, CancellationToken cancellationToken)
     {
         var realmIndexKey = BuildRealmIndexKey(realmId);
+
+        // Acquire distributed lock for index modification (per IMPLEMENTATION TENETS)
+        await using var lockResponse = await _lockProvider.LockAsync(
+            StateStoreDefinitions.LocationLock,
+            realmIndexKey,
+            Guid.NewGuid().ToString(),
+            _configuration.IndexLockTimeoutSeconds,
+            cancellationToken);
+
+        if (!lockResponse.Success)
+        {
+            _logger.LogWarning("Could not acquire lock for realm index {RealmIndexKey}", realmIndexKey);
+            return;
+        }
+
         var locationIds = await _stateStoreFactory.GetStore<List<Guid>>(StateStoreDefinitions.Location).GetAsync(realmIndexKey, cancellationToken) ?? new List<Guid>();
         if (!locationIds.Contains(locationId))
         {
@@ -1261,6 +1748,21 @@ public partial class LocationService : ILocationService
     private async Task RemoveFromRealmIndexAsync(Guid realmId, Guid locationId, CancellationToken cancellationToken)
     {
         var realmIndexKey = BuildRealmIndexKey(realmId);
+
+        // Acquire distributed lock for index modification (per IMPLEMENTATION TENETS)
+        await using var lockResponse = await _lockProvider.LockAsync(
+            StateStoreDefinitions.LocationLock,
+            realmIndexKey,
+            Guid.NewGuid().ToString(),
+            _configuration.IndexLockTimeoutSeconds,
+            cancellationToken);
+
+        if (!lockResponse.Success)
+        {
+            _logger.LogWarning("Could not acquire lock for realm index {RealmIndexKey}", realmIndexKey);
+            return;
+        }
+
         var locationIds = await _stateStoreFactory.GetStore<List<Guid>>(StateStoreDefinitions.Location).GetAsync(realmIndexKey, cancellationToken) ?? new List<Guid>();
         if (locationIds.Remove(locationId))
         {
@@ -1271,6 +1773,21 @@ public partial class LocationService : ILocationService
     private async Task AddToParentIndexAsync(Guid realmId, Guid parentId, Guid locationId, CancellationToken cancellationToken)
     {
         var parentIndexKey = BuildParentIndexKey(realmId, parentId);
+
+        // Acquire distributed lock for index modification (per IMPLEMENTATION TENETS)
+        await using var lockResponse = await _lockProvider.LockAsync(
+            StateStoreDefinitions.LocationLock,
+            parentIndexKey,
+            Guid.NewGuid().ToString(),
+            _configuration.IndexLockTimeoutSeconds,
+            cancellationToken);
+
+        if (!lockResponse.Success)
+        {
+            _logger.LogWarning("Could not acquire lock for parent index {ParentIndexKey}", parentIndexKey);
+            return;
+        }
+
         var childIds = await _stateStoreFactory.GetStore<List<Guid>>(StateStoreDefinitions.Location).GetAsync(parentIndexKey, cancellationToken) ?? new List<Guid>();
         if (!childIds.Contains(locationId))
         {
@@ -1282,16 +1799,55 @@ public partial class LocationService : ILocationService
     private async Task RemoveFromParentIndexAsync(Guid realmId, Guid parentId, Guid locationId, CancellationToken cancellationToken)
     {
         var parentIndexKey = BuildParentIndexKey(realmId, parentId);
-        var childIds = await _stateStoreFactory.GetStore<List<Guid>>(StateStoreDefinitions.Location).GetAsync(parentIndexKey, cancellationToken) ?? new List<Guid>();
+
+        // Acquire distributed lock for index modification (per IMPLEMENTATION TENETS)
+        await using var lockResponse = await _lockProvider.LockAsync(
+            StateStoreDefinitions.LocationLock,
+            parentIndexKey,
+            Guid.NewGuid().ToString(),
+            _configuration.IndexLockTimeoutSeconds,
+            cancellationToken);
+
+        if (!lockResponse.Success)
+        {
+            _logger.LogWarning("Could not acquire lock for parent index {ParentIndexKey}", parentIndexKey);
+            return;
+        }
+
+        var store = _stateStoreFactory.GetStore<List<Guid>>(StateStoreDefinitions.Location);
+        var childIds = await store.GetAsync(parentIndexKey, cancellationToken) ?? new List<Guid>();
         if (childIds.Remove(locationId))
         {
-            await _stateStoreFactory.GetStore<List<Guid>>(StateStoreDefinitions.Location).SaveAsync(parentIndexKey, childIds, cancellationToken: cancellationToken);
+            if (childIds.Count == 0)
+            {
+                // Clean up empty index key to prevent accumulation
+                await store.DeleteAsync(parentIndexKey, cancellationToken);
+            }
+            else
+            {
+                await store.SaveAsync(parentIndexKey, childIds, cancellationToken: cancellationToken);
+            }
         }
     }
 
     private async Task AddToRootLocationsAsync(Guid realmId, Guid locationId, CancellationToken cancellationToken)
     {
         var rootKey = BuildRootLocationsKey(realmId);
+
+        // Acquire distributed lock for index modification (per IMPLEMENTATION TENETS)
+        await using var lockResponse = await _lockProvider.LockAsync(
+            StateStoreDefinitions.LocationLock,
+            rootKey,
+            Guid.NewGuid().ToString(),
+            _configuration.IndexLockTimeoutSeconds,
+            cancellationToken);
+
+        if (!lockResponse.Success)
+        {
+            _logger.LogWarning("Could not acquire lock for root locations {RootKey}", rootKey);
+            return;
+        }
+
         var rootIds = await _stateStoreFactory.GetStore<List<Guid>>(StateStoreDefinitions.Location).GetAsync(rootKey, cancellationToken) ?? new List<Guid>();
         if (!rootIds.Contains(locationId))
         {
@@ -1303,6 +1859,21 @@ public partial class LocationService : ILocationService
     private async Task RemoveFromRootLocationsAsync(Guid realmId, Guid locationId, CancellationToken cancellationToken)
     {
         var rootKey = BuildRootLocationsKey(realmId);
+
+        // Acquire distributed lock for index modification (per IMPLEMENTATION TENETS)
+        await using var lockResponse = await _lockProvider.LockAsync(
+            StateStoreDefinitions.LocationLock,
+            rootKey,
+            Guid.NewGuid().ToString(),
+            _configuration.IndexLockTimeoutSeconds,
+            cancellationToken);
+
+        if (!lockResponse.Success)
+        {
+            _logger.LogWarning("Could not acquire lock for root locations {RootKey}", rootKey);
+            return;
+        }
+
         var rootIds = await _stateStoreFactory.GetStore<List<Guid>>(StateStoreDefinitions.Location).GetAsync(rootKey, cancellationToken) ?? new List<Guid>();
         if (rootIds.Remove(locationId))
         {
@@ -1345,13 +1916,34 @@ public partial class LocationService : ILocationService
         var descendants = new List<LocationModel>();
         await CollectDescendantsAsync(parentId, realmId, descendants, 0, _configuration.MaxDescendantDepth, cancellationToken);
 
+        if (descendants.Count == 0)
+        {
+            return;
+        }
+
+        // Update depths in memory and prepare bulk operations
+        var now = DateTimeOffset.UtcNow;
+        var itemsToSave = new List<KeyValuePair<string, LocationModel>>();
+        var cacheKeysToInvalidate = new List<string>();
+
         foreach (var descendant in descendants)
         {
             descendant.Depth += depthChange;
-            descendant.UpdatedAt = DateTimeOffset.UtcNow;
+            descendant.UpdatedAt = now;
             var key = BuildLocationKey(descendant.LocationId);
-            await _stateStoreFactory.GetStore<LocationModel>(StateStoreDefinitions.Location).SaveAsync(key, descendant, cancellationToken: cancellationToken);
+            itemsToSave.Add(new KeyValuePair<string, LocationModel>(key, descendant));
+            cacheKeysToInvalidate.Add(key);
         }
+
+        // Bulk save all descendants to state store (single database call)
+        var locationStore = _stateStoreFactory.GetStore<LocationModel>(StateStoreDefinitions.Location);
+        await locationStore.SaveBulkAsync(itemsToSave, cancellationToken: cancellationToken);
+
+        // Bulk invalidate cache for all updated descendants (single cache call)
+        var cacheStore = _stateStoreFactory.GetStore<LocationModel>(StateStoreDefinitions.LocationCache);
+        await cacheStore.DeleteBulkAsync(cacheKeysToInvalidate, cancellationToken);
+
+        _logger.LogDebug("Updated depths for {Count} descendants of location {ParentId}", descendants.Count, parentId);
     }
 
     private LocationResponse MapToResponse(LocationModel model)
@@ -1369,6 +1961,10 @@ public partial class LocationService : ILocationService
             IsDeprecated = model.IsDeprecated,
             DeprecatedAt = model.DeprecatedAt,
             DeprecationReason = model.DeprecationReason,
+            Bounds = model.Bounds,
+            BoundsPrecision = model.BoundsPrecision,
+            CoordinateMode = model.CoordinateMode,
+            LocalOrigin = model.LocalOrigin,
             Metadata = model.Metadata,
             CreatedAt = model.CreatedAt,
             UpdatedAt = model.UpdatedAt
@@ -1387,12 +1983,16 @@ public partial class LocationService : ILocationService
             Name = model.Name,
             Description = model.Description,
             LocationType = model.LocationType,
-            ParentLocationId = model.ParentLocationId ?? Guid.Empty,
+            ParentLocationId = model.ParentLocationId,
             Depth = model.Depth,
             IsDeprecated = model.IsDeprecated,
-            DeprecatedAt = model.DeprecatedAt ?? default,
+            DeprecatedAt = model.DeprecatedAt,
             DeprecationReason = model.DeprecationReason,
-            Metadata = model.Metadata ?? new object(),
+            Bounds = model.Bounds,
+            BoundsPrecision = model.BoundsPrecision,
+            CoordinateMode = model.CoordinateMode,
+            LocalOrigin = model.LocalOrigin,
+            Metadata = model.Metadata,
             CreatedAt = model.CreatedAt,
             UpdatedAt = model.UpdatedAt
         };
@@ -1412,12 +2012,16 @@ public partial class LocationService : ILocationService
             Name = model.Name,
             Description = model.Description,
             LocationType = model.LocationType,
-            ParentLocationId = model.ParentLocationId ?? Guid.Empty,
+            ParentLocationId = model.ParentLocationId,
             Depth = model.Depth,
             IsDeprecated = model.IsDeprecated,
-            DeprecatedAt = model.DeprecatedAt ?? default,
+            DeprecatedAt = model.DeprecatedAt,
             DeprecationReason = model.DeprecationReason,
-            Metadata = model.Metadata ?? new object(),
+            Bounds = model.Bounds,
+            BoundsPrecision = model.BoundsPrecision,
+            CoordinateMode = model.CoordinateMode,
+            LocalOrigin = model.LocalOrigin,
+            Metadata = model.Metadata,
             CreatedAt = model.CreatedAt,
             UpdatedAt = model.UpdatedAt,
             ChangedFields = changedFields.ToList()
@@ -1438,29 +2042,100 @@ public partial class LocationService : ILocationService
             Name = model.Name,
             Description = model.Description,
             LocationType = model.LocationType,
-            ParentLocationId = model.ParentLocationId ?? Guid.Empty,
+            ParentLocationId = model.ParentLocationId,
             Depth = model.Depth,
             IsDeprecated = model.IsDeprecated,
-            DeprecatedAt = model.DeprecatedAt ?? default,
+            DeprecatedAt = model.DeprecatedAt,
             DeprecationReason = model.DeprecationReason,
-            Metadata = model.Metadata ?? new object()
+            Bounds = model.Bounds,
+            BoundsPrecision = model.BoundsPrecision,
+            CoordinateMode = model.CoordinateMode,
+            LocalOrigin = model.LocalOrigin,
+            Metadata = model.Metadata
         };
 
         await _messageBus.TryPublishAsync("location.deleted", eventData, cancellationToken: cancellationToken);
+    }
+
+    private async Task PublishEntityArrivedEventAsync(
+        string entityType, Guid entityId, Guid locationId, Guid realmId, string? reportedBy, CancellationToken cancellationToken)
+    {
+        var eventData = new LocationEntityArrivedEvent
+        {
+            EventId = Guid.NewGuid(),
+            Timestamp = DateTimeOffset.UtcNow,
+            EntityType = entityType,
+            EntityId = entityId,
+            LocationId = locationId,
+            RealmId = realmId,
+            ReportedBy = reportedBy
+        };
+
+        await _messageBus.TryPublishAsync("location.entity-arrived", eventData, cancellationToken: cancellationToken);
+    }
+
+    private async Task PublishEntityDepartedEventAsync(
+        string entityType, Guid entityId, Guid locationId, CancellationToken cancellationToken)
+    {
+        var eventData = new LocationEntityDepartedEvent
+        {
+            EventId = Guid.NewGuid(),
+            Timestamp = DateTimeOffset.UtcNow,
+            EntityType = entityType,
+            EntityId = entityId,
+            LocationId = locationId
+        };
+
+        await _messageBus.TryPublishAsync("location.entity-departed", eventData, cancellationToken: cancellationToken);
     }
 
     #endregion
 
     #region Permission Registration
 
+    #endregion
+
+    #region Cache Methods
+
     /// <summary>
-    /// Registers this service's API permissions with the Permission service on startup.
-    /// Uses generated permission data from x-permissions sections in the OpenAPI schema.
+    /// Get location with Redis cache read-through. Falls back to MySQL persistent store on cache miss.
     /// </summary>
-    public async Task RegisterServicePermissionsAsync(string appId)
+    private async Task<LocationModel?> GetLocationWithCacheAsync(string locationKey, CancellationToken ct)
     {
-        _logger.LogDebug("Registering Location service permissions");
-        await LocationPermissionRegistration.RegisterViaEventAsync(_messageBus, appId, _logger);
+        var cacheStore = _stateStoreFactory.GetStore<LocationModel>(StateStoreDefinitions.LocationCache);
+
+        // Try cache first
+        var cached = await cacheStore.GetAsync(locationKey, ct);
+        if (cached is not null) return cached;
+
+        // Fallback to persistent store
+        var store = _stateStoreFactory.GetStore<LocationModel>(StateStoreDefinitions.Location);
+        var model = await store.GetAsync(locationKey, ct);
+        if (model is null) return null;
+
+        // Populate cache
+        await cacheStore.SaveAsync(locationKey, model,
+            new StateOptions { Ttl = _configuration.CacheTtlSeconds }, ct);
+        return model;
+    }
+
+    /// <summary>
+    /// Populate location cache after a write operation.
+    /// </summary>
+    private async Task PopulateLocationCacheAsync(string locationKey, LocationModel model, CancellationToken ct)
+    {
+        var cacheStore = _stateStoreFactory.GetStore<LocationModel>(StateStoreDefinitions.LocationCache);
+        await cacheStore.SaveAsync(locationKey, model,
+            new StateOptions { Ttl = _configuration.CacheTtlSeconds }, ct);
+    }
+
+    /// <summary>
+    /// Invalidate location cache after a write/delete operation.
+    /// </summary>
+    private async Task InvalidateLocationCacheAsync(string locationKey, CancellationToken ct)
+    {
+        var cacheStore = _stateStoreFactory.GetStore<LocationModel>(StateStoreDefinitions.LocationCache);
+        await cacheStore.DeleteAsync(locationKey, ct);
     }
 
     #endregion
@@ -1480,6 +2155,10 @@ public partial class LocationService : ILocationService
         public bool IsDeprecated { get; set; }
         public DateTimeOffset? DeprecatedAt { get; set; }
         public string? DeprecationReason { get; set; }
+        public BoundingBox3D? Bounds { get; set; }
+        public BoundsPrecision BoundsPrecision { get; set; } = BoundsPrecision.None;
+        public CoordinateMode CoordinateMode { get; set; } = CoordinateMode.Inherit;
+        public Position3D? LocalOrigin { get; set; }
         public object? Metadata { get; set; }
         public DateTimeOffset CreatedAt { get; set; }
         public DateTimeOffset UpdatedAt { get; set; }

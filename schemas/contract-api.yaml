@@ -20,8 +20,12 @@ info:
     **Polymorphic Parties**: Any entity type can enter contracts (characters, NPCs,
     guilds, companies, governments, locations).
 
-    **Schema Rules**: AI agents MUST review docs/reference/SCHEMA-RULES.md before
-    modifying this schema. Optional reference types require `nullable: true`.
+    **SCHEMA MODIFICATION GATE**: STOP. Before modifying this schema, you MUST:
+    1. Read docs/reference/SCHEMA-RULES.md
+    2. State which section applies to your change
+    3. Only then proceed with edits
+    Edits without stating the applicable rule are FORBIDDEN.
+x-service-layer: AppFoundation
 
 servers:
 - url: http://localhost:5012
@@ -974,8 +978,17 @@ components:
       enum:
       - term_violation
       - milestone_missed
+      - milestone_deadline
       - unauthorized_action
       - non_payment
+
+    MilestoneDeadlineBehavior:
+      type: string
+      description: Behavior when optional milestone deadline passes
+      enum:
+      - skip
+      - warn
+      - breach
 
     BreachStatus:
       type: string
@@ -1029,7 +1042,6 @@ components:
       enum:
       - exclusivity
       - non_compete
-      - territory
       - time_commitment
 
     MetadataType:
@@ -1038,6 +1050,20 @@ components:
       enum:
       - instance_data
       - runtime_state
+
+    IndexLockFailureMode:
+      type: string
+      description: Behavior when index lock acquisition fails
+      enum:
+      - warn
+      - fail
+
+    TermsMergeMode:
+      type: string
+      description: How instance terms merge with template terms during contract creation
+      enum:
+      - shallow
+      - deep
 
     # =========================================================================
     # Template Models
@@ -1109,7 +1135,7 @@ components:
           type: object
           additionalProperties: true
           nullable: true
-          description: Template-level game-specific metadata
+          description: "Client-only game metadata. No Bannou plugin reads specific keys from this field by convention."
 
     GetContractTemplateRequest:
       type: object
@@ -1128,33 +1154,32 @@ components:
 
     ListContractTemplatesRequest:
       type: object
-      description: Request to list contract templates
+      description: Request to list contract templates with cursor-based pagination.
       additionalProperties: false
       properties:
         realmId:
           type: string
           format: uuid
           nullable: true
-          description: Filter by realm (null includes cross-realm templates)
+          description: Filter by realm (null includes cross-realm templates).
         isActive:
           type: boolean
           nullable: true
-          description: Filter by active status
+          description: Filter by active status.
         searchTerm:
           type: string
           nullable: true
-          description: Search in name and description
-        page:
-          type: integer
-          minimum: 1
-          default: 1
-          description: Page number (1-based)
+          description: Search in name and description.
+        cursor:
+          type: string
+          nullable: true
+          description: Opaque cursor from previous response. Null for first page.
         pageSize:
           type: integer
           minimum: 1
           maximum: 100
-          default: 20
-          description: Results per page
+          nullable: true
+          description: Number of items per page. Uses service default if not specified.
 
     UpdateContractTemplateRequest:
       type: object
@@ -1185,7 +1210,7 @@ components:
           type: object
           additionalProperties: true
           nullable: true
-          description: Updated game metadata
+          description: "Client-only game metadata. No Bannou plugin reads specific keys from this field by convention."
 
     DeleteContractTemplateRequest:
       type: object
@@ -1264,7 +1289,7 @@ components:
           type: object
           additionalProperties: true
           nullable: true
-          description: Game-specific metadata
+          description: "Client-only game metadata. No Bannou plugin reads specific keys from this field by convention."
         isActive:
           type: boolean
           description: Whether template is active
@@ -1280,31 +1305,24 @@ components:
 
     ListContractTemplatesResponse:
       type: object
-      description: Paginated list of contract templates
+      description: Paginated list of contract templates.
       additionalProperties: false
       required:
       - templates
-      - totalCount
-      - page
-      - pageSize
+      - hasMore
       properties:
         templates:
           type: array
           items:
             $ref: '#/components/schemas/ContractTemplateResponse'
-          description: List of templates
-        totalCount:
-          type: integer
-          description: Total matching templates
-        page:
-          type: integer
-          description: Current page number
-        pageSize:
-          type: integer
-          description: Results per page
-        hasNextPage:
+          description: Templates in this page.
+        nextCursor:
+          type: string
+          nullable: true
+          description: Cursor for next page. Null if no more results.
+        hasMore:
           type: boolean
-          description: Whether more results exist
+          description: Whether more results exist beyond this page.
 
     # =========================================================================
     # Instance Models
@@ -1353,7 +1371,7 @@ components:
           type: object
           additionalProperties: true
           nullable: true
-          description: Instance-level game metadata
+          description: "Client-only game metadata. No Bannou plugin reads specific keys from this field by convention."
 
     ProposeContractInstanceRequest:
       type: object
@@ -1402,40 +1420,39 @@ components:
 
     QueryContractInstancesRequest:
       type: object
-      description: Request to query contract instances
+      description: Request to query contract instances with cursor-based pagination.
       additionalProperties: false
       properties:
         partyEntityId:
           type: string
           format: uuid
           nullable: true
-          description: Filter by party entity ID
+          description: Filter by party entity ID.
         partyEntityType:
           $ref: 'common-api.yaml#/components/schemas/EntityType'
           nullable: true
-          description: Filter by party entity type
+          description: Filter by party entity type.
         templateId:
           type: string
           format: uuid
           nullable: true
-          description: Filter by template
+          description: Filter by template.
         statuses:
           type: array
           items:
             $ref: '#/components/schemas/ContractStatus'
           nullable: true
-          description: Filter by statuses
-        page:
-          type: integer
-          minimum: 1
-          default: 1
-          description: Page number (1-based)
+          description: Filter by statuses.
+        cursor:
+          type: string
+          nullable: true
+          description: Opaque cursor from previous response. Null for first page.
         pageSize:
           type: integer
           minimum: 1
           maximum: 100
-          default: 20
-          description: Results per page
+          nullable: true
+          description: Number of items per page. Uses service default if not specified.
 
     TerminateContractInstanceRequest:
       type: object
@@ -1555,7 +1572,7 @@ components:
           type: object
           additionalProperties: true
           nullable: true
-          description: Game-specific metadata
+          description: "Client-only game metadata. No Bannou plugin reads specific keys from this field by convention."
         createdAt:
           type: string
           format: date-time
@@ -1568,31 +1585,24 @@ components:
 
     QueryContractInstancesResponse:
       type: object
-      description: Paginated list of contract instances
+      description: Paginated list of contract instances.
       additionalProperties: false
       required:
       - contracts
-      - totalCount
-      - page
-      - pageSize
+      - hasMore
       properties:
         contracts:
           type: array
           items:
             $ref: '#/components/schemas/ContractInstanceResponse'
-          description: List of contracts
-        totalCount:
-          type: integer
-          description: Total matching contracts
-        page:
-          type: integer
-          description: Current page number
-        pageSize:
-          type: integer
-          description: Results per page
-        hasNextPage:
+          description: Contracts in this page.
+        nextCursor:
+          type: string
+          nullable: true
+          description: Cursor for next page. Null if no more results.
+        hasMore:
           type: boolean
-          description: Whether more results exist
+          description: Whether more results exist beyond this page.
 
     ContractInstanceStatusResponse:
       type: object
@@ -1771,11 +1781,117 @@ components:
           type: string
           nullable: true
           description: Time to cure breach (ISO 8601 duration)
+        exclusivity:
+          type: boolean
+          nullable: true
+          description: Whether this contract has an exclusivity clause preventing the entity from entering similar contracts
+        nonCompete:
+          type: boolean
+          nullable: true
+          description: Whether this contract has a non-compete clause
+        timeCommitment:
+          type: boolean
+          nullable: true
+          description: Whether this contract has a time commitment clause
+        timeCommitmentType:
+          type: string
+          nullable: true
+          description: Type of time commitment (exclusive or partial)
+        clauses:
+          type: array
+          nullable: true
+          items:
+            $ref: '#/components/schemas/ContractClauseDefinition'
+          description: Clause definitions for contract execution (fees, distributions, asset requirements)
         customTerms:
           type: object
           additionalProperties: true
           nullable: true
-          description: Game-specific custom terms
+          description: "Client-only custom terms. No Bannou plugin reads specific keys from this field by convention."
+
+    ContractClauseDefinition:
+      type: object
+      description: A clause definition for contract execution specifying asset transfers, fees, or requirements
+      additionalProperties: false
+      required:
+      - id
+      - type
+      properties:
+        id:
+          type: string
+          description: Unique identifier for this clause within the contract
+        type:
+          type: string
+          description: Clause type code (fee, distribution, currency_transfer, item_transfer, asset_requirement)
+        party:
+          type: string
+          nullable: true
+          description: Party role reference for this clause
+        amount:
+          type: string
+          nullable: true
+          description: Amount value (numeric string for template substitution support)
+        amountType:
+          type: string
+          nullable: true
+          description: How to interpret the amount (flat, percentage, remainder)
+        sourceWallet:
+          type: string
+          nullable: true
+          description: Source wallet identifier or template variable reference
+        destinationWallet:
+          type: string
+          nullable: true
+          description: Destination wallet identifier or template variable reference
+        recipientWallet:
+          type: string
+          nullable: true
+          description: Recipient wallet for fee clauses or template variable reference
+        currencyCode:
+          type: string
+          nullable: true
+          description: Currency code for currency-based clauses
+        sourceContainer:
+          type: string
+          nullable: true
+          description: Source container identifier or template variable reference for item clauses
+        destinationContainer:
+          type: string
+          nullable: true
+          description: Destination container identifier or template variable reference for item clauses
+        itemCode:
+          type: string
+          nullable: true
+          description: Item code for item-based clauses
+        checkLocation:
+          type: string
+          nullable: true
+          description: Location template variable reference for asset requirement checks
+        assets:
+          type: array
+          nullable: true
+          items:
+            $ref: '#/components/schemas/ContractClauseAsset'
+          description: Asset requirements for asset_requirement clause type
+
+    ContractClauseAsset:
+      type: object
+      description: An asset requirement within a clause definition
+      additionalProperties: false
+      required:
+      - type
+      - code
+      - amount
+      properties:
+        type:
+          type: string
+          description: Asset type (currency, item)
+        code:
+          type: string
+          description: Asset code identifier
+        amount:
+          type: number
+          description: Required amount of the asset
 
     # =========================================================================
     # Milestone Models
@@ -1815,6 +1931,10 @@ components:
           type: string
           nullable: true
           description: Relative deadline (ISO 8601 duration)
+        deadlineBehavior:
+          $ref: '#/components/schemas/MilestoneDeadlineBehavior'
+          nullable: true
+          description: Behavior when deadline passes for optional milestones (default skip). Required milestones always trigger breach.
         onComplete:
           type: array
           items:
@@ -1864,11 +1984,20 @@ components:
           format: date-time
           nullable: true
           description: When failed
+        activatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When this milestone became active
         deadline:
           type: string
           format: date-time
           nullable: true
-          description: Absolute deadline
+          description: Absolute deadline (computed from activatedAt + duration)
+        deadlineBehavior:
+          $ref: '#/components/schemas/MilestoneDeadlineBehavior'
+          nullable: true
+          description: Behavior when deadline passes for optional milestones
 
     MilestoneProgressSummary:
       type: object
@@ -1904,7 +2033,7 @@ components:
           type: object
           additionalProperties: true
           nullable: true
-          description: Evidence of completion
+          description: "Client-only evidence data. No Bannou plugin reads specific keys from this field by convention."
 
     FailMilestoneRequest:
       type: object
@@ -2131,7 +2260,7 @@ components:
         data:
           type: object
           additionalProperties: true
-          description: Metadata to set or merge
+          description: "Client-only metadata payload. No Bannou plugin reads specific keys from this field by convention."
 
     GetContractMetadataRequest:
       type: object
@@ -2160,12 +2289,12 @@ components:
           type: object
           additionalProperties: true
           nullable: true
-          description: Instance-level metadata
+          description: "Client-only instance metadata. No Bannou plugin reads specific keys from this field by convention."
         runtimeState:
           type: object
           additionalProperties: true
           nullable: true
-          description: Runtime state metadata
+          description: "Client-only runtime state. No Bannou plugin reads specific keys from this field by convention."
 
     # =========================================================================
     # Constraint Models
@@ -2194,7 +2323,7 @@ components:
           type: object
           additionalProperties: true
           nullable: true
-          description: What the entity wants to do
+          description: "Client-only proposed action data. No Bannou plugin reads specific keys from this field by convention."
 
     CheckConstraintResponse:
       type: object
@@ -2609,12 +2738,12 @@ components:
           type: object
           additionalProperties: true
           nullable: true
-          description: Template variable to request field mapping
+          description: "Client-only request field mapping. No Bannou plugin reads specific keys from this field by convention."
         responseMapping:
           type: object
           additionalProperties: true
           nullable: true
-          description: Response field to result mapping
+          description: "Client-only response field mapping. No Bannou plugin reads specific keys from this field by convention."
 
     RegisterClauseTypeRequest:
       type: object
@@ -2875,48 +3004,43 @@ components:
           nullable: true
           description: Idempotency key for the execution
 
-    DistributionRecord:
+    ClauseDistributionResult:
       type: object
-      description: Record of an asset distribution
+      description: |
+        Outcome of a single clause distribution during contract execution.
+        Used in ContractExecutedEvent to provide per-clause success/failure details.
+        Deliberately excludes wallet/container IDs - consumers tracking these should
+        correlate via clauseId to their own records.
       additionalProperties: false
       required:
       - clauseId
       - clauseType
       - assetType
       - amount
+      - succeeded
       properties:
         clauseId:
           type: string
-          description: Clause that was executed
+          format: uuid
+          description: The clause that was executed
         clauseType:
           type: string
-          description: Type of clause (fee, distribution)
+          description: Type of clause (e.g., currency_transfer, item_transfer, fee)
         assetType:
           type: string
-          description: Type of asset (currency, item)
+          description: |
+            Descriptive type of asset involved (e.g., "currency", "item").
+            Provides human-readable context for what was transferred.
         amount:
           type: number
-          description: Amount transferred
-        sourceWalletId:
+          description: Quantity transferred (currency amount, item count, etc.)
+        succeeded:
+          type: boolean
+          description: Whether this clause executed successfully
+        failureReason:
           type: string
-          format: uuid
           nullable: true
-          description: Source wallet ID (for currency)
-        destinationWalletId:
-          type: string
-          format: uuid
-          nullable: true
-          description: Destination wallet ID (for currency)
-        sourceContainerId:
-          type: string
-          format: uuid
-          nullable: true
-          description: Source container ID (for items)
-        destinationContainerId:
-          type: string
-          format: uuid
-          nullable: true
-          description: Destination container ID (for items)
+          description: If succeeded is false, describes what went wrong
 
     ExecuteContractResponse:
       type: object
@@ -2939,9 +3063,9 @@ components:
         distributions:
           type: array
           items:
-            $ref: '#/components/schemas/DistributionRecord'
+            $ref: '#/components/schemas/ClauseDistributionResult'
           nullable: true
-          description: Records of what was moved where
+          description: Per-clause distribution outcomes with success/failure details
         executedAt:
           type: string
           format: date-time

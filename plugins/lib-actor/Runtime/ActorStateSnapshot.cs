@@ -1,3 +1,5 @@
+using BeyondImmersion.BannouService.Behavior;
+
 namespace BeyondImmersion.BannouService.Actor.Runtime;
 
 /// <summary>
@@ -25,6 +27,17 @@ public class ActorStateSnapshot
     /// Gets the optional character ID for NPC brain actors.
     /// </summary>
     public Guid? CharacterId { get; init; }
+
+    /// <summary>
+    /// Gets the realm this actor operates in.
+    /// </summary>
+    public Guid RealmId { get; init; }
+
+    /// <summary>
+    /// Gets the actor's current location, tracked from perception events.
+    /// Null if no perception events with location data have been received yet.
+    /// </summary>
+    public Guid? LocationId { get; init; }
 
     /// <summary>
     /// Gets the current status.
@@ -72,6 +85,13 @@ public class ActorStateSnapshot
     public IReadOnlyDictionary<string, object> WorkingMemory { get; init; } = new Dictionary<string, object>();
 
     /// <summary>
+    /// Gets the per-instance cognition overrides accumulated through gameplay.
+    /// Applied as the second layer in the three-layer override composition
+    /// (template → instance → ABML metadata).
+    /// </summary>
+    public CognitionOverrides? CognitionOverrides { get; init; }
+
+    /// <summary>
     /// Gets the current encounter state for Event Brain actors.
     /// Null if this actor is not managing an encounter.
     /// </summary>
@@ -88,6 +108,7 @@ public class ActorStateSnapshot
             TemplateId = TemplateId,
             Category = Category,
             CharacterId = CharacterId,
+            RealmId = RealmId,
             Status = Status,
             StartedAt = StartedAt,
             LastHeartbeat = LastHeartbeat,

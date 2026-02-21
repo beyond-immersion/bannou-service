@@ -1,0 +1,207 @@
+openapi: 3.0.3
+info:
+  title: Obligation Service Events
+  description: |
+    Event models for Obligation service RabbitMQ pub/sub via MassTransit.
+    These events are published when obligation violations are reported, and
+    the service subscribes to contract lifecycle events to maintain its
+    obligation cache.
+
+    **Event Flow**:
+    - Contract activated → obligation cache rebuilt for contract parties
+    - Contract terminated/fulfilled/expired → obligation cache cleared for contract parties
+    - Violation reported → obligation.violation.reported event published for downstream consumers
+      (character-personality for OATH_BROKEN drift, character-encounter for memory recording)
+
+    **SCHEMA MODIFICATION GATE**: STOP. Before modifying this schema, you MUST:
+    1. Read docs/reference/SCHEMA-RULES.md
+    2. State which section applies to your change
+    3. Only then proceed with edits
+    Edits without stating the applicable rule are FORBIDDEN.
+  version: 1.0.0
+  x-event-subscriptions:
+    - topic: contract.activated
+      event: ContractActivatedEvent
+      handler: HandleContractActivated
+      description: Rebuild obligation cache for contract parties when a contract becomes active
+    - topic: contract.terminated
+      event: ContractTerminatedEvent
+      handler: HandleContractTerminated
+      description: Remove obligations when a contract is terminated early
+    - topic: contract.fulfilled
+      event: ContractFulfilledEvent
+      handler: HandleContractFulfilled
+      description: Remove obligations when all required milestones complete
+    - topic: contract.expired
+      event: ContractExpiredEvent
+      handler: HandleContractExpired
+      description: Remove obligations when a contract reaches natural expiration
+  x-event-publications:
+    - topic: obligation.violation.reported
+      event: ObligationViolationReportedEvent
+      description: Published when a character knowingly violates an obligation
+    - topic: obligation.cache.rebuilt
+      event: ObligationCacheRebuiltEvent
+      description: Published when a character's obligation cache is rebuilt (observability)
+
+paths: {}  # Events don't have HTTP paths
+
+components:
+  schemas:
+    # =========================================================================
+    # Published Events
+    # =========================================================================
+
+    ObligationViolationReportedEvent:
+      type: object
+      additionalProperties: false
+      description: |
+        Published when a character knowingly violates an obligation. Downstream
+        consumers use this to trigger personality drift (OATH_BROKEN experience
+        type in character-personality), encounter memory recording (negative
+        sentiment in character-encounter), and other feedback effects.
+      x-resource-mapping:
+        resource_type: character
+        resource_id_field: characterId
+        source_type: obligation
+      x-event-template:
+        name: obligation_violation_reported
+        topic: obligation.violation.reported
+      required:
+        - eventId
+        - timestamp
+        - violationId
+        - characterId
+        - contractId
+        - templateCode
+        - clauseCode
+        - violationType
+        - actionTag
+        - motivationScore
+        - violationCost
+        - breachReported
+        - contractRole
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique identifier for this event
+        timestamp:
+          type: string
+          format: date-time
+          description: When this event was published
+        violationId:
+          type: string
+          format: uuid
+          description: ID of the violation record
+        characterId:
+          type: string
+          format: uuid
+          description: Character who committed the violation
+        contractId:
+          type: string
+          format: uuid
+          description: Contract that was violated
+        templateCode:
+          type: string
+          minLength: 1
+          maxLength: 128
+          description: Template code of the violated contract
+        clauseCode:
+          type: string
+          minLength: 1
+          maxLength: 128
+          description: Code of the behavioral clause that was violated
+        violationType:
+          type: string
+          minLength: 1
+          maxLength: 128
+          description: Violation type code (e.g., "theft", "deception")
+        actionTag:
+          type: string
+          minLength: 1
+          maxLength: 128
+          description: GOAP action tag that triggered the violation
+        motivationScore:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 1.0
+          description: Goal urgency that overrode the obligation (0.0-1.0)
+        violationCost:
+          type: number
+          format: float
+          minimum: 0.0
+          description: Total violation cost that was accepted
+        breachReported:
+          type: boolean
+          description: Whether a breach was filed with the contract service
+        breachId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Breach record ID from contract service
+        targetEntityId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Target entity of the violating action
+        targetEntityType:
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
+          nullable: true
+          description: Entity type of the target
+        contractRole:
+          type: string
+          minLength: 1
+          maxLength: 128
+          description: The violating character's role in the contract
+
+    ObligationCacheRebuiltEvent:
+      type: object
+      additionalProperties: false
+      description: Published when a character's obligation cache is rebuilt (for observability and debugging)
+      x-resource-mapping:
+        resource_type: character
+        resource_id_field: characterId
+        source_type: obligation
+      required:
+        - eventId
+        - timestamp
+        - characterId
+        - obligationCount
+        - contractCount
+        - trigger
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique identifier for this event
+        timestamp:
+          type: string
+          format: date-time
+          description: When this event was published
+        characterId:
+          type: string
+          format: uuid
+          description: Character whose cache was rebuilt
+        obligationCount:
+          type: integer
+          minimum: 0
+          maximum: 10000
+          description: Number of obligations now cached
+        contractCount:
+          type: integer
+          minimum: 0
+          maximum: 1000
+          description: Number of active contracts with behavioral clauses
+        trigger:
+          type: string
+          minLength: 1
+          maxLength: 128
+          description: What triggered the rebuild (contract.activated, contract.terminated, manual, etc.)
+
+    # Consumed event types (ContractActivatedEvent, ContractTerminatedEvent,
+    # ContractFulfilledEvent, ContractExpiredEvent) are canonically defined in
+    # contract-events.yaml. Per SCHEMA-RULES.md, consumed types are NOT
+    # redefined here — x-event-subscriptions references resolve at compile
+    # time from the source service's generated models.

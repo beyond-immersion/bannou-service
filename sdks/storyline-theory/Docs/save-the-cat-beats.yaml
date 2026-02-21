@@ -1,0 +1,698 @@
+# Save the Cat Beat Sheet (Blake Snyder, 2005)
+# Structured data for narrative pacing and beat tracking
+#
+# Sources:
+#   - ~/repos/beatsheet (JavaScript implementation)
+#   - ~/repos/story-analysis/research/Save the Cat Beat Sheet 101.md
+#   - ~/repos/story-analysis/research/Save the Cat Screenplay Outline.md
+#   - "Save the Cat!" by Blake Snyder (2005)
+#   - "Save the Cat! Strikes Back" by Blake Snyder (2009)
+#   - "Save the Cat! Writes a Novel" by Jessica Brody (2018)
+
+version: "1.0"
+source: "Blake Snyder, Save the Cat! (2005)"
+
+# =============================================================================
+# BEAT STRATEGIES
+# =============================================================================
+# Different percentage distributions for different media
+
+strategies:
+  bs2:
+    name: "Original Blake Snyder Beat Sheet"
+    description: "For 110-page screenplays (standard Hollywood format)"
+    source: "Save the Cat! (2005)"
+    breakpoints:
+      # Position index: percentage through story
+      0: 0.00   # Opening Image (special: 1/range)
+      1: 0.05   # Theme Stated
+      2: 0.09   # Set-up ends
+      3: 0.11   # Stasis = Death
+      4: 0.18   # Catalyst
+      5: 0.23   # Debate ends / Break into Two
+      6: 0.27   # B Story
+      7: 0.50   # Midpoint
+      8: 0.68   # Bad Guys Close In ends / All Is Lost
+      9: 0.77   # Dark Night ends / Break into Three
+      10: 0.81  # Gathering the Team
+      11: 0.85  # Executing the Plan
+      12: 0.89  # High Tower Surprise
+      13: 0.93  # Dig Deep Down
+      14: 0.97  # Execution of New Plan
+      15: 1.00  # Final Image
+
+  fiction:
+    name: "Novel Adaptation"
+    description: "Modified for prose fiction - shorter Act 1 (1/5 vs 1/4)"
+    source: "Save the Cat! Writes a Novel (2018)"
+    breakpoints:
+      0: 0.00
+      1: 0.04   # Theme Stated earlier
+      2: 0.08   # Set-up ends earlier
+      3: 0.09   # Stasis = Death
+      4: 0.10   # Catalyst earlier
+      5: 0.20   # Break into Two (1/5 mark, not 1/4)
+      6: 0.24   # B Story
+      7: 0.50   # Midpoint (same)
+      8: 0.68   # All Is Lost (same)
+      9: 0.77   # Break into Three (same)
+      10: 0.81  # Gathering the Team
+      11: 0.85  # Executing the Plan
+      12: 0.89  # High Tower Surprise
+      13: 0.93  # Dig Deep Down
+      14: 0.97  # Execution of New Plan
+      15: 1.00  # Final Image
+
+# =============================================================================
+# BEAT DEFINITIONS
+# =============================================================================
+
+beats:
+  # ---------------------------------------------------------------------------
+  # ACT ONE: THESIS (0% - 20%)
+  # "The world before" - establishes status quo
+  # ---------------------------------------------------------------------------
+
+  opening_image:
+    id: 1
+    name: "Opening Image"
+    code: "OPENING_IMAGE"
+    description: "A visual that represents the struggle and tone of the story"
+    purpose: "Sets mood, tone, and introduces protagonist's flaw or problem"
+    position_index: 0
+    percentage:
+      bs2: 0.01  # Page 1
+      fiction: 0.01
+    beat_type: "single"
+    act: 1
+    emotional_function: "establish_baseline"
+    questions:
+      - "What is the protagonist's world like before change?"
+      - "What visual metaphor captures their current state?"
+    notes: "Should mirror Final Image to show transformation"
+
+  theme_stated:
+    id: 2
+    name: "Theme Stated"
+    code: "THEME_STATED"
+    description: "What your story is about - the message, the truth"
+    purpose: "Someone poses a question or makes a statement that is the theme"
+    position_index: 1
+    percentage:
+      bs2: 0.05  # Page 5
+      fiction: 0.04
+    beat_type: "single"
+    act: 1
+    emotional_function: "plant_seed"
+    questions:
+      - "What is the thematic premise of this story?"
+      - "What lesson will the protagonist learn?"
+    notes: "Often delivered by a secondary character; protagonist doesn't understand it yet"
+
+  setup:
+    id: 3
+    name: "Set-Up"
+    code: "SETUP"
+    description: "Explore the hero's status quo life and all six things that need fixing"
+    purpose: "Introduce protagonist, their world, and establish what needs to change"
+    position_index_range: [0, 2]
+    percentage:
+      bs2: [0.01, 0.09]  # Pages 1-10
+      fiction: [0.01, 0.08]
+    beat_type: "sequence"
+    act: 1
+    emotional_function: "establish_world"
+    requirements:
+      - "Introduce protagonist"
+      - "Show their flaws (things that need fixing)"
+      - "Introduce key supporting characters"
+      - "Establish stakes"
+      - "Show stasis = death moment"
+    notes: "Everything the hero needs to fix should be planted here"
+
+  stasis_equals_death:
+    id: 4
+    name: "Stasis = Death"
+    code: "STASIS_EQUALS_DEATH"
+    description: "The static world of Act One - why something must change"
+    purpose: "Show that staying the same is not an option"
+    position_index: 3
+    percentage:
+      bs2: 0.11
+      fiction: 0.09
+    beat_type: "single"
+    act: 1
+    emotional_function: "create_urgency"
+    source: "Save the Cat! Strikes Back (2009)"
+    questions:
+      - "Why must the hero change?"
+      - "What will happen if they don't?"
+    notes: "Added in later Save the Cat editions; shows status quo is untenable"
+
+  catalyst:
+    id: 5
+    name: "Catalyst"
+    code: "CATALYST"
+    aliases: ["Inciting Incident", "Call to Adventure"]
+    description: "The moment where life as it is changes completely"
+    purpose: "Life-changing event that starts the story's main action"
+    position_index: 4
+    percentage:
+      bs2: 0.12  # Page 12 (10%)
+      fiction: 0.10
+    beat_type: "single"
+    act: 1
+    emotional_function: "disrupt_equilibrium"
+    catalyst_types:
+      - "Getting fired"
+      - "Meeting someone"
+      - "Discovering something"
+      - "Death"
+      - "Breaking up"
+      - "Getting news"
+    questions:
+      - "What event disrupts the protagonist's normal world?"
+      - "What external force initiates the change?"
+    notes: "Should be external to the hero, not their choice"
+
+  debate:
+    id: 6
+    name: "Debate"
+    code: "DEBATE"
+    description: "The last chance for the hero to say no"
+    purpose: "Hero debates whether to accept the call to adventure"
+    position_index_range: [4, 5]
+    percentage:
+      bs2: [0.12, 0.23]  # Pages 12-25
+      fiction: [0.10, 0.20]
+    beat_type: "sequence"
+    act: 1
+    emotional_function: "build_anticipation"
+    questions:
+      - "Should I go?"
+      - "What do I have to lose?"
+      - "Am I ready for this?"
+    notes: "Hero weighs options; shows reluctance and fear"
+
+  # ---------------------------------------------------------------------------
+  # ACT TWO (PART A): ANTITHESIS (20% - 50%)
+  # "The upside-down world" - opposite of Act One
+  # ---------------------------------------------------------------------------
+
+  break_into_two:
+    id: 7
+    name: "Break into Two"
+    code: "BREAK_INTO_TWO"
+    aliases: ["First Plot Point", "Crossing the Threshold"]
+    description: "The hero decides to accept the call to adventure"
+    purpose: "Hero makes the choice that launches Act 2"
+    position_index: 5
+    percentage:
+      bs2: 0.25  # Page 25 (1/4 mark)
+      fiction: 0.20  # 1/5 mark for novels
+    beat_type: "single"
+    act: 2
+    emotional_function: "commit"
+    requirements:
+      - "Must be a proactive choice by the hero"
+      - "Cannot be forced or accidental"
+      - "Launches hero into new world"
+    questions:
+      - "What choice does the hero make?"
+      - "What are they leaving behind?"
+
+  b_story:
+    id: 8
+    name: "B Story"
+    code: "B_STORY"
+    description: "The helper story - often a love story"
+    purpose: "Introduces characters who help the hero learn the theme"
+    position_index: 6
+    percentage:
+      bs2: 0.30  # Page 30
+      fiction: 0.24
+    beat_type: "single"
+    act: 2
+    emotional_function: "provide_support"
+    b_story_types:
+      - "Love interest"
+      - "Mentor figure"
+      - "New ally/friend"
+      - "Internal journey"
+    questions:
+      - "Who helps the hero learn the theme?"
+      - "What relationship carries the theme?"
+    notes: "Provides breather from A story; often where theme is discussed"
+
+  fun_and_games:
+    id: 9
+    name: "Fun and Games"
+    code: "FUN_AND_GAMES"
+    aliases: ["Promise of the Premise"]
+    description: "This is where we see the 'hook' of the story"
+    purpose: "Deliver what the audience came for - the trailer moments"
+    position_index_range: [6, 7]
+    percentage:
+      bs2: [0.30, 0.50]  # Pages 30-55
+      fiction: [0.24, 0.50]
+    beat_type: "sequence"
+    act: 2
+    emotional_function: "deliver_premise"
+    questions:
+      - "What did the audience come to see?"
+      - "What is the promise of the premise?"
+      - "What makes this story unique?"
+    notes: "Least structured section; hero tries 'old way' to solve problem"
+
+  midpoint:
+    id: 10
+    name: "Midpoint"
+    code: "MIDPOINT"
+    description: "Stakes are raised; it's no longer a game"
+    purpose: "False victory or false defeat; stakes become real"
+    position_index: 7
+    percentage:
+      bs2: 0.50  # Page 55 (exact center)
+      fiction: 0.50
+    beat_type: "single"
+    act: 2
+    emotional_function: "raise_stakes"
+    midpoint_types:
+      false_victory:
+        description: "Hero seems to achieve goal"
+        consequence: "Leads to complacency, then downfall"
+        examples: ["Gets the prize", "Wins the battle", "Achieves success"]
+      false_defeat:
+        description: "Hero seems to lose everything"
+        consequence: "Leads to new determination"
+        examples: ["Loses love interest", "Plan fails", "Gets captured"]
+    questions:
+      - "What raises the stakes at the halfway point?"
+      - "Is this a false victory or false defeat?"
+    notes: "A and B stories often cross here; time clocks often start"
+
+  # ---------------------------------------------------------------------------
+  # ACT TWO (PART B): SYNTHESIS (50% - 75%)
+  # "Bad guys close in" - things get worse
+  # ---------------------------------------------------------------------------
+
+  bad_guys_close_in:
+    id: 11
+    name: "Bad Guys Close In"
+    code: "BAD_GUYS_CLOSE_IN"
+    description: "The hero's world starts to fall apart"
+    purpose: "Internal bad guys (doubt, fear) and external bad guys mount"
+    position_index_range: [7, 8]
+    percentage:
+      bs2: [0.50, 0.68]  # Pages 55-75
+      fiction: [0.50, 0.68]
+    beat_type: "sequence"
+    act: 2
+    emotional_function: "escalate_conflict"
+    bad_guy_types:
+      external:
+        - "Villain intensifies"
+        - "New obstacles appear"
+        - "Allies betray"
+      internal:
+        - "Team dissension"
+        - "Self-doubt grows"
+        - "Jealousy/rivalry"
+    questions:
+      - "How do things get worse for the hero?"
+      - "What internal doubts emerge?"
+      - "How does the antagonist respond to midpoint?"
+    notes: "If midpoint was false victory, this section brings defeat; if false defeat, this brings hope then crash"
+
+  all_is_lost:
+    id: 12
+    name: "All Is Lost"
+    code: "ALL_IS_LOST"
+    description: "The opposite of the midpoint"
+    purpose: "The lowest point - false defeat if midpoint was false victory"
+    position_index: 8
+    percentage:
+      bs2: 0.75  # Page 75 (3/4 mark)
+      fiction: 0.68
+    beat_type: "single"
+    act: 2
+    emotional_function: "hit_rock_bottom"
+    requirements:
+      - "Whiff of death (literal or metaphorical)"
+      - "Old way definitively fails"
+      - "Mentor may die"
+    whiff_of_death:
+      description: "Something must die - can be literal death, relationship death, idea death"
+      examples:
+        - "Mentor dies"
+        - "Dream dies"
+        - "Relationship ends"
+        - "Identity death"
+    questions:
+      - "What is the protagonist's lowest moment?"
+      - "What dies here?"
+
+  # ---------------------------------------------------------------------------
+  # ACT THREE: SYNTHESIS (75% - 100%)
+  # "The world after" - transformation complete
+  # ---------------------------------------------------------------------------
+
+  dark_night_of_the_soul:
+    id: 13
+    name: "Dark Night of the Soul"
+    code: "DARK_NIGHT_OF_THE_SOUL"
+    description: "The darkness right before the dawn"
+    purpose: "Hero reacts to All Is Lost; wallows before solution"
+    position_index_range: [8, 9]
+    percentage:
+      bs2: [0.75, 0.80]  # Pages 75-85
+      fiction: [0.68, 0.77]
+    beat_type: "sequence"
+    act: 3
+    emotional_function: "process_defeat"
+    questions:
+      - "How does the hero process their defeat?"
+      - "What moment of clarity emerges?"
+    notes: "Often the shortest beat; hero sits with failure before revelation"
+
+  break_into_three:
+    id: 14
+    name: "Break into Three"
+    code: "BREAK_INTO_THREE"
+    aliases: ["Second Plot Point", "The Revelation"]
+    description: "Solution is found; usually from B story"
+    purpose: "Hero finds the solution by combining A and B story lessons"
+    position_index: 9
+    percentage:
+      bs2: 0.80  # Page 85
+      fiction: 0.77
+    beat_type: "single"
+    act: 3
+    emotional_function: "eureka_moment"
+    requirements:
+      - "Solution comes from combining A and B story"
+      - "Hero finally understands theme"
+      - "External + internal solution"
+    questions:
+      - "What revelation does the hero have?"
+      - "How does B story provide the key?"
+
+  # ---------------------------------------------------------------------------
+  # FIVE-POINT FINALE (80% - 99%)
+  # Added in "Save the Cat! Strikes Back" (2009)
+  # ---------------------------------------------------------------------------
+
+  finale:
+    id: 15
+    name: "Finale"
+    code: "FINALE"
+    description: "The final act - hero confronts obstacles and applies lessons"
+    purpose: "Complete the story; synthesize thesis and antithesis"
+    position_index_range: [9, 15]
+    percentage:
+      bs2: [0.80, 0.99]  # Pages 85-110
+      fiction: [0.77, 0.99]
+    beat_type: "act"
+    act: 3
+    emotional_function: "resolve"
+    sub_beats:
+      gathering_the_team:
+        position_index: 10
+        percentage: 0.81
+        description: "Hero gathers allies and prepares for final battle"
+        purpose: "Shows hero has changed - can now work with others"
+
+      executing_the_plan:
+        position_index: 11
+        percentage: 0.85
+        description: "Hero puts plan into action"
+        purpose: "Initial attempt at solving problem using new knowledge"
+
+      high_tower_surprise:
+        position_index: 12
+        percentage: 0.89
+        description: "Twist or complication - the plan isn't working"
+        purpose: "Final test - forces hero to dig deeper"
+        notes: "Named for classic trope of princess in high tower"
+
+      dig_deep_down:
+        position_index: 13
+        percentage: 0.93
+        description: "Hero reaches deep inside for strength"
+        purpose: "Prove transformation is complete; find inner strength"
+
+      execution_of_new_plan:
+        position_index: 14
+        percentage: 0.97
+        description: "Hero applies the theme/lesson to defeat bad guy"
+        purpose: "Resolution that only works because of transformation"
+
+  final_image:
+    id: 16
+    name: "Final Image"
+    code: "FINAL_IMAGE"
+    description: "Opposite of the opening image - proof of change"
+    purpose: "Visual proof that the hero has transformed"
+    position_index: 15
+    percentage:
+      bs2: 1.00  # Final page
+      fiction: 1.00
+    beat_type: "single"
+    act: 3
+    emotional_function: "confirm_transformation"
+    requirements:
+      - "Must mirror Opening Image"
+      - "Show how protagonist has changed"
+      - "Demonstrate theme visually"
+    questions:
+      - "How has the protagonist's world changed?"
+      - "What visual proves the transformation?"
+
+# =============================================================================
+# 10 GENRE CATEGORIES
+# =============================================================================
+# Each genre has specific beat expectations
+
+genres:
+  monster_in_the_house:
+    code: "MITH"
+    name: "Monster in the House"
+    description: "A monster, a house, and a sin"
+    core_elements:
+      monster:
+        description: "Supernatural or serial killer villain"
+        requirement: "Must be fundamentally evil, not misunderstood"
+      house:
+        description: "Enclosed space that traps characters"
+        examples: ["Spaceship", "Beach town", "Family home", "Office building"]
+      sin:
+        description: "Someone's transgression that brings the monster"
+        examples: ["Greed", "Hubris", "Trespassing", "Playing God"]
+    optional_elements:
+      half_man:
+        description: "Character who encountered monster before and survived"
+        purpose: "Provides exposition and shows what's at stake"
+    examples: ["Jaws", "Alien", "The Exorcist", "A Quiet Place", "Jurassic Park"]
+
+  golden_fleece:
+    code: "GF"
+    name: "Golden Fleece"
+    description: "A road, a team, and a prize"
+    core_elements:
+      road:
+        description: "A journey that changes the hero"
+        note: "Includes 'road apple' - obstacles along the way"
+      team:
+        description: "Companions who represent what hero needs to learn"
+      prize:
+        description: "Tangible goal driving the quest"
+    theme: "Internal growth matters more than external prize"
+    examples: ["Star Wars", "The Wizard of Oz", "Finding Nemo", "Lord of the Rings"]
+
+  out_of_the_bottle:
+    code: "OOTB"
+    name: "Out of the Bottle"
+    description: "A wish, a spell, and a lesson"
+    core_elements:
+      wish:
+        description: "Something the hero wants granted"
+      spell:
+        description: "The mechanism that grants the wish"
+        examples: ["Magic", "Technology", "Body swap", "Time travel"]
+      lesson:
+        description: "Hero learns magic isn't everything"
+        requirement: "Must discover their own inherent worth"
+    examples: ["Big", "Liar Liar", "Bruce Almighty", "Groundhog Day", "Freaky Friday"]
+
+  dude_with_a_problem:
+    code: "DWAP"
+    name: "Dude with a Problem"
+    description: "An innocent hero, a sudden event, and a life-or-death battle"
+    core_elements:
+      innocent_hero:
+        description: "Ordinary person in extraordinary circumstances"
+        requirement: "Must be relatable, not skilled"
+      sudden_event:
+        description: "Life-disrupting circumstance outside hero's control"
+      life_or_death:
+        description: "High stakes requiring courage and resourcefulness"
+    rule: "The badder the bad guy, the greater the heroics"
+    examples: ["Die Hard", "Titanic", "The Martian", "127 Hours", "Misery"]
+
+  rites_of_passage:
+    code: "ROP"
+    name: "Rites of Passage"
+    description: "A life problem, a wrong way, and acceptance"
+    core_elements:
+      life_problem:
+        description: "Universal human experience"
+        examples: ["Puberty", "Midlife crisis", "Death", "Addiction", "Divorce"]
+      wrong_way:
+        description: "Hero initially handles problem incorrectly"
+      acceptance:
+        description: "Hero learns to accept life on life's terms"
+    theme: "Slow realization of forces beyond our control"
+    examples: ["Ordinary People", "Lady Bird", "The Graduate", "American Beauty"]
+
+  buddy_love:
+    code: "BL"
+    name: "Buddy Love"
+    description: "An incomplete hero, a counterpart, and a complication"
+    core_elements:
+      incomplete_hero:
+        description: "Protagonist missing something essential"
+      counterpart:
+        description: "Person who provides what hero lacks"
+        note: "Can be friend, pet, or even enemy"
+      complication:
+        description: "External or internal force threatening relationship"
+    structure: "Hate → Collaboration reveals incompleteness → Separation → Ego surrender → Reunion"
+    examples: ["Pretty Woman", "Rain Man", "E.T.", "Toy Story", "When Harry Met Sally"]
+
+  whydunit:
+    code: "WD"
+    name: "Whydunit"
+    description: "A detective, a secret, and a dark turn"
+    core_elements:
+      detective:
+        description: "Character driven to uncover truth"
+        types: ["Professional", "Amateur"]
+      secret:
+        description: "Truth revealing human darkness"
+      dark_turn:
+        description: "Protagonist compromises morals in pursuit"
+    key_insight: "Not 'who did it' but 'why'"
+    examples: ["Citizen Kane", "Chinatown", "Knives Out", "Gone Girl"]
+
+  fool_triumphant:
+    code: "FT"
+    name: "The Fool Triumphant"
+    description: "A fool, an establishment, and a transmutation"
+    core_elements:
+      fool:
+        description: "Underestimated protagonist"
+        requirement: "Must be genuine, not pretending"
+      establishment:
+        description: "Powerful institution the fool challenges"
+      transmutation:
+        description: "Moment fool reveals hidden competence"
+    optional_elements:
+      insider_accomplice:
+        description: "Someone who knows the 'ruse'"
+    examples: ["Forrest Gump", "Amadeus", "Being There", "Legally Blonde"]
+
+  institutionalized:
+    code: "INST"
+    name: "Institutionalized"
+    description: "A group, a choice, and a sacrifice"
+    core_elements:
+      group:
+        description: "Family, organization, or institution"
+      choice:
+        description: "Whether to join, stay, leave, or destroy"
+      sacrifice:
+        description: "What's lost due to the decision"
+    central_question: "To join or not to join?"
+    optional_elements:
+      breakout_character:
+        description: "Exposes the group's goal as fraud"
+    examples: ["The Godfather", "One Flew Over the Cuckoo's Nest", "The Social Network"]
+
+  superhero:
+    code: "SH"
+    name: "Superhero"
+    description: "A special power, a nemesis, and a curse"
+    core_elements:
+      special_power:
+        description: "What makes hero extraordinary"
+        examples: ["Superhuman abilities", "Being 'the chosen one'", "Unique gift"]
+      nemesis:
+        description: "Opponent who exceeds hero's capabilities"
+        requirement: "Must be overwhelming"
+      curse:
+        description: "Price paid for having powers"
+    theme: "Triumph despite being misunderstood"
+    examples: ["Harry Potter", "Spider-Man", "The Matrix", "A Beautiful Mind"]
+
+# =============================================================================
+# CALCULATION LOGIC
+# =============================================================================
+
+calculation:
+  formula: "position = ceil(percentage * total_length)"
+
+  example_110_pages:
+    - beat: "Opening Image"
+      percentage: 0.01
+      page: 1
+
+    - beat: "Theme Stated"
+      percentage: 0.05
+      page: 6
+
+    - beat: "Catalyst"
+      percentage: 0.12
+      page: 13
+
+    - beat: "Break into Two"
+      percentage: 0.25
+      page: 28
+
+    - beat: "Midpoint"
+      percentage: 0.50
+      page: 55
+
+    - beat: "All Is Lost"
+      percentage: 0.75
+      page: 83
+
+    - beat: "Final Image"
+      percentage: 1.00
+      page: 110
+
+# =============================================================================
+# REFERENCES
+# =============================================================================
+
+references:
+  primary:
+    - title: "Save the Cat! The Last Book on Screenwriting You'll Ever Need"
+      author: "Blake Snyder"
+      year: 2005
+      publisher: "Michael Wiese Productions"
+
+    - title: "Save the Cat! Strikes Back"
+      author: "Blake Snyder"
+      year: 2009
+      notes: "Added Stasis=Death and Five-Point Finale"
+
+    - title: "Save the Cat! Writes a Novel"
+      author: "Jessica Brody"
+      year: 2018
+      notes: "Adapted for prose fiction"
+
+  implementations:
+    - name: "beatsheet"
+      language: "JavaScript"
+      repository: "~/repos/beatsheet"
+      url: "https://github.com/davidlitmark/beatsheet"

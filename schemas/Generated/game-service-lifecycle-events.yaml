@@ -21,6 +21,7 @@ components:
       - stubName
       - displayName
       - isActive
+      - createdAt
       properties:
         eventName:
           type: string
@@ -43,6 +44,15 @@ components:
         isActive: &id005
           type: boolean
           description: Whether the game service is currently active
+        createdAt: &id006
+          type: string
+          format: date-time
+          description: When the service was created
+        updatedAt: &id007
+          type: string
+          format: date-time
+          nullable: true
+          description: When the service was last updated
     GameServiceUpdatedEvent:
       allOf:
       - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
@@ -57,6 +67,7 @@ components:
       - stubName
       - displayName
       - isActive
+      - createdAt
       - changedFields
       properties:
         eventName:
@@ -68,6 +79,8 @@ components:
         displayName: *id003
         description: *id004
         isActive: *id005
+        createdAt: *id006
+        updatedAt: *id007
         changedFields:
           type: array
           items:
@@ -87,6 +100,7 @@ components:
       - stubName
       - displayName
       - isActive
+      - createdAt
       properties:
         eventName:
           type: string
@@ -97,6 +111,8 @@ components:
         displayName: *id003
         description: *id004
         isActive: *id005
+        createdAt: *id006
+        updatedAt: *id007
         deletedReason:
           type: string
           nullable: true

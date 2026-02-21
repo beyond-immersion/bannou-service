@@ -114,6 +114,26 @@ public interface IConnectController : BeyondImmersion.BannouService.Controllers.
     System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> ConnectWebSocketPostAsync(Connection2 connection, Upgrade2 upgrade, string authorization, ConnectRequest? body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
     /// <summary>
+    /// Permission-gated proxy for endpoint metadata
+    /// </summary>
+
+    /// <remarks>
+    /// Accepts a full meta endpoint path (e.g., "/account/get/meta/info"),
+    /// <br/>validates the caller's JWT, looks up their active WebSocket session
+    /// <br/>via the JWT's sessionKey, checks the session's capability mappings
+    /// <br/>for the underlying endpoint, and proxies the internal meta GET
+    /// <br/>request if authorized. Returns the meta endpoint response directly.
+    /// <br/>
+    /// <br/>Requires an active WebSocket connection -- the session's compiled
+    /// <br/>capability mappings in Connect's in-memory connection state are the
+    /// <br/>permission source, exactly as for WebSocket meta requests.
+    /// </remarks>
+
+    /// <returns>Meta endpoint response</returns>
+
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<GetEndpointMetaResponse>> GetEndpointMetaAsync(GetEndpointMetaRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
+    /// <summary>
     /// Get all active WebSocket sessions for an account
     /// </summary>
 
@@ -142,10 +162,12 @@ public interface IConnectController : BeyondImmersion.BannouService.Controllers.
 public abstract class ConnectControllerBase : Microsoft.AspNetCore.Mvc.ControllerBase
 {
     private IConnectService _implementation;
+    private BeyondImmersion.BannouService.Services.ITelemetryProvider _telemetryProvider;
 
-    public ConnectControllerBase(IConnectService implementation)
+    public ConnectControllerBase(IConnectService implementation, BeyondImmersion.BannouService.Services.ITelemetryProvider telemetryProvider)
     {
         _implementation = implementation;
+        _telemetryProvider = telemetryProvider;
     }
 
     /// <summary>
@@ -198,8 +220,40 @@ public abstract class ConnectControllerBase : Microsoft.AspNetCore.Mvc.Controlle
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<InternalProxyResponse>> ProxyInternalRequest([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] InternalProxyRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
-        var (statusCode, result) = await _implementation.ProxyInternalRequestAsync(body, cancellationToken);
-        return ConvertToActionResult(statusCode, result);
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.internal",
+            "ConnectController.ProxyInternalRequest",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "internal/proxy");
+        try
+        {
+
+            var (statusCode, result) = await _implementation.ProxyInternalRequestAsync(body, cancellationToken);
+            return ConvertToActionResult(statusCode, result);
+        }
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<ConnectControllerBase>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:internal/proxy");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
+            return StatusCode(503);
+        }
+        catch (System.Exception ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<ConnectControllerBase>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogError(logger_, ex_, "Unexpected error in {Endpoint}", "post:internal/proxy");
+            var messageBus_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<BeyondImmersion.BannouService.Services.IMessageBus>(HttpContext.RequestServices);
+            await messageBus_.TryPublishErrorAsync(
+                "internal",
+                "ProxyInternalRequest",
+                "unexpected_exception",
+                ex_.Message,
+                endpoint: "post:internal/proxy",
+                stack: ex_.StackTrace,
+                cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
+            return StatusCode(500);
+        }
     }
 
     /// <summary>
@@ -226,8 +280,40 @@ public abstract class ConnectControllerBase : Microsoft.AspNetCore.Mvc.Controlle
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ClientCapabilitiesResponse>> GetClientCapabilities([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] GetClientCapabilitiesRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
-        var (statusCode, result) = await _implementation.GetClientCapabilitiesAsync(body, cancellationToken);
-        return ConvertToActionResult(statusCode, result);
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.client-capabilities",
+            "ConnectController.GetClientCapabilities",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "client-capabilities");
+        try
+        {
+
+            var (statusCode, result) = await _implementation.GetClientCapabilitiesAsync(body, cancellationToken);
+            return ConvertToActionResult(statusCode, result);
+        }
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<ConnectControllerBase>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:client-capabilities");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
+            return StatusCode(503);
+        }
+        catch (System.Exception ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<ConnectControllerBase>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogError(logger_, ex_, "Unexpected error in {Endpoint}", "post:client-capabilities");
+            var messageBus_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<BeyondImmersion.BannouService.Services.IMessageBus>(HttpContext.RequestServices);
+            await messageBus_.TryPublishErrorAsync(
+                "client-capabilities",
+                "GetClientCapabilities",
+                "unexpected_exception",
+                ex_.Message,
+                endpoint: "post:client-capabilities",
+                stack: ex_.StackTrace,
+                cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
+            return StatusCode(500);
+        }
     }
 
     /// <summary>
@@ -269,6 +355,62 @@ public abstract class ConnectControllerBase : Microsoft.AspNetCore.Mvc.Controlle
     public abstract System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> ConnectWebSocketPost([Microsoft.AspNetCore.Mvc.FromHeader] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] Connection2 connection, [Microsoft.AspNetCore.Mvc.FromHeader] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] Upgrade2 upgrade, [Microsoft.AspNetCore.Mvc.FromHeader] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] string authorization, [Microsoft.AspNetCore.Mvc.FromBody] ConnectRequest? body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
     /// <summary>
+    /// Permission-gated proxy for endpoint metadata
+    /// </summary>
+    /// <remarks>
+    /// Accepts a full meta endpoint path (e.g., "/account/get/meta/info"),
+    /// <br/>validates the caller's JWT, looks up their active WebSocket session
+    /// <br/>via the JWT's sessionKey, checks the session's capability mappings
+    /// <br/>for the underlying endpoint, and proxies the internal meta GET
+    /// <br/>request if authorized. Returns the meta endpoint response directly.
+    /// <br/>
+    /// <br/>Requires an active WebSocket connection -- the session's compiled
+    /// <br/>capability mappings in Connect's in-memory connection state are the
+    /// <br/>permission source, exactly as for WebSocket meta requests.
+    /// </remarks>
+    /// <returns>Meta endpoint response</returns>
+    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("connect/get-endpoint-meta")]
+
+    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<GetEndpointMetaResponse>> GetEndpointMeta([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] GetEndpointMetaRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    {
+
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.connect",
+            "ConnectController.GetEndpointMeta",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "connect/get-endpoint-meta");
+        try
+        {
+
+            var (statusCode, result) = await _implementation.GetEndpointMetaAsync(body, cancellationToken);
+            return ConvertToActionResult(statusCode, result);
+        }
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<ConnectControllerBase>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:connect/get-endpoint-meta");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
+            return StatusCode(503);
+        }
+        catch (System.Exception ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<ConnectControllerBase>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogError(logger_, ex_, "Unexpected error in {Endpoint}", "post:connect/get-endpoint-meta");
+            var messageBus_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<BeyondImmersion.BannouService.Services.IMessageBus>(HttpContext.RequestServices);
+            await messageBus_.TryPublishErrorAsync(
+                "connect",
+                "GetEndpointMeta",
+                "unexpected_exception",
+                ex_.Message,
+                endpoint: "post:connect/get-endpoint-meta",
+                stack: ex_.StackTrace,
+                cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
+            return StatusCode(500);
+        }
+    }
+
+    /// <summary>
     /// Get all active WebSocket sessions for an account
     /// </summary>
     /// <remarks>
@@ -290,8 +432,40 @@ public abstract class ConnectControllerBase : Microsoft.AspNetCore.Mvc.Controlle
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<GetAccountSessionsResponse>> GetAccountSessions([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] GetAccountSessionsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
-        var (statusCode, result) = await _implementation.GetAccountSessionsAsync(body, cancellationToken);
-        return ConvertToActionResult(statusCode, result);
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.connect",
+            "ConnectController.GetAccountSessions",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "connect/get-account-sessions");
+        try
+        {
+
+            var (statusCode, result) = await _implementation.GetAccountSessionsAsync(body, cancellationToken);
+            return ConvertToActionResult(statusCode, result);
+        }
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<ConnectControllerBase>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:connect/get-account-sessions");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
+            return StatusCode(503);
+        }
+        catch (System.Exception ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<ConnectControllerBase>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogError(logger_, ex_, "Unexpected error in {Endpoint}", "post:connect/get-account-sessions");
+            var messageBus_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<BeyondImmersion.BannouService.Services.IMessageBus>(HttpContext.RequestServices);
+            await messageBus_.TryPublishErrorAsync(
+                "connect",
+                "GetAccountSessions",
+                "unexpected_exception",
+                ex_.Message,
+                endpoint: "post:connect/get-account-sessions",
+                stack: ex_.StackTrace,
+                cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
+            return StatusCode(500);
+        }
     }
 
 }

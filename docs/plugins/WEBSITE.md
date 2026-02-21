@@ -3,13 +3,14 @@
 > **Plugin**: lib-website
 > **Schema**: schemas/website-api.yaml
 > **Version**: 1.0.0
+> **Layer**: AppFeatures
 > **State Store**: None (no state stores defined)
 
 ---
 
 ## Overview
 
-Public-facing website service for browser-based access to registration, news, account management, game downloads, CMS page management, and server status. This is a unique service in Bannou because it uses traditional REST HTTP methods (GET, PUT, DELETE) with path parameters for browser compatibility (bookmarkable URLs, SEO, caching), which is an explicit exception to the POST-only API pattern used by all other services. The service is currently a complete stub -- every endpoint returns `StatusCodes.NotImplemented` with a warning log. No business logic, state storage, or cross-service calls are implemented. The schema defines a comprehensive CMS-oriented API with page management, theme configuration, site settings, news, downloads, contact forms, and authenticated account/character/subscription views. When implemented, this service will require integration with account, character, subscription, realm, and potentially auth services via generated clients.
+Public-facing website service (L3 AppFeatures) for browser-based access to news, account profiles, game downloads, CMS pages, and contact forms. Intentionally does NOT access game data (characters, subscriptions, realms) to respect the service hierarchy. Uses traditional REST HTTP methods (GET, PUT, DELETE) with path parameters for browser compatibility, which is an explicit exception to Bannou's POST-only pattern. **Currently a complete stub** -- every endpoint returns `NotImplemented`. When implemented, will require lib-account integration and state stores for CMS data.
 
 ---
 
@@ -17,10 +18,10 @@ Public-facing website service for browser-based access to registration, news, ac
 
 | Dependency | Usage |
 |------------|-------|
-| lib-messaging (`IMessageBus`) | Error event publishing via `TryPublishErrorAsync`; permission registration event |
+| lib-messaging (`IMessageBus`) | Error event publishing via `TryPublishErrorAsync` |
 | lib-messaging (`IEventConsumer`) | Event handler registration (constructor call, no handlers registered) |
 
-**Note**: The service currently has no dependency on `IStateStoreFactory`, generated service clients, or any other infrastructure libs. When implemented, it will likely require `IAccountClient`, `ICharacterClient`, `ISubscriptionClient`, `IRealmClient`, and `IStateStoreFactory` for CMS page persistence.
+**Note**: The service currently has no dependency on `IStateStoreFactory`, generated service clients, or any other infrastructure libs. When implemented, it will require `IAccountClient` (for profile retrieval) and `IStateStoreFactory` for CMS page persistence. Per the service hierarchy (L3 cannot depend on L2 game services), this service intentionally does NOT use `ICharacterClient`, `ISubscriptionClient`, or `IRealmClient`.
 
 ---
 
@@ -56,7 +57,7 @@ The `schemas/state-stores.yaml` file contains no entries for "website". When CMS
 
 | Topic | Event Type | Trigger |
 |-------|-----------|---------|
-| `permission.service-registered` | `ServiceRegistrationEvent` | On startup (permission matrix registration) |
+| *(none)* | | Permission registration is now DI-based via `IPermissionRegistry` |
 | `error.*` | Error event (via `TryPublishErrorAsync`) | On unhandled exceptions in any endpoint |
 
 No domain-specific events are published (all endpoints are stubs).
@@ -85,7 +86,7 @@ The `schemas/website-configuration.yaml` defines no properties (`x-service-confi
 |---------|----------|------|
 | `ILogger<WebsiteService>` | Scoped | Structured logging (warning for stub calls, error for exceptions) |
 | `WebsiteServiceConfiguration` | Singleton | Configuration (currently unused) |
-| `IMessageBus` | Scoped | Error event publishing and permission registration |
+| `IMessageBus` | Scoped | Error event publishing |
 | `IEventConsumer` | Scoped | Event handler registration (no handlers) |
 
 Service lifetime is **Scoped** (per-request). No background services. Plugin discovery is via `WebsiteServicePlugin : StandardServicePlugin<IWebsiteService>` with `PluginName = "website"`.
@@ -94,13 +95,11 @@ Service lifetime is **Scoped** (per-request). No background services. Plugin dis
 
 ## API Endpoints (Implementation Notes)
 
-**CRITICAL: ALL 17 endpoints are stubs.** Every method logs a warning and returns `(StatusCodes.NotImplemented, null)`. The error handling catch blocks call `TryPublishErrorAsync` but can never be reached because the try blocks contain only a log statement and return.
+**CRITICAL: ALL 14 endpoints are stubs.** All methods log a debug message and return `(StatusCodes.NotImplemented, null)`. The error handling catch blocks call `TryPublishErrorAsync` but can never be reached because the try blocks contain only a log statement and return.
 
-### Status Endpoints (2 endpoints)
+### Status Endpoint (1 endpoint)
 
 - **GetStatus** (`GET /website/status`): Returns service health, version, and uptime. Access: anonymous. **Stub** -- returns NotImplemented. When implemented, should return actual service health metrics, version from assembly, and calculated uptime.
-
-- **GetServerStatus** (`GET /website/server-status`): Returns game server status for all realms with population levels. Access: anonymous. **Stub** -- returns NotImplemented. When implemented, will need to query realm service for all realms and their online/population status (likely via `IRealmClient` or real-time aggregation from game-session events).
 
 ### Content Endpoints (2 endpoints)
 
@@ -116,13 +115,11 @@ Service lifetime is **Scoped** (per-request). No background services. Plugin dis
 
 - **SubmitContact** (`POST /website/contact`): Submits a contact form. Access: anonymous. This is the only POST endpoint in the public-facing API. Request body: `ContactRequest` with required email, subject (5-200 chars), message (10-2000 chars), optional name and category (general/support/bug/feedback/business). Schema defines 429 Too Many Requests response. **Stub** -- returns NotImplemented. When implemented, should generate a ticket ID, store the contact request, and potentially publish an event or send email notification.
 
-### Account Endpoints (3 endpoints)
+### Account Endpoint (1 endpoint)
 
 - **GetAccountProfile** (`GET /website/account/profile`): Retrieves logged-in user's account profile. Access: user (requires BearerAuth). **Stub** -- returns NotImplemented. When implemented, will need to resolve the authenticated user's identity and call `IAccountClient` for account data.
 
-- **GetAccountCharacters** (`GET /website/account/characters`): Lists characters for the logged-in user. Access: user (requires BearerAuth). **Stub** -- returns NotImplemented. When implemented, will need to call `ICharacterClient` to list characters owned by the authenticated account.
-
-- **GetSubscription** (`GET /website/account/subscription`): Returns subscription status and plan details. Access: user (requires BearerAuth). **Stub** -- returns NotImplemented. When implemented, will need to call `ISubscriptionClient` for the user's active subscription.
+**Note**: Game-specific account endpoints (characters, subscriptions) were intentionally removed from the Website schema to respect the L3/L2 service hierarchy boundary. Character and subscription data should be accessed through a future L4 "game-portal" service or directly via game clients.
 
 ### CMS Endpoints (7 endpoints)
 
@@ -153,7 +150,6 @@ Website Service Architecture (Planned)
   Browser / Game Launcher
        │
        ├── GET /website/status
-       ├── GET /website/server-status
        ├── GET /website/news
        ├── GET /website/downloads
        ├── GET /website/content/{slug}
@@ -161,8 +157,6 @@ Website Service Architecture (Planned)
        │
        │   (Authenticated via JWT)
        ├── GET /website/account/profile
-       ├── GET /website/account/characters
-       ├── GET /website/account/subscription
        │
        │   (Developer access)
        ├── GET/POST /website/cms/pages
@@ -173,6 +167,7 @@ Website Service Architecture (Planned)
               ▼
      ┌─────────────────────────────────────┐
      │         WebsiteService              │
+     │   (L3 App Feature - Pure CMS)       │
      │   (ALL STUBS - NotImplemented)      │
      │                                     │
      │   Dependencies (current):           │
@@ -181,7 +176,9 @@ Website Service Architecture (Planned)
      │                                     │
      │   Dependencies (future):            │
      │   ├── IStateStoreFactory            │
-     │   ├── IAccountClient                │
+     │   └── IAccountClient (L1)           │
+     │                                     │
+     │   ❌ NO L2 game service deps:       │
      │   ├── ICharacterClient              │
      │   ├── ISubscriptionClient           │
      │   └── IRealmClient                  │
@@ -211,11 +208,9 @@ HTTP Methods in Use (Unique to Website Service)
 Permission Matrix
 ==================
 
-  anonymous ──► status, content/{slug}, news, server-status,
-                downloads, contact
+  anonymous ──► status, content/{slug}, news, downloads, contact
 
-  user ────────► account/profile, account/characters,
-                 account/subscription
+  user ────────► account/profile
 
   developer ───► cms/pages (GET, POST, PUT, DELETE),
                   cms/site-settings (GET, PUT),
@@ -265,15 +260,15 @@ Generated Model Hierarchy
 
 ## Stubs & Unimplemented Features
 
-1. **ALL 17 endpoints are stubs**: Every method in `WebsiteService.cs` immediately logs a warning and returns `(StatusCodes.NotImplemented, null)`. There is zero business logic.
+1. **ALL 14 endpoints are stubs**: Every method in `WebsiteService.cs` immediately logs a debug message and returns `(StatusCodes.NotImplemented, null)`. There is zero business logic.
 
 2. **No state store**: The `schemas/state-stores.yaml` has no website entries. CMS pages, news items, site settings, and theme configuration have nowhere to persist.
 
-3. **No service client dependencies**: The service does not inject `IAccountClient`, `ICharacterClient`, `ISubscriptionClient`, or `IRealmClient`. The account, characters, and subscription endpoints cannot function without these.
+3. **No service client dependencies**: The service does not inject `IAccountClient`. The account profile endpoint cannot function without this. Note: per service hierarchy, Website (L3) intentionally does NOT depend on L2 game services like Character, Subscription, or Realm.
 
 4. **No authentication context**: The service has no mechanism to identify the authenticated user (no `IHttpContextAccessor`, no JWT claims extraction). The `user`-role endpoints cannot determine whose profile/characters/subscription to return.
 
-5. **Dead error handling**: The catch blocks in every method call `TryPublishErrorAsync` but can never be reached -- the preceding try block contains only a log statement and a return. The async warning pattern (`LogWarning` then return) cannot throw.
+5. **Dead error handling**: The catch blocks in every method call `TryPublishErrorAsync` but can never be reached -- the preceding try block contains only a log statement and a return. The pattern (`LogDebug` then return) cannot throw.
 
 6. **No event publishing for domain actions**: When implemented, CMS page creation/update/deletion should publish domain events. No events schema exists (`schemas/website-events.yaml` is missing).
 
@@ -289,7 +284,7 @@ Generated Model Hierarchy
 
 1. **CMS state store implementation**: Add `website-pages`, `website-news`, `website-settings` to `schemas/state-stores.yaml` and implement CRUD operations with slug-based indexing.
 
-2. **Service client integration**: Inject `IAccountClient`, `ICharacterClient`, `ISubscriptionClient`, and `IRealmClient` to power the account and server-status endpoints.
+2. **Service client integration**: Inject `IAccountClient` (L1) to power the account profile endpoint. Note: L2 game service clients are intentionally excluded per service hierarchy.
 
 3. **Authentication context**: Add `IHttpContextAccessor` to extract JWT claims (account ID) for authenticated endpoints.
 
@@ -311,17 +306,19 @@ Generated Model Hierarchy
 
 ## Known Quirks & Caveats
 
-### Bugs
+### Bugs (Fix Immediately)
 
-1. **Unreachable catch blocks**: Every endpoint method has a try-catch where the try block cannot throw (contains only `LogWarning` + return). The catch blocks with `TryPublishErrorAsync` are dead code. When real logic is added, the error handling structure is already in place but the current code is misleading.
+None currently identified.
 
-### Intentional Quirks
+### Intentional Quirks (Documented Behavior)
 
 1. **Path params on GET endpoints**: The `content/{slug}` and `cms/pages/{slug}` endpoints use path parameters, which means they cannot be routed via the WebSocket binary protocol (which requires static POST paths for GUID mapping). This service is accessed directly via HTTP, not through the Connect gateway.
 
 2. **No NotImplemented mapping in ConvertToActionResult**: The generated `ConvertToActionResult` switch expression has no case for `StatusCodes.NotImplemented`. Since all stubs currently return NotImplemented, the controller will fall through to the `_ => StatusCode(500, result)` default case, meaning clients receive 500 Internal Server Error instead of 501 Not Implemented.
 
-### Design Considerations
+3. **Scaffolded error handling in stub methods**: Every endpoint method has a try-catch block where the catch cannot currently be reached (the try block contains only `LogDebug` + return, which cannot throw). This is intentional scaffolding - when real business logic is added to the try blocks, the error handling structure with `TryPublishErrorAsync` will become reachable without requiring structural changes.
+
+### Design Considerations (Requires Planning)
 
 1. **No WebSocket access**: Because this service uses REST HTTP methods, it cannot be accessed via the Connect WebSocket gateway. This means browser clients must make direct HTTP requests to the Bannou service, which has implications for authentication (must use Bearer tokens, not WebSocket session tokens).
 
@@ -337,18 +334,22 @@ Generated Model Hierarchy
 
 7. **Schema defines `additionalProperties: false` globally**: All response models forbid additional properties. This means future schema evolution (adding fields) requires client updates -- no backwards-compatible field additions are possible without a version bump.
 
-8. **GetSubscription overlaps with Subscription service**: The website's `GetSubscription` endpoint essentially duplicates what the dedicated Subscription service provides (`/subscription/get`). The intent is to aggregate subscription data with a web-friendly response shape, but care must be taken to avoid divergence.
+8. **Non-nullable collection fields default to null**: Multiple `ICollection<T>` fields like `Keywords`, `SupportedLanguages`, `SocialLinks`, `Navigation`, `Tags`, and `Children` are typed as non-nullable but assigned `= default!` in the generated models. Accessing these without initialization throws `NullReferenceException`.
 
-9. **Non-nullable collection fields default to null**: Multiple `ICollection<T>` fields like `Keywords`, `SupportedLanguages`, `SocialLinks`, `Navigation`, `Tags`, `Benefits`, and `Children` are typed as non-nullable but assigned `= default!` in the generated models. Accessing these without initialization throws `NullReferenceException`.
+9. **Non-nullable nested objects default to null**: Fields like `Seo`, `Logo`, `Analytics`, and `CustomScripts` in WebsiteModels.cs are typed as non-nullable references but assigned `= default!`. Since they're not in the schema's `required` array, they'll be null if not provided in JSON.
 
-10. **Non-nullable nested objects default to null**: Fields like `Seo`, `Logo`, `Analytics`, and `CustomScripts` in WebsiteModels.cs are typed as non-nullable references but assigned `= default!`. Since they're not in the schema's `required` array, they'll be null if not provided in JSON.
+10. **`Size` field is `int` limiting downloads to ~2GB**: The `DownloadInfo.Size` property is `int`, not `long`. This limits represented file sizes to ~2GB, which may be insufficient for large game clients.
 
-11. **`Size` field is `int` limiting downloads to ~2GB**: The `DownloadInfo.Size` property is `int`, not `long`. This limits represented file sizes to ~2GB, which may be insufficient for large game clients.
+11. **Metadata stored as untyped `object`**: Both `PageContent.Metadata` and `Analytics.OtherTrackers` are typed as `object`, meaning they accept any JSON but provide no type safety.
 
-12. **Multiple overlapping status enums with "maintenance"**: Three different enums define "maintenance" with different ordinal values. Code comparing these across contexts could have subtle bugs.
+12. **Dead configuration reference**: The `_configuration` field is assigned but never used. Acceptable for a stub service, but should be wired up when implementing.
 
-13. **Metadata stored as untyped `object`**: Both `PageContent.Metadata` and `Analytics.OtherTrackers` are typed as `object`, meaning they accept any JSON but provide no type safety.
+13. **Missing XML documentation**: Several public methods lack `<param>` and `<returns>` tags. Acceptable for a stub service, but should be completed when implementing.
 
-14. **Dead configuration reference**: The `_configuration` field is assigned but never used. Acceptable for a stub service, but should be wired up when implementing.
+---
 
-15. **Missing XML documentation**: Several public methods lack `<param>` and `<returns>` tags. Acceptable for a stub service, but should be completed when implementing.
+## Work Tracking
+
+This section tracks active development work on items from the quirks/bugs lists above. Items here are managed by the `/audit-plugin` workflow.
+
+*No active work items.*

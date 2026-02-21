@@ -12,7 +12,7 @@
 //
 //     IMPLEMENTATION TENETS - Configuration-First:
 //     - Access configuration via dependency injection, never Environment.GetEnvironmentVariable.
-//     - ALL properties below MUST be referenced in MessagingService.cs (no dead config).
+//     - ALL properties below MUST be referenced somewhere in the plugin (no dead config).
 //     - Any hardcoded tunable (limit, timeout, threshold, capacity) in service code means
 //       a configuration property is MISSING - add it to the configuration schema.
 //     - If a property is unused, remove it from the configuration schema.
@@ -40,7 +40,7 @@ namespace BeyondImmersion.BannouService.Messaging;
 /// <para>
 /// <b>IMPLEMENTATION TENETS - Configuration-First:</b> Access configuration via dependency injection.
 /// Never use <c>Environment.GetEnvironmentVariable()</c> directly in service code.
-/// ALL properties in this class MUST be referenced in the service implementation.
+/// ALL properties in this class MUST be referenced somewhere in the plugin.
 /// If a property is unused, remove it from the configuration schema.
 /// </para>
 /// <para>
@@ -96,7 +96,7 @@ public class MessagingServiceConfiguration : IServiceConfiguration
     public string DefaultExchange { get; set; } = AppConstants.DEFAULT_APP_NAME;
 
     /// <summary>
-    /// Enable RabbitMQ publisher confirms for reliability
+    /// Enable RabbitMQ publisher confirms for reliability. When enabled, BasicPublishAsync waits for broker confirmation (RabbitMQ.Client 7.x pattern).
     /// Environment variable: MESSAGING_ENABLE_CONFIRMS
     /// </summary>
     public bool EnablePublisherConfirms { get; set; } = true;
@@ -112,6 +112,33 @@ public class MessagingServiceConfiguration : IServiceConfiguration
     /// Environment variable: MESSAGING_CONNECTION_RETRY_DELAY_MS
     /// </summary>
     public int ConnectionRetryDelayMs { get; set; } = 1000;
+
+    /// <summary>
+    /// Maximum backoff delay for connection retries in milliseconds
+    /// Environment variable: MESSAGING_CONNECTION_MAX_BACKOFF_MS
+    /// </summary>
+    public int ConnectionMaxBackoffMs { get; set; } = 60000;
+
+    /// <summary>
+    /// Maximum number of channels in the publisher channel pool
+    /// Environment variable: MESSAGING_CHANNEL_POOL_SIZE
+    /// </summary>
+    [ConfigRange(Minimum = 10, Maximum = 500)]
+    public int ChannelPoolSize { get; set; } = 100;
+
+    /// <summary>
+    /// Maximum concurrent channel creation requests (backpressure semaphore count)
+    /// Environment variable: MESSAGING_MAX_CONCURRENT_CHANNEL_CREATION
+    /// </summary>
+    [ConfigRange(Minimum = 10, Maximum = 200)]
+    public int MaxConcurrentChannelCreation { get; set; } = 50;
+
+    /// <summary>
+    /// Hard limit on total active channels per connection (RabbitMQ typically allows 2048)
+    /// Environment variable: MESSAGING_MAX_TOTAL_CHANNELS
+    /// </summary>
+    [ConfigRange(Minimum = 100, Maximum = 2000)]
+    public int MaxTotalChannels { get; set; } = 1000;
 
     /// <summary>
     /// Default prefetch count for subscriptions
@@ -132,16 +159,45 @@ public class MessagingServiceConfiguration : IServiceConfiguration
     public string DeadLetterExchange { get; set; } = "bannou-dlx";
 
     /// <summary>
-    /// Maximum retry attempts before dead-lettering
-    /// Environment variable: MESSAGING_RETRY_MAX_ATTEMPTS
+    /// Maximum messages in dead letter queue before oldest dropped
+    /// Environment variable: MESSAGING_DEAD_LETTER_MAX_LENGTH
     /// </summary>
-    public int RetryMaxAttempts { get; set; } = 3;
+    [ConfigRange(Minimum = 1000, Maximum = 10000000)]
+    public int DeadLetterMaxLength { get; set; } = 100000;
 
     /// <summary>
-    /// Delay between retry attempts in milliseconds
+    /// Time-to-live for dead letter messages in milliseconds (default 7 days)
+    /// Environment variable: MESSAGING_DEAD_LETTER_TTL_MS
+    /// </summary>
+    [ConfigRange(Minimum = 3600000, Maximum = 2592000000)]
+    public int DeadLetterTtlMs { get; set; } = 604800000;
+
+    /// <summary>
+    /// Behavior when DLX queue exceeds max length (drop-head drops oldest, reject-publish blocks new messages)
+    /// Environment variable: MESSAGING_DEAD_LETTER_OVERFLOW_BEHAVIOR
+    /// </summary>
+    public string DeadLetterOverflowBehavior { get; set; } = "drop-head";
+
+    /// <summary>
+    /// Maximum retry attempts before discarding message to dead-letter topic
+    /// Environment variable: MESSAGING_RETRY_MAX_ATTEMPTS
+    /// </summary>
+    [ConfigRange(Minimum = 1, Maximum = 20)]
+    public int RetryMaxAttempts { get; set; } = 5;
+
+    /// <summary>
+    /// Base delay between retry attempts in milliseconds (doubles with each retry)
     /// Environment variable: MESSAGING_RETRY_DELAY_MS
     /// </summary>
+    [ConfigRange(Minimum = 100, Maximum = 60000)]
     public int RetryDelayMs { get; set; } = 5000;
+
+    /// <summary>
+    /// Maximum backoff delay between retries in milliseconds (caps exponential growth)
+    /// Environment variable: MESSAGING_RETRY_MAX_BACKOFF_MS
+    /// </summary>
+    [ConfigRange(Minimum = 1000, Maximum = 300000)]
+    public int RetryMaxBackoffMs { get; set; } = 60000;
 
     /// <summary>
     /// Enable retry buffer for failed event publishes
@@ -150,22 +206,51 @@ public class MessagingServiceConfiguration : IServiceConfiguration
     public bool RetryBufferEnabled { get; set; } = true;
 
     /// <summary>
-    /// Maximum number of messages in retry buffer before node crash
+    /// Maximum number of messages in retry buffer before node crash (500k = ~5s at 100k msg/sec)
     /// Environment variable: MESSAGING_RETRY_BUFFER_MAX_SIZE
     /// </summary>
-    public int RetryBufferMaxSize { get; set; } = 10000;
+    [ConfigRange(Minimum = 10000, Maximum = 2000000)]
+    public int RetryBufferMaxSize { get; set; } = 500000;
 
     /// <summary>
-    /// Maximum age of buffered messages before node crash (prevents stale events)
+    /// Maximum age of buffered messages before node crash (gives operators time to respond)
     /// Environment variable: MESSAGING_RETRY_BUFFER_MAX_AGE_SECONDS
     /// </summary>
-    public int RetryBufferMaxAgeSeconds { get; set; } = 300;
+    [ConfigRange(Minimum = 60, Maximum = 1800)]
+    public int RetryBufferMaxAgeSeconds { get; set; } = 600;
 
     /// <summary>
     /// Interval between retry attempts for buffered messages
     /// Environment variable: MESSAGING_RETRY_BUFFER_INTERVAL_SECONDS
     /// </summary>
     public int RetryBufferIntervalSeconds { get; set; } = 5;
+
+    /// <summary>
+    /// When buffer reaches this percentage full, start rejecting new publishes (0.0-1.0)
+    /// Environment variable: MESSAGING_RETRY_BUFFER_BACKPRESSURE_THRESHOLD
+    /// </summary>
+    [ConfigRange(Minimum = 0.5, Maximum = 0.95)]
+    public double RetryBufferBackpressureThreshold { get; set; } = 0.8;
+
+    /// <summary>
+    /// Enable batched publishing for high-throughput scenarios. When enabled, messages are queued and sent in batches to reduce broker overhead.
+    /// Environment variable: MESSAGING_ENABLE_PUBLISH_BATCHING
+    /// </summary>
+    public bool EnablePublishBatching { get; set; } = false;
+
+    /// <summary>
+    /// Maximum number of messages to batch before sending. Batch is flushed when this size is reached.
+    /// Environment variable: MESSAGING_PUBLISH_BATCH_SIZE
+    /// </summary>
+    [ConfigRange(Minimum = 10, Maximum = 1000)]
+    public int PublishBatchSize { get; set; } = 100;
+
+    /// <summary>
+    /// Maximum delay in milliseconds before flushing a partial batch. Ensures low-throughput periods don't accumulate stale messages.
+    /// Environment variable: MESSAGING_PUBLISH_BATCH_TIMEOUT_MS
+    /// </summary>
+    [ConfigRange(Minimum = 1, Maximum = 100)]
+    public int PublishBatchTimeoutMs { get; set; } = 10;
 
     /// <summary>
     /// Maximum retry attempts for HTTP callback delivery (network failures only)
@@ -178,24 +263,6 @@ public class MessagingServiceConfiguration : IServiceConfiguration
     /// Environment variable: MESSAGING_CALLBACK_RETRY_DELAY_MS
     /// </summary>
     public int CallbackRetryDelayMs { get; set; } = 1000;
-
-    /// <summary>
-    /// Use MassTransit wrapper (true) or direct RabbitMQ.Client (false)
-    /// Environment variable: MESSAGING_USE_MASSTRANSIT
-    /// </summary>
-    public bool UseMassTransit { get; set; } = true;
-
-    /// <summary>
-    /// Enable message bus metrics collection
-    /// Environment variable: MESSAGING_ENABLE_METRICS
-    /// </summary>
-    public bool EnableMetrics { get; set; } = true;
-
-    /// <summary>
-    /// Enable distributed tracing for messages
-    /// Environment variable: MESSAGING_ENABLE_TRACING
-    /// </summary>
-    public bool EnableTracing { get; set; } = true;
 
     /// <summary>
     /// Interval in hours between subscription TTL refresh operations

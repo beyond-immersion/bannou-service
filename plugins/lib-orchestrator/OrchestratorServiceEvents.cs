@@ -17,7 +17,7 @@ public partial class OrchestratorService
     protected void RegisterEventConsumers(IEventConsumer eventConsumer)
     {
         eventConsumer.RegisterHandler<IOrchestratorService, ServiceHeartbeatEvent>(
-            "bannou.service-heartbeats",
+            "bannou.service-heartbeat",
             async (svc, evt) => await ((OrchestratorService)svc).HandleServiceHeartbeatAsync(evt));
 
     }

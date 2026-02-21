@@ -1,0 +1,169 @@
+openapi: 3.0.3
+info:
+  title: Faction Service Events Lifecycle Events
+  description: "Auto-generated lifecycle event schemas for faction service.\nDO NOT EDIT - This file is completely overwritten
+    by generate-lifecycle-events.py.\nSource of truth: faction-events.yaml x-lifecycle section."
+  version: 1.0.0
+paths: {}
+components:
+  schemas:
+    FactionCreatedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+      type: object
+      additionalProperties: false
+      description: Published to faction.created when a faction is created
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - factionId
+      - gameServiceId
+      - name
+      - code
+      - realmId
+      - isRealmBaseline
+      - status
+      - memberCount
+      - createdAt
+      - updatedAt
+      properties:
+        eventName:
+          type: string
+          default: faction.created
+          description: 'Event type identifier: faction.created'
+        factionId: &id001
+          type: string
+          format: uuid
+          description: "Unique identifier for the faction"
+        gameServiceId: &id002
+          type: string
+          format: uuid
+          description: "Game service this faction belongs to"
+        name: &id003
+          type: string
+          description: "Display name of the faction"
+        code: &id004
+          type: string
+          description: "Unique code within game service scope"
+        realmId: &id005
+          type: string
+          format: uuid
+          description: "Realm this faction belongs to"
+        isRealmBaseline: &id006
+          type: boolean
+          description: "Whether this is the realm baseline cultural faction"
+        parentFactionId: &id007
+          type: string
+          format: uuid
+          nullable: true
+          description: "Parent faction in hierarchy"
+        seedId: &id008
+          type: string
+          format: uuid
+          nullable: true
+          description: "Associated seed for growth tracking"
+        status: &id009
+          $ref: ../faction-api.yaml#/components/schemas/FactionStatus
+          description: "Current lifecycle status"
+        currentPhase: &id010
+          type: string
+          nullable: true
+          description: "Current seed growth phase"
+        memberCount: &id011
+          type: integer
+          description: "Current number of members"
+        createdAt: &id012
+          type: string
+          format: date-time
+          description: "When the faction was created"
+        updatedAt: &id013
+          type: string
+          format: date-time
+          description: "When the faction was last updated"
+    FactionUpdatedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+      type: object
+      additionalProperties: false
+      description: Published to faction.updated when a faction is updated
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - factionId
+      - gameServiceId
+      - name
+      - code
+      - realmId
+      - isRealmBaseline
+      - status
+      - memberCount
+      - createdAt
+      - updatedAt
+      - changedFields
+      properties:
+        eventName:
+          type: string
+          default: faction.updated
+          description: 'Event type identifier: faction.updated'
+        factionId: *id001
+        gameServiceId: *id002
+        name: *id003
+        code: *id004
+        realmId: *id005
+        isRealmBaseline: *id006
+        parentFactionId: *id007
+        seedId: *id008
+        status: *id009
+        currentPhase: *id010
+        memberCount: *id011
+        createdAt: *id012
+        updatedAt: *id013
+        changedFields:
+          type: array
+          items:
+            type: string
+          description: List of field names that were modified
+    FactionDeletedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+      type: object
+      additionalProperties: false
+      description: Published to faction.deleted when a faction is deleted
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - factionId
+      - gameServiceId
+      - name
+      - code
+      - realmId
+      - isRealmBaseline
+      - status
+      - memberCount
+      - createdAt
+      - updatedAt
+      properties:
+        eventName:
+          type: string
+          default: faction.deleted
+          description: 'Event type identifier: faction.deleted'
+        factionId: *id001
+        gameServiceId: *id002
+        name: *id003
+        code: *id004
+        realmId: *id005
+        isRealmBaseline: *id006
+        parentFactionId: *id007
+        seedId: *id008
+        status: *id009
+        currentPhase: *id010
+        memberCount: *id011
+        createdAt: *id012
+        updatedAt: *id013
+        deletedReason:
+          type: string
+          nullable: true
+          description: Optional reason for deletion (e.g., "Merged into {targetId}")

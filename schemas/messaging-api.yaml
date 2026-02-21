@@ -10,10 +10,14 @@ info:
     **POST-Only API Pattern**: All endpoints use POST with request bodies for
     consistency with WebSocket routing architecture.
 
-    **Schema Rules**: AI agents MUST review docs/reference/SCHEMA-RULES.md before
-    modifying this schema. Optional reference types require `nullable: true`.
+    **SCHEMA MODIFICATION GATE**: STOP. Before modifying this schema, you MUST:
+    1. Read docs/reference/SCHEMA-RULES.md
+    2. State which section applies to your change
+    3. Only then proceed with edits
+    Edits without stating the applicable rule are FORBIDDEN.
 
   version: 1.0.0
+x-service-layer: Infrastructure
 servers:
 - url: http://localhost:5012
   description: Bannou service endpoint
@@ -163,7 +167,9 @@ components:
           type: object
           additionalProperties: true
           nullable: true
-          description: Custom headers to include with the message
+          description: >-
+            Caller-provided custom headers included with the message.
+            No Bannou plugin reads specific keys from this field by convention.
 
     PublishEventResponse:
       description: Response confirming event publication with message identifier
@@ -212,8 +218,8 @@ components:
           description: Whether only this connection can consume from the queue
         autoAck:
           type: boolean
-          default: false
-          description: Whether messages should be auto-acknowledged
+          nullable: true
+          description: Whether messages should be auto-acknowledged (null uses DefaultAutoAck config)
         prefetchCount:
           type: integer
           default: 10

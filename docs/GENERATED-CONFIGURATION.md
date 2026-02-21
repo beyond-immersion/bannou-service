@@ -14,9 +14,12 @@ This document lists all configuration options defined in Bannou's configuration 
 | `ACCOUNT_ADMIN_EMAILS` | string | **REQUIRED** | Comma-separated list of admin email addresses |
 | `ACCOUNT_ADMIN_EMAIL_DOMAIN` | string | **REQUIRED** | Email domain that grants admin access (e.g., "@company.com") |
 | `ACCOUNT_AUTO_MANAGE_ANONYMOUS_ROLE` | bool | `true` | When true, automatically manages the anonymous role. If remo... |
+| `ACCOUNT_CREATE_LOCK_EXPIRY_SECONDS` | int | `10` | Lock expiry in seconds for account creation email uniqueness... |
 | `ACCOUNT_DEFAULT_PAGE_SIZE` | int | `20` | Default page size for list operations when not specified |
+| `ACCOUNT_EMAIL_CHANGE_LOCK_EXPIRY_SECONDS` | int | `10` | Lock expiry in seconds for email uniqueness check during ema... |
 | `ACCOUNT_LIST_BATCH_SIZE` | int | `100` | Number of accounts to process per batch in list operations |
 | `ACCOUNT_MAX_PAGE_SIZE` | int | `100` | Maximum allowed page size for list operations |
+| `ACCOUNT_PROVIDER_FILTER_MAX_SCAN_SIZE` | int | `10000` | Maximum number of accounts to scan when filtering by provide... |
 
 ### Achievement
 
@@ -49,7 +52,6 @@ This document lists all configuration options defined in Bannou's configuration 
 | `ACTOR_DEFAULT_MEMORY_EXPIRATION_MINUTES` | int | `60` | Default expiration time in minutes for actor memories |
 | `ACTOR_DEFAULT_TICK_INTERVAL_MS` | int | `100` | Default behavior loop interval in milliseconds |
 | `ACTOR_DEPLOYMENT_MODE` | string | `bannou` | Actor deployment mode: bannou (local dev), pool-per-type, sh... |
-| `ACTOR_ENCOUNTER_CACHE_TTL_MINUTES` | int | `5` | TTL in minutes for cached encounter data |
 | `ACTOR_ERROR_RETRY_DELAY_MS` | int | `1000` | Delay in milliseconds before retrying after behavior loop er... |
 | `ACTOR_EVENT_BRAIN_DEFAULT_URGENCY` | double | `0.8` | Default urgency for Event Brain instruction perceptions (0.0... |
 | `ACTOR_GOAP_MAX_PLAN_DEPTH` | int | `10` | Maximum depth for GOAP planning search |
@@ -59,7 +61,6 @@ This document lists all configuration options defined in Bannou's configuration 
 | `ACTOR_HEARTBEAT_TIMEOUT_SECONDS` | int | `30` | Mark node unhealthy after this many seconds without heartbea... |
 | `ACTOR_LOCAL_MODE_APP_ID` | string | `bannou` | App ID used when running in local/bannou deployment mode |
 | `ACTOR_LOCAL_MODE_NODE_ID` | string | `bannou-local` | Node ID used when running in local/bannou deployment mode |
-| `ACTOR_MAX_ENCOUNTER_RESULTS_PER_QUERY` | int | `50` | Maximum encounter results returned per query |
 | `ACTOR_MAX_POOL_NODES` | int | `10` | Maximum pool nodes allowed (auto-scale mode) |
 | `ACTOR_MEMORY_STORE_MAX_RETRIES` | int | `3` | Maximum retry attempts for memory store operations |
 | `ACTOR_MIN_POOL_NODES` | int | `1` | Minimum pool nodes to maintain (auto-scale mode) |
@@ -67,7 +68,6 @@ This document lists all configuration options defined in Bannou's configuration 
 | `ACTOR_PERCEPTION_FILTER_THRESHOLD` | double | `0.1` | Minimum urgency for perception to be processed (0.0-1.0) |
 | `ACTOR_PERCEPTION_MEMORY_THRESHOLD` | double | `0.7` | Minimum urgency for perception to become a memory (0.0-1.0) |
 | `ACTOR_PERCEPTION_QUEUE_SIZE` | int | `100` | Max perceptions queued per actor before dropping oldest |
-| `ACTOR_PERSONALITY_CACHE_TTL_MINUTES` | int | `5` | TTL in minutes for cached personality data |
 | `ACTOR_POOL_HEALTH_CHECK_INTERVAL_SECONDS` | int | `15` | Interval in seconds between pool health check operations |
 | `ACTOR_POOL_HEALTH_MONITOR_STARTUP_DELAY_SECONDS` | int | `5` | Delay in seconds before pool health monitor starts checking ... |
 | `ACTOR_POOL_NODE_APP_ID` | string | **REQUIRED** | Mesh app-id for routing commands to this pool node. Required... |
@@ -189,22 +189,47 @@ This document lists all configuration options defined in Bannou's configuration 
 | Environment Variable | Type | Default | Description |
 |---------------------|------|---------|-------------|
 | `AUTH_BCRYPT_WORK_FACTOR` | int | `12` | BCrypt work factor for password hashing. Higher values are m... |
+| `AUTH_CLOUDFLARE_ACCOUNT_ID` | string | **REQUIRED** | CloudFlare account ID for KV API access. Required when Cloud... |
+| `AUTH_CLOUDFLARE_API_TOKEN` | string | **REQUIRED** | CloudFlare API token with Workers KV write permissions. Use ... |
+| `AUTH_CLOUDFLARE_EDGE_ENABLED` | bool | `false` | Enable CloudFlare Workers KV edge revocation. Requires Cloud... |
+| `AUTH_CLOUDFLARE_KV_NAMESPACE_ID` | string | **REQUIRED** | CloudFlare KV namespace ID where revoked tokens are stored. ... |
 | `AUTH_CONNECT_URL` | string | `ws://localhost:5014/connect` | URL to Connect service for WebSocket connections. Defaults t... |
 | `AUTH_DISCORD_CLIENT_ID` | string | **REQUIRED** | Discord OAuth client ID |
 | `AUTH_DISCORD_CLIENT_SECRET` | string | **REQUIRED** | Discord OAuth client secret |
 | `AUTH_DISCORD_REDIRECT_URI` | string | **REQUIRED** | Discord OAuth redirect URI. Optional if BANNOU_SERVICE_DOMAI... |
+| `AUTH_EDGE_REVOCATION_ENABLED` | bool | `false` | Master switch for edge-layer token revocation. When enabled,... |
+| `AUTH_EDGE_REVOCATION_MAX_RETRY_ATTEMPTS` | int | `3` | Maximum retry attempts for failed edge pushes before giving ... |
+| `AUTH_EDGE_REVOCATION_TIMEOUT_SECONDS` | int | `5` | Timeout in seconds for edge provider push operations. Operat... |
+| `AUTH_EMAIL_FROM_ADDRESS` | string | **REQUIRED** | Sender email address for outgoing emails. Required when Emai... |
+| `AUTH_EMAIL_FROM_NAME` | string | **REQUIRED** | Display name for the sender in outgoing emails (e.g., 'Banno... |
+| `AUTH_EMAIL_PROVIDER` | string | `none` | Email delivery provider (none=console logging, sendgrid=Send... |
 | `AUTH_GOOGLE_CLIENT_ID` | string | **REQUIRED** | Google OAuth client ID |
 | `AUTH_GOOGLE_CLIENT_SECRET` | string | **REQUIRED** | Google OAuth client secret |
 | `AUTH_GOOGLE_REDIRECT_URI` | string | **REQUIRED** | Google OAuth redirect URI. Optional if BANNOU_SERVICE_DOMAIN... |
 | `AUTH_JWT_EXPIRATION_MINUTES` | int | `60` | JWT token expiration time in minutes |
+| `AUTH_LOGIN_LOCKOUT_MINUTES` | int | `15` | Duration in minutes to lock out an email after exceeding Max... |
+| `AUTH_MAX_LOGIN_ATTEMPTS` | int | `5` | Maximum failed login attempts before lockout. After this man... |
+| `AUTH_MFA_CHALLENGE_TTL_MINUTES` | int | `5` | TTL in minutes for MFA challenge tokens issued during login ... |
+| `AUTH_MFA_ENCRYPTION_KEY` | string | **REQUIRED** | AES-256-GCM encryption key for TOTP secrets at rest. Require... |
+| `AUTH_MFA_ISSUER_NAME` | string | `Bannou` | Issuer name displayed in authenticator apps (appears as serv... |
 | `AUTH_MOCK_DISCORD_ID` | string | `mock-discord-123456` | Mock Discord user ID for testing |
 | `AUTH_MOCK_GOOGLE_ID` | string | `mock-google-123456` | Mock Google user ID for testing |
 | `AUTH_MOCK_PROVIDERS` | bool | `false` | Enable mock OAuth providers for testing |
 | `AUTH_MOCK_STEAM_ID` | string | `76561198000000000` | Mock Steam user ID for testing |
 | `AUTH_MOCK_TWITCH_ID` | string | `mock-twitch-123456` | Mock Twitch user ID for testing |
+| `AUTH_OPENRESTY_EDGE_ENABLED` | bool | `false` | Enable OpenResty/NGINX edge revocation verification. When en... |
 | `AUTH_PASSWORD_RESET_BASE_URL` | string | **REQUIRED** | Base URL for password reset page |
 | `AUTH_PASSWORD_RESET_TOKEN_TTL_MINUTES` | int | `30` | Password reset token expiration time in minutes |
+| `AUTH_SENDGRID_API_KEY` | string | **REQUIRED** | SendGrid API key. Required when EmailProvider is 'sendgrid'. |
 | `AUTH_SESSION_TOKEN_TTL_DAYS` | int | `7` | Session token TTL in days for persistent sessions |
+| `AUTH_SES_ACCESS_KEY_ID` | string | **REQUIRED** | AWS access key ID for SES API authentication. Required when ... |
+| `AUTH_SES_REGION` | string | `us-east-1` | AWS region for SES API (e.g., us-east-1, eu-west-1). SES mus... |
+| `AUTH_SES_SECRET_ACCESS_KEY` | string | **REQUIRED** | AWS secret access key for SES API authentication. Required w... |
+| `AUTH_SMTP_HOST` | string | **REQUIRED** | SMTP server hostname. Required when EmailProvider is 'smtp'. |
+| `AUTH_SMTP_PASSWORD` | string | **REQUIRED** | SMTP authentication password. Optional if server allows anon... |
+| `AUTH_SMTP_PORT` | int | `587` | SMTP server port (587 for STARTTLS, 465 for implicit SSL, 25... |
+| `AUTH_SMTP_USERNAME` | string | **REQUIRED** | SMTP authentication username. Optional if server allows anon... |
+| `AUTH_SMTP_USE_SSL` | bool | `true` | Use SSL/TLS when connecting to SMTP server. When true with p... |
 | `AUTH_STEAM_API_KEY` | string | **REQUIRED** | Steam Web API key for session ticket validation |
 | `AUTH_STEAM_APP_ID` | string | **REQUIRED** | Steam application ID |
 | `AUTH_TWITCH_CLIENT_ID` | string | **REQUIRED** | Twitch OAuth client ID |
@@ -256,22 +281,23 @@ This document lists all configuration options defined in Bannou's configuration 
 | Environment Variable | Type | Default | Description |
 |---------------------|------|---------|-------------|
 | `CHARACTER_CLEANUP_GRACE_PERIOD_DAYS` | int | `30` | Grace period in days before cleanup of dead character refere... |
-| `CHARACTER_COMPRESSION_MAX_BACKSTORY_POINTS` | int | `5` | Maximum number of backstory points to include in character c... |
-| `CHARACTER_COMPRESSION_MAX_LIFE_EVENTS` | int | `10` | Maximum number of major life events to include in character ... |
 | `CHARACTER_DEFAULT_PAGE_SIZE` | int | `20` | Default page size when not specified |
+| `CHARACTER_LOCK_TIMEOUT_SECONDS` | int | `30` | Timeout in seconds for acquiring distributed locks during ch... |
 | `CHARACTER_MAX_PAGE_SIZE` | int | `100` | Maximum page size for list queries |
-| `CHARACTER_PERSONALITY_TRAIT_THRESHOLD` | double | `0.3` | Threshold for personality trait classification (values above... |
 | `CHARACTER_REALM_INDEX_UPDATE_MAX_RETRIES` | int | `3` | Maximum retry attempts when updating realm character index (... |
-| `CHARACTER_RETENTION_DAYS` | int | `90` | Number of days to retain deleted characters before permanent... |
 
 ### Character Encounter
 
 | Environment Variable | Type | Default | Description |
 |---------------------|------|---------|-------------|
+| `CHARACTER_ENCOUNTER_CACHE_MAX_RESULTS_PER_QUERY` | int | `50` | Maximum encounter results loaded per cache query for Actor b... |
+| `CHARACTER_ENCOUNTER_CACHE_TTL_MINUTES` | int | `5` | TTL in minutes for the in-memory encounter data cache used b... |
 | `CHARACTER_ENCOUNTER_DEFAULT_MEMORY_STRENGTH` | double | `1.0` | Default initial memory strength for new perspectives (0.0-1.... |
 | `CHARACTER_ENCOUNTER_DEFAULT_PAGE_SIZE` | int | `20` | Default page size for query results |
+| `CHARACTER_ENCOUNTER_DUPLICATE_TIMESTAMP_TOLERANCE_MINUTES` | int | `5` | Time window in minutes for duplicate encounter detection. En... |
 | `CHARACTER_ENCOUNTER_MAX_BATCH_SIZE` | int | `100` | Maximum items in bulk operations (batch-get, etc.) |
 | `CHARACTER_ENCOUNTER_MAX_PAGE_SIZE` | int | `100` | Maximum allowed page size for query results |
+| `CHARACTER_ENCOUNTER_MAX_PARTICIPANTS_PER_ENCOUNTER` | int | `20` | Maximum participants allowed per encounter (caps O(N^2) pair... |
 | `CHARACTER_ENCOUNTER_MAX_PER_CHARACTER` | int | `1000` | Maximum encounters stored per character before oldest are pr... |
 | `CHARACTER_ENCOUNTER_MAX_PER_PAIR` | int | `100` | Maximum encounters stored per character pair before oldest a... |
 | `CHARACTER_ENCOUNTER_MEMORY_DECAY_ENABLED` | bool | `true` | Enable time-based memory decay for encounter perspectives |
@@ -280,18 +306,28 @@ This document lists all configuration options defined in Bannou's configuration 
 | `CHARACTER_ENCOUNTER_MEMORY_DECAY_RATE` | double | `0.05` | Memory strength reduction per decay interval (0.0-1.0) |
 | `CHARACTER_ENCOUNTER_MEMORY_FADE_THRESHOLD` | double | `0.1` | Memory strength below which encounters are considered forgot... |
 | `CHARACTER_ENCOUNTER_MEMORY_REFRESH_BOOST` | double | `0.2` | Default memory strength boost when refreshing (0.0-1.0) |
+| `CHARACTER_ENCOUNTER_SCHEDULED_DECAY_CHECK_INTERVAL_MINUTES` | int | `60` | Interval between scheduled decay checks in minutes (only use... |
+| `CHARACTER_ENCOUNTER_SCHEDULED_DECAY_STARTUP_DELAY_SECONDS` | int | `30` | Startup delay before first scheduled decay check in seconds ... |
 | `CHARACTER_ENCOUNTER_SEED_BUILTIN_TYPES_ON_STARTUP` | bool | `true` | Automatically seed built-in encounter types on service start... |
 | `CHARACTER_ENCOUNTER_SENTIMENT_SHIFT_MEMORABLE` | double | `0.1` | Default sentiment shift for memorable encounter outcomes |
 | `CHARACTER_ENCOUNTER_SENTIMENT_SHIFT_NEGATIVE` | double | `-0.2` | Default sentiment shift for negative encounter outcomes (sho... |
 | `CHARACTER_ENCOUNTER_SENTIMENT_SHIFT_POSITIVE` | double | `0.2` | Default sentiment shift for positive encounter outcomes |
 | `CHARACTER_ENCOUNTER_SENTIMENT_SHIFT_TRANSFORMATIVE` | double | `0.3` | Default sentiment shift for transformative encounter outcome... |
-| `CHARACTER_ENCOUNTER_SERVER_SALT` | string | `bannou-dev-encounter-salt-change-in-production` | Server salt for GUID generation. Must be shared across all i... |
+
+### Character History
+
+| Environment Variable | Type | Default | Description |
+|---------------------|------|---------|-------------|
+| `CHARACTER_HISTORY_BACKSTORY_CACHE_TTL_SECONDS` | int | `600` | TTL in seconds for backstory cache entries. Backstory data i... |
+| `CHARACTER_HISTORY_INDEX_LOCK_TIMEOUT_SECONDS` | int | `15` | Timeout in seconds for distributed locks during index and ba... |
+| `CHARACTER_HISTORY_MAX_BACKSTORY_ELEMENTS` | int | `100` | Maximum number of backstory elements allowed per character. ... |
 
 ### Character Personality
 
 | Environment Variable | Type | Default | Description |
 |---------------------|------|---------|-------------|
 | `CHARACTER_PERSONALITY_BASE_EVOLUTION_PROBABILITY` | double | `0.15` | Base chance for trait shift per evolution event (0.0-1.0) |
+| `CHARACTER_PERSONALITY_CACHE_TTL_MINUTES` | int | `5` | TTL in minutes for personality and combat preferences cache ... |
 | `CHARACTER_PERSONALITY_COMBAT_DEFEAT_STYLE_TRANSITION_PROBABILITY` | double | `0.4` | Probability for combat style transitions after defeat (0.0-1... |
 | `CHARACTER_PERSONALITY_COMBAT_DEFENSIVE_SHIFT_PROBABILITY` | double | `0.5` | Probability for defensive shift after injury (0.0-1.0) |
 | `CHARACTER_PERSONALITY_COMBAT_INTENSE_SHIFT_MULTIPLIER` | double | `1.5` | Multiplier for intense stat shifts (near-death, heavy defeat... |
@@ -305,11 +341,45 @@ This document lists all configuration options defined in Bannou's configuration 
 | `CHARACTER_PERSONALITY_MAX_TRAIT_SHIFT` | double | `0.1` | Maximum magnitude of trait change per evolution event |
 | `CHARACTER_PERSONALITY_MIN_TRAIT_SHIFT` | double | `0.02` | Minimum magnitude of trait change per evolution event |
 
+### Chat
+
+| Environment Variable | Type | Default | Description |
+|---------------------|------|---------|-------------|
+| `CHAT_DEFAULT_CONTRACT_BREACH_ACTION` | string | `Lock` | Default action when a breach is detected on governing contra... |
+| `CHAT_DEFAULT_CONTRACT_EXPIRED_ACTION` | string | `Archive` | Default action when governing contract expires naturally |
+| `CHAT_DEFAULT_CONTRACT_FULFILLED_ACTION` | string | `Archive` | Default action when governing contract is fulfilled |
+| `CHAT_DEFAULT_CONTRACT_TERMINATED_ACTION` | string | `Delete` | Default action when governing contract is terminated early |
+| `CHAT_DEFAULT_MAX_PARTICIPANTS_PER_ROOM` | int | `100` | Default participant limit when room type does not specify |
+| `CHAT_DEFAULT_RATE_LIMIT_PER_MINUTE` | int | `60` | Default messages per minute per participant when room type d... |
+| `CHAT_EPHEMERAL_MESSAGE_TTL_MINUTES` | int | `60` | TTL for messages in ephemeral (Redis) rooms |
+| `CHAT_IDLE_ROOM_CLEANUP_INTERVAL_MINUTES` | int | `60` | How often the background worker checks for idle rooms |
+| `CHAT_IDLE_ROOM_CLEANUP_STARTUP_DELAY_SECONDS` | int | `30` | Initial delay before the idle room cleanup worker begins its... |
+| `CHAT_IDLE_ROOM_TIMEOUT_MINUTES` | int | `1440` | Minutes of inactivity before a room is eligible for auto-cle... |
+| `CHAT_LOCK_EXPIRY_SECONDS` | int | `15` | Distributed lock expiry for chat room and participant mutati... |
+| `CHAT_MAX_PINNED_MESSAGES_PER_ROOM` | int | `10` | Maximum pinned messages per room |
+| `CHAT_MAX_ROOM_TYPES_PER_GAME_SERVICE` | int | `50` | Maximum custom room types per game service |
+| `CHAT_MESSAGE_HISTORY_PAGE_SIZE` | int | `50` | Default page size for message history queries |
+
+### Collection
+
+| Environment Variable | Type | Default | Description |
+|---------------------|------|---------|-------------|
+| `COLLECTION_CACHE_TTL_SECONDS` | int | `300` | Redis TTL for collection state cache in seconds |
+| `COLLECTION_DEFAULT_PAGE_SIZE` | int | `20` | Default page size for paginated queries |
+| `COLLECTION_LOCK_TIMEOUT_SECONDS` | int | `30` | Distributed lock TTL for collection mutations in seconds |
+| `COLLECTION_MAX_COLLECTIONS_PER_OWNER` | int | `20` | Maximum number of collections a single owner entity can have |
+| `COLLECTION_MAX_CONCURRENCY_RETRIES` | int | `3` | Maximum retry attempts for optimistic concurrency conflicts |
+| `COLLECTION_MAX_ENTRIES_PER_COLLECTION` | int | `500` | Maximum number of unlocked entries per collection instance |
+
 ### Connect
 
 | Environment Variable | Type | Default | Description |
 |---------------------|------|---------|-------------|
 | `CONNECT_BUFFER_SIZE` | int | `65536` | Size of message buffers in bytes |
+| `CONNECT_COMPANION_ROOM_MODE` | string | `Disabled` | How Connect manages companion chat rooms (Disabled, AutoJoin... |
+| `CONNECT_COMPRESSION_ENABLED` | bool | `false` | Enable Brotli compression for outbound WebSocket payloads ab... |
+| `CONNECT_COMPRESSION_QUALITY` | int | `1` | Brotli compression quality level (0=no compression, 1=fastes... |
+| `CONNECT_COMPRESSION_THRESHOLD_BYTES` | int | `1024` | Minimum payload size in bytes before compression is applied ... |
 | `CONNECT_CONNECTION_CLEANUP_INTERVAL_SECONDS` | int | `30` | Interval in seconds between connection cleanup runs |
 | `CONNECT_CONNECTION_MODE` | string | `external` | Connection mode: external (default, no broadcast), relayed (... |
 | `CONNECT_CONNECTION_SHUTDOWN_TIMEOUT_SECONDS` | int | `5` | Timeout in seconds when waiting for connection closure durin... |
@@ -317,13 +387,11 @@ This document lists all configuration options defined in Bannou's configuration 
 | `CONNECT_ENABLE_CLIENT_TO_CLIENT_ROUTING` | bool | `true` | Enable routing messages between WebSocket clients |
 | `CONNECT_HEARTBEAT_INTERVAL_SECONDS` | int | `30` | Interval between heartbeat messages |
 | `CONNECT_HEARTBEAT_TTL_SECONDS` | int | `300` | Heartbeat data TTL in Redis in seconds (default 5 minutes) |
-| `CONNECT_HTTP_CLIENT_TIMEOUT_SECONDS` | int | `120` | Timeout in seconds for HTTP client requests to backend servi... |
 | `CONNECT_INACTIVE_CONNECTION_TIMEOUT_MINUTES` | int | `30` | Timeout in minutes after which inactive connections are clea... |
 | `CONNECT_INTERNAL_AUTH_MODE` | string | `service-token` | Auth mode for internal connections: service-token (validate ... |
 | `CONNECT_INTERNAL_SERVICE_TOKEN` | string | **REQUIRED** | Secret for X-Service-Token validation when InternalAuthMode ... |
 | `CONNECT_MAX_CONCURRENT_CONNECTIONS` | int | `10000` | Maximum number of concurrent WebSocket connections |
 | `CONNECT_MAX_MESSAGES_PER_MINUTE` | int | `1000` | Rate limit for messages per minute per client |
-| `CONNECT_MESSAGE_QUEUE_SIZE` | int | `1000` | Maximum number of queued messages per connection |
 | `CONNECT_PENDING_MESSAGE_TIMEOUT_SECONDS` | int | `30` | Timeout in seconds for pending messages awaiting acknowledgm... |
 | `CONNECT_RATE_LIMIT_WINDOW_MINUTES` | int | `1` | Rate limit window in minutes |
 | `CONNECT_RECONNECTION_WINDOW_EXTENSION_MINUTES` | int | `1` | Additional minutes added to reconnection window on each exte... |
@@ -336,18 +404,22 @@ This document lists all configuration options defined in Bannou's configuration 
 
 | Environment Variable | Type | Default | Description |
 |---------------------|------|---------|-------------|
-| `CONTRACT_CLAUSE_VALIDATION_CACHE_STALENESS_SECONDS` | int | `15` | Staleness threshold in seconds for cached clause validation ... |
 | `CONTRACT_DEFAULT_CONSENT_TIMEOUT_DAYS` | int | `7` | Default number of days for parties to consent before proposa... |
 | `CONTRACT_DEFAULT_ENFORCEMENT_MODE` | string | `event_only` | Default enforcement mode for contracts |
+| `CONTRACT_DEFAULT_PAGE_SIZE` | int | `20` | Default page size for paginated endpoints when not specified... |
 | `CONTRACT_IDEMPOTENCY_TTL_SECONDS` | int | `86400` | TTL in seconds for idempotency key storage (default 24 hours... |
+| `CONTRACT_INDEX_LOCK_FAILURE_MODE` | string | `warn` | Behavior when index lock acquisition fails (warn=continue, f... |
 | `CONTRACT_INDEX_LOCK_TIMEOUT_SECONDS` | int | `15` | Lock timeout in seconds for index update distributed locks |
 | `CONTRACT_LOCK_TIMEOUT_SECONDS` | int | `60` | Lock timeout in seconds for contract-level distributed locks |
 | `CONTRACT_MAX_ACTIVE_CONTRACTS_PER_ENTITY` | int | `100` | Maximum active contracts per entity (0 for unlimited) |
 | `CONTRACT_MAX_MILESTONES_PER_TEMPLATE` | int | `50` | Maximum number of milestones allowed in a template |
 | `CONTRACT_MAX_PARTIES_PER_CONTRACT` | int | `20` | Maximum number of parties allowed in a single contract |
 | `CONTRACT_MAX_PREBOUND_APIS_PER_MILESTONE` | int | `10` | Maximum number of prebound APIs per milestone |
+| `CONTRACT_MILESTONE_DEADLINE_CHECK_INTERVAL_SECONDS` | int | `300` | Interval between milestone deadline checks in seconds (defau... |
+| `CONTRACT_MILESTONE_DEADLINE_STARTUP_DELAY_SECONDS` | int | `30` | Startup delay before first milestone deadline check in secon... |
 | `CONTRACT_PREBOUND_API_BATCH_SIZE` | int | `10` | Number of prebound APIs to execute in parallel |
 | `CONTRACT_PREBOUND_API_TIMEOUT_MS` | int | `30000` | Timeout for individual prebound API calls in milliseconds |
+| `CONTRACT_TERMS_MERGE_MODE` | string | `shallow` | How instance terms merge with template terms (shallow=replac... |
 
 ### Currency
 
@@ -372,12 +444,33 @@ This document lists all configuration options defined in Bannou's configuration 
 | `CURRENCY_TRANSACTION_RETENTION_DAYS` | int | `365` | How many days to retain detailed transaction history |
 | `CURRENCY_WALLET_LOCK_TIMEOUT_SECONDS` | int | `30` | Timeout in seconds for wallet-level distributed locks |
 
+### Divine
+
+| Environment Variable | Type | Default | Description |
+|---------------------|------|---------|-------------|
+| `DIVINE_ATTENTION_DECAY_INTERVAL_MINUTES` | int | `60` | Minutes between attention slot decay evaluations for inactiv... |
+| `DIVINE_ATTENTION_IMPRESSION_THRESHOLD` | double | `0.1` | Minimum cumulative impression below which an attention slot ... |
+| `DIVINE_ATTENTION_WORKER_INTERVAL_SECONDS` | int | `60` | Seconds between attention decay worker evaluation cycles |
+| `DIVINE_BLESSING_COLLECTION_TYPE` | string | `divine_blessings` | Collection type code for permanent blessings via lib-collect... |
+| `DIVINE_BLESSING_STATUS_CATEGORY` | string | `divine_blessing` | Status category code for temporary blessings via Status Inve... |
+| `DIVINE_DEFAULT_MAX_ATTENTION_SLOTS` | int | `10` | Default maximum characters a deity can actively monitor simu... |
+| `DIVINE_DEITY_ACTOR_TYPE_CODE` | string | `deity_watcher` | Actor type code used when starting deity watcher actors via ... |
+| `DIVINE_DEITY_SEED_TYPE_CODE` | string | `deity_domain` | Seed type code for deity domain power growth |
+| `DIVINE_DIVINITY_COST_GREATER` | double | `200.0` | Divinity cost for granting a Greater tier blessing |
+| `DIVINE_DIVINITY_COST_MINOR` | double | `10.0` | Divinity cost for granting a Minor tier blessing |
+| `DIVINE_DIVINITY_COST_STANDARD` | double | `50.0` | Divinity cost for granting a Standard tier blessing |
+| `DIVINE_DIVINITY_COST_SUPREME` | double | `1000.0` | Divinity cost for granting a Supreme tier blessing |
+| `DIVINE_DIVINITY_CURRENCY_CODE` | string | `divinity` | Currency code used for divinity economy within each game ser... |
+| `DIVINE_DIVINITY_GENERATION_MULTIPLIER` | double | `1.0` | Global multiplier applied to all divinity generation from mo... |
+| `DIVINE_DIVINITY_GENERATION_WORKER_INTERVAL_SECONDS` | int | `30` | Seconds between divinity generation worker processing cycles |
+| `DIVINE_FOLLOWER_RELATIONSHIP_TYPE_CODE` | string | `deity_follower` | Relationship type code for deity-to-character follower bonds |
+| `DIVINE_MAX_BLESSINGS_PER_ENTITY` | int | `10` | Maximum active blessings an entity can hold simultaneously |
+| `DIVINE_RIVALRY_RELATIONSHIP_TYPE_CODE` | string | `deity_rivalry` | Relationship type code for deity-to-deity rivalry bonds |
+
 ### Documentation
 
 | Environment Variable | Type | Default | Description |
 |---------------------|------|---------|-------------|
-| `DOCUMENTATION_AI_EMBEDDINGS_MODEL` | string | **REQUIRED** | Model for generating embeddings (when AI enabled) |
-| `DOCUMENTATION_AI_ENHANCEMENTS_ENABLED` | bool | `false` | Enable AI-powered semantic search (future feature) |
 | `DOCUMENTATION_BULK_OPERATION_BATCH_SIZE` | int | `10` | Maximum documents processed per bulk operation |
 | `DOCUMENTATION_GIT_CLONE_TIMEOUT_SECONDS` | int | `300` | Clone/pull operation timeout in seconds |
 | `DOCUMENTATION_GIT_STORAGE_CLEANUP_HOURS` | int | `24` | Hours before inactive repos are cleaned up |
@@ -407,7 +500,13 @@ This document lists all configuration options defined in Bannou's configuration 
 
 | Environment Variable | Type | Default | Description |
 |---------------------|------|---------|-------------|
+| `ESCROW_CONFIRMATION_TIMEOUT_BATCH_SIZE` | int | `100` | Maximum escrows to process per timeout check cycle |
+| `ESCROW_CONFIRMATION_TIMEOUT_BEHAVIOR` | string | `auto_confirm` | What happens on confirmation timeout (auto_confirm/dispute/r... |
+| `ESCROW_CONFIRMATION_TIMEOUT_CHECK_INTERVAL_SECONDS` | int | `30` | How often the background service checks for expired confirma... |
+| `ESCROW_CONFIRMATION_TIMEOUT_SECONDS` | int | `300` | Timeout for party confirmations in seconds (default 5 minute... |
 | `ESCROW_DEFAULT_LIST_LIMIT` | int | `50` | Default limit for listing escrows when not specified |
+| `ESCROW_DEFAULT_REFUND_MODE` | string | `immediate` | Default refund confirmation mode when not specified in reque... |
+| `ESCROW_DEFAULT_RELEASE_MODE` | string | `service_only` | Default release confirmation mode when not specified in requ... |
 | `ESCROW_DEFAULT_TIMEOUT` | string | `P7D` | Default escrow expiration if not specified (ISO 8601 duratio... |
 | `ESCROW_EXPIRATION_BATCH_SIZE` | int | `100` | Batch size for expiration processing |
 | `ESCROW_EXPIRATION_CHECK_INTERVAL` | string | `PT1M` | How often to check for expired escrows (ISO 8601 duration) |
@@ -418,10 +517,21 @@ This document lists all configuration options defined in Bannou's configuration 
 | `ESCROW_MAX_PARTIES` | int | `10` | Maximum parties per escrow |
 | `ESCROW_MAX_PENDING_PER_PARTY` | int | `100` | Maximum concurrent pending escrows per party |
 | `ESCROW_MAX_TIMEOUT` | string | `P30D` | Maximum allowed escrow duration (ISO 8601 duration) |
-| `ESCROW_TOKEN_ALGORITHM` | string | `hmac_sha256` | Algorithm used for token generation |
 | `ESCROW_TOKEN_LENGTH` | int | `32` | Token length in bytes (before encoding) |
-| `ESCROW_TOKEN_SECRET` | string | **REQUIRED** | Token secret for HMAC (must be set in production) |
 | `ESCROW_VALIDATION_CHECK_INTERVAL` | string | `PT5M` | How often to validate held assets (ISO 8601 duration) |
+
+### Faction
+
+| Environment Variable | Type | Default | Description |
+|---------------------|------|---------|-------------|
+| `FACTION_DEFAULT_MEMBER_ROLE` | string | `Member` | Default role assigned to new members when no role is specifi... |
+| `FACTION_DISTRIBUTED_LOCK_TIMEOUT_SECONDS` | int | `30` | Timeout in seconds for distributed lock acquisition on facti... |
+| `FACTION_MAX_HIERARCHY_DEPTH` | int | `5` | Maximum parent/child nesting depth for faction hierarchy |
+| `FACTION_MAX_NORMS_PER_FACTION` | int | `50` | Maximum number of norm definitions per faction |
+| `FACTION_MAX_TERRITORIES_PER_FACTION` | int | `20` | Maximum number of territory claims per faction |
+| `FACTION_NORM_QUERY_CACHE_TTL_SECONDS` | int | `300` | TTL in seconds for cached norm resolution results per charac... |
+| `FACTION_SEED_BULK_PAGE_SIZE` | int | `100` | Page size for bulk seed operations during faction seeding |
+| `FACTION_SEED_TYPE_CODE` | string | `faction` | Which seed type code this service manages for faction growth |
 
 ### Game Session
 
@@ -439,6 +549,57 @@ This document lists all configuration options defined in Bannou's configuration 
 | `GAME_SESSION_STARTUP_SERVICE_DELAY_SECONDS` | int | `2` | Delay before startup service initializes subscription caches |
 | `GAME_SESSION_SUBSCRIBER_SESSION_RETRY_MAX_ATTEMPTS` | int | `3` | Maximum retry attempts for optimistic concurrency on subscri... |
 | `GAME_SESSION_SUPPORTED_GAME_SERVICES` | string | `generic` | Comma-separated list of supported game service stub names (e... |
+
+### Gardener
+
+| Environment Variable | Type | Default | Description |
+|---------------------|------|---------|-------------|
+| `GARDENER_ABANDON_DETECTION_MINUTES` | int | `5` | Minutes without player input before scenario is marked aband... |
+| `GARDENER_AFFINITY_WEIGHT` | double | `0.4` | Weight for domain affinity in scenario scoring algorithm |
+| `GARDENER_BACKGROUND_SERVICE_STARTUP_DELAY_SECONDS` | int | `5` | Seconds to wait before starting background workers after ser... |
+| `GARDENER_BOND_SCENARIO_PRIORITY` | double | `1.5` | Scoring boost multiplier for bond-friendly scenarios when pl... |
+| `GARDENER_BOND_SHARED_GARDEN_ENABLED` | bool | `true` | Whether bonded players share a garden instance with merged P... |
+| `GARDENER_DEFAULT_ESTIMATED_DURATION_MINUTES` | int | `30` | Fallback estimated duration for templates without an explici... |
+| `GARDENER_DEFAULT_PHASE` | string | `Alpha` | Starting deployment phase for new installations |
+| `GARDENER_DIRECTED_DISTANCE_THRESHOLD` | double | `200.0` | Minimum total drift distance to classify a player as directe... |
+| `GARDENER_DIRECTED_MAX_HESITATION_RATIO` | double | `0.15` | Maximum hesitation ratio to classify a player as directed |
+| `GARDENER_DISTRIBUTED_LOCK_TIMEOUT_SECONDS` | int | `30` | Timeout in seconds for distributed lock acquisition on garde... |
+| `GARDENER_DIVERSITY_SEEN_PENALTY` | double | `0.2` | Diversity score multiplier for recently completed scenarios ... |
+| `GARDENER_DIVERSITY_WEIGHT` | double | `0.3` | Weight for category diversity in scenario scoring algorithm |
+| `GARDENER_EXPLORATION_DISTANCE_THRESHOLD` | double | `500.0` | Minimum total drift distance to classify a player as explori... |
+| `GARDENER_EXPLORATION_MAX_HESITATION_RATIO` | double | `0.3` | Maximum hesitation ratio to still classify a player as explo... |
+| `GARDENER_GARDEN_TICK_INTERVAL_MS` | int | `5000` | Milliseconds between garden orchestrator evaluation cycles |
+| `GARDENER_GROWTH_AWARD_MULTIPLIER` | double | `1.0` | Global multiplier applied to all growth awards from scenario... |
+| `GARDENER_GROWTH_FULL_COMPLETION_MAX_RATIO` | double | `1.5` | Maximum time ratio cap for full completion growth (overtime ... |
+| `GARDENER_GROWTH_FULL_COMPLETION_MIN_RATIO` | double | `0.5` | Minimum time ratio floor for full completion growth (speed-r... |
+| `GARDENER_GROWTH_PARTIAL_MAX_RATIO` | double | `0.5` | Maximum time ratio cap for abandoned/timed-out scenario grow... |
+| `GARDENER_HESITANT_HESITATION_THRESHOLD` | double | `0.6` | Minimum hesitation ratio to classify a player as hesitant |
+| `GARDENER_HESITATION_DETECTION_THRESHOLD` | double | `0.1` | Minimum distance movement for hesitation detection in garden... |
+| `GARDENER_HESITATION_RATIO_NORMALIZATION_FACTOR` | double | `10.0` | Divisor for normalizing hesitation count to a ratio against ... |
+| `GARDENER_MAX_ACTIVE_POIS_PER_GARDEN` | int | `8` | Maximum concurrent POIs per player garden instance |
+| `GARDENER_MAX_CONCURRENT_SCENARIOS_GLOBAL` | int | `1000` | Maximum total active scenario instances across all players |
+| `GARDENER_MIN_POI_SPACING` | double | `30.0` | Minimum distance between any two POIs in garden space units |
+| `GARDENER_NARRATIVE_SCORE_HIGH` | double | `0.9` | Narrative score for strongest category-pattern match (e.g. e... |
+| `GARDENER_NARRATIVE_SCORE_LOW` | double | `0.4` | Narrative score for weak category-pattern match (e.g. explor... |
+| `GARDENER_NARRATIVE_SCORE_MEDIUM` | double | `0.6` | Narrative score for moderate category-pattern match (e.g. ex... |
+| `GARDENER_NARRATIVE_SCORE_MEDIUM_HIGH` | double | `0.7` | Narrative score for good category-pattern match (e.g. explor... |
+| `GARDENER_NARRATIVE_SCORE_NEUTRAL` | double | `0.5` | Baseline narrative score when no player drift pattern is det... |
+| `GARDENER_NARRATIVE_WEIGHT` | double | `0.2` | Weight for drift-pattern narrative response in scenario scor... |
+| `GARDENER_POI_DEFAULT_INTENSITY_RAMP` | double | `0.5` | Default initial intensity ramp value for spawned POIs (0.0-1... |
+| `GARDENER_POI_DEFAULT_TRIGGER_RADIUS` | double | `15.0` | Default trigger radius for POI proximity detection in garden... |
+| `GARDENER_POI_DEFAULT_TTL_MINUTES` | int | `10` | Default time-to-live in minutes for spawned POIs before expi... |
+| `GARDENER_POI_POSITION_MAX_RETRIES` | int | `10` | Maximum rejection sampling attempts when generating a valid ... |
+| `GARDENER_POI_SPAWN_RADIUS_MAX` | double | `200.0` | Maximum distance from player to spawn a POI in garden space ... |
+| `GARDENER_POI_SPAWN_RADIUS_MIN` | double | `50.0` | Minimum distance from player to spawn a POI in garden space ... |
+| `GARDENER_POI_VERTICAL_DAMPENING_FACTOR` | double | `0.3` | Y-axis scale factor for POI vertical distribution relative t... |
+| `GARDENER_PROXIMITY_TRIGGER_MAX_HESITATION_RATIO` | double | `0.2` | Maximum hesitation ratio for proximity-based POI trigger mod... |
+| `GARDENER_RANDOM_WEIGHT` | double | `0.1` | Weight for randomness and discovery in scenario scoring |
+| `GARDENER_RECENT_SCENARIO_COOLDOWN_MINUTES` | int | `30` | Minutes before a completed scenario can be re-offered to the... |
+| `GARDENER_SCENARIO_HISTORY_QUERY_PAGE_SIZE` | int | `200` | Maximum number of scenario history records to load per orche... |
+| `GARDENER_SCENARIO_LIFECYCLE_WORKER_INTERVAL_SECONDS` | int | `30` | Seconds between scenario lifecycle worker evaluation cycles |
+| `GARDENER_SCENARIO_TEMPLATE_QUERY_PAGE_SIZE` | int | `500` | Maximum number of scenario templates to load per orchestrato... |
+| `GARDENER_SCENARIO_TIMEOUT_MINUTES` | int | `60` | Maximum scenario duration before forced completion in minute... |
+| `GARDENER_SEED_TYPE_CODE` | string | `guardian` | Which seed type code this gardener manages for player spirit... |
 
 ### Inventory
 
@@ -460,6 +621,7 @@ This document lists all configuration options defined in Bannou's configuration 
 | Environment Variable | Type | Default | Description |
 |---------------------|------|---------|-------------|
 | `ITEM_BINDING_ALLOW_ADMIN_OVERRIDE` | bool | `true` | Whether admins can unbind soulbound items |
+| `ITEM_CAN_USE_MILESTONE_CODE` | string | `validate` | Milestone code to complete for CanUse validation contracts |
 | `ITEM_DEFAULT_MAX_STACK_SIZE` | int | `99` | Default max stack size for new templates when not specified |
 | `ITEM_DEFAULT_RARITY` | string | `common` | Default rarity for new templates when not specified |
 | `ITEM_DEFAULT_SOULBOUND_TYPE` | string | `none` | Default soulbound type for new templates |
@@ -468,23 +630,49 @@ This document lists all configuration options defined in Bannou's configuration 
 | `ITEM_LIST_OPERATION_MAX_RETRIES` | int | `3` | Maximum retry attempts for optimistic concurrency on list op... |
 | `ITEM_LOCK_TIMEOUT_SECONDS` | int | `30` | Timeout in seconds for distributed locks on item instance mo... |
 | `ITEM_MAX_INSTANCES_PER_QUERY` | int | `1000` | Maximum item instances returned in a single query |
+| `ITEM_ON_USE_FAILED_MILESTONE_CODE` | string | `handle_failure` | Milestone code to complete for OnUseFailed handler contracts |
+| `ITEM_SYSTEM_PARTY_ID` | string | **REQUIRED** | System party ID for item use contracts (null uses determinis... |
+| `ITEM_SYSTEM_PARTY_TYPE` | string | `system` | Entity type string for the system party in item use contract... |
 | `ITEM_TEMPLATE_CACHE_TTL_SECONDS` | int | `3600` | TTL for template cache entries in seconds (templates change ... |
+| `ITEM_USE_EVENT_BATCH_MAX_SIZE` | int | `100` | Maximum number of use records per batched event before force... |
+| `ITEM_USE_EVENT_DEDUPLICATION_WINDOW_SECONDS` | int | `60` | Time window in seconds for deduplicating item use events by ... |
+| `ITEM_USE_MILESTONE_CODE` | string | `use` | Milestone code to complete when using items via contract beh... |
+| `ITEM_USE_STEP_LOCK_TIMEOUT_SECONDS` | int | `30` | Distributed lock timeout in seconds for UseItemStep operatio... |
 
 ### Leaderboard
 
 | Environment Variable | Type | Default | Description |
 |---------------------|------|---------|-------------|
-| `LEADERBOARD_AUTO_ARCHIVE_ON_SEASON_END` | bool | `true` | Automatically archive leaderboard data when season ends |
 | `LEADERBOARD_MAX_ENTRIES_PER_QUERY` | int | `1000` | Maximum entries returned per rank query |
 | `LEADERBOARD_SCORE_UPDATE_BATCH_SIZE` | int | `1000` | Maximum scores to process in a single batch |
+
+### License
+
+| Environment Variable | Type | Default | Description |
+|---------------------|------|---------|-------------|
+| `LICENSE_BOARD_CACHE_TTL_SECONDS` | int | `300` | Redis TTL for board state cache in seconds |
+| `LICENSE_DEFAULT_ADJACENCY_MODE` | string | `eight_way` | Default adjacency mode for new board templates |
+| `LICENSE_DEFAULT_PAGE_SIZE` | int | `20` | Default page size for paginated queries (min 1, max 100) |
+| `LICENSE_LOCK_TIMEOUT_SECONDS` | int | `30` | Distributed lock TTL for board mutations in seconds |
+| `LICENSE_MAX_BOARDS_PER_OWNER` | int | `10` | Maximum number of active boards a single owner entity can ha... |
+| `LICENSE_MAX_CONCURRENCY_RETRIES` | int | `3` | Maximum retry attempts for optimistic concurrency conflicts |
+| `LICENSE_MAX_DEFINITIONS_PER_BOARD` | int | `200` | Maximum license definitions per board template |
 
 ### Location
 
 | Environment Variable | Type | Default | Description |
 |---------------------|------|---------|-------------|
+| `LOCATION_CACHE_TTL_SECONDS` | int | `3600` | TTL for location cache entries in seconds (locations change ... |
+| `LOCATION_CONTEXT_CACHE_TTL_SECONDS` | int | `10` | TTL for location context provider cache entries in seconds, ... |
+| `LOCATION_CONTEXT_NEARBY_POIS_LIMIT` | int | `50` | Maximum number of sibling locations to include in the nearby... |
 | `LOCATION_DEFAULT_DESCENDANT_MAX_DEPTH` | int | `10` | Default max depth when listing descendants if not specified ... |
+| `LOCATION_ENTITY_PRESENCE_CLEANUP_INTERVAL_SECONDS` | int | `60` | Interval in seconds between background cleanup cycles for ex... |
+| `LOCATION_ENTITY_PRESENCE_CLEANUP_STARTUP_DELAY_SECONDS` | int | `15` | Delay in seconds before entity presence cleanup worker start... |
+| `LOCATION_ENTITY_PRESENCE_TTL_SECONDS` | int | `30` | Default TTL for entity presence entries in seconds (reporter... |
+| `LOCATION_INDEX_LOCK_TIMEOUT_SECONDS` | int | `5` | Timeout for acquiring distributed locks on index operations ... |
 | `LOCATION_MAX_ANCESTOR_DEPTH` | int | `20` | Maximum depth to traverse when walking ancestor chain (preve... |
 | `LOCATION_MAX_DESCENDANT_DEPTH` | int | `20` | Safety limit for descendant traversal and circular reference... |
+| `LOCATION_MAX_ENTITIES_PER_LOCATION_QUERY` | int | `100` | Maximum entities returned by list-entities-at-location (pagi... |
 
 ### Mapping
 
@@ -498,6 +686,7 @@ This document lists all configuration options defined in Bannou's configuration 
 | `MAPPING_EVENT_AGGREGATION_WINDOW_MS` | int | `100` | Window in milliseconds for batching rapid updates into singl... |
 | `MAPPING_INLINE_PAYLOAD_MAX_BYTES` | int | `65536` | Payloads larger than this are stored via lib-asset reference |
 | `MAPPING_MAX_AFFORDANCE_CANDIDATES` | int | `1000` | Maximum candidate points to evaluate in affordance queries |
+| `MAPPING_MAX_BUFFER_FLUSH_RETRIES` | int | `3` | Maximum retry attempts for flushing spatial change buffers b... |
 | `MAPPING_MAX_CHECKOUT_DURATION_SECONDS` | int | `1800` | Maximum duration for authoring checkout locks |
 | `MAPPING_MAX_OBJECTS_PER_QUERY` | int | `5000` | Maximum objects returned in a single query |
 | `MAPPING_MAX_PAYLOADS_PER_PUBLISH` | int | `100` | Maximum payloads in single publish or ingest event |
@@ -543,22 +732,28 @@ This document lists all configuration options defined in Bannou's configuration 
 | `MESH_CONNECT_TIMEOUT_SECONDS` | int | `10` | TCP connection timeout in seconds |
 | `MESH_DEFAULT_LOAD_BALANCER` | string | `RoundRobin` | Default load balancing algorithm |
 | `MESH_DEFAULT_MAX_CONNECTIONS` | int | `1000` | Default max connections for auto-registered endpoints when h... |
+| `MESH_DEGRADATION_EVENT_DEDUPLICATION_WINDOW_SECONDS` | int | `60` | Time window in seconds for deduplicating degradation events ... |
 | `MESH_DEGRADATION_THRESHOLD_SECONDS` | int | `60` | Time without heartbeat before marking endpoint as degraded |
 | `MESH_ENABLE_SERVICE_MAPPING_SYNC` | bool | `true` | Whether to subscribe to FullServiceMappingsEvent for routing... |
+| `MESH_ENDPOINT_CACHE_MAX_SIZE` | int | `0` | Maximum number of app-ids to cache endpoint resolutions for.... |
 | `MESH_ENDPOINT_CACHE_TTL_SECONDS` | int | `5` | TTL in seconds for cached service endpoints |
 | `MESH_ENDPOINT_HOST` | string | **REQUIRED** | Hostname/IP for mesh endpoint registration. Defaults to app-... |
 | `MESH_ENDPOINT_PORT` | int | `80` | Port for mesh endpoint registration. |
 | `MESH_ENDPOINT_TTL_SECONDS` | int | `90` | TTL for endpoint registration (should be > 2x heartbeat inte... |
 | `MESH_HEALTH_CHECK_ENABLED` | bool | `false` | Whether to perform active health checks on endpoints |
+| `MESH_HEALTH_CHECK_EVENT_DEDUPLICATION_WINDOW_SECONDS` | int | `60` | Time window in seconds for deduplicating health check failur... |
+| `MESH_HEALTH_CHECK_FAILURE_THRESHOLD` | int | `3` | Consecutive health check failures before deregistering endpo... |
 | `MESH_HEALTH_CHECK_INTERVAL_SECONDS` | int | `60` | Interval between active health checks |
 | `MESH_HEALTH_CHECK_STARTUP_DELAY_SECONDS` | int | `10` | Delay in seconds before health check service starts probing ... |
 | `MESH_HEALTH_CHECK_TIMEOUT_SECONDS` | int | `5` | Timeout for health check requests |
 | `MESH_HEARTBEAT_INTERVAL_SECONDS` | int | `30` | Recommended interval between heartbeats |
+| `MESH_LOAD_BALANCING_STATE_MAX_APP_IDS` | int | `0` | Maximum number of app-ids to track in load balancing state (... |
 | `MESH_LOAD_THRESHOLD_PERCENT` | int | `80` | Load percentage above which an endpoint is considered high-l... |
 | `MESH_MAX_RETRIES` | int | `3` | Maximum retry attempts for failed service calls |
 | `MESH_MAX_SERVICE_MAPPINGS_DISPLAYED` | int | `10` | Maximum service mappings shown in diagnostic logs |
 | `MESH_MAX_TOP_ENDPOINTS_RETURNED` | int | `2` | Maximum top endpoints returned in health status queries |
 | `MESH_POOLED_CONNECTION_LIFETIME_MINUTES` | int | `2` | How long to keep pooled HTTP connections alive in minutes |
+| `MESH_REQUEST_TIMEOUT_SECONDS` | int | `30` | Maximum time in seconds for a complete request/response cycl... |
 | `MESH_RETRY_DELAY_MILLISECONDS` | int | `100` | Initial delay between retries (doubles on each retry) |
 | `MESH_USE_LOCAL_ROUTING` | bool | `false` | Use local-only routing instead of lib-state. All calls route... |
 
@@ -568,38 +763,79 @@ This document lists all configuration options defined in Bannou's configuration 
 |---------------------|------|---------|-------------|
 | `MESSAGING_CALLBACK_RETRY_DELAY_MS` | int | `1000` | Delay between HTTP callback retry attempts in milliseconds |
 | `MESSAGING_CALLBACK_RETRY_MAX_ATTEMPTS` | int | `3` | Maximum retry attempts for HTTP callback delivery (network f... |
+| `MESSAGING_CHANNEL_POOL_SIZE` | int | `100` | Maximum number of channels in the publisher channel pool |
+| `MESSAGING_CONNECTION_MAX_BACKOFF_MS` | int | `60000` | Maximum backoff delay for connection retries in milliseconds |
 | `MESSAGING_CONNECTION_RETRY_COUNT` | int | `5` | Number of connection retry attempts |
 | `MESSAGING_CONNECTION_RETRY_DELAY_MS` | int | `1000` | Delay between connection retry attempts in milliseconds |
 | `MESSAGING_DEAD_LETTER_EXCHANGE` | string | `bannou-dlx` | Dead letter exchange name for failed messages |
+| `MESSAGING_DEAD_LETTER_MAX_LENGTH` | int | `100000` | Maximum messages in dead letter queue before oldest dropped |
+| `MESSAGING_DEAD_LETTER_OVERFLOW_BEHAVIOR` | string | `drop-head` | Behavior when DLX queue exceeds max length (drop-head drops ... |
+| `MESSAGING_DEAD_LETTER_TTL_MS` | int | `604800000` | Time-to-live for dead letter messages in milliseconds (defau... |
 | `MESSAGING_DEFAULT_AUTO_ACK` | bool | `false` | Default auto-acknowledge setting for subscriptions |
 | `MESSAGING_DEFAULT_EXCHANGE` | string | `bannou` | Default exchange name for publishing |
 | `MESSAGING_DEFAULT_PREFETCH_COUNT` | int | `10` | Default prefetch count for subscriptions |
-| `MESSAGING_ENABLE_CONFIRMS` | bool | `true` | Enable RabbitMQ publisher confirms for reliability |
-| `MESSAGING_ENABLE_METRICS` | bool | `true` | Enable message bus metrics collection |
-| `MESSAGING_ENABLE_TRACING` | bool | `true` | Enable distributed tracing for messages |
+| `MESSAGING_ENABLE_CONFIRMS` | bool | `true` | Enable RabbitMQ publisher confirms for reliability. When ena... |
+| `MESSAGING_ENABLE_PUBLISH_BATCHING` | bool | `false` | Enable batched publishing for high-throughput scenarios. Whe... |
 | `MESSAGING_EXTERNAL_SUBSCRIPTION_TTL_SECONDS` | int | `86400` | TTL in seconds for external HTTP callback subscriptions (def... |
+| `MESSAGING_MAX_CONCURRENT_CHANNEL_CREATION` | int | `50` | Maximum concurrent channel creation requests (backpressure s... |
+| `MESSAGING_MAX_TOTAL_CHANNELS` | int | `1000` | Hard limit on total active channels per connection (RabbitMQ... |
+| `MESSAGING_PUBLISH_BATCH_SIZE` | int | `100` | Maximum number of messages to batch before sending. Batch is... |
+| `MESSAGING_PUBLISH_BATCH_TIMEOUT_MS` | int | `10` | Maximum delay in milliseconds before flushing a partial batc... |
 | `MESSAGING_RABBITMQ_HOST` | string | `rabbitmq` | RabbitMQ server hostname |
 | `MESSAGING_RABBITMQ_NETWORK_RECOVERY_INTERVAL_SECONDS` | int | `10` | Interval in seconds between RabbitMQ connection recovery att... |
 | `MESSAGING_RABBITMQ_PASSWORD` | string | `guest` (insecure) | RabbitMQ password |
 | `MESSAGING_RABBITMQ_PORT` | int | `5672` | RabbitMQ server port |
 | `MESSAGING_RABBITMQ_USERNAME` | string | `guest` (insecure) | RabbitMQ username |
 | `MESSAGING_RABBITMQ_VHOST` | string | `/` | RabbitMQ virtual host |
+| `MESSAGING_RETRY_BUFFER_BACKPRESSURE_THRESHOLD` | double | `0.8` | When buffer reaches this percentage full, start rejecting ne... |
 | `MESSAGING_RETRY_BUFFER_ENABLED` | bool | `true` | Enable retry buffer for failed event publishes |
 | `MESSAGING_RETRY_BUFFER_INTERVAL_SECONDS` | int | `5` | Interval between retry attempts for buffered messages |
-| `MESSAGING_RETRY_BUFFER_MAX_AGE_SECONDS` | int | `300` | Maximum age of buffered messages before node crash (prevents... |
-| `MESSAGING_RETRY_BUFFER_MAX_SIZE` | int | `10000` | Maximum number of messages in retry buffer before node crash |
-| `MESSAGING_RETRY_DELAY_MS` | int | `5000` | Delay between retry attempts in milliseconds |
-| `MESSAGING_RETRY_MAX_ATTEMPTS` | int | `3` | Maximum retry attempts before dead-lettering |
+| `MESSAGING_RETRY_BUFFER_MAX_AGE_SECONDS` | int | `600` | Maximum age of buffered messages before node crash (gives op... |
+| `MESSAGING_RETRY_BUFFER_MAX_SIZE` | int | `500000` | Maximum number of messages in retry buffer before node crash... |
+| `MESSAGING_RETRY_DELAY_MS` | int | `5000` | Base delay between retry attempts in milliseconds (doubles w... |
+| `MESSAGING_RETRY_MAX_ATTEMPTS` | int | `5` | Maximum retry attempts before discarding message to dead-let... |
+| `MESSAGING_RETRY_MAX_BACKOFF_MS` | int | `60000` | Maximum backoff delay between retries in milliseconds (caps ... |
 | `MESSAGING_SUBSCRIPTION_RECOVERY_STARTUP_DELAY_SECONDS` | int | `2` | Delay in seconds before starting subscription recovery servi... |
 | `MESSAGING_SUBSCRIPTION_TTL_REFRESH_INTERVAL_HOURS` | int | `6` | Interval in hours between subscription TTL refresh operation... |
 | `MESSAGING_USE_INMEMORY` | bool | `false` | Use in-memory messaging instead of RabbitMQ. Messages are NO... |
-| `MESSAGING_USE_MASSTRANSIT` | bool | `true` | Use MassTransit wrapper (true) or direct RabbitMQ.Client (fa... |
 
 ### Music
 
 | Environment Variable | Type | Default | Description |
 |---------------------|------|---------|-------------|
 | `MUSIC_COMPOSITION_CACHE_TTL_SECONDS` | int | `86400` | TTL in seconds for cached deterministic compositions |
+| `MUSIC_CONTOUR_DEFAULT_TENSION` | double | `0.5` | Default initial tension used when no section provides a valu... |
+| `MUSIC_CONTOUR_TENSION_THRESHOLD` | double | `0.2` | Tension delta threshold for determining ascending/descending... |
+| `MUSIC_DEFAULT_BEATS_PER_CHORD` | double | `4.0` | Default beats per chord in progression generation |
+| `MUSIC_DEFAULT_CHORDS_PER_BAR` | int | `1` | Default number of chords per bar in generated progressions |
+| `MUSIC_DEFAULT_EMOTIONAL_BRIGHTNESS` | double | `0.5` | Default brightness value for emotional state (0.0-1.0) |
+| `MUSIC_DEFAULT_EMOTIONAL_ENERGY` | double | `0.5` | Default energy value for emotional state (0.0-1.0) |
+| `MUSIC_DEFAULT_EMOTIONAL_STABILITY` | double | `0.8` | Default stability value for emotional state (0.0-1.0) |
+| `MUSIC_DEFAULT_EMOTIONAL_TENSION` | double | `0.2` | Default tension value for emotional state (0.0-1.0) |
+| `MUSIC_DEFAULT_EMOTIONAL_VALENCE` | double | `0.5` | Default valence value for emotional state (0.0-1.0) |
+| `MUSIC_DEFAULT_EMOTIONAL_WARMTH` | double | `0.5` | Default warmth value for emotional state (0.0-1.0) |
+| `MUSIC_DEFAULT_MELODY_DENSITY` | double | `0.7` | Default note density for melody generation (0.0-1.0) |
+| `MUSIC_DEFAULT_MELODY_SYNCOPATION` | double | `0.2` | Default syncopation amount for melody generation (0.0-1.0) |
+| `MUSIC_DEFAULT_TICKS_PER_BEAT` | int | `480` | Default MIDI ticks per beat (PPQN) for composition rendering |
+| `MUSIC_DEFAULT_VOICE_COUNT` | int | `4` | Default number of voices for chord voicing |
+| `MUSIC_DENSITY_ENERGY_MULTIPLIER` | double | `0.5` | Multiplier applied to energy for density calculation.
+Final ... |
+| `MUSIC_DENSITY_MINIMUM` | double | `0.4` | Minimum melody density (floor value before energy scaling).
+ |
+
+### Obligation
+
+| Environment Variable | Type | Default | Description |
+|---------------------|------|---------|-------------|
+| `OBLIGATION_BREACH_REPORT_ENABLED` | bool | `true` | Whether to auto-report violations as breaches to the contrac... |
+| `OBLIGATION_CACHE_TTL_MINUTES` | int | `10` | TTL in minutes for obligation manifest cache entries per cha... |
+| `OBLIGATION_DEFAULT_PAGE_SIZE` | int | `20` | Default page size for paginated queries |
+| `OBLIGATION_IDEMPOTENCY_TTL_SECONDS` | int | `86400` | TTL in seconds for violation report idempotency keys |
+| `OBLIGATION_LOCK_TIMEOUT_SECONDS` | int | `30` | Timeout in seconds for distributed locks on obligation cache... |
+| `OBLIGATION_MAX_ACTIVE_CONTRACTS_QUERY` | int | `100` | Maximum number of active contracts to query per character du... |
+| `OBLIGATION_MAX_OBLIGATIONS_PER_CHARACTER` | int | `200` | Safety limit on cached obligations per character (prevents r... |
+| `OBLIGATION_NORM_RESOLUTION_MODE` | string | `PerfectKnowledge` | How norm-based obligation costs are resolved when the Hearsa... |
+| `OBLIGATION_NORM_UNCERTAINTY_VARIANCE` | double | `0.2` | Maximum variance applied to norm penalties when NormResoluti... |
 
 ### Orchestrator
 
@@ -637,17 +873,76 @@ This document lists all configuration options defined in Bannou's configuration 
 
 | Environment Variable | Type | Default | Description |
 |---------------------|------|---------|-------------|
-| `PERMISSION_LOCK_BASE_DELAY_MS` | int | `100` | Base delay in ms between lock retry attempts (exponential ba... |
-| `PERMISSION_LOCK_EXPIRY_SECONDS` | int | `30` | Distributed lock expiration time in seconds |
-| `PERMISSION_LOCK_MAX_RETRIES` | int | `10` | Maximum retries for acquiring distributed lock |
+| `PERMISSION_CACHE_TTL_SECONDS` | int | `0` | In-memory permission cache TTL in seconds. Cached capabiliti... |
+| `PERMISSION_MAX_CONCURRENT_RECOMPILATIONS` | int | `50` | Maximum number of concurrent session recompilations during s... |
+| `PERMISSION_ROLE_HIERARCHY` | string[] | `['anonymous', 'user', 'developer', 'admin']` | Ordered role hierarchy from lowest to highest privilege. Ind... |
+| `PERMISSION_SESSION_DATA_TTL_SECONDS` | int | `86400` | Redis TTL in seconds for session permission data keys (state... |
 
-### Relationship Type
+### Puppetmaster
 
 | Environment Variable | Type | Default | Description |
 |---------------------|------|---------|-------------|
+| `PUPPETMASTER_ASSET_DOWNLOAD_TIMEOUT_SECONDS` | int | `30` | Timeout for downloading behavior YAML from asset service |
+| `PUPPETMASTER_BEHAVIOR_CACHE_MAX_SIZE` | int | `1000` | Maximum number of behavior documents to cache in memory |
+| `PUPPETMASTER_BEHAVIOR_CACHE_TTL_SECONDS` | int | `3600` | Time-to-live for cached behavior documents in seconds |
+| `PUPPETMASTER_DEFAULT_WATCHER_TYPES` | string[] | `['regional']` | Default watcher types to start for each realm (comma-separat... |
+| `PUPPETMASTER_SNAPSHOT_CACHE_TTL_SECONDS` | int | `300` | Time-to-live for cached resource snapshots in seconds (used ... |
+
+### Quest
+
+| Environment Variable | Type | Default | Description |
+|---------------------|------|---------|-------------|
+| `QUEST_COOLDOWN_CACHE_TTL_SECONDS` | int | `86400` | TTL for quest cooldown tracking |
+| `QUEST_DATA_CACHE_TTL_SECONDS` | int | `120` | TTL for in-memory quest data cache used by actor behavior ex... |
+| `QUEST_DEFAULT_DEADLINE_SECONDS` | int | `604800` | Default quest deadline in seconds (7 days) |
+| `QUEST_DEFINITION_CACHE_TTL_SECONDS` | int | `3600` | TTL for quest definition cache in Redis |
+| `QUEST_IDEMPOTENCY_TTL_SECONDS` | int | `86400` | TTL for idempotency keys (24 hours) |
+| `QUEST_LOCK_EXPIRY_SECONDS` | int | `30` | Distributed lock expiry for quest mutations |
+| `QUEST_LOCK_RETRY_ATTEMPTS` | int | `3` | Retry attempts when lock acquisition fails |
+| `QUEST_MAX_ACTIVE_QUESTS_PER_CHARACTER` | int | `25` | Maximum concurrent active quests per character |
+| `QUEST_MAX_CONCURRENCY_RETRIES` | int | `5` | ETag concurrency retry attempts |
+| `QUEST_MAX_QUESTORS_PER_QUEST` | int | `5` | Maximum party members per quest instance |
+| `QUEST_PREREQUISITE_VALIDATION_MODE` | string | `CHECK_ALL` | Controls prerequisite validation behavior.
+CHECK_ALL (defaul... |
+| `QUEST_PROGRESS_CACHE_TTL_SECONDS` | int | `300` | TTL for objective progress cache |
+
+### Realm
+
+| Environment Variable | Type | Default | Description |
+|---------------------|------|---------|-------------|
+| `REALM_MERGE_PAGE_SIZE` | int | `50` | Page size for paginated entity migration during realm merge ... |
+
+### Realm History
+
+| Environment Variable | Type | Default | Description |
+|---------------------|------|---------|-------------|
+| `REALM_HISTORY_ARCHIVE_SUMMARY_MAX_HISTORICAL_EVENTS` | int | `10` | Maximum number of major historical events to include in arch... |
+| `REALM_HISTORY_ARCHIVE_SUMMARY_MAX_LORE_POINTS` | int | `10` | Maximum number of key lore points to include in archive text... |
+| `REALM_HISTORY_INDEX_LOCK_TIMEOUT_SECONDS` | int | `15` | Timeout in seconds for distributed locks during index and lo... |
+| `REALM_HISTORY_MAX_LORE_ELEMENTS` | int | `100` | Maximum number of lore elements allowed per realm. Prevents ... |
+
+### Relationship
+
+| Environment Variable | Type | Default | Description |
+|---------------------|------|---------|-------------|
+| `RELATIONSHIP_LOCK_TIMEOUT_SECONDS` | int | `30` | Timeout in seconds for distributed lock acquisition on index... |
 | `RELATIONSHIP_TYPE_MAX_HIERARCHY_DEPTH` | int | `20` | Maximum depth for hierarchy traversal to prevent infinite lo... |
 | `RELATIONSHIP_TYPE_MAX_MIGRATION_ERRORS_TO_TRACK` | int | `100` | Maximum number of individual migration error details to trac... |
-| `RELATIONSHIP_TYPE_SEED_PAGE_SIZE` | int | `100` | Number of records to process per page during seed operations |
+
+### Resource
+
+| Environment Variable | Type | Default | Description |
+|---------------------|------|---------|-------------|
+| `RESOURCE_CLEANUP_CALLBACK_TIMEOUT_SECONDS` | int | `30` | Timeout for each cleanup callback execution |
+| `RESOURCE_CLEANUP_LOCK_EXPIRY_SECONDS` | int | `300` | Distributed lock timeout during cleanup execution |
+| `RESOURCE_COMPRESSION_CALLBACK_TIMEOUT_SECONDS` | int | `60` | Timeout for each compression callback execution |
+| `RESOURCE_COMPRESSION_LOCK_EXPIRY_SECONDS` | int | `600` | Distributed lock timeout during compression execution |
+| `RESOURCE_DEFAULT_CLEANUP_POLICY` | string | `BEST_EFFORT` | Default cleanup policy when not specified per-resource-type |
+| `RESOURCE_DEFAULT_COMPRESSION_POLICY` | string | `ALL_REQUIRED` | Default compression policy when not specified per-request |
+| `RESOURCE_DEFAULT_GRACE_PERIOD_SECONDS` | int | `604800` | Default grace period in seconds before cleanup eligible (7 d... |
+| `RESOURCE_SNAPSHOT_DEFAULT_TTL_SECONDS` | int | `3600` | Default TTL for snapshots when not specified in request (1 h... |
+| `RESOURCE_SNAPSHOT_MAX_TTL_SECONDS` | int | `86400` | Maximum allowed TTL for snapshots (24 hours default, max 7 d... |
+| `RESOURCE_SNAPSHOT_MIN_TTL_SECONDS` | int | `60` | Minimum allowed TTL for snapshots (1 minute default) |
 
 ### Save Load
 
@@ -701,8 +996,6 @@ This document lists all configuration options defined in Bannou's configuration 
 
 | Environment Variable | Type | Default | Description |
 |---------------------|------|---------|-------------|
-| `SCENE_ASSET_BUCKET` | string | `scenes` | lib-asset bucket for storing scene documents |
-| `SCENE_ASSET_CONTENT_TYPE` | string | `application/x-bannou-scene+yaml` | Content type for scene assets (YAML format) |
 | `SCENE_CHECKOUT_TTL_BUFFER_MINUTES` | int | `5` | Buffer time added to checkout TTL for state store expiry (gr... |
 | `SCENE_DEFAULT_CHECKOUT_TTL_MINUTES` | int | `60` | Default lock TTL for checkout operations in minutes |
 | `SCENE_DEFAULT_MAX_REFERENCE_DEPTH` | int | `3` | Default maximum depth for reference resolution (prevents inf... |
@@ -715,44 +1008,147 @@ This document lists all configuration options defined in Bannou's configuration 
 | `SCENE_MAX_TAGS_PER_SCENE` | int | `50` | Maximum tags allowed per scene |
 | `SCENE_MAX_VERSION_RETENTION_COUNT` | int | `100` | Maximum versions that can be retained (configurable per game... |
 
+### Seed
+
+| Environment Variable | Type | Default | Description |
+|---------------------|------|---------|-------------|
+| `SEED_BOND_SHARED_GROWTH_MULTIPLIER` | double | `1.5` | Growth multiplier applied when bonded seeds grow together in... |
+| `SEED_BOND_STRENGTH_GROWTH_RATE` | double | `0.1` | Rate at which bond strength increases per unit of shared gro... |
+| `SEED_CAPABILITY_RECOMPUTE_DEBOUNCE_MS` | int | `5000` | Debounce interval in milliseconds before recomputing capabil... |
+| `SEED_DECAY_WORKER_INTERVAL_SECONDS` | int | `900` | Interval in seconds between growth decay worker cycles (defa... |
+| `SEED_DECAY_WORKER_STARTUP_DELAY_SECONDS` | int | `30` | Delay in seconds before the decay worker starts its first cy... |
+| `SEED_DEFAULT_MAX_SEEDS_PER_OWNER` | int | `3` | Default maximum seeds of any single type per owner when not ... |
+| `SEED_DEFAULT_QUERY_PAGE_SIZE` | int | `100` | Default page size for queries that do not expose pagination ... |
+| `SEED_GROWTH_DECAY_ENABLED` | bool | `false` | Global toggle for growth domain decay. Per-type overrides ca... |
+| `SEED_GROWTH_DECAY_RATE_PER_DAY` | double | `0.01` | Global daily decay rate applied to unused growth domains. Pe... |
+| `SEED_MAX_SEED_TYPES_PER_GAME_SERVICE` | int | `50` | Maximum number of seed types that can be registered per game... |
+| `SEED_SEED_DATA_CACHE_TTL_SECONDS` | int | `60` | TTL in seconds for the seed data cache used by the variable ... |
+
 ### Species
 
 | Environment Variable | Type | Default | Description |
 |---------------------|------|---------|-------------|
-| `SPECIES_SEED_PAGE_SIZE` | int | `100` | Number of records to process per page during seed operations |
+| `SPECIES_MERGE_PAGE_SIZE` | int | `100` | Number of characters to process per page during species merg... |
 
 ### State
 
 | Environment Variable | Type | Default | Description |
 |---------------------|------|---------|-------------|
+| `STATE_CONNECTION_RETRY_COUNT` | int | `10` | Maximum number of connection retry attempts for MySQL initia... |
 | `STATE_CONNECTION_TIMEOUT_SECONDS` | int | `60` | Total timeout in seconds for establishing Redis/MySQL connec... |
-| `STATE_DEFAULT_CONSISTENCY` | string | `strong` | Default consistency level for state operations |
-| `STATE_ENABLE_METRICS` | bool | `true` | Enable metrics collection for state operations |
-| `STATE_ENABLE_TRACING` | bool | `true` | Enable distributed tracing for state operations |
+| `STATE_ENABLE_ERROR_EVENT_PUBLISHING` | bool | `true` | Enable publishing error events when state store operations f... |
+| `STATE_ERROR_EVENT_DEDUPLICATION_WINDOW_SECONDS` | int | `60` | Time window in seconds for deduplicating identical error eve... |
+| `STATE_INMEMORY_FALLBACK_LIMIT` | int | `10000` | Maximum entries for in-memory LINQ fallback before throwing ... |
+| `STATE_MIN_RETRY_DELAY_MS` | int | `1000` | Minimum delay in milliseconds between MySQL connection retry... |
 | `STATE_MYSQL_CONNECTION_STRING` | string | `server=bannou-mysql;database=bannou;user=guest;password=guest` (insecure) | MySQL connection string for MySQL-backed state stores |
 | `STATE_REDIS_CONNECTION_STRING` | string | `bannou-redis:6379` | Redis connection string (host:port format) for Redis-backed ... |
+| `STATE_SQLITE_DATA_PATH` | string | `./data/state` | Directory path for SQLite database files. Each MySQL-configu... |
 | `STATE_USE_INMEMORY` | bool | `false` | Use in-memory storage instead of Redis/MySQL. Data is NOT pe... |
+| `STATE_USE_SQLITE` | bool | `false` | Use SQLite file storage instead of MySQL for SQL-backed stor... |
+
+### Status
+
+| Environment Variable | Type | Default | Description |
+|---------------------|------|---------|-------------|
+| `STATUS_CACHE_WARMING_ENABLED` | bool | `false` | Enable proactive cache warming on startup by pre-loading act... |
+| `STATUS_DEFAULT_PAGE_SIZE` | int | `50` | Default page size for paginated queries |
+| `STATUS_DEFAULT_STATUS_DURATION_SECONDS` | int | `60` | Default duration when template has no defaultDurationSeconds... |
+| `STATUS_LOCK_ACQUISITION_TIMEOUT_SECONDS` | int | `5` | Maximum seconds to wait when acquiring a distributed lock be... |
+| `STATUS_LOCK_TIMEOUT_SECONDS` | int | `30` | TTL for distributed locks on status mutations |
+| `STATUS_MAX_CACHED_ENTITIES` | int | `10000` | Maximum number of entity active-status cache entries retaine... |
+| `STATUS_MAX_STACKS_PER_STATUS` | int | `10` | Global maximum stack count per status (template maxStacks ta... |
+| `STATUS_MAX_STATUSES_PER_ENTITY` | int | `50` | Maximum concurrent active statuses per entity |
+| `STATUS_MAX_STATUS_TEMPLATES_PER_GAME_SERVICE` | int | `200` | Maximum status template definitions per game service |
+| `STATUS_SEED_EFFECTS_CACHE_TTL_SECONDS` | int | `300` | TTL in seconds for seed-derived effects cache (longer becaus... |
+| `STATUS_SEED_EFFECTS_ENABLED` | bool | `true` | Enable seed-derived passive effects in unified queries (disa... |
+| `STATUS_STATUS_CACHE_TTL_SECONDS` | int | `60` | TTL in seconds for active status cache per entity (short bec... |
+
+### Storyline
+
+| Environment Variable | Type | Default | Description |
+|---------------------|------|---------|-------------|
+| `STORYLINE_CONFIDENCE_ACTION_COUNT_BONUS` | double | `0.15` | Confidence bonus when action count is within acceptable rang... |
+| `STORYLINE_CONFIDENCE_BASE_SCORE` | double | `0.5` | Base confidence score before any bonuses are applied.
+ |
+| `STORYLINE_CONFIDENCE_CORE_EVENT_BONUS` | double | `0.15` | Confidence bonus when plan contains core events.
+ |
+| `STORYLINE_CONFIDENCE_MAX_ACTION_COUNT` | int | `20` | Maximum action count for action count bonus.
+ |
+| `STORYLINE_CONFIDENCE_MIN_ACTION_COUNT` | int | `5` | Minimum action count for action count bonus.
+ |
+| `STORYLINE_CONFIDENCE_PHASE_BONUS` | double | `0.2` | Confidence bonus when phase threshold is met.
+ |
+| `STORYLINE_CONFIDENCE_PHASE_THRESHOLD` | int | `3` | Minimum number of phases to receive a phase count bonus.
+ |
+| `STORYLINE_DEFAULT_GENRE` | string | `drama` | Default genre when not specified and cannot be inferred.
+ |
+| `STORYLINE_DEFAULT_PLANNING_URGENCY` | string | `medium` | Default urgency tier for GOAP planning.
+low = more iteration... |
+| `STORYLINE_MAX_SEED_SOURCES` | int | `10` | Maximum number of seed sources per compose request.
+ |
+| `STORYLINE_PLAN_CACHE_ENABLED` | bool | `true` | Whether to cache deterministic plans (those with explicit se... |
+| `STORYLINE_PLAN_CACHE_TTL_SECONDS` | int | `3600` | TTL in seconds for cached composed plans.
+Default: 3600 (1 h... |
+| `STORYLINE_RISK_MIN_ACTION_THRESHOLD` | int | `3` | Minimum action count before "thin_content" risk is flagged.
+ |
+| `STORYLINE_RISK_MIN_PHASE_THRESHOLD` | int | `2` | Minimum phase count before "flat_arc" risk is flagged.
+ |
+| `STORYLINE_SCENARIO_BACKSTORY_MATCH_BONUS` | double | `0.1` | Bonus added to fit score for each matching backstory conditi... |
+| `STORYLINE_SCENARIO_COOLDOWN_DEFAULT_SECONDS` | int | `86400` | Default cooldown in seconds before a scenario can trigger ag... |
+| `STORYLINE_SCENARIO_DEFINITION_CACHE_TTL_SECONDS` | int | `300` | TTL in seconds for cached scenario definitions (Redis read-t... |
+| `STORYLINE_SCENARIO_FIT_SCORE_BASE_WEIGHT` | double | `0.5` | Base weight for scenario fit score calculation.
+Applied when... |
+| `STORYLINE_SCENARIO_FIT_SCORE_MINIMUM_THRESHOLD` | double | `0.3` | Minimum fit score required for a scenario to be considered a... |
+| `STORYLINE_SCENARIO_FIT_SCORE_RECOMMEND_THRESHOLD` | double | `0.7` | Fit score threshold above which immediate trigger is recomme... |
+| `STORYLINE_SCENARIO_IDEMPOTENCY_TTL_SECONDS` | int | `3600` | TTL in seconds for idempotency keys to prevent duplicate tri... |
+| `STORYLINE_SCENARIO_LOCATION_MATCH_BONUS` | double | `0.08` | Bonus added to fit score for matching location condition.
+ |
+| `STORYLINE_SCENARIO_MAX_ACTIVE_PER_CHARACTER` | int | `3` | Maximum number of active (in-progress) scenarios per charact... |
+| `STORYLINE_SCENARIO_RELATIONSHIP_MATCH_BONUS` | double | `0.12` | Bonus added to fit score for each matching relationship cond... |
+| `STORYLINE_SCENARIO_TRAIT_MATCH_BONUS` | double | `0.15` | Bonus added to fit score for each matching trait condition.
+ |
+| `STORYLINE_SCENARIO_TRIGGER_LOCK_TIMEOUT_SECONDS` | int | `30` | Timeout in seconds for the distributed lock during scenario ... |
+| `STORYLINE_SCENARIO_WORLD_STATE_MATCH_BONUS` | double | `0.05` | Bonus added to fit score for matching world state conditions... |
 
 ### Subscription
 
 | Environment Variable | Type | Default | Description |
 |---------------------|------|---------|-------------|
-| `SUBSCRIPTION_AUTHORIZATION_SUFFIX` | string | `authorized` | Suffix for authorization keys in state store |
 | `SUBSCRIPTION_EXPIRATION_CHECK_INTERVAL_MINUTES` | int | `5` | Interval in minutes between subscription expiration checks |
 | `SUBSCRIPTION_EXPIRATION_GRACE_PERIOD_SECONDS` | int | `30` | Grace period in seconds before expired subscriptions are mar... |
 | `SUBSCRIPTION_STARTUP_DELAY_SECONDS` | int | `30` | Delay in seconds before background service starts processing |
+
+### Telemetry
+
+| Environment Variable | Type | Default | Description |
+|---------------------|------|---------|-------------|
+| `TELEMETRY_DEPLOYMENT_ENVIRONMENT` | string | `development` | Deployment environment (development, staging, production) |
+| `TELEMETRY_METRICS_ENABLED` | bool | `true` | Enable metrics export via Prometheus scraping endpoint (/met... |
+| `TELEMETRY_OTLP_ENDPOINT` | string | `http://localhost:4317` | OTLP exporter endpoint (gRPC or HTTP) |
+| `TELEMETRY_OTLP_PROTOCOL` | string | `grpc` | OTLP transport protocol |
+| `TELEMETRY_SERVICE_NAME` | string | **REQUIRED** | Service name for telemetry (defaults to effective app-id if ... |
+| `TELEMETRY_SERVICE_NAMESPACE` | string | `bannou` | Service namespace for telemetry grouping |
+| `TELEMETRY_TRACING_ENABLED` | bool | `true` | Enable distributed tracing export |
+| `TELEMETRY_TRACING_SAMPLING_RATIO` | double | `1.0` | Trace sampling ratio (0.0-1.0). Use 1.0 for full sampling in... |
 
 ### Voice
 
 | Environment Variable | Type | Default | Description |
 |---------------------|------|---------|-------------|
+| `VOICE_AD_HOC_ROOMS_ENABLED` | bool | `false` | If true, joining a non-existent room auto-creates it with au... |
+| `VOICE_BROADCAST_CONSENT_TIMEOUT_SECONDS` | int | `30` | Seconds to wait for all participants to respond before auto-... |
+| `VOICE_EMPTY_ROOM_GRACE_PERIOD_SECONDS` | int | `300` | Seconds an empty autoCleanup room persists before auto-delet... |
+| `VOICE_EVICTION_WORKER_INITIAL_DELAY_SECONDS` | int | `10` | Seconds to wait after startup before the first eviction cycl... |
 | `VOICE_KAMAILIO_HOST` | string | `localhost` | Kamailio SIP server host |
 | `VOICE_KAMAILIO_REQUEST_TIMEOUT_SECONDS` | int | `5` | Timeout in seconds for Kamailio service requests |
 | `VOICE_KAMAILIO_RPC_PORT` | int | `5080` | Kamailio JSON-RPC port (typically 5080, not SIP port 5060) |
 | `VOICE_KAMAILIO_SIP_PORT` | int | `5060` | Kamailio SIP signaling port for client registration |
 | `VOICE_P2P_MAX_PARTICIPANTS` | int | `8` | Maximum participants in P2P voice sessions |
+| `VOICE_PARTICIPANT_EVICTION_CHECK_INTERVAL_SECONDS` | int | `15` | How often the background worker checks for stale participant... |
+| `VOICE_PARTICIPANT_HEARTBEAT_TIMEOUT_SECONDS` | int | `60` | Seconds of missed heartbeats before participant is evicted |
 | `VOICE_RTPENGINE_HOST` | string | `localhost` | RTPEngine media relay host |
 | `VOICE_RTPENGINE_PORT` | int | `22222` | RTPEngine control port |
+| `VOICE_RTPENGINE_TIMEOUT_SECONDS` | int | `5` | Timeout in seconds for RTPEngine UDP requests |
 | `VOICE_SCALED_MAX_PARTICIPANTS` | int | `100` | Maximum participants in scaled tier voice sessions |
 | `VOICE_SCALED_TIER_ENABLED` | bool | `false` | Enable scaled tier voice communication (SIP-based) |
 | `VOICE_SIP_CREDENTIAL_EXPIRATION_HOURS` | int | `24` | Hours until SIP credentials expire (clients should re-authen... |
@@ -762,11 +1158,28 @@ This document lists all configuration options defined in Bannou's configuration 
 | `VOICE_TIER_UPGRADE_ENABLED` | bool | `false` | Enable automatic tier upgrade from P2P to scaled |
 | `VOICE_TIER_UPGRADE_MIGRATION_DEADLINE_MS` | int | `30000` | Migration deadline in milliseconds when upgrading tiers |
 
+### Worldstate
+
+| Environment Variable | Type | Default | Description |
+|---------------------|------|---------|-------------|
+| `WORLDSTATE_BOUNDARY_EVENT_BATCH_SIZE` | int | `50` | Maximum boundary events published per tick. Prevents event f... |
+| `WORLDSTATE_CALENDAR_CACHE_TTL_MINUTES` | int | `60` | TTL for in-memory calendar template cache. Calendar structur... |
+| `WORLDSTATE_CLOCK_CACHE_TTL_SECONDS` | int | `10` | TTL for in-memory clock cache used by the variable provider.... |
+| `WORLDSTATE_CLOCK_TICK_INTERVAL_SECONDS` | int | `5` | Real-time seconds between clock advancement ticks. At 24:1 r... |
+| `WORLDSTATE_CLOCK_TICK_STARTUP_DELAY_SECONDS` | int | `10` | Seconds to wait after startup before first clock tick, allow... |
+| `WORLDSTATE_DEFAULT_CALENDAR_TEMPLATE_CODE` | string | **REQUIRED** | Default calendar template code used as fallback when Initial... |
+| `WORLDSTATE_DEFAULT_DOWNTIME_POLICY` | string | `Advance` | Default downtime handling policy for new realm clocks. Advan... |
+| `WORLDSTATE_DEFAULT_TIME_RATIO` | double | `24.0` | Default game-seconds per real-second for new realm clocks. 2... |
+| `WORLDSTATE_DISTRIBUTED_LOCK_TIMEOUT_SECONDS` | int | `10` | Timeout in seconds for distributed lock acquisition during c... |
+| `WORLDSTATE_MAX_CALENDARS_PER_GAME_SERVICE` | int | `10` | Safety limit on calendar templates per game service. |
+| `WORLDSTATE_MAX_CATCH_UP_GAME_DAYS` | int | `365` | Maximum game-days to advance during catch-up on startup. Pre... |
+| `WORLDSTATE_RATIO_HISTORY_RETENTION_DAYS` | int | `90` | Days of ratio history to retain. Older segments are compacte... |
+
 ## Configuration Summary
 
-- **Total properties**: 585
-- **Required (no default)**: 39
-- **Optional (has default)**: 546
+- **Total properties**: 890
+- **Required (no default)**: 52
+- **Optional (has default)**: 838
 
 ## Environment Variable Naming Convention
 

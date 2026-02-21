@@ -12,7 +12,7 @@
 //
 //     IMPLEMENTATION TENETS - Configuration-First:
 //     - Access configuration via dependency injection, never Environment.GetEnvironmentVariable.
-//     - ALL properties below MUST be referenced in LocationService.cs (no dead config).
+//     - ALL properties below MUST be referenced somewhere in the plugin (no dead config).
 //     - Any hardcoded tunable (limit, timeout, threshold, capacity) in service code means
 //       a configuration property is MISSING - add it to the configuration schema.
 //     - If a property is unused, remove it from the configuration schema.
@@ -40,7 +40,7 @@ namespace BeyondImmersion.BannouService.Location;
 /// <para>
 /// <b>IMPLEMENTATION TENETS - Configuration-First:</b> Access configuration via dependency injection.
 /// Never use <c>Environment.GetEnvironmentVariable()</c> directly in service code.
-/// ALL properties in this class MUST be referenced in the service implementation.
+/// ALL properties in this class MUST be referenced somewhere in the plugin.
 /// If a property is unused, remove it from the configuration schema.
 /// </para>
 /// <para>
@@ -70,5 +70,59 @@ public class LocationServiceConfiguration : IServiceConfiguration
     /// Environment variable: LOCATION_MAX_DESCENDANT_DEPTH
     /// </summary>
     public int MaxDescendantDepth { get; set; } = 20;
+
+    /// <summary>
+    /// TTL for location cache entries in seconds (locations change infrequently)
+    /// Environment variable: LOCATION_CACHE_TTL_SECONDS
+    /// </summary>
+    public int CacheTtlSeconds { get; set; } = 3600;
+
+    /// <summary>
+    /// Timeout for acquiring distributed locks on index operations (realm, parent, root indexes)
+    /// Environment variable: LOCATION_INDEX_LOCK_TIMEOUT_SECONDS
+    /// </summary>
+    public int IndexLockTimeoutSeconds { get; set; } = 5;
+
+    /// <summary>
+    /// Default TTL for entity presence entries in seconds (reporters must refresh within this window)
+    /// Environment variable: LOCATION_ENTITY_PRESENCE_TTL_SECONDS
+    /// </summary>
+    [ConfigRange(Minimum = 5, Maximum = 300)]
+    public int EntityPresenceTtlSeconds { get; set; } = 30;
+
+    /// <summary>
+    /// Interval in seconds between background cleanup cycles for expired location-entities set members
+    /// Environment variable: LOCATION_ENTITY_PRESENCE_CLEANUP_INTERVAL_SECONDS
+    /// </summary>
+    [ConfigRange(Minimum = 10, Maximum = 600)]
+    public int EntityPresenceCleanupIntervalSeconds { get; set; } = 60;
+
+    /// <summary>
+    /// Delay in seconds before entity presence cleanup worker starts processing
+    /// Environment variable: LOCATION_ENTITY_PRESENCE_CLEANUP_STARTUP_DELAY_SECONDS
+    /// </summary>
+    [ConfigRange(Minimum = 5, Maximum = 120)]
+    public int EntityPresenceCleanupStartupDelaySeconds { get; set; } = 15;
+
+    /// <summary>
+    /// Maximum entities returned by list-entities-at-location (pagination cap)
+    /// Environment variable: LOCATION_MAX_ENTITIES_PER_LOCATION_QUERY
+    /// </summary>
+    [ConfigRange(Minimum = 10, Maximum = 1000)]
+    public int MaxEntitiesPerLocationQuery { get; set; } = 100;
+
+    /// <summary>
+    /// TTL for location context provider cache entries in seconds, distinct from the main location CacheTtlSeconds (spatial context for ABML variable resolution)
+    /// Environment variable: LOCATION_CONTEXT_CACHE_TTL_SECONDS
+    /// </summary>
+    [ConfigRange(Minimum = 1, Maximum = 300)]
+    public int ContextCacheTtlSeconds { get; set; } = 10;
+
+    /// <summary>
+    /// Maximum number of sibling locations to include in the nearby_pois ABML variable for the location context provider
+    /// Environment variable: LOCATION_CONTEXT_NEARBY_POIS_LIMIT
+    /// </summary>
+    [ConfigRange(Minimum = 1, Maximum = 200)]
+    public int ContextNearbyPoisLimit { get; set; } = 50;
 
 }

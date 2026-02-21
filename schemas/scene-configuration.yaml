@@ -8,25 +8,15 @@ info:
     The Scene service stores and retrieves hierarchical scene documents
     with support for versioning, validation, and reference resolution.
 
-    **Schema Rules**: AI agents MUST review docs/reference/SCHEMA-RULES.md before
-    modifying this schema. Optional reference types require `nullable: true`.
+    **SCHEMA MODIFICATION GATE**: STOP. Before modifying this schema, you MUST:
+    1. Read docs/reference/SCHEMA-RULES.md
+    2. State which section applies to your change
+    3. Only then proceed with edits
+    Edits without stating the applicable rule are FORBIDDEN.
   version: 1.0.0
 paths: {}
 x-service-configuration:
   properties:
-    # Service Enable/Disable
-    # Storage Configuration
-    AssetBucket:
-      type: string
-      description: lib-asset bucket for storing scene documents
-      default: "scenes"
-      env: SCENE_ASSET_BUCKET
-    AssetContentType:
-      type: string
-      description: Content type for scene assets (YAML format)
-      default: "application/x-bannou-scene+yaml"
-      env: SCENE_ASSET_CONTENT_TYPE
-
     # Checkout Configuration
     DefaultCheckoutTtlMinutes:
       type: integer

@@ -3,13 +3,14 @@
 > **Plugin**: lib-asset
 > **Schema**: schemas/asset-api.yaml
 > **Version**: 1.0.0
+> **Layer**: AppFeatures
 > **State Stores**: asset-statestore (Redis), asset-processor-pool (Redis)
 
 ---
 
 ## Overview
 
-The Asset service provides storage, versioning, and distribution of large binary assets (textures, audio, 3D models) using MinIO/S3-compatible object storage. It never routes raw asset data through the WebSocket gateway; instead, it issues pre-signed URLs so clients upload/download directly to the storage backend. The service also manages bundles (grouped assets in a custom `.bannou` format with LZ4 compression), metabundles (merged super-bundles), and a distributed processor pool for content-type-specific transcoding and optimization.
+The Asset service (L3 AppFeatures) provides storage, versioning, and distribution of large binary assets (textures, audio, 3D models) using MinIO/S3-compatible object storage. Issues pre-signed URLs so clients upload/download directly to the storage backend, never routing raw asset data through the WebSocket gateway. Also manages bundles (grouped assets in a custom `.bannou` format with LZ4 compression), metabundles (merged super-bundles), and a distributed processor pool for content-type-specific transcoding. Used by lib-behavior, lib-save-load, lib-mapping, and lib-documentation for binary storage needs.
 
 ---
 
@@ -294,12 +295,17 @@ Client                    Asset Service                     MinIO Storage
 ## Stubs & Unimplemented Features
 
 1. **Texture and Model Processors**: `TextureProcessor` and `ModelProcessor` are registered but contain minimal implementations (validation only, no actual format conversion or optimization). The `AudioProcessor` with FFmpeg integration is the only fully functional processor.
+<!-- AUDIT:NEEDS_DESIGN:2026-02-01:https://github.com/beyond-immersion/bannou-service/issues/227 -->
 
 2. **Filesystem/Azure/R2 storage providers**: `StorageProvider` config accepts `minio`, `s3`, `r2`, `azure`, `filesystem` but only MinIO/S3-compatible backends have an implementation (`MinioStorageProvider`). Other backends would require new `IAssetStorageProvider` implementations.
+<!-- AUDIT:NEEDS_DESIGN:2026-02-01:https://github.com/beyond-immersion/bannou-service/issues/239 -->
 
 3. **Deleted bundle cleanup**: `DeletedBundleRetentionDays` is configurable but there is no background task that purges bundles past their retention window. Soft-deleted bundles accumulate indefinitely until manually cleaned.
 
 4. **Bundle ZIP cache cleanup**: `ZipCacheTtlHours` is set but no scheduled task removes expired ZIP cache entries from the `bundles/zip-cache` storage path.
+
+5. **Schema-defined events not implemented**: The `asset-events.yaml` schema declares `asset.processing.queued` and `asset.ready` events that have no corresponding `TryPublishAsync` calls in the service code. These event types exist in generated models but are never emitted.
+<!-- AUDIT:NEEDS_DESIGN:2026-02-01:https://github.com/beyond-immersion/bannou-service/issues/227 -->
 
 ---
 
@@ -321,9 +327,9 @@ Client                    Asset Service                     MinIO Storage
 
 ### Bugs (Fix Immediately)
 
-1. **T25 (String constants instead of enum)**: `AssetProcessingResult.ErrorCode` and `AssetValidationResult.ErrorCode` use string constants (`"UNSUPPORTED_CONTENT_TYPE"`, `"FILE_TOO_LARGE"`, etc.). Should define an `AssetProcessingErrorCode` enum for compile-time validation.
+1. ~~**T25 (String constants instead of enum)**~~: **FIXED** (2026-02-01) - Added `ProcessingErrorCode` enum with 7 values (UnsupportedContentType, UnsupportedFormat, FileTooLarge, MissingExtension, SourceNotFound, TranscodingFailed, ProcessingError). Changed `AssetProcessingResult.ErrorCode` and `AssetValidationResult.ErrorCode` to use `ProcessingErrorCode?` type. All processors (TextureProcessor, ModelProcessor, AudioProcessor) now use strongly-typed enum values.
 
-2. **BundleId incorrectly changed to Guid**: The BundleId fields were changed from `string` to `Guid`, but this was WRONG. BundleId is a human-provided identifier (e.g., `"synty/polygon-adventure"`, `"my-bundle-v1"`) as shown in the SDK documentation. This needs to be reverted to `string`. See `docs/plugins/DEEP_DIVE_CLEANUP.md` for details.
+2. **Schema-code event mismatch**: The events schema (`asset-events.yaml`) declares `asset.processing.queued` and `asset.ready` events that are not actually published anywhere in the service code. These should either be implemented or removed from the schema to prevent downstream consumers from expecting events that never fire.
 
 ### Intentional Quirks (Documented Behavior)
 
@@ -360,3 +366,13 @@ Client                    Asset Service                     MinIO Storage
 6. **Streaming metabundle memory model**: `StreamingMaxMemoryMb` limits buffer allocation, but the actual peak memory includes decompressed source bundle data being read, LZ4 compression buffers, and the multipart upload parts in flight. True memory usage can exceed the configured limit by `StreamingPartSizeMb + StreamingCompressionBufferKb/1024` MB.
 
 7. **Event emission without transactional guarantees**: Asset record creation and event publication are separate operations. If the service crashes between saving the record and publishing `asset.upload.completed`, no retry mechanism re-publishes the event. Dependent services relying on events would miss the asset until a manual reconciliation.
+
+---
+
+## Work Tracking
+
+This section tracks active development work on items from the quirks/bugs lists above. Items here are managed by the `/audit-plugin` workflow and should not be manually edited except to add new tracking markers.
+
+### Completed
+
+- **2026-02-01**: Fixed T25 violation - Added `ProcessingErrorCode` enum to replace string constants in `AssetProcessingResult` and `AssetValidationResult`. Modified 4 files: `IAssetProcessor.cs`, `TextureProcessor.cs`, `ModelProcessor.cs`, `AudioProcessor.cs`. Updated tests in `AudioProcessorTests.cs`.

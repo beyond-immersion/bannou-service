@@ -17,7 +17,6 @@
 #nullable enable
 
 using BeyondImmersion.BannouService;
-using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.Logging;
 
@@ -37,26 +36,7 @@ public static class RelationshipPermissionRegistration
     /// <summary>
     /// Service version from OpenAPI schema.
     /// </summary>
-    public const string ServiceVersion = "1.0.0";
-
-    /// <summary>
-    /// Generates the ServiceRegistrationEvent containing all endpoint permissions.
-    /// </summary>
-    /// <param name="instanceId">The unique instance GUID for this bannou instance</param>
-    /// <param name="appId">The effective app ID for this service instance</param>
-    public static ServiceRegistrationEvent CreateRegistrationEvent(Guid instanceId, string appId)
-    {
-        return new ServiceRegistrationEvent
-        {
-            EventId = Guid.NewGuid(),
-            Timestamp = DateTimeOffset.UtcNow,
-            ServiceId = instanceId,
-            ServiceName = ServiceId,
-            Version = ServiceVersion,
-            AppId = appId,
-            Endpoints = GetEndpoints()
-        };
-    }
+    public const string ServiceVersion = "2.0.0";
 
     /// <summary>
     /// Gets the list of endpoints with their permission requirements.
@@ -170,6 +150,216 @@ public static class RelationshipPermissionRegistration
             }
         });
 
+        endpoints.Add(new ServiceEndpoint
+        {
+            Path = "/relationship/cleanup-by-entity",
+            Method = ServiceEndpointMethod.POST,
+            Description = "cleanupByEntity",
+            Permissions = new List<PermissionRequirement>
+            {
+                new PermissionRequirement
+                {
+                    Role = "developer",
+                    RequiredStates = new Dictionary<string, string> {  }
+                },
+            }
+        });
+
+        endpoints.Add(new ServiceEndpoint
+        {
+            Path = "/relationship-type/get",
+            Method = ServiceEndpointMethod.POST,
+            Description = "getRelationshipType",
+            Permissions = new List<PermissionRequirement>
+            {
+                new PermissionRequirement
+                {
+                    Role = "user",
+                    RequiredStates = new Dictionary<string, string> {  }
+                },
+            }
+        });
+
+        endpoints.Add(new ServiceEndpoint
+        {
+            Path = "/relationship-type/get-by-code",
+            Method = ServiceEndpointMethod.POST,
+            Description = "getRelationshipTypeByCode",
+            Permissions = new List<PermissionRequirement>
+            {
+                new PermissionRequirement
+                {
+                    Role = "user",
+                    RequiredStates = new Dictionary<string, string> {  }
+                },
+            }
+        });
+
+        endpoints.Add(new ServiceEndpoint
+        {
+            Path = "/relationship-type/list",
+            Method = ServiceEndpointMethod.POST,
+            Description = "listRelationshipTypes",
+            Permissions = new List<PermissionRequirement>
+            {
+                new PermissionRequirement
+                {
+                    Role = "user",
+                    RequiredStates = new Dictionary<string, string> {  }
+                },
+            }
+        });
+
+        endpoints.Add(new ServiceEndpoint
+        {
+            Path = "/relationship-type/get-children",
+            Method = ServiceEndpointMethod.POST,
+            Description = "getChildRelationshipTypes",
+            Permissions = new List<PermissionRequirement>
+            {
+                new PermissionRequirement
+                {
+                    Role = "user",
+                    RequiredStates = new Dictionary<string, string> {  }
+                },
+            }
+        });
+
+        endpoints.Add(new ServiceEndpoint
+        {
+            Path = "/relationship-type/matches-hierarchy",
+            Method = ServiceEndpointMethod.POST,
+            Description = "matchesHierarchy",
+            Permissions = new List<PermissionRequirement>
+            {
+                new PermissionRequirement
+                {
+                    Role = "user",
+                    RequiredStates = new Dictionary<string, string> {  }
+                },
+            }
+        });
+
+        endpoints.Add(new ServiceEndpoint
+        {
+            Path = "/relationship-type/get-ancestors",
+            Method = ServiceEndpointMethod.POST,
+            Description = "getAncestors",
+            Permissions = new List<PermissionRequirement>
+            {
+                new PermissionRequirement
+                {
+                    Role = "user",
+                    RequiredStates = new Dictionary<string, string> {  }
+                },
+            }
+        });
+
+        endpoints.Add(new ServiceEndpoint
+        {
+            Path = "/relationship-type/create",
+            Method = ServiceEndpointMethod.POST,
+            Description = "createRelationshipType",
+            Permissions = new List<PermissionRequirement>
+            {
+                new PermissionRequirement
+                {
+                    Role = "admin",
+                    RequiredStates = new Dictionary<string, string> {  }
+                },
+            }
+        });
+
+        endpoints.Add(new ServiceEndpoint
+        {
+            Path = "/relationship-type/update",
+            Method = ServiceEndpointMethod.POST,
+            Description = "updateRelationshipType",
+            Permissions = new List<PermissionRequirement>
+            {
+                new PermissionRequirement
+                {
+                    Role = "admin",
+                    RequiredStates = new Dictionary<string, string> {  }
+                },
+            }
+        });
+
+        endpoints.Add(new ServiceEndpoint
+        {
+            Path = "/relationship-type/delete",
+            Method = ServiceEndpointMethod.POST,
+            Description = "deleteRelationshipType",
+            Permissions = new List<PermissionRequirement>
+            {
+                new PermissionRequirement
+                {
+                    Role = "admin",
+                    RequiredStates = new Dictionary<string, string> {  }
+                },
+            }
+        });
+
+        endpoints.Add(new ServiceEndpoint
+        {
+            Path = "/relationship-type/deprecate",
+            Method = ServiceEndpointMethod.POST,
+            Description = "deprecateRelationshipType",
+            Permissions = new List<PermissionRequirement>
+            {
+                new PermissionRequirement
+                {
+                    Role = "admin",
+                    RequiredStates = new Dictionary<string, string> {  }
+                },
+            }
+        });
+
+        endpoints.Add(new ServiceEndpoint
+        {
+            Path = "/relationship-type/undeprecate",
+            Method = ServiceEndpointMethod.POST,
+            Description = "undeprecateRelationshipType",
+            Permissions = new List<PermissionRequirement>
+            {
+                new PermissionRequirement
+                {
+                    Role = "admin",
+                    RequiredStates = new Dictionary<string, string> {  }
+                },
+            }
+        });
+
+        endpoints.Add(new ServiceEndpoint
+        {
+            Path = "/relationship-type/merge",
+            Method = ServiceEndpointMethod.POST,
+            Description = "mergeRelationshipType",
+            Permissions = new List<PermissionRequirement>
+            {
+                new PermissionRequirement
+                {
+                    Role = "admin",
+                    RequiredStates = new Dictionary<string, string> {  }
+                },
+            }
+        });
+
+        endpoints.Add(new ServiceEndpoint
+        {
+            Path = "/relationship-type/seed",
+            Method = ServiceEndpointMethod.POST,
+            Description = "seedRelationshipTypes",
+            Permissions = new List<PermissionRequirement>
+            {
+                new PermissionRequirement
+                {
+                    Role = "admin",
+                    RequiredStates = new Dictionary<string, string> {  }
+                },
+            }
+        });
+
         return endpoints;
     }
 
@@ -219,33 +409,28 @@ public static class RelationshipPermissionRegistration
         return matrix;
     }
 
+}
+
+/// <summary>
+/// Partial class overlay: registers Relationship service permissions via DI registry.
+/// Generated from x-permissions sections in relationship-api.yaml.
+/// Push-based: this service pushes its permission matrix TO the IPermissionRegistry.
+/// </summary>
+public partial class RelationshipService
+{
     /// <summary>
-    /// Registers service permissions via event publishing.
-    /// Should only be called after messaging infrastructure is confirmed.
+    /// Registers this service's permissions with the Permission service via DI registry.
+    /// Called by PluginLoader during startup with the resolved IPermissionRegistry.
     /// </summary>
-    /// <param name="messageBus">The message bus for publishing events</param>
-    /// <param name="appId">The effective app ID for this service instance</param>
-    /// <param name="logger">Optional logger for diagnostics</param>
-    public static async Task RegisterViaEventAsync(IMessageBus messageBus, string appId, ILogger? logger = null)
+    async Task IBannouService.RegisterServicePermissionsAsync(
+        string appId, IPermissionRegistry? registry)
     {
-        var registrationEvent = CreateRegistrationEvent(Program.ServiceGUID, appId);
-
-        var success = await messageBus.TryPublishAsync(
-            "permission.service-registered",
-            registrationEvent);
-
-        if (success)
+        if (registry != null)
         {
-            logger?.LogInformation(
-                "Published service registration event for {ServiceName} v{Version} with {EndpointCount} endpoints",
-                ServiceId, ServiceVersion, registrationEvent.Endpoints.Count);
-        }
-        else
-        {
-            logger?.LogWarning(
-                "Failed to publish service registration event for {ServiceId} (will be retried)",
-                ServiceId);
+            await registry.RegisterServiceAsync(
+                RelationshipPermissionRegistration.ServiceId,
+                RelationshipPermissionRegistration.ServiceVersion,
+                RelationshipPermissionRegistration.BuildPermissionMatrix());
         }
     }
-
 }

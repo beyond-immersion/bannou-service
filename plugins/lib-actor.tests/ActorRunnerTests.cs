@@ -1,12 +1,13 @@
-using BeyondImmersion.BannouService.Abml.Documents;
+using BeyondImmersion.Bannou.BehaviorCompiler.Documents;
+using BeyondImmersion.Bannou.BehaviorExpressions.Expressions;
+using BeyondImmersion.Bannou.BehaviorExpressions.Runtime;
 using BeyondImmersion.BannouService.Abml.Execution;
-using BeyondImmersion.BannouService.Abml.Expressions;
-using BeyondImmersion.BannouService.Abml.Runtime;
 using BeyondImmersion.BannouService.Actor;
-using BeyondImmersion.BannouService.Actor.Caching;
 using BeyondImmersion.BannouService.Actor.Runtime;
+using BeyondImmersion.BannouService.Behavior;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Messaging;
+using BeyondImmersion.BannouService.Providers;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State;
 using BeyondImmersion.BannouService.TestUtilities;
@@ -54,6 +55,7 @@ public class ActorRunnerTests
         string? actorId = null,
         ActorTemplateData? template = null,
         Guid? characterId = null,
+        Guid? realmId = null,
         ActorServiceConfiguration? config = null,
         object? initialState = null)
     {
@@ -75,13 +77,7 @@ public class ActorRunnerTests
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync("etag-1");
 
-        var behaviorCacheMock = new Mock<IBehaviorDocumentCache>();
-        var personalityCacheMock = new Mock<IPersonalityCache>();
-        var encounterCacheMock = new Mock<IEncounterCache>();
-        var executorMock = new Mock<IDocumentExecutor>();
-        var expressionEvaluatorMock = new Mock<IExpressionEvaluator>();
-
-        // Set up behavior cache to return a valid document with a main flow
+        // Create test document that will be returned by the mock loader
         var document = new AbmlDocument
         {
             Version = "2.0",
@@ -91,10 +87,28 @@ public class ActorRunnerTests
                 ["main"] = new Flow { Name = "main", Actions = [] }
             }
         };
-        behaviorCacheMock.Setup(c => c.GetOrLoadAsync(
-                It.IsAny<string>(),
-                It.IsAny<CancellationToken>()))
+
+        // Mock the behavior document loader directly
+        var behaviorLoaderMock = new Mock<IBehaviorDocumentLoader>();
+        behaviorLoaderMock.Setup(l => l.GetDocumentAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(document);
+
+        // Empty provider factories list - tests don't need actual providers
+        var providerFactories = new List<IVariableProviderFactory>();
+
+        var executorMock = new Mock<IDocumentExecutor>();
+        var expressionEvaluatorMock = new Mock<IExpressionEvaluator>();
+        var cognitionBuilderMock = new Mock<ICognitionBuilder>();
+
+        // Set up cognition builder to return a minimal pipeline by default.
+        // Category defaults (e.g., npc-brain → humanoid-cognition-base) resolve a template ID,
+        // and a specified-but-unresolvable template now fails the actor. Return a valid pipeline
+        // so existing tests that don't care about cognition still work.
+        var defaultPipelineMock = new Mock<ICognitionPipeline>();
+        defaultPipelineMock.SetupGet(p => p.Stages).Returns(new List<ICognitionStage>());
+        defaultPipelineMock.SetupGet(p => p.TemplateId).Returns("test-pipeline");
+        cognitionBuilderMock.Setup(b => b.Build(It.IsAny<string>(), It.IsAny<CognitionOverrides?>()))
+            .Returns(defaultPipelineMock.Object);
 
         // Set up executor to return success
         executorMock.Setup(e => e.ExecuteAsync(
@@ -110,16 +124,17 @@ public class ActorRunnerTests
             actorId ?? $"actor-{Guid.NewGuid()}",
             template ?? CreateTestTemplate(),
             characterId,
+            realmId ?? Guid.NewGuid(),
             config ?? CreateTestConfig(),
             messageBusMock.Object,
             messageSubscriberMock.Object,
             meshClientMock.Object,
             stateStoreMock.Object,
-            behaviorCacheMock.Object,
-            personalityCacheMock.Object,
-            encounterCacheMock.Object,
+            behaviorLoaderMock.Object,
+            providerFactories,
             executorMock.Object,
             expressionEvaluatorMock.Object,
+            cognitionBuilderMock.Object,
             loggerMock.Object,
             initialState);
 
@@ -822,6 +837,145 @@ public class ActorRunnerTests
         Assert.NotNull(snapshot.Encounter);
         Assert.True(snapshot.Encounter.StartedAt >= beforeStart);
         Assert.True(snapshot.Encounter.StartedAt <= DateTimeOffset.UtcNow);
+    }
+
+    #endregion
+
+    #region BindCharacterAsync Tests
+
+    [Fact]
+    public async Task BindCharacterAsync_UnboundRunningActor_SetsCharacterId()
+    {
+        // Arrange — create without characterId (event-mode actor)
+        var (runner, messageBusMock) = CreateRunner(characterId: null);
+        await runner.StartAsync(CancellationToken.None);
+        await WaitForIterationsAsync(runner, 1, TimeSpan.FromSeconds(5));
+
+        Assert.Null(runner.CharacterId);
+
+        var characterId = Guid.NewGuid();
+
+        // Act
+        await runner.BindCharacterAsync(characterId, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(characterId, runner.CharacterId);
+
+        // Cleanup
+        await runner.StopAsync(cancellationToken: CancellationToken.None);
+        await runner.DisposeAsync();
+    }
+
+    [Fact]
+    public async Task BindCharacterAsync_PublishesCharacterBoundEvent()
+    {
+        // Arrange
+        var realmId = Guid.NewGuid();
+        var (runner, messageBusMock) = CreateRunner(characterId: null, realmId: realmId);
+        await runner.StartAsync(CancellationToken.None);
+        await WaitForIterationsAsync(runner, 1, TimeSpan.FromSeconds(5));
+
+        var characterId = Guid.NewGuid();
+
+        // Act
+        await runner.BindCharacterAsync(characterId, CancellationToken.None);
+
+        // Assert
+        messageBusMock.Verify(
+            m => m.TryPublishAsync(
+                "actor.instance.character-bound",
+                It.Is<ActorCharacterBoundEvent>(e =>
+                    e.CharacterId == characterId &&
+                    e.RealmId == realmId &&
+                    e.PreviousCharacterId == null),
+                It.IsAny<CancellationToken>()),
+            Times.Once);
+
+        // Cleanup
+        await runner.StopAsync(cancellationToken: CancellationToken.None);
+        await runner.DisposeAsync();
+    }
+
+    [Fact]
+    public async Task BindCharacterAsync_AlreadyBound_Throws()
+    {
+        // Arrange — create with characterId already set
+        var (runner, _) = CreateRunner(characterId: Guid.NewGuid());
+        await runner.StartAsync(CancellationToken.None);
+        await WaitForIterationsAsync(runner, 1, TimeSpan.FromSeconds(5));
+
+        // Act & Assert
+        await Assert.ThrowsAsync<InvalidOperationException>(
+            () => runner.BindCharacterAsync(Guid.NewGuid(), CancellationToken.None));
+
+        // Cleanup
+        await runner.StopAsync(cancellationToken: CancellationToken.None);
+        await runner.DisposeAsync();
+    }
+
+    [Fact]
+    public async Task BindCharacterAsync_NotRunning_Throws()
+    {
+        // Arrange — create but don't start
+        var (runner, _) = CreateRunner(characterId: null);
+
+        // Act & Assert
+        await Assert.ThrowsAsync<InvalidOperationException>(
+            () => runner.BindCharacterAsync(Guid.NewGuid(), CancellationToken.None));
+
+        // Cleanup
+        await runner.DisposeAsync();
+    }
+
+    [Fact]
+    public async Task StartAsync_WithCharacterId_PublishesCharacterBoundEvent()
+    {
+        // Arrange
+        var characterId = Guid.NewGuid();
+        var realmId = Guid.NewGuid();
+        var (runner, messageBusMock) = CreateRunner(characterId: characterId, realmId: realmId);
+
+        // Act
+        await runner.StartAsync(CancellationToken.None);
+        await WaitForIterationsAsync(runner, 1, TimeSpan.FromSeconds(5));
+
+        // Assert
+        messageBusMock.Verify(
+            m => m.TryPublishAsync(
+                "actor.instance.character-bound",
+                It.Is<ActorCharacterBoundEvent>(e =>
+                    e.CharacterId == characterId &&
+                    e.RealmId == realmId &&
+                    e.PreviousCharacterId == null),
+                It.IsAny<CancellationToken>()),
+            Times.Once);
+
+        // Cleanup
+        await runner.StopAsync(cancellationToken: CancellationToken.None);
+        await runner.DisposeAsync();
+    }
+
+    [Fact]
+    public async Task StartAsync_WithoutCharacterId_DoesNotPublishCharacterBoundEvent()
+    {
+        // Arrange
+        var (runner, messageBusMock) = CreateRunner(characterId: null);
+
+        // Act
+        await runner.StartAsync(CancellationToken.None);
+        await WaitForIterationsAsync(runner, 1, TimeSpan.FromSeconds(5));
+
+        // Assert
+        messageBusMock.Verify(
+            m => m.TryPublishAsync(
+                "actor.instance.character-bound",
+                It.IsAny<ActorCharacterBoundEvent>(),
+                It.IsAny<CancellationToken>()),
+            Times.Never);
+
+        // Cleanup
+        await runner.StopAsync(cancellationToken: CancellationToken.None);
+        await runner.DisposeAsync();
     }
 
     #endregion

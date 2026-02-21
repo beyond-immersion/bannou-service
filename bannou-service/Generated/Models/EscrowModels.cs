@@ -347,6 +347,83 @@ public enum TokenType
 #pragma warning restore CS1591
 
 /// <summary>
+/// Controls how release confirmation is handled:
+/// <br/>- immediate: Finalizing → Released (skip Releasing state entirely).
+/// <br/>  ⚠️ WARNING: Use only for trusted/low-value scenarios (NPC vendors, system rewards).
+/// <br/>  Assets are marked as released BEFORE downstream services confirm transfers.
+/// <br/>  If downstream services fail, manual intervention may be required.
+/// <br/>- service_only: Wait for downstream services (currency, inventory) to confirm transfers complete.
+/// <br/>- party_required: Wait for all parties to call /confirm-release.
+/// <br/>- service_and_party: Wait for both service completion AND party confirmation.
+/// <br/>
+/// </summary>
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public enum ReleaseMode
+{
+
+    [System.Runtime.Serialization.EnumMember(Value = @"immediate")]
+    Immediate = 0,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"service_only")]
+    ServiceOnly = 1,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"party_required")]
+    PartyRequired = 2,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"service_and_party")]
+    ServiceAndParty = 3,
+
+}
+#pragma warning restore CS1591
+
+/// <summary>
+/// Controls how refund confirmation is handled. Same semantics as ReleaseMode.
+/// <br/>Refunds typically use 'immediate' since parties get their own assets back.
+/// <br/>
+/// </summary>
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public enum RefundMode
+{
+
+    [System.Runtime.Serialization.EnumMember(Value = @"immediate")]
+    Immediate = 0,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"service_only")]
+    ServiceOnly = 1,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"party_required")]
+    PartyRequired = 2,
+
+}
+#pragma warning restore CS1591
+
+/// <summary>
+/// What happens when confirmation timeout expires:
+/// <br/>- auto_confirm: If service events received, auto-confirm parties (default).
+/// <br/>- dispute: Transition to Disputed state, require arbiter intervention.
+/// <br/>- refund: Treat as failed, transition to Refunding.
+/// <br/>
+/// </summary>
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public enum ConfirmationTimeoutBehavior
+{
+
+    [System.Runtime.Serialization.EnumMember(Value = @"auto_confirm")]
+    AutoConfirm = 0,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"dispute")]
+    Dispute = 1,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"refund")]
+    Refund = 2,
+
+}
+#pragma warning restore CS1591
+
+/// <summary>
 /// Main escrow agreement record
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
@@ -533,7 +610,7 @@ public partial class EscrowAgreement
     public string? Description { get; set; } = default!;
 
     /// <summary>
-    /// Game/application specific metadata
+    /// Client-provided application-specific metadata. No Bannou plugin reads specific keys from this field by convention.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("metadata")]
     public object? Metadata { get; set; } = default!;
@@ -550,6 +627,26 @@ public partial class EscrowAgreement
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("resolutionNotes")]
     public string? ResolutionNotes { get; set; } = default!;
+
+    /// <summary>
+    /// How release confirmation is handled for this escrow.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("releaseMode")]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public ReleaseMode ReleaseMode { get; set; } = default!;
+
+    /// <summary>
+    /// How refund confirmation is handled for this escrow.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("refundMode")]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public RefundMode RefundMode { get; set; } = default!;
+
+    /// <summary>
+    /// Deadline for party confirmations when in Releasing/Refunding state.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("confirmationDeadline")]
+    public System.DateTimeOffset? ConfirmationDeadline { get; set; } = default!;
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 
@@ -785,7 +882,7 @@ public partial class EscrowAsset
     public string? CustomAssetId { get; set; } = default!;
 
     /// <summary>
-    /// Handler-specific data
+    /// Custom asset handler-specific data. No Bannou plugin reads specific keys from this field by convention.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("customAssetData")]
     public object? CustomAssetData { get; set; } = default!;
@@ -1208,7 +1305,7 @@ public partial class ValidationFailure
     public EntityType AffectedPartyType { get; set; } = default!;
 
     /// <summary>
-    /// Additional failure details
+    /// Validation failure diagnostic details. No Bannou plugin reads specific keys from this field by convention.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("details")]
     public object? Details { get; set; } = default!;
@@ -1399,10 +1496,26 @@ public partial class CreateEscrowRequest
     public string? Description { get; set; } = default!;
 
     /// <summary>
-    /// Application metadata
+    /// Client-provided application-specific metadata. No Bannou plugin reads specific keys from this field by convention.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("metadata")]
     public object? Metadata { get; set; } = default!;
+
+    /// <summary>
+    /// How release confirmation is handled. Defaults to service_only if not specified.
+    /// <br/>Only applies to unbound escrows; contract-bound escrows follow contract fulfillment.
+    /// <br/>
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("releaseMode")]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public ReleaseMode? ReleaseMode { get; set; } = default!;
+
+    /// <summary>
+    /// How refund confirmation is handled. Defaults to immediate if not specified.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("refundMode")]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public RefundMode? RefundMode { get; set; } = default!;
 
     /// <summary>
     /// Idempotency key for this operation
@@ -1656,7 +1769,7 @@ public partial class EscrowAssetInput
     public string? CustomAssetId { get; set; } = default!;
 
     /// <summary>
-    /// Custom asset data
+    /// Custom asset handler-specific data. No Bannou plugin reads specific keys from this field by convention.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("customAssetData")]
     public object? CustomAssetData { get; set; } = default!;
@@ -3201,6 +3314,148 @@ public partial class DisputeResponse
 }
 
 /// <summary>
+/// Request to confirm receipt of released assets
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class ConfirmReleaseRequest
+{
+
+    /// <summary>
+    /// The escrow being confirmed.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("escrowId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid EscrowId { get; set; } = default!;
+
+    /// <summary>
+    /// The party confirming receipt.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("partyId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid PartyId { get; set; } = default!;
+
+    /// <summary>
+    /// The party's release token (received via confirmation shortcut).
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("releaseToken")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string ReleaseToken { get; set; } = default!;
+
+    /// <summary>
+    /// Optional confirmation notes.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("notes")]
+    public string? Notes { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Response from confirming release receipt
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class ConfirmReleaseResponse
+{
+
+    /// <summary>
+    /// The escrow ID.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("escrowId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid EscrowId { get; set; } = default!;
+
+    /// <summary>
+    /// Whether this party's confirmation was recorded.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("confirmed")]
+    public bool Confirmed { get; set; } = default!;
+
+    /// <summary>
+    /// Whether all parties have now confirmed (triggers Released transition).
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("allPartiesConfirmed")]
+    public bool AllPartiesConfirmed { get; set; } = default!;
+
+    /// <summary>
+    /// Current escrow status after confirmation.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("status")]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public EscrowStatus? Status { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Request to confirm receipt of refunded assets
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class ConfirmRefundRequest
+{
+
+    /// <summary>
+    /// The escrow being confirmed.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("escrowId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid EscrowId { get; set; } = default!;
+
+    /// <summary>
+    /// The party confirming receipt of refund.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("partyId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid PartyId { get; set; } = default!;
+
+    /// <summary>
+    /// Optional confirmation notes.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("notes")]
+    public string? Notes { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Response from confirming refund receipt
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class ConfirmRefundResponse
+{
+
+    /// <summary>
+    /// The escrow ID.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("escrowId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid EscrowId { get; set; } = default!;
+
+    /// <summary>
+    /// Whether this party's confirmation was recorded.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("confirmed")]
+    public bool Confirmed { get; set; } = default!;
+
+    /// <summary>
+    /// Whether all parties have now confirmed (triggers Refunded transition).
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("allPartiesConfirmed")]
+    public bool AllPartiesConfirmed { get; set; } = default!;
+
+    /// <summary>
+    /// Current escrow status after confirmation.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("status")]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public EscrowStatus? Status { get; set; } = default!;
+
+}
+
+/// <summary>
 /// Request for arbiter to resolve a disputed escrow
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
@@ -3444,7 +3699,7 @@ public partial class VerifyConditionRequest
     public EntityType VerifierType { get; set; } = default!;
 
     /// <summary>
-    /// Proof/evidence data
+    /// Caller-provided proof/evidence data for condition verification. No Bannou plugin reads specific keys from this field by convention.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("verificationData")]
     public object? VerificationData { get; set; } = default!;
@@ -3860,49 +4115,6 @@ public partial class DeregisterHandlerResponse
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("deregistered")]
     public bool Deregistered { get; set; } = default!;
-
-    private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
-
-    /// <summary>
-    /// Gets or sets additional properties not defined in the schema.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
-    {
-        get => _additionalProperties;
-        set { _additionalProperties = value; }
-    }
-
-}
-
-/// <summary>
-/// Standard error response format
-/// </summary>
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class ErrorResponse
-{
-
-    /// <summary>
-    /// Error code
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("error")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public string Error { get; set; } = default!;
-
-    /// <summary>
-    /// Human-readable error message
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("message")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public string Message { get; set; } = default!;
-
-    /// <summary>
-    /// Additional error details
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("details")]
-    public object? Details { get; set; } = default!;
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 

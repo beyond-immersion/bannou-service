@@ -8,6 +8,7 @@ using Microsoft.Extensions.Logging;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
 using System.Collections.Concurrent;
+using System.Diagnostics;
 using System.Text;
 
 namespace BeyondImmersion.BannouService.Messaging.Services;
@@ -27,9 +28,11 @@ namespace BeyondImmersion.BannouService.Messaging.Services;
 /// </remarks>
 public sealed class RabbitMQMessageSubscriber : IMessageSubscriber, IAsyncDisposable
 {
-    private readonly RabbitMQConnectionManager _connectionManager;
+    private readonly IChannelManager _channelManager;
     private readonly ILogger<RabbitMQMessageSubscriber> _logger;
     private readonly MessagingServiceConfiguration _configuration;
+    private readonly ITelemetryProvider _telemetryProvider;
+    private readonly IMessageBus _messageBus;
 
     // Track static subscriptions by topic
     private readonly ConcurrentDictionary<string, StaticSubscription> _staticSubscriptions = new();
@@ -40,14 +43,30 @@ public sealed class RabbitMQMessageSubscriber : IMessageSubscriber, IAsyncDispos
     /// <summary>
     /// Creates a new RabbitMQMessageSubscriber instance.
     /// </summary>
+    /// <param name="channelManager">Channel manager for RabbitMQ operations.</param>
+    /// <param name="logger">Logger instance.</param>
+    /// <param name="configuration">Messaging service configuration.</param>
+    /// <param name="telemetryProvider">Telemetry provider for instrumentation (NullTelemetryProvider when telemetry disabled).</param>
+    /// <param name="messageBus">Message bus for publishing error events.</param>
     public RabbitMQMessageSubscriber(
-        RabbitMQConnectionManager connectionManager,
+        IChannelManager channelManager,
         ILogger<RabbitMQMessageSubscriber> logger,
-        MessagingServiceConfiguration configuration)
+        MessagingServiceConfiguration configuration,
+        ITelemetryProvider telemetryProvider,
+        IMessageBus messageBus)
     {
-        _connectionManager = connectionManager;
+        _channelManager = channelManager;
         _logger = logger;
         _configuration = configuration;
+        _telemetryProvider = telemetryProvider;
+        _messageBus = messageBus;
+
+        if (_telemetryProvider.TracingEnabled || _telemetryProvider.MetricsEnabled)
+        {
+            _logger.LogDebug(
+                "RabbitMQMessageSubscriber created with telemetry instrumentation: tracing={TracingEnabled}, metrics={MetricsEnabled}",
+                _telemetryProvider.TracingEnabled, _telemetryProvider.MetricsEnabled);
+        }
     }
 
     /// <inheritdoc/>
@@ -69,12 +88,12 @@ public sealed class RabbitMQMessageSubscriber : IMessageSubscriber, IAsyncDispos
 
         var effectiveOptions = options ?? new SubscriptionOptions();
         var queueName = BuildQueueName(topic, effectiveOptions);
-        var effectiveExchange = exchange ?? _connectionManager.DefaultExchange;
+        var effectiveExchange = exchange ?? _channelManager.DefaultExchange;
 
         try
         {
             // Create a dedicated channel for this subscription
-            var channel = await _connectionManager.CreateConsumerChannelAsync(cancellationToken);
+            var channel = await _channelManager.CreateConsumerChannelAsync(cancellationToken);
 
             // Declare the exchange (topic for service events - routes by routing key pattern)
             await channel.ExchangeDeclareAsync(
@@ -106,41 +125,60 @@ public sealed class RabbitMQMessageSubscriber : IMessageSubscriber, IAsyncDispos
             var consumer = new AsyncEventingBasicConsumer(channel);
             consumer.ReceivedAsync += async (sender, ea) =>
             {
-                try
-                {
-                    // Deserialize the message
-                    var json = Encoding.UTF8.GetString(ea.Body.Span);
-                    var eventData = BannouJson.Deserialize<TEvent>(json);
+                // Extract W3C trace context from message headers for distributed tracing
+                var parentContext = ExtractTraceContext(ea.BasicProperties.Headers);
 
-                    if (eventData == null)
-                    {
-                        _logger.LogWarning(
-                            "Failed to deserialize message on topic '{Topic}' to {EventType}",
-                            topic,
-                            typeof(TEvent).Name);
+                // Start telemetry activity for this consume operation
+                using var activity = _telemetryProvider?.StartActivity(
+                    TelemetryComponents.Messaging,
+                    "messaging.consume",
+                    ActivityKind.Consumer,
+                    parentContext);
+
+                var sw = Stopwatch.StartNew();
+
+                // Set activity tags for tracing
+                activity?.SetTag("messaging.system", "rabbitmq");
+                activity?.SetTag("messaging.destination", topic);
+                activity?.SetTag("messaging.operation", "receive");
+                if (ea.BasicProperties.MessageId != null)
+                {
+                    activity?.SetTag("messaging.message_id", ea.BasicProperties.MessageId);
+                }
+
+                // Delegate to extracted method for testability
+                var result = await HandleTypedDeliveryAsync(
+                    ea.Body,
+                    topic,
+                    handler,
+                    activity,
+                    subscriptionId: null,
+                    cancellationToken);
+
+                // Handle ack/nack based on result
+                switch (result)
+                {
+                    case MessageDeliveryResult.Success:
+                        await channel.BasicAckAsync(ea.DeliveryTag, multiple: false);
+                        break;
+                    case MessageDeliveryResult.DeserializationFailed:
                         await channel.BasicNackAsync(ea.DeliveryTag, multiple: false, requeue: false);
-                        return;
-                    }
-
-                    // Call handler
-                    await handler(eventData, cancellationToken);
-
-                    // Acknowledge
-                    await channel.BasicAckAsync(ea.DeliveryTag, multiple: false);
+                        break;
+                    case MessageDeliveryResult.HandlerError:
+                        // Nack with requeue for retry (unless it's been redelivered too many times)
+                        var requeue = !ea.Redelivered;
+                        await channel.BasicNackAsync(ea.DeliveryTag, multiple: false, requeue: requeue);
+                        break;
                 }
-                catch (Exception ex)
-                {
-                    _logger.LogError(ex, "Handler failed for message on topic '{Topic}'", topic);
-                    // Nack with requeue for retry (unless it's been redelivered too many times)
-                    var requeue = !ea.Redelivered;
-                    await channel.BasicNackAsync(ea.DeliveryTag, multiple: false, requeue: requeue);
-                }
+
+                sw.Stop();
+                RecordConsumeMetrics(topic, result == MessageDeliveryResult.Success, sw.Elapsed.TotalSeconds);
             };
 
-            // Start consuming
+            // Start consuming - use config fallback when AutoAck not explicitly specified
             var consumerTag = await channel.BasicConsumeAsync(
                 queue: queueName,
-                autoAck: effectiveOptions.AutoAck,
+                autoAck: effectiveOptions.AutoAck ?? _configuration.DefaultAutoAck,
                 consumer: consumer,
                 cancellationToken: cancellationToken);
 
@@ -171,7 +209,7 @@ public sealed class RabbitMQMessageSubscriber : IMessageSubscriber, IAsyncDispos
 
         var subscriptionId = Guid.NewGuid();
         var queueName = $"{topic}.dynamic.{subscriptionId:N}";
-        var effectiveExchange = exchange ?? _connectionManager.DefaultExchange;
+        var effectiveExchange = exchange ?? _channelManager.DefaultExchange;
 
         // Map enum to RabbitMQ exchange type
         var rabbitExchangeType = exchangeType switch
@@ -184,7 +222,7 @@ public sealed class RabbitMQMessageSubscriber : IMessageSubscriber, IAsyncDispos
         try
         {
             // Create a dedicated channel for this subscription
-            var channel = await _connectionManager.CreateConsumerChannelAsync(cancellationToken);
+            var channel = await _channelManager.CreateConsumerChannelAsync(cancellationToken);
 
             // Declare the exchange with the specified type
             await channel.ExchangeDeclareAsync(
@@ -214,39 +252,54 @@ public sealed class RabbitMQMessageSubscriber : IMessageSubscriber, IAsyncDispos
 
             // Create consumer
             var consumer = new AsyncEventingBasicConsumer(channel);
+            var subId = subscriptionId; // Capture for closure
             consumer.ReceivedAsync += async (sender, ea) =>
             {
-                try
-                {
-                    // Deserialize the message
-                    var json = Encoding.UTF8.GetString(ea.Body.Span);
-                    var eventData = BannouJson.Deserialize<TEvent>(json);
+                // Extract W3C trace context from message headers for distributed tracing
+                var parentContext = ExtractTraceContext(ea.BasicProperties.Headers);
 
-                    if (eventData == null)
-                    {
-                        _logger.LogWarning(
-                            "Failed to deserialize message on dynamic subscription {SubscriptionId} topic '{Topic}'",
-                            subscriptionId,
-                            topic);
+                // Start telemetry activity for this consume operation
+                using var activity = _telemetryProvider?.StartActivity(
+                    TelemetryComponents.Messaging,
+                    "messaging.consume",
+                    ActivityKind.Consumer,
+                    parentContext);
+
+                var sw = Stopwatch.StartNew();
+
+                // Set activity tags for tracing
+                activity?.SetTag("messaging.system", "rabbitmq");
+                activity?.SetTag("messaging.destination", topic);
+                activity?.SetTag("messaging.operation", "receive");
+                activity?.SetTag("messaging.subscription.id", subId.ToString());
+                if (ea.BasicProperties.MessageId != null)
+                {
+                    activity?.SetTag("messaging.message_id", ea.BasicProperties.MessageId);
+                }
+
+                // Delegate to extracted method for testability
+                var result = await HandleTypedDeliveryAsync(
+                    ea.Body,
+                    topic,
+                    handler,
+                    activity,
+                    subId,
+                    cancellationToken);
+
+                // Handle ack/nack based on result - dynamic subscriptions don't requeue
+                switch (result)
+                {
+                    case MessageDeliveryResult.Success:
+                        await channel.BasicAckAsync(ea.DeliveryTag, multiple: false);
+                        break;
+                    case MessageDeliveryResult.DeserializationFailed:
+                    case MessageDeliveryResult.HandlerError:
                         await channel.BasicNackAsync(ea.DeliveryTag, multiple: false, requeue: false);
-                        return;
-                    }
-
-                    // Call handler
-                    await handler(eventData, cancellationToken);
-
-                    // Acknowledge
-                    await channel.BasicAckAsync(ea.DeliveryTag, multiple: false);
+                        break;
                 }
-                catch (Exception ex)
-                {
-                    _logger.LogError(
-                        ex,
-                        "Handler failed for dynamic subscription {SubscriptionId} on topic '{Topic}'",
-                        subscriptionId,
-                        topic);
-                    await channel.BasicNackAsync(ea.DeliveryTag, multiple: false, requeue: false);
-                }
+
+                sw.Stop();
+                RecordConsumeMetrics(topic, result == MessageDeliveryResult.Success, sw.Elapsed.TotalSeconds);
             };
 
             // Start consuming
@@ -290,7 +343,7 @@ public sealed class RabbitMQMessageSubscriber : IMessageSubscriber, IAsyncDispos
         var subscriptionId = Guid.NewGuid();
         // Use provided queue name for deterministic naming (reconnection support), or generate one
         var effectiveQueueName = queueName ?? $"{topic}.dynamic.{subscriptionId:N}";
-        var effectiveExchange = exchange ?? _connectionManager.DefaultExchange;
+        var effectiveExchange = exchange ?? _channelManager.DefaultExchange;
 
         // Map enum to RabbitMQ exchange type
         var rabbitExchangeType = exchangeType switch
@@ -322,7 +375,7 @@ public sealed class RabbitMQMessageSubscriber : IMessageSubscriber, IAsyncDispos
         try
         {
             // Create a dedicated channel for this subscription
-            var channel = await _connectionManager.CreateConsumerChannelAsync(cancellationToken);
+            var channel = await _channelManager.CreateConsumerChannelAsync(cancellationToken);
 
             // Declare the exchange with the specified type
             await channel.ExchangeDeclareAsync(
@@ -352,25 +405,54 @@ public sealed class RabbitMQMessageSubscriber : IMessageSubscriber, IAsyncDispos
 
             // Create consumer that passes raw bytes directly
             var consumer = new AsyncEventingBasicConsumer(channel);
+            var subId = subscriptionId; // Capture for closure
             consumer.ReceivedAsync += async (sender, ea) =>
             {
-                try
-                {
-                    // Pass raw bytes directly to handler - no deserialization
-                    await handler(ea.Body.ToArray(), cancellationToken);
+                // Extract W3C trace context from message headers for distributed tracing
+                var parentContext = ExtractTraceContext(ea.BasicProperties.Headers);
 
-                    // Acknowledge
-                    await channel.BasicAckAsync(ea.DeliveryTag, multiple: false);
-                }
-                catch (Exception ex)
+                // Start telemetry activity for this consume operation
+                using var activity = _telemetryProvider?.StartActivity(
+                    TelemetryComponents.Messaging,
+                    "messaging.consume.raw",
+                    ActivityKind.Consumer,
+                    parentContext);
+
+                var sw = Stopwatch.StartNew();
+
+                // Set activity tags for tracing
+                activity?.SetTag("messaging.system", "rabbitmq");
+                activity?.SetTag("messaging.destination", topic);
+                activity?.SetTag("messaging.operation", "receive");
+                activity?.SetTag("messaging.subscription.id", subId.ToString());
+                activity?.SetTag("messaging.message.body_size", ea.Body.Length);
+                if (ea.BasicProperties.MessageId != null)
                 {
-                    _logger.LogError(
-                        ex,
-                        "Handler failed for raw dynamic subscription {SubscriptionId} on topic '{Topic}'",
-                        subscriptionId,
-                        topic);
-                    await channel.BasicNackAsync(ea.DeliveryTag, multiple: false, requeue: false);
+                    activity?.SetTag("messaging.message_id", ea.BasicProperties.MessageId);
                 }
+
+                // Delegate to extracted method for testability
+                var result = await HandleRawDeliveryAsync(
+                    ea.Body,
+                    topic,
+                    handler,
+                    activity,
+                    subId,
+                    cancellationToken);
+
+                // Handle ack/nack based on result
+                switch (result)
+                {
+                    case MessageDeliveryResult.Success:
+                        await channel.BasicAckAsync(ea.DeliveryTag, multiple: false);
+                        break;
+                    case MessageDeliveryResult.HandlerError:
+                        await channel.BasicNackAsync(ea.DeliveryTag, multiple: false, requeue: false);
+                        break;
+                }
+
+                sw.Stop();
+                RecordConsumeMetrics(topic, result == MessageDeliveryResult.Success, sw.Elapsed.TotalSeconds);
             };
 
             // Start consuming
@@ -508,8 +590,232 @@ public sealed class RabbitMQMessageSubscriber : IMessageSubscriber, IAsyncDispos
         return new Dictionary<string, object?>
         {
             ["x-dead-letter-exchange"] = _configuration.DeadLetterExchange,
-            ["x-dead-letter-routing-key"] = "dead-letter"
+            ["x-dead-letter-routing-key"] = "dead-letter",
+            ["x-max-length"] = _configuration.DeadLetterMaxLength,
+            ["x-message-ttl"] = _configuration.DeadLetterTtlMs,
+            ["x-overflow"] = _configuration.DeadLetterOverflowBehavior
         };
+    }
+
+    /// <summary>
+    /// Extracts W3C trace context from RabbitMQ message headers.
+    /// </summary>
+    /// <param name="headers">Message headers.</param>
+    /// <returns>ActivityContext if traceparent header present, null otherwise.</returns>
+    private static ActivityContext? ExtractTraceContext(IDictionary<string, object?>? headers)
+    {
+        if (headers == null)
+        {
+            return null;
+        }
+
+        // Look for W3C traceparent header
+        if (!headers.TryGetValue("traceparent", out var traceparentObj))
+        {
+            return null;
+        }
+
+        var traceparent = traceparentObj switch
+        {
+            byte[] bytes => Encoding.UTF8.GetString(bytes),
+            string str => str,
+            _ => null
+        };
+
+        if (string.IsNullOrEmpty(traceparent))
+        {
+            return null;
+        }
+
+        // Extract tracestate if present
+        string? tracestate = null;
+        if (headers.TryGetValue("tracestate", out var tracestateObj))
+        {
+            tracestate = tracestateObj switch
+            {
+                byte[] bytes => Encoding.UTF8.GetString(bytes),
+                string str => str,
+                _ => null
+            };
+        }
+
+        // Use ActivityContext.TryParse to parse W3C trace context
+        if (ActivityContext.TryParse(traceparent, tracestate, out var context))
+        {
+            return context;
+        }
+
+        return null;
+    }
+
+    /// <summary>
+    /// Records metrics for a consume operation.
+    /// </summary>
+    private void RecordConsumeMetrics(string topic, bool success, double durationSeconds)
+    {
+        if (_telemetryProvider == null)
+        {
+            return;
+        }
+
+        var tags = new[]
+        {
+            new KeyValuePair<string, object?>("topic", topic),
+            new KeyValuePair<string, object?>("success", success)
+        };
+
+        _telemetryProvider.RecordCounter(TelemetryComponents.Messaging, TelemetryMetrics.MessagingConsumed, 1, tags);
+        _telemetryProvider.RecordHistogram(TelemetryComponents.Messaging, TelemetryMetrics.MessagingConsumeDuration, durationSeconds, tags);
+    }
+
+    /// <summary>
+    /// Result of a message delivery attempt.
+    /// Used for testing to verify correct handling of different scenarios.
+    /// </summary>
+    internal enum MessageDeliveryResult
+    {
+        /// <summary>Message was successfully processed.</summary>
+        Success,
+        /// <summary>Message deserialized to null.</summary>
+        DeserializationFailed,
+        /// <summary>Handler threw an exception.</summary>
+        HandlerError
+    }
+
+    /// <summary>
+    /// Handles typed message delivery - extracted for testability.
+    /// </summary>
+    /// <typeparam name="TEvent">The event type to deserialize to.</typeparam>
+    /// <param name="body">Raw message body bytes.</param>
+    /// <param name="topic">The topic/routing key the message was received on.</param>
+    /// <param name="handler">The handler to invoke with the deserialized event.</param>
+    /// <param name="activity">Optional telemetry activity for tracing.</param>
+    /// <param name="subscriptionId">Optional subscription ID for dynamic subscriptions.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>The delivery result indicating success or failure type.</returns>
+    /// <remarks>
+    /// This method is internal to allow unit testing of message deserialization and handler
+    /// invocation without requiring actual RabbitMQ infrastructure.
+    /// </remarks>
+    internal async Task<MessageDeliveryResult> HandleTypedDeliveryAsync<TEvent>(
+        ReadOnlyMemory<byte> body,
+        string topic,
+        Func<TEvent, CancellationToken, Task> handler,
+        Activity? activity = null,
+        Guid? subscriptionId = null,
+        CancellationToken cancellationToken = default)
+        where TEvent : class
+    {
+        try
+        {
+            // Deserialize the message
+            var json = Encoding.UTF8.GetString(body.Span);
+            var eventData = BannouJson.Deserialize<TEvent>(json);
+
+            if (eventData == null)
+            {
+                // Truncate payload for logging (avoid memory issues with large payloads)
+                var truncatedPayload = json.Length > 500 ? json[..500] + "..." : json;
+
+                if (subscriptionId.HasValue)
+                {
+                    _logger.LogError(
+                        "Failed to deserialize message on dynamic subscription {SubscriptionId} topic '{Topic}' to {EventType}. Payload (truncated): {Payload}",
+                        subscriptionId.Value,
+                        topic,
+                        typeof(TEvent).Name,
+                        truncatedPayload);
+                }
+                else
+                {
+                    _logger.LogError(
+                        "Failed to deserialize message on topic '{Topic}' to {EventType}. Payload (truncated): {Payload}",
+                        topic,
+                        typeof(TEvent).Name,
+                        truncatedPayload);
+                }
+
+                activity?.SetStatus(ActivityStatusCode.Error, "Deserialization failed");
+
+                // Publish error event for observability
+                var details = subscriptionId.HasValue
+                    ? (object)new { SubscriptionId = subscriptionId.Value, Topic = topic, EventType = typeof(TEvent).Name, PayloadLength = json.Length }
+                    : new { Topic = topic, EventType = typeof(TEvent).Name, PayloadLength = json.Length };
+
+                var message = subscriptionId.HasValue
+                    ? $"Failed to deserialize message on dynamic subscription {subscriptionId.Value} topic '{topic}' to {typeof(TEvent).Name}"
+                    : $"Failed to deserialize message on topic '{topic}' to {typeof(TEvent).Name}";
+
+                await _messageBus.TryPublishErrorAsync(
+                    serviceName: "messaging",
+                    operation: "deserialize",
+                    errorType: "DeserializationFailed",
+                    message: message,
+                    details: details,
+                    cancellationToken: cancellationToken);
+
+                return MessageDeliveryResult.DeserializationFailed;
+            }
+
+            // Call handler
+            await handler(eventData, cancellationToken);
+            activity?.SetStatus(ActivityStatusCode.Ok);
+            return MessageDeliveryResult.Success;
+        }
+        catch (Exception ex)
+        {
+            if (subscriptionId.HasValue)
+            {
+                _logger.LogError(
+                    ex,
+                    "Handler failed for dynamic subscription {SubscriptionId} on topic '{Topic}'",
+                    subscriptionId.Value,
+                    topic);
+            }
+            else
+            {
+                _logger.LogError(ex, "Handler failed for message on topic '{Topic}'", topic);
+            }
+            activity?.SetStatus(ActivityStatusCode.Error, ex.Message);
+            return MessageDeliveryResult.HandlerError;
+        }
+    }
+
+    /// <summary>
+    /// Handles raw message delivery - extracted for testability.
+    /// </summary>
+    /// <param name="body">Raw message body bytes.</param>
+    /// <param name="topic">The topic/routing key the message was received on.</param>
+    /// <param name="handler">The handler to invoke with the raw bytes.</param>
+    /// <param name="activity">Optional telemetry activity for tracing.</param>
+    /// <param name="subscriptionId">Subscription ID for logging.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>The delivery result indicating success or failure type.</returns>
+    internal async Task<MessageDeliveryResult> HandleRawDeliveryAsync(
+        ReadOnlyMemory<byte> body,
+        string topic,
+        Func<byte[], CancellationToken, Task> handler,
+        Activity? activity = null,
+        Guid? subscriptionId = null,
+        CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            // Pass raw bytes directly to handler - no deserialization
+            await handler(body.ToArray(), cancellationToken);
+            activity?.SetStatus(ActivityStatusCode.Ok);
+            return MessageDeliveryResult.Success;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(
+                ex,
+                "Handler failed for raw dynamic subscription {SubscriptionId} on topic '{Topic}'",
+                subscriptionId,
+                topic);
+            activity?.SetStatus(ActivityStatusCode.Error, ex.Message);
+            return MessageDeliveryResult.HandlerError;
+        }
     }
 
     /// <summary>

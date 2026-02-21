@@ -3,6 +3,7 @@ using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.Voice.Clients;
 using BeyondImmersion.BannouService.Voice.Services;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
 namespace BeyondImmersion.BannouService.Voice;
@@ -19,9 +20,6 @@ public class VoiceServicePlugin : StandardServicePlugin<IVoiceService>
     {
         Logger?.LogInformation("Configuring Voice service dependencies");
 
-        // Ensure HttpClient factory is available for Kamailio/RTPEngine clients
-        services.AddHttpClient();
-
         // Register helper services for P2P voice coordination
         // These are Singleton because they maintain local caches for multi-instance safety (FOUNDATION TENETS)
         services.AddSingleton<ISipEndpointRegistry, SipEndpointRegistry>();
@@ -31,24 +29,19 @@ public class VoiceServicePlugin : StandardServicePlugin<IVoiceService>
         // Register scaled tier coordinator and clients for SFU-based conferencing
         services.AddSingleton<IScaledTierCoordinator, ScaledTierCoordinator>();
 
-        // Register Kamailio and RTPEngine clients with configuration-driven settings
-        services.AddSingleton<IKamailioClient>(sp =>
-        {
-            var config = sp.GetRequiredService<VoiceServiceConfiguration>();
-            var logger = sp.GetRequiredService<ILogger<KamailioClient>>();
-            var httpClient = sp.GetRequiredService<IHttpClientFactory>().CreateClient("Kamailio");
-            var messageBus = sp.GetRequiredService<IMessageBus>();
-            return new KamailioClient(httpClient, config.KamailioHost, config.KamailioRpcPort, TimeSpan.FromSeconds(config.KamailioRequestTimeoutSeconds), logger, messageBus);
-        });
-
+        // Register RTPEngine client with configuration-driven settings
         services.AddSingleton<IRtpEngineClient>(sp =>
         {
             var config = sp.GetRequiredService<VoiceServiceConfiguration>();
             var logger = sp.GetRequiredService<ILogger<RtpEngineClient>>();
             var messageBus = sp.GetRequiredService<IMessageBus>();
-            return new RtpEngineClient(config.RtpEngineHost, config.RtpEnginePort, logger, messageBus, timeoutSeconds: 5);
+            return new RtpEngineClient(config.RtpEngineHost, config.RtpEnginePort, logger, messageBus, timeoutSeconds: config.RtpEngineTimeoutSeconds);
         });
-        Logger?.LogDebug("Registered Voice scaled tier services (ScaledTierCoordinator, KamailioClient, RtpEngineClient)");
+        Logger?.LogDebug("Registered Voice scaled tier services (ScaledTierCoordinator, RtpEngineClient)");
+
+        // Register background worker for participant eviction, empty room cleanup, and consent timeout
+        services.AddHostedService<ParticipantEvictionWorker>();
+        Logger?.LogDebug("Registered ParticipantEvictionWorker background service");
 
         Logger?.LogInformation("Voice service dependencies configured");
     }

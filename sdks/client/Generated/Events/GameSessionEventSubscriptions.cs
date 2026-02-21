@@ -24,17 +24,6 @@ public sealed class GameSessionEventSubscriptions
     }
 
     /// <summary>
-    /// Subscribe to <see cref="ChatMessageReceivedEvent"/> events.
-    /// Sent to recipients when a chat message is posted in the session.
-    /// </summary>
-    /// <param name="handler">Handler invoked when the event is received.</param>
-    /// <returns>Subscription handle. Dispose to unsubscribe.</returns>
-    public IEventSubscription OnChatMessageReceived(Action<ChatMessageReceivedEvent> handler)
-    {
-        return _client.OnEvent<ChatMessageReceivedEvent>(handler);
-    }
-
-    /// <summary>
     /// Subscribe to <see cref="GameActionResultEvent"/> events.
     /// Sent to relevant players when a game action produces results.
     /// </summary>
@@ -87,6 +76,17 @@ public sealed class GameSessionEventSubscriptions
     public IEventSubscription OnPlayerLeft(Action<PlayerLeftEvent> handler)
     {
         return _client.OnEvent<PlayerLeftEvent>(handler);
+    }
+
+    /// <summary>
+    /// Subscribe to <see cref="SessionChatReceivedEvent"/> events.
+    /// Sent to recipients when a chat message is posted in the session.
+    /// </summary>
+    /// <param name="handler">Handler invoked when the event is received.</param>
+    /// <returns>Subscription handle. Dispose to unsubscribe.</returns>
+    public IEventSubscription OnSessionChatReceived(Action<SessionChatReceivedEvent> handler)
+    {
+        return _client.OnEvent<SessionChatReceivedEvent>(handler);
     }
 
     /// <summary>

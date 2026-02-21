@@ -29,9 +29,35 @@ info:
     - AGGRESSION: Pacifist/Avoidant (-1) to Confrontational/Violent (+1)
     - LOYALTY: Self-serving/Mercenary (-1) to Devoted/Faithful (+1)
 
-    **Schema Rules**: AI agents MUST review docs/reference/SCHEMA-RULES.md before modifying
-    this schema. Optional reference types require `nullable: true`.
+    **SCHEMA MODIFICATION GATE**: STOP. Before modifying this schema, you MUST:
+    1. Read docs/reference/SCHEMA-RULES.md
+    2. State which section applies to your change
+    3. Only then proceed with edits
+    Edits without stating the applicable rule are FORBIDDEN.
   version: 1.0.0
+  # Resource reference tracking (see SCHEMA-RULES.md "x-references")
+  # The personality service stores BOTH personality traits AND combat preferences for characters.
+  # A single cleanup endpoint handles deletion of both data types for a given character.
+  x-references:
+    - target: character
+      sourceType: character-personality
+      field: characterId
+      onDelete: cascade
+      cleanup:
+        endpoint: /character-personality/cleanup-by-character
+        payloadTemplate: '{"characterId": "{{resourceId}}"}'
+  # Compression callback for resource archival (see SCHEMA-RULES.md "x-compression-callback")
+  x-compression-callback:
+    resourceType: character
+    sourceType: character-personality
+    compressEndpoint: /character-personality/get-compress-data
+    compressPayloadTemplate: '{"characterId": "{{resourceId}}"}'
+    priority: 10
+    templateNamespace: personality
+    description: Personality traits and combat preferences
+    decompressEndpoint: /character-personality/restore-from-archive
+    decompressPayloadTemplate: '{"characterId": "{{resourceId}}", "data": "{{data}}"}'
+x-service-layer: GameFeatures
 servers:
 - url: http://localhost:5012
   description: Bannou service endpoint (internal only)
@@ -302,6 +328,93 @@ paths:
           description: Combat preferences deleted successfully
         '404':
           description: No combat preferences found for this character
+
+  # ===========================================================================
+  # Compression Endpoints (Resource Service Integration)
+  # ===========================================================================
+
+  /character-personality/get-compress-data:
+    post:
+      summary: Get personality data for compression
+      operationId: getCompressData
+      tags:
+      - Compression
+      description: |
+        Called by Resource service during character compression.
+        Returns personality traits and combat preferences for archival.
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetCompressDataRequest'
+      responses:
+        '200':
+          description: Compressed data returned
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CharacterPersonalityArchive'
+        '404':
+          description: No personality data for character
+
+  /character-personality/restore-from-archive:
+    post:
+      summary: Restore personality data from archive
+      operationId: restoreFromArchive
+      tags:
+      - Compression
+      description: |
+        Called by Resource service during character decompression.
+        Restores personality traits and combat preferences from archive data.
+      x-permissions:
+      - role: admin
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RestoreFromArchiveRequest'
+      responses:
+        '200':
+          description: Restoration result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RestoreFromArchiveResponse'
+        '400':
+          description: Invalid archive data
+
+  # Resource Cleanup Endpoint
+  /character-personality/cleanup-by-character:
+    post:
+      summary: Cleanup all personality data for a deleted character
+      operationId: cleanupByCharacter
+      tags:
+      - Resource Cleanup
+      description: |
+        Called by lib-resource cleanup coordination when a character is deleted.
+        Removes BOTH personality traits AND combat preferences for the specified character.
+        This endpoint is designed for internal service-to-service calls during
+        cascading resource cleanup.
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CleanupByCharacterRequest'
+      responses:
+        '200':
+          description: Cleanup completed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CleanupByCharacterResponse'
 
 components:
   schemas:
@@ -787,3 +900,130 @@ components:
           description: |
             Optional context for logging and debugging (e.g., enemy type,
             ally count, location). Not used in evolution calculations.
+
+    # Resource Cleanup Models
+    CleanupByCharacterRequest:
+      type: object
+      description: Request to cleanup all personality data for a deleted character
+      additionalProperties: false
+      required:
+      - characterId
+      properties:
+        characterId:
+          type: string
+          format: uuid
+          description: ID of the character that was deleted
+
+    CleanupByCharacterResponse:
+      type: object
+      description: Response from character cleanup operation
+      additionalProperties: false
+      # NRT: Response properties server always sets (Rule 4)
+      required:
+      - personalityDeleted
+      - combatPreferencesDeleted
+      - success
+      properties:
+        personalityDeleted:
+          type: boolean
+          description: Whether personality traits were found and deleted
+        combatPreferencesDeleted:
+          type: boolean
+          description: Whether combat preferences were found and deleted
+        success:
+          type: boolean
+          description: Whether cleanup completed successfully
+
+    # ===========================================================================
+    # Compression Models (Resource Service Integration)
+    # ===========================================================================
+
+    GetCompressDataRequest:
+      type: object
+      description: Request to get personality data for compression
+      additionalProperties: false
+      required:
+      - characterId
+      properties:
+        characterId:
+          type: string
+          format: uuid
+          description: ID of the character to get compress data for
+
+    CharacterPersonalityArchive:
+      type: object
+      x-archive-type: true
+      description: |
+        Complete personality data for archive storage and storyline SDK consumption.
+        Inherits base archive properties from ResourceArchiveBase.
+        The characterId field equals resourceId for convenience.
+      allOf:
+        - $ref: './common-api.yaml#/components/schemas/ResourceArchiveBase'
+      additionalProperties: false
+      required:
+        - characterId
+        - hasPersonality
+        - hasCombatPreferences
+      properties:
+        characterId:
+          type: string
+          format: uuid
+          description: Character this data belongs to (equals resourceId)
+        hasPersonality:
+          type: boolean
+          description: Whether personality traits exist
+        personality:
+          $ref: '#/components/schemas/PersonalityResponse'
+          nullable: true
+          description: Personality traits (null if hasPersonality=false)
+        hasCombatPreferences:
+          type: boolean
+          description: Whether combat preferences exist
+        combatPreferences:
+          $ref: '#/components/schemas/CombatPreferencesResponse'
+          nullable: true
+          description: Combat preferences (null if hasCombatPreferences=false)
+
+    RestoreFromArchiveRequest:
+      type: object
+      description: Request to restore personality data from archive
+      additionalProperties: false
+      required:
+      - characterId
+      - data
+      properties:
+        characterId:
+          type: string
+          format: uuid
+          description: ID of the character to restore data for
+        data:
+          type: string
+          description: Base64-encoded gzipped CharacterPersonalityArchive JSON
+
+    RestoreFromArchiveResponse:
+      type: object
+      description: Result of restoration from archive
+      additionalProperties: false
+      required:
+      - characterId
+      - personalityRestored
+      - combatPreferencesRestored
+      - success
+      properties:
+        characterId:
+          type: string
+          format: uuid
+          description: Character data was restored for
+        personalityRestored:
+          type: boolean
+          description: Whether personality traits were restored
+        combatPreferencesRestored:
+          type: boolean
+          description: Whether combat preferences were restored
+        success:
+          type: boolean
+          description: Whether restoration completed successfully
+        errorMessage:
+          type: string
+          nullable: true
+          description: Error details if restoration failed

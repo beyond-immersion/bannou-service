@@ -12,7 +12,7 @@
 //
 //     IMPLEMENTATION TENETS - Configuration-First:
 //     - Access configuration via dependency injection, never Environment.GetEnvironmentVariable.
-//     - ALL properties below MUST be referenced in ItemService.cs (no dead config).
+//     - ALL properties below MUST be referenced somewhere in the plugin (no dead config).
 //     - Any hardcoded tunable (limit, timeout, threshold, capacity) in service code means
 //       a configuration property is MISSING - add it to the configuration schema.
 //     - If a property is unused, remove it from the configuration schema.
@@ -40,7 +40,7 @@ namespace BeyondImmersion.BannouService.Item;
 /// <para>
 /// <b>IMPLEMENTATION TENETS - Configuration-First:</b> Access configuration via dependency injection.
 /// Never use <c>Environment.GetEnvironmentVariable()</c> directly in service code.
-/// ALL properties in this class MUST be referenced in the service implementation.
+/// ALL properties in this class MUST be referenced somewhere in the plugin.
 /// If a property is unused, remove it from the configuration schema.
 /// </para>
 /// <para>
@@ -112,5 +112,60 @@ public class ItemServiceConfiguration : IServiceConfiguration
     /// Environment variable: ITEM_LOCK_TIMEOUT_SECONDS
     /// </summary>
     public int LockTimeoutSeconds { get; set; } = 30;
+
+    /// <summary>
+    /// Time window in seconds for deduplicating item use events by templateId+userId combination
+    /// Environment variable: ITEM_USE_EVENT_DEDUPLICATION_WINDOW_SECONDS
+    /// </summary>
+    [ConfigRange(Minimum = 1, Maximum = 3600)]
+    public int UseEventDeduplicationWindowSeconds { get; set; } = 60;
+
+    /// <summary>
+    /// Maximum number of use records per batched event before forced publish
+    /// Environment variable: ITEM_USE_EVENT_BATCH_MAX_SIZE
+    /// </summary>
+    [ConfigRange(Minimum = 1, Maximum = 1000)]
+    public int UseEventBatchMaxSize { get; set; } = 100;
+
+    /// <summary>
+    /// Milestone code to complete when using items via contract behavior
+    /// Environment variable: ITEM_USE_MILESTONE_CODE
+    /// </summary>
+    [ConfigStringLength(MinLength = 1, MaxLength = 64)]
+    public string UseMilestoneCode { get; set; } = "use";
+
+    /// <summary>
+    /// System party ID for item use contracts (null uses deterministic UUID from game ID)
+    /// Environment variable: ITEM_SYSTEM_PARTY_ID
+    /// </summary>
+    public string? SystemPartyId { get; set; }
+
+    /// <summary>
+    /// Entity type string for the system party in item use contracts
+    /// Environment variable: ITEM_SYSTEM_PARTY_TYPE
+    /// </summary>
+    [ConfigStringLength(MinLength = 1, MaxLength = 64)]
+    public string SystemPartyType { get; set; } = "system";
+
+    /// <summary>
+    /// Milestone code to complete for CanUse validation contracts
+    /// Environment variable: ITEM_CAN_USE_MILESTONE_CODE
+    /// </summary>
+    [ConfigStringLength(MinLength = 1, MaxLength = 64)]
+    public string CanUseMilestoneCode { get; set; } = "validate";
+
+    /// <summary>
+    /// Milestone code to complete for OnUseFailed handler contracts
+    /// Environment variable: ITEM_ON_USE_FAILED_MILESTONE_CODE
+    /// </summary>
+    [ConfigStringLength(MinLength = 1, MaxLength = 64)]
+    public string OnUseFailedMilestoneCode { get; set; } = "handle_failure";
+
+    /// <summary>
+    /// Distributed lock timeout in seconds for UseItemStep operations (prevents race conditions)
+    /// Environment variable: ITEM_USE_STEP_LOCK_TIMEOUT_SECONDS
+    /// </summary>
+    [ConfigRange(Minimum = 5, Maximum = 300)]
+    public int UseStepLockTimeoutSeconds { get; set; } = 30;
 
 }

@@ -12,7 +12,7 @@
 //
 //     IMPLEMENTATION TENETS - Configuration-First:
 //     - Access configuration via dependency injection, never Environment.GetEnvironmentVariable.
-//     - ALL properties below MUST be referenced in ActorService.cs (no dead config).
+//     - ALL properties below MUST be referenced somewhere in the plugin (no dead config).
 //     - Any hardcoded tunable (limit, timeout, threshold, capacity) in service code means
 //       a configuration property is MISSING - add it to the configuration schema.
 //     - If a property is unused, remove it from the configuration schema.
@@ -54,7 +54,7 @@ public enum DeploymentMode
 /// <para>
 /// <b>IMPLEMENTATION TENETS - Configuration-First:</b> Access configuration via dependency injection.
 /// Never use <c>Environment.GetEnvironmentVariable()</c> directly in service code.
-/// ALL properties in this class MUST be referenced in the service implementation.
+/// ALL properties in this class MUST be referenced somewhere in the plugin.
 /// If a property is unused, remove it from the configuration schema.
 /// </para>
 /// <para>
@@ -264,24 +264,6 @@ public class ActorServiceConfiguration : IServiceConfiguration
     /// Environment variable: ACTOR_QUERY_OPTIONS_DEFAULT_MAX_AGE_MS
     /// </summary>
     public int QueryOptionsDefaultMaxAgeMs { get; set; } = 5000;
-
-    /// <summary>
-    /// TTL in minutes for cached personality data
-    /// Environment variable: ACTOR_PERSONALITY_CACHE_TTL_MINUTES
-    /// </summary>
-    public int PersonalityCacheTtlMinutes { get; set; } = 5;
-
-    /// <summary>
-    /// TTL in minutes for cached encounter data
-    /// Environment variable: ACTOR_ENCOUNTER_CACHE_TTL_MINUTES
-    /// </summary>
-    public int EncounterCacheTtlMinutes { get; set; } = 5;
-
-    /// <summary>
-    /// Maximum encounter results returned per query
-    /// Environment variable: ACTOR_MAX_ENCOUNTER_RESULTS_PER_QUERY
-    /// </summary>
-    public int MaxEncounterResultsPerQuery { get; set; } = 50;
 
     /// <summary>
     /// Maximum retry attempts for memory store operations

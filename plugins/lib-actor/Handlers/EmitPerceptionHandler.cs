@@ -4,7 +4,7 @@
 // Uses character.{characterId}.perceptions topic per ACTOR_BEHAVIORS_GAP_ANALYSIS §6.
 // =============================================================================
 
-using BeyondImmersion.BannouService.Abml.Documents.Actions;
+using BeyondImmersion.Bannou.BehaviorCompiler.Documents.Actions;
 using BeyondImmersion.BannouService.Abml.Execution;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Services;

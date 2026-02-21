@@ -451,7 +451,7 @@ public sealed class SaveExportImportManager : ISaveExportImportManager
                 // Queue for upload if enabled - PendingUploadEntry fields are now proper types
                 if (_configuration.AsyncUploadEnabled)
                 {
-                    var pendingStore = _stateStoreFactory.GetStore<PendingUploadEntry>(StateStoreDefinitions.SaveLoadPending);
+                    var pendingStore = _stateStoreFactory.GetCacheableStore<PendingUploadEntry>(StateStoreDefinitions.SaveLoadPending);
                     var uploadId = Guid.NewGuid();
                     var pendingEntry = new PendingUploadEntry
                     {

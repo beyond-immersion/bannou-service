@@ -6,6 +6,7 @@ namespace BeyondImmersion.BannouService.History;
 /// Implementation of backstory/lore element storage with merge/replace semantics.
 /// Handles the common pattern of storing typed elements that can be identified
 /// by a composite (type, key) pair, with support for merging or replacing.
+/// Write operations acquire a distributed lock on the entity ID per IMPLEMENTATION TENETS.
 /// </summary>
 /// <typeparam name="TBackstory">Type of the backstory container.</typeparam>
 /// <typeparam name="TElement">Type of elements in the backstory.</typeparam>
@@ -25,6 +26,8 @@ public class BackstoryStorageHelper<TBackstory, TElement> : IBackstoryStorageHel
     private readonly Action<TBackstory, long> _setCreatedAtUnix;
     private readonly Func<TBackstory, long> _getUpdatedAtUnix;
     private readonly Action<TBackstory, long> _setUpdatedAtUnix;
+    private readonly IDistributedLockProvider _lockProvider;
+    private readonly int _lockTimeoutSeconds;
 
     /// <summary>
     /// Creates a new BackstoryStorageHelper with the specified configuration.
@@ -46,6 +49,8 @@ public class BackstoryStorageHelper<TBackstory, TElement> : IBackstoryStorageHel
         _setCreatedAtUnix = config.SetCreatedAtUnix ?? throw new ArgumentNullException(nameof(config.SetCreatedAtUnix));
         _getUpdatedAtUnix = config.GetUpdatedAtUnix ?? throw new ArgumentNullException(nameof(config.GetUpdatedAtUnix));
         _setUpdatedAtUnix = config.SetUpdatedAtUnix ?? throw new ArgumentNullException(nameof(config.SetUpdatedAtUnix));
+        _lockProvider = config.LockProvider ?? throw new ArgumentNullException(nameof(config.LockProvider));
+        _lockTimeoutSeconds = config.LockTimeoutSeconds;
     }
 
     /// <inheritdoc />
@@ -53,14 +58,14 @@ public class BackstoryStorageHelper<TBackstory, TElement> : IBackstoryStorageHel
         string entityId,
         CancellationToken cancellationToken = default)
     {
-        if (string.IsNullOrEmpty(entityId)) return null;
+        if (string.IsNullOrEmpty(entityId)) throw new ArgumentNullException(nameof(entityId));
 
         var store = _stateStoreFactory.GetStore<TBackstory>(_stateStoreName);
         return await store.GetAsync($"{_keyPrefix}{entityId}", cancellationToken);
     }
 
     /// <inheritdoc />
-    public async Task<BackstoryOperationResult<TBackstory>> SetAsync(
+    public async Task<LockableResult<BackstoryOperationResult<TBackstory>>> SetAsync(
         string entityId,
         IReadOnlyList<TElement> elements,
         bool replaceExisting,
@@ -68,6 +73,15 @@ public class BackstoryStorageHelper<TBackstory, TElement> : IBackstoryStorageHel
     {
         if (string.IsNullOrEmpty(entityId)) throw new ArgumentNullException(nameof(entityId));
         if (elements == null) throw new ArgumentNullException(nameof(elements));
+
+        // Acquire distributed lock on entity ID per IMPLEMENTATION TENETS
+        await using var lockResponse = await _lockProvider.LockAsync(
+            "history-backstory", entityId, $"{_keyPrefix}{Guid.NewGuid()}", _lockTimeoutSeconds, cancellationToken);
+
+        if (!lockResponse.Success)
+        {
+            return new LockableResult<BackstoryOperationResult<TBackstory>>(false, null);
+        }
 
         var store = _stateStoreFactory.GetStore<TBackstory>(_stateStoreName);
         var key = $"{_keyPrefix}{entityId}";
@@ -117,17 +131,27 @@ public class BackstoryStorageHelper<TBackstory, TElement> : IBackstoryStorageHel
         }
 
         await store.SaveAsync(key, data, cancellationToken: cancellationToken);
-        return new BackstoryOperationResult<TBackstory>(data, isNew);
+        return new LockableResult<BackstoryOperationResult<TBackstory>>(
+            true, new BackstoryOperationResult<TBackstory>(data, isNew));
     }
 
     /// <inheritdoc />
-    public async Task<BackstoryOperationResult<TBackstory>> AddElementAsync(
+    public async Task<LockableResult<BackstoryOperationResult<TBackstory>>> AddElementAsync(
         string entityId,
         TElement element,
         CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrEmpty(entityId)) throw new ArgumentNullException(nameof(entityId));
         if (element == null) throw new ArgumentNullException(nameof(element));
+
+        // Acquire distributed lock on entity ID per IMPLEMENTATION TENETS
+        await using var lockResponse = await _lockProvider.LockAsync(
+            "history-backstory", entityId, $"{_keyPrefix}{Guid.NewGuid()}", _lockTimeoutSeconds, cancellationToken);
+
+        if (!lockResponse.Success)
+        {
+            return new LockableResult<BackstoryOperationResult<TBackstory>>(false, null);
+        }
 
         var store = _stateStoreFactory.GetStore<TBackstory>(_stateStoreName);
         var key = $"{_keyPrefix}{entityId}";
@@ -173,15 +197,25 @@ public class BackstoryStorageHelper<TBackstory, TElement> : IBackstoryStorageHel
         }
 
         await store.SaveAsync(key, data, cancellationToken: cancellationToken);
-        return new BackstoryOperationResult<TBackstory>(data, isNew);
+        return new LockableResult<BackstoryOperationResult<TBackstory>>(
+            true, new BackstoryOperationResult<TBackstory>(data, isNew));
     }
 
     /// <inheritdoc />
-    public async Task<bool> DeleteAsync(
+    public async Task<LockableResult<bool>> DeleteAsync(
         string entityId,
         CancellationToken cancellationToken = default)
     {
-        if (string.IsNullOrEmpty(entityId)) return false;
+        if (string.IsNullOrEmpty(entityId)) throw new ArgumentNullException(nameof(entityId));
+
+        // Acquire distributed lock on entity ID per IMPLEMENTATION TENETS
+        await using var lockResponse = await _lockProvider.LockAsync(
+            "history-backstory", entityId, $"{_keyPrefix}{Guid.NewGuid()}", _lockTimeoutSeconds, cancellationToken);
+
+        if (!lockResponse.Success)
+        {
+            return new LockableResult<bool>(false, false);
+        }
 
         var store = _stateStoreFactory.GetStore<TBackstory>(_stateStoreName);
         var key = $"{_keyPrefix}{entityId}";
@@ -189,11 +223,11 @@ public class BackstoryStorageHelper<TBackstory, TElement> : IBackstoryStorageHel
         var existing = await store.GetAsync(key, cancellationToken);
         if (existing == null)
         {
-            return false;
+            return new LockableResult<bool>(true, false);
         }
 
         await store.DeleteAsync(key, cancellationToken);
-        return true;
+        return new LockableResult<bool>(true, true);
     }
 
     /// <inheritdoc />
@@ -201,7 +235,7 @@ public class BackstoryStorageHelper<TBackstory, TElement> : IBackstoryStorageHel
         string entityId,
         CancellationToken cancellationToken = default)
     {
-        if (string.IsNullOrEmpty(entityId)) return false;
+        if (string.IsNullOrEmpty(entityId)) throw new ArgumentNullException(nameof(entityId));
 
         var store = _stateStoreFactory.GetStore<TBackstory>(_stateStoreName);
         return await store.ExistsAsync($"{_keyPrefix}{entityId}", cancellationToken);

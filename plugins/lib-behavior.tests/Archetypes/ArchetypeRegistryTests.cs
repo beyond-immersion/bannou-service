@@ -3,8 +3,8 @@
 // Unit tests for entity archetype system.
 // =============================================================================
 
-using BeyondImmersion.BannouService.Behavior.Archetypes;
-using BeyondImmersion.BannouService.Behavior.Intent;
+using BeyondImmersion.Bannou.BehaviorCompiler.Archetypes;
+using BeyondImmersion.Bannou.BehaviorCompiler.Intent;
 using Xunit;
 
 namespace BeyondImmersion.BannouService.Behavior.Tests.Archetypes;

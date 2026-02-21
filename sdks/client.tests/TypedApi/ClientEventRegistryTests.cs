@@ -23,7 +23,7 @@ public class ClientEventRegistryTests
     [Fact]
     public void GetEventName_GameSessionEvent_ReturnsCorrectName()
     {
-        var eventName = ClientEventRegistry.GetEventName<ChatMessageReceivedEvent>();
+        var eventName = ClientEventRegistry.GetEventName<SessionChatReceivedEvent>();
 
         Assert.Equal("game_session.chat_received", eventName);
     }
@@ -115,7 +115,7 @@ public class ClientEventRegistryTests
     [Fact]
     public void IsRegistered_Generic_RegisteredType_ReturnsTrue()
     {
-        var isRegistered = ClientEventRegistry.IsRegistered<ChatMessageReceivedEvent>();
+        var isRegistered = ClientEventRegistry.IsRegistered<SessionChatReceivedEvent>();
 
         Assert.True(isRegistered);
     }
@@ -161,7 +161,7 @@ public class ClientEventRegistryTests
     {
         var types = ClientEventRegistry.GetAllEventTypes().ToList();
 
-        Assert.Contains(typeof(ChatMessageReceivedEvent), types);
+        Assert.Contains(typeof(SessionChatReceivedEvent), types);
         Assert.Contains(typeof(VoicePeerJoinedEvent), types);
         Assert.Contains(typeof(PlayerJoinedEvent), types);
     }
@@ -183,7 +183,7 @@ public class ClientEventRegistryTests
     [Fact]
     public void RoundTrip_TypeToNameToType_ReturnsOriginalType()
     {
-        var originalType = typeof(ChatMessageReceivedEvent);
+        var originalType = typeof(SessionChatReceivedEvent);
 
         var eventName = ClientEventRegistry.GetEventName(originalType);
         Assert.NotNull(eventName);

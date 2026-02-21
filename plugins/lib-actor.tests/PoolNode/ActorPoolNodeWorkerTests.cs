@@ -104,6 +104,7 @@ public class ActorPoolNodeWorkerTests : IAsyncLifetime
                 "actor-1",
                 It.IsAny<ActorTemplateData>(),
                 It.IsAny<Guid?>(),
+                It.IsAny<Guid>(),
                 It.IsAny<object?>(),
                 It.IsAny<object?>()))
             .Returns(mockRunner.Object);
@@ -117,7 +118,8 @@ public class ActorPoolNodeWorkerTests : IAsyncLifetime
             ActorId = "actor-1",
             TemplateId = Guid.NewGuid(),
             BehaviorRef = "behavior.yaml",
-            TickIntervalMs = 100
+            TickIntervalMs = 100,
+            RealmId = Guid.NewGuid()
         };
 
         // Act
@@ -141,6 +143,7 @@ public class ActorPoolNodeWorkerTests : IAsyncLifetime
                 "actor-1",
                 It.IsAny<ActorTemplateData>(),
                 It.IsAny<Guid?>(),
+                It.IsAny<Guid>(),
                 It.IsAny<object?>(),
                 It.IsAny<object?>()))
             .Returns(mockRunner.Object);
@@ -153,7 +156,8 @@ public class ActorPoolNodeWorkerTests : IAsyncLifetime
         {
             ActorId = "actor-1",
             TemplateId = Guid.NewGuid(),
-            BehaviorRef = "behavior.yaml"
+            BehaviorRef = "behavior.yaml",
+            RealmId = Guid.NewGuid()
         };
 
         // Act
@@ -176,6 +180,7 @@ public class ActorPoolNodeWorkerTests : IAsyncLifetime
                 "actor-1",
                 It.IsAny<ActorTemplateData>(),
                 It.IsAny<Guid?>(),
+                It.IsAny<Guid>(),
                 It.IsAny<object?>(),
                 It.IsAny<object?>()))
             .Returns(mockRunner.Object);
@@ -188,7 +193,8 @@ public class ActorPoolNodeWorkerTests : IAsyncLifetime
         {
             ActorId = "actor-1",
             TemplateId = Guid.NewGuid(),
-            BehaviorRef = "behavior.yaml"
+            BehaviorRef = "behavior.yaml",
+            RealmId = Guid.NewGuid()
         };
 
         // Act
@@ -221,6 +227,7 @@ public class ActorPoolNodeWorkerTests : IAsyncLifetime
                 "actor-1",
                 It.IsAny<ActorTemplateData>(),
                 It.IsAny<Guid?>(),
+                It.IsAny<Guid>(),
                 It.IsAny<object?>(),
                 It.IsAny<object?>()))
             .Returns(mockRunner.Object);
@@ -233,7 +240,8 @@ public class ActorPoolNodeWorkerTests : IAsyncLifetime
         {
             ActorId = "actor-1",
             TemplateId = Guid.NewGuid(),
-            BehaviorRef = "behavior.yaml"
+            BehaviorRef = "behavior.yaml",
+            RealmId = Guid.NewGuid()
         };
 
         // Act
@@ -441,6 +449,63 @@ public class ActorPoolNodeWorkerTests : IAsyncLifetime
         // Assert
         Assert.NotNull(capturedPerception);
         Assert.Equal(urgency, capturedPerception.Urgency);
+    }
+
+    #endregion
+
+    #region HandleBindCharacterCommandAsync Tests
+
+    [Fact]
+    public async Task HandleBindCharacterCommandAsync_ActorNotFound_ReturnsFalse()
+    {
+        // Arrange
+        var worker = CreateWorker();
+
+        _actorRegistryMock
+            .Setup(r => r.TryGet("actor-unknown", out It.Ref<IActorRunner?>.IsAny))
+            .Returns(false);
+
+        var command = new BindActorCharacterCommand
+        {
+            ActorId = "actor-unknown",
+            CharacterId = Guid.NewGuid()
+        };
+
+        // Act
+        var result = await worker.HandleBindCharacterCommandAsync(command, CancellationToken.None);
+
+        // Assert
+        Assert.False(result);
+    }
+
+    [Fact]
+    public async Task HandleBindCharacterCommandAsync_BindsActorToCharacter()
+    {
+        // Arrange
+        var worker = CreateWorker();
+        var characterId = Guid.NewGuid();
+        var mockRunner = new Mock<IActorRunner>();
+        mockRunner.SetupGet(r => r.ActorId).Returns("actor-1");
+
+        var outRunner = mockRunner.Object;
+        _actorRegistryMock
+            .Setup(r => r.TryGet("actor-1", out outRunner))
+            .Returns(true);
+
+        var command = new BindActorCharacterCommand
+        {
+            ActorId = "actor-1",
+            CharacterId = characterId
+        };
+
+        // Act
+        var result = await worker.HandleBindCharacterCommandAsync(command, CancellationToken.None);
+
+        // Assert
+        Assert.True(result);
+        mockRunner.Verify(
+            r => r.BindCharacterAsync(characterId, It.IsAny<CancellationToken>()),
+            Times.Once);
     }
 
     #endregion

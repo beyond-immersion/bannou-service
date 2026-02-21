@@ -5,8 +5,11 @@ info:
     Event models for Location service RabbitMQ pub/sub via MassTransit.
     Lifecycle events are auto-generated from x-lifecycle definition.
 
-    **Schema Rules**: AI agents MUST review docs/reference/SCHEMA-RULES.md before
-    modifying this schema. Optional reference types require `nullable: true`.
+    **SCHEMA MODIFICATION GATE**: STOP. Before modifying this schema, you MUST:
+    1. Read docs/reference/SCHEMA-RULES.md
+    2. State which section applies to your change
+    3. Only then proceed with edits
+    Edits without stating the applicable rule are FORBIDDEN.
   version: 1.0.0
   x-event-subscriptions: []  # Location service doesn't subscribe to external events
   x-event-publications:
@@ -20,6 +23,12 @@ info:
     - topic: location.deleted
       event: LocationDeletedEvent
       description: Published when a location is soft-deleted
+    - topic: location.entity-arrived
+      event: LocationEntityArrivedEvent
+      description: Published when an entity arrives at a location (position change detected)
+    - topic: location.entity-departed
+      event: LocationEntityDepartedEvent
+      description: Published when an entity departs from a location (position change or clear)
 
 # Lifecycle events auto-generated from this definition
 # Output: schemas/Generated/location-lifecycle-events.yaml
@@ -32,15 +41,90 @@ x-lifecycle:
       name: { type: string, required: true, description: "Human-readable name of the location" }
       description: { type: string, nullable: true, description: "Detailed description of the location" }
       locationType: { $ref: 'location-api.yaml#/components/schemas/LocationType', required: true, description: "Type classification of the location" }
-      parentLocationId: { type: string, format: uuid, description: "ID of the parent location for hierarchical structures" }
+      parentLocationId: { type: string, format: uuid, nullable: true, description: "ID of the parent location for hierarchical structures" }
       depth: { type: integer, required: true, description: "Depth level in the location hierarchy (0 for root locations)" }
       isDeprecated: { type: boolean, required: true, description: "Whether this location has been marked as deprecated" }
-      deprecatedAt: { type: string, format: date-time, description: "Timestamp when the location was deprecated" }
+      deprecatedAt: { type: string, format: date-time, nullable: true, description: "Timestamp when the location was deprecated" }
       deprecationReason: { type: string, nullable: true, description: "Explanation for why the location was deprecated" }
-      metadata: { type: object, additionalProperties: true, description: "Additional custom metadata associated with the location" }
+      bounds: { $ref: 'common-api.yaml#/components/schemas/BoundingBox3D', nullable: true, description: "Optional spatial extent in world coordinates" }
+      boundsPrecision: { $ref: 'location-api.yaml#/components/schemas/BoundsPrecision', required: true, description: "Precision level of spatial bounds" }
+      coordinateMode: { $ref: 'location-api.yaml#/components/schemas/CoordinateMode', required: true, description: "How this location's coordinate system relates to its parent" }
+      localOrigin: { $ref: 'common-api.yaml#/components/schemas/Position3D', nullable: true, description: "Origin point for local or inherited coordinate systems" }
+      metadata: { type: object, additionalProperties: true, nullable: true, description: "Additional custom metadata associated with the location" }
       createdAt: { type: string, format: date-time, required: true, description: "Timestamp when the location was created" }
       updatedAt: { type: string, format: date-time, required: true, description: "Timestamp when the location was last updated" }
 
 paths: {}  # Events don't have HTTP paths
 
-# NOTE: No components/schemas - lifecycle events are auto-generated to schemas/Generated/
+components:
+  schemas:
+    LocationEntityArrivedEvent:
+      type: object
+      additionalProperties: false
+      description: Published when an entity arrives at a location
+      required:
+        - eventId
+        - timestamp
+        - entityType
+        - entityId
+        - locationId
+        - realmId
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique identifier for this event
+        timestamp:
+          type: string
+          format: date-time
+          description: When the arrival was recorded
+        entityType:
+          type: string
+          description: Type of entity (opaque string - character, actor, npc, player, etc.)
+        entityId:
+          type: string
+          format: uuid
+          description: ID of the entity that arrived
+        locationId:
+          type: string
+          format: uuid
+          description: ID of the location the entity arrived at
+        realmId:
+          type: string
+          format: uuid
+          description: ID of the realm the location belongs to
+        reportedBy:
+          type: string
+          nullable: true
+          description: Identifier of the reporter (service name or session ID)
+
+    LocationEntityDepartedEvent:
+      type: object
+      additionalProperties: false
+      description: Published when an entity departs from a location
+      required:
+        - eventId
+        - timestamp
+        - entityType
+        - entityId
+        - locationId
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique identifier for this event
+        timestamp:
+          type: string
+          format: date-time
+          description: When the departure was recorded
+        entityType:
+          type: string
+          description: Type of entity (opaque string - character, actor, npc, player, etc.)
+        entityId:
+          type: string
+          format: uuid
+          description: ID of the entity that departed
+        locationId:
+          type: string
+          format: uuid
+          description: ID of the location the entity departed from

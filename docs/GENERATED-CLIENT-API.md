@@ -9,46 +9,60 @@ This document lists all typed proxy methods available in the Bannou Client SDK.
 
 | Service | Proxy Property | Methods | Description |
 |---------|---------------|---------|-------------|
-| [Bannou Account Service API](#account) | `client.Account` | 16 | Internal account management service (CRUD operations only, n... |
+| [Bannou Account Service API](#account) | `client.Account` | 18 | Internal account management service (CRUD operations only, n... |
 | [Bannou Achievement Service API](#achievement) | `client.Achievement` | 11 | Achievement and trophy system with progress tracking and pla... |
-| [Actor Service API](#actor) | `client.Actor` | 15 | Distributed actor management and execution for NPC brains, e... |
+| [Actor Service API](#actor) | `client.Actor` | 17 | Distributed actor management and execution for NPC brains, e... |
 | [Bannou Analytics Service API](#analytics) | `client.Analytics` | 9 | Event ingestion, entity statistics, skill ratings (Glicko-2)... |
 | [Asset Service API](#asset) | `client.Asset` | 20 | Asset management service for storage, versioning, and distri... |
-| [Bannou Auth Service API](#auth) | `client.Auth` | 12 | Authentication and session management service (Internet-faci... |
+| [Bannou Auth Service API](#auth) | `client.Auth` | 18 | Authentication and session management service (Internet-faci... |
 | [ABML Behavior Management API](#behavior) | `client.Behavior` | 6 | Arcadia Behavior Markup Language (ABML) API for character be... |
-| [Bannou Character Service API](#character) | `client.Character` | 10 | Character management service for game worlds. |
-| [Bannou Character Encounter Service API](#character-encounter) | `client.CharacterEncounter` | 19 | Character encounter tracking service for memorable interacti... |
-| [Bannou Character History Service API](#character-history) | `client.CharacterHistory` | 10 | Historical event participation and backstory management for ... |
-| [Bannou Character Personality Service API](#character-personality) | `client.CharacterPersonality` | 9 | Machine-readable personality traits for NPC behavior decisio... |
-| [Bannou Connect API](#connect) | `client.Connect` | 4 | Real-time communication and WebSocket connection management ... |
+| [Bannou Character Service API](#character) | `client.Character` | 12 | Character management service for game worlds. |
+| [Bannou Character Encounter Service API](#character-encounter) | `client.CharacterEncounter` | 21 | Character encounter tracking service for memorable interacti... |
+| [Bannou Character History Service API](#character-history) | `client.CharacterHistory` | 12 | Historical event participation and backstory management for ... |
+| [Bannou Character Personality Service API](#character-personality) | `client.CharacterPersonality` | 12 | Machine-readable personality traits for NPC behavior decisio... |
+| [Chat Service API](#chat) | `client.Chat` | 28 | Typed message channel service (L1 AppFoundation) providing u... |
+| [Collection Service API](#collection) | `client.Collection` | 20 | Universal content unlock and archive system for collectible ... |
+| [Bannou Connect API](#connect) | `client.Connect` | 5 | Real-time communication and WebSocket connection management ... |
 | [Contract Service API](#contract) | `client.Contract` | 30 | Binding agreements between entities with milestone-based pro... |
 | [Currency Service API](#currency) | `client.Currency` | 32 | Multi-currency management service for game economies. |
+| [Bannou Divine Service API](#divine) | `client.Divine` | 22 | Pantheon management service (L4 GameFeatures) for deity enti... |
 | [Bannou Documentation API](#documentation) | `client.Documentation` | 25 | Knowledge base API for AI agents to query documentation. Des... |
-| [Escrow Service API](#escrow) | `client.Escrow` | 20 | Full-custody orchestration layer for multi-party asset excha... |
+| [Escrow Service API](#escrow) | `client.Escrow` | 22 | Full-custody orchestration layer for multi-party asset excha... |
+| [Bannou Faction Service API](#faction) | `client.Faction` | 31 | Faction management as seed-based living entities (L4 GameFea... |
 | [Bannou Game Service API](#game-service) | `client.GameService` | 5 | Registry service for game services that users can subscribe ... |
 | [Bannou Game Session Service API](#game-session) | `client.GameSession` | 11 | Minimal game session management for games. |
+| [Bannou Gardener Service API](#gardener) | `client.Gardener` | 24 | Player experience orchestration service (L4 GameFeatures) fo... |
 | [Inventory Service API](#inventory) | `client.Inventory` | 16 | Container and inventory management service for games. |
-| [Item Service API](#item) | `client.Item` | 13 | Item template and instance management service. |
+| [Item Service API](#item) | `client.Item` | 16 | Item template and instance management service. |
 | [Bannou Leaderboard Service API](#leaderboard) | `client.Leaderboard` | 12 | Real-time leaderboard management using Redis Sorted Sets for... |
-| [Bannou Location Service API](#location) | `client.Location` | 17 | Location management service for game worlds. |
+| [License Service API](#license) | `client.License` | 20 | Grid-based progression boards via itemized contracts. |
+| [Bannou Location Service API](#location) | `client.Location` | 24 | Location management service for game worlds. |
 | [Bannou Mapping Service API](#mapping) | `client.Mapping` | 18 | Spatial data management service for game worlds. |
 | [Bannou Matchmaking Service API](#matchmaking) | `client.Matchmaking` | 11 | Matchmaking service for competitive and casual game matching... |
 | [Bannou Mesh Service API](#mesh) | `client.Mesh` | 8 | Native service mesh plugin providing direct service-to-servi... |
 | [Bannou Messaging Service API](#messaging) | `client.Messaging` | 4 | Native RabbitMQ pub/sub messaging with native serialization. |
 | [Music Theory Engine API](#music) | `client.Music` | 8 | Pure computation music generation using formal music theory ... |
+| [Bannou Obligation Service API](#obligation) | `client.Obligation` | 11 | Contract-aware obligation tracking for NPC cognition (L4 Gam... |
 | [Orchestrator API](#orchestrator) | `client.Orchestrator` | 22 | Central intelligence for Bannou environment management and s... |
 | [Bannou Permission System API](#permission) | `client.Permission` | 8 | Redis-backed high-performance permission system for WebSocke... |
-| [Bannou Realm Service API](#realm) | `client.Realm` | 10 | Realm management service for game worlds. |
-| [Bannou Realm History Service API](#realm-history) | `client.RealmHistory` | 10 | Historical event participation and lore management for realm... |
-| [Relationship Service API](#relationship) | `client.Relationship` | 7 | Generic relationship management service for entity-to-entity... |
-| [Bannou RelationshipType Service API](#relationship-type) | `client.RelationshipType` | 13 | Relationship type management service for game worlds. |
+| [Bannou Puppetmaster Service API](#puppetmaster) | `client.Puppetmaster` | 6 | Orchestration service for dynamic behaviors, regional watche... |
+| [Bannou Quest Service API](#quest) | `client.Quest` | 17 | Quest system providing objective-based gameplay progression ... |
+| [Bannou Realm Service API](#realm) | `client.Realm` | 12 | Realm management service for game worlds. |
+| [Bannou Realm History Service API](#realm-history) | `client.RealmHistory` | 12 | Historical event participation and lore management for realm... |
+| [Relationship Service API](#relationship) | `client.Relationship` | 21 | Relationship and relationship type management service for en... |
+| [Resource Lifecycle API](#resource) | `client.Resource` | 17 | Resource reference tracking and lifecycle management. |
 | [Save-Load Service API](#save-load) | `client.SaveLoad` | 26 | Generic save/load system for game state persistence. Support... |
 | [Bannou Scene Service API](#scene) | `client.Scene` | 19 | Hierarchical composition storage for game worlds. |
+| [Seed Service API](#seed) | `client.Seed` | 24 | Generic progressive growth entity service (L2 GameFoundation... |
 | [Bannou Species Service API](#species) | `client.Species` | 13 | Species management service for game worlds. |
-| [Bannou State Service API](#state) | `client.State` | 6 | Repository pattern state management with Redis and MySQL bac... |
+| [Bannou State Service API](#state) | `client.State` | 9 | Repository pattern state management with Redis and MySQL bac... |
+| [Status Service API](#status) | `client.Status` | 16 | Unified entity effects query layer for temporary contract-ma... |
+| [Storyline Composer API](#storyline) | `client.Storyline` | 15 | Seeded narrative generation from compressed archives using t... |
 | [Bannou Subscription Service API](#subscription) | `client.Subscription` | 7 | Manages user subscriptions to game services. Tracks which ac... |
-| [Bannou Voice Service API](#voice) | `client.Voice` | 7 | Voice communication coordination service for P2P and room-ba... |
-| [Bannou Website Service API](#website) | `client.Website` | 15 | Public-facing website service for registration, information,... |
+| [Bannou Telemetry Service API](#telemetry) | `client.Telemetry` | 2 | Unified observability plugin providing distributed tracing, ... |
+| [Bannou Voice Service API](#voice) | `client.Voice` | 11 | Voice room coordination service. Internal service accessed b... |
+| [Bannou Website Service API](#website) | `client.Website` | 12 | Public-facing website service for registration, information,... |
+| [Worldstate Service API](#worldstate) | `client.Worldstate` | 18 | Per-realm game time authority, calendar system, and temporal... |
 
 ---
 
@@ -98,10 +112,12 @@ Internal account management service (CRUD operations only, never exposed to inte
 | `UpdateAccountAsync` | `UpdateAccountRequest` | `AccountResponse` | Update account |
 | `DeleteAccountEventAsync` | `DeleteAccountRequest` | *(fire-and-forget)* | Delete account |
 | `UpdatePasswordhashEventAsync` | `UpdatePasswordRequest` | *(fire-and-forget)* | Update account password hash |
+| `UpdateMfaEventAsync` | `UpdateMfaRequest` | *(fire-and-forget)* | Update MFA settings for an account |
 | `BatchgetaccountsAsync` | `BatchGetAccountsRequest` | `BatchGetAccountsResponse` | Get multiple accounts by ID |
 | `CountaccountsAsync` | `CountAccountsRequest` | `CountAccountsResponse` | Count accounts matching filters |
 | `BulkupdaterolesAsync` | `BulkUpdateRolesRequest` | `BulkUpdateRolesResponse` | Bulk update roles for multiple accounts |
 | `UpdateVerificationstatusEventAsync` | `UpdateVerificationRequest` | *(fire-and-forget)* | Update email verification status |
+| `UpdateEmailAsync` | `UpdateEmailRequest` | `AccountResponse` | Update account email address |
 
 ### Authentication Methods
 
@@ -171,6 +187,8 @@ Distributed actor management and execution for NPC brains, event coordinators, a
 | `SpawnactorAsync` | `SpawnActorRequest` | `ActorInstanceResponse` | Spawn a new actor from a template |
 | `GetActorAsync` | `GetActorRequest` | `ActorInstanceResponse` | Get actor instance (instantiate-on-access if template allows) |
 | `StopactorAsync` | `StopActorRequest` | `StopActorResponse` | Stop a running actor |
+| `BindactorcharacterAsync` | `BindActorCharacterRequest` | `ActorInstanceResponse` | Bind an unbound actor to a character |
+| `CleanupbycharacterAsync` | `CleanupByCharacterRequest` | `CleanupByCharacterResponse` | Cleanup actors referencing a deleted character |
 | `ListActorsAsync` | `ListActorsRequest` | `ListActorsResponse` | List actors with optional filters |
 | `InjectperceptionAsync` | `InjectPerceptionRequest` | `InjectPerceptionResponse` | Inject a perception event into an actor's queue (testing) |
 | `QueryoptionsAsync` | `QueryOptionsRequest` | `QueryOptionsResponse` | Query an actor for its available options |
@@ -266,10 +284,20 @@ Authentication and session management service (Internet-facing).
 
 | Method | Request | Response | Summary |
 |--------|---------|----------|---------|
-| `LoginAsync` | `LoginRequest` | `AuthResponse` | Login with email/password |
+| `LoginAsync` | `LoginRequest` | `LoginResponse` | Login with email/password |
 | `RegisterAsync` | `RegisterRequest` | `RegisterResponse` | Register new user account |
 | `LogoutEventAsync` | `LogoutRequest` | *(fire-and-forget)* | Logout and invalidate tokens |
 | `ListProvidersAsync` | - | `ProvidersResponse` | List available authentication providers |
+
+### MFA
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `SetupmfaAsync` | - | `MfaSetupResponse` | Initialize MFA setup |
+| `EnablemfaEventAsync` | `MfaEnableRequest` | *(fire-and-forget)* | Confirm MFA setup with TOTP code |
+| `DisablemfaEventAsync` | `MfaDisableRequest` | *(fire-and-forget)* | Disable MFA for current account |
+| `AdmindisablemfaEventAsync` | `AdminDisableMfaRequest` | *(fire-and-forget)* | Admin override to disable MFA |
+| `VerifymfaAsync` | `MfaVerifyRequest` | `AuthResponse` | Verify MFA code during login |
 
 ### OAuth
 
@@ -296,6 +324,12 @@ Authentication and session management service (Internet-facing).
 | Method | Request | Response | Summary |
 |--------|---------|----------|---------|
 | `VerifysteamauthAsync` | `SteamVerifyRequest` | `AuthResponse` | Verify Steam Session Ticket |
+
+### Token Management
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `GetRevocationlistAsync` | `GetRevocationListRequest` | `RevocationListResponse` | Get current token revocation list |
 
 ### Tokens
 
@@ -353,6 +387,7 @@ Character management service for game worlds.
 | `CompresscharacterAsync` | `CompressCharacterRequest` | `CharacterArchive` | Compress a dead character to archive format |
 | `GetCharacterarchiveAsync` | `GetCharacterArchiveRequest` | `CharacterArchive` | Get compressed archive data for a character |
 | `CheckcharacterreferencesAsync` | `CheckReferencesRequest` | `CharacterRefCount` | Check reference count for cleanup eligibility |
+| `GetCompressdataAsync` | `GetCompressDataRequest` | `CharacterBaseArchive` | Get character base data for compression |
 
 ### Character Lookup
 
@@ -370,6 +405,7 @@ Character management service for game worlds.
 | `UpdateCharacterAsync` | `UpdateCharacterRequest` | `CharacterResponse` | Update character |
 | `DeleteCharacterEventAsync` | `DeleteCharacterRequest` | *(fire-and-forget)* | Delete character (permanent removal) |
 | `ListCharactersAsync` | `ListCharactersRequest` | `CharacterListResponse` | List characters with filtering |
+| `TransfercharactertorealmAsync` | `TransferCharacterToRealmRequest` | `CharacterResponse` | Transfer character to a different realm |
 
 ---
 
@@ -386,6 +422,13 @@ Character encounter tracking service for memorable interactions between characte
 | `DeleteEncounterAsync` | `DeleteEncounterRequest` | `DeleteEncounterResponse` | Delete encounter and perspectives |
 | `DeleteBycharacterAsync` | `DeleteByCharacterRequest` | `DeleteByCharacterResponse` | Delete all encounters for a character |
 | `DecaymemoriesAsync` | `DecayMemoriesRequest` | `DecayMemoriesResponse` | Trigger memory decay (maintenance) |
+
+### Compression
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `GetCompressdataAsync` | `GetCompressDataRequest` | `CharacterEncounterArchive` | Get encounter data for compression |
+| `RestorefromarchiveAsync` | `RestoreFromArchiveRequest` | `RestoreFromArchiveResponse` | Restore encounter data from archive |
 
 ### Encounter Type Management
 
@@ -440,6 +483,13 @@ Historical event participation and backstory management for characters.
 | `AddbackstoryelementAsync` | `AddBackstoryElementRequest` | `BackstoryResponse` | Add a single backstory element |
 | `DeleteBackstoryEventAsync` | `DeleteBackstoryRequest` | *(fire-and-forget)* | Delete all backstory for a character |
 
+### Compression
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `GetCompressdataAsync` | `GetCompressDataRequest` | `CharacterHistoryArchive` | Get history data for compression |
+| `RestorefromarchiveAsync` | `RestoreFromArchiveRequest` | `RestoreFromArchiveResponse` | Restore history data from archive |
+
 ### Historical Events
 
 | Method | Request | Response | Summary |
@@ -473,6 +523,13 @@ Machine-readable personality traits for NPC behavior decisions.
 | `EvolvecombatpreferencesAsync` | `EvolveCombatRequest` | `CombatEvolutionResult` | Record combat experience that may evolve preferences |
 | `DeleteCombatpreferencesEventAsync` | `DeleteCombatPreferencesRequest` | *(fire-and-forget)* | Delete combat preferences for a character |
 
+### Compression
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `GetCompressdataAsync` | `GetCompressDataRequest` | `CharacterPersonalityArchive` | Get personality data for compression |
+| `RestorefromarchiveAsync` | `RestoreFromArchiveRequest` | `RestoreFromArchiveResponse` | Restore personality data from archive |
+
 ### Personality Evolution
 
 | Method | Request | Response | Summary |
@@ -487,6 +544,106 @@ Machine-readable personality traits for NPC behavior decisions.
 | `SetpersonalityAsync` | `SetPersonalityRequest` | `PersonalityResponse` | Create or update personality for a character |
 | `BatchgetpersonalitiesAsync` | `BatchGetPersonalitiesRequest` | `BatchPersonalityResponse` | Get personalities for multiple characters |
 | `DeletePersonalityEventAsync` | `DeletePersonalityRequest` | *(fire-and-forget)* | Delete personality for a character |
+
+### Resource Cleanup
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `CleanupbycharacterAsync` | `CleanupByCharacterRequest` | `CleanupByCharacterResponse` | Cleanup all personality data for a deleted character |
+
+---
+
+## Chat Service API {#chat}
+
+**Proxy**: `client.Chat` | **Version**: 1.0.0
+
+Typed message channel service (L1 AppFoundation) providing universal communication primitives. Channel type determines valid message formats: text,...
+
+### Other
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `RegisterRoomtypeAsync` | `RegisterRoomTypeRequest` | `RoomTypeResponse` | Register a new room type |
+| `GetRoomtypeAsync` | `GetRoomTypeRequest` | `RoomTypeResponse` | Get room type by code |
+| `ListRoomtypesAsync` | `ListRoomTypesRequest` | `ListRoomTypesResponse` | List room types with filters |
+| `UpdateRoomtypeAsync` | `UpdateRoomTypeRequest` | `RoomTypeResponse` | Update a room type definition |
+| `DeprecateroomtypeAsync` | `DeprecateRoomTypeRequest` | `RoomTypeResponse` | Soft-deprecate a room type |
+| `CreateRoomAsync` | `CreateRoomRequest` | `ChatRoomResponse` | Create a chat room |
+| `GetRoomAsync` | `GetRoomRequest` | `ChatRoomResponse` | Get room by ID |
+| `ListRoomsAsync` | `ListRoomsRequest` | `ListRoomsResponse` | List rooms with filters |
+| `UpdateRoomAsync` | `UpdateRoomRequest` | `ChatRoomResponse` | Update room settings |
+| `DeleteRoomAsync` | `DeleteRoomRequest` | `ChatRoomResponse` | Delete a room |
+| `ArchiveroomAsync` | `ArchiveRoomRequest` | `ChatRoomResponse` | Archive a room to Resource |
+| `JoinroomAsync` | `JoinRoomRequest` | `ChatRoomResponse` | Join a chat room |
+| `LeaveroomAsync` | `LeaveRoomRequest` | `ChatRoomResponse` | Leave a chat room |
+| `ListParticipantsAsync` | `ListParticipantsRequest` | `ParticipantsResponse` | List room participants |
+| `KickparticipantAsync` | `KickParticipantRequest` | `ChatRoomResponse` | Remove a participant from the room |
+| `BanparticipantAsync` | `BanParticipantRequest` | `ChatRoomResponse` | Ban a participant from the room |
+| `UnbanparticipantAsync` | `UnbanParticipantRequest` | `ChatRoomResponse` | Unban a participant |
+| `MuteparticipantAsync` | `MuteParticipantRequest` | `ChatRoomResponse` | Mute a participant |
+| `SendmessageAsync` | `SendMessageRequest` | `ChatMessageResponse` | Send a message to a room |
+| `SendmessagebatchAsync` | `SendMessageBatchRequest` | `SendMessageBatchResponse` | Send multiple messages |
+| `GetMessagehistoryAsync` | `MessageHistoryRequest` | `MessageHistoryResponse` | Get message history |
+| `DeleteMessageAsync` | `DeleteMessageRequest` | `ChatMessageResponse` | Delete a message |
+| `PinmessageAsync` | `PinMessageRequest` | `ChatMessageResponse` | Pin a message |
+| `UnpinmessageAsync` | `UnpinMessageRequest` | `ChatMessageResponse` | Unpin a message |
+| `SearchmessagesAsync` | `SearchMessagesRequest` | `SearchMessagesResponse` | Full-text search in persistent rooms |
+| `AdminlistroomsAsync` | `AdminListRoomsRequest` | `ListRoomsResponse` | List all rooms system-wide |
+| `AdmingetstatsAsync` | `AdminGetStatsRequest` | `AdminStatsResponse` | Room and message statistics |
+| `AdminforcecleanupAsync` | `AdminForceCleanupRequest` | `AdminCleanupResponse` | Force cleanup of idle rooms |
+
+---
+
+## Collection Service API {#collection}
+
+**Proxy**: `client.Collection` | **Version**: 1.0.0
+
+Universal content unlock and archive system for collectible content.
+
+### Collection
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `CreateCollectionAsync` | `CreateCollectionRequest` | `CollectionResponse` | Create a collection for an owner |
+| `GetCollectionAsync` | `GetCollectionRequest` | `CollectionResponse` | Get a collection with unlocked entry summary |
+| `ListCollectionsAsync` | `ListCollectionsRequest` | `ListCollectionsResponse` | List all collections for an owner |
+| `DeleteCollectionAsync` | `DeleteCollectionRequest` | `CollectionResponse` | Delete a collection and its inventory container |
+
+### Content
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `SelectcontentforareaAsync` | `SelectContentForAreaRequest` | `ContentSelectionResponse` | Select content for an area based on unlocked library |
+| `SetareacontentconfigAsync` | `SetAreaContentConfigRequest` | `AreaContentConfigResponse` | Set area-to-theme mapping |
+| `GetAreacontentconfigAsync` | `GetAreaContentConfigRequest` | `AreaContentConfigResponse` | Get area content config |
+| `ListAreacontentconfigsAsync` | `ListAreaContentConfigsRequest` | `ListAreaContentConfigsResponse` | List area configs for a game service |
+
+### Discovery
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `AdvancediscoveryAsync` | `AdvanceDiscoveryRequest` | `AdvanceDiscoveryResponse` | Advance progressive discovery level |
+
+### Entry
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `GrantentryAsync` | `GrantEntryRequest` | `GrantEntryResponse` | Grant/unlock an entry (idempotent) |
+| `HasentryAsync` | `HasEntryRequest` | `HasEntryResponse` | Check if owner has a specific entry |
+| `QueryentriesAsync` | `QueryEntriesRequest` | `QueryEntriesResponse` | Query unlocked entries with filtering |
+| `UpdateEntrymetadataAsync` | `UpdateEntryMetadataRequest` | `UnlockedEntryResponse` | Update entry instance metadata |
+| `GetCompletionstatsAsync` | `GetCompletionStatsRequest` | `CompletionStatsResponse` | Get completion statistics per collection type |
+
+### EntryTemplate
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `CreateEntrytemplateAsync` | `CreateEntryTemplateRequest` | `EntryTemplateResponse` | Create an entry template |
+| `GetEntrytemplateAsync` | `GetEntryTemplateRequest` | `EntryTemplateResponse` | Get an entry template by ID |
+| `ListEntrytemplatesAsync` | `ListEntryTemplatesRequest` | `ListEntryTemplatesResponse` | List entry templates |
+| `UpdateEntrytemplateAsync` | `UpdateEntryTemplateRequest` | `EntryTemplateResponse` | Update an entry template |
+| `DeleteEntrytemplateAsync` | `DeleteEntryTemplateRequest` | `EntryTemplateResponse` | Delete an entry template |
+| `SeedentrytemplatesAsync` | `SeedEntryTemplatesRequest` | `SeedEntryTemplatesResponse` | Bulk seed entry templates |
 
 ---
 
@@ -507,6 +664,12 @@ Real-time communication and WebSocket connection management for Bannou services.
 | Method | Request | Response | Summary |
 |--------|---------|----------|---------|
 | `ProxyinternalrequestAsync` | `InternalProxyRequest` | `InternalProxyResponse` | Internal API proxy for stateless requests |
+
+### Meta Proxy
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `GetEndpointmetaAsync` | `GetEndpointMetaRequest` | `GetEndpointMetaResponse` | Permission-gated proxy for endpoint metadata |
 
 ### Session Management
 
@@ -685,6 +848,61 @@ Multi-currency management service for game economies.
 
 ---
 
+## Bannou Divine Service API {#divine}
+
+**Proxy**: `client.Divine` | **Version**: 1.0.0
+
+Pantheon management service (L4 GameFeatures) for deity entities, divinity economy, and blessing orchestration. A thin orchestration layer (like Qu...
+
+### Blessing Orchestration
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `GrantblessingAsync` | `GrantBlessingRequest` | `BlessingResponse` | Grant a blessing from a deity to an entity |
+| `RevokeblessingAsync` | `RevokeBlessingRequest` | `BlessingResponse` | Revoke an active blessing |
+| `ListBlessingsbyentityAsync` | `ListBlessingsByEntityRequest` | `ListBlessingsResponse` | List blessings for an entity |
+| `ListBlessingsbydeityAsync` | `ListBlessingsByDeityRequest` | `ListBlessingsResponse` | List blessings granted by a deity |
+| `GetBlessingAsync` | `GetBlessingRequest` | `BlessingResponse` | Get a blessing by ID |
+
+### Deity Management
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `CreateDeityAsync` | `CreateDeityRequest` | `DeityResponse` | Create a new deity |
+| `GetDeityAsync` | `GetDeityRequest` | `DeityResponse` | Get a deity by ID |
+| `GetDeitybycodeAsync` | `GetDeityByCodeRequest` | `DeityResponse` | Get a deity by code within a game service |
+| `ListDeitiesAsync` | `ListDeitiesRequest` | `ListDeitiesResponse` | List deities with optional filters |
+| `UpdateDeityAsync` | `UpdateDeityRequest` | `DeityResponse` | Update deity properties |
+| `ActivatedeityAsync` | `ActivateDeityRequest` | `DeityResponse` | Activate a dormant deity |
+| `DeactivatedeityAsync` | `DeactivateDeityRequest` | `DeityResponse` | Deactivate an active deity |
+| `DeleteDeityEventAsync` | `DeleteDeityRequest` | *(fire-and-forget)* | Delete a deity |
+
+### Divinity Economy
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `GetDivinitybalanceAsync` | `GetDivinityBalanceRequest` | `DivinityBalanceResponse` | Get a deity's divinity balance |
+| `CreditdivinityAsync` | `CreditDivinityRequest` | `DivinityBalanceResponse` | Credit divinity to a deity |
+| `DebitdivinityAsync` | `DebitDivinityRequest` | `DivinityBalanceResponse` | Debit divinity from a deity |
+| `GetDivinityhistoryAsync` | `GetDivinityHistoryRequest` | `DivinityHistoryResponse` | Get divinity transaction history |
+
+### Follower Management
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `RegisterFollowerAsync` | `RegisterFollowerRequest` | `FollowerResponse` | Register a character as a follower of a deity |
+| `UnregisterfollowerEventAsync` | `UnregisterFollowerRequest` | *(fire-and-forget)* | Unregister a character as a follower |
+| `GetFollowersAsync` | `GetFollowersRequest` | `ListFollowersResponse` | Get followers of a deity |
+
+### Resource Cleanup
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `CleanupbycharacterEventAsync` | `CleanupByCharacterRequest` | *(fire-and-forget)* | Cleanup divine data for a deleted character |
+| `CleanupbygameserviceEventAsync` | `CleanupByGameServiceRequest` | *(fire-and-forget)* | Cleanup divine data for a deleted game service |
+
+---
+
 ## Bannou Documentation API {#documentation}
 
 **Proxy**: `client.Documentation` | **Version**: 1.0.0
@@ -763,6 +981,8 @@ Full-custody orchestration layer for multi-party asset exchanges.
 | `RefundAsync` | `RefundRequest` | `RefundResponse` | Trigger refund |
 | `CancelAsync` | `CancelRequest` | `CancelResponse` | Cancel escrow before fully funded |
 | `DisputeAsync` | `DisputeRequest` | `DisputeResponse` | Raise a dispute on funded escrow |
+| `ConfirmreleaseAsync` | `ConfirmReleaseRequest` | `ConfirmReleaseResponse` | Confirm receipt of released assets |
+| `ConfirmrefundAsync` | `ConfirmRefundRequest` | `ConfirmRefundResponse` | Confirm receipt of refunded assets |
 
 ### Condition
 
@@ -808,6 +1028,75 @@ Full-custody orchestration layer for multi-party asset exchanges.
 |--------|---------|----------|---------|
 | `ValidateEscrowAsync` | `ValidateEscrowRequest` | `ValidateEscrowResponse` | Manually trigger validation |
 | `ReaffirmAsync` | `ReaffirmRequest` | `ReaffirmResponse` | Re-affirm after validation failure |
+
+---
+
+## Bannou Faction Service API {#faction}
+
+**Proxy**: `client.Faction` | **Version**: 1.0.0
+
+Faction management as seed-based living entities (L4 GameFeatures).
+
+### Compression
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `GetCompressdataAsync` | `GetCompressDataRequest` | `FactionArchive` | Get faction data for character archival compression |
+| `RestorefromarchiveAsync` | `RestoreFromArchiveRequest` | `RestoreFromArchiveResponse` | Restore faction data from archive |
+
+### Faction CRUD
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `CreateFactionAsync` | `CreateFactionRequest` | `FactionResponse` | Create a new faction |
+| `GetFactionAsync` | `GetFactionRequest` | `FactionResponse` | Get a faction by ID |
+| `GetFactionbycodeAsync` | `GetFactionByCodeRequest` | `FactionResponse` | Get a faction by code |
+| `ListFactionsAsync` | `ListFactionsRequest` | `ListFactionsResponse` | List factions with filters |
+| `UpdateFactionAsync` | `UpdateFactionRequest` | `FactionResponse` | Update a faction |
+| `DeprecatefactionAsync` | `DeprecateFactionRequest` | `FactionResponse` | Deprecate a faction |
+| `UndeprecatefactionAsync` | `UndeprecateFactionRequest` | `FactionResponse` | Reactivate a deprecated faction |
+| `DeleteFactionEventAsync` | `DeleteFactionRequest` | *(fire-and-forget)* | Delete a faction |
+| `SeedfactionsAsync` | `SeedFactionsRequest` | `SeedFactionsResponse` | Bulk seed factions from configuration |
+| `DesignaterealmbaselineAsync` | `DesignateRealmBaselineRequest` | `FactionResponse` | Designate a faction as realm baseline |
+| `GetRealmbaselineAsync` | `GetRealmBaselineRequest` | `FactionResponse` | Get the realm baseline faction |
+
+### Membership
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `AddmemberAsync` | `AddMemberRequest` | `FactionMemberResponse` | Add a character to a faction |
+| `RemovememberEventAsync` | `RemoveMemberRequest` | *(fire-and-forget)* | Remove a character from a faction |
+| `ListMembersAsync` | `ListMembersRequest` | `ListMembersResponse` | List members of a faction |
+| `ListMembershipsbycharacterAsync` | `ListMembershipsByCharacterRequest` | `ListMembershipsByCharacterResponse` | List a character's faction memberships |
+| `UpdateMemberroleAsync` | `UpdateMemberRoleRequest` | `FactionMemberResponse` | Update a member's role |
+| `CheckmembershipAsync` | `CheckMembershipRequest` | `CheckMembershipResponse` | Check if a character is a member of a faction |
+
+### Norms
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `DefinenormAsync` | `DefineNormRequest` | `NormDefinitionResponse` | Define a behavioral norm for a faction |
+| `UpdateNormAsync` | `UpdateNormRequest` | `NormDefinitionResponse` | Update an existing norm |
+| `DeleteNormEventAsync` | `DeleteNormRequest` | *(fire-and-forget)* | Delete a norm definition |
+| `ListNormsAsync` | `ListNormsRequest` | `ListNormsResponse` | List norms defined by a faction |
+| `QueryapplicablenormsAsync` | `QueryApplicableNormsRequest` | `QueryApplicableNormsResponse` | Query all norms applicable to a character |
+
+### Resource Cleanup
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `CleanupbycharacterAsync` | `CleanupByCharacterRequest` | `CleanupByCharacterResponse` | Cleanup faction data for a deleted character |
+| `CleanupbyrealmAsync` | `CleanupByRealmRequest` | `CleanupByRealmResponse` | Cleanup faction data for a deleted realm |
+| `CleanupbylocationAsync` | `CleanupByLocationRequest` | `CleanupByLocationResponse` | Cleanup territory claims for a deleted location |
+
+### Territory
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `ClaimterritoryAsync` | `ClaimTerritoryRequest` | `TerritoryClaimResponse` | Claim a location for a faction |
+| `ReleaseterritoryEventAsync` | `ReleaseTerritoryRequest` | *(fire-and-forget)* | Release a territory claim |
+| `ListTerritoryclaimsAsync` | `ListTerritoryClaimsRequest` | `ListTerritoryClaimsResponse` | List territory claims for a faction |
+| `GetControllingfactionAsync` | `GetControllingFactionRequest` | `ControllingFactionResponse` | Get the controlling faction for a location |
 
 ---
 
@@ -868,6 +1157,68 @@ Minimal game session management for games.
 
 ---
 
+## Bannou Gardener Service API {#gardener}
+
+**Proxy**: `client.Gardener` | **Version**: 1.0.0
+
+Player experience orchestration service (L4 GameFeatures) for garden navigation, scenario routing, progressive discovery, and deployment phase mana...
+
+### Bond Scenarios
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `EnterscenariotogetherAsync` | `EnterTogetherRequest` | `ScenarioStateResponse` | Enter a scenario together with a bonded player |
+| `GetSharedgardenstateAsync` | `GetSharedGardenRequest` | `SharedGardenStateResponse` | Get shared garden state for bonded players |
+
+### Deployment Phase
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `GetPhaseconfigAsync` | `GetPhaseConfigRequest` | `PhaseConfigResponse` | Get deployment phase configuration |
+| `UpdatePhaseconfigAsync` | `UpdatePhaseConfigRequest` | `PhaseConfigResponse` | Update deployment phase configuration |
+| `GetPhasemetricsAsync` | `GetPhaseMetricsRequest` | `PhaseMetricsResponse` | Get deployment phase metrics |
+
+### Garden Management
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `EntergardenAsync` | `EnterGardenRequest` | `GardenStateResponse` | Enter the garden |
+| `GetGardenstateAsync` | `GetGardenStateRequest` | `GardenStateResponse` | Get current garden state |
+| `UpdatePositionAsync` | `UpdatePositionRequest` | `PositionUpdateResponse` | Update player position in the garden |
+| `LeavegardenAsync` | `LeaveGardenRequest` | `LeaveGardenResponse` | Leave the garden |
+
+### POI Interaction
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `ListPoisAsync` | `ListPoisRequest` | `ListPoisResponse` | List active POIs |
+| `InteractwithpoiAsync` | `InteractWithPoiRequest` | `PoiInteractionResponse` | Interact with a POI |
+| `DeclinepoiAsync` | `DeclinePoiRequest` | `DeclinePoiResponse` | Decline a POI |
+
+### Scenario Lifecycle
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `EnterscenarioAsync` | `EnterScenarioRequest` | `ScenarioStateResponse` | Enter a scenario |
+| `GetScenariostateAsync` | `GetScenarioStateRequest` | `ScenarioStateResponse` | Get current scenario state |
+| `CompletescenarioAsync` | `CompleteScenarioRequest` | `ScenarioCompletionResponse` | Complete a scenario |
+| `AbandonscenarioAsync` | `AbandonScenarioRequest` | `AbandonScenarioResponse` | Abandon a scenario |
+| `ChainscenarioAsync` | `ChainScenarioRequest` | `ScenarioStateResponse` | Chain to another scenario |
+
+### Template Management
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `CreateTemplateAsync` | `CreateTemplateRequest` | `ScenarioTemplateResponse` | Create a scenario template |
+| `GetTemplateAsync` | `GetTemplateRequest` | `ScenarioTemplateResponse` | Get scenario template by ID |
+| `GetTemplatebycodeAsync` | `GetTemplateByCodeRequest` | `ScenarioTemplateResponse` | Get scenario template by code |
+| `ListTemplatesAsync` | `ListTemplatesRequest` | `ListTemplatesResponse` | List scenario templates |
+| `UpdateTemplateAsync` | `UpdateTemplateRequest` | `ScenarioTemplateResponse` | Update scenario template |
+| `DeprecatetemplateAsync` | `DeprecateTemplateRequest` | `ScenarioTemplateResponse` | Deprecate scenario template |
+| `DeleteTemplateAsync` | `DeleteTemplateRequest` | `ScenarioTemplateResponse` | Delete scenario template |
+
+---
+
 ## Inventory Service API {#inventory}
 
 **Proxy**: `client.Inventory` | **Version**: 1.0.0
@@ -921,7 +1272,10 @@ Item template and instance management service.
 | `GetIteminstanceAsync` | `GetItemInstanceRequest` | `ItemInstanceResponse` | Get item instance by ID |
 | `ModifyiteminstanceAsync` | `ModifyItemInstanceRequest` | `ItemInstanceResponse` | Modify item instance state |
 | `BinditeminstanceAsync` | `BindItemInstanceRequest` | `ItemInstanceResponse` | Bind item to character |
+| `UnbinditeminstanceAsync` | `UnbindItemInstanceRequest` | `ItemInstanceResponse` | Unbind item from character |
 | `DestroyiteminstanceAsync` | `DestroyItemInstanceRequest` | `DestroyItemInstanceResponse` | Destroy item instance |
+| `UseitemAsync` | `UseItemRequest` | `UseItemResponse` | Use an item (execute its behavior contract) |
+| `UseitemstepAsync` | `UseItemStepRequest` | `UseItemStepResponse` | Complete a specific step of a multi-step item use |
 
 ### Item Query
 
@@ -983,6 +1337,59 @@ Real-time leaderboard management using Redis Sorted Sets for efficient ranking.
 
 ---
 
+## License Service API {#license}
+
+**Proxy**: `client.License` | **Version**: 1.0.0
+
+Grid-based progression boards via itemized contracts.
+
+### Board
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `CreateBoardAsync` | `CreateBoardRequest` | `BoardResponse` | Create a board instance for an owner |
+| `GetBoardAsync` | `GetBoardRequest` | `BoardResponse` | Get a board instance by ID |
+| `ListBoardsbyownerAsync` | `ListBoardsByOwnerRequest` | `ListBoardsByOwnerResponse` | List boards for an owner |
+| `DeleteBoardAsync` | `DeleteBoardRequest` | `BoardResponse` | Delete a board instance |
+| `CloneboardAsync` | `CloneBoardRequest` | `CloneBoardResponse` | Clone a board's unlock state to a new owner |
+
+### BoardTemplate
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `CreateBoardtemplateAsync` | `CreateBoardTemplateRequest` | `BoardTemplateResponse` | Create a new board template |
+| `GetBoardtemplateAsync` | `GetBoardTemplateRequest` | `BoardTemplateResponse` | Get a board template by ID |
+| `ListBoardtemplatesAsync` | `ListBoardTemplatesRequest` | `ListBoardTemplatesResponse` | List board templates for a game service |
+| `UpdateBoardtemplateAsync` | `UpdateBoardTemplateRequest` | `BoardTemplateResponse` | Update a board template |
+| `DeleteBoardtemplateAsync` | `DeleteBoardTemplateRequest` | `BoardTemplateResponse` | Delete a board template |
+| `SeedboardtemplateAsync` | `SeedBoardTemplateRequest` | `SeedBoardTemplateResponse` | Bulk seed a board template with license definitions |
+
+### Cleanup
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `CleanupbyownerAsync` | `CleanupByOwnerRequest` | `CleanupByOwnerResponse` | Cleanup boards referencing a deleted owner |
+
+### Definition
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `AddlicensedefinitionAsync` | `AddLicenseDefinitionRequest` | `LicenseDefinitionResponse` | Add a license definition to a board template |
+| `GetLicensedefinitionAsync` | `GetLicenseDefinitionRequest` | `LicenseDefinitionResponse` | Get a license definition |
+| `ListLicensedefinitionsAsync` | `ListLicenseDefinitionsRequest` | `ListLicenseDefinitionsResponse` | List all license definitions for a board template |
+| `UpdateLicensedefinitionAsync` | `UpdateLicenseDefinitionRequest` | `LicenseDefinitionResponse` | Update a license definition |
+| `RemovelicensedefinitionAsync` | `RemoveLicenseDefinitionRequest` | `LicenseDefinitionResponse` | Remove a license definition from a board template |
+
+### Gameplay
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `UnlocklicenseAsync` | `UnlockLicenseRequest` | `UnlockLicenseResponse` | Unlock a license on a board |
+| `CheckunlockableAsync` | `CheckUnlockableRequest` | `CheckUnlockableResponse` | Check if a license can be unlocked |
+| `GetBoardstateAsync` | `BoardStateRequest` | `BoardStateResponse` | Get full board state |
+
+---
+
 ## Bannou Location Service API {#location}
 
 **Proxy**: `client.Location` | **Version**: 1.0.0
@@ -1000,8 +1407,10 @@ Location management service for game worlds.
 | `ListLocationsbyparentAsync` | `ListLocationsByParentRequest` | `LocationListResponse` | Get child locations for a parent location |
 | `ListRootlocationsAsync` | `ListRootLocationsRequest` | `LocationListResponse` | Get root locations in a realm |
 | `GetLocationancestorsAsync` | `GetLocationAncestorsRequest` | `LocationListResponse` | Get all ancestors of a location |
+| `ValidateTerritoryAsync` | `ValidateTerritoryRequest` | `ValidateTerritoryResponse` | Validate location against territory boundaries |
 | `GetLocationdescendantsAsync` | `GetLocationDescendantsRequest` | `LocationListResponse` | Get all descendants of a location |
 | `LocationexistsAsync` | `LocationExistsRequest` | `LocationExistsResponse` | Check if location exists and is active |
+| `QuerylocationsbypositionAsync` | `QueryLocationsByPositionRequest` | `LocationListResponse` | Find locations containing a spatial position |
 
 ### Location Admin
 
@@ -1012,9 +1421,19 @@ Location management service for game worlds.
 | `SetlocationparentAsync` | `SetLocationParentRequest` | `LocationResponse` | Set or change the parent of a location |
 | `RemovelocationparentAsync` | `RemoveLocationParentRequest` | `LocationResponse` | Remove parent from a location (make it a root location) |
 | `DeleteLocationEventAsync` | `DeleteLocationRequest` | *(fire-and-forget)* | Delete location |
+| `TransferlocationtorealmAsync` | `TransferLocationToRealmRequest` | `LocationResponse` | Transfer a location to a different realm |
 | `DeprecatelocationAsync` | `DeprecateLocationRequest` | `LocationResponse` | Deprecate a location |
 | `UndeprecatelocationAsync` | `UndeprecateLocationRequest` | `LocationResponse` | Restore a deprecated location |
 | `SeedlocationsAsync` | `SeedLocationsRequest` | `SeedLocationsResponse` | Seed locations from configuration |
+
+### Location Presence
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `ReportentitypositionAsync` | `ReportEntityPositionRequest` | `ReportEntityPositionResponse` | Report entity presence at a location |
+| `GetEntitylocationAsync` | `GetEntityLocationRequest` | `GetEntityLocationResponse` | Get the current location of an entity |
+| `ListEntitiesatlocationAsync` | `ListEntitiesAtLocationRequest` | `ListEntitiesAtLocationResponse` | List entities currently at a location |
+| `ClearentitypositionAsync` | `ClearEntityPositionRequest` | `ClearEntityPositionResponse` | Remove entity presence from its current location |
 
 ---
 
@@ -1197,6 +1616,55 @@ Pure computation music generation using formal music theory rules.
 
 ---
 
+## Bannou Obligation Service API {#obligation}
+
+**Proxy**: `client.Obligation` | **Version**: 1.0.0
+
+Contract-aware obligation tracking for NPC cognition (L4 GameFeatures).
+
+### Action Mapping
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `SetactionmappingAsync` | `SetActionMappingRequest` | `ActionMappingResponse` | Create or update an action tag to violation type mapping |
+| `ListActionmappingsAsync` | `ListActionMappingsRequest` | `ListActionMappingsResponse` | List registered action tag mappings |
+| `DeleteActionmappingEventAsync` | `DeleteActionMappingRequest` | *(fire-and-forget)* | Delete an action tag mapping |
+
+### Cache Management
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `InvalidatecacheAsync` | `InvalidateCacheRequest` | `InvalidateCacheResponse` | Force obligation cache refresh for a character |
+
+### Compression
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `GetCompressdataAsync` | `GetCompressDataRequest` | `ObligationArchive` | Get obligation data for character archival compression |
+| `RestorefromarchiveAsync` | `RestoreFromArchiveRequest` | `RestoreFromArchiveResponse` | Restore obligation data from archive |
+
+### Obligations
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `QueryobligationsAsync` | `QueryObligationsRequest` | `QueryObligationsResponse` | Query active obligations for a character |
+| `EvaluateactionAsync` | `EvaluateActionRequest` | `EvaluateActionResponse` | Evaluate obligation violation costs for proposed actions |
+
+### Resource Cleanup
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `CleanupbycharacterAsync` | `CleanupByCharacterRequest` | `CleanupByCharacterResponse` | Cleanup all obligation data for a deleted character |
+
+### Violations
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `ReportviolationAsync` | `ReportViolationRequest` | `ReportViolationResponse` | Report a knowing obligation violation |
+| `QueryviolationsAsync` | `QueryViolationsRequest` | `QueryViolationsResponse` | Query violation history for a character |
+
+---
+
 ## Orchestrator API {#orchestrator}
 
 **Proxy**: `client.Orchestrator` | **Version**: 3.0.0
@@ -1268,6 +1736,85 @@ Redis-backed high-performance permission system for WebSocket services.
 
 ---
 
+## Bannou Puppetmaster Service API {#puppetmaster}
+
+**Proxy**: `client.Puppetmaster` | **Version**: 1.0.0
+
+Orchestration service for dynamic behaviors, regional watchers, and encounter coordination. Pulls the strings while actors perform on stage.
+
+### Behaviors
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `InvalidatebehaviorsAsync` | `InvalidateBehaviorsRequest` | `InvalidateBehaviorsResponse` | Invalidate cached behavior documents |
+
+### Puppetmaster
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `GetStatusAsync` | `GetStatusRequest` | `PuppetmasterStatusResponse` | Get service status and statistics |
+
+### Watchers
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `ListWatchersAsync` | `ListWatchersRequest` | `ListWatchersResponse` | List active regional watchers |
+| `StartwatcherAsync` | `StartWatcherRequest` | `StartWatcherResponse` | Manually start a regional watcher |
+| `StopwatcherAsync` | `StopWatcherRequest` | `StopWatcherResponse` | Stop a regional watcher |
+| `StartwatchersforrealmAsync` | `StartWatchersForRealmRequest` | `StartWatchersForRealmResponse` | Start all relevant watchers for a realm |
+
+---
+
+## Bannou Quest Service API {#quest}
+
+**Proxy**: `client.Quest` | **Version**: 1.0.0
+
+Quest system providing objective-based gameplay progression as a thin orchestration layer over lib-contract. Quests are contracts with game-flavore...
+
+### Compression
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `GetCompressdataAsync` | `GetCompressDataRequest` | `QuestArchive` | Get quest data for compression |
+
+### Definitions
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `CreateQuestdefinitionAsync` | `CreateQuestDefinitionRequest` | `QuestDefinitionResponse` | Create a new quest definition |
+| `GetQuestdefinitionAsync` | `GetQuestDefinitionRequest` | `QuestDefinitionResponse` | Get quest definition by ID or code |
+| `ListQuestdefinitionsAsync` | `ListQuestDefinitionsRequest` | `ListQuestDefinitionsResponse` | List quest definitions with filtering |
+| `UpdateQuestdefinitionAsync` | `UpdateQuestDefinitionRequest` | `QuestDefinitionResponse` | Update quest definition metadata |
+| `DeprecatequestdefinitionAsync` | `DeprecateQuestDefinitionRequest` | `QuestDefinitionResponse` | Mark quest definition as deprecated |
+
+### Instances
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `AcceptquestAsync` | `AcceptQuestRequest` | `QuestInstanceResponse` | Accept a quest |
+| `AbandonquestAsync` | `AbandonQuestRequest` | `QuestInstanceResponse` | Abandon an active quest |
+| `GetQuestAsync` | `GetQuestRequest` | `QuestInstanceResponse` | Get quest instance details |
+| `ListQuestsAsync` | `ListQuestsRequest` | `ListQuestsResponse` | List character's quests |
+| `ListAvailablequestsAsync` | `ListAvailableQuestsRequest` | `ListAvailableQuestsResponse` | List quests available to accept |
+| `GetQuestlogAsync` | `GetQuestLogRequest` | `QuestLogResponse` | Get player-facing quest log |
+
+### Internal
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `HandlemilestonecompletedEventAsync` | `MilestoneCompletedCallback` | *(fire-and-forget)* | Handle milestone completion callback |
+| `HandlequestcompletedEventAsync` | `QuestCompletedCallback` | *(fire-and-forget)* | Handle quest completion callback |
+
+### Objectives
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `ReportobjectiveprogressAsync` | `ReportProgressRequest` | `ObjectiveProgressResponse` | Report progress on an objective |
+| `ForcecompleteobjectiveAsync` | `ForceCompleteObjectiveRequest` | `ObjectiveProgressResponse` | Force complete an objective (debug/GM) |
+| `GetObjectiveprogressAsync` | `GetObjectiveProgressRequest` | `ObjectiveProgressResponse` | Get objective progress details |
+
+---
+
 ## Bannou Realm Service API {#realm}
 
 **Proxy**: `client.Realm` | **Version**: 1.0.0
@@ -1282,6 +1829,7 @@ Realm management service for game worlds.
 | `GetRealmbycodeAsync` | `GetRealmByCodeRequest` | `RealmResponse` | Get realm by code |
 | `ListRealmsAsync` | `ListRealmsRequest` | `RealmListResponse` | List all realms |
 | `RealmexistsAsync` | `RealmExistsRequest` | `RealmExistsResponse` | Check if realm exists and is active |
+| `RealmsexistbatchAsync` | `RealmsExistBatchRequest` | `RealmsExistBatchResponse` | Check if multiple realms exist and are active |
 
 ### Realm Admin
 
@@ -1292,6 +1840,7 @@ Realm management service for game worlds.
 | `DeleteRealmEventAsync` | `DeleteRealmRequest` | *(fire-and-forget)* | Delete realm |
 | `DeprecaterealmAsync` | `DeprecateRealmRequest` | `RealmResponse` | Deprecate a realm |
 | `UndeprecaterealmAsync` | `UndeprecateRealmRequest` | `RealmResponse` | Restore a deprecated realm |
+| `MergerealmsAsync` | `MergeRealmsRequest` | `MergeRealmsResponse` | Merge a deprecated realm into another realm |
 | `SeedrealmsAsync` | `SeedRealmsRequest` | `SeedRealmsResponse` | Seed realms from configuration |
 
 ---
@@ -1301,6 +1850,13 @@ Realm management service for game worlds.
 **Proxy**: `client.RealmHistory` | **Version**: 1.0.0
 
 Historical event participation and lore management for realms.
+
+### Compression
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `GetCompressdataAsync` | `GetCompressDataRequest` | `RealmHistoryArchive` | Get realm history data for compression |
+| `RestorefromarchiveAsync` | `RestoreFromArchiveRequest` | `RestoreFromArchiveResponse` | Restore realm history from archive |
 
 ### Historical Events
 
@@ -1331,9 +1887,9 @@ Historical event participation and lore management for realms.
 
 ## Relationship Service API {#relationship}
 
-**Proxy**: `client.Relationship` | **Version**: 1.0.0
+**Proxy**: `client.Relationship` | **Version**: 2.0.0
 
-Generic relationship management service for entity-to-entity relationships.
+Relationship and relationship type management service for entity-to-entity relationships in the Arcadia game world.
 
 ### Relationship Management
 
@@ -1346,27 +1902,9 @@ Generic relationship management service for entity-to-entity relationships.
 | `ListRelationshipsbytypeAsync` | `ListRelationshipsByTypeRequest` | `RelationshipListResponse` | List all relationships of a specific type |
 | `UpdateRelationshipAsync` | `UpdateRelationshipRequest` | `RelationshipResponse` | Update relationship metadata |
 | `EndrelationshipEventAsync` | `EndRelationshipRequest` | *(fire-and-forget)* | End a relationship |
+| `CleanupbyentityAsync` | `CleanupByEntityRequest` | `CleanupByEntityResponse` | Cleanup relationships referencing a deleted entity |
 
----
-
-## Bannou RelationshipType Service API {#relationship-type}
-
-**Proxy**: `client.RelationshipType` | **Version**: 2.0.0
-
-Relationship type management service for game worlds.
-
-### RelationshipType
-
-| Method | Request | Response | Summary |
-|--------|---------|----------|---------|
-| `GetRelationshiptypeAsync` | `GetRelationshipTypeRequest` | `RelationshipTypeResponse` | Get relationship type by ID |
-| `GetRelationshiptypebycodeAsync` | `GetRelationshipTypeByCodeRequest` | `RelationshipTypeResponse` | Get relationship type by code |
-| `ListRelationshiptypesAsync` | `ListRelationshipTypesRequest` | `RelationshipTypeListResponse` | List all relationship types |
-| `GetChildrelationshiptypesAsync` | `GetChildRelationshipTypesRequest` | `RelationshipTypeListResponse` | Get child types for a parent type |
-| `MatcheshierarchyAsync` | `MatchesHierarchyRequest` | `MatchesHierarchyResponse` | Check if type matches ancestor in hierarchy |
-| `GetAncestorsAsync` | `GetAncestorsRequest` | `RelationshipTypeListResponse` | Get all ancestors of a relationship type |
-
-### RelationshipType Admin
+### Relationship Type Admin
 
 | Method | Request | Response | Summary |
 |--------|---------|----------|---------|
@@ -1377,6 +1915,67 @@ Relationship type management service for game worlds.
 | `UndeprecaterelationshiptypeAsync` | `UndeprecateRelationshipTypeRequest` | `RelationshipTypeResponse` | Restore a deprecated relationship type |
 | `MergerelationshiptypeAsync` | `MergeRelationshipTypeRequest` | `MergeRelationshipTypeResponse` | Merge a deprecated type into another type |
 | `SeedrelationshiptypesAsync` | `SeedRelationshipTypesRequest` | `SeedRelationshipTypesResponse` | Seed relationship types from configuration |
+
+### Relationship Type Management
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `GetRelationshiptypeAsync` | `GetRelationshipTypeRequest` | `RelationshipTypeResponse` | Get relationship type by ID |
+| `GetRelationshiptypebycodeAsync` | `GetRelationshipTypeByCodeRequest` | `RelationshipTypeResponse` | Get relationship type by code |
+| `ListRelationshiptypesAsync` | `ListRelationshipTypesRequest` | `RelationshipTypeListResponse` | List all relationship types |
+| `GetChildrelationshiptypesAsync` | `GetChildRelationshipTypesRequest` | `RelationshipTypeListResponse` | Get child types for a parent type |
+| `MatcheshierarchyAsync` | `MatchesHierarchyRequest` | `MatchesHierarchyResponse` | Check if type matches ancestor in hierarchy |
+| `GetAncestorsAsync` | `GetAncestorsRequest` | `RelationshipTypeListResponse` | Get all ancestors of a relationship type |
+
+---
+
+## Resource Lifecycle API {#resource}
+
+**Proxy**: `client.Resource` | **Version**: 1.0.0
+
+Resource reference tracking and lifecycle management.
+
+### Cleanup Management
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `DefinecleanupcallbackAsync` | `DefineCleanupRequest` | `DefineCleanupResponse` | Define cleanup callbacks for a resource type |
+| `ExecutecleanupAsync` | `ExecuteCleanupRequest` | `ExecuteCleanupResponse` | Execute cleanup for a resource |
+| `ListCleanupcallbacksAsync` | `ListCleanupCallbacksRequest` | `ListCleanupCallbacksResponse` | List registered cleanup callbacks |
+| `RemovecleanupcallbackAsync` | `RemoveCleanupCallbackRequest` | `RemoveCleanupCallbackResponse` | Remove a cleanup callback registration |
+
+### Compression Management
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `DefinecompresscallbackAsync` | `DefineCompressCallbackRequest` | `DefineCompressCallbackResponse` | Register compression callback for a resource type |
+| `ExecutecompressAsync` | `ExecuteCompressRequest` | `ExecuteCompressResponse` | Compress a resource and all dependents |
+| `ExecutedecompressAsync` | `ExecuteDecompressRequest` | `ExecuteDecompressResponse` | Restore data from archive |
+| `ListCompresscallbacksAsync` | `ListCompressCallbacksRequest` | `ListCompressCallbacksResponse` | List registered compression callbacks |
+| `GetArchiveAsync` | `GetArchiveRequest` | `GetArchiveResponse` | Retrieve compressed archive |
+
+### Reference Management
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `RegisterReferenceAsync` | `RegisterReferenceRequest` | `RegisterReferenceResponse` | Register a reference to a resource |
+| `UnregisterreferenceAsync` | `UnregisterReferenceRequest` | `UnregisterReferenceResponse` | Remove a reference to a resource |
+| `CheckreferencesAsync` | `CheckReferencesRequest` | `CheckReferencesResponse` | Check reference count and cleanup eligibility |
+| `ListReferencesAsync` | `ListReferencesRequest` | `ListReferencesResponse` | List all references to a resource |
+
+### Seeded Resources
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `ListSeededresourcesAsync` | `ListSeededResourcesRequest` | `ListSeededResourcesResponse` | List available seeded resources |
+| `GetSeededresourceAsync` | `GetSeededResourceRequest` | `GetSeededResourceResponse` | Get a seeded resource by type and identifier |
+
+### Snapshot Management
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `ExecutesnapshotAsync` | `ExecuteSnapshotRequest` | `ExecuteSnapshotResponse` | Create ephemeral snapshot of a living resource |
+| `GetSnapshotAsync` | `GetSnapshotRequest` | `GetSnapshotResponse` | Retrieve an ephemeral snapshot |
 
 ---
 
@@ -1506,6 +2105,43 @@ Hierarchical composition storage for game worlds.
 
 ---
 
+## Seed Service API {#seed}
+
+**Proxy**: `client.Seed` | **Version**: 1.0.0
+
+Generic progressive growth entity service (L2 GameFoundation). Seeds are entities that start empty and grow by accumulating metadata from external ...
+
+### Other
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `CreateSeedAsync` | `CreateSeedRequest` | `SeedResponse` | Create a new seed |
+| `GetSeedAsync` | `GetSeedRequest` | `SeedResponse` | Get seed by ID |
+| `GetSeedsbyownerAsync` | `GetSeedsByOwnerRequest` | `ListSeedsResponse` | Get seeds by owner ID and type |
+| `ListSeedsAsync` | `ListSeedsRequest` | `ListSeedsResponse` | List seeds with filtering |
+| `UpdateSeedAsync` | `UpdateSeedRequest` | `SeedResponse` | Update seed metadata or display name |
+| `ActivateseedAsync` | `ActivateSeedRequest` | `SeedResponse` | Set a seed as active |
+| `ArchiveseedAsync` | `ArchiveSeedRequest` | `SeedResponse` | Archive a seed |
+| `GetGrowthAsync` | `GetGrowthRequest` | `GrowthResponse` | Get full growth domain map |
+| `RecordgrowthAsync` | `RecordGrowthRequest` | `GrowthResponse` | Record growth in a domain |
+| `RecordgrowthbatchAsync` | `RecordGrowthBatchRequest` | `GrowthResponse` | Record growth across multiple domains atomically |
+| `GetGrowthphaseAsync` | `GetGrowthPhaseRequest` | `GrowthPhaseResponse` | Get current growth phase |
+| `GetCapabilitymanifestAsync` | `GetCapabilityManifestRequest` | `CapabilityManifestResponse` | Get current capability manifest |
+| `RegisterSeedtypeAsync` | `RegisterSeedTypeRequest` | `SeedTypeResponse` | Register a new seed type definition |
+| `GetSeedtypeAsync` | `GetSeedTypeRequest` | `SeedTypeResponse` | Get seed type definition |
+| `ListSeedtypesAsync` | `ListSeedTypesRequest` | `ListSeedTypesResponse` | List registered seed types |
+| `UpdateSeedtypeAsync` | `UpdateSeedTypeRequest` | `SeedTypeResponse` | Update seed type definition |
+| `DeprecateseedtypeAsync` | `DeprecateSeedTypeRequest` | `SeedTypeResponse` | Deprecate a seed type |
+| `UndeprecateseedtypeAsync` | `UndeprecateSeedTypeRequest` | `SeedTypeResponse` | Restore a deprecated seed type |
+| `DeleteSeedtypeEventAsync` | `DeleteSeedTypeRequest` | *(fire-and-forget)* | Delete a seed type |
+| `InitiatebondAsync` | `InitiateBondRequest` | `BondResponse` | Begin bond process between seeds |
+| `ConfirmbondAsync` | `ConfirmBondRequest` | `BondResponse` | Confirm a pending bond |
+| `GetBondAsync` | `GetBondRequest` | `BondResponse` | Get bond by ID |
+| `GetBondforseedAsync` | `GetBondForSeedRequest` | `BondResponse` | Get bond for a specific seed |
+| `GetBondpartnersAsync` | `GetBondPartnersRequest` | `BondPartnersResponse` | Get partner seed(s) public info |
+
+---
+
 ## Bannou Species Service API {#species}
 
 **Proxy**: `client.Species` | **Version**: 2.0.0
@@ -1552,7 +2188,107 @@ Repository pattern state management with Redis and MySQL backends.
 | `DeleteStateAsync` | `DeleteStateRequest` | `DeleteStateResponse` | Delete state value |
 | `QuerystateAsync` | `QueryStateRequest` | `QueryStateResponse` | Query state (MySQL JSON queries or Redis with search enabled) |
 | `BulkgetstateAsync` | `BulkGetStateRequest` | `BulkGetStateResponse` | Bulk get multiple keys |
+| `BulksavestateAsync` | `BulkSaveStateRequest` | `BulkSaveStateResponse` | Bulk save multiple key-value pairs |
+| `BulkexistsstateAsync` | `BulkExistsStateRequest` | `BulkExistsStateResponse` | Check existence of multiple keys |
+| `BulkdeletestateAsync` | `BulkDeleteStateRequest` | `BulkDeleteStateResponse` | Delete multiple keys |
 | `ListStoresAsync` | `ListStoresRequest` | `ListStoresResponse` | List configured state stores |
+
+---
+
+## Status Service API {#status}
+
+**Proxy**: `client.Status` | **Version**: 1.0.0
+
+Unified entity effects query layer for temporary contract-managed statuses and passive seed-derived capabilities.
+
+### Cleanup
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `CleanupbyownerAsync` | `CleanupByOwnerRequest` | `CleanupResponse` | Remove all statuses and containers for an owner |
+
+### Effects
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `GetEffectsAsync` | `GetEffectsRequest` | `GetEffectsResponse` | Get unified effects for an entity |
+| `GetSeedeffectsAsync` | `GetSeedEffectsRequest` | `SeedEffectsResponse` | Get seed-derived passive effects for an entity |
+
+### Status
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `GrantstatusAsync` | `GrantStatusRequest` | `GrantStatusResponse` | Grant a status effect to an entity |
+| `RemovestatusAsync` | `RemoveStatusRequest` | `StatusInstanceResponse` | Remove a specific status instance |
+| `RemovebysourceAsync` | `RemoveBySourceRequest` | `RemoveStatusesResponse` | Remove all statuses from a source |
+| `RemovebycategoryAsync` | `RemoveByCategoryRequest` | `RemoveStatusesResponse` | Remove all statuses of a category (cleanse) |
+| `HasstatusAsync` | `HasStatusRequest` | `HasStatusResponse` | Check if an entity has a specific status |
+| `ListStatusesAsync` | `ListStatusesRequest` | `ListStatusesResponse` | List active statuses for an entity |
+| `GetStatusAsync` | `GetStatusRequest` | `StatusInstanceResponse` | Get a specific status instance |
+
+### StatusTemplate
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `CreateStatustemplateAsync` | `CreateStatusTemplateRequest` | `StatusTemplateResponse` | Create a status template |
+| `GetStatustemplateAsync` | `GetStatusTemplateRequest` | `StatusTemplateResponse` | Get a status template by ID |
+| `GetStatustemplatebycodeAsync` | `GetStatusTemplateByCodeRequest` | `StatusTemplateResponse` | Get a status template by code |
+| `ListStatustemplatesAsync` | `ListStatusTemplatesRequest` | `ListStatusTemplatesResponse` | List status templates |
+| `UpdateStatustemplateAsync` | `UpdateStatusTemplateRequest` | `StatusTemplateResponse` | Update a status template |
+| `SeedstatustemplatesAsync` | `SeedStatusTemplatesRequest` | `SeedStatusTemplatesResponse` | Bulk seed status templates |
+
+---
+
+## Storyline Composer API {#storyline}
+
+**Proxy**: `client.Storyline` | **Version**: 1.0.0
+
+Seeded narrative generation from compressed archives using the storyline SDKs.
+
+### Composition
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `ComposeAsync` | `ComposeRequest` | `ComposeResponse` | Compose a storyline plan from archive seeds |
+
+### Compression
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `GetCompressdataAsync` | `GetCompressDataRequest` | `StorylineArchive` | Get storyline data for compression |
+
+### Plans
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `GetPlanAsync` | `GetPlanRequest` | `GetPlanResponse` | Retrieve a cached storyline plan |
+| `ListPlansAsync` | `ListPlansRequest` | `ListPlansResponse` | List cached storyline plans |
+
+### Scenario Definitions
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `CreateScenariodefinitionAsync` | `CreateScenarioDefinitionRequest` | `ScenarioDefinition` | Create a new scenario definition |
+| `GetScenariodefinitionAsync` | `GetScenarioDefinitionRequest` | `GetScenarioDefinitionResponse` | Get a scenario definition by ID or code |
+| `ListScenariodefinitionsAsync` | `ListScenarioDefinitionsRequest` | `ListScenarioDefinitionsResponse` | List scenario definitions |
+| `UpdateScenariodefinitionAsync` | `UpdateScenarioDefinitionRequest` | `ScenarioDefinition` | Update a scenario definition |
+| `DeprecatescenariodefinitionEventAsync` | `DeprecateScenarioDefinitionRequest` | *(fire-and-forget)* | Deprecate a scenario definition |
+
+### Scenario Discovery
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `FindavailablescenariosAsync` | `FindAvailableScenariosRequest` | `FindAvailableScenariosResponse` | Find scenarios matching character state |
+| `TestscenariotriggerAsync` | `TestScenarioRequest` | `TestScenarioResponse` | Dry-run scenario trigger |
+| `EvaluatescenariofitAsync` | `EvaluateFitRequest` | `EvaluateFitResponse` | Score narrative fit without full condition check |
+
+### Scenario Execution
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `TriggerscenarioAsync` | `TriggerScenarioRequest` | `TriggerScenarioResponse` | Execute a scenario |
+| `GetActivescenariosAsync` | `GetActiveScenariosRequest` | `GetActiveScenariosResponse` | Get active scenarios for a character |
+| `GetScenariohistoryAsync` | `GetScenarioHistoryRequest` | `GetScenarioHistoryResponse` | Get scenario execution history |
 
 ---
 
@@ -1576,11 +2312,35 @@ Manages user subscriptions to game services. Tracks which accounts have access t
 
 ---
 
+## Bannou Telemetry Service API {#telemetry}
+
+**Proxy**: `client.Telemetry` | **Version**: 1.0.0
+
+Unified observability plugin providing distributed tracing, metrics, and log correlation for Bannou services using OpenTelemetry standards.
+
+### Telemetry
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `HealthAsync` | `TelemetryHealthRequest` | `TelemetryHealthResponse` | Check telemetry exporter health |
+| `StatusAsync` | `TelemetryStatusRequest` | `TelemetryStatusResponse` | Get telemetry status and configuration |
+
+---
+
 ## Bannou Voice Service API {#voice}
 
-**Proxy**: `client.Voice` | **Version**: 1.1.0
+**Proxy**: `client.Voice` | **Version**: 2.0.0
 
-Voice communication coordination service for P2P and room-based audio.
+Voice room coordination service. Internal service accessed by other services via lib-mesh.
+
+### Voice Broadcasting
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `RequestbroadcastconsentAsync` | `BroadcastConsentRequest` | `BroadcastConsentStatus` | Request broadcast consent from all room participants |
+| `RespondbroadcastconsentAsync` | `BroadcastConsentResponse` | `BroadcastConsentStatus` | Respond to a broadcast consent request |
+| `StopbroadcastEventAsync` | `StopBroadcastConsentRequest` | *(fire-and-forget)* | Stop broadcasting from a voice room |
+| `GetBroadcaststatusAsync` | `BroadcastStatusRequest` | `BroadcastConsentStatus` | Get broadcast status for a voice room |
 
 ### Voice Peers
 
@@ -1593,7 +2353,7 @@ Voice communication coordination service for P2P and room-based audio.
 
 | Method | Request | Response | Summary |
 |--------|---------|----------|---------|
-| `CreateVoiceroomAsync` | `CreateVoiceRoomRequest` | `VoiceRoomResponse` | Create voice room for a game session |
+| `CreateVoiceroomAsync` | `CreateVoiceRoomRequest` | `VoiceRoomResponse` | Create a new voice room |
 | `GetVoiceroomAsync` | `GetVoiceRoomRequest` | `VoiceRoomResponse` | Get voice room details |
 | `JoinvoiceroomAsync` | `JoinVoiceRoomRequest` | `JoinVoiceRoomResponse` | Join voice room and register SIP endpoint |
 | `LeavevoiceroomEventAsync` | `LeaveVoiceRoomRequest` | *(fire-and-forget)* | Leave voice room |
@@ -1612,8 +2372,6 @@ Public-facing website service for registration, information, and account managem
 | Method | Request | Response | Summary |
 |--------|---------|----------|---------|
 | `GetAccountprofileAsync` | - | `AccountProfile` | Get account profile for logged-in user |
-| `GetAccountcharactersAsync` | - | `CharacterListResponse` | Get character list for logged-in user |
-| `GetAccountsubscriptionAsync` | - | `SubscriptionResponse` | Get subscription status |
 
 ### CMS
 
@@ -1650,14 +2408,44 @@ Public-facing website service for registration, information, and account managem
 | Method | Request | Response | Summary |
 |--------|---------|----------|---------|
 | `GetStatusAsync` | - | `StatusResponse` | Get website status and version |
-| `GetServerstatusAsync` | - | `ServerStatusResponse` | Get game server status for all realms |
+
+---
+
+## Worldstate Service API {#worldstate}
+
+**Proxy**: `client.Worldstate` | **Version**: 1.0.0
+
+Per-realm game time authority, calendar system, and temporal event broadcasting. Maps real-world time to configurable game-time progression with pe...
+
+### Worldstate
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `GetRealmtimeAsync` | `GetRealmTimeRequest` | `GameTimeSnapshot` | Get current game time for a realm |
+| `GetRealmtimebycodeAsync` | `GetRealmTimeByCodeRequest` | `GameTimeSnapshot` | Get current game time by realm code |
+| `BatchgetrealmtimesAsync` | `BatchGetRealmTimesRequest` | `BatchGetRealmTimesResponse` | Get current game time for multiple realms |
+| `GetElapsedgametimeAsync` | `GetElapsedGameTimeRequest` | `GetElapsedGameTimeResponse` | Compute elapsed game-time between two real timestamps |
+| `TriggertimesyncAsync` | `TriggerTimeSyncRequest` | `TriggerTimeSyncResponse` | Trigger a time sync event for an entity's sessions |
+| `InitializerealmclockAsync` | `InitializeRealmClockRequest` | `InitializeRealmClockResponse` | Initialize a clock for a realm |
+| `SettimeratioAsync` | `SetTimeRatioRequest` | `SetTimeRatioResponse` | Change the time ratio for a realm |
+| `AdvanceclockAsync` | `AdvanceClockRequest` | `AdvanceClockResponse` | Manually advance a realm's clock |
+| `SeedcalendarAsync` | `SeedCalendarRequest` | `CalendarTemplateResponse` | Create a calendar template |
+| `GetCalendarAsync` | `GetCalendarRequest` | `CalendarTemplateResponse` | Get a calendar template |
+| `ListCalendarsAsync` | `ListCalendarsRequest` | `ListCalendarsResponse` | List calendar templates for a game service |
+| `UpdateCalendarAsync` | `UpdateCalendarRequest` | `CalendarTemplateResponse` | Update a calendar template |
+| `DeleteCalendarAsync` | `DeleteCalendarRequest` | `DeleteCalendarResponse` | Delete a calendar template |
+| `GetRealmconfigAsync` | `GetRealmConfigRequest` | `RealmConfigResponse` | Get realm worldstate configuration |
+| `UpdateRealmconfigAsync` | `UpdateRealmConfigRequest` | `RealmConfigResponse` | Update realm worldstate configuration |
+| `ListRealmclocksAsync` | `ListRealmClocksRequest` | `ListRealmClocksResponse` | List active realm clocks |
+| `CleanupbyrealmAsync` | `CleanupByRealmRequest` | `CleanupByRealmResponse` | Clean up worldstate data for a deleted realm |
+| `CleanupbygameserviceAsync` | `CleanupByGameServiceRequest` | `CleanupByGameServiceResponse` | Clean up worldstate data for a deleted game service |
 
 ---
 
 ## Summary
 
-- **Total services**: 40
-- **Total methods**: 534
+- **Total services**: 54
+- **Total methods**: 846
 
 ---
 

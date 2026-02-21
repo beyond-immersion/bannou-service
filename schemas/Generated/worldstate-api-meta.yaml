@@ -1,0 +1,2414 @@
+openapi: 3.0.3
+info:
+  title: Worldstate Service API
+  version: 1.0.0
+  description: |
+    Per-realm game time authority, calendar system, and temporal event broadcasting.
+    Maps real-world time to configurable game-time progression with per-realm time ratios,
+    calendar templates, and day-period cycles.
+
+    NOTE: This is an INTERNAL service API (L2 GameFoundation).
+    All endpoints use POST-only pattern per FOUNDATION TENETS.
+
+    **SCHEMA MODIFICATION GATE**: STOP. Before modifying this schema, you MUST:
+    1. Read docs/reference/SCHEMA-RULES.md
+    2. State which section applies to your change
+    3. Only then proceed with edits
+    Edits without stating the applicable rule are FORBIDDEN.
+  x-references:
+  - target: realm
+    sourceType: worldstate
+    field: realmId
+    onDelete: cascade
+    cleanup:
+      endpoint: /worldstate/cleanup-by-realm
+      payloadTemplate: '{"realmId": "{{resourceId}}"}'
+  - target: game-service
+    sourceType: worldstate
+    field: gameServiceId
+    onDelete: cascade
+    cleanup:
+      endpoint: /worldstate/cleanup-by-game-service
+      payloadTemplate: '{"gameServiceId": "{{resourceId}}"}'
+x-service-layer: GameFoundation
+servers:
+- url: http://localhost:5012
+paths:
+  /worldstate/clock/get-realm-time:
+    post:
+      operationId: getRealmTime
+      summary: Get current game time for a realm
+      description: Returns full GameTimeSnapshot for a realm. Reads from Redis cache (hot path).
+      tags:
+      - Worldstate
+      x-permissions:
+      - role: user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetRealmTimeRequest'
+      responses:
+        '200':
+          description: Current game time snapshot for the realm
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GameTimeSnapshot'
+        '404':
+          description: No clock initialized for this realm
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/GetRealmTimeRequest\"\
+        ,\n    \"$defs\": {\n        \"GetRealmTimeRequest\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"description\": \"Request to get the current game time for a realm\",\n            \"required\"\
+        : [\n                \"realmId\"\n            ],\n            \"properties\": {\n                \"realmId\": {\n\
+        \                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
+        : \"Realm to get the current game time for\"\n                }\n            }\n        }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/GameTimeSnapshot\"\
+        ,\n    \"$defs\": {\n        \"GameTimeSnapshot\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"description\": \"Complete point-in-time game time state for a realm, used in responses and
+        boundary events\",\n            \"required\": [\n                \"realmId\",\n                \"gameServiceId\",\n\
+        \                \"year\",\n                \"monthIndex\",\n                \"monthCode\",\n                \"dayOfMonth\"\
+        ,\n                \"dayOfYear\",\n                \"hour\",\n                \"minute\",\n                \"period\"\
+        ,\n                \"isDaylight\",\n                \"season\",\n                \"seasonIndex\",\n              \
+        \  \"seasonProgress\",\n                \"totalGameSecondsSinceEpoch\",\n                \"timeRatio\",\n        \
+        \        \"timestamp\"\n            ],\n            \"properties\": {\n                \"realmId\": {\n          \
+        \          \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\":
+        \"Realm this snapshot belongs to\"\n                },\n                \"gameServiceId\": {\n                   \
+        \ \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Game service
+        the realm belongs to\"\n                },\n                \"year\": {\n                    \"type\": \"integer\"\
+        ,\n                    \"description\": \"Current game year (0-based from realm epoch)\"\n                },\n   \
+        \             \"monthIndex\": {\n                    \"type\": \"integer\",\n                    \"description\":
+        \"0-based index into calendar months\"\n                },\n                \"monthCode\": {\n                   \
+        \ \"type\": \"string\",\n                    \"description\": \"Month code from calendar template (e.g., \\\"greenleaf\\\
+        \")\"\n                },\n                \"dayOfMonth\": {\n                    \"type\": \"integer\",\n       \
+        \             \"minimum\": 1,\n                    \"description\": \"1-based day within current month\"\n       \
+        \         },\n                \"dayOfYear\": {\n                    \"type\": \"integer\",\n                    \"\
+        minimum\": 1,\n                    \"description\": \"1-based day within current year\"\n                },\n    \
+        \            \"hour\": {\n                    \"type\": \"integer\",\n                    \"minimum\": 0,\n      \
+        \              \"description\": \"Current game hour (0 to gameHoursPerDay-1)\"\n                },\n             \
+        \   \"minute\": {\n                    \"type\": \"integer\",\n                    \"minimum\": 0,\n             \
+        \       \"maximum\": 59,\n                    \"description\": \"Current game minute (0-59)\"\n                },\n\
+        \                \"period\": {\n                    \"type\": \"string\",\n                    \"description\": \"\
+        Current day period code from calendar (e.g., \\\"dawn\\\", \\\"morning\\\")\"\n                },\n              \
+        \  \"isDaylight\": {\n                    \"type\": \"boolean\",\n                    \"description\": \"True if current
+        period's isDaylight flag is set in the calendar template\"\n                },\n                \"season\": {\n  \
+        \                  \"type\": \"string\",\n                    \"description\": \"Current season code from calendar
+        (e.g., \\\"spring\\\")\"\n                },\n                \"seasonIndex\": {\n                    \"type\": \"\
+        integer\",\n                    \"minimum\": 0,\n                    \"description\": \"Current season ordinal (0-based)\"\
+        \n                },\n                \"seasonProgress\": {\n                    \"type\": \"number\",\n         \
+        \           \"format\": \"float\",\n                    \"minimum\": 0,\n                    \"maximum\": 1,\n   \
+        \                 \"description\": \"0.0-1.0 progress through the current season, computed from day-of-season / days-in-season\"\
+        \n                },\n                \"totalGameSecondsSinceEpoch\": {\n                    \"type\": \"integer\"\
+        ,\n                    \"format\": \"int64\",\n                    \"description\": \"Absolute game-seconds since
+        realm epoch\"\n                },\n                \"timeRatio\": {\n                    \"type\": \"number\",\n \
+        \                   \"format\": \"float\",\n                    \"description\": \"Current game-seconds per real-second\"\
+        \n                },\n                \"timestamp\": {\n                    \"type\": \"string\",\n              \
+        \      \"format\": \"date-time\",\n                    \"description\": \"Real-world UTC timestamp of this snapshot\"\
+        \n                }\n            }\n        }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Get current game time for a realm\",\n    \"description\": \"Returns full
+        GameTimeSnapshot for a realm. Reads from Redis cache (hot path).\",\n    \"tags\": [\n        \"Worldstate\"\n   \
+        \ ],\n    \"deprecated\": false,\n    \"operationId\": \"getRealmTime\"\n}"
+  /worldstate/clock/get-realm-time-by-code:
+    post:
+      operationId: getRealmTimeByCode
+      summary: Get current game time by realm code
+      description: Convenience endpoint accepting realm code string instead of GUID. Resolves to realm ID via 
+        IRealmClient, then delegates to GetRealmTime.
+      tags:
+      - Worldstate
+      x-permissions:
+      - role: user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetRealmTimeByCodeRequest'
+      responses:
+        '200':
+          description: Current game time snapshot for the realm
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GameTimeSnapshot'
+        '404':
+          description: Realm code not found or no clock initialized
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/GetRealmTimeByCodeRequest\"\
+        ,\n    \"$defs\": {\n        \"GetRealmTimeByCodeRequest\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"description\": \"Request to get the current game time for a realm by its code string\",\n\
+        \            \"required\": [\n                \"realmCode\"\n            ],\n            \"properties\": {\n     \
+        \           \"realmCode\": {\n                    \"type\": \"string\",\n                    \"minLength\": 1,\n \
+        \                   \"maxLength\": 128,\n                    \"description\": \"Realm code string (resolved to realm
+        ID via IRealmClient)\"\n                }\n            }\n        }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/GameTimeSnapshot\"\
+        ,\n    \"$defs\": {\n        \"GameTimeSnapshot\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"description\": \"Complete point-in-time game time state for a realm, used in responses and
+        boundary events\",\n            \"required\": [\n                \"realmId\",\n                \"gameServiceId\",\n\
+        \                \"year\",\n                \"monthIndex\",\n                \"monthCode\",\n                \"dayOfMonth\"\
+        ,\n                \"dayOfYear\",\n                \"hour\",\n                \"minute\",\n                \"period\"\
+        ,\n                \"isDaylight\",\n                \"season\",\n                \"seasonIndex\",\n              \
+        \  \"seasonProgress\",\n                \"totalGameSecondsSinceEpoch\",\n                \"timeRatio\",\n        \
+        \        \"timestamp\"\n            ],\n            \"properties\": {\n                \"realmId\": {\n          \
+        \          \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\":
+        \"Realm this snapshot belongs to\"\n                },\n                \"gameServiceId\": {\n                   \
+        \ \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Game service
+        the realm belongs to\"\n                },\n                \"year\": {\n                    \"type\": \"integer\"\
+        ,\n                    \"description\": \"Current game year (0-based from realm epoch)\"\n                },\n   \
+        \             \"monthIndex\": {\n                    \"type\": \"integer\",\n                    \"description\":
+        \"0-based index into calendar months\"\n                },\n                \"monthCode\": {\n                   \
+        \ \"type\": \"string\",\n                    \"description\": \"Month code from calendar template (e.g., \\\"greenleaf\\\
+        \")\"\n                },\n                \"dayOfMonth\": {\n                    \"type\": \"integer\",\n       \
+        \             \"minimum\": 1,\n                    \"description\": \"1-based day within current month\"\n       \
+        \         },\n                \"dayOfYear\": {\n                    \"type\": \"integer\",\n                    \"\
+        minimum\": 1,\n                    \"description\": \"1-based day within current year\"\n                },\n    \
+        \            \"hour\": {\n                    \"type\": \"integer\",\n                    \"minimum\": 0,\n      \
+        \              \"description\": \"Current game hour (0 to gameHoursPerDay-1)\"\n                },\n             \
+        \   \"minute\": {\n                    \"type\": \"integer\",\n                    \"minimum\": 0,\n             \
+        \       \"maximum\": 59,\n                    \"description\": \"Current game minute (0-59)\"\n                },\n\
+        \                \"period\": {\n                    \"type\": \"string\",\n                    \"description\": \"\
+        Current day period code from calendar (e.g., \\\"dawn\\\", \\\"morning\\\")\"\n                },\n              \
+        \  \"isDaylight\": {\n                    \"type\": \"boolean\",\n                    \"description\": \"True if current
+        period's isDaylight flag is set in the calendar template\"\n                },\n                \"season\": {\n  \
+        \                  \"type\": \"string\",\n                    \"description\": \"Current season code from calendar
+        (e.g., \\\"spring\\\")\"\n                },\n                \"seasonIndex\": {\n                    \"type\": \"\
+        integer\",\n                    \"minimum\": 0,\n                    \"description\": \"Current season ordinal (0-based)\"\
+        \n                },\n                \"seasonProgress\": {\n                    \"type\": \"number\",\n         \
+        \           \"format\": \"float\",\n                    \"minimum\": 0,\n                    \"maximum\": 1,\n   \
+        \                 \"description\": \"0.0-1.0 progress through the current season, computed from day-of-season / days-in-season\"\
+        \n                },\n                \"totalGameSecondsSinceEpoch\": {\n                    \"type\": \"integer\"\
+        ,\n                    \"format\": \"int64\",\n                    \"description\": \"Absolute game-seconds since
+        realm epoch\"\n                },\n                \"timeRatio\": {\n                    \"type\": \"number\",\n \
+        \                   \"format\": \"float\",\n                    \"description\": \"Current game-seconds per real-second\"\
+        \n                },\n                \"timestamp\": {\n                    \"type\": \"string\",\n              \
+        \      \"format\": \"date-time\",\n                    \"description\": \"Real-world UTC timestamp of this snapshot\"\
+        \n                }\n            }\n        }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Get current game time by realm code\",\n    \"description\": \"Convenience
+        endpoint accepting realm code string instead of GUID. Resolves to realm ID via IRealmClient, then delegates to GetRealmTime.\"\
+        ,\n    \"tags\": [\n        \"Worldstate\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"getRealmTimeByCode\"\
+        \n}"
+  /worldstate/clock/batch-get-realm-times:
+    post:
+      operationId: batchGetRealmTimes
+      summary: Get current game time for multiple realms
+      description: Returns GameTimeSnapshot for multiple realms in a single call. Used by services operating across 
+        realms.
+      tags:
+      - Worldstate
+      x-permissions:
+      - role: user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BatchGetRealmTimesRequest'
+      responses:
+        '200':
+          description: Game time snapshots for the requested realms
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BatchGetRealmTimesResponse'
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/BatchGetRealmTimesRequest\"\
+        ,\n    \"$defs\": {\n        \"BatchGetRealmTimesRequest\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"description\": \"Request to get current game time for multiple realms\",\n            \"required\"\
+        : [\n                \"realmIds\"\n            ],\n            \"properties\": {\n                \"realmIds\": {\n\
+        \                    \"type\": \"array\",\n                    \"items\": {\n                        \"type\": \"\
+        string\",\n                        \"format\": \"uuid\"\n                    },\n                    \"minItems\"\
+        : 1,\n                    \"maxItems\": 100,\n                    \"description\": \"Realm IDs to get current game
+        time for\"\n                }\n            }\n        }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/BatchGetRealmTimesResponse\"\
+        ,\n    \"$defs\": {\n        \"BatchGetRealmTimesResponse\": {\n            \"type\": \"object\",\n            \"\
+        additionalProperties\": false,\n            \"description\": \"Game time snapshots for multiple realms\",\n      \
+        \      \"required\": [\n                \"snapshots\"\n            ],\n            \"properties\": {\n           \
+        \     \"snapshots\": {\n                    \"type\": \"array\",\n                    \"items\": {\n             \
+        \           \"$ref\": \"#/$defs/GameTimeSnapshot\"\n                    },\n                    \"description\": \"\
+        Game time snapshots for each requested realm (omits realms without initialized clocks)\"\n                }\n    \
+        \        }\n        },\n        \"GameTimeSnapshot\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"description\": \"Complete point-in-time game time state for a realm, used in responses and
+        boundary events\",\n            \"required\": [\n                \"realmId\",\n                \"gameServiceId\",\n\
+        \                \"year\",\n                \"monthIndex\",\n                \"monthCode\",\n                \"dayOfMonth\"\
+        ,\n                \"dayOfYear\",\n                \"hour\",\n                \"minute\",\n                \"period\"\
+        ,\n                \"isDaylight\",\n                \"season\",\n                \"seasonIndex\",\n              \
+        \  \"seasonProgress\",\n                \"totalGameSecondsSinceEpoch\",\n                \"timeRatio\",\n        \
+        \        \"timestamp\"\n            ],\n            \"properties\": {\n                \"realmId\": {\n          \
+        \          \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\":
+        \"Realm this snapshot belongs to\"\n                },\n                \"gameServiceId\": {\n                   \
+        \ \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Game service
+        the realm belongs to\"\n                },\n                \"year\": {\n                    \"type\": \"integer\"\
+        ,\n                    \"description\": \"Current game year (0-based from realm epoch)\"\n                },\n   \
+        \             \"monthIndex\": {\n                    \"type\": \"integer\",\n                    \"description\":
+        \"0-based index into calendar months\"\n                },\n                \"monthCode\": {\n                   \
+        \ \"type\": \"string\",\n                    \"description\": \"Month code from calendar template (e.g., \\\"greenleaf\\\
+        \")\"\n                },\n                \"dayOfMonth\": {\n                    \"type\": \"integer\",\n       \
+        \             \"minimum\": 1,\n                    \"description\": \"1-based day within current month\"\n       \
+        \         },\n                \"dayOfYear\": {\n                    \"type\": \"integer\",\n                    \"\
+        minimum\": 1,\n                    \"description\": \"1-based day within current year\"\n                },\n    \
+        \            \"hour\": {\n                    \"type\": \"integer\",\n                    \"minimum\": 0,\n      \
+        \              \"description\": \"Current game hour (0 to gameHoursPerDay-1)\"\n                },\n             \
+        \   \"minute\": {\n                    \"type\": \"integer\",\n                    \"minimum\": 0,\n             \
+        \       \"maximum\": 59,\n                    \"description\": \"Current game minute (0-59)\"\n                },\n\
+        \                \"period\": {\n                    \"type\": \"string\",\n                    \"description\": \"\
+        Current day period code from calendar (e.g., \\\"dawn\\\", \\\"morning\\\")\"\n                },\n              \
+        \  \"isDaylight\": {\n                    \"type\": \"boolean\",\n                    \"description\": \"True if current
+        period's isDaylight flag is set in the calendar template\"\n                },\n                \"season\": {\n  \
+        \                  \"type\": \"string\",\n                    \"description\": \"Current season code from calendar
+        (e.g., \\\"spring\\\")\"\n                },\n                \"seasonIndex\": {\n                    \"type\": \"\
+        integer\",\n                    \"minimum\": 0,\n                    \"description\": \"Current season ordinal (0-based)\"\
+        \n                },\n                \"seasonProgress\": {\n                    \"type\": \"number\",\n         \
+        \           \"format\": \"float\",\n                    \"minimum\": 0,\n                    \"maximum\": 1,\n   \
+        \                 \"description\": \"0.0-1.0 progress through the current season, computed from day-of-season / days-in-season\"\
+        \n                },\n                \"totalGameSecondsSinceEpoch\": {\n                    \"type\": \"integer\"\
+        ,\n                    \"format\": \"int64\",\n                    \"description\": \"Absolute game-seconds since
+        realm epoch\"\n                },\n                \"timeRatio\": {\n                    \"type\": \"number\",\n \
+        \                   \"format\": \"float\",\n                    \"description\": \"Current game-seconds per real-second\"\
+        \n                },\n                \"timestamp\": {\n                    \"type\": \"string\",\n              \
+        \      \"format\": \"date-time\",\n                    \"description\": \"Real-world UTC timestamp of this snapshot\"\
+        \n                }\n            }\n        }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Get current game time for multiple realms\",\n    \"description\": \"Returns
+        GameTimeSnapshot for multiple realms in a single call. Used by services operating across realms.\",\n    \"tags\"\
+        : [\n        \"Worldstate\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"batchGetRealmTimes\"\n}"
+  /worldstate/clock/get-elapsed-game-time:
+    post:
+      operationId: getElapsedGameTime
+      summary: Compute elapsed game-time between two real timestamps
+      description: Given a realmId, fromRealTime, and toRealTime, computes total game-seconds elapsed. Integrates over 
+        ratio history segments. Critical for lazy evaluation patterns.
+      tags:
+      - Worldstate
+      x-permissions:
+      - role: user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetElapsedGameTimeRequest'
+      responses:
+        '200':
+          description: Elapsed game time as raw seconds and decomposed calendar units
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetElapsedGameTimeResponse'
+        '404':
+          description: No clock initialized for this realm
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/GetElapsedGameTimeRequest\"\
+        ,\n    \"$defs\": {\n        \"GetElapsedGameTimeRequest\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"description\": \"Request to compute elapsed game-time between two real timestamps\",\n   \
+        \         \"required\": [\n                \"realmId\",\n                \"fromRealTime\",\n                \"toRealTime\"\
+        \n            ],\n            \"properties\": {\n                \"realmId\": {\n                    \"type\": \"\
+        string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Realm to compute elapsed
+        time for\"\n                },\n                \"fromRealTime\": {\n                    \"type\": \"string\",\n \
+        \                   \"format\": \"date-time\",\n                    \"description\": \"Start real-world UTC timestamp\"\
+        \n                },\n                \"toRealTime\": {\n                    \"type\": \"string\",\n             \
+        \       \"format\": \"date-time\",\n                    \"description\": \"End real-world UTC timestamp\"\n      \
+        \          }\n            }\n        }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/GetElapsedGameTimeResponse\"\
+        ,\n    \"$defs\": {\n        \"GetElapsedGameTimeResponse\": {\n            \"type\": \"object\",\n            \"\
+        additionalProperties\": false,\n            \"description\": \"Elapsed game-time as raw seconds and decomposed calendar
+        units\",\n            \"required\": [\n                \"totalGameSeconds\",\n                \"gameDays\",\n    \
+        \            \"gameHours\",\n                \"gameMinutes\"\n            ],\n            \"properties\": {\n    \
+        \            \"totalGameSeconds\": {\n                    \"type\": \"integer\",\n                    \"format\":
+        \"int64\",\n                    \"minimum\": 0,\n                    \"description\": \"Total game-seconds elapsed
+        between the two real timestamps\"\n                },\n                \"gameDays\": {\n                    \"type\"\
+        : \"integer\",\n                    \"minimum\": 0,\n                    \"description\": \"Decomposed game days component\"\
+        \n                },\n                \"gameHours\": {\n                    \"type\": \"integer\",\n             \
+        \       \"minimum\": 0,\n                    \"description\": \"Decomposed game hours component (remainder after days)\"\
+        \n                },\n                \"gameMinutes\": {\n                    \"type\": \"integer\",\n           \
+        \         \"minimum\": 0,\n                    \"description\": \"Decomposed game minutes component (remainder after
+        hours)\"\n                }\n            }\n        }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Compute elapsed game-time between two real timestamps\",\n    \"description\"\
+        : \"Given a realmId, fromRealTime, and toRealTime, computes total game-seconds elapsed. Integrates over ratio history
+        segments. Critical for lazy evaluation patterns.\",\n    \"tags\": [\n        \"Worldstate\"\n    ],\n    \"deprecated\"\
+        : false,\n    \"operationId\": \"getElapsedGameTime\"\n}"
+  /worldstate/clock/trigger-sync:
+    post:
+      operationId: triggerTimeSync
+      summary: Trigger a time sync event for an entity's sessions
+      description: Publishes a WorldstateTimeSyncEvent with syncReason TriggerSync to a specific entity's connected 
+        sessions. Primary caller is Agency (L4) on realm entry for immediate client time sync.
+      tags:
+      - Worldstate
+      x-permissions:
+      - role: user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TriggerTimeSyncRequest'
+      responses:
+        '200':
+          description: Time sync triggered successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TriggerTimeSyncResponse'
+        '404':
+          description: No clock initialized for this realm
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/TriggerTimeSyncRequest\"\
+        ,\n    \"$defs\": {\n        \"TriggerTimeSyncRequest\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"description\": \"Request to trigger a time sync event for an entity's sessions\",\n      \
+        \      \"required\": [\n                \"realmId\",\n                \"entityId\"\n            ],\n            \"\
+        properties\": {\n                \"realmId\": {\n                    \"type\": \"string\",\n                    \"\
+        format\": \"uuid\",\n                    \"description\": \"Realm to sync time for\"\n                },\n       \
+        \         \"entityId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n\
+        \                    \"description\": \"Entity whose sessions should receive the sync (typically a character or account)\"\
+        \n                }\n            }\n        }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/TriggerTimeSyncResponse\"\
+        ,\n    \"$defs\": {\n        \"TriggerTimeSyncResponse\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"description\": \"Result of a time sync trigger\",\n            \"required\": [\n         \
+        \       \"sessionsNotified\"\n            ],\n            \"properties\": {\n                \"sessionsNotified\"\
+        : {\n                    \"type\": \"integer\",\n                    \"minimum\": 0,\n                    \"description\"\
+        : \"Number of sessions that received the time sync event\"\n                }\n            }\n        }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Trigger a time sync event for an entity's sessions\",\n    \"description\"\
+        : \"Publishes a WorldstateTimeSyncEvent with syncReason TriggerSync to a specific entity's connected sessions. Primary
+        caller is Agency (L4) on realm entry for immediate client time sync.\",\n    \"tags\": [\n        \"Worldstate\"\n\
+        \    ],\n    \"deprecated\": false,\n    \"operationId\": \"triggerTimeSync\"\n}"
+  /worldstate/clock/initialize:
+    post:
+      operationId: initializeRealmClock
+      summary: Initialize a clock for a realm
+      description: The primary path from "realm exists" to "realm has a clock." Validates realm existence, calendar 
+        template existence, and that no clock already exists. Registers reference with lib-resource.
+      tags:
+      - Worldstate
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InitializeRealmClockRequest'
+      responses:
+        '200':
+          description: Realm clock initialized successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InitializeRealmClockResponse'
+        '400':
+          description: Both calendarTemplateCode and DefaultCalendarTemplateCode config are null
+        '404':
+          description: Realm or calendar template not found
+        '409':
+          description: Clock already initialized for this realm
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/InitializeRealmClockRequest\"\
+        ,\n    \"$defs\": {\n        \"InitializeRealmClockRequest\": {\n            \"type\": \"object\",\n            \"\
+        additionalProperties\": false,\n            \"description\": \"Request to initialize a clock for a realm\",\n    \
+        \        \"required\": [\n                \"realmId\"\n            ],\n            \"properties\": {\n           \
+        \     \"realmId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n     \
+        \               \"description\": \"Realm to initialize a clock for\"\n                },\n                \"calendarTemplateCode\"\
+        : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"maxLength\"\
+        : 128,\n                    \"description\": \"Calendar template code to use (falls back to DefaultCalendarTemplateCode
+        config if null; BadRequest if both are null)\"\n                },\n                \"epoch\": {\n               \
+        \     \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"nullable\": true,\n\
+        \                    \"description\": \"Real-world timestamp to use as the realm epoch (defaults to current time)\"\
+        \n                },\n                \"startingYear\": {\n                    \"type\": \"integer\",\n          \
+        \          \"nullable\": true,\n                    \"minimum\": 0,\n                    \"description\": \"Game year
+        to start at (defaults to 0)\"\n                },\n                \"timeRatio\": {\n                    \"type\"\
+        : \"number\",\n                    \"format\": \"float\",\n                    \"nullable\": true,\n             \
+        \       \"minimum\": 0.1,\n                    \"maximum\": 10000,\n                    \"description\": \"Initial
+        game-seconds per real-second (falls back to DefaultTimeRatio config)\"\n                },\n                \"downtimePolicy\"\
+        : {\n                    \"nullable\": true,\n                    \"description\": \"Initial downtime handling policy
+        (falls back to DefaultDowntimePolicy config)\",\n                    \"allOf\": [\n                        {\n   \
+        \                         \"$ref\": \"#/$defs/DowntimePolicy\"\n                        }\n                    ]\n\
+        \                }\n            }\n        },\n        \"DowntimePolicy\": {\n            \"type\": \"string\",\n\
+        \            \"description\": \"How to handle clock gaps after service downtime\",\n            \"enum\": [\n    \
+        \            \"Advance\",\n                \"Pause\"\n            ]\n        }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/InitializeRealmClockResponse\"\
+        ,\n    \"$defs\": {\n        \"InitializeRealmClockResponse\": {\n            \"type\": \"object\",\n            \"\
+        additionalProperties\": false,\n            \"description\": \"Confirmation of realm clock initialization with resolved
+        values\",\n            \"required\": [\n                \"realmId\",\n                \"gameServiceId\",\n       \
+        \         \"calendarTemplateCode\",\n                \"timeRatio\",\n                \"downtimePolicy\",\n       \
+        \         \"epoch\",\n                \"startingYear\"\n            ],\n            \"properties\": {\n          \
+        \      \"realmId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n    \
+        \                \"description\": \"Realm the clock was initialized for\"\n                },\n                \"\
+        gameServiceId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n       \
+        \             \"description\": \"Game service the realm belongs to\"\n                },\n                \"calendarTemplateCode\"\
+        : {\n                    \"type\": \"string\",\n                    \"description\": \"Calendar template code in use
+        (resolved from request or config)\"\n                },\n                \"timeRatio\": {\n                    \"\
+        type\": \"number\",\n                    \"format\": \"float\",\n                    \"description\": \"Initial game-seconds
+        per real-second (resolved from request or config)\"\n                },\n                \"downtimePolicy\": {\n \
+        \                   \"$ref\": \"#/$defs/DowntimePolicy\",\n                    \"description\": \"Downtime handling
+        policy (resolved from request or config)\"\n                },\n                \"epoch\": {\n                   \
+        \ \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"Real-world
+        timestamp of the realm epoch\"\n                },\n                \"startingYear\": {\n                    \"type\"\
+        : \"integer\",\n                    \"description\": \"Game year the clock started at\"\n                }\n     \
+        \       }\n        },\n        \"DowntimePolicy\": {\n            \"type\": \"string\",\n            \"description\"\
+        : \"How to handle clock gaps after service downtime\",\n            \"enum\": [\n                \"Advance\",\n  \
+        \              \"Pause\"\n            ]\n        }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Initialize a clock for a realm\",\n    \"description\": \"The primary path
+        from \\\"realm exists\\\" to \\\"realm has a clock.\\\" Validates realm existence, calendar template existence, and
+        that no clock already exists. Registers reference with lib-resource.\",\n    \"tags\": [\n        \"Worldstate\"\n\
+        \    ],\n    \"deprecated\": false,\n    \"operationId\": \"initializeRealmClock\"\n}"
+  /worldstate/clock/set-ratio:
+    post:
+      operationId: setTimeRatio
+      summary: Change the time ratio for a realm
+      description: Materializes current clock state, records new ratio segment in history, updates realm clock. Setting 
+        ratio to 0.0 pauses the clock.
+      tags:
+      - Worldstate
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SetTimeRatioRequest'
+      responses:
+        '200':
+          description: Time ratio changed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SetTimeRatioResponse'
+        '404':
+          description: No clock initialized for this realm
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/SetTimeRatioRequest\"\
+        ,\n    \"$defs\": {\n        \"SetTimeRatioRequest\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"description\": \"Request to change the time ratio for a realm\",\n            \"required\"\
+        : [\n                \"realmId\",\n                \"newRatio\",\n                \"reason\"\n            ],\n   \
+        \         \"properties\": {\n                \"realmId\": {\n                    \"type\": \"string\",\n         \
+        \           \"format\": \"uuid\",\n                    \"description\": \"Realm to change the time ratio for\"\n \
+        \               },\n                \"newRatio\": {\n                    \"type\": \"number\",\n                 \
+        \   \"format\": \"float\",\n                    \"minimum\": 0,\n                    \"maximum\": 10000,\n       \
+        \             \"description\": \"New game-seconds per real-second (0.0 pauses the clock)\"\n                },\n \
+        \               \"reason\": {\n                    \"$ref\": \"#/$defs/TimeRatioChangeReason\",\n                \
+        \    \"description\": \"Reason for the ratio change\"\n                }\n            }\n        },\n        \"TimeRatioChangeReason\"\
+        : {\n            \"type\": \"string\",\n            \"description\": \"Why the time ratio was changed\",\n       \
+        \     \"enum\": [\n                \"Initial\",\n                \"AdminAdjustment\",\n                \"Event\",\n\
+        \                \"Pause\",\n                \"Resume\"\n            ]\n        }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/SetTimeRatioResponse\"\
+        ,\n    \"$defs\": {\n        \"SetTimeRatioResponse\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"description\": \"Confirmation of time ratio change\",\n            \"required\": [\n     \
+        \           \"realmId\",\n                \"previousRatio\",\n                \"newRatio\",\n                \"reason\"\
+        \n            ],\n            \"properties\": {\n                \"realmId\": {\n                    \"type\": \"\
+        string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Realm the ratio was changed
+        for\"\n                },\n                \"previousRatio\": {\n                    \"type\": \"number\",\n     \
+        \               \"format\": \"float\",\n                    \"description\": \"Previous game-seconds per real-second\"\
+        \n                },\n                \"newRatio\": {\n                    \"type\": \"number\",\n               \
+        \     \"format\": \"float\",\n                    \"description\": \"New game-seconds per real-second\"\n        \
+        \        },\n                \"reason\": {\n                    \"$ref\": \"#/$defs/TimeRatioChangeReason\",\n   \
+        \                 \"description\": \"Reason for the ratio change\"\n                }\n            }\n        },\n\
+        \        \"TimeRatioChangeReason\": {\n            \"type\": \"string\",\n            \"description\": \"Why the time
+        ratio was changed\",\n            \"enum\": [\n                \"Initial\",\n                \"AdminAdjustment\",\n\
+        \                \"Event\",\n                \"Pause\",\n                \"Resume\"\n            ]\n        }\n  \
+        \  }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Change the time ratio for a realm\",\n    \"description\": \"Materializes
+        current clock state, records new ratio segment in history, updates realm clock. Setting ratio to 0.0 pauses the clock.\"\
+        ,\n    \"tags\": [\n        \"Worldstate\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"setTimeRatio\"\
+        \n}"
+  /worldstate/clock/advance:
+    post:
+      operationId: advanceClock
+      summary: Manually advance a realm's clock
+      description: Advances a realm's clock by a specified amount of game time. Used for testing and administrative 
+        fast-forward. Publishes all boundary events crossed during advancement.
+      tags:
+      - Worldstate
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdvanceClockRequest'
+      responses:
+        '200':
+          description: Clock advanced successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdvanceClockResponse'
+        '400':
+          description: No advancement amount specified
+        '404':
+          description: No clock initialized for this realm
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/AdvanceClockRequest\"\
+        ,\n    \"$defs\": {\n        \"AdvanceClockRequest\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"description\": \"Request to manually advance a realm's clock by a specified amount\",\n  \
+        \          \"required\": [\n                \"realmId\"\n            ],\n            \"properties\": {\n         \
+        \       \"realmId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n   \
+        \                 \"description\": \"Realm to advance the clock for\"\n                },\n                \"gameSeconds\"\
+        : {\n                    \"type\": \"integer\",\n                    \"format\": \"int64\",\n                    \"\
+        nullable\": true,\n                    \"minimum\": 1,\n                    \"description\": \"Number of game-seconds
+        to advance\"\n                },\n                \"gameDays\": {\n                    \"type\": \"integer\",\n  \
+        \                  \"nullable\": true,\n                    \"minimum\": 1,\n                    \"description\":
+        \"Number of game-days to advance\"\n                },\n                \"gameMonths\": {\n                    \"\
+        type\": \"integer\",\n                    \"nullable\": true,\n                    \"minimum\": 1,\n             \
+        \       \"description\": \"Number of game-months to advance (uses current calendar structure)\"\n                },\n\
+        \                \"gameYears\": {\n                    \"type\": \"integer\",\n                    \"nullable\": true,\n\
+        \                    \"minimum\": 1,\n                    \"description\": \"Number of game-years to advance (uses
+        current calendar structure)\"\n                }\n            }\n        }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/AdvanceClockResponse\"\
+        ,\n    \"$defs\": {\n        \"AdvanceClockResponse\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"description\": \"Result of manual clock advancement\",\n            \"required\": [\n    \
+        \            \"realmId\",\n                \"previousTime\",\n                \"newTime\",\n                \"boundaryEventsPublished\"\
+        \n            ],\n            \"properties\": {\n                \"realmId\": {\n                    \"type\": \"\
+        string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Realm the clock was advanced
+        for\"\n                },\n                \"previousTime\": {\n                    \"$ref\": \"#/$defs/GameTimeSnapshot\"\
+        ,\n                    \"description\": \"Game time before advancement\"\n                },\n                \"newTime\"\
+        : {\n                    \"$ref\": \"#/$defs/GameTimeSnapshot\",\n                    \"description\": \"Game time
+        after advancement\"\n                },\n                \"boundaryEventsPublished\": {\n                    \"type\"\
+        : \"integer\",\n                    \"minimum\": 0,\n                    \"description\": \"Number of boundary events
+        published during advancement\"\n                }\n            }\n        },\n        \"GameTimeSnapshot\": {\n  \
+        \          \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"description\": \"Complete
+        point-in-time game time state for a realm, used in responses and boundary events\",\n            \"required\": [\n\
+        \                \"realmId\",\n                \"gameServiceId\",\n                \"year\",\n                \"monthIndex\"\
+        ,\n                \"monthCode\",\n                \"dayOfMonth\",\n                \"dayOfYear\",\n             \
+        \   \"hour\",\n                \"minute\",\n                \"period\",\n                \"isDaylight\",\n       \
+        \         \"season\",\n                \"seasonIndex\",\n                \"seasonProgress\",\n                \"totalGameSecondsSinceEpoch\"\
+        ,\n                \"timeRatio\",\n                \"timestamp\"\n            ],\n            \"properties\": {\n\
+        \                \"realmId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\"\
+        ,\n                    \"description\": \"Realm this snapshot belongs to\"\n                },\n                \"\
+        gameServiceId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n       \
+        \             \"description\": \"Game service the realm belongs to\"\n                },\n                \"year\"\
+        : {\n                    \"type\": \"integer\",\n                    \"description\": \"Current game year (0-based
+        from realm epoch)\"\n                },\n                \"monthIndex\": {\n                    \"type\": \"integer\"\
+        ,\n                    \"description\": \"0-based index into calendar months\"\n                },\n             \
+        \   \"monthCode\": {\n                    \"type\": \"string\",\n                    \"description\": \"Month code
+        from calendar template (e.g., \\\"greenleaf\\\")\"\n                },\n                \"dayOfMonth\": {\n      \
+        \              \"type\": \"integer\",\n                    \"minimum\": 1,\n                    \"description\": \"\
+        1-based day within current month\"\n                },\n                \"dayOfYear\": {\n                    \"type\"\
+        : \"integer\",\n                    \"minimum\": 1,\n                    \"description\": \"1-based day within current
+        year\"\n                },\n                \"hour\": {\n                    \"type\": \"integer\",\n            \
+        \        \"minimum\": 0,\n                    \"description\": \"Current game hour (0 to gameHoursPerDay-1)\"\n  \
+        \              },\n                \"minute\": {\n                    \"type\": \"integer\",\n                   \
+        \ \"minimum\": 0,\n                    \"maximum\": 59,\n                    \"description\": \"Current game minute
+        (0-59)\"\n                },\n                \"period\": {\n                    \"type\": \"string\",\n         \
+        \           \"description\": \"Current day period code from calendar (e.g., \\\"dawn\\\", \\\"morning\\\")\"\n   \
+        \             },\n                \"isDaylight\": {\n                    \"type\": \"boolean\",\n                \
+        \    \"description\": \"True if current period's isDaylight flag is set in the calendar template\"\n             \
+        \   },\n                \"season\": {\n                    \"type\": \"string\",\n                    \"description\"\
+        : \"Current season code from calendar (e.g., \\\"spring\\\")\"\n                },\n                \"seasonIndex\"\
+        : {\n                    \"type\": \"integer\",\n                    \"minimum\": 0,\n                    \"description\"\
+        : \"Current season ordinal (0-based)\"\n                },\n                \"seasonProgress\": {\n              \
+        \      \"type\": \"number\",\n                    \"format\": \"float\",\n                    \"minimum\": 0,\n  \
+        \                  \"maximum\": 1,\n                    \"description\": \"0.0-1.0 progress through the current season,
+        computed from day-of-season / days-in-season\"\n                },\n                \"totalGameSecondsSinceEpoch\"\
+        : {\n                    \"type\": \"integer\",\n                    \"format\": \"int64\",\n                    \"\
+        description\": \"Absolute game-seconds since realm epoch\"\n                },\n                \"timeRatio\": {\n\
+        \                    \"type\": \"number\",\n                    \"format\": \"float\",\n                    \"description\"\
+        : \"Current game-seconds per real-second\"\n                },\n                \"timestamp\": {\n               \
+        \     \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\":
+        \"Real-world UTC timestamp of this snapshot\"\n                }\n            }\n        }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Manually advance a realm's clock\",\n    \"description\": \"Advances a
+        realm's clock by a specified amount of game time. Used for testing and administrative fast-forward. Publishes all
+        boundary events crossed during advancement.\",\n    \"tags\": [\n        \"Worldstate\"\n    ],\n    \"deprecated\"\
+        : false,\n    \"operationId\": \"advanceClock\"\n}"
+  /worldstate/calendar/seed:
+    post:
+      operationId: seedCalendar
+      summary: Create a calendar template
+      description: Creates a calendar template for a game service. Validates structural consistency (day period 
+        coverage, season-month mapping, day count sums). Registers reference with lib-resource for game-service target.
+      tags:
+      - Worldstate
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SeedCalendarRequest'
+      responses:
+        '200':
+          description: Calendar template created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CalendarTemplateResponse'
+        '400':
+          description: Structural validation failed (period gaps, season-month mismatch, etc.)
+        '404':
+          description: Game service not found
+        '409':
+          description: Template code already exists for this game service or max calendars exceeded
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/SeedCalendarRequest\"\
+        ,\n    \"$defs\": {\n        \"SeedCalendarRequest\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"description\": \"Request to create a calendar template for a game service\",\n           \
+        \ \"required\": [\n                \"templateCode\",\n                \"gameServiceId\",\n                \"gameHoursPerDay\"\
+        ,\n                \"dayPeriods\",\n                \"months\",\n                \"seasons\"\n            ],\n   \
+        \         \"properties\": {\n                \"templateCode\": {\n                    \"type\": \"string\",\n    \
+        \                \"minLength\": 1,\n                    \"maxLength\": 128,\n                    \"description\":
+        \"Unique identifier for this calendar template within the game service\"\n                },\n                \"gameServiceId\"\
+        : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
+        description\": \"Game service this calendar belongs to\"\n                },\n                \"gameHoursPerDay\"\
+        : {\n                    \"type\": \"integer\",\n                    \"minimum\": 1,\n                    \"description\"\
+        : \"Number of game hours in a day (day periods must cover [0, gameHoursPerDay) without gaps or overlaps)\"\n     \
+        \           },\n                \"dayPeriods\": {\n                    \"type\": \"array\",\n                    \"\
+        items\": {\n                        \"$ref\": \"#/$defs/DayPeriodDefinition\"\n                    },\n          \
+        \          \"minItems\": 1,\n                    \"description\": \"Named time-of-day periods (must cover [0, gameHoursPerDay)
+        without gaps or overlaps)\"\n                },\n                \"months\": {\n                    \"type\": \"array\"\
+        ,\n                    \"items\": {\n                        \"$ref\": \"#/$defs/MonthDefinition\"\n             \
+        \       },\n                    \"minItems\": 1,\n                    \"description\": \"Ordered list of months in
+        a year (each month's seasonCode must reference a defined season)\"\n                },\n                \"seasons\"\
+        : {\n                    \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\"\
+        : \"#/$defs/SeasonDefinition\"\n                    },\n                    \"minItems\": 1,\n                   \
+        \ \"description\": \"Ordered list of seasons in a year\"\n                },\n                \"eraLabels\": {\n \
+        \                   \"type\": \"array\",\n                    \"nullable\": true,\n                    \"items\":
+        {\n                        \"$ref\": \"#/$defs/EraLabel\"\n                    },\n                    \"description\"\
+        : \"Named time spans for display purposes (optional)\"\n                }\n            }\n        },\n        \"DayPeriodDefinition\"\
+        : {\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"description\"\
+        : \"A named time-of-day period within a calendar template\",\n            \"required\": [\n                \"code\"\
+        ,\n                \"startHour\",\n                \"endHour\",\n                \"isDaylight\"\n            ],\n\
+        \            \"properties\": {\n                \"code\": {\n                    \"type\": \"string\",\n         \
+        \           \"minLength\": 1,\n                    \"maxLength\": 64,\n                    \"description\": \"Period
+        identifier code (e.g., \\\"dawn\\\", \\\"morning\\\", \\\"night\\\")\"\n                },\n                \"startHour\"\
+        : {\n                    \"type\": \"integer\",\n                    \"minimum\": 0,\n                    \"description\"\
+        : \"Game hour this period begins (0 to gameHoursPerDay-1)\"\n                },\n                \"endHour\": {\n\
+        \                    \"type\": \"integer\",\n                    \"minimum\": 1,\n                    \"description\"\
+        : \"Game hour this period ends (exclusive, max = gameHoursPerDay)\"\n                },\n                \"isDaylight\"\
+        : {\n                    \"type\": \"boolean\",\n                    \"description\": \"True if this period has sunlight,
+        used by ${world.time.is_day} and ${world.time.is_night}\"\n                }\n            }\n        },\n        \"\
+        MonthDefinition\": {\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n          \
+        \  \"description\": \"A month within a calendar template year\",\n            \"required\": [\n                \"\
+        code\",\n                \"name\",\n                \"daysInMonth\",\n                \"seasonCode\"\n           \
+        \ ],\n            \"properties\": {\n                \"code\": {\n                    \"type\": \"string\",\n    \
+        \                \"minLength\": 1,\n                    \"maxLength\": 64,\n                    \"description\": \"\
+        Month identifier code (e.g., \\\"frostmere\\\", \\\"greenleaf\\\")\"\n                },\n                \"name\"\
+        : {\n                    \"type\": \"string\",\n                    \"minLength\": 1,\n                    \"maxLength\"\
+        : 128,\n                    \"description\": \"Display name for the month\"\n                },\n                \"\
+        daysInMonth\": {\n                    \"type\": \"integer\",\n                    \"minimum\": 1,\n              \
+        \      \"description\": \"Number of game days in this month\"\n                },\n                \"seasonCode\"\
+        : {\n                    \"type\": \"string\",\n                    \"minLength\": 1,\n                    \"maxLength\"\
+        : 64,\n                    \"description\": \"Season code this month belongs to (must reference a defined season)\"\
+        \n                }\n            }\n        },\n        \"SeasonDefinition\": {\n            \"type\": \"object\"\
+        ,\n            \"additionalProperties\": false,\n            \"description\": \"A season within a calendar template
+        year\",\n            \"required\": [\n                \"code\",\n                \"name\",\n                \"ordinal\"\
+        \n            ],\n            \"properties\": {\n                \"code\": {\n                    \"type\": \"string\"\
+        ,\n                    \"minLength\": 1,\n                    \"maxLength\": 64,\n                    \"description\"\
+        : \"Season identifier code (e.g., \\\"winter\\\", \\\"spring\\\", \\\"summer\\\", \\\"autumn\\\")\"\n            \
+        \    },\n                \"name\": {\n                    \"type\": \"string\",\n                    \"minLength\"\
+        : 1,\n                    \"maxLength\": 128,\n                    \"description\": \"Display name for the season\"\
+        \n                },\n                \"ordinal\": {\n                    \"type\": \"integer\",\n               \
+        \     \"minimum\": 0,\n                    \"description\": \"Position in annual cycle (0-based)\"\n             \
+        \   }\n            }\n        },\n        \"EraLabel\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"description\": \"A named time span in the calendar for display purposes\",\n            \"\
+        required\": [\n                \"code\",\n                \"startYear\"\n            ],\n            \"properties\"\
+        : {\n                \"code\": {\n                    \"type\": \"string\",\n                    \"minLength\": 1,\n\
+        \                    \"maxLength\": 64,\n                    \"description\": \"Era identifier code (e.g., \\\"first_age\\\
+        \", \\\"era_of_strife\\\")\"\n                },\n                \"startYear\": {\n                    \"type\":
+        \"integer\",\n                    \"minimum\": 0,\n                    \"description\": \"Game year when this era
+        begins (0-based)\"\n                },\n                \"endYear\": {\n                    \"type\": \"integer\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"Game year when this era ends (null
+        = ongoing)\"\n                }\n            }\n        }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/CalendarTemplateResponse\"\
+        ,\n    \"$defs\": {\n        \"CalendarTemplateResponse\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"description\": \"A calendar template definition with computed summary fields\",\n        \
+        \    \"required\": [\n                \"templateCode\",\n                \"gameServiceId\",\n                \"gameHoursPerDay\"\
+        ,\n                \"dayPeriods\",\n                \"months\",\n                \"seasons\",\n                \"\
+        daysPerYear\",\n                \"monthsPerYear\",\n                \"seasonsPerYear\"\n            ],\n         \
+        \   \"properties\": {\n                \"templateCode\": {\n                    \"type\": \"string\",\n          \
+        \          \"description\": \"Calendar template identifier\"\n                },\n                \"gameServiceId\"\
+        : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
+        description\": \"Game service this calendar belongs to\"\n                },\n                \"gameHoursPerDay\"\
+        : {\n                    \"type\": \"integer\",\n                    \"description\": \"Number of game hours in a
+        day\"\n                },\n                \"dayPeriods\": {\n                    \"type\": \"array\",\n         \
+        \           \"items\": {\n                        \"$ref\": \"#/$defs/DayPeriodDefinition\"\n                    },\n\
+        \                    \"description\": \"Named time-of-day periods\"\n                },\n                \"months\"\
+        : {\n                    \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\"\
+        : \"#/$defs/MonthDefinition\"\n                    },\n                    \"description\": \"Ordered list of months
+        in a year\"\n                },\n                \"seasons\": {\n                    \"type\": \"array\",\n      \
+        \              \"items\": {\n                        \"$ref\": \"#/$defs/SeasonDefinition\"\n                    },\n\
+        \                    \"description\": \"Ordered list of seasons in a year\"\n                },\n                \"\
+        daysPerYear\": {\n                    \"type\": \"integer\",\n                    \"description\": \"Computed total
+        days per year (sum of all months' daysInMonth)\"\n                },\n                \"monthsPerYear\": {\n     \
+        \               \"type\": \"integer\",\n                    \"description\": \"Computed number of months per year\"\
+        \n                },\n                \"seasonsPerYear\": {\n                    \"type\": \"integer\",\n        \
+        \            \"description\": \"Computed number of seasons per year\"\n                },\n                \"eraLabels\"\
+        : {\n                    \"type\": \"array\",\n                    \"nullable\": true,\n                    \"items\"\
+        : {\n                        \"$ref\": \"#/$defs/EraLabel\"\n                    },\n                    \"description\"\
+        : \"Named time spans for display purposes (null if none defined)\"\n                }\n            }\n        },\n\
+        \        \"DayPeriodDefinition\": {\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n\
+        \            \"description\": \"A named time-of-day period within a calendar template\",\n            \"required\"\
+        : [\n                \"code\",\n                \"startHour\",\n                \"endHour\",\n                \"isDaylight\"\
+        \n            ],\n            \"properties\": {\n                \"code\": {\n                    \"type\": \"string\"\
+        ,\n                    \"minLength\": 1,\n                    \"maxLength\": 64,\n                    \"description\"\
+        : \"Period identifier code (e.g., \\\"dawn\\\", \\\"morning\\\", \\\"night\\\")\"\n                },\n          \
+        \      \"startHour\": {\n                    \"type\": \"integer\",\n                    \"minimum\": 0,\n       \
+        \             \"description\": \"Game hour this period begins (0 to gameHoursPerDay-1)\"\n                },\n   \
+        \             \"endHour\": {\n                    \"type\": \"integer\",\n                    \"minimum\": 1,\n  \
+        \                  \"description\": \"Game hour this period ends (exclusive, max = gameHoursPerDay)\"\n          \
+        \      },\n                \"isDaylight\": {\n                    \"type\": \"boolean\",\n                    \"description\"\
+        : \"True if this period has sunlight, used by ${world.time.is_day} and ${world.time.is_night}\"\n                }\n\
+        \            }\n        },\n        \"MonthDefinition\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"description\": \"A month within a calendar template year\",\n            \"required\": [\n\
+        \                \"code\",\n                \"name\",\n                \"daysInMonth\",\n                \"seasonCode\"\
+        \n            ],\n            \"properties\": {\n                \"code\": {\n                    \"type\": \"string\"\
+        ,\n                    \"minLength\": 1,\n                    \"maxLength\": 64,\n                    \"description\"\
+        : \"Month identifier code (e.g., \\\"frostmere\\\", \\\"greenleaf\\\")\"\n                },\n                \"name\"\
+        : {\n                    \"type\": \"string\",\n                    \"minLength\": 1,\n                    \"maxLength\"\
+        : 128,\n                    \"description\": \"Display name for the month\"\n                },\n                \"\
+        daysInMonth\": {\n                    \"type\": \"integer\",\n                    \"minimum\": 1,\n              \
+        \      \"description\": \"Number of game days in this month\"\n                },\n                \"seasonCode\"\
+        : {\n                    \"type\": \"string\",\n                    \"minLength\": 1,\n                    \"maxLength\"\
+        : 64,\n                    \"description\": \"Season code this month belongs to (must reference a defined season)\"\
+        \n                }\n            }\n        },\n        \"SeasonDefinition\": {\n            \"type\": \"object\"\
+        ,\n            \"additionalProperties\": false,\n            \"description\": \"A season within a calendar template
+        year\",\n            \"required\": [\n                \"code\",\n                \"name\",\n                \"ordinal\"\
+        \n            ],\n            \"properties\": {\n                \"code\": {\n                    \"type\": \"string\"\
+        ,\n                    \"minLength\": 1,\n                    \"maxLength\": 64,\n                    \"description\"\
+        : \"Season identifier code (e.g., \\\"winter\\\", \\\"spring\\\", \\\"summer\\\", \\\"autumn\\\")\"\n            \
+        \    },\n                \"name\": {\n                    \"type\": \"string\",\n                    \"minLength\"\
+        : 1,\n                    \"maxLength\": 128,\n                    \"description\": \"Display name for the season\"\
+        \n                },\n                \"ordinal\": {\n                    \"type\": \"integer\",\n               \
+        \     \"minimum\": 0,\n                    \"description\": \"Position in annual cycle (0-based)\"\n             \
+        \   }\n            }\n        },\n        \"EraLabel\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"description\": \"A named time span in the calendar for display purposes\",\n            \"\
+        required\": [\n                \"code\",\n                \"startYear\"\n            ],\n            \"properties\"\
+        : {\n                \"code\": {\n                    \"type\": \"string\",\n                    \"minLength\": 1,\n\
+        \                    \"maxLength\": 64,\n                    \"description\": \"Era identifier code (e.g., \\\"first_age\\\
+        \", \\\"era_of_strife\\\")\"\n                },\n                \"startYear\": {\n                    \"type\":
+        \"integer\",\n                    \"minimum\": 0,\n                    \"description\": \"Game year when this era
+        begins (0-based)\"\n                },\n                \"endYear\": {\n                    \"type\": \"integer\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"Game year when this era ends (null
+        = ongoing)\"\n                }\n            }\n        }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Create a calendar template\",\n    \"description\": \"Creates a calendar
+        template for a game service. Validates structural consistency (day period coverage, season-month mapping, day count
+        sums). Registers reference with lib-resource for game-service target.\",\n    \"tags\": [\n        \"Worldstate\"\n\
+        \    ],\n    \"deprecated\": false,\n    \"operationId\": \"seedCalendar\"\n}"
+  /worldstate/calendar/get:
+    post:
+      operationId: getCalendar
+      summary: Get a calendar template
+      description: Returns a calendar template by game service ID and template code.
+      tags:
+      - Worldstate
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetCalendarRequest'
+      responses:
+        '200':
+          description: Calendar template found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CalendarTemplateResponse'
+        '404':
+          description: Calendar template not found
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/GetCalendarRequest\"\
+        ,\n    \"$defs\": {\n        \"GetCalendarRequest\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"description\": \"Request to get a calendar template by game service and template code\",\n\
+        \            \"required\": [\n                \"gameServiceId\",\n                \"templateCode\"\n            ],\n\
+        \            \"properties\": {\n                \"gameServiceId\": {\n                    \"type\": \"string\",\n\
+        \                    \"format\": \"uuid\",\n                    \"description\": \"Game service the calendar belongs
+        to\"\n                },\n                \"templateCode\": {\n                    \"type\": \"string\",\n       \
+        \             \"minLength\": 1,\n                    \"maxLength\": 128,\n                    \"description\": \"\
+        Calendar template code\"\n                }\n            }\n        }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/CalendarTemplateResponse\"\
+        ,\n    \"$defs\": {\n        \"CalendarTemplateResponse\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"description\": \"A calendar template definition with computed summary fields\",\n        \
+        \    \"required\": [\n                \"templateCode\",\n                \"gameServiceId\",\n                \"gameHoursPerDay\"\
+        ,\n                \"dayPeriods\",\n                \"months\",\n                \"seasons\",\n                \"\
+        daysPerYear\",\n                \"monthsPerYear\",\n                \"seasonsPerYear\"\n            ],\n         \
+        \   \"properties\": {\n                \"templateCode\": {\n                    \"type\": \"string\",\n          \
+        \          \"description\": \"Calendar template identifier\"\n                },\n                \"gameServiceId\"\
+        : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
+        description\": \"Game service this calendar belongs to\"\n                },\n                \"gameHoursPerDay\"\
+        : {\n                    \"type\": \"integer\",\n                    \"description\": \"Number of game hours in a
+        day\"\n                },\n                \"dayPeriods\": {\n                    \"type\": \"array\",\n         \
+        \           \"items\": {\n                        \"$ref\": \"#/$defs/DayPeriodDefinition\"\n                    },\n\
+        \                    \"description\": \"Named time-of-day periods\"\n                },\n                \"months\"\
+        : {\n                    \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\"\
+        : \"#/$defs/MonthDefinition\"\n                    },\n                    \"description\": \"Ordered list of months
+        in a year\"\n                },\n                \"seasons\": {\n                    \"type\": \"array\",\n      \
+        \              \"items\": {\n                        \"$ref\": \"#/$defs/SeasonDefinition\"\n                    },\n\
+        \                    \"description\": \"Ordered list of seasons in a year\"\n                },\n                \"\
+        daysPerYear\": {\n                    \"type\": \"integer\",\n                    \"description\": \"Computed total
+        days per year (sum of all months' daysInMonth)\"\n                },\n                \"monthsPerYear\": {\n     \
+        \               \"type\": \"integer\",\n                    \"description\": \"Computed number of months per year\"\
+        \n                },\n                \"seasonsPerYear\": {\n                    \"type\": \"integer\",\n        \
+        \            \"description\": \"Computed number of seasons per year\"\n                },\n                \"eraLabels\"\
+        : {\n                    \"type\": \"array\",\n                    \"nullable\": true,\n                    \"items\"\
+        : {\n                        \"$ref\": \"#/$defs/EraLabel\"\n                    },\n                    \"description\"\
+        : \"Named time spans for display purposes (null if none defined)\"\n                }\n            }\n        },\n\
+        \        \"DayPeriodDefinition\": {\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n\
+        \            \"description\": \"A named time-of-day period within a calendar template\",\n            \"required\"\
+        : [\n                \"code\",\n                \"startHour\",\n                \"endHour\",\n                \"isDaylight\"\
+        \n            ],\n            \"properties\": {\n                \"code\": {\n                    \"type\": \"string\"\
+        ,\n                    \"minLength\": 1,\n                    \"maxLength\": 64,\n                    \"description\"\
+        : \"Period identifier code (e.g., \\\"dawn\\\", \\\"morning\\\", \\\"night\\\")\"\n                },\n          \
+        \      \"startHour\": {\n                    \"type\": \"integer\",\n                    \"minimum\": 0,\n       \
+        \             \"description\": \"Game hour this period begins (0 to gameHoursPerDay-1)\"\n                },\n   \
+        \             \"endHour\": {\n                    \"type\": \"integer\",\n                    \"minimum\": 1,\n  \
+        \                  \"description\": \"Game hour this period ends (exclusive, max = gameHoursPerDay)\"\n          \
+        \      },\n                \"isDaylight\": {\n                    \"type\": \"boolean\",\n                    \"description\"\
+        : \"True if this period has sunlight, used by ${world.time.is_day} and ${world.time.is_night}\"\n                }\n\
+        \            }\n        },\n        \"MonthDefinition\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"description\": \"A month within a calendar template year\",\n            \"required\": [\n\
+        \                \"code\",\n                \"name\",\n                \"daysInMonth\",\n                \"seasonCode\"\
+        \n            ],\n            \"properties\": {\n                \"code\": {\n                    \"type\": \"string\"\
+        ,\n                    \"minLength\": 1,\n                    \"maxLength\": 64,\n                    \"description\"\
+        : \"Month identifier code (e.g., \\\"frostmere\\\", \\\"greenleaf\\\")\"\n                },\n                \"name\"\
+        : {\n                    \"type\": \"string\",\n                    \"minLength\": 1,\n                    \"maxLength\"\
+        : 128,\n                    \"description\": \"Display name for the month\"\n                },\n                \"\
+        daysInMonth\": {\n                    \"type\": \"integer\",\n                    \"minimum\": 1,\n              \
+        \      \"description\": \"Number of game days in this month\"\n                },\n                \"seasonCode\"\
+        : {\n                    \"type\": \"string\",\n                    \"minLength\": 1,\n                    \"maxLength\"\
+        : 64,\n                    \"description\": \"Season code this month belongs to (must reference a defined season)\"\
+        \n                }\n            }\n        },\n        \"SeasonDefinition\": {\n            \"type\": \"object\"\
+        ,\n            \"additionalProperties\": false,\n            \"description\": \"A season within a calendar template
+        year\",\n            \"required\": [\n                \"code\",\n                \"name\",\n                \"ordinal\"\
+        \n            ],\n            \"properties\": {\n                \"code\": {\n                    \"type\": \"string\"\
+        ,\n                    \"minLength\": 1,\n                    \"maxLength\": 64,\n                    \"description\"\
+        : \"Season identifier code (e.g., \\\"winter\\\", \\\"spring\\\", \\\"summer\\\", \\\"autumn\\\")\"\n            \
+        \    },\n                \"name\": {\n                    \"type\": \"string\",\n                    \"minLength\"\
+        : 1,\n                    \"maxLength\": 128,\n                    \"description\": \"Display name for the season\"\
+        \n                },\n                \"ordinal\": {\n                    \"type\": \"integer\",\n               \
+        \     \"minimum\": 0,\n                    \"description\": \"Position in annual cycle (0-based)\"\n             \
+        \   }\n            }\n        },\n        \"EraLabel\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"description\": \"A named time span in the calendar for display purposes\",\n            \"\
+        required\": [\n                \"code\",\n                \"startYear\"\n            ],\n            \"properties\"\
+        : {\n                \"code\": {\n                    \"type\": \"string\",\n                    \"minLength\": 1,\n\
+        \                    \"maxLength\": 64,\n                    \"description\": \"Era identifier code (e.g., \\\"first_age\\\
+        \", \\\"era_of_strife\\\")\"\n                },\n                \"startYear\": {\n                    \"type\":
+        \"integer\",\n                    \"minimum\": 0,\n                    \"description\": \"Game year when this era
+        begins (0-based)\"\n                },\n                \"endYear\": {\n                    \"type\": \"integer\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"Game year when this era ends (null
+        = ongoing)\"\n                }\n            }\n        }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Get a calendar template\",\n    \"description\": \"Returns a calendar template
+        by game service ID and template code.\",\n    \"tags\": [\n        \"Worldstate\"\n    ],\n    \"deprecated\": false,\n\
+        \    \"operationId\": \"getCalendar\"\n}"
+  /worldstate/calendar/list:
+    post:
+      operationId: listCalendars
+      summary: List calendar templates for a game service
+      description: Returns all calendar templates registered for a game service.
+      tags:
+      - Worldstate
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ListCalendarsRequest'
+      responses:
+        '200':
+          description: Calendar templates listed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListCalendarsResponse'
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ListCalendarsRequest\"\
+        ,\n    \"$defs\": {\n        \"ListCalendarsRequest\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"description\": \"Request to list all calendar templates for a game service\",\n          \
+        \  \"required\": [\n                \"gameServiceId\"\n            ],\n            \"properties\": {\n           \
+        \     \"gameServiceId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n\
+        \                    \"description\": \"Game service to list calendars for\"\n                }\n            }\n \
+        \       }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ListCalendarsResponse\"\
+        ,\n    \"$defs\": {\n        \"ListCalendarsResponse\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"description\": \"List of calendar templates for a game service\",\n            \"required\"\
+        : [\n                \"templates\"\n            ],\n            \"properties\": {\n                \"templates\":
+        {\n                    \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\": \"\
+        #/$defs/CalendarTemplateResponse\"\n                    },\n                    \"description\": \"Calendar templates
+        for the game service\"\n                }\n            }\n        },\n        \"CalendarTemplateResponse\": {\n  \
+        \          \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"description\": \"A calendar
+        template definition with computed summary fields\",\n            \"required\": [\n                \"templateCode\"\
+        ,\n                \"gameServiceId\",\n                \"gameHoursPerDay\",\n                \"dayPeriods\",\n   \
+        \             \"months\",\n                \"seasons\",\n                \"daysPerYear\",\n                \"monthsPerYear\"\
+        ,\n                \"seasonsPerYear\"\n            ],\n            \"properties\": {\n                \"templateCode\"\
+        : {\n                    \"type\": \"string\",\n                    \"description\": \"Calendar template identifier\"\
+        \n                },\n                \"gameServiceId\": {\n                    \"type\": \"string\",\n          \
+        \          \"format\": \"uuid\",\n                    \"description\": \"Game service this calendar belongs to\"\n\
+        \                },\n                \"gameHoursPerDay\": {\n                    \"type\": \"integer\",\n        \
+        \            \"description\": \"Number of game hours in a day\"\n                },\n                \"dayPeriods\"\
+        : {\n                    \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\"\
+        : \"#/$defs/DayPeriodDefinition\"\n                    },\n                    \"description\": \"Named time-of-day
+        periods\"\n                },\n                \"months\": {\n                    \"type\": \"array\",\n         \
+        \           \"items\": {\n                        \"$ref\": \"#/$defs/MonthDefinition\"\n                    },\n\
+        \                    \"description\": \"Ordered list of months in a year\"\n                },\n                \"\
+        seasons\": {\n                    \"type\": \"array\",\n                    \"items\": {\n                       \
+        \ \"$ref\": \"#/$defs/SeasonDefinition\"\n                    },\n                    \"description\": \"Ordered list
+        of seasons in a year\"\n                },\n                \"daysPerYear\": {\n                    \"type\": \"integer\"\
+        ,\n                    \"description\": \"Computed total days per year (sum of all months' daysInMonth)\"\n      \
+        \          },\n                \"monthsPerYear\": {\n                    \"type\": \"integer\",\n                \
+        \    \"description\": \"Computed number of months per year\"\n                },\n                \"seasonsPerYear\"\
+        : {\n                    \"type\": \"integer\",\n                    \"description\": \"Computed number of seasons
+        per year\"\n                },\n                \"eraLabels\": {\n                    \"type\": \"array\",\n     \
+        \               \"nullable\": true,\n                    \"items\": {\n                        \"$ref\": \"#/$defs/EraLabel\"\
+        \n                    },\n                    \"description\": \"Named time spans for display purposes (null if none
+        defined)\"\n                }\n            }\n        },\n        \"DayPeriodDefinition\": {\n            \"type\"\
+        : \"object\",\n            \"additionalProperties\": false,\n            \"description\": \"A named time-of-day period
+        within a calendar template\",\n            \"required\": [\n                \"code\",\n                \"startHour\"\
+        ,\n                \"endHour\",\n                \"isDaylight\"\n            ],\n            \"properties\": {\n \
+        \               \"code\": {\n                    \"type\": \"string\",\n                    \"minLength\": 1,\n  \
+        \                  \"maxLength\": 64,\n                    \"description\": \"Period identifier code (e.g., \\\"dawn\\\
+        \", \\\"morning\\\", \\\"night\\\")\"\n                },\n                \"startHour\": {\n                    \"\
+        type\": \"integer\",\n                    \"minimum\": 0,\n                    \"description\": \"Game hour this period
+        begins (0 to gameHoursPerDay-1)\"\n                },\n                \"endHour\": {\n                    \"type\"\
+        : \"integer\",\n                    \"minimum\": 1,\n                    \"description\": \"Game hour this period
+        ends (exclusive, max = gameHoursPerDay)\"\n                },\n                \"isDaylight\": {\n               \
+        \     \"type\": \"boolean\",\n                    \"description\": \"True if this period has sunlight, used by ${world.time.is_day}
+        and ${world.time.is_night}\"\n                }\n            }\n        },\n        \"MonthDefinition\": {\n     \
+        \       \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"description\": \"A month
+        within a calendar template year\",\n            \"required\": [\n                \"code\",\n                \"name\"\
+        ,\n                \"daysInMonth\",\n                \"seasonCode\"\n            ],\n            \"properties\": {\n\
+        \                \"code\": {\n                    \"type\": \"string\",\n                    \"minLength\": 1,\n \
+        \                   \"maxLength\": 64,\n                    \"description\": \"Month identifier code (e.g., \\\"frostmere\\\
+        \", \\\"greenleaf\\\")\"\n                },\n                \"name\": {\n                    \"type\": \"string\"\
+        ,\n                    \"minLength\": 1,\n                    \"maxLength\": 128,\n                    \"description\"\
+        : \"Display name for the month\"\n                },\n                \"daysInMonth\": {\n                    \"type\"\
+        : \"integer\",\n                    \"minimum\": 1,\n                    \"description\": \"Number of game days in
+        this month\"\n                },\n                \"seasonCode\": {\n                    \"type\": \"string\",\n \
+        \                   \"minLength\": 1,\n                    \"maxLength\": 64,\n                    \"description\"\
+        : \"Season code this month belongs to (must reference a defined season)\"\n                }\n            }\n    \
+        \    },\n        \"SeasonDefinition\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"description\": \"A season within a calendar template year\",\n            \"required\": [\n\
+        \                \"code\",\n                \"name\",\n                \"ordinal\"\n            ],\n            \"\
+        properties\": {\n                \"code\": {\n                    \"type\": \"string\",\n                    \"minLength\"\
+        : 1,\n                    \"maxLength\": 64,\n                    \"description\": \"Season identifier code (e.g.,
+        \\\"winter\\\", \\\"spring\\\", \\\"summer\\\", \\\"autumn\\\")\"\n                },\n                \"name\": {\n\
+        \                    \"type\": \"string\",\n                    \"minLength\": 1,\n                    \"maxLength\"\
+        : 128,\n                    \"description\": \"Display name for the season\"\n                },\n               \
+        \ \"ordinal\": {\n                    \"type\": \"integer\",\n                    \"minimum\": 0,\n              \
+        \      \"description\": \"Position in annual cycle (0-based)\"\n                }\n            }\n        },\n   \
+        \     \"EraLabel\": {\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n         \
+        \   \"description\": \"A named time span in the calendar for display purposes\",\n            \"required\": [\n  \
+        \              \"code\",\n                \"startYear\"\n            ],\n            \"properties\": {\n         \
+        \       \"code\": {\n                    \"type\": \"string\",\n                    \"minLength\": 1,\n          \
+        \          \"maxLength\": 64,\n                    \"description\": \"Era identifier code (e.g., \\\"first_age\\\"\
+        , \\\"era_of_strife\\\")\"\n                },\n                \"startYear\": {\n                    \"type\": \"\
+        integer\",\n                    \"minimum\": 0,\n                    \"description\": \"Game year when this era begins
+        (0-based)\"\n                },\n                \"endYear\": {\n                    \"type\": \"integer\",\n    \
+        \                \"nullable\": true,\n                    \"description\": \"Game year when this era ends (null =
+        ongoing)\"\n                }\n            }\n        }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"List calendar templates for a game service\",\n    \"description\": \"\
+        Returns all calendar templates registered for a game service.\",\n    \"tags\": [\n        \"Worldstate\"\n    ],\n\
+        \    \"deprecated\": false,\n    \"operationId\": \"listCalendars\"\n}"
+  /worldstate/calendar/update:
+    post:
+      operationId: updateCalendar
+      summary: Update a calendar template
+      description: Partial update of a calendar template. Acquires distributed lock. Validates structural consistency. 
+        Cannot change template code or game service ID. Invalidates local cache and publishes 
+        CalendarTemplateUpdatedEvent for cross-node invalidation.
+      tags:
+      - Worldstate
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateCalendarRequest'
+      responses:
+        '200':
+          description: Calendar template updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CalendarTemplateResponse'
+        '400':
+          description: Structural validation failed
+        '404':
+          description: Calendar template not found
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/UpdateCalendarRequest\"\
+        ,\n    \"$defs\": {\n        \"UpdateCalendarRequest\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"description\": \"Request to partially update a calendar template (only non-null fields are
+        applied)\",\n            \"required\": [\n                \"gameServiceId\",\n                \"templateCode\"\n \
+        \           ],\n            \"properties\": {\n                \"gameServiceId\": {\n                    \"type\"\
+        : \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Game service the
+        calendar belongs to (identity, cannot be changed)\"\n                },\n                \"templateCode\": {\n   \
+        \                 \"type\": \"string\",\n                    \"minLength\": 1,\n                    \"maxLength\"\
+        : 128,\n                    \"description\": \"Calendar template code (identity, cannot be changed)\"\n          \
+        \      },\n                \"gameHoursPerDay\": {\n                    \"type\": \"integer\",\n                  \
+        \  \"nullable\": true,\n                    \"minimum\": 1,\n                    \"description\": \"New number of
+        game hours in a day (triggers day period re-validation)\"\n                },\n                \"dayPeriods\": {\n\
+        \                    \"type\": \"array\",\n                    \"nullable\": true,\n                    \"items\"\
+        : {\n                        \"$ref\": \"#/$defs/DayPeriodDefinition\"\n                    },\n                 \
+        \   \"minItems\": 1,\n                    \"description\": \"New day period definitions (must cover [0, gameHoursPerDay)
+        without gaps or overlaps)\"\n                },\n                \"months\": {\n                    \"type\": \"array\"\
+        ,\n                    \"nullable\": true,\n                    \"items\": {\n                        \"$ref\": \"\
+        #/$defs/MonthDefinition\"\n                    },\n                    \"minItems\": 1,\n                    \"description\"\
+        : \"New month definitions (season codes must reference defined seasons)\"\n                },\n                \"\
+        seasons\": {\n                    \"type\": \"array\",\n                    \"nullable\": true,\n                \
+        \    \"items\": {\n                        \"$ref\": \"#/$defs/SeasonDefinition\"\n                    },\n      \
+        \              \"minItems\": 1,\n                    \"description\": \"New season definitions\"\n               \
+        \ },\n                \"eraLabels\": {\n                    \"type\": \"array\",\n                    \"nullable\"\
+        : true,\n                    \"items\": {\n                        \"$ref\": \"#/$defs/EraLabel\"\n              \
+        \      },\n                    \"description\": \"New era label definitions (null = no change, empty array = clear
+        all)\"\n                }\n            }\n        },\n        \"DayPeriodDefinition\": {\n            \"type\": \"\
+        object\",\n            \"additionalProperties\": false,\n            \"description\": \"A named time-of-day period
+        within a calendar template\",\n            \"required\": [\n                \"code\",\n                \"startHour\"\
+        ,\n                \"endHour\",\n                \"isDaylight\"\n            ],\n            \"properties\": {\n \
+        \               \"code\": {\n                    \"type\": \"string\",\n                    \"minLength\": 1,\n  \
+        \                  \"maxLength\": 64,\n                    \"description\": \"Period identifier code (e.g., \\\"dawn\\\
+        \", \\\"morning\\\", \\\"night\\\")\"\n                },\n                \"startHour\": {\n                    \"\
+        type\": \"integer\",\n                    \"minimum\": 0,\n                    \"description\": \"Game hour this period
+        begins (0 to gameHoursPerDay-1)\"\n                },\n                \"endHour\": {\n                    \"type\"\
+        : \"integer\",\n                    \"minimum\": 1,\n                    \"description\": \"Game hour this period
+        ends (exclusive, max = gameHoursPerDay)\"\n                },\n                \"isDaylight\": {\n               \
+        \     \"type\": \"boolean\",\n                    \"description\": \"True if this period has sunlight, used by ${world.time.is_day}
+        and ${world.time.is_night}\"\n                }\n            }\n        },\n        \"MonthDefinition\": {\n     \
+        \       \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"description\": \"A month
+        within a calendar template year\",\n            \"required\": [\n                \"code\",\n                \"name\"\
+        ,\n                \"daysInMonth\",\n                \"seasonCode\"\n            ],\n            \"properties\": {\n\
+        \                \"code\": {\n                    \"type\": \"string\",\n                    \"minLength\": 1,\n \
+        \                   \"maxLength\": 64,\n                    \"description\": \"Month identifier code (e.g., \\\"frostmere\\\
+        \", \\\"greenleaf\\\")\"\n                },\n                \"name\": {\n                    \"type\": \"string\"\
+        ,\n                    \"minLength\": 1,\n                    \"maxLength\": 128,\n                    \"description\"\
+        : \"Display name for the month\"\n                },\n                \"daysInMonth\": {\n                    \"type\"\
+        : \"integer\",\n                    \"minimum\": 1,\n                    \"description\": \"Number of game days in
+        this month\"\n                },\n                \"seasonCode\": {\n                    \"type\": \"string\",\n \
+        \                   \"minLength\": 1,\n                    \"maxLength\": 64,\n                    \"description\"\
+        : \"Season code this month belongs to (must reference a defined season)\"\n                }\n            }\n    \
+        \    },\n        \"SeasonDefinition\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"description\": \"A season within a calendar template year\",\n            \"required\": [\n\
+        \                \"code\",\n                \"name\",\n                \"ordinal\"\n            ],\n            \"\
+        properties\": {\n                \"code\": {\n                    \"type\": \"string\",\n                    \"minLength\"\
+        : 1,\n                    \"maxLength\": 64,\n                    \"description\": \"Season identifier code (e.g.,
+        \\\"winter\\\", \\\"spring\\\", \\\"summer\\\", \\\"autumn\\\")\"\n                },\n                \"name\": {\n\
+        \                    \"type\": \"string\",\n                    \"minLength\": 1,\n                    \"maxLength\"\
+        : 128,\n                    \"description\": \"Display name for the season\"\n                },\n               \
+        \ \"ordinal\": {\n                    \"type\": \"integer\",\n                    \"minimum\": 0,\n              \
+        \      \"description\": \"Position in annual cycle (0-based)\"\n                }\n            }\n        },\n   \
+        \     \"EraLabel\": {\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n         \
+        \   \"description\": \"A named time span in the calendar for display purposes\",\n            \"required\": [\n  \
+        \              \"code\",\n                \"startYear\"\n            ],\n            \"properties\": {\n         \
+        \       \"code\": {\n                    \"type\": \"string\",\n                    \"minLength\": 1,\n          \
+        \          \"maxLength\": 64,\n                    \"description\": \"Era identifier code (e.g., \\\"first_age\\\"\
+        , \\\"era_of_strife\\\")\"\n                },\n                \"startYear\": {\n                    \"type\": \"\
+        integer\",\n                    \"minimum\": 0,\n                    \"description\": \"Game year when this era begins
+        (0-based)\"\n                },\n                \"endYear\": {\n                    \"type\": \"integer\",\n    \
+        \                \"nullable\": true,\n                    \"description\": \"Game year when this era ends (null =
+        ongoing)\"\n                }\n            }\n        }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/CalendarTemplateResponse\"\
+        ,\n    \"$defs\": {\n        \"CalendarTemplateResponse\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"description\": \"A calendar template definition with computed summary fields\",\n        \
+        \    \"required\": [\n                \"templateCode\",\n                \"gameServiceId\",\n                \"gameHoursPerDay\"\
+        ,\n                \"dayPeriods\",\n                \"months\",\n                \"seasons\",\n                \"\
+        daysPerYear\",\n                \"monthsPerYear\",\n                \"seasonsPerYear\"\n            ],\n         \
+        \   \"properties\": {\n                \"templateCode\": {\n                    \"type\": \"string\",\n          \
+        \          \"description\": \"Calendar template identifier\"\n                },\n                \"gameServiceId\"\
+        : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
+        description\": \"Game service this calendar belongs to\"\n                },\n                \"gameHoursPerDay\"\
+        : {\n                    \"type\": \"integer\",\n                    \"description\": \"Number of game hours in a
+        day\"\n                },\n                \"dayPeriods\": {\n                    \"type\": \"array\",\n         \
+        \           \"items\": {\n                        \"$ref\": \"#/$defs/DayPeriodDefinition\"\n                    },\n\
+        \                    \"description\": \"Named time-of-day periods\"\n                },\n                \"months\"\
+        : {\n                    \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\"\
+        : \"#/$defs/MonthDefinition\"\n                    },\n                    \"description\": \"Ordered list of months
+        in a year\"\n                },\n                \"seasons\": {\n                    \"type\": \"array\",\n      \
+        \              \"items\": {\n                        \"$ref\": \"#/$defs/SeasonDefinition\"\n                    },\n\
+        \                    \"description\": \"Ordered list of seasons in a year\"\n                },\n                \"\
+        daysPerYear\": {\n                    \"type\": \"integer\",\n                    \"description\": \"Computed total
+        days per year (sum of all months' daysInMonth)\"\n                },\n                \"monthsPerYear\": {\n     \
+        \               \"type\": \"integer\",\n                    \"description\": \"Computed number of months per year\"\
+        \n                },\n                \"seasonsPerYear\": {\n                    \"type\": \"integer\",\n        \
+        \            \"description\": \"Computed number of seasons per year\"\n                },\n                \"eraLabels\"\
+        : {\n                    \"type\": \"array\",\n                    \"nullable\": true,\n                    \"items\"\
+        : {\n                        \"$ref\": \"#/$defs/EraLabel\"\n                    },\n                    \"description\"\
+        : \"Named time spans for display purposes (null if none defined)\"\n                }\n            }\n        },\n\
+        \        \"DayPeriodDefinition\": {\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n\
+        \            \"description\": \"A named time-of-day period within a calendar template\",\n            \"required\"\
+        : [\n                \"code\",\n                \"startHour\",\n                \"endHour\",\n                \"isDaylight\"\
+        \n            ],\n            \"properties\": {\n                \"code\": {\n                    \"type\": \"string\"\
+        ,\n                    \"minLength\": 1,\n                    \"maxLength\": 64,\n                    \"description\"\
+        : \"Period identifier code (e.g., \\\"dawn\\\", \\\"morning\\\", \\\"night\\\")\"\n                },\n          \
+        \      \"startHour\": {\n                    \"type\": \"integer\",\n                    \"minimum\": 0,\n       \
+        \             \"description\": \"Game hour this period begins (0 to gameHoursPerDay-1)\"\n                },\n   \
+        \             \"endHour\": {\n                    \"type\": \"integer\",\n                    \"minimum\": 1,\n  \
+        \                  \"description\": \"Game hour this period ends (exclusive, max = gameHoursPerDay)\"\n          \
+        \      },\n                \"isDaylight\": {\n                    \"type\": \"boolean\",\n                    \"description\"\
+        : \"True if this period has sunlight, used by ${world.time.is_day} and ${world.time.is_night}\"\n                }\n\
+        \            }\n        },\n        \"MonthDefinition\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"description\": \"A month within a calendar template year\",\n            \"required\": [\n\
+        \                \"code\",\n                \"name\",\n                \"daysInMonth\",\n                \"seasonCode\"\
+        \n            ],\n            \"properties\": {\n                \"code\": {\n                    \"type\": \"string\"\
+        ,\n                    \"minLength\": 1,\n                    \"maxLength\": 64,\n                    \"description\"\
+        : \"Month identifier code (e.g., \\\"frostmere\\\", \\\"greenleaf\\\")\"\n                },\n                \"name\"\
+        : {\n                    \"type\": \"string\",\n                    \"minLength\": 1,\n                    \"maxLength\"\
+        : 128,\n                    \"description\": \"Display name for the month\"\n                },\n                \"\
+        daysInMonth\": {\n                    \"type\": \"integer\",\n                    \"minimum\": 1,\n              \
+        \      \"description\": \"Number of game days in this month\"\n                },\n                \"seasonCode\"\
+        : {\n                    \"type\": \"string\",\n                    \"minLength\": 1,\n                    \"maxLength\"\
+        : 64,\n                    \"description\": \"Season code this month belongs to (must reference a defined season)\"\
+        \n                }\n            }\n        },\n        \"SeasonDefinition\": {\n            \"type\": \"object\"\
+        ,\n            \"additionalProperties\": false,\n            \"description\": \"A season within a calendar template
+        year\",\n            \"required\": [\n                \"code\",\n                \"name\",\n                \"ordinal\"\
+        \n            ],\n            \"properties\": {\n                \"code\": {\n                    \"type\": \"string\"\
+        ,\n                    \"minLength\": 1,\n                    \"maxLength\": 64,\n                    \"description\"\
+        : \"Season identifier code (e.g., \\\"winter\\\", \\\"spring\\\", \\\"summer\\\", \\\"autumn\\\")\"\n            \
+        \    },\n                \"name\": {\n                    \"type\": \"string\",\n                    \"minLength\"\
+        : 1,\n                    \"maxLength\": 128,\n                    \"description\": \"Display name for the season\"\
+        \n                },\n                \"ordinal\": {\n                    \"type\": \"integer\",\n               \
+        \     \"minimum\": 0,\n                    \"description\": \"Position in annual cycle (0-based)\"\n             \
+        \   }\n            }\n        },\n        \"EraLabel\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"description\": \"A named time span in the calendar for display purposes\",\n            \"\
+        required\": [\n                \"code\",\n                \"startYear\"\n            ],\n            \"properties\"\
+        : {\n                \"code\": {\n                    \"type\": \"string\",\n                    \"minLength\": 1,\n\
+        \                    \"maxLength\": 64,\n                    \"description\": \"Era identifier code (e.g., \\\"first_age\\\
+        \", \\\"era_of_strife\\\")\"\n                },\n                \"startYear\": {\n                    \"type\":
+        \"integer\",\n                    \"minimum\": 0,\n                    \"description\": \"Game year when this era
+        begins (0-based)\"\n                },\n                \"endYear\": {\n                    \"type\": \"integer\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"Game year when this era ends (null
+        = ongoing)\"\n                }\n            }\n        }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Update a calendar template\",\n    \"description\": \"Partial update of
+        a calendar template. Acquires distributed lock. Validates structural consistency. Cannot change template code or game
+        service ID. Invalidates local cache and publishes CalendarTemplateUpdatedEvent for cross-node invalidation.\",\n \
+        \   \"tags\": [\n        \"Worldstate\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"updateCalendar\"\
+        \n}"
+  /worldstate/calendar/delete:
+    post:
+      operationId: deleteCalendar
+      summary: Delete a calendar template
+      description: Deletes a calendar template. Fails with Conflict if any active realm clocks reference this template. 
+        Acquires distributed lock. Unregisters reference with lib-resource.
+      tags:
+      - Worldstate
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeleteCalendarRequest'
+      responses:
+        '200':
+          description: Calendar template deleted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeleteCalendarResponse'
+        '404':
+          description: Calendar template not found
+        '409':
+          description: Active realm clocks reference this template
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/DeleteCalendarRequest\"\
+        ,\n    \"$defs\": {\n        \"DeleteCalendarRequest\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"description\": \"Request to delete a calendar template\",\n            \"required\": [\n \
+        \               \"gameServiceId\",\n                \"templateCode\"\n            ],\n            \"properties\":
+        {\n                \"gameServiceId\": {\n                    \"type\": \"string\",\n                    \"format\"\
+        : \"uuid\",\n                    \"description\": \"Game service the calendar belongs to\"\n                },\n \
+        \               \"templateCode\": {\n                    \"type\": \"string\",\n                    \"minLength\"\
+        : 1,\n                    \"maxLength\": 128,\n                    \"description\": \"Calendar template code to delete\"\
+        \n                }\n            }\n        }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/DeleteCalendarResponse\"\
+        ,\n    \"$defs\": {\n        \"DeleteCalendarResponse\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"description\": \"Confirmation of calendar template deletion\",\n            \"required\":
+        [\n                \"deleted\"\n            ],\n            \"properties\": {\n                \"deleted\": {\n  \
+        \                  \"type\": \"boolean\",\n                    \"description\": \"Whether the calendar template was
+        deleted\"\n                }\n            }\n        }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Delete a calendar template\",\n    \"description\": \"Deletes a calendar
+        template. Fails with Conflict if any active realm clocks reference this template. Acquires distributed lock. Unregisters
+        reference with lib-resource.\",\n    \"tags\": [\n        \"Worldstate\"\n    ],\n    \"deprecated\": false,\n   \
+        \ \"operationId\": \"deleteCalendar\"\n}"
+  /worldstate/realm-config/get:
+    post:
+      operationId: getRealmConfig
+      summary: Get realm worldstate configuration
+      description: Returns the realm's worldstate configuration including calendar template, time ratio, downtime 
+        policy, epoch, and active status.
+      tags:
+      - Worldstate
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetRealmConfigRequest'
+      responses:
+        '200':
+          description: Realm configuration found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RealmConfigResponse'
+        '404':
+          description: No clock initialized for this realm
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/GetRealmConfigRequest\"\
+        ,\n    \"$defs\": {\n        \"GetRealmConfigRequest\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"description\": \"Request to get realm worldstate configuration\",\n            \"required\"\
+        : [\n                \"realmId\"\n            ],\n            \"properties\": {\n                \"realmId\": {\n\
+        \                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
+        : \"Realm to get configuration for\"\n                }\n            }\n        }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/RealmConfigResponse\"\
+        ,\n    \"$defs\": {\n        \"RealmConfigResponse\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"description\": \"Realm worldstate configuration\",\n            \"required\": [\n        \
+        \        \"realmId\",\n                \"gameServiceId\",\n                \"calendarTemplateCode\",\n           \
+        \     \"currentTimeRatio\",\n                \"downtimePolicy\",\n                \"realmEpoch\",\n              \
+        \  \"isActive\"\n            ],\n            \"properties\": {\n                \"realmId\": {\n                 \
+        \   \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Realm
+        identifier\"\n                },\n                \"gameServiceId\": {\n                    \"type\": \"string\",\n\
+        \                    \"format\": \"uuid\",\n                    \"description\": \"Game service the realm belongs
+        to\"\n                },\n                \"calendarTemplateCode\": {\n                    \"type\": \"string\",\n\
+        \                    \"description\": \"Calendar template code in use\"\n                },\n                \"currentTimeRatio\"\
+        : {\n                    \"type\": \"number\",\n                    \"format\": \"float\",\n                    \"\
+        description\": \"Current game-seconds per real-second\"\n                },\n                \"downtimePolicy\": {\n\
+        \                    \"$ref\": \"#/$defs/DowntimePolicy\",\n                    \"description\": \"How clock gaps
+        are handled after service downtime\"\n                },\n                \"realmEpoch\": {\n                    \"\
+        type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"Real-world
+        timestamp when the realm's clock started\"\n                },\n                \"isActive\": {\n                \
+        \    \"type\": \"boolean\",\n                    \"description\": \"Whether the realm clock is initialized and active\"\
+        \n                }\n            }\n        },\n        \"DowntimePolicy\": {\n            \"type\": \"string\",\n\
+        \            \"description\": \"How to handle clock gaps after service downtime\",\n            \"enum\": [\n    \
+        \            \"Advance\",\n                \"Pause\"\n            ]\n        }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Get realm worldstate configuration\",\n    \"description\": \"Returns the
+        realm's worldstate configuration including calendar template, time ratio, downtime policy, epoch, and active status.\"\
+        ,\n    \"tags\": [\n        \"Worldstate\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"getRealmConfig\"\
+        \n}"
+  /worldstate/realm-config/update:
+    post:
+      operationId: updateRealmConfig
+      summary: Update realm worldstate configuration
+      description: Partial update of realm-level configuration. Acquires distributed lock. Supports changing 
+        downtimePolicy and calendarTemplateCode. Cannot change time ratio (use SetTimeRatio) or epoch (immutable).
+      tags:
+      - Worldstate
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateRealmConfigRequest'
+      responses:
+        '200':
+          description: Realm configuration updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RealmConfigResponse'
+        '404':
+          description: No clock initialized for this realm or calendar template not found
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/UpdateRealmConfigRequest\"\
+        ,\n    \"$defs\": {\n        \"UpdateRealmConfigRequest\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"description\": \"Request to partially update realm worldstate configuration\",\n         \
+        \   \"required\": [\n                \"realmId\"\n            ],\n            \"properties\": {\n                \"\
+        realmId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n             \
+        \       \"description\": \"Realm to update configuration for\"\n                },\n                \"downtimePolicy\"\
+        : {\n                    \"nullable\": true,\n                    \"description\": \"New downtime handling policy
+        (null = no change)\",\n                    \"allOf\": [\n                        {\n                            \"\
+        $ref\": \"#/$defs/DowntimePolicy\"\n                        }\n                    ]\n                },\n       \
+        \         \"calendarTemplateCode\": {\n                    \"type\": \"string\",\n                    \"nullable\"\
+        : true,\n                    \"maxLength\": 128,\n                    \"description\": \"New calendar template code
+        (validated for existence, null = no change)\"\n                }\n            }\n        },\n        \"DowntimePolicy\"\
+        : {\n            \"type\": \"string\",\n            \"description\": \"How to handle clock gaps after service downtime\"\
+        ,\n            \"enum\": [\n                \"Advance\",\n                \"Pause\"\n            ]\n        }\n  \
+        \  }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/RealmConfigResponse\"\
+        ,\n    \"$defs\": {\n        \"RealmConfigResponse\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"description\": \"Realm worldstate configuration\",\n            \"required\": [\n        \
+        \        \"realmId\",\n                \"gameServiceId\",\n                \"calendarTemplateCode\",\n           \
+        \     \"currentTimeRatio\",\n                \"downtimePolicy\",\n                \"realmEpoch\",\n              \
+        \  \"isActive\"\n            ],\n            \"properties\": {\n                \"realmId\": {\n                 \
+        \   \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Realm
+        identifier\"\n                },\n                \"gameServiceId\": {\n                    \"type\": \"string\",\n\
+        \                    \"format\": \"uuid\",\n                    \"description\": \"Game service the realm belongs
+        to\"\n                },\n                \"calendarTemplateCode\": {\n                    \"type\": \"string\",\n\
+        \                    \"description\": \"Calendar template code in use\"\n                },\n                \"currentTimeRatio\"\
+        : {\n                    \"type\": \"number\",\n                    \"format\": \"float\",\n                    \"\
+        description\": \"Current game-seconds per real-second\"\n                },\n                \"downtimePolicy\": {\n\
+        \                    \"$ref\": \"#/$defs/DowntimePolicy\",\n                    \"description\": \"How clock gaps
+        are handled after service downtime\"\n                },\n                \"realmEpoch\": {\n                    \"\
+        type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"Real-world
+        timestamp when the realm's clock started\"\n                },\n                \"isActive\": {\n                \
+        \    \"type\": \"boolean\",\n                    \"description\": \"Whether the realm clock is initialized and active\"\
+        \n                }\n            }\n        },\n        \"DowntimePolicy\": {\n            \"type\": \"string\",\n\
+        \            \"description\": \"How to handle clock gaps after service downtime\",\n            \"enum\": [\n    \
+        \            \"Advance\",\n                \"Pause\"\n            ]\n        }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Update realm worldstate configuration\",\n    \"description\": \"Partial
+        update of realm-level configuration. Acquires distributed lock. Supports changing downtimePolicy and calendarTemplateCode.
+        Cannot change time ratio (use SetTimeRatio) or epoch (immutable).\",\n    \"tags\": [\n        \"Worldstate\"\n  \
+        \  ],\n    \"deprecated\": false,\n    \"operationId\": \"updateRealmConfig\"\n}"
+  /worldstate/realm-config/list:
+    post:
+      operationId: listRealmClocks
+      summary: List active realm clocks
+      description: Lists all active realm clocks with summary info. Supports pagination and optional gameServiceId 
+        filter.
+      tags:
+      - Worldstate
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ListRealmClocksRequest'
+      responses:
+        '200':
+          description: Realm clocks listed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListRealmClocksResponse'
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ListRealmClocksRequest\"\
+        ,\n    \"$defs\": {\n        \"ListRealmClocksRequest\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"description\": \"Request to list active realm clocks with optional filtering\",\n        \
+        \    \"properties\": {\n                \"gameServiceId\": {\n                    \"type\": \"string\",\n        \
+        \            \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\":
+        \"Filter by game service ID (null returns all)\"\n                },\n                \"page\": {\n              \
+        \      \"type\": \"integer\",\n                    \"minimum\": 0,\n                    \"default\": 0,\n        \
+        \            \"description\": \"Page number (0-indexed)\"\n                },\n                \"pageSize\": {\n \
+        \                   \"type\": \"integer\",\n                    \"minimum\": 1,\n                    \"maximum\":
+        1000,\n                    \"default\": 100,\n                    \"description\": \"Items per page\"\n          \
+        \      }\n            }\n        }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ListRealmClocksResponse\"\
+        ,\n    \"$defs\": {\n        \"ListRealmClocksResponse\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"description\": \"Paginated list of active realm clocks\",\n            \"required\": [\n \
+        \               \"items\",\n                \"totalCount\",\n                \"page\",\n                \"pageSize\"\
+        \n            ],\n            \"properties\": {\n                \"items\": {\n                    \"type\": \"array\"\
+        ,\n                    \"items\": {\n                        \"$ref\": \"#/$defs/RealmClockSummary\"\n           \
+        \         },\n                    \"description\": \"Realm clock summaries for the current page\"\n              \
+        \  },\n                \"totalCount\": {\n                    \"type\": \"integer\",\n                    \"minimum\"\
+        : 0,\n                    \"description\": \"Total matching realm clocks\"\n                },\n                \"\
+        page\": {\n                    \"type\": \"integer\",\n                    \"minimum\": 0,\n                    \"\
+        description\": \"Current page number\"\n                },\n                \"pageSize\": {\n                    \"\
+        type\": \"integer\",\n                    \"minimum\": 1,\n                    \"maximum\": 1000,\n              \
+        \      \"description\": \"Items per page\"\n                }\n            }\n        },\n        \"RealmClockSummary\"\
+        : {\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"description\"\
+        : \"Summary information for an active realm clock\",\n            \"required\": [\n                \"realmId\",\n\
+        \                \"calendarTemplateCode\",\n                \"currentTimeRatio\",\n                \"currentSeason\"\
+        ,\n                \"currentYear\",\n                \"lastAdvancedAt\"\n            ],\n            \"properties\"\
+        : {\n                \"realmId\": {\n                    \"type\": \"string\",\n                    \"format\": \"\
+        uuid\",\n                    \"description\": \"Realm identifier\"\n                },\n                \"calendarTemplateCode\"\
+        : {\n                    \"type\": \"string\",\n                    \"description\": \"Calendar template code in use\"\
+        \n                },\n                \"currentTimeRatio\": {\n                    \"type\": \"number\",\n       \
+        \             \"format\": \"float\",\n                    \"description\": \"Current game-seconds per real-second\"\
+        \n                },\n                \"currentSeason\": {\n                    \"type\": \"string\",\n          \
+        \          \"description\": \"Current season code\"\n                },\n                \"currentYear\": {\n    \
+        \                \"type\": \"integer\",\n                    \"description\": \"Current game year\"\n            \
+        \    },\n                \"lastAdvancedAt\": {\n                    \"type\": \"string\",\n                    \"\
+        format\": \"date-time\",\n                    \"description\": \"Real-world UTC timestamp of last clock advancement\"\
+        \n                }\n            }\n        }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"List active realm clocks\",\n    \"description\": \"Lists all active realm
+        clocks with summary info. Supports pagination and optional gameServiceId filter.\",\n    \"tags\": [\n        \"Worldstate\"\
+        \n    ],\n    \"deprecated\": false,\n    \"operationId\": \"listRealmClocks\"\n}"
+  /worldstate/cleanup-by-realm:
+    post:
+      operationId: cleanupByRealm
+      summary: Clean up worldstate data for a deleted realm
+      description: Removes realm clock, ratio history, and realm configuration for a realm. Called exclusively by 
+        lib-resource during coordinated deletion. Unregisters reference with lib-resource. Publishes 
+        RealmConfigDeletedEvent.
+      tags:
+      - Worldstate
+      x-permissions: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CleanupByRealmRequest'
+      responses:
+        '200':
+          description: Cleanup completed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CleanupByRealmResponse'
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/CleanupByRealmRequest\"\
+        ,\n    \"$defs\": {\n        \"CleanupByRealmRequest\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"description\": \"Request to clean up worldstate data for a deleted realm\",\n            \"\
+        required\": [\n                \"realmId\"\n            ],\n            \"properties\": {\n                \"realmId\"\
+        : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
+        description\": \"Realm to clean up worldstate data for\"\n                }\n            }\n        }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/CleanupByRealmResponse\"\
+        ,\n    \"$defs\": {\n        \"CleanupByRealmResponse\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"description\": \"Confirmation of realm worldstate cleanup\",\n            \"required\": [\n\
+        \                \"cleaned\"\n            ],\n            \"properties\": {\n                \"cleaned\": {\n    \
+        \                \"type\": \"boolean\",\n                    \"description\": \"Whether worldstate data was found
+        and cleaned up for this realm\"\n                }\n            }\n        }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Clean up worldstate data for a deleted realm\",\n    \"description\": \"\
+        Removes realm clock, ratio history, and realm configuration for a realm. Called exclusively by lib-resource during
+        coordinated deletion. Unregisters reference with lib-resource. Publishes RealmConfigDeletedEvent.\",\n    \"tags\"\
+        : [\n        \"Worldstate\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"cleanupByRealm\"\n}"
+  /worldstate/cleanup-by-game-service:
+    post:
+      operationId: cleanupByGameService
+      summary: Clean up worldstate data for a deleted game service
+      description: Removes all calendar templates for a game service. Realm configs are cleaned up transitively via 
+        realm deletion. Called exclusively by lib-resource. Unregisters references with lib-resource. Publishes 
+        CalendarTemplateDeletedEvent for each removed template.
+      tags:
+      - Worldstate
+      x-permissions: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CleanupByGameServiceRequest'
+      responses:
+        '200':
+          description: Cleanup completed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CleanupByGameServiceResponse'
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/CleanupByGameServiceRequest\"\
+        ,\n    \"$defs\": {\n        \"CleanupByGameServiceRequest\": {\n            \"type\": \"object\",\n            \"\
+        additionalProperties\": false,\n            \"description\": \"Request to clean up worldstate data for a deleted game
+        service\",\n            \"required\": [\n                \"gameServiceId\"\n            ],\n            \"properties\"\
+        : {\n                \"gameServiceId\": {\n                    \"type\": \"string\",\n                    \"format\"\
+        : \"uuid\",\n                    \"description\": \"Game service to clean up worldstate data for\"\n             \
+        \   }\n            }\n        }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/CleanupByGameServiceResponse\"\
+        ,\n    \"$defs\": {\n        \"CleanupByGameServiceResponse\": {\n            \"type\": \"object\",\n            \"\
+        additionalProperties\": false,\n            \"description\": \"Confirmation of game service worldstate cleanup\",\n\
+        \            \"required\": [\n                \"templatesRemoved\"\n            ],\n            \"properties\": {\n\
+        \                \"templatesRemoved\": {\n                    \"type\": \"integer\",\n                    \"minimum\"\
+        : 0,\n                    \"description\": \"Number of calendar templates removed\"\n                }\n         \
+        \   }\n        }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Clean up worldstate data for a deleted game service\",\n    \"description\"\
+        : \"Removes all calendar templates for a game service. Realm configs are cleaned up transitively via realm deletion.
+        Called exclusively by lib-resource. Unregisters references with lib-resource. Publishes CalendarTemplateDeletedEvent
+        for each removed template.\",\n    \"tags\": [\n        \"Worldstate\"\n    ],\n    \"deprecated\": false,\n    \"\
+        operationId\": \"cleanupByGameService\"\n}"
+components:
+  schemas:
+    DowntimePolicy:
+      type: string
+      description: How to handle clock gaps after service downtime
+      enum:
+      - Advance
+      - Pause
+    TimeRatioChangeReason:
+      type: string
+      description: Why the time ratio was changed
+      enum:
+      - Initial
+      - AdminAdjustment
+      - Event
+      - Pause
+      - Resume
+    TimeSyncReason:
+      type: string
+      description: Why a time sync event was published to a client
+      enum:
+      - PeriodChanged
+      - RatioChanged
+      - AdminAdvance
+      - TriggerSync
+    GameTimeSnapshot:
+      type: object
+      additionalProperties: false
+      description: Complete point-in-time game time state for a realm, used in responses and boundary events
+      required:
+      - realmId
+      - gameServiceId
+      - year
+      - monthIndex
+      - monthCode
+      - dayOfMonth
+      - dayOfYear
+      - hour
+      - minute
+      - period
+      - isDaylight
+      - season
+      - seasonIndex
+      - seasonProgress
+      - totalGameSecondsSinceEpoch
+      - timeRatio
+      - timestamp
+      properties:
+        realmId:
+          type: string
+          format: uuid
+          description: Realm this snapshot belongs to
+        gameServiceId:
+          type: string
+          format: uuid
+          description: Game service the realm belongs to
+        year:
+          type: integer
+          description: Current game year (0-based from realm epoch)
+        monthIndex:
+          type: integer
+          description: 0-based index into calendar months
+        monthCode:
+          type: string
+          description: Month code from calendar template (e.g., "greenleaf")
+        dayOfMonth:
+          type: integer
+          minimum: 1
+          description: 1-based day within current month
+        dayOfYear:
+          type: integer
+          minimum: 1
+          description: 1-based day within current year
+        hour:
+          type: integer
+          minimum: 0
+          description: Current game hour (0 to gameHoursPerDay-1)
+        minute:
+          type: integer
+          minimum: 0
+          maximum: 59
+          description: Current game minute (0-59)
+        period:
+          type: string
+          description: Current day period code from calendar (e.g., "dawn", "morning")
+        isDaylight:
+          type: boolean
+          description: True if current period's isDaylight flag is set in the calendar template
+        season:
+          type: string
+          description: Current season code from calendar (e.g., "spring")
+        seasonIndex:
+          type: integer
+          minimum: 0
+          description: Current season ordinal (0-based)
+        seasonProgress:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+          description: 0.0-1.0 progress through the current season, computed from day-of-season / days-in-season
+        totalGameSecondsSinceEpoch:
+          type: integer
+          format: int64
+          description: Absolute game-seconds since realm epoch
+        timeRatio:
+          type: number
+          format: float
+          description: Current game-seconds per real-second
+        timestamp:
+          type: string
+          format: date-time
+          description: Real-world UTC timestamp of this snapshot
+    DayPeriodDefinition:
+      type: object
+      additionalProperties: false
+      description: A named time-of-day period within a calendar template
+      required:
+      - code
+      - startHour
+      - endHour
+      - isDaylight
+      properties:
+        code:
+          type: string
+          minLength: 1
+          maxLength: 64
+          description: Period identifier code (e.g., "dawn", "morning", "night")
+        startHour:
+          type: integer
+          minimum: 0
+          description: Game hour this period begins (0 to gameHoursPerDay-1)
+        endHour:
+          type: integer
+          minimum: 1
+          description: Game hour this period ends (exclusive, max = gameHoursPerDay)
+        isDaylight:
+          type: boolean
+          description: True if this period has sunlight, used by ${world.time.is_day} and ${world.time.is_night}
+    MonthDefinition:
+      type: object
+      additionalProperties: false
+      description: A month within a calendar template year
+      required:
+      - code
+      - name
+      - daysInMonth
+      - seasonCode
+      properties:
+        code:
+          type: string
+          minLength: 1
+          maxLength: 64
+          description: Month identifier code (e.g., "frostmere", "greenleaf")
+        name:
+          type: string
+          minLength: 1
+          maxLength: 128
+          description: Display name for the month
+        daysInMonth:
+          type: integer
+          minimum: 1
+          description: Number of game days in this month
+        seasonCode:
+          type: string
+          minLength: 1
+          maxLength: 64
+          description: Season code this month belongs to (must reference a defined season)
+    SeasonDefinition:
+      type: object
+      additionalProperties: false
+      description: A season within a calendar template year
+      required:
+      - code
+      - name
+      - ordinal
+      properties:
+        code:
+          type: string
+          minLength: 1
+          maxLength: 64
+          description: Season identifier code (e.g., "winter", "spring", "summer", "autumn")
+        name:
+          type: string
+          minLength: 1
+          maxLength: 128
+          description: Display name for the season
+        ordinal:
+          type: integer
+          minimum: 0
+          description: Position in annual cycle (0-based)
+    EraLabel:
+      type: object
+      additionalProperties: false
+      description: A named time span in the calendar for display purposes
+      required:
+      - code
+      - startYear
+      properties:
+        code:
+          type: string
+          minLength: 1
+          maxLength: 64
+          description: Era identifier code (e.g., "first_age", "era_of_strife")
+        startYear:
+          type: integer
+          minimum: 0
+          description: Game year when this era begins (0-based)
+        endYear:
+          type: integer
+          nullable: true
+          description: Game year when this era ends (null = ongoing)
+    GetRealmTimeRequest:
+      type: object
+      additionalProperties: false
+      description: Request to get the current game time for a realm
+      required:
+      - realmId
+      properties:
+        realmId:
+          type: string
+          format: uuid
+          description: Realm to get the current game time for
+    GetRealmTimeByCodeRequest:
+      type: object
+      additionalProperties: false
+      description: Request to get the current game time for a realm by its code string
+      required:
+      - realmCode
+      properties:
+        realmCode:
+          type: string
+          minLength: 1
+          maxLength: 128
+          description: Realm code string (resolved to realm ID via IRealmClient)
+    BatchGetRealmTimesRequest:
+      type: object
+      additionalProperties: false
+      description: Request to get current game time for multiple realms
+      required:
+      - realmIds
+      properties:
+        realmIds:
+          type: array
+          items:
+            type: string
+            format: uuid
+          minItems: 1
+          maxItems: 100
+          description: Realm IDs to get current game time for
+    BatchGetRealmTimesResponse:
+      type: object
+      additionalProperties: false
+      description: Game time snapshots for multiple realms
+      required:
+      - snapshots
+      properties:
+        snapshots:
+          type: array
+          items:
+            $ref: '#/components/schemas/GameTimeSnapshot'
+          description: Game time snapshots for each requested realm (omits realms without initialized clocks)
+    GetElapsedGameTimeRequest:
+      type: object
+      additionalProperties: false
+      description: Request to compute elapsed game-time between two real timestamps
+      required:
+      - realmId
+      - fromRealTime
+      - toRealTime
+      properties:
+        realmId:
+          type: string
+          format: uuid
+          description: Realm to compute elapsed time for
+        fromRealTime:
+          type: string
+          format: date-time
+          description: Start real-world UTC timestamp
+        toRealTime:
+          type: string
+          format: date-time
+          description: End real-world UTC timestamp
+    GetElapsedGameTimeResponse:
+      type: object
+      additionalProperties: false
+      description: Elapsed game-time as raw seconds and decomposed calendar units
+      required:
+      - totalGameSeconds
+      - gameDays
+      - gameHours
+      - gameMinutes
+      properties:
+        totalGameSeconds:
+          type: integer
+          format: int64
+          minimum: 0
+          description: Total game-seconds elapsed between the two real timestamps
+        gameDays:
+          type: integer
+          minimum: 0
+          description: Decomposed game days component
+        gameHours:
+          type: integer
+          minimum: 0
+          description: Decomposed game hours component (remainder after days)
+        gameMinutes:
+          type: integer
+          minimum: 0
+          description: Decomposed game minutes component (remainder after hours)
+    TriggerTimeSyncRequest:
+      type: object
+      additionalProperties: false
+      description: Request to trigger a time sync event for an entity's sessions
+      required:
+      - realmId
+      - entityId
+      properties:
+        realmId:
+          type: string
+          format: uuid
+          description: Realm to sync time for
+        entityId:
+          type: string
+          format: uuid
+          description: Entity whose sessions should receive the sync (typically a character or account)
+    TriggerTimeSyncResponse:
+      type: object
+      additionalProperties: false
+      description: Result of a time sync trigger
+      required:
+      - sessionsNotified
+      properties:
+        sessionsNotified:
+          type: integer
+          minimum: 0
+          description: Number of sessions that received the time sync event
+    InitializeRealmClockRequest:
+      type: object
+      additionalProperties: false
+      description: Request to initialize a clock for a realm
+      required:
+      - realmId
+      properties:
+        realmId:
+          type: string
+          format: uuid
+          description: Realm to initialize a clock for
+        calendarTemplateCode:
+          type: string
+          nullable: true
+          maxLength: 128
+          description: Calendar template code to use (falls back to DefaultCalendarTemplateCode config if null; 
+            BadRequest if both are null)
+        epoch:
+          type: string
+          format: date-time
+          nullable: true
+          description: Real-world timestamp to use as the realm epoch (defaults to current time)
+        startingYear:
+          type: integer
+          nullable: true
+          minimum: 0
+          description: Game year to start at (defaults to 0)
+        timeRatio:
+          type: number
+          format: float
+          nullable: true
+          minimum: 0.1
+          maximum: 10000
+          description: Initial game-seconds per real-second (falls back to DefaultTimeRatio config)
+        downtimePolicy:
+          nullable: true
+          description: Initial downtime handling policy (falls back to DefaultDowntimePolicy config)
+          allOf:
+          - $ref: '#/components/schemas/DowntimePolicy'
+    InitializeRealmClockResponse:
+      type: object
+      additionalProperties: false
+      description: Confirmation of realm clock initialization with resolved values
+      required:
+      - realmId
+      - gameServiceId
+      - calendarTemplateCode
+      - timeRatio
+      - downtimePolicy
+      - epoch
+      - startingYear
+      properties:
+        realmId:
+          type: string
+          format: uuid
+          description: Realm the clock was initialized for
+        gameServiceId:
+          type: string
+          format: uuid
+          description: Game service the realm belongs to
+        calendarTemplateCode:
+          type: string
+          description: Calendar template code in use (resolved from request or config)
+        timeRatio:
+          type: number
+          format: float
+          description: Initial game-seconds per real-second (resolved from request or config)
+        downtimePolicy:
+          $ref: '#/components/schemas/DowntimePolicy'
+          description: Downtime handling policy (resolved from request or config)
+        epoch:
+          type: string
+          format: date-time
+          description: Real-world timestamp of the realm epoch
+        startingYear:
+          type: integer
+          description: Game year the clock started at
+    SetTimeRatioRequest:
+      type: object
+      additionalProperties: false
+      description: Request to change the time ratio for a realm
+      required:
+      - realmId
+      - newRatio
+      - reason
+      properties:
+        realmId:
+          type: string
+          format: uuid
+          description: Realm to change the time ratio for
+        newRatio:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 10000
+          description: New game-seconds per real-second (0.0 pauses the clock)
+        reason:
+          $ref: '#/components/schemas/TimeRatioChangeReason'
+          description: Reason for the ratio change
+    SetTimeRatioResponse:
+      type: object
+      additionalProperties: false
+      description: Confirmation of time ratio change
+      required:
+      - realmId
+      - previousRatio
+      - newRatio
+      - reason
+      properties:
+        realmId:
+          type: string
+          format: uuid
+          description: Realm the ratio was changed for
+        previousRatio:
+          type: number
+          format: float
+          description: Previous game-seconds per real-second
+        newRatio:
+          type: number
+          format: float
+          description: New game-seconds per real-second
+        reason:
+          $ref: '#/components/schemas/TimeRatioChangeReason'
+          description: Reason for the ratio change
+    AdvanceClockRequest:
+      type: object
+      additionalProperties: false
+      description: Request to manually advance a realm's clock by a specified amount
+      required:
+      - realmId
+      properties:
+        realmId:
+          type: string
+          format: uuid
+          description: Realm to advance the clock for
+        gameSeconds:
+          type: integer
+          format: int64
+          nullable: true
+          minimum: 1
+          description: Number of game-seconds to advance
+        gameDays:
+          type: integer
+          nullable: true
+          minimum: 1
+          description: Number of game-days to advance
+        gameMonths:
+          type: integer
+          nullable: true
+          minimum: 1
+          description: Number of game-months to advance (uses current calendar structure)
+        gameYears:
+          type: integer
+          nullable: true
+          minimum: 1
+          description: Number of game-years to advance (uses current calendar structure)
+    AdvanceClockResponse:
+      type: object
+      additionalProperties: false
+      description: Result of manual clock advancement
+      required:
+      - realmId
+      - previousTime
+      - newTime
+      - boundaryEventsPublished
+      properties:
+        realmId:
+          type: string
+          format: uuid
+          description: Realm the clock was advanced for
+        previousTime:
+          $ref: '#/components/schemas/GameTimeSnapshot'
+          description: Game time before advancement
+        newTime:
+          $ref: '#/components/schemas/GameTimeSnapshot'
+          description: Game time after advancement
+        boundaryEventsPublished:
+          type: integer
+          minimum: 0
+          description: Number of boundary events published during advancement
+    SeedCalendarRequest:
+      type: object
+      additionalProperties: false
+      description: Request to create a calendar template for a game service
+      required:
+      - templateCode
+      - gameServiceId
+      - gameHoursPerDay
+      - dayPeriods
+      - months
+      - seasons
+      properties:
+        templateCode:
+          type: string
+          minLength: 1
+          maxLength: 128
+          description: Unique identifier for this calendar template within the game service
+        gameServiceId:
+          type: string
+          format: uuid
+          description: Game service this calendar belongs to
+        gameHoursPerDay:
+          type: integer
+          minimum: 1
+          description: Number of game hours in a day (day periods must cover [0, gameHoursPerDay) without gaps or 
+            overlaps)
+        dayPeriods:
+          type: array
+          items:
+            $ref: '#/components/schemas/DayPeriodDefinition'
+          minItems: 1
+          description: Named time-of-day periods (must cover [0, gameHoursPerDay) without gaps or overlaps)
+        months:
+          type: array
+          items:
+            $ref: '#/components/schemas/MonthDefinition'
+          minItems: 1
+          description: Ordered list of months in a year (each month's seasonCode must reference a defined season)
+        seasons:
+          type: array
+          items:
+            $ref: '#/components/schemas/SeasonDefinition'
+          minItems: 1
+          description: Ordered list of seasons in a year
+        eraLabels:
+          type: array
+          nullable: true
+          items:
+            $ref: '#/components/schemas/EraLabel'
+          description: Named time spans for display purposes (optional)
+    CalendarTemplateResponse:
+      type: object
+      additionalProperties: false
+      description: A calendar template definition with computed summary fields
+      required:
+      - templateCode
+      - gameServiceId
+      - gameHoursPerDay
+      - dayPeriods
+      - months
+      - seasons
+      - daysPerYear
+      - monthsPerYear
+      - seasonsPerYear
+      properties:
+        templateCode:
+          type: string
+          description: Calendar template identifier
+        gameServiceId:
+          type: string
+          format: uuid
+          description: Game service this calendar belongs to
+        gameHoursPerDay:
+          type: integer
+          description: Number of game hours in a day
+        dayPeriods:
+          type: array
+          items:
+            $ref: '#/components/schemas/DayPeriodDefinition'
+          description: Named time-of-day periods
+        months:
+          type: array
+          items:
+            $ref: '#/components/schemas/MonthDefinition'
+          description: Ordered list of months in a year
+        seasons:
+          type: array
+          items:
+            $ref: '#/components/schemas/SeasonDefinition'
+          description: Ordered list of seasons in a year
+        daysPerYear:
+          type: integer
+          description: Computed total days per year (sum of all months' daysInMonth)
+        monthsPerYear:
+          type: integer
+          description: Computed number of months per year
+        seasonsPerYear:
+          type: integer
+          description: Computed number of seasons per year
+        eraLabels:
+          type: array
+          nullable: true
+          items:
+            $ref: '#/components/schemas/EraLabel'
+          description: Named time spans for display purposes (null if none defined)
+    GetCalendarRequest:
+      type: object
+      additionalProperties: false
+      description: Request to get a calendar template by game service and template code
+      required:
+      - gameServiceId
+      - templateCode
+      properties:
+        gameServiceId:
+          type: string
+          format: uuid
+          description: Game service the calendar belongs to
+        templateCode:
+          type: string
+          minLength: 1
+          maxLength: 128
+          description: Calendar template code
+    ListCalendarsRequest:
+      type: object
+      additionalProperties: false
+      description: Request to list all calendar templates for a game service
+      required:
+      - gameServiceId
+      properties:
+        gameServiceId:
+          type: string
+          format: uuid
+          description: Game service to list calendars for
+    ListCalendarsResponse:
+      type: object
+      additionalProperties: false
+      description: List of calendar templates for a game service
+      required:
+      - templates
+      properties:
+        templates:
+          type: array
+          items:
+            $ref: '#/components/schemas/CalendarTemplateResponse'
+          description: Calendar templates for the game service
+    UpdateCalendarRequest:
+      type: object
+      additionalProperties: false
+      description: Request to partially update a calendar template (only non-null fields are applied)
+      required:
+      - gameServiceId
+      - templateCode
+      properties:
+        gameServiceId:
+          type: string
+          format: uuid
+          description: Game service the calendar belongs to (identity, cannot be changed)
+        templateCode:
+          type: string
+          minLength: 1
+          maxLength: 128
+          description: Calendar template code (identity, cannot be changed)
+        gameHoursPerDay:
+          type: integer
+          nullable: true
+          minimum: 1
+          description: New number of game hours in a day (triggers day period re-validation)
+        dayPeriods:
+          type: array
+          nullable: true
+          items:
+            $ref: '#/components/schemas/DayPeriodDefinition'
+          minItems: 1
+          description: New day period definitions (must cover [0, gameHoursPerDay) without gaps or overlaps)
+        months:
+          type: array
+          nullable: true
+          items:
+            $ref: '#/components/schemas/MonthDefinition'
+          minItems: 1
+          description: New month definitions (season codes must reference defined seasons)
+        seasons:
+          type: array
+          nullable: true
+          items:
+            $ref: '#/components/schemas/SeasonDefinition'
+          minItems: 1
+          description: New season definitions
+        eraLabels:
+          type: array
+          nullable: true
+          items:
+            $ref: '#/components/schemas/EraLabel'
+          description: New era label definitions (null = no change, empty array = clear all)
+    DeleteCalendarRequest:
+      type: object
+      additionalProperties: false
+      description: Request to delete a calendar template
+      required:
+      - gameServiceId
+      - templateCode
+      properties:
+        gameServiceId:
+          type: string
+          format: uuid
+          description: Game service the calendar belongs to
+        templateCode:
+          type: string
+          minLength: 1
+          maxLength: 128
+          description: Calendar template code to delete
+    DeleteCalendarResponse:
+      type: object
+      additionalProperties: false
+      description: Confirmation of calendar template deletion
+      required:
+      - deleted
+      properties:
+        deleted:
+          type: boolean
+          description: Whether the calendar template was deleted
+    GetRealmConfigRequest:
+      type: object
+      additionalProperties: false
+      description: Request to get realm worldstate configuration
+      required:
+      - realmId
+      properties:
+        realmId:
+          type: string
+          format: uuid
+          description: Realm to get configuration for
+    RealmConfigResponse:
+      type: object
+      additionalProperties: false
+      description: Realm worldstate configuration
+      required:
+      - realmId
+      - gameServiceId
+      - calendarTemplateCode
+      - currentTimeRatio
+      - downtimePolicy
+      - realmEpoch
+      - isActive
+      properties:
+        realmId:
+          type: string
+          format: uuid
+          description: Realm identifier
+        gameServiceId:
+          type: string
+          format: uuid
+          description: Game service the realm belongs to
+        calendarTemplateCode:
+          type: string
+          description: Calendar template code in use
+        currentTimeRatio:
+          type: number
+          format: float
+          description: Current game-seconds per real-second
+        downtimePolicy:
+          $ref: '#/components/schemas/DowntimePolicy'
+          description: How clock gaps are handled after service downtime
+        realmEpoch:
+          type: string
+          format: date-time
+          description: Real-world timestamp when the realm's clock started
+        isActive:
+          type: boolean
+          description: Whether the realm clock is initialized and active
+    UpdateRealmConfigRequest:
+      type: object
+      additionalProperties: false
+      description: Request to partially update realm worldstate configuration
+      required:
+      - realmId
+      properties:
+        realmId:
+          type: string
+          format: uuid
+          description: Realm to update configuration for
+        downtimePolicy:
+          nullable: true
+          description: New downtime handling policy (null = no change)
+          allOf:
+          - $ref: '#/components/schemas/DowntimePolicy'
+        calendarTemplateCode:
+          type: string
+          nullable: true
+          maxLength: 128
+          description: New calendar template code (validated for existence, null = no change)
+    ListRealmClocksRequest:
+      type: object
+      additionalProperties: false
+      description: Request to list active realm clocks with optional filtering
+      properties:
+        gameServiceId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Filter by game service ID (null returns all)
+        page:
+          type: integer
+          minimum: 0
+          default: 0
+          description: Page number (0-indexed)
+        pageSize:
+          type: integer
+          minimum: 1
+          maximum: 1000
+          default: 100
+          description: Items per page
+    ListRealmClocksResponse:
+      type: object
+      additionalProperties: false
+      description: Paginated list of active realm clocks
+      required:
+      - items
+      - totalCount
+      - page
+      - pageSize
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/RealmClockSummary'
+          description: Realm clock summaries for the current page
+        totalCount:
+          type: integer
+          minimum: 0
+          description: Total matching realm clocks
+        page:
+          type: integer
+          minimum: 0
+          description: Current page number
+        pageSize:
+          type: integer
+          minimum: 1
+          maximum: 1000
+          description: Items per page
+    RealmClockSummary:
+      type: object
+      additionalProperties: false
+      description: Summary information for an active realm clock
+      required:
+      - realmId
+      - calendarTemplateCode
+      - currentTimeRatio
+      - currentSeason
+      - currentYear
+      - lastAdvancedAt
+      properties:
+        realmId:
+          type: string
+          format: uuid
+          description: Realm identifier
+        calendarTemplateCode:
+          type: string
+          description: Calendar template code in use
+        currentTimeRatio:
+          type: number
+          format: float
+          description: Current game-seconds per real-second
+        currentSeason:
+          type: string
+          description: Current season code
+        currentYear:
+          type: integer
+          description: Current game year
+        lastAdvancedAt:
+          type: string
+          format: date-time
+          description: Real-world UTC timestamp of last clock advancement
+    CleanupByRealmRequest:
+      type: object
+      additionalProperties: false
+      description: Request to clean up worldstate data for a deleted realm
+      required:
+      - realmId
+      properties:
+        realmId:
+          type: string
+          format: uuid
+          description: Realm to clean up worldstate data for
+    CleanupByRealmResponse:
+      type: object
+      additionalProperties: false
+      description: Confirmation of realm worldstate cleanup
+      required:
+      - cleaned
+      properties:
+        cleaned:
+          type: boolean
+          description: Whether worldstate data was found and cleaned up for this realm
+    CleanupByGameServiceRequest:
+      type: object
+      additionalProperties: false
+      description: Request to clean up worldstate data for a deleted game service
+      required:
+      - gameServiceId
+      properties:
+        gameServiceId:
+          type: string
+          format: uuid
+          description: Game service to clean up worldstate data for
+    CleanupByGameServiceResponse:
+      type: object
+      additionalProperties: false
+      description: Confirmation of game service worldstate cleanup
+      required:
+      - templatesRemoved
+      properties:
+        templatesRemoved:
+          type: integer
+          minimum: 0
+          description: Number of calendar templates removed

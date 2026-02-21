@@ -391,7 +391,7 @@ public partial class ComponentHealth
     public string? Message { get; set; } = default!;
 
     /// <summary>
-    /// Component-specific metrics (e.g., ping time)
+    /// Component-specific metrics reported by the service. No Bannou plugin reads specific keys from this field by convention.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("metrics")]
     public object Metrics { get; set; } = default!;
@@ -574,7 +574,7 @@ public partial class ServiceHealthStatus
     public Capacity? Capacity { get; set; } = default!;
 
     /// <summary>
-    /// Additional service metadata (null if not provided)
+    /// Client-provided service metadata. No Bannou plugin reads specific keys from this field by convention.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("metadata")]
     public object? Metadata { get; set; } = default!;
@@ -2504,7 +2504,7 @@ public partial class AcquireProcessorRequest
     public int TimeoutSeconds { get; set; } = 300;
 
     /// <summary>
-    /// Optional metadata about the processing job (null if not needed)
+    /// Client-provided processing job metadata. No Bannou plugin reads specific keys from this field by convention.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("metadata")]
     public object? Metadata { get; set; } = default!;
@@ -2574,7 +2574,7 @@ public partial class ReleaseProcessorRequest
     public bool Success { get; set; } = true;
 
     /// <summary>
-    /// Optional processing metrics (duration, items processed, etc.)
+    /// Client-provided processing metrics (duration, items processed, etc.). No Bannou plugin reads specific keys from this field by convention.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("metrics")]
     public object Metrics { get; set; } = default!;

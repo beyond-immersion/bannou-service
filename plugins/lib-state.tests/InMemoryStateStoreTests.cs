@@ -42,7 +42,8 @@ public class InMemoryStateStoreTests : IDisposable
     [Fact]
     public void ConstructorIsValid()
     {
-        ServiceConstructorValidator.ValidateServiceConstructor<InMemoryStateStore<TestEntity>>();
+        // Note: InMemoryStateStore is not a DI-registered service - it's created by StateStoreFactory.
+        // The factory controls constructor args including the optional error publisher callback.
         Assert.NotNull(_store);
     }
 

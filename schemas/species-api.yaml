@@ -29,8 +29,13 @@ info:
     2. Merge deprecated species into another species (or VOID to effectively delete)
     3. Optionally hard-delete the deprecated species after merge
 
-    **Schema Rules**: AI agents MUST review docs/reference/SCHEMA-RULES.md before modifying this schema. Optional reference types require `nullable: true`.
+    **SCHEMA MODIFICATION GATE**: STOP. Before modifying this schema, you MUST:
+    1. Read docs/reference/SCHEMA-RULES.md
+    2. State which section applies to your change
+    3. Only then proceed with edits
+    Edits without stating the applicable rule are FORBIDDEN.
   version: 2.0.0
+x-service-layer: GameFoundation
 servers:
 - url: http://localhost:5012
   description: Bannou service endpoint (internal only)
@@ -542,7 +547,7 @@ components:
           type: object
           additionalProperties: true
           nullable: true
-          description: Base trait modifiers for this species (JSON)
+          description: "Client-only trait modifiers. No Bannou plugin reads specific keys from this field by convention."
         realmIds:
           type: array
           items:
@@ -554,7 +559,7 @@ components:
           type: object
           additionalProperties: true
           nullable: true
-          description: Additional metadata for the species
+          description: "Client-only metadata. No Bannou plugin reads specific keys from this field by convention."
 
     UpdateSpeciesRequest:
       description: Request to update an existing species with partial attribute changes
@@ -601,12 +606,12 @@ components:
           type: object
           additionalProperties: true
           nullable: true
-          description: Base trait modifiers for this species
+          description: "Client-only trait modifiers. No Bannou plugin reads specific keys from this field by convention."
         metadata:
           type: object
           additionalProperties: true
           nullable: true
-          description: Additional metadata
+          description: "Client-only metadata. No Bannou plugin reads specific keys from this field by convention."
 
     DeleteSpeciesRequest:
       description: Request to hard-delete a deprecated species with no remaining references
@@ -759,7 +764,7 @@ components:
           type: object
           additionalProperties: true
           nullable: true
-          description: Base trait modifiers for this species (null if none)
+          description: "Client-only trait modifiers. No Bannou plugin reads specific keys from this field by convention."
         realmCodes:
           type: array
           items:
@@ -770,7 +775,7 @@ components:
           type: object
           additionalProperties: true
           nullable: true
-          description: Additional metadata for the species (null if none)
+          description: "Client-only metadata. No Bannou plugin reads specific keys from this field by convention."
 
     # Response schemas
     SpeciesResponse:
@@ -831,7 +836,7 @@ components:
           type: object
           additionalProperties: true
           nullable: true
-          description: Base trait modifiers for this species
+          description: "Client-only trait modifiers. No Bannou plugin reads specific keys from this field by convention."
         realmIds:
           type: array
           items:
@@ -842,7 +847,7 @@ components:
           type: object
           additionalProperties: true
           nullable: true
-          description: Additional metadata for the species
+          description: "Client-only metadata. No Bannou plugin reads specific keys from this field by convention."
         createdAt:
           type: string
           format: date-time

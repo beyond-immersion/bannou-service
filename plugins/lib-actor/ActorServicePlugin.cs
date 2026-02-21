@@ -1,12 +1,14 @@
-using BeyondImmersion.Bannou.Behavior.Handlers;
+using BeyondImmersion.BannouService.Abml.Cognition.Handlers;
 using BeyondImmersion.BannouService.Abml.Execution;
-using BeyondImmersion.BannouService.Actor.Caching;
 using BeyondImmersion.BannouService.Actor.Execution;
 using BeyondImmersion.BannouService.Actor.Handlers;
 using BeyondImmersion.BannouService.Actor.Pool;
 using BeyondImmersion.BannouService.Actor.PoolNode;
+using BeyondImmersion.BannouService.Actor.Providers;
 using BeyondImmersion.BannouService.Actor.Runtime;
 using BeyondImmersion.BannouService.Plugins;
+using BeyondImmersion.BannouService.Providers;
+using BeyondImmersion.BannouService.Resource;
 using BeyondImmersion.BannouService.Services;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
@@ -54,7 +56,7 @@ public class ActorServicePlugin : BaseBannouPlugin
         // Configuration registration is now handled centrally by PluginLoader based on [ServiceConfiguration] attributes
         // No need to register ActorServiceConfiguration here
 
-        // Register cognition handlers from lib-behavior (used by DocumentExecutorFactory)
+        // Register cognition handlers from bannou-service (used by DocumentExecutorFactory)
         services.AddSingleton<FilterAttentionHandler>();
         services.AddSingleton<AssessSignificanceHandler>();
         services.AddSingleton<QueryMemoryHandler>();
@@ -71,13 +73,31 @@ public class ActorServicePlugin : BaseBannouPlugin
         services.AddSingleton<IActionHandler, SetEncounterPhaseHandler>();
         services.AddSingleton<IActionHandler, EndEncounterHandler>();
 
+        // Register Event-to-Character communication handlers
+        services.AddSingleton<IActionHandler, ActorCommandHandler>();
+        services.AddSingleton<IActionHandler, ActorQueryHandler>();
+
         // Register scheduled event manager for delayed event handling
         services.AddSingleton<IScheduledEventManager, ScheduledEventManager>();
 
         // Register behavior execution infrastructure
-        services.AddSingleton<IBehaviorDocumentCache, BehaviorDocumentCache>();
-        services.AddSingleton<IPersonalityCache, PersonalityCache>();
-        services.AddSingleton<IEncounterCache, EncounterCache>();
+        // Note: Variable provider factories (personality, encounters, quests) are registered by their
+        // owning L3/L4 plugins (lib-character-personality, lib-character-encounter, lib-quest) via
+        // IVariableProviderFactory interface. Actor (L2) discovers them via DI collection injection.
+
+        // Behavior document providers - discovered via IEnumerable<IBehaviorDocumentProvider>
+        // Priority 100 (DynamicBehaviorProvider) is registered by lib-puppetmaster (L4)
+        // Priority 50 (SeededBehaviorProvider) loads embedded behaviors from this assembly
+        // Priority 0 (FallbackBehaviorProvider) logs when no provider can serve a behavior
+        services.AddSingleton<IBehaviorDocumentProvider, SeededBehaviorProvider>();
+        services.AddSingleton<IBehaviorDocumentProvider, FallbackBehaviorProvider>();
+        services.AddSingleton<BehaviorDocumentLoader>();
+        services.AddSingleton<IBehaviorDocumentLoader>(sp => sp.GetRequiredService<BehaviorDocumentLoader>());
+
+        // Register seeded resource provider for lib-resource API exposure
+        // This enables behaviors to be discovered via /resource/seeded/list and /resource/seeded/get
+        services.AddSingleton<ISeededResourceProvider, BehaviorSeededResourceProvider>();
+
         services.AddSingleton<IDocumentExecutorFactory, DocumentExecutorFactory>();
 
         // Register actor runtime components as singletons (shared across service instances)
@@ -151,12 +171,15 @@ public class ActorServicePlugin : BaseBannouPlugin
 
     /// <summary>
     /// Running phase - calls existing IBannouService lifecycle if present.
+    /// Also registers cleanup callbacks with lib-resource (must happen after all plugins are started).
     /// </summary>
     protected override async Task OnRunningAsync()
     {
         if (_service == null) return;
 
         Logger?.LogDebug("Actor service running");
+
+        var serviceProvider = _serviceProvider ?? throw new InvalidOperationException("ServiceProvider not available during OnRunningAsync");
 
         try
         {
@@ -170,6 +193,21 @@ public class ActorServicePlugin : BaseBannouPlugin
         catch (Exception ex)
         {
             Logger?.LogWarning(ex, "Exception during Actor service running phase");
+        }
+
+        // Register cleanup callbacks with lib-resource for character reference tracking.
+        // IResourceClient is L1 infrastructure - must be available (fail-fast per TENETS).
+        using var scope = serviceProvider.CreateScope();
+        var resourceClient = scope.ServiceProvider.GetRequiredService<IResourceClient>();
+
+        var success = await ActorService.RegisterResourceCleanupCallbacksAsync(resourceClient, CancellationToken.None);
+        if (success)
+        {
+            Logger?.LogInformation("Registered character cleanup callbacks with lib-resource");
+        }
+        else
+        {
+            Logger?.LogWarning("Failed to register some cleanup callbacks with lib-resource");
         }
     }
 

@@ -18,11 +18,15 @@ info:
     **Authority Model**: Authority over a map channel (region + kind) is established at
     creation or checkout. Publishers must include authorityToken in requests.
 
-    **Schema-less Payloads**: Map objects are "bags of data" with additionalProperties: true.
-    Only objectType is indexed; lib-mapping passes data through without validation.
+    **Game-Specific Payloads**: Map object data uses additionalProperties: true for
+    game-specific spatial data. No Bannou plugin reads specific keys by convention;
+    only objectType is indexed. lib-mapping passes data through without validation.
 
-    **Schema Rules**: AI agents MUST review docs/reference/SCHEMA-RULES.md before modifying
-    this schema. Optional reference types require `nullable: true`.
+    **SCHEMA MODIFICATION GATE**: STOP. Before modifying this schema, you MUST:
+    1. Read docs/reference/SCHEMA-RULES.md
+    2. State which section applies to your change
+    3. Only then proceed with edits
+    Edits without stating the applicable rule are FORBIDDEN.
   version: 1.0.0
 servers:
 - url: http://localhost:5012
@@ -689,10 +693,9 @@ components:
         data:
           type: object
           additionalProperties: true
-          description: |
-            SCHEMA-LESS. Can contain anything.
-            lib-mapping does not validate this.
-            Examples: cover_rating, health, respawn_delay, etc.
+          description: >-
+            Game-specific spatial object data. lib-mapping stores and returns this as-is.
+            No Bannou plugin reads specific keys from this field by convention.
           nullable: true
 
     MapObject:
@@ -731,7 +734,9 @@ components:
         data:
           type: object
           additionalProperties: true
-          description: Schema-less object data (publisher-defined)
+          description: >-
+            Game-specific spatial object data.
+            No Bannou plugin reads specific keys from this field by convention.
           nullable: true
         version:
           type: integer
@@ -775,7 +780,9 @@ components:
         data:
           type: object
           additionalProperties: true
-          description: Object state (for created/updated)
+          description: >-
+            Game-specific object state data.
+            No Bannou plugin reads specific keys from this field by convention.
           nullable: true
 
     # ========== AUTHORITY TYPES ==========
@@ -881,23 +888,23 @@ components:
         requires:
           type: object
           additionalProperties: true
-          description: |
-            Required criteria. Object types, property constraints.
-            Example: { "objectTypes": ["boulder"], "cover_rating": { "min": 0.5 } }
+          description: >-
+            Game-specific required criteria for affordance matching.
+            No Bannou plugin reads specific keys from this field by convention.
           nullable: true
         prefers:
           type: object
           additionalProperties: true
-          description: |
-            Preferred criteria (boost score but not required).
-            Example: { "elevation": { "prefer_higher": true } }
+          description: >-
+            Game-specific preferred criteria (boost score but not required).
+            No Bannou plugin reads specific keys from this field by convention.
           nullable: true
         excludes:
           type: object
           additionalProperties: true
-          description: |
-            Exclusion criteria. Reject candidates matching these.
-            Example: { "hazards": true, "contested": true }
+          description: >-
+            Game-specific exclusion criteria for affordance matching.
+            No Bannou plugin reads specific keys from this field by convention.
           nullable: true
 
     # ========== AUTHORITY REQUEST/RESPONSE ==========
@@ -1344,9 +1351,9 @@ components:
         features:
           type: object
           additionalProperties: true
-          description: |
-            What makes this location suitable.
-            Example: { "cover_rating": 0.8, "sightlines": ["north"], "terrain": "rocky" }
+          description: >-
+            Game-specific features of this affordance result.
+            No Bannou plugin reads specific keys from this field by convention.
           nullable: true
         objectIds:
           type: array
@@ -1529,7 +1536,9 @@ components:
         metadata:
           type: object
           additionalProperties: true
-          description: Additional metadata (schema-less)
+          description: >-
+            Client-provided definition metadata.
+            No Bannou plugin reads specific keys from this field by convention.
           nullable: true
         createdAt:
           type: string
@@ -1594,7 +1603,9 @@ components:
         metadata:
           type: object
           additionalProperties: true
-          description: Additional metadata
+          description: >-
+            Client-provided definition metadata.
+            No Bannou plugin reads specific keys from this field by convention.
           nullable: true
 
     GetDefinitionRequest:
@@ -1675,7 +1686,9 @@ components:
         metadata:
           type: object
           additionalProperties: true
-          description: New metadata (replaces existing)
+          description: >-
+            Updated client-provided definition metadata (replaces existing).
+            No Bannou plugin reads specific keys from this field by convention.
           nullable: true
 
     DeleteDefinitionRequest:

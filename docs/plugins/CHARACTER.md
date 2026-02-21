@@ -3,13 +3,24 @@
 > **Plugin**: lib-character
 > **Schema**: schemas/character-api.yaml
 > **Version**: 1.0.0
+> **Layer**: GameFoundation
 > **State Store**: character-statestore (MySQL)
 
 ---
 
 ## Overview
 
-The Character service manages game world characters for Arcadia. Characters are independent world assets (not owned by accounts) with realm-based partitioning for scalable queries. Provides standard CRUD, enriched retrieval with optional cross-service data (personality, backstory, family tree), and a compression/archival system for dead characters that generates text summaries and tracks reference counts for cleanup eligibility.
+The Character service (L2 GameFoundation) manages game world characters for Arcadia. Characters are independent world assets (not owned by accounts) with realm-based partitioning for scalable queries. Provides standard CRUD, enriched retrieval with family tree data (from lib-relationship), and compression/archival for dead characters via lib-resource. Per the service hierarchy, Character cannot depend on L4 services (personality, history, encounters) -- callers needing that data should aggregate from L4 services directly.
+
+---
+
+## Schema Extensions
+
+| Extension | Value | Purpose |
+|-----------|-------|---------|
+| `x-service-layer` | `GameFoundation` | L2 service - depends on L0/L1/L2 only |
+| `x-resource-lifecycle` | `resourceType: character`, `gracePeriodSeconds: 2592000`, `cleanupPolicy: ALL_REQUIRED` | 30-day grace period before cleanup; deletion aborts if any cleanup callback fails |
+| `x-compression-callback` | `resourceType: character`, `priority: 0` | Provides base character data for hierarchical compression via Resource service |
 
 ---
 
@@ -17,17 +28,18 @@ The Character service manages game world characters for Arcadia. Characters are 
 
 | Dependency | Usage |
 |------------|-------|
-| lib-state (`IStateStoreFactory`) | MySQL persistence for character data, archives, and indexes |
+| lib-state (`IStateStoreFactory`) | MySQL persistence for character data, archives, indexes, and refcount tracking |
+| lib-state (`IDistributedLockProvider`) | Distributed locks for character update and compression operations |
 | lib-messaging (`IMessageBus`) | Publishing lifecycle and compression events |
 | lib-messaging (`IEventConsumer`) | Event handler registration (no current handlers) |
 | lib-realm (`IRealmClient`) | Validates realm exists and is active before character creation |
 | lib-species (`ISpeciesClient`) | Validates species exists and belongs to the specified realm |
-| lib-character-personality (`ICharacterPersonalityClient`) | Fetches personality/combat prefs for enrichment; deletes on compression |
-| lib-character-history (`ICharacterHistoryClient`) | Fetches backstory for enrichment; summarizes/deletes on compression |
-| lib-relationship (`IRelationshipClient`) | Queries relationships for family tree and cleanup reference counting |
-| lib-relationship-type (`IRelationshipTypeClient`) | Maps relationship type IDs to codes for family tree categorization |
+| lib-relationship (`IRelationshipClient`) | Queries relationships for family tree and cleanup reference counting; maps type IDs to codes for family tree categorization |
+| lib-contract (`IContractClient`) | Queries contracts where character is a party (L1 - allowed) |
+| lib-resource (`IResourceClient`) | Queries L4 references (Actor, Encounter) via event-driven pattern (L1 - allowed) |
+| lib-resource (`IResourceTemplateRegistry`) | Registers `CharacterBaseTemplate` for ABML compile-time path validation (e.g., `${candidate.character.name}`) |
 
-> **Refactoring Consideration**: This plugin injects 6 service clients individually. Consider whether `IServiceNavigator` would reduce constructor complexity, trading explicit dependencies for cleaner signatures. Currently favoring explicit injection for dependency clarity.
+> **Refactoring Consideration**: This plugin injects 9 service clients individually in the service constructor (10 including `IEventConsumer`). Consider whether `IServiceNavigator` would reduce constructor complexity, trading explicit dependencies for cleaner signatures. Currently favoring explicit injection for dependency clarity.
 
 ---
 
@@ -35,11 +47,13 @@ The Character service manages game world characters for Arcadia. Characters are 
 
 | Dependent | Relationship |
 |-----------|-------------|
-| lib-analytics | Character lifecycle tracking for skill ratings |
-| lib-species | Species reference updates |
-| lib-character-personality | Character info for personality association |
-| lib-character-history | Character info for historical event tracking |
-| lib-character-encounter | Character data for encounter records and perspectives |
+| lib-analytics | Subscribes to `character.updated` for cache invalidation; calls `ICharacterClient` for realm resolution |
+| lib-character-encounter | Registers `x-references` cleanup callback (`/character-encounter/delete-by-character`); calls `ICharacterClient` for character name enrichment |
+| lib-character-history | Registers `x-references` cleanup callback (`/character-history/delete-all`); cleanup invoked via lib-resource when character deleted |
+| lib-character-personality | Registers `x-references` cleanup callback (`/character-personality/cleanup-by-character`); cleanup invoked via lib-resource when character deleted |
+| lib-actor | Registers `x-references` cleanup callback (`/actor/cleanup-by-character`); cleanup invoked via lib-resource when character deleted |
+| lib-species | Calls `ICharacterClient` to check character references during species deprecation |
+| lib-quest | Calls `ICharacterClient` to validate character existence when accepting quests |
 
 ---
 
@@ -50,10 +64,14 @@ The Character service manages game world characters for Arcadia. Characters are 
 | Key Pattern | Data Type | Purpose |
 |-------------|-----------|---------|
 | `character:{realmId}:{characterId}` | `CharacterModel` | Full character data (realm-partitioned) |
-| `realm-index:{realmId}` | `List<string>` | Character IDs in a realm (Redis for speed) |
-| `character-global-index:{characterId}` | `string` | Character ID to realm ID mapping (MySQL for durability) |
+| `realm-index:{realmId}` | `List<string>` | Character IDs in a realm (for list queries) |
+| `character-global-index:{characterId}` | `string` | Character ID to realm ID mapping (for ID-only lookups) |
 | `archive:{characterId}` | `CharacterArchiveModel` | Compressed character text summaries |
 | `refcount:{characterId}` | `RefCountData` | Cleanup eligibility tracking (zero-ref timestamp) |
+
+**Lock Store**: `character-lock` (Backend: Redis)
+
+Used by `IDistributedLockProvider` to ensure multi-instance safety for character modifications.
 
 ---
 
@@ -61,14 +79,14 @@ The Character service manages game world characters for Arcadia. Characters are 
 
 ### Published Events
 
-| Topic | Trigger |
-|-------|---------|
-| `character.created` | New character created |
-| `character.updated` | Character metadata modified (includes `changedFields`) |
-| `character.deleted` | Character permanently deleted |
-| `character.realm.joined` | Character created in or transferred to a realm |
-| `character.realm.left` | Character deleted from a realm |
-| `character.compressed` | Dead character archived (includes `DeletedSourceData` flag) |
+| Topic | Event Type | Trigger |
+|-------|-----------|---------|
+| `character.created` | `CharacterCreatedEvent` | New character created |
+| `character.updated` | `CharacterUpdatedEvent` | Character metadata modified (includes `ChangedFields` list) |
+| `character.deleted` | `CharacterDeletedEvent` | Character permanently deleted |
+| `character.realm.joined` | `CharacterRealmJoinedEvent` | Character created in or transferred to a realm (includes `PreviousRealmId` for transfers) |
+| `character.realm.left` | `CharacterRealmLeftEvent` | Character deleted from or transferred out of a realm (includes `Reason`: "deletion" or "transfer") |
+| `character.compressed` | `CharacterCompressedEvent` | Dead character archived (includes `DeletedSourceData` flag) |
 
 ### Consumed Events
 
@@ -83,11 +101,8 @@ This plugin does not consume external events.
 | `MaxPageSize` | `CHARACTER_MAX_PAGE_SIZE` | `100` | Maximum page size for list operations |
 | `DefaultPageSize` | `CHARACTER_DEFAULT_PAGE_SIZE` | `20` | Default page size when not specified |
 | `RealmIndexUpdateMaxRetries` | `CHARACTER_REALM_INDEX_UPDATE_MAX_RETRIES` | `3` | Optimistic concurrency retry limit for realm index |
+| `LockTimeoutSeconds` | `CHARACTER_LOCK_TIMEOUT_SECONDS` | `30` | Timeout in seconds for distributed lock acquisition |
 | `CleanupGracePeriodDays` | `CHARACTER_CLEANUP_GRACE_PERIOD_DAYS` | `30` | Days at zero references before cleanup eligible |
-| `CompressionMaxBackstoryPoints` | `CHARACTER_COMPRESSION_MAX_BACKSTORY_POINTS` | `5` | Max backstory points in compression summary |
-| `CompressionMaxLifeEvents` | `CHARACTER_COMPRESSION_MAX_LIFE_EVENTS` | `10` | Max life events in compression summary |
-| `PersonalityTraitThreshold` | `CHARACTER_PERSONALITY_TRAIT_THRESHOLD` | `0.3` | Threshold for trait classification (>threshold = positive, <-threshold = negative) |
-| `CharacterRetentionDays` | `CHARACTER_RETENTION_DAYS` | `90` | Days to retain deleted characters (stub for unimplemented purge feature) |
 
 ---
 
@@ -98,59 +113,93 @@ This plugin does not consume external events.
 | `ILogger<CharacterService>` | Scoped | Structured logging |
 | `CharacterServiceConfiguration` | Singleton | Pagination and cleanup config |
 | `IStateStoreFactory` | Singleton | State store access |
+| `IDistributedLockProvider` | Singleton | Distributed locking for multi-instance safety |
 | `IMessageBus` | Scoped | Event publishing |
 | `IRealmClient` | Scoped | Realm validation |
 | `ISpeciesClient` | Scoped | Species validation |
-| `ICharacterPersonalityClient` | Scoped | Enrichment and compression |
-| `ICharacterHistoryClient` | Scoped | Enrichment and compression |
-| `IRelationshipClient` | Scoped | Family tree and reference counting |
-| `IRelationshipTypeClient` | Scoped | Relationship code lookup |
-| `IEventConsumer` | Scoped | Event registration (no handlers) |
+| `IRelationshipClient` | Scoped | Family tree, reference counting, and type code lookup |
+| `IContractClient` | Scoped | Contract reference counting (L1 - allowed) |
+| `IResourceClient` | Scoped | L4 reference counting via event-driven pattern |
+| `IEventConsumer` | Scoped | Event registration (no handlers defined) |
 
 Service lifetime is **Scoped** (per-request).
+
+**Plugin Startup** (`CharacterServicePlugin.OnRunningAsync`):
+1. Registers `CharacterBaseTemplate` with `IResourceTemplateRegistry` for ABML compile-time path validation
+2. Registers compression callback with lib-resource via generated `CharacterCompressionCallbacks.RegisterAsync`
 
 ---
 
 ## API Endpoints (Implementation Notes)
 
-### CRUD Operations (5 endpoints)
+### CRUD Operations (7 endpoints)
 
-- **Create**: Validates realm (must exist AND be active) and species (must exist AND be in specified realm). Fails CLOSED on service unavailability. Generates new GUID. Stores with realm-partitioned key. Maintains both realm index (Redis) and global index (MySQL) with optimistic concurrency retries.
+- **Create**: Validates realm (must exist AND be active) and species (must exist AND be in specified realm). Fails CLOSED on service unavailability (throws `InvalidOperationException`). Generates new GUID. Stores with realm-partitioned key. Maintains both realm index and global index with optimistic concurrency retries.
 - **Get**: Two-step lookup via global index (characterId -> realmId) then data fetch.
-- **Update**: Smart field tracking with changedFields list. Setting DeathDate automatically sets Status to Dead. SpeciesId is mutable (supports species merge migrations).
-- **Delete**: Removes from all three storage locations (data, realm index, global index) with optimistic concurrency on index updates.
-- **List/ByRealm**: Gets realm index, bulk-fetches all characters, filters in-memory (status, species), then paginates. Clamps page size to MaxPageSize.
+- **Update**: Smart field tracking with `ChangedFields` list. `DeathDate` and `Status=Dead` are bidirectionally linked: setting `DeathDate` auto-sets `Status` to `Dead`, and setting `Status` to `Dead` auto-sets `DeathDate` to now (if not already set). `SpeciesId` is mutable (supports species merge migrations).
+- **Delete**: Checks for L4 references via lib-resource, executes cleanup callbacks (CASCADE) to delete dependent data in CharacterPersonality/CharacterHistory/etc., then removes from all three storage locations (data, realm index, global index) with optimistic concurrency on index updates. Returns Conflict if cleanup is blocked by RESTRICT policy.
+- **List/ByRealm**: Server-side filtering and pagination via `IJsonQueryableStateStore` MySQL JSON queries. Builds query conditions for realm, status, and species filters, delegates to `JsonQueryPagedAsync` for O(log N + P) performance. Results are sorted by `$.Name` ascending. Clamps page size to `MaxPageSize`.
+- **TransferRealm**: Moves a character to a different realm. Validates target realm is active, acquires distributed lock, deletes from old realm-partitioned key, saves to new realm-partitioned key, updates indexes, and publishes `character.realm.left` (reason: "transfer"), `character.realm.joined` (with previousRealmId), and `character.updated` events.
 
 ### Enriched Character (`/character/get-enriched`)
 
-Opt-in enrichment via boolean flags to avoid unnecessary service calls:
+Per SERVICE_HIERARCHY, Character (L2) can only enrich with data from L2 or lower services. The following flags are available:
 
-| Flag | Source Service | Data Retrieved |
-|------|---------------|----------------|
-| `includePersonality` | CharacterPersonality | Trait axes as Dictionary<string, float> |
-| `includeCombatPreferences` | CharacterPersonality | Style, range, role, risk/retreat |
-| `includeBackstory` | CharacterHistory | BackstoryElementSnapshot list |
-| `includeFamilyTree` | Relationship + RelationshipType | Parents, children, siblings, spouse, past lives |
+| Flag | Source Service | Status |
+|------|---------------|--------|
+| `includePersonality` | CharacterPersonality (L4) | **NOT INCLUDED** - callers should call L4 directly |
+| `includeCombatPreferences` | CharacterPersonality (L4) | **NOT INCLUDED** - callers should call L4 directly |
+| `includeBackstory` | CharacterHistory (L4) | **NOT INCLUDED** - callers should call L4 directly |
+| `includeFamilyTree` | Relationship (L2) | ✅ Included |
 
-Each enrichment section is independently try-caught. Failures return null for that section (graceful degradation). Main response still returns with available data.
+If L4 enrichment flags are set, the service logs a debug message explaining the SERVICE_HIERARCHY constraint but does not fail.
 
 **Family tree categorization** uses string-based type code matching:
 - Parents: PARENT, MOTHER, FATHER, STEP_PARENT
 - Children: CHILD, SON, DAUGHTER, STEP_CHILD
 - Siblings: SIBLING, BROTHER, SISTER, HALF_SIBLING
-- Spouse: SPOUSE, HUSBAND, WIFE
+- Spouses: SPOUSE, HUSBAND, WIFE (array - supports multiple spousal relationships)
 - Reincarnation: INCARNATION (tracks past lives)
 
-### Compression (`/character/compress`)
+### Compression (Centralized via Resource Service)
 
-Preconditions: Must be Status=Dead with DeathDate set.
+**IMPORTANT**: Character compression is now centralized through the Resource service (L1). Character (L2) provides a compression callback endpoint; actual compression orchestration happens via `/resource/compress/execute`.
 
-Compression steps:
-1. **Personality summary**: Maps trait values to text via threshold logic (>0.3 = "creative", <-0.3 = "traditional")
-2. **History summary**: Calls `SummarizeHistoryAsync()` with configurable max backstory/event limits
-3. **Family summary**: Text like "married to Elena, parent of 3, reincarnated from 2 past lives"
-4. **Archive creation**: Stores text summaries in MySQL under `archive:{characterId}`
-5. **Optional source deletion**: If `DeleteSourceData=true`, deletes personality and history data
+#### Compression Callback (`/character/get-compress-data`)
+
+Preconditions: Must be `Status=Dead` with `DeathDate` set. Returns `BadRequest` for alive characters.
+
+Called by Resource service during `ExecuteCompressAsync`. Returns character base data for archival:
+- Core character fields (name, realm, species, birth/death dates, status)
+- Family summary text: "married to Elena and Marcus, parent of 3, orphaned" (from Relationship service, L2)
+
+Returns `NotFound` if character doesn't exist, `BadRequest` if character is alive.
+
+#### Triggering Compression
+
+To compress a character with all its L4 data:
+
+```csharp
+// Caller invokes Resource service, NOT Character service directly
+var result = await _resourceClient.ExecuteCompressAsync(
+    new ExecuteCompressRequest
+    {
+        ResourceType = "character",
+        ResourceId = characterId,
+        DeleteSourceData = true,  // Clean up after archival
+        CompressionPolicy = CompressionPolicy.ALL_REQUIRED
+    }, ct);
+```
+
+Resource service will:
+1. Call `/character/get-compress-data` (priority 0)
+2. Call `/character-personality/get-compress-data` (priority 10)
+3. Call `/character-history/get-compress-data` (priority 20)
+4. Call `/character-encounter/get-compress-data` (priority 30)
+5. Bundle all responses into a unified archive stored in MySQL
+6. If `deleteSourceData=true`, invoke cleanup callbacks to delete source data
+
+**Legacy**: The old `/character/compress` endpoint still exists but only archives L2 data (family summary). Use Resource service for full hierarchical compression including L4 data.
 
 ### Archive Retrieval (`/character/get-archive`)
 
@@ -159,11 +208,12 @@ Simple lookup of compressed archive data by character ID.
 ### Reference Checking (`/character/check-references`)
 
 Determines cleanup eligibility for compressed characters:
-1. Character must be compressed (archive exists)
-2. Reference count must be 0 (currently only checks relationships)
-3. Must maintain 0 references for grace period (default 30 days)
+1. Character must exist
+2. Check if compressed (archive exists)
+3. Reference count must be 0 (checks relationships, encounters, contracts, and actors)
+4. Must maintain 0 references for grace period (default 30 days)
 
-Tracks `ZeroRefSinceUnix` timestamp in state store for multi-instance safety.
+Tracks `ZeroRefSinceUnix` timestamp in state store with optimistic concurrency for multi-instance safety.
 
 ---
 
@@ -188,17 +238,12 @@ Character Key Architecture (Realm-Partitioned)
   GET /character/by-realm (realm query)
        │
        ▼
-  realm-index:{realmId}
-       │ returns [id1, id2, id3, ...]
+  IJsonQueryableStateStore<CharacterModel>
+       │ JsonQueryPagedAsync(conditions, offset, limit)
+       │ conditions: $.RealmId, $.Status, $.SpeciesId
        ▼
-  BulkGet: character:{realmId}:{id1}, character:{realmId}:{id2}, ...
-       │ returns [CharacterModel, ...]
-       ▼
-  In-memory filter (status, species)
-       │
-       ▼
-  Paginate (page, pageSize)
-       │
+  MySQL: WHERE JSON_EXTRACT(...) with LIMIT/OFFSET
+       │ returns page of CharacterModel + TotalCount
        ▼
   [CharacterListResponse]
 ```
@@ -207,17 +252,16 @@ Character Key Architecture (Realm-Partitioned)
 
 ## Stubs & Unimplemented Features
 
-1. **Incomplete reference counting**: `CheckCharacterReferences` only checks relationships. Does not check character encounters, history events, contracts, documents, or AI agent references.
-2. **`CharacterRetentionDays` config placeholder**: Defined for future retention/purge feature but not yet referenced in service code.
+None currently tracked.
 
 ---
 
 ## Potential Extensions
 
-1. **Full reference counting**: Expand to check encounters, history, contracts, and other polymorphic references.
-2. **Realm transfer**: Move characters between realms with event publishing and index updates.
-3. **Batch compression**: Compress multiple dead characters in one operation.
-4. **Typed compression event**: Create `CharacterCompressedEvent` model in events schema.
+1. **Batch compression**: Compress multiple dead characters in one operation. Would need to be implemented in Resource service as a batch variant of `/resource/compress/execute`.
+<!-- AUDIT:NEEDS_DESIGN:2026-02-01:https://github.com/beyond-immersion/bannou-service/issues/253 -->
+2. **Character purge background service**: Automated purge of characters eligible for cleanup (zero references past grace period). Dead `CharacterRetentionDays` config was removed (T21 violation); new config with clear semantics should be designed when this is implemented. Deferred until operational need arises.
+<!-- AUDIT:NEEDS_DESIGN:2026-02-07:https://github.com/beyond-immersion/bannou-service/issues/263 -->
 
 ---
 
@@ -225,36 +269,38 @@ Character Key Architecture (Realm-Partitioned)
 
 ### Bugs (Fix Immediately)
 
-No bugs identified.
+1. ~~**ApiException wrapped in InvalidOperationException in validation helpers**~~: **FIXED** (2026-02-09) - `ValidateRealmAsync` and `ValidateSpeciesAsync` were catching all non-404 exceptions (including `ApiException`) and wrapping them in `InvalidOperationException`. This caused dependency failures (e.g., RealmService returning 500) to be misclassified as internal errors, emitting unnecessary error events and returning 500 instead of 503 (ServiceUnavailable). Fixed by using `catch (Exception ex) when (ex is not ApiException)` to let `ApiException` propagate naturally to the caller's `catch (ApiException)` block.
 
-### Intentional Quirks
+### Intentional Quirks (Documented Behavior)
 
-1. **DeathDate auto-sets Status**: Setting `DeathDate` in an update automatically changes `Status` to `Dead`. The inverse is not true (setting Status=Dead doesn't set DeathDate).
+1. **Compression delegated to Resource service**: Full character compression (including L4 data) is now handled by the centralized Resource service (L1). Character provides a `/character/get-compress-data` callback endpoint that Resource invokes during compression orchestration. The legacy `/character/compress` endpoint still exists but only archives L2 data. For hierarchical compression that includes CharacterPersonality, CharacterHistory, and CharacterEncounter data, use `/resource/compress/execute` with `resourceType="character"`.
 
-2. **Silent deletion on compression**: When `DeleteSourceData=true`, exceptions from personality/history deletion are caught and ignored. Archive is created even if source data deletion fails.
+2. **Family tree silently skips unknown relationship types**: If a relationship type ID can't be resolved (type deleted, Relationship service unavailable), the relationship is excluded from the family tree with no indication in the response. This is intentional graceful degradation: partial valid data is preferred over failing the entire enrichment. A warning is logged (`"Could not look up relationship type {TypeId}"`) for observability. The alternative (returning uncategorized relationships) would break the structured Parents/Children/Siblings/Spouses/PastLives response format.
+
+3. **INCARNATION tracking is directional (past lives only)**: The `PastLives` field only populates when the queried character is Entity2 in an INCARNATION relationship. This is semantically correct: INCARNATION means "Entity1 died and was reincarnated as Entity2". When querying Entity2, Entity1 is correctly shown as a past life. When querying Entity1, Entity2 is NOT shown because that would be a "future incarnation" (you wouldn't know your future incarnations). The field is named `PastLives`, not `Incarnations`, reinforcing this semantic meaning.
+
+4. **Family summary uses relationship counts, not semantic inference**: The `GenerateFamilySummaryAsync` text output uses literal relationship counts rather than inferring intent. Specifically: "orphaned" means `Parents.Count == 0` (no parent relationships exist in the system), NOT that parents have died -- dead parents appear in the `Parents` list with `IsAlive = false`. Similarly, "single parent household" means exactly one parent relationship exists; it doesn't infer that two parents were expected. These are meaningful semantic distinctions for backstory generation: a character with no parent records is fundamentally different from one whose parents died.
 
 ### Design Considerations (Requires Planning)
 
-1. **No distributed lock on character update (T9)**: `UpdateCharacterAsync` reads a character, modifies it, and saves it without concurrency protection. Two simultaneous updates result in last-writer-wins. Fix requires: inject `IDistributedLockProvider`, add locking around read-modify-write, or use `GetWithETagAsync`/`TrySaveAsync` with retry-on-conflict.
+None currently tracked.
 
-2. **No distributed lock on character compression (T9)**: `CompressCharacterAsync` reads a character, generates summaries, stores archive, and optionally deletes source data without concurrency protection. Fix requires: inject `IDistributedLockProvider`, wrap compression in lock scope.
+---
 
-3. **In-memory filtering before pagination**: List operations load all characters in a realm, filter in-memory, then paginate. For realms with thousands of characters, this loads everything into memory before applying page limits.
+## Work Tracking
 
-4. **Global index double-write**: Both Redis (realm index) and MySQL (global index) are updated on create/delete. Extra write for resilience across restarts but adds complexity.
+This section tracks active development work on items from the quirks/bugs lists above.
 
-5. **Reference counting only checks relationships**: `CheckCharacterReferences` queries only the Relationship service. Characters referenced by encounters, history events, contracts, or AI agents are not counted, potentially allowing premature cleanup.
+### Active
 
-6. **Family tree type lookups are sequential**: `BuildFamilyTreeAsync` looks up each unique relationship type ID one at a time via API call. Not parallelized. For N relationship types, N sequential network calls.
+No active work items.
 
-7. **Family tree silently skips unknown relationship types**: If a relationship type ID can't be looked up, the relationship is silently excluded from the family tree with no indication in the response.
+### Historical
 
-8. **INCARNATION tracking is directional**: Only tracks past lives when the character is Entity2 in the INCARNATION relationship. If the character is Entity1 (the "reincarnator"), past lives are not included.
-
-9. **Multiple spouses = last one wins**: Uses simple assignment for spouse. If a character has multiple spouse relationships, only the last one processed appears in the response.
-
-10. **"orphaned" label ignores parent death status**: Adds "orphaned" when `Parents.Count == 0`, regardless of whether parents existed but died.
-
-11. **"single parent household" is literal**: Adds this label when exactly one parent exists. Doesn't consider whether two parents were expected.
-
-12. **Family tree character lookups are sequential**: Calls `FindCharacterByIdAsync` for each related character during family tree building. A family of 10 means 10+ sequential database lookups.
+See git history for full changelog. Key milestones:
+- **2026-02-09**: Fixed ApiException wrapping in validation helpers (T7 compliance)
+- **2026-02-07**: Server-side MySQL JSON queries, plural `spouses`, removed dead config, schema extensions
+- **2026-02-03**: Centralized compression via Resource service (L1), delete flow with `ExecuteCleanupAsync`
+- **2026-02-02**: Parallel family tree lookups, quirk categorization audit, dead config removal
+- **2026-02-01**: Realm transfer feature
+- **2026-01-31**: Expanded reference counting, distributed locking

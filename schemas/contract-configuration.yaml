@@ -5,8 +5,11 @@ info:
     Configuration schema for Contract service.
     Properties are bound to environment variables with BANNOU_ prefix.
 
-    **Schema Rules**: AI agents MUST review docs/reference/SCHEMA-RULES.md before
-    modifying this schema. Optional reference types require `nullable: true`.
+    **SCHEMA MODIFICATION GATE**: STOP. Before modifying this schema, you MUST:
+    1. Read docs/reference/SCHEMA-RULES.md
+    2. State which section applies to your change
+    3. Only then proceed with edits
+    Edits without stating the applicable rule are FORBIDDEN.
   version: 1.0.0
 paths: {}
 x-service-configuration:
@@ -51,11 +54,6 @@ x-service-configuration:
       env: CONTRACT_PREBOUND_API_TIMEOUT_MS
       default: 30000
       description: Timeout for individual prebound API calls in milliseconds
-    clauseValidationCacheStalenessSeconds:
-      type: integer
-      env: CONTRACT_CLAUSE_VALIDATION_CACHE_STALENESS_SECONDS
-      default: 15
-      description: Staleness threshold in seconds for cached clause validation results before revalidation
 
     # Lock Configuration
     contractLockTimeoutSeconds:
@@ -70,8 +68,42 @@ x-service-configuration:
       default: 15
       description: Lock timeout in seconds for index update distributed locks
 
+    indexLockFailureMode:
+      $ref: 'contract-api.yaml#/components/schemas/IndexLockFailureMode'
+      env: CONTRACT_INDEX_LOCK_FAILURE_MODE
+      default: warn
+      description: Behavior when index lock acquisition fails (warn=continue, fail=throw)
+
+    termsMergeMode:
+      $ref: 'contract-api.yaml#/components/schemas/TermsMergeMode'
+      env: CONTRACT_TERMS_MERGE_MODE
+      default: shallow
+      description: How instance terms merge with template terms (shallow=replace by key, deep=recursive merge)
+
     idempotencyTtlSeconds:
       type: integer
       env: CONTRACT_IDEMPOTENCY_TTL_SECONDS
       default: 86400
       description: TTL in seconds for idempotency key storage (default 24 hours)
+
+    # Milestone Deadline Background Service
+    milestoneDeadlineCheckIntervalSeconds:
+      type: integer
+      env: CONTRACT_MILESTONE_DEADLINE_CHECK_INTERVAL_SECONDS
+      default: 300
+      description: Interval between milestone deadline checks in seconds (default 5 minutes)
+
+    milestoneDeadlineStartupDelaySeconds:
+      type: integer
+      env: CONTRACT_MILESTONE_DEADLINE_STARTUP_DELAY_SECONDS
+      default: 30
+      description: Startup delay before first milestone deadline check in seconds
+
+    # Pagination Configuration
+    defaultPageSize:
+      type: integer
+      env: CONTRACT_DEFAULT_PAGE_SIZE
+      default: 20
+      minimum: 1
+      maximum: 100
+      description: Default page size for paginated endpoints when not specified in request

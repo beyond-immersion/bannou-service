@@ -3,9 +3,9 @@
 // Tests for document execution.
 // =============================================================================
 
+using BeyondImmersion.Bannou.BehaviorCompiler.Parser;
+using BeyondImmersion.Bannou.BehaviorExpressions.Expressions;
 using BeyondImmersion.BannouService.Abml.Execution;
-using BeyondImmersion.BannouService.Abml.Expressions;
-using BeyondImmersion.BannouService.Abml.Parser;
 using Xunit;
 
 namespace BeyondImmersion.BannouService.Tests.Abml;

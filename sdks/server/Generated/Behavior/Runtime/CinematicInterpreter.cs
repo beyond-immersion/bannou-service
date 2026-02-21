@@ -43,7 +43,6 @@ public sealed class CinematicInterpreter
     /// <param name="baseModel">The base behavior model.</param>
     public CinematicInterpreter(BehaviorModel baseModel)
     {
-
         _baseModel = baseModel;
         _interpreter = new BehaviorModelInterpreter(baseModel);
         _inputState = new double[baseModel.Schema.InputCount];
@@ -85,7 +84,6 @@ public sealed class CinematicInterpreter
     /// <param name="extensionModel">The extension model.</param>
     public void RegisterExtension(string continuationPointName, BehaviorModel extensionModel)
     {
-
         var ext = new ExtensionModel(extensionModel, new BehaviorModelInterpreter(extensionModel));
         _extensions[continuationPointName] = ext;
 
@@ -108,7 +106,6 @@ public sealed class CinematicInterpreter
     /// <returns>True if the extension was accepted (waiting at the matching point).</returns>
     public bool InjectExtension(string continuationPointName, BehaviorModel extensionModel)
     {
-
         if (_waitingForExtension && _waitingCpName == continuationPointName)
         {
             _pendingExtension = new ExtensionModel(extensionModel, new BehaviorModelInterpreter(extensionModel));

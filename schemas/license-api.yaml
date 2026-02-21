@@ -1,0 +1,1619 @@
+openapi: 3.0.0
+info:
+  title: License Service API
+  version: 1.0.0
+  description: |
+    Grid-based progression boards via itemized contracts.
+
+    lib-license provides skill trees, license boards, and tech trees by combining
+    Inventory (containers), Items (license nodes), and Contracts (unlock behavior).
+    It is a thin orchestration layer that handles adjacency validation, board state
+    management, and unlock coordination — delegating business logic to contracts.
+
+    **Key Design Principle**: The contract is the brain, the license board is the grid.
+    Board templates define the spatial layout and reference a contract template that
+    controls unlock behavior (LP deduction, ability grants). lib-license validates
+    adjacency and prerequisites, then delegates to lib-contract for execution.
+
+    **Per-Board Infrastructure**: Each board instance creates an inventory container
+    (slot_only, maxSlots = gridWidth * gridHeight) to hold unlocked license items.
+    Licenses are items placed at grid positions within this container.
+
+    **Adjacency Modes**: Boards support 4-way (orthogonal only) and 8-way (orthogonal
+    + diagonal) adjacency for grid traversal. Starting nodes bypass adjacency checks.
+
+    **Atomic Unlocks**: If contract execution fails (LP deduction, ability grant), no
+    license is placed. The unlock rolls back cleanly.
+
+    **POST-Only API Pattern**: This API uses POST for all operations to support
+    zero-copy WebSocket routing. Path parameters are passed in request bodies.
+
+    **SCHEMA MODIFICATION GATE**: STOP. Before modifying this schema, you MUST:
+    1. Read docs/reference/SCHEMA-RULES.md
+    2. State which section applies to your change
+    3. Only then proceed with edits
+    Edits without stating the applicable rule are FORBIDDEN.
+  # Resource reference tracking (see SCHEMA-RULES.md "x-references")
+  x-references:
+    - target: character
+      sourceType: license-board
+      field: ownerId
+      onDelete: cascade
+      cleanup:
+        endpoint: /license/cleanup-by-owner
+        payloadTemplate: '{"ownerType": "character", "ownerId": "{{resourceId}}"}'
+x-service-layer: GameFeatures
+
+servers:
+- url: http://localhost:5012
+  description: Bannou service endpoint (internal only)
+
+paths:
+  # ===========================================================================
+  # Board Template Management (5 endpoints)
+  # ===========================================================================
+
+  /license/board-template/create:
+    post:
+      operationId: createBoardTemplate
+      tags:
+      - BoardTemplate
+      summary: Create a new board template
+      description: |
+        Create a board template with grid dimensions, starting nodes, adjacency mode,
+        and a reference to the contract template that controls unlock behavior.
+        Board templates are scoped to a game service.
+      x-permissions:
+      - role: developer
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateBoardTemplateRequest'
+      responses:
+        '200':
+          description: Board template created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BoardTemplateResponse'
+        '400':
+          description: Invalid request (validation error)
+        '404':
+          description: Referenced game service or contract template not found
+  /license/board-template/get:
+    post:
+      operationId: getBoardTemplate
+      tags:
+      - BoardTemplate
+      summary: Get a board template by ID
+      description: Retrieves a board template by its unique identifier.
+      x-permissions:
+      - role: developer
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetBoardTemplateRequest'
+      responses:
+        '200':
+          description: Board template retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BoardTemplateResponse'
+        '404':
+          description: Board template not found
+  /license/board-template/list:
+    post:
+      operationId: listBoardTemplates
+      tags:
+      - BoardTemplate
+      summary: List board templates for a game service
+      description: Paginated list of board templates filtered by game service ID.
+      x-permissions:
+      - role: developer
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ListBoardTemplatesRequest'
+      responses:
+        '200':
+          description: Board templates retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListBoardTemplatesResponse'
+
+  /license/board-template/update:
+    post:
+      operationId: updateBoardTemplate
+      tags:
+      - BoardTemplate
+      summary: Update a board template
+      description: |
+        Update mutable fields of a board template. Grid dimensions, starting nodes,
+        and contract template are immutable after creation.
+      x-permissions:
+      - role: developer
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateBoardTemplateRequest'
+      responses:
+        '200':
+          description: Board template updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BoardTemplateResponse'
+        '404':
+          description: Board template not found
+  /license/board-template/delete:
+    post:
+      operationId: deleteBoardTemplate
+      tags:
+      - BoardTemplate
+      summary: Delete a board template
+      description: |
+        Delete a board template. Blocked if active board instances exist
+        that reference this template.
+      x-permissions:
+      - role: developer
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeleteBoardTemplateRequest'
+      responses:
+        '200':
+          description: Board template deleted successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BoardTemplateResponse'
+        '404':
+          description: Board template not found
+        '409':
+          description: Active board instances exist for this template
+  # ===========================================================================
+  # License Definition Management (5 endpoints)
+  # ===========================================================================
+
+  /license/definition/add:
+    post:
+      operationId: addLicenseDefinition
+      tags:
+      - Definition
+      summary: Add a license definition to a board template
+      description: |
+        Add a license definition (node) to a board template at a specific grid position.
+        Each definition has a unique code within the template, a grid position, an LP cost,
+        and a reference to the item template that is created when the license is unlocked.
+        Optional non-adjacent prerequisites can reference other license codes on the board.
+      x-permissions:
+      - role: developer
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AddLicenseDefinitionRequest'
+      responses:
+        '200':
+          description: License definition added successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LicenseDefinitionResponse'
+        '400':
+          description: Invalid request (position out of bounds, invalid item template)
+        '404':
+          description: Board template or item template not found
+        '409':
+          description: Duplicate code or position, or max definitions exceeded
+  /license/definition/get:
+    post:
+      operationId: getLicenseDefinition
+      tags:
+      - Definition
+      summary: Get a license definition
+      description: Get a license definition by board template ID and license code.
+      x-permissions:
+      - role: developer
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetLicenseDefinitionRequest'
+      responses:
+        '200':
+          description: License definition retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LicenseDefinitionResponse'
+        '404':
+          description: Board template or license definition not found
+  /license/definition/list:
+    post:
+      operationId: listLicenseDefinitions
+      tags:
+      - Definition
+      summary: List all license definitions for a board template
+      description: Returns the full grid layout of all license definitions for a board template.
+      x-permissions:
+      - role: developer
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ListLicenseDefinitionsRequest'
+      responses:
+        '200':
+          description: License definitions retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListLicenseDefinitionsResponse'
+        '404':
+          description: Board template not found
+  /license/definition/update:
+    post:
+      operationId: updateLicenseDefinition
+      tags:
+      - Definition
+      summary: Update a license definition
+      description: |
+        Update mutable fields of a license definition. Position and code are immutable
+        after creation.
+      x-permissions:
+      - role: developer
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateLicenseDefinitionRequest'
+      responses:
+        '200':
+          description: License definition updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LicenseDefinitionResponse'
+        '404':
+          description: Board template or license definition not found
+  /license/definition/remove:
+    post:
+      operationId: removeLicenseDefinition
+      tags:
+      - Definition
+      summary: Remove a license definition from a board template
+      description: |
+        Remove a license definition from a board template. Blocked if any board
+        instances have this license unlocked.
+      x-permissions:
+      - role: developer
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RemoveLicenseDefinitionRequest'
+      responses:
+        '200':
+          description: License definition removed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LicenseDefinitionResponse'
+        '404':
+          description: Board template or license definition not found
+        '409':
+          description: License is unlocked by active board instances
+  # ===========================================================================
+  # Board Instance Management (4 endpoints)
+  # ===========================================================================
+
+  /license/board/create:
+    post:
+      operationId: createBoard
+      tags:
+      - Board
+      summary: Create a board instance for an owner
+      description: |
+        Create a board instance for an owner from a board template. Validates the owner type
+        is in the template's allowedOwnerTypes, game service matches, and no duplicate board
+        exists (one board per template per owner). For character owners, validates the character
+        exists and resolves realm context. Creates an inventory container (slot_only,
+        maxSlots = gridWidth * gridHeight) to hold unlocked license items.
+      x-permissions:
+      - role: user
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateBoardRequest'
+      responses:
+        '200':
+          description: Board created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BoardResponse'
+        '400':
+          description: Invalid request (inactive template)
+        '404':
+          description: Character, game service, or board template not found
+        '409':
+          description: Duplicate board or max boards per character exceeded
+  /license/board/get:
+    post:
+      operationId: getBoard
+      tags:
+      - Board
+      summary: Get a board instance by ID
+      description: Retrieves a board instance by its unique identifier.
+      x-permissions:
+      - role: developer
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetBoardRequest'
+      responses:
+        '200':
+          description: Board retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BoardResponse'
+        '404':
+          description: Board not found
+  /license/board/list-by-owner:
+    post:
+      operationId: listBoardsByOwner
+      tags:
+      - Board
+      summary: List boards for an owner
+      description: List all board instances for an owner (by ownerType + ownerId), with optional game service filter.
+      x-permissions:
+      - role: user
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ListBoardsByOwnerRequest'
+      responses:
+        '200':
+          description: Boards retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListBoardsByOwnerResponse'
+
+  /license/board/delete:
+    post:
+      operationId: deleteBoard
+      tags:
+      - Board
+      summary: Delete a board instance
+      description: |
+        Delete a board instance. Destroys the inventory container and all license
+        items within it.
+      x-permissions:
+      - role: developer
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeleteBoardRequest'
+      responses:
+        '200':
+          description: Board deleted successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BoardResponse'
+        '404':
+          description: Board not found
+  # ===========================================================================
+  # Gameplay Operations (4 endpoints)
+  # ===========================================================================
+
+  /license/unlock:
+    post:
+      operationId: unlockLicense
+      tags:
+      - Gameplay
+      summary: Unlock a license on a board
+      description: |
+        The core operation. Validates adjacency and prerequisites, creates a contract
+        instance from the board template's contract template, executes the unlock
+        milestone (LP deduction, ability grants via prebound APIs), then creates an
+        item instance and places it in the board container. Atomic: if contract
+        execution fails, no license is placed.
+      x-permissions:
+      - role: user
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UnlockLicenseRequest'
+      responses:
+        '200':
+          description: License unlocked successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UnlockLicenseResponse'
+        '400':
+          description: Not adjacent, prerequisites not met, or insufficient LP
+        '404':
+          description: Board or license definition not found
+        '409':
+          description: License already unlocked
+        '500':
+          description: Contract execution failed
+  /license/check-unlockable:
+    post:
+      operationId: checkUnlockable
+      tags:
+      - Gameplay
+      summary: Check if a license can be unlocked
+      description: |
+        Check if a license can be unlocked without performing the unlock. Returns
+        adjacency status, prerequisite status, and whether the character has
+        sufficient LP.
+      x-permissions:
+      - role: user
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CheckUnlockableRequest'
+      responses:
+        '200':
+          description: Unlockability check completed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CheckUnlockableResponse'
+        '404':
+          description: Board or license definition not found
+  /license/board-state:
+    post:
+      operationId: getBoardState
+      tags:
+      - Gameplay
+      summary: Get full board state
+      description: |
+        Get the full board state: all defined license positions with unlock status
+        (unlocked, locked, unlockable) and adjacency info. Primary endpoint for
+        client UI rendering.
+      x-permissions:
+      - role: user
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BoardStateRequest'
+      responses:
+        '200':
+          description: Board state retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BoardStateResponse'
+        '404':
+          description: Board not found
+  /license/board-template/seed:
+    post:
+      operationId: seedBoardTemplate
+      tags:
+      - BoardTemplate
+      summary: Bulk seed a board template with license definitions
+      description: |
+        Bulk seed a board template with license definitions from a JSON payload.
+        Two-pass: creates definitions, then resolves prerequisite references.
+      x-permissions:
+      - role: developer
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SeedBoardTemplateRequest'
+      responses:
+        '200':
+          description: Board template seeded successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SeedBoardTemplateResponse'
+        '400':
+          description: Invalid definitions (out of bounds, duplicates)
+        '404':
+          description: Board template not found
+  # ===========================================================================
+  # Board Clone (1 endpoint)
+  # ===========================================================================
+
+  /license/board/clone:
+    post:
+      operationId: cloneBoard
+      tags:
+      - Board
+      summary: Clone a board's unlock state to a new owner
+      description: |
+        Developer-only endpoint for cloning NPC progression. Reads unlock state
+        from a source board, creates a new board for the target owner, and bulk-creates
+        item instances for all unlocked licenses. Skips contracts entirely (admin tooling,
+        not gameplay). Publishes a single license.board.cloned event.
+        Does not publish individual license.unlocked events.
+      x-permissions:
+      - role: developer
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CloneBoardRequest'
+      responses:
+        '200':
+          description: Board cloned successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CloneBoardResponse'
+        '400':
+          description: Invalid request (owner type not allowed, missing realm for character)
+        '404':
+          description: Source board, target owner (character), or template not found
+        '409':
+          description: Target already has a board for this template, or max boards exceeded
+  # ===========================================================================
+  # Resource Cleanup (1 endpoint)
+  # ===========================================================================
+
+  /license/cleanup-by-owner:
+    post:
+      operationId: cleanupByOwner
+      tags:
+      - Cleanup
+      summary: Cleanup boards referencing a deleted owner
+      description: |
+        Called by lib-resource cleanup coordination when an owner entity is deleted.
+        Deletes all board instances for the specified owner (ownerType + ownerId),
+        destroying their inventory containers and all contained license items.
+        This endpoint is designed for internal service-to-service calls during
+        cascading resource cleanup.
+      x-permissions:
+      - role: developer
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CleanupByOwnerRequest'
+      responses:
+        '200':
+          description: Cleanup completed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CleanupByOwnerResponse'
+
+components:
+  schemas:
+    # ==========================================================================
+    # Enums
+    # ==========================================================================
+
+    AdjacencyMode:
+      type: string
+      description: |
+        Grid traversal adjacency mode for a board template.
+        - four_way: Orthogonal only (up, down, left, right)
+        - eight_way: Orthogonal + diagonal (all 8 surrounding cells)
+      enum:
+      - four_way
+      - eight_way
+
+    LicenseStatus:
+      type: string
+      description: |
+        Unlock status of a license node on a board.
+        - locked: Not adjacent to any unlocked node (cannot be unlocked)
+        - unlockable: Adjacent to an unlocked node or is a starting node (can be unlocked)
+        - unlocked: Already unlocked (item placed at this position)
+      enum:
+      - locked
+      - unlockable
+      - unlocked
+
+    UnlockFailureReason:
+      type: string
+      description: |
+        Reason why a license unlock attempt failed.
+        - not_adjacent: No adjacent unlocked license and not a starting node
+        - insufficient_lp: Character does not have enough LP for the cost
+        - prerequisites_not_met: Required non-adjacent licenses are not unlocked
+        - contract_failed: Contract execution failed during unlock milestone
+        - already_unlocked: License is already unlocked on this board
+        - board_not_found: Board instance does not exist
+        - license_not_found: License definition does not exist on this board template
+      enum:
+      - not_adjacent
+      - insufficient_lp
+      - prerequisites_not_met
+      - contract_failed
+      - already_unlocked
+      - board_not_found
+      - license_not_found
+
+    # ==========================================================================
+    # Core Models
+    # ==========================================================================
+
+    GridPosition:
+      type: object
+      description: A position on the board grid (zero-indexed)
+      additionalProperties: false
+      required:
+      - x
+      - y
+      properties:
+        x:
+          type: integer
+          description: Horizontal grid coordinate (zero-indexed)
+        y:
+          type: integer
+          description: Vertical grid coordinate (zero-indexed)
+
+    BoardNodeState:
+      type: object
+      description: State of a single license node on a board, including unlock status
+      additionalProperties: false
+      required:
+      - code
+      - position
+      - lpCost
+      - status
+      - itemTemplateId
+      properties:
+        code:
+          type: string
+          description: Unique license code within this board template
+        position:
+          $ref: '#/components/schemas/GridPosition'
+          description: Grid position of this license node
+        lpCost:
+          type: integer
+          description: License Point cost to unlock this node
+        status:
+          $ref: '#/components/schemas/LicenseStatus'
+          description: Current unlock status of this node
+        itemTemplateId:
+          type: string
+          format: uuid
+          description: Item template that is created when this license is unlocked
+        itemInstanceId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Item instance ID if this license has been unlocked
+        prerequisites:
+          type: array
+          nullable: true
+          items:
+            type: string
+          description: License codes that must be unlocked before this one (non-adjacent)
+        description:
+          type: string
+          nullable: true
+          description: Human-readable description of what this license grants
+        metadata:
+          type: object
+          nullable: true
+          additionalProperties: true
+          description: Game-specific metadata for this license node
+
+    # ==========================================================================
+    # Request/Response Models - Board Template
+    # ==========================================================================
+
+    CreateBoardTemplateRequest:
+      type: object
+      description: Request to create a new board template
+      additionalProperties: false
+      required:
+      - gameServiceId
+      - name
+      - gridWidth
+      - gridHeight
+      - startingNodes
+      - boardContractTemplateId
+      - allowedOwnerTypes
+      properties:
+        gameServiceId:
+          type: string
+          format: uuid
+          description: Game service this board template belongs to
+        name:
+          type: string
+          description: Display name for the board template
+        description:
+          type: string
+          nullable: true
+          description: Human-readable description of this board template
+        gridWidth:
+          type: integer
+          minimum: 1
+          maximum: 50
+          description: Width of the board grid (columns)
+        gridHeight:
+          type: integer
+          minimum: 1
+          maximum: 50
+          description: Height of the board grid (rows)
+        startingNodes:
+          type: array
+          items:
+            $ref: '#/components/schemas/GridPosition'
+          minItems: 1
+          description: Grid positions where unlocking can begin without adjacency
+        boardContractTemplateId:
+          type: string
+          format: uuid
+          description: Contract template that controls unlock behavior (LP deduction, ability grants)
+        adjacencyMode:
+          allOf:
+            - $ref: '#/components/schemas/AdjacencyMode'
+          nullable: true
+          description: Grid traversal mode. Defaults to eight_way if not specified.
+        allowedOwnerTypes:
+          type: array
+          items:
+            type: string
+          minItems: 1
+          description: Owner types allowed to create boards from this template. Each must map to a supported container owner type (e.g., character, account, location, guild).
+
+    GetBoardTemplateRequest:
+      type: object
+      description: Request to get a board template by ID
+      additionalProperties: false
+      required:
+      - boardTemplateId
+      properties:
+        boardTemplateId:
+          type: string
+          format: uuid
+          description: Board template identifier
+
+    UpdateBoardTemplateRequest:
+      type: object
+      description: Request to update mutable fields of a board template
+      additionalProperties: false
+      required:
+      - boardTemplateId
+      properties:
+        boardTemplateId:
+          type: string
+          format: uuid
+          description: Board template to update
+        name:
+          type: string
+          nullable: true
+          description: Updated display name
+        description:
+          type: string
+          nullable: true
+          description: Updated description
+        isActive:
+          type: boolean
+          nullable: true
+          description: Whether the template is active (can create new board instances)
+        allowedOwnerTypes:
+          type: array
+          nullable: true
+          items:
+            type: string
+          minItems: 1
+          description: Updated allowed owner types. Narrowing checks for existing boards with removed types.
+
+    DeleteBoardTemplateRequest:
+      type: object
+      description: Request to delete a board template
+      additionalProperties: false
+      required:
+      - boardTemplateId
+      properties:
+        boardTemplateId:
+          type: string
+          format: uuid
+          description: Board template to delete
+
+    ListBoardTemplatesRequest:
+      type: object
+      description: Request to list board templates with cursor-based pagination
+      additionalProperties: false
+      required:
+      - gameServiceId
+      properties:
+        gameServiceId:
+          type: string
+          format: uuid
+          description: Filter by game service
+        cursor:
+          type: string
+          nullable: true
+          description: Opaque cursor from previous response. Null for first page.
+        pageSize:
+          type: integer
+          minimum: 1
+          maximum: 100
+          nullable: true
+          description: Number of items per page. Uses service default if not specified.
+
+    BoardTemplateResponse:
+      type: object
+      description: Board template with all fields
+      additionalProperties: false
+      required:
+      - boardTemplateId
+      - gameServiceId
+      - name
+      - gridWidth
+      - gridHeight
+      - startingNodes
+      - boardContractTemplateId
+      - adjacencyMode
+      - allowedOwnerTypes
+      - isActive
+      - createdAt
+      properties:
+        boardTemplateId:
+          type: string
+          format: uuid
+          description: Unique board template identifier
+        gameServiceId:
+          type: string
+          format: uuid
+          description: Game service this template belongs to
+        name:
+          type: string
+          description: Display name
+        description:
+          type: string
+          nullable: true
+          description: Human-readable description
+        gridWidth:
+          type: integer
+          description: Width of the board grid (columns)
+        gridHeight:
+          type: integer
+          description: Height of the board grid (rows)
+        startingNodes:
+          type: array
+          items:
+            $ref: '#/components/schemas/GridPosition'
+          description: Grid positions where unlocking can begin without adjacency
+        boardContractTemplateId:
+          type: string
+          format: uuid
+          description: Contract template that controls unlock behavior
+        adjacencyMode:
+          $ref: '#/components/schemas/AdjacencyMode'
+          description: Grid traversal mode for this template
+        allowedOwnerTypes:
+          type: array
+          items:
+            type: string
+          description: Owner types allowed to create boards from this template
+        isActive:
+          type: boolean
+          description: Whether the template is active (can create new board instances)
+        createdAt:
+          type: string
+          format: date-time
+          description: When the template was created
+        updatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When the template was last updated
+
+    ListBoardTemplatesResponse:
+      type: object
+      description: Paginated list of board templates
+      additionalProperties: false
+      required:
+      - templates
+      - hasMore
+      properties:
+        templates:
+          type: array
+          items:
+            $ref: '#/components/schemas/BoardTemplateResponse'
+          description: Board templates in this page
+        nextCursor:
+          type: string
+          nullable: true
+          description: Cursor for next page. Null if no more results.
+        hasMore:
+          type: boolean
+          description: Whether more results exist beyond this page
+
+    SeedBoardTemplateRequest:
+      type: object
+      description: Request to bulk seed a board template with license definitions
+      additionalProperties: false
+      required:
+      - boardTemplateId
+      - definitions
+      properties:
+        boardTemplateId:
+          type: string
+          format: uuid
+          description: Board template to seed with definitions
+        definitions:
+          type: array
+          items:
+            $ref: '#/components/schemas/AddLicenseDefinitionRequest'
+          description: License definitions to add (boardTemplateId in each is ignored, uses top-level)
+
+    SeedBoardTemplateResponse:
+      type: object
+      description: Result of bulk seeding a board template
+      additionalProperties: false
+      required:
+      - boardTemplateId
+      - definitionsCreated
+      - definitions
+      properties:
+        boardTemplateId:
+          type: string
+          format: uuid
+          description: Board template that was seeded
+        definitionsCreated:
+          type: integer
+          description: Number of definitions created
+        definitions:
+          type: array
+          items:
+            $ref: '#/components/schemas/LicenseDefinitionResponse'
+          description: All created license definitions
+
+    # ==========================================================================
+    # Request/Response Models - License Definition
+    # ==========================================================================
+
+    AddLicenseDefinitionRequest:
+      type: object
+      description: Request to add a license definition to a board template
+      additionalProperties: false
+      required:
+      - boardTemplateId
+      - code
+      - position
+      - lpCost
+      - itemTemplateId
+      properties:
+        boardTemplateId:
+          type: string
+          format: uuid
+          description: Board template to add this definition to
+        code:
+          type: string
+          maxLength: 64
+          description: Unique license code within this board template
+        position:
+          $ref: '#/components/schemas/GridPosition'
+          description: Grid position for this license node
+        lpCost:
+          type: integer
+          minimum: 0
+          description: License Point cost to unlock this node
+        itemTemplateId:
+          type: string
+          format: uuid
+          description: Item template created when this license is unlocked
+        prerequisites:
+          type: array
+          nullable: true
+          items:
+            type: string
+          description: License codes that must be unlocked before this one (non-adjacent requirements)
+        description:
+          type: string
+          nullable: true
+          description: Human-readable description of what this license grants
+        metadata:
+          type: object
+          nullable: true
+          additionalProperties: true
+          description: Game-specific metadata for this license node
+
+    GetLicenseDefinitionRequest:
+      type: object
+      description: Request to get a license definition by board template ID and code
+      additionalProperties: false
+      required:
+      - boardTemplateId
+      - code
+      properties:
+        boardTemplateId:
+          type: string
+          format: uuid
+          description: Board template containing the definition
+        code:
+          type: string
+          description: License code to look up
+
+    UpdateLicenseDefinitionRequest:
+      type: object
+      description: Request to update mutable fields of a license definition
+      additionalProperties: false
+      required:
+      - boardTemplateId
+      - code
+      properties:
+        boardTemplateId:
+          type: string
+          format: uuid
+          description: Board template containing the definition
+        code:
+          type: string
+          description: License code to update
+        lpCost:
+          type: integer
+          minimum: 0
+          nullable: true
+          description: Updated LP cost
+        prerequisites:
+          type: array
+          nullable: true
+          items:
+            type: string
+          description: Updated prerequisite license codes
+        description:
+          type: string
+          nullable: true
+          description: Updated description
+        metadata:
+          type: object
+          nullable: true
+          additionalProperties: true
+          description: Updated game-specific metadata
+
+    RemoveLicenseDefinitionRequest:
+      type: object
+      description: Request to remove a license definition from a board template
+      additionalProperties: false
+      required:
+      - boardTemplateId
+      - code
+      properties:
+        boardTemplateId:
+          type: string
+          format: uuid
+          description: Board template containing the definition
+        code:
+          type: string
+          description: License code to remove
+
+    ListLicenseDefinitionsRequest:
+      type: object
+      description: Request to list all license definitions for a board template
+      additionalProperties: false
+      required:
+      - boardTemplateId
+      properties:
+        boardTemplateId:
+          type: string
+          format: uuid
+          description: Board template to list definitions for
+
+    LicenseDefinitionResponse:
+      type: object
+      description: License definition with all fields
+      additionalProperties: false
+      required:
+      - licenseDefinitionId
+      - boardTemplateId
+      - code
+      - position
+      - lpCost
+      - itemTemplateId
+      - createdAt
+      properties:
+        licenseDefinitionId:
+          type: string
+          format: uuid
+          description: Unique license definition identifier
+        boardTemplateId:
+          type: string
+          format: uuid
+          description: Board template this definition belongs to
+        code:
+          type: string
+          description: Unique license code within this board template
+        position:
+          $ref: '#/components/schemas/GridPosition'
+          description: Grid position of this license node
+        lpCost:
+          type: integer
+          description: License Point cost to unlock this node
+        itemTemplateId:
+          type: string
+          format: uuid
+          description: Item template created when this license is unlocked
+        prerequisites:
+          type: array
+          nullable: true
+          items:
+            type: string
+          description: License codes that must be unlocked before this one
+        description:
+          type: string
+          nullable: true
+          description: Human-readable description of what this license grants
+        metadata:
+          type: object
+          nullable: true
+          additionalProperties: true
+          description: Game-specific metadata for this license node
+        createdAt:
+          type: string
+          format: date-time
+          description: When this definition was created
+
+    ListLicenseDefinitionsResponse:
+      type: object
+      description: All license definitions for a board template
+      additionalProperties: false
+      required:
+      - boardTemplateId
+      - definitions
+      properties:
+        boardTemplateId:
+          type: string
+          format: uuid
+          description: Board template these definitions belong to
+        definitions:
+          type: array
+          items:
+            $ref: '#/components/schemas/LicenseDefinitionResponse'
+          description: All license definitions for this board template
+
+    # ==========================================================================
+    # Request/Response Models - Board Instance
+    # ==========================================================================
+
+    CreateBoardRequest:
+      type: object
+      description: Request to create a board instance for an owner entity
+      additionalProperties: false
+      required:
+      - ownerType
+      - ownerId
+      - boardTemplateId
+      - gameServiceId
+      properties:
+        ownerType:
+          type: string
+          description: Type of entity that owns this board (e.g., character, account, realm, guild)
+        ownerId:
+          type: string
+          format: uuid
+          description: ID of the entity that owns this board
+        boardTemplateId:
+          type: string
+          format: uuid
+          description: Board template to instantiate
+        gameServiceId:
+          type: string
+          format: uuid
+          description: Game service context for validation
+        realmId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Realm context for item creation. Required for character owners (validated against character realm). For realm owners, must equal ownerId. Null for realm-agnostic boards.
+
+    GetBoardRequest:
+      type: object
+      description: Request to get a board instance by ID
+      additionalProperties: false
+      required:
+      - boardId
+      properties:
+        boardId:
+          type: string
+          format: uuid
+          description: Board instance identifier
+
+    DeleteBoardRequest:
+      type: object
+      description: Request to delete a board instance
+      additionalProperties: false
+      required:
+      - boardId
+      properties:
+        boardId:
+          type: string
+          format: uuid
+          description: Board instance to delete
+
+    ListBoardsByOwnerRequest:
+      type: object
+      description: Request to list board instances for an owner entity
+      additionalProperties: false
+      required:
+      - ownerType
+      - ownerId
+      properties:
+        ownerType:
+          type: string
+          description: Type of entity that owns the boards
+        ownerId:
+          type: string
+          format: uuid
+          description: Entity to list boards for
+        gameServiceId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Optional filter by game service
+
+    BoardResponse:
+      type: object
+      description: Board instance with all fields
+      additionalProperties: false
+      required:
+      - boardId
+      - ownerType
+      - ownerId
+      - boardTemplateId
+      - gameServiceId
+      - containerId
+      - createdAt
+      properties:
+        boardId:
+          type: string
+          format: uuid
+          description: Unique board instance identifier
+        ownerType:
+          type: string
+          description: Type of entity that owns this board
+        ownerId:
+          type: string
+          format: uuid
+          description: Entity that owns this board
+        realmId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Realm context for this board. Null for realm-agnostic boards.
+        boardTemplateId:
+          type: string
+          format: uuid
+          description: Board template this instance was created from
+        gameServiceId:
+          type: string
+          format: uuid
+          description: Game service this board belongs to
+        containerId:
+          type: string
+          format: uuid
+          description: Inventory container holding unlocked license items
+        createdAt:
+          type: string
+          format: date-time
+          description: When this board instance was created
+
+    ListBoardsByOwnerResponse:
+      type: object
+      description: List of board instances for an owner entity
+      additionalProperties: false
+      required:
+      - boards
+      properties:
+        boards:
+          type: array
+          items:
+            $ref: '#/components/schemas/BoardResponse'
+          description: Board instances for this owner
+
+    # ==========================================================================
+    # Request/Response Models - Gameplay
+    # ==========================================================================
+
+    UnlockLicenseRequest:
+      type: object
+      description: Request to unlock a license on a board
+      additionalProperties: false
+      required:
+      - boardId
+      - licenseCode
+      properties:
+        boardId:
+          type: string
+          format: uuid
+          description: Board instance to unlock on
+        licenseCode:
+          type: string
+          description: License code to unlock
+
+    UnlockLicenseResponse:
+      type: object
+      description: Result of a successful license unlock
+      additionalProperties: false
+      required:
+      - boardId
+      - licenseCode
+      - position
+      - itemInstanceId
+      - contractInstanceId
+      properties:
+        boardId:
+          type: string
+          format: uuid
+          description: Board the license was unlocked on
+        licenseCode:
+          type: string
+          description: License code that was unlocked
+        position:
+          $ref: '#/components/schemas/GridPosition'
+          description: Grid position of the unlocked license
+        itemInstanceId:
+          type: string
+          format: uuid
+          description: Item instance created for this license
+        contractInstanceId:
+          type: string
+          format: uuid
+          description: Contract instance created for this unlock
+
+    CheckUnlockableRequest:
+      type: object
+      description: Request to check if a license can be unlocked
+      additionalProperties: false
+      required:
+      - boardId
+      - licenseCode
+      properties:
+        boardId:
+          type: string
+          format: uuid
+          description: Board instance to check on
+        licenseCode:
+          type: string
+          description: License code to check
+
+    CheckUnlockableResponse:
+      type: object
+      description: Result of unlockability check
+      additionalProperties: false
+      required:
+      - unlockable
+      - adjacencyMet
+      - prerequisitesMet
+      - requiredLp
+      properties:
+        unlockable:
+          type: boolean
+          description: Whether the license can be unlocked (all conditions met)
+        adjacencyMet:
+          type: boolean
+          description: Whether adjacency requirement is satisfied
+        prerequisitesMet:
+          type: boolean
+          description: Whether all non-adjacent prerequisites are unlocked
+        lpSufficient:
+          type: boolean
+          nullable: true
+          description: Whether the owner has enough LP. Null if LP check is not applicable for this owner type.
+        currentLp:
+          type: number
+          nullable: true
+          description: Current LP balance of the owner (null if balance check failed or not applicable)
+        requiredLp:
+          type: integer
+          description: LP cost for this license
+
+    BoardStateRequest:
+      type: object
+      description: Request to get the full board state
+      additionalProperties: false
+      required:
+      - boardId
+      properties:
+        boardId:
+          type: string
+          format: uuid
+          description: Board instance to get state for
+
+    BoardStateResponse:
+      type: object
+      description: Full board state with all node statuses for client UI rendering
+      additionalProperties: false
+      required:
+      - boardId
+      - ownerType
+      - ownerId
+      - boardTemplateId
+      - gridWidth
+      - gridHeight
+      - nodes
+      properties:
+        boardId:
+          type: string
+          format: uuid
+          description: Board instance identifier
+        ownerType:
+          type: string
+          description: Type of entity that owns this board (e.g., character, account, guild)
+        ownerId:
+          type: string
+          format: uuid
+          description: ID of the entity that owns this board
+        boardTemplateId:
+          type: string
+          format: uuid
+          description: Board template this instance was created from
+        gridWidth:
+          type: integer
+          description: Width of the board grid (columns)
+        gridHeight:
+          type: integer
+          description: Height of the board grid (rows)
+        nodes:
+          type: array
+          items:
+            $ref: '#/components/schemas/BoardNodeState'
+          description: All license nodes with their current status
+
+    # ==========================================================================
+    # Request/Response Models - Board Clone
+    # ==========================================================================
+
+    CloneBoardRequest:
+      type: object
+      description: Request to clone a board's unlock state to a new owner (developer tooling)
+      additionalProperties: false
+      required:
+      - sourceBoardId
+      - targetOwnerType
+      - targetOwnerId
+      properties:
+        sourceBoardId:
+          type: string
+          format: uuid
+          description: Source board instance to clone unlock state from
+        targetOwnerType:
+          type: string
+          description: Type of entity to clone the board to (must be in template's allowedOwnerTypes)
+        targetOwnerId:
+          type: string
+          format: uuid
+          description: ID of the target entity
+        targetRealmId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Realm context for the cloned board. Required for character owners (auto-resolved from character). For realm owners, must equal targetOwnerId. Null for realm-agnostic boards.
+
+    CloneBoardResponse:
+      type: object
+      description: Result of a board clone operation
+      additionalProperties: false
+      required:
+      - sourceBoardId
+      - targetBoardId
+      - targetOwnerType
+      - targetOwnerId
+      - targetContainerId
+      - licensesCloned
+      properties:
+        sourceBoardId:
+          type: string
+          format: uuid
+          description: Source board that was cloned from
+        targetBoardId:
+          type: string
+          format: uuid
+          description: New board instance created for the target
+        targetOwnerType:
+          type: string
+          description: Type of entity the board was cloned to
+        targetOwnerId:
+          type: string
+          format: uuid
+          description: ID of the entity the board was cloned to
+        targetContainerId:
+          type: string
+          format: uuid
+          description: Inventory container created for the cloned board
+        licensesCloned:
+          type: integer
+          description: Number of licenses cloned (item instances created)
+
+    # ==========================================================================
+    # Request/Response Models - Resource Cleanup
+    # ==========================================================================
+
+    CleanupByOwnerRequest:
+      type: object
+      description: Request to cleanup all boards for a deleted owner entity
+      additionalProperties: false
+      required:
+      - ownerType
+      - ownerId
+      properties:
+        ownerType:
+          type: string
+          description: Type of entity whose boards should be cleaned up
+        ownerId:
+          type: string
+          format: uuid
+          description: ID of the entity whose boards should be cleaned up
+
+    CleanupByOwnerResponse:
+      type: object
+      description: Result of owner board cleanup
+      additionalProperties: false
+      required:
+      - ownerType
+      - ownerId
+      - boardsDeleted
+      properties:
+        ownerType:
+          type: string
+          description: Type of entity that was cleaned up
+        ownerId:
+          type: string
+          format: uuid
+          description: ID of the entity that was cleaned up
+        boardsDeleted:
+          type: integer
+          description: Number of boards deleted during cleanup
+

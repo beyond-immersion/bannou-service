@@ -4,12 +4,14 @@
 // =============================================================================
 
 using BeyondImmersion.Bannou.Behavior.Cognition;
+using BeyondImmersion.BannouService.Abml.Cognition;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State;
 using BeyondImmersion.BannouService.TestUtilities;
 using Microsoft.Extensions.Logging;
 using Moq;
 using Xunit;
+using CognitionMemory = BeyondImmersion.BannouService.Abml.Cognition.Memory;
 
 namespace BeyondImmersion.BannouService.Behavior.Tests.Cognition;
 
@@ -41,7 +43,7 @@ namespace BeyondImmersion.BannouService.Behavior.Tests.Cognition;
 public class ActorLocalMemoryStoreTests
 {
     private readonly Mock<IStateStoreFactory> _mockFactory;
-    private readonly Mock<IStateStore<Memory>> _mockMemoryStore;
+    private readonly Mock<IStateStore<CognitionMemory>> _mockMemoryStore;
     private readonly Mock<IStateStore<List<string>>> _mockIndexStore;
     private readonly Mock<ILogger<ActorLocalMemoryStore>> _mockLogger;
     private readonly BehaviorServiceConfiguration _configuration;
@@ -50,12 +52,12 @@ public class ActorLocalMemoryStoreTests
     public ActorLocalMemoryStoreTests()
     {
         _mockFactory = new Mock<IStateStoreFactory>();
-        _mockMemoryStore = new Mock<IStateStore<Memory>>();
+        _mockMemoryStore = new Mock<IStateStore<CognitionMemory>>();
         _mockIndexStore = new Mock<IStateStore<List<string>>>();
         _mockLogger = new Mock<ILogger<ActorLocalMemoryStore>>();
         _configuration = new BehaviorServiceConfiguration();
 
-        _mockFactory.Setup(f => f.GetStore<Memory>(StateStoreDefinitions.AgentMemories))
+        _mockFactory.Setup(f => f.GetStore<CognitionMemory>(StateStoreDefinitions.AgentMemories))
             .Returns(_mockMemoryStore.Object);
         _mockFactory.Setup(f => f.GetStore<List<string>>(StateStoreDefinitions.AgentMemories))
             .Returns(_mockIndexStore.Object);
@@ -170,7 +172,7 @@ public class ActorLocalMemoryStoreTests
         // - Old (>1 hour, no recency bonus)
         // - Zero significance (no significance bonus)
         // Total score: 0, which is below MemoryMinimumRelevanceThreshold (0.1)
-        var memory = new Memory
+        var memory = new CognitionMemory
         {
             Id = memoryId,
             EntityId = entityId,
@@ -199,7 +201,7 @@ public class ActorLocalMemoryStoreTests
     public async Task FindRelevantAsync_RespectsLimit()
     {
         var entityId = "entity-1";
-        var memories = new List<Memory>
+        var memories = new List<CognitionMemory>
         {
             CreateMemory("mem-1", entityId, "threat", "First threat"),
             CreateMemory("mem-2", entityId, "threat", "Second threat"),
@@ -227,7 +229,7 @@ public class ActorLocalMemoryStoreTests
     public async Task FindRelevantAsync_SortsByRelevanceScore()
     {
         var entityId = "entity-1";
-        var memories = new List<Memory>
+        var memories = new List<CognitionMemory>
         {
             CreateMemory("mem-1", entityId, "routine", "Routine task", 0.2f),
             CreateMemory("mem-2", entityId, "threat", "Dangerous enemy", 0.9f)
@@ -263,14 +265,14 @@ public class ActorLocalMemoryStoreTests
     {
         var entityId = "entity-1";
         var perception = CreatePerception("threat", "Enemy spotted", 0.9f);
-        Memory? savedMemory = null;
+        CognitionMemory? savedMemory = null;
 
         _mockMemoryStore.Setup(s => s.SaveAsync(
             It.IsAny<string>(),
-            It.IsAny<Memory>(),
+            It.IsAny<CognitionMemory>(),
             It.IsAny<StateOptions?>(),
             It.IsAny<CancellationToken>()))
-            .Callback<string, Memory, StateOptions?, CancellationToken>((_, mem, _, _) => savedMemory = mem)
+            .Callback<string, CognitionMemory, StateOptions?, CancellationToken>((_, mem, _, _) => savedMemory = mem)
             .ReturnsAsync("etag-new");
 
         _mockIndexStore.Setup(s => s.GetWithETagAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
@@ -301,7 +303,7 @@ public class ActorLocalMemoryStoreTests
 
         _mockMemoryStore.Setup(s => s.SaveAsync(
             It.IsAny<string>(),
-            It.IsAny<Memory>(),
+            It.IsAny<CognitionMemory>(),
             It.IsAny<StateOptions?>(),
             It.IsAny<CancellationToken>()))
             .ReturnsAsync("etag-new");
@@ -329,19 +331,19 @@ public class ActorLocalMemoryStoreTests
     {
         var entityId = "entity-1";
         var perception = CreatePerception();
-        var contextMemories = new List<Memory>
+        var contextMemories = new List<CognitionMemory>
         {
             CreateMemory("ctx-1", entityId),
             CreateMemory("ctx-2", entityId)
         };
-        Memory? savedMemory = null;
+        CognitionMemory? savedMemory = null;
 
         _mockMemoryStore.Setup(s => s.SaveAsync(
             It.IsAny<string>(),
-            It.IsAny<Memory>(),
+            It.IsAny<CognitionMemory>(),
             It.IsAny<StateOptions?>(),
             It.IsAny<CancellationToken>()))
-            .Callback<string, Memory, StateOptions?, CancellationToken>((_, mem, _, _) => savedMemory = mem)
+            .Callback<string, CognitionMemory, StateOptions?, CancellationToken>((_, mem, _, _) => savedMemory = mem)
             .ReturnsAsync("etag-new");
 
         _mockIndexStore.Setup(s => s.GetWithETagAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
@@ -386,7 +388,7 @@ public class ActorLocalMemoryStoreTests
     public async Task GetAllAsync_ReturnsAllMemories()
     {
         var entityId = "entity-1";
-        var memories = new List<Memory>
+        var memories = new List<CognitionMemory>
         {
             CreateMemory("mem-1", entityId),
             CreateMemory("mem-2", entityId)
@@ -414,7 +416,7 @@ public class ActorLocalMemoryStoreTests
         var entityId = "entity-1";
         SetupMemoryIndex(entityId, ["mem-1", "mem-2", "mem-3"]);
 
-        var memories = new Dictionary<string, Memory>
+        var memories = new Dictionary<string, CognitionMemory>
         {
             { $"memory:{entityId}:mem-2", CreateMemory("mem-2", entityId) },
             { $"memory:{entityId}:mem-3", CreateMemory("mem-3", entityId) }
@@ -550,17 +552,17 @@ public class ActorLocalMemoryStoreTests
             .ReturnsAsync(memoryIds);
     }
 
-    private void SetupMemoryRetrieval(string entityId, string memoryId, Memory memory)
+    private void SetupMemoryRetrieval(string entityId, string memoryId, CognitionMemory memory)
     {
         var key = $"memory:{entityId}:{memoryId}";
-        var dict = new Dictionary<string, Memory> { { key, memory } };
+        var dict = new Dictionary<string, CognitionMemory> { { key, memory } };
 
         _mockMemoryStore.Setup(s => s.GetBulkAsync(
             It.Is<IEnumerable<string>>(keys => keys.Contains(key)),
             It.IsAny<CancellationToken>()))
             .ReturnsAsync((IEnumerable<string> keys, CancellationToken _) =>
             {
-                var result = new Dictionary<string, Memory>();
+                var result = new Dictionary<string, CognitionMemory>();
                 foreach (var k in keys)
                 {
                     if (dict.TryGetValue(k, out var mem))
@@ -589,14 +591,14 @@ public class ActorLocalMemoryStoreTests
         };
     }
 
-    private static Memory CreateMemory(
+    private static CognitionMemory CreateMemory(
         string id,
         string entityId,
         string category = "routine",
         string content = "Test memory",
         float significance = 0.5f)
     {
-        return new Memory
+        return new CognitionMemory
         {
             Id = id,
             EntityId = entityId,

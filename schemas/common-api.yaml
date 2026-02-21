@@ -6,8 +6,11 @@ info:
     These types are not owned by any specific plugin and provide
     system-wide consistency for cross-service concepts.
 
-    **Schema Rules**: AI agents MUST review docs/reference/SCHEMA-RULES.md before
-    modifying this schema.
+    **SCHEMA MODIFICATION GATE**: STOP. Before modifying this schema, you MUST:
+    1. Read docs/reference/SCHEMA-RULES.md
+    2. State which section applies to your change
+    3. Only then proceed with edits
+    Edits without stating the applicable rule are FORBIDDEN.
   version: 1.0.0
 
 # No paths - this schema only defines shared types
@@ -40,3 +43,186 @@ components:
         - monster
         - custom
         - other
+
+    SentimentCategory:
+      type: string
+      description: >
+        Standardized sentiment categories for anonymous audience and reaction data.
+        Used by lib-chat for sentiment room messages and lib-stream for platform
+        audience processing. Designed for privacy-safe communication where text
+        content is inappropriate or unnecessary.
+      enum:
+        - Excited
+        - Supportive
+        - Critical
+        - Curious
+        - Surprised
+        - Amused
+        - Bored
+        - Hostile
+
+    # ==========================================================================
+    # Permission Metadata Types
+    # ==========================================================================
+
+    ServiceEndpoint:
+      type: object
+      additionalProperties: false
+      description: |
+        Individual API endpoint with permission requirements.
+        Extracted from OpenAPI schema x-permissions sections.
+      required:
+        - path
+        - method
+        - permissions
+      properties:
+        path:
+          type: string
+          description: API endpoint path (e.g., "/account/{id}")
+        method:
+          type: string
+          enum: [GET, POST, PUT, DELETE, PATCH]
+          description: HTTP method for this endpoint
+        permissions:
+          type: array
+          items:
+            $ref: '#/components/schemas/PermissionRequirement'
+          description: Permission requirements for this endpoint
+        description:
+          type: string
+          nullable: true  # NRT: Optional property MUST be nullable
+          description: Human-readable endpoint description
+        category:
+          type: string
+          nullable: true  # NRT: Optional property MUST be nullable
+          description: API category (auth, account, game, social, etc.)
+
+    PermissionRequirement:
+      type: object
+      additionalProperties: false
+      description: |
+        Permission requirement mapping role and state to endpoint access.
+        Defines which roles can access an endpoint in which states.
+      required:
+        - role
+        - requiredStates
+      properties:
+        role:
+          type: string
+          description: Role that can access this endpoint (e.g., "user", "admin", "npc")
+        requiredStates:
+          type: object
+          additionalProperties:
+            type: string
+          description: |
+            Map of service states required for access.
+            Key: service_id, Value: required_state
+            Example: {"game-session": "in_game", "character": "selected"}
+        description:
+          type: string
+          nullable: true  # NRT: Optional property MUST be nullable
+          description: Optional human-readable permission description
+
+    # ==========================================================================
+    # Spatial Types
+    # ==========================================================================
+
+    Position3D:
+      type: object
+      additionalProperties: false
+      description: Position in world coordinates (meters, Y-up, right-handed)
+      required:
+        - x
+        - y
+        - z
+      properties:
+        x:
+          type: number
+          format: float
+          description: X coordinate in world space (meters)
+        y:
+          type: number
+          format: float
+          description: Y coordinate (up axis) in world space (meters)
+        z:
+          type: number
+          format: float
+          description: Z coordinate in world space (meters)
+
+    BoundingBox3D:
+      type: object
+      additionalProperties: false
+      description: Axis-aligned bounding box in world coordinates (meters, Y-up, right-handed)
+      required:
+        - minX
+        - minY
+        - minZ
+        - maxX
+        - maxY
+        - maxZ
+      properties:
+        minX:
+          type: number
+          format: float
+          description: Minimum X bound in world space
+        minY:
+          type: number
+          format: float
+          description: Minimum Y bound in world space
+        minZ:
+          type: number
+          format: float
+          description: Minimum Z bound in world space
+        maxX:
+          type: number
+          format: float
+          description: Maximum X bound in world space
+        maxY:
+          type: number
+          format: float
+          description: Maximum Y bound in world space
+        maxZ:
+          type: number
+          format: float
+          description: Maximum Z bound in world space
+
+    # ==========================================================================
+    # Archive Base Types
+    # ==========================================================================
+
+    ResourceArchiveBase:
+      type: object
+      description: |
+        Base schema for all resource archives that can be stored in
+        the resource service's archive bundles and consumed by the
+        storyline SDK's ArchiveExtractor.
+
+        Archives implementing this base schema are marked with
+        x-archive-type: true and are automatically collected by
+        the archive generation script for SDK model generation.
+      required:
+        - resourceId
+        - resourceType
+        - archivedAt
+        - schemaVersion
+      properties:
+        resourceId:
+          type: string
+          format: uuid
+          description: Unique identifier of the archived resource
+        resourceType:
+          type: string
+          description: Type identifier (e.g., "character", "character-personality", "realm-history")
+        archivedAt:
+          type: string
+          format: date-time
+          description: When this archive was created
+        schemaVersion:
+          type: integer
+          minimum: 1
+          description: Schema version for forward compatibility migration
+        nestedArchives:
+          type: array
+          description: Child archives from dependent resources (populated by lib-resource compression)
+          items:
+            $ref: '#/components/schemas/ResourceArchiveBase'

@@ -77,20 +77,20 @@ public partial class SessionInvalidatedEvent : BaseServiceEvent
 public enum SessionInvalidatedEventReason
 {
 
-    [System.Runtime.Serialization.EnumMember(Value = @"logout")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Logout")]
     Logout = 0,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"account_deleted")]
-    Account_deleted = 1,
+    [System.Runtime.Serialization.EnumMember(Value = @"AccountDeleted")]
+    AccountDeleted = 1,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"security_revocation")]
-    Security_revocation = 2,
+    [System.Runtime.Serialization.EnumMember(Value = @"SecurityRevocation")]
+    SecurityRevocation = 2,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"admin_action")]
-    Admin_action = 3,
+    [System.Runtime.Serialization.EnumMember(Value = @"AdminAction")]
+    AdminAction = 3,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"session_expired")]
-    Session_expired = 4,
+    [System.Runtime.Serialization.EnumMember(Value = @"SessionExpired")]
+    SessionExpired = 4,
 
 }
 #pragma warning restore CS1591
@@ -155,14 +155,14 @@ public partial class SessionUpdatedEvent : BaseServiceEvent
 public enum SessionUpdatedEventReason
 {
 
-    [System.Runtime.Serialization.EnumMember(Value = @"role_changed")]
-    Role_changed = 0,
+    [System.Runtime.Serialization.EnumMember(Value = @"RoleChanged")]
+    RoleChanged = 0,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"authorization_changed")]
-    Authorization_changed = 1,
+    [System.Runtime.Serialization.EnumMember(Value = @"AuthorizationChanged")]
+    AuthorizationChanged = 1,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"subscription_changed")]
-    Subscription_changed = 2,
+    [System.Runtime.Serialization.EnumMember(Value = @"SubscriptionChanged")]
+    SubscriptionChanged = 2,
 
 }
 #pragma warning restore CS1591
@@ -264,17 +264,20 @@ public partial class AuthLoginFailedEvent : BaseServiceEvent
 public enum AuthLoginFailedReason
 {
 
-    [System.Runtime.Serialization.EnumMember(Value = @"invalid_credentials")]
-    Invalid_credentials = 0,
+    [System.Runtime.Serialization.EnumMember(Value = @"InvalidCredentials")]
+    InvalidCredentials = 0,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"account_disabled")]
-    Account_disabled = 1,
+    [System.Runtime.Serialization.EnumMember(Value = @"AccountDisabled")]
+    AccountDisabled = 1,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"account_locked")]
-    Account_locked = 2,
+    [System.Runtime.Serialization.EnumMember(Value = @"AccountLocked")]
+    AccountLocked = 2,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"account_not_found")]
-    Account_not_found = 3,
+    [System.Runtime.Serialization.EnumMember(Value = @"AccountNotFound")]
+    AccountNotFound = 3,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"RateLimited")]
+    RateLimited = 4,
 
 }
 #pragma warning restore CS1591
@@ -447,6 +450,184 @@ public partial class AuthPasswordResetSuccessfulEvent : BaseServiceEvent
     public string? IpAddress { get; set; } = default!;
 
 }
+
+/// <summary>
+/// Published when MFA is successfully enabled for an account
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class AuthMfaEnabledEvent : BaseServiceEvent
+{
+
+    /// <summary>
+    /// ID of the account that enabled MFA
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("accountId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid AccountId { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Published when MFA is disabled for an account
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class AuthMfaDisabledEvent : BaseServiceEvent
+{
+
+    /// <summary>
+    /// ID of the account whose MFA was disabled
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("accountId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid AccountId { get; set; } = default!;
+
+    /// <summary>
+    /// Who triggered the MFA disable
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("disabledBy")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public MfaDisabledBy DisabledBy { get; set; } = default!;
+
+    /// <summary>
+    /// Administrative reason (only when disabledBy is Admin)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("adminReason")]
+    public string? AdminReason { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Who triggered the MFA disable action
+/// </summary>
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public enum MfaDisabledBy
+{
+
+    [System.Runtime.Serialization.EnumMember(Value = @"Self")]
+    Self = 0,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"Admin")]
+    Admin = 1,
+
+}
+#pragma warning restore CS1591
+
+/// <summary>
+/// Published when MFA verification succeeds during login
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class AuthMfaVerifiedEvent : BaseServiceEvent
+{
+
+    /// <summary>
+    /// ID of the account that completed MFA verification
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("accountId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid AccountId { get; set; } = default!;
+
+    /// <summary>
+    /// Method used for MFA verification
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("method")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public MfaVerificationMethod Method { get; set; } = default!;
+
+    /// <summary>
+    /// ID of the session created after successful MFA
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("sessionId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid SessionId { get; set; } = default!;
+
+    /// <summary>
+    /// Recovery codes remaining after use (only when method is RecoveryCode)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("recoveryCodesRemaining")]
+    public int? RecoveryCodesRemaining { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Method used for MFA verification
+/// </summary>
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public enum MfaVerificationMethod
+{
+
+    [System.Runtime.Serialization.EnumMember(Value = @"Totp")]
+    Totp = 0,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"RecoveryCode")]
+    RecoveryCode = 1,
+
+}
+#pragma warning restore CS1591
+
+/// <summary>
+/// Published when MFA verification fails during login
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class AuthMfaFailedEvent : BaseServiceEvent
+{
+
+    /// <summary>
+    /// ID of the account that failed MFA
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("accountId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid AccountId { get; set; } = default!;
+
+    /// <summary>
+    /// Method attempted
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("method")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public MfaVerificationMethod Method { get; set; } = default!;
+
+    /// <summary>
+    /// Why MFA verification failed
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("reason")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public MfaFailedReason Reason { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Reason for MFA verification failure
+/// </summary>
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public enum MfaFailedReason
+{
+
+    [System.Runtime.Serialization.EnumMember(Value = @"InvalidCode")]
+    InvalidCode = 0,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"ExpiredChallenge")]
+    ExpiredChallenge = 1,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"NoRecoveryCodesRemaining")]
+    NoRecoveryCodesRemaining = 2,
+
+}
+#pragma warning restore CS1591
 
 
 

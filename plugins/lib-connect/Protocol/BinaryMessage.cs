@@ -328,11 +328,6 @@ public readonly struct BinaryMessage
     public bool IsClientRouted => Flags.HasFlag(MessageFlags.Client);
 
     /// <summary>
-    /// Returns true if this message has high priority.
-    /// </summary>
-    public bool IsHighPriority => Flags.HasFlag(MessageFlags.HighPriority);
-
-    /// <summary>
     /// Returns true if this is a successful response (ResponseCode is 0).
     /// Only meaningful for response messages.
     /// </summary>

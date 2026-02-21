@@ -5,8 +5,11 @@ info:
     Configuration schema for Auth service.
     Properties are bound to environment variables with BANNOU_ prefix.
 
-    **Schema Rules**: AI agents MUST review docs/reference/SCHEMA-RULES.md before
-    modifying this schema. Optional reference types require `nullable: true`.
+    **SCHEMA MODIFICATION GATE**: STOP. Before modifying this schema, you MUST:
+    1. Read docs/reference/SCHEMA-RULES.md
+    2. State which section applies to your change
+    3. Only then proceed with edits
+    Edits without stating the applicable rule are FORBIDDEN.
   version: 1.0.0
 paths: {}
 x-service-configuration:
@@ -121,6 +124,76 @@ x-service-configuration:
       env: AUTH_STEAM_APP_ID
       example: "480"
 
+    # Email Configuration
+    EmailProvider:
+      $ref: 'auth-api.yaml#/components/schemas/EmailProvider'
+      env: AUTH_EMAIL_PROVIDER
+      default: none
+      description: Email delivery provider (none=console logging, sendgrid=SendGrid API, smtp=SMTP via MailKit, ses=AWS SES v2)
+    EmailFromAddress:
+      type: string
+      nullable: true  # NRT: Optional config MUST be nullable (required when EmailProvider is not 'none')
+      env: AUTH_EMAIL_FROM_ADDRESS
+      description: Sender email address for outgoing emails. Required when EmailProvider is not 'none'.
+    EmailFromName:
+      type: string
+      nullable: true  # NRT: Optional config MUST be nullable
+      env: AUTH_EMAIL_FROM_NAME
+      description: Display name for the sender in outgoing emails (e.g., 'Bannou Support'). Optional.
+
+    # SendGrid Configuration
+    SendGridApiKey:
+      type: string
+      nullable: true  # NRT: Optional config MUST be nullable (required when EmailProvider is 'sendgrid')
+      env: AUTH_SENDGRID_API_KEY
+      description: SendGrid API key. Required when EmailProvider is 'sendgrid'.
+
+    # AWS SES Configuration
+    SesAccessKeyId:
+      type: string
+      nullable: true  # NRT: Optional config MUST be nullable (required when EmailProvider is 'ses')
+      env: AUTH_SES_ACCESS_KEY_ID
+      description: AWS access key ID for SES API authentication. Required when EmailProvider is 'ses'.
+    SesSecretAccessKey:
+      type: string
+      nullable: true  # NRT: Optional config MUST be nullable (required when EmailProvider is 'ses')
+      env: AUTH_SES_SECRET_ACCESS_KEY
+      description: AWS secret access key for SES API authentication. Required when EmailProvider is 'ses'.
+    SesRegion:
+      type: string
+      env: AUTH_SES_REGION
+      default: "us-east-1"
+      description: AWS region for SES API (e.g., us-east-1, eu-west-1). SES must be configured in this region.
+
+    # SMTP Configuration
+    SmtpHost:
+      type: string
+      nullable: true  # NRT: Optional config MUST be nullable (required when EmailProvider is 'smtp')
+      env: AUTH_SMTP_HOST
+      description: SMTP server hostname. Required when EmailProvider is 'smtp'.
+    SmtpPort:
+      type: integer
+      env: AUTH_SMTP_PORT
+      default: 587
+      minimum: 1
+      maximum: 65535
+      description: SMTP server port (587 for STARTTLS, 465 for implicit SSL, 25 for unencrypted).
+    SmtpUsername:
+      type: string
+      nullable: true  # NRT: Optional config MUST be nullable (optional if server allows anonymous relay)
+      env: AUTH_SMTP_USERNAME
+      description: SMTP authentication username. Optional if server allows anonymous relay.
+    SmtpPassword:
+      type: string
+      nullable: true  # NRT: Optional config MUST be nullable (optional if server allows anonymous relay)
+      env: AUTH_SMTP_PASSWORD
+      description: SMTP authentication password. Optional if server allows anonymous relay.
+    SmtpUseSsl:
+      type: boolean
+      env: AUTH_SMTP_USE_SSL
+      default: true
+      description: Use SSL/TLS when connecting to SMTP server. When true with port 587, uses STARTTLS.
+
     # Password Reset
     PasswordResetTokenTtlMinutes:
       type: integer
@@ -133,6 +206,22 @@ x-service-configuration:
       description: Base URL for password reset page
       env: AUTH_PASSWORD_RESET_BASE_URL
       example: "https://your-domain.com/reset-password"
+
+    # Rate Limiting
+    MaxLoginAttempts:
+      type: integer
+      description: Maximum failed login attempts before lockout. After this many consecutive failures for an email, further attempts return 429 until the lockout expires.
+      env: AUTH_MAX_LOGIN_ATTEMPTS
+      default: 5
+      minimum: 1
+      maximum: 100
+    LoginLockoutMinutes:
+      type: integer
+      description: Duration in minutes to lock out an email after exceeding MaxLoginAttempts. The lockout counter resets on successful login.
+      env: AUTH_LOGIN_LOCKOUT_MINUTES
+      default: 15
+      minimum: 1
+      maximum: 1440
 
     # Security
     BcryptWorkFactor:
@@ -147,3 +236,79 @@ x-service-configuration:
       description: Session token TTL in days for persistent sessions
       env: AUTH_SESSION_TOKEN_TTL_DAYS
       default: 7
+
+    # Edge Revocation - Master Switch
+    EdgeRevocationEnabled:
+      type: boolean
+      default: false
+      description: Master switch for edge-layer token revocation. When enabled, revoked tokens are pushed to configured edge providers for CDN/firewall-level blocking. Disabled by default.
+      env: AUTH_EDGE_REVOCATION_ENABLED
+
+    EdgeRevocationTimeoutSeconds:
+      type: integer
+      default: 5
+      minimum: 1
+      maximum: 30
+      description: Timeout in seconds for edge provider push operations. Operations exceeding this timeout are logged and added to the failed-pushes retry set.
+      env: AUTH_EDGE_REVOCATION_TIMEOUT_SECONDS
+
+    EdgeRevocationMaxRetryAttempts:
+      type: integer
+      default: 3
+      minimum: 1
+      maximum: 10
+      description: Maximum retry attempts for failed edge pushes before giving up and logging an error.
+      env: AUTH_EDGE_REVOCATION_MAX_RETRY_ATTEMPTS
+
+    # CloudFlare Provider
+    CloudflareEdgeEnabled:
+      type: boolean
+      default: false
+      description: Enable CloudFlare Workers KV edge revocation. Requires CloudflareAccountId, CloudflareKvNamespaceId, and CloudflareApiToken to be configured.
+      env: AUTH_CLOUDFLARE_EDGE_ENABLED
+
+    CloudflareAccountId:
+      type: string
+      nullable: true
+      description: CloudFlare account ID for KV API access. Required when CloudflareEdgeEnabled is true.
+      env: AUTH_CLOUDFLARE_ACCOUNT_ID
+
+    CloudflareKvNamespaceId:
+      type: string
+      nullable: true
+      description: CloudFlare KV namespace ID where revoked tokens are stored. Create via CloudFlare dashboard or API.
+      env: AUTH_CLOUDFLARE_KV_NAMESPACE_ID
+
+    CloudflareApiToken:
+      type: string
+      nullable: true
+      description: CloudFlare API token with Workers KV write permissions. Use a scoped token with only KV Edit permission for security.
+      env: AUTH_CLOUDFLARE_API_TOKEN
+
+    # OpenResty/Redis Provider
+    OpenrestyEdgeEnabled:
+      type: boolean
+      default: false
+      description: Enable OpenResty/NGINX edge revocation verification. When enabled, the OpenResty Lua scripts read revocation entries directly from Redis (auth:edge prefix) to block revoked tokens at the edge layer before requests reach upstream services.
+      env: AUTH_OPENRESTY_EDGE_ENABLED
+
+    # MFA Configuration
+    MfaEncryptionKey:
+      type: string
+      nullable: true  # NRT: Optional - validated at runtime when MFA operations are attempted
+      env: AUTH_MFA_ENCRYPTION_KEY
+      description: AES-256-GCM encryption key for TOTP secrets at rest. Required when MFA is used. Must be at least 32 characters. Throws InvalidOperationException at runtime if null when MFA setup is attempted.
+
+    MfaIssuerName:
+      type: string
+      env: AUTH_MFA_ISSUER_NAME
+      default: "Bannou"
+      description: Issuer name displayed in authenticator apps (appears as service name in Google Authenticator, Authy, etc.)
+
+    MfaChallengeTtlMinutes:
+      type: integer
+      env: AUTH_MFA_CHALLENGE_TTL_MINUTES
+      default: 5
+      minimum: 1
+      maximum: 30
+      description: TTL in minutes for MFA challenge tokens issued during login and MFA setup tokens during enrollment

@@ -409,7 +409,7 @@ public partial class AchievementService
         Guid gameServiceId,
         CancellationToken cancellationToken)
     {
-        var definitionStore = _stateStoreFactory.GetStore<AchievementDefinitionData>(StateStoreDefinitions.AchievementDefinition);
+        var definitionStore = _stateStoreFactory.GetCacheableStore<AchievementDefinitionData>(StateStoreDefinitions.AchievementDefinition);
         var indexKey = GetDefinitionIndexKey(gameServiceId);
         var achievementIds = await definitionStore.GetSetAsync<string>(indexKey, cancellationToken);
 

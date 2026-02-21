@@ -1,0 +1,91 @@
+openapi: 3.0.3
+info:
+  title: Quest Service Configuration
+  description: Configuration schema for Quest service.
+  version: 1.0.0
+
+paths: {}
+
+x-service-configuration:
+  properties:
+    # === Quest Limits ===
+    MaxActiveQuestsPerCharacter:
+      type: integer
+      default: 25
+      env: QUEST_MAX_ACTIVE_QUESTS_PER_CHARACTER
+      description: Maximum concurrent active quests per character
+
+    MaxQuestorsPerQuest:
+      type: integer
+      default: 5
+      env: QUEST_MAX_QUESTORS_PER_QUEST
+      description: Maximum party members per quest instance
+
+    DefaultDeadlineSeconds:
+      type: integer
+      default: 604800
+      env: QUEST_DEFAULT_DEADLINE_SECONDS
+      description: Default quest deadline in seconds (7 days)
+
+    # === Redis Cache Settings ===
+    DefinitionCacheTtlSeconds:
+      type: integer
+      default: 3600
+      env: QUEST_DEFINITION_CACHE_TTL_SECONDS
+      description: TTL for quest definition cache in Redis
+
+    ProgressCacheTtlSeconds:
+      type: integer
+      default: 300
+      env: QUEST_PROGRESS_CACHE_TTL_SECONDS
+      description: TTL for objective progress cache
+
+    # === In-Memory Cache Settings ===
+    QuestDataCacheTtlSeconds:
+      type: integer
+      default: 120
+      env: QUEST_DATA_CACHE_TTL_SECONDS
+      description: TTL for in-memory quest data cache used by actor behavior expressions (2 minutes default)
+
+    CooldownCacheTtlSeconds:
+      type: integer
+      default: 86400
+      env: QUEST_COOLDOWN_CACHE_TTL_SECONDS
+      description: TTL for quest cooldown tracking
+
+    # === Distributed Lock Settings ===
+    LockExpirySeconds:
+      type: integer
+      default: 30
+      env: QUEST_LOCK_EXPIRY_SECONDS
+      description: Distributed lock expiry for quest mutations
+
+    LockRetryAttempts:
+      type: integer
+      default: 3
+      env: QUEST_LOCK_RETRY_ATTEMPTS
+      description: Retry attempts when lock acquisition fails
+
+    # === Concurrency Settings ===
+    MaxConcurrencyRetries:
+      type: integer
+      default: 5
+      env: QUEST_MAX_CONCURRENCY_RETRIES
+      description: ETag concurrency retry attempts
+
+    # === Idempotency Settings ===
+    IdempotencyTtlSeconds:
+      type: integer
+      default: 86400
+      env: QUEST_IDEMPOTENCY_TTL_SECONDS
+      description: TTL for idempotency keys (24 hours)
+
+    # === Prerequisite Validation Settings ===
+    PrerequisiteValidationMode:
+      type: string
+      default: CHECK_ALL
+      env: QUEST_PREREQUISITE_VALIDATION_MODE
+      description: |
+        Controls prerequisite validation behavior.
+        CHECK_ALL (default): Evaluate all prerequisites, return all failures for richer error info.
+        FAIL_FAST: Stop on first failure for faster rejection.

@@ -298,13 +298,6 @@ export function isClientRouted(message: BinaryMessage): boolean {
 }
 
 /**
- * Returns true if this message has high priority.
- */
-export function isHighPriority(message: BinaryMessage): boolean {
-  return hasFlag(message.flags, MessageFlags.HighPriority);
-}
-
-/**
  * Returns true if this is a successful response (ResponseCode is 0).
  */
 export function isSuccess(message: BinaryMessage): boolean {

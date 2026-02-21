@@ -55,6 +55,21 @@ public partial interface IStateService : IBannouService
         Task<(StatusCodes, BulkGetStateResponse?)> BulkGetStateAsync(BulkGetStateRequest body, CancellationToken cancellationToken = default(CancellationToken));
 
         /// <summary>
+        /// BulkSaveState operation
+        /// </summary>
+        Task<(StatusCodes, BulkSaveStateResponse?)> BulkSaveStateAsync(BulkSaveStateRequest body, CancellationToken cancellationToken = default(CancellationToken));
+
+        /// <summary>
+        /// BulkExistsState operation
+        /// </summary>
+        Task<(StatusCodes, BulkExistsStateResponse?)> BulkExistsStateAsync(BulkExistsStateRequest body, CancellationToken cancellationToken = default(CancellationToken));
+
+        /// <summary>
+        /// BulkDeleteState operation
+        /// </summary>
+        Task<(StatusCodes, BulkDeleteStateResponse?)> BulkDeleteStateAsync(BulkDeleteStateRequest body, CancellationToken cancellationToken = default(CancellationToken));
+
+        /// <summary>
         /// ListStores operation
         /// </summary>
         Task<(StatusCodes, ListStoresResponse?)> ListStoresAsync(ListStoresRequest body, CancellationToken cancellationToken = default(CancellationToken));

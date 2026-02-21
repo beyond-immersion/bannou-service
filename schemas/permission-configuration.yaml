@@ -5,27 +5,40 @@ info:
     Configuration schema for Permission service.
     Properties are bound to environment variables with BANNOU_ prefix.
 
-    **Schema Rules**: AI agents MUST review docs/reference/SCHEMA-RULES.md before
-    modifying this schema. Optional reference types require `nullable: true`.
+    **SCHEMA MODIFICATION GATE**: STOP. Before modifying this schema, you MUST:
+    1. Read docs/reference/SCHEMA-RULES.md
+    2. State which section applies to your change
+    3. Only then proceed with edits
+    Edits without stating the applicable rule are FORBIDDEN.
   version: 1.0.0
 paths: {}
 x-service-configuration:
   properties:
-    # === Distributed Lock Parameters (Tier 1) ===
-    LockMaxRetries:
+    MaxConcurrentRecompilations:
       type: integer
-      env: PERMISSION_LOCK_MAX_RETRIES
-      default: 10
-      description: Maximum retries for acquiring distributed lock
-
-    LockBaseDelayMs:
+      env: PERMISSION_MAX_CONCURRENT_RECOMPILATIONS
+      default: 50
+      minimum: 1
+      maximum: 500
+      description: Maximum number of concurrent session recompilations during service registration (bounds parallel Redis operations)
+    PermissionCacheTtlSeconds:
       type: integer
-      env: PERMISSION_LOCK_BASE_DELAY_MS
-      default: 100
-      description: Base delay in ms between lock retry attempts (exponential backoff applied)
-
-    LockExpirySeconds:
+      env: PERMISSION_CACHE_TTL_SECONDS
+      default: 0
+      minimum: 0
+      maximum: 86400
+      description: In-memory permission cache TTL in seconds. Cached capabilities older than this are refreshed from Redis on next access. 0 disables TTL (cache never expires). Recommended non-zero value is 300 (5 minutes). Acts as a safety net against lost event-driven recompilation triggers.
+    SessionDataTtlSeconds:
       type: integer
-      env: PERMISSION_LOCK_EXPIRY_SECONDS
-      default: 30
-      description: Distributed lock expiration time in seconds
+      env: PERMISSION_SESSION_DATA_TTL_SECONDS
+      default: 86400
+      minimum: 0
+      maximum: 604800
+      description: Redis TTL in seconds for session permission data keys (states and compiled permissions). Handles cleanup of orphaned data from sessions that disconnect without proper cleanup. 0 disables Redis TTL. Default 86400 (24 hours). Maximum 604800 (7 days).
+    RoleHierarchy:
+      type: array
+      items:
+        type: string
+      default: ["anonymous", "user", "developer", "admin"]
+      env: PERMISSION_ROLE_HIERARCHY
+      description: Ordered role hierarchy from lowest to highest privilege. Index determines priority for permission compilation (comma-separated in env var).

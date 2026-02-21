@@ -1,12 +1,14 @@
 # Bannou Service Development Tenets
 
-> **Version**: 6.0
-> **Last Updated**: 2026-01-28
+> **Version**: 8.0
+> **Last Updated**: 2026-02-11
 > **Scope**: All Bannou microservices and related infrastructure
 
 This document is the authoritative index for Bannou development standards. All service implementations, tests, and infrastructure MUST adhere to these tenets. Tenets must not be changed or added without EXPLICIT approval, without exception.
 
 > **AI ASSISTANTS**: All tenets apply with heightened scrutiny to AI-generated code and suggestions. AI assistants MUST NOT bypass, weaken, or work around any tenet without explicit human approval. This includes modifying tests to pass with buggy implementations, adding fallback mechanisms, or any other "creative solutions" that violate the spirit of these tenets.
+>
+> **Equally forbidden**: (1) **False tenet citation** — attributing a requirement to a specific tenet when that tenet does not actually require it. If you claim code is "per T7" or "per IMPLEMENTATION TENETS," you MUST be able to point to the specific rule in that tenet that mandates it. Fabricating tenet requirements poisons the codebase with phantom obligations that mislead future developers. (2) **Existing violations as precedent** — "the existing code also violates this" is NEVER a justification for a new violation. Existing violations are tech debt to be tracked and fixed, not patterns to replicate. Each new line of code must comply with the tenets as written, regardless of what surrounds it.
 
 ---
 
@@ -15,11 +17,12 @@ This document is the authoritative index for Bannou development standards. All s
 When documenting tenet compliance in source code comments, **NEVER use specific tenet numbers** (e.g., "T9", "Tenet 21", "TENET T4"). Tenet numbers change over time as tenets are added, removed, or reorganized.
 
 **Instead, use category names:**
-- `FOUNDATION TENETS` - for T4, T5, T6, T13, T15, T18
-- `IMPLEMENTATION TENETS` - for T3, T7, T8, T9, T14, T17, T20, T21, T23, T24, T25
+- `FOUNDATION TENETS` - for T4, T5, T6, T13, T15, T18, T27, T28, T29
+- `IMPLEMENTATION TENETS` - for T3, T7, T8, T9, T14, T17, T20, T21, T23, T24, T25, T26, T30
 - `QUALITY TENETS` - for T10, T11, T12, T16, T19, T22
+- `SERVICE HIERARCHY` - for Tenet 2 (service layer dependencies)
 
-> **Note**: Tenet 1 (Schema-First Development) is special - it references [SCHEMA-RULES.md](SCHEMA-RULES.md) for all schema-related rules. In source code, reference it as `FOUNDATION TENETS` or simply "per schema-first development".
+> **Note**: Tenets 1 and 2 are special - they reference external documents ([SCHEMA-RULES.md](SCHEMA-RULES.md) and [SERVICE-HIERARCHY.md](SERVICE-HIERARCHY.md)) for detailed rules. In source code, reference them as `FOUNDATION TENETS` or by their specific names ("per schema-first development", "per service hierarchy").
 
 **Examples:**
 ```csharp
@@ -70,10 +73,12 @@ plugins/lib-{service}/
 └── Services/                        # MANUAL - optional helper services
 
 bannou-service/Generated/
-├── Models/{Service}Models.cs        # Request/response models
+├── Models/{Service}Models.cs        # Request/response models (use make print-models to inspect)
 ├── Clients/{Service}Client.cs       # Service client for mesh calls
 └── Events/{Service}EventsModels.cs  # Service event models
 ```
+
+> **Model Inspection**: Use `make print-models PLUGIN="service"` to view compact model shapes instead of reading generated files directly. If print-models fails, generate first — never guess at model definitions.
 
 ### The Cardinal Rules
 
@@ -116,17 +121,67 @@ Schema-first applies to **HTTP APIs and service contracts**. Some components are
 
 ---
 
+## Tenet 2: Service Hierarchy (INVIOLABLE)
+
+**Services are organized into layers. Dependencies may only flow downward.**
+
+Before adding ANY service client dependency, you MUST read [SERVICE-HIERARCHY.md](SERVICE-HIERARCHY.md). This is not optional.
+
+### The Hierarchy Layers
+
+```
+Layer 4: Application Services (actor, behavior, mapping, scene, etc.)
+Layer 3: Extended Services (character-personality, character-history, etc.)
+Layer 2: Foundational Services (account, auth, character, realm, etc.)
+Layer 1: Observability (telemetry, orchestrator, analytics) - OPTIONAL
+Layer 0: Infrastructure (lib-state, lib-messaging, lib-mesh) - ALWAYS ON
+```
+
+### The Cardinal Rule
+
+> **A service may ONLY depend on services in its own layer or lower layers. Dependencies on higher layers are FORBIDDEN.**
+
+### Why This Matters
+
+- **Layer 2 services are foundations** - they don't know about their consumers
+- **Layer 1 services are optional** - nothing breaks if they're disabled
+- **Higher layers extend lower layers** - not the other way around
+
+### Common Violation Pattern
+
+```csharp
+// FORBIDDEN: Foundation service depending on extension service
+public class CharacterService  // Layer 2
+{
+    private readonly IActorClient _actorClient;  // Layer 4 - VIOLATION!
+}
+
+// CORRECT: Extension service depending on foundation
+public class ActorService  // Layer 4
+{
+    private readonly ICharacterClient _characterClient;  // Layer 2 - OK
+}
+```
+
+### Reference Counting the Right Way
+
+If a foundational service needs to know about references from higher layers (for cleanup eligibility), higher-layer services call **lib-resource's API directly** to register/unregister references, and lib-resource coordinates cleanup with policies (CASCADE/RESTRICT/DETACH). See [SERVICE-HIERARCHY.md](SERVICE-HIERARCHY.md) for the full pattern and T27/T28 in [FOUNDATION.md](tenets/FOUNDATION.md) for the communication and cleanup rules.
+
+---
+
 ## Tenet Categories
 
-Tenets are organized into three categories based on when they're needed:
+Tenets are organized into categories based on when they're needed:
 
 | Category | Tenets | When to Reference |
 |----------|--------|-------------------|
-| [**Foundation**](tenets/FOUNDATION.md) | T4, T5, T6, T13, T15, T18 | Before starting any new service or feature |
-| [**Implementation**](tenets/IMPLEMENTATION.md) | T3, T7, T8, T9, T14, T17, T20, T21, T23, T24, T25 | While actively writing service code |
+| [**Schema Rules**](SCHEMA-RULES.md) | Tenet 1 | Before creating or modifying any schema file |
+| [**Service Hierarchy**](SERVICE-HIERARCHY.md) | Tenet 2 | Before adding any service client dependency |
+| [**Foundation**](tenets/FOUNDATION.md) | T4, T5, T6, T13, T15, T18, T27, T28, T29 | Before starting any new service or feature |
+| [**Implementation**](tenets/IMPLEMENTATION.md) | T3, T7, T8, T9, T14, T17, T20, T21, T23, T24, T25, T26, T30 | While actively writing service code |
 | [**Quality**](tenets/QUALITY.md) | T10, T11, T12, T16, T19, T22 | During code review or before PR submission |
 
-> **Note**: Schema-related rules (formerly T1, T2, T26) are now consolidated in [SCHEMA-RULES.md](SCHEMA-RULES.md) and referenced by Tenet 1 above.
+> **Note**: Tenets 1 and 2 reference standalone documents (SCHEMA-RULES.md and SERVICE-HIERARCHY.md) that contain their own detailed rules.
 
 ---
 
@@ -136,12 +191,15 @@ Tenets are organized into three categories based on when they're needed:
 
 | # | Name | Core Rule |
 |---|------|-----------|
-| **T4** | Infrastructure Libs Pattern | MUST use lib-state, lib-messaging, lib-mesh; direct DB/queue access forbidden |
+| **T4** | Infrastructure Libs Pattern | MUST use lib-state, lib-messaging, lib-mesh; direct DB/queue access forbidden; L0/L1/L2 dependencies are hard (fail at startup) |
 | **T5** | Event-Driven Architecture | All state changes publish typed events; no anonymous objects |
 | **T6** | Service Implementation Pattern | Partial class structure with standardized dependencies |
 | **T13** | X-Permissions Usage | All endpoints declare x-permissions; enforced for WebSocket clients |
 | **T15** | Browser-Facing Endpoints | GET/path-params only for OAuth, Website, WebSocket upgrade (exceptional) |
 | **T18** | Licensing Requirements | MIT/BSD/Apache only; GPL forbidden for linked code |
+| **T27** | Cross-Service Communication Discipline | Direct API for higher→lower; DI interfaces for lower↔higher; events for broadcast only; inverted subscriptions forbidden |
+| **T28** | Resource-Managed Cleanup | Dependent data cleanup via lib-resource only; never subscribe to lifecycle events for destruction; Account exempt for privacy |
+| **T29** | No Metadata Bag Contracts | `additionalProperties: true` is NEVER a data contract between services; metadata bags are client-only; services own their own domain data in their own schemas |
 
 ---
 
@@ -162,6 +220,8 @@ Tenets are organized into three categories based on when they're needed:
 | **T23** | Async Method Pattern | Task-returning methods must be async with await |
 | **T24** | Using Statement Pattern | Use `using` for disposables; manual Dispose only for class-owned resources |
 | **T25** | Type Safety Across All Models | ALL models use proper types (enums, Guids); "JSON requires strings" is FALSE |
+| **T26** | No Sentinel Values | Never use magic values (Guid.Empty, -1, empty string) for absence; use nullable types |
+| **T30** | Telemetry Span Instrumentation | All async methods get `StartActivity` spans; zero-signature-change via `Activity.Current` ambient context |
 
 ---
 
@@ -194,9 +254,14 @@ Tenets are organized into three categories based on when they're needed:
 | Shared type defined in events schema | T1 | Move type to `-api.yaml`, use `$ref` in events |
 | API schema `$ref` to events schema | T1 | Reverse the dependency - API is source of truth |
 | Events `$ref` to different service's API | T1 | Use common schema or duplicate the type |
+| Layer 2 service depending on Layer 3 | T2 | Remove dependency; use DI Provider/Listener interfaces (see T27) |
+| Layer 2 service depending on Layer 4 | T2 | Remove dependency; use DI Provider/Listener interfaces (see T27) |
+| Foundation service calling extension client | T2 | Invert with DI interfaces; extension implements provider, foundation discovers via `IEnumerable<T>` |
+| Circular service dependencies | T2 | Restructure to respect layer hierarchy |
 | Direct Redis/MySQL connection | T4 | Use IStateStoreFactory via lib-state |
 | Direct RabbitMQ connection | T4 | Use IMessageBus via lib-messaging |
 | Direct HTTP service calls | T4 | Use generated clients via lib-mesh |
+| Graceful degradation for L0/L1/L2 dependency | T4 | Use constructor injection; see SERVICE-HIERARCHY.md |
 | Anonymous event objects | T5 | Define typed event in schema |
 | Manually defining lifecycle events | T5 | Use `x-lifecycle` in events schema |
 | Service class missing `partial` | T6 | Add `partial` keyword |
@@ -215,8 +280,8 @@ Tenets are organized into three categories based on when they're needed:
 | Hardcoded magic number for tunable | T21 | Define in configuration schema, use config |
 | Defined cache store not used | T21 | Implement cache read-through or remove store |
 | Secondary fallback for defaulted config property | T21 | Remove fallback; if null, throw (infrastructure failure) |
-| Non-async Task-returning method | T23 | Add async keyword and await |
-| `Task.FromResult` without async | T23 | Use async method with await |
+| Non-async Task-returning method | T23 | Add `async` keyword and `await Task.CompletedTask` if no other await exists |
+| `Task.FromResult` without async | T23 | Use `async` method with `await Task.CompletedTask` |
 | `.Result` or `.Wait()` on Task | T23 | Use await instead |
 | Manual `.Dispose()` in method scope | T24 | Use `using` statement instead |
 | try/finally for disposal | T24 | Use `using` statement instead |
@@ -228,6 +293,10 @@ Tenets are organized into three categories based on when they're needed:
 | Claiming "JSON requires strings" | T25 | FALSE - BannouJson handles serialization |
 | String in request/response/event model | T25 | Schema should define enum type |
 | String in configuration class | T25 | Config schema should define enum type |
+| Using `Guid.Empty` to mean "none" | T26 | Make field `Guid?` nullable |
+| Using `-1` to mean "no index" | T26 | Make field `int?` nullable |
+| Using empty string for "absent" | T26 | Make field `string?` nullable |
+| Non-nullable model field when value can be absent | T26 | Make field nullable, update schema |
 | `[TAG]` prefix in logs | T10 | Remove brackets, use structured logging |
 | Emojis in log messages | T10 | Plain text only (scripts excepted) |
 | HTTP fallback in tests | T12 | Remove fallback, fix root cause |
@@ -239,6 +308,24 @@ Tenets are organized into three categories based on when they're needed:
 | Blanket GlobalSuppressions.cs | T22 | Remove file, fix warnings individually |
 | Suppressing CS8602/CS8603/CS8604 in non-generated | T22 | Fix the null safety issue |
 | CS1591 warning on schema property/class | T1, T22 | Add `description` to schema (enums auto-suppressed) |
+| Service is `x-references` target but doesn't call `ExecuteCleanupAsync` | T1 | Add Resource cleanup to delete flow (see SCHEMA-RULES.md) |
+| Event handlers duplicate `x-references` cleanup callbacks | T1 | Remove event handlers; use Resource pattern only |
+| Adding event cleanup when `x-references` callbacks exist | T1 | Fix producer to call `ExecuteCleanupAsync` instead |
+| Using `additionalProperties: true` as cross-service data contract | T29 | Owning service defines its own schema, stores its own data |
+| Reading metadata keys from another service's response by convention | T29 | Query the service that owns the domain concept via API |
+| Storing higher-layer domain data in lower-layer metadata bags | T29 | Higher-layer service owns binding table, references lower-layer entity by ID |
+| Documentation specifying "put X in service Y's metadata" | T29 | X belongs in the schema of the service that owns concept X |
+| Publishing event to lower-layer's topic instead of calling API | T27 | Use generated client directly (hierarchy permits the call) |
+| Lower-layer subscribing to higher-layer events | T27 | Use DI Provider/Listener interface in `bannou-service/Providers/` |
+| Publishing registration events at startup | T27 | Use DI Provider interface discovered via `IEnumerable<T>` |
+| Defining event schema to receive data from callers | T27 | Remove event; expose API endpoint; callers use generated client |
+| Lower-layer caching higher-layer data and subscribing to invalidation events | T27 | Provider owns its cache; lower layer calls provider interface for fresh data |
+| Subscribing to `*.deleted` for dependent data cleanup | T28 | Register with lib-resource; implement cleanup callback via `ISeededResourceProvider` |
+| Event-based cleanup for persistent dependent data | T28 | Use lib-resource with CASCADE/RESTRICT/DETACH policy |
+| Cleanup handler in `*ServiceEvents.cs` for another service's entity | T28 | Move to lib-resource cleanup callback; remove event subscription |
+| Async helper method without `StartActivity` span | T30 | Add `using var activity = _telemetryProvider.StartActivity(...)` |
+| Manually adding spans to generated code | T30 | Add to code generation templates, not generated files |
+| Missing `ITelemetryProvider` in helper service constructor | T30 | Add constructor parameter for span creation |
 
 ---
 

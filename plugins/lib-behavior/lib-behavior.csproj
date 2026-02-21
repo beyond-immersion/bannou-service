@@ -11,4 +11,11 @@
 		<PackageReference Include="YamlDotNet" Version="16.3.0" />
 	</ItemGroup>
 
+	<ItemGroup>
+		<!-- Reference the standalone behavior-compiler SDK for compilation and runtime types -->
+		<ProjectReference Include="../../sdks/behavior-compiler/BeyondImmersion.Bannou.BehaviorCompiler.csproj" />
+		<!-- Reference the behavior-expressions SDK for expression evaluation -->
+		<ProjectReference Include="../../sdks/behavior-expressions/BeyondImmersion.Bannou.BehaviorExpressions.csproj" />
+	</ItemGroup>
+
 </Project>

@@ -24,10 +24,12 @@ public class AnalyticsTestHandler : BaseHttpTestHandler
 
         // Skill Rating Tests
         new ServiceTest(TestGetSkillRating, "GetSkillRating", "Analytics", "Test skill rating retrieval"),
+        new ServiceTest(TestUpdateSkillRating, "UpdateSkillRating", "Analytics", "Test skill rating update after match"),
 
         // Controller History Tests
         new ServiceTest(TestRecordControllerEvent, "RecordControllerEvent", "Analytics", "Test controller event recording"),
         new ServiceTest(TestQueryControllerHistory, "QueryControllerHistory", "Analytics", "Test controller history query"),
+        new ServiceTest(TestCleanupControllerHistory, "CleanupControllerHistory", "Analytics", "Test controller history cleanup"),
     ];
 
     private static async Task<TestResult> TestIngestEvent(ITestClient client, string[] args) =>
@@ -138,6 +140,46 @@ public class AnalyticsTestHandler : BaseHttpTestHandler
             return TestResult.Successful($"Skill rating retrieved: Rating={response.Rating}");
         }, "Get skill rating");
 
+    private static async Task<TestResult> TestUpdateSkillRating(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
+        {
+            var analyticsClient = GetServiceClient<IAnalyticsClient>();
+            var player1 = Guid.NewGuid();
+            var player2 = Guid.NewGuid();
+            var matchId = Guid.NewGuid();
+
+            var request = new UpdateSkillRatingRequest
+            {
+                GameServiceId = TestGameServiceId,
+                RatingType = "pvp",
+                MatchId = matchId,
+                Results = new List<MatchResult>
+                {
+                    new MatchResult
+                    {
+                        EntityId = player1,
+                        EntityType = EntityType.Account,
+                        Outcome = 1.0, // Win
+                        Score = 100
+                    },
+                    new MatchResult
+                    {
+                        EntityId = player2,
+                        EntityType = EntityType.Account,
+                        Outcome = 0.0, // Loss
+                        Score = 50
+                    }
+                }
+            };
+
+            var response = await analyticsClient.UpdateSkillRatingAsync(request);
+
+            if (response.MatchId != matchId)
+                return TestResult.Failed("Match ID mismatch");
+
+            return TestResult.Successful($"Skill ratings updated: {response.UpdatedRatings.Count} ratings changed");
+        }, "Update skill rating");
+
     private static async Task<TestResult> TestRecordControllerEvent(ITestClient client, string[] args) =>
         await ExecuteTestAsync(async () =>
         {
@@ -177,4 +219,25 @@ public class AnalyticsTestHandler : BaseHttpTestHandler
 
             return TestResult.Successful("Controller history queried successfully");
         }, "Query controller history");
+
+    private static async Task<TestResult> TestCleanupControllerHistory(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
+        {
+            var analyticsClient = GetServiceClient<IAnalyticsClient>();
+
+            // Use dry run to preview cleanup without deleting anything
+            var request = new CleanupControllerHistoryRequest
+            {
+                DryRun = true,
+                OlderThanDays = 30,
+                GameServiceId = TestGameServiceId
+            };
+
+            var response = await analyticsClient.CleanupControllerHistoryAsync(request);
+
+            if (!response.DryRun)
+                return TestResult.Failed("Expected dry run mode");
+
+            return TestResult.Successful($"Cleanup preview: {response.RecordsDeleted} records would be deleted");
+        }, "Cleanup controller history");
 }

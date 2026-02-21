@@ -12,7 +12,7 @@
 //
 //     IMPLEMENTATION TENETS - Configuration-First:
 //     - Access configuration via dependency injection, never Environment.GetEnvironmentVariable.
-//     - ALL properties below MUST be referenced in StateService.cs (no dead config).
+//     - ALL properties below MUST be referenced somewhere in the plugin (no dead config).
 //     - Any hardcoded tunable (limit, timeout, threshold, capacity) in service code means
 //       a configuration property is MISSING - add it to the configuration schema.
 //     - If a property is unused, remove it from the configuration schema.
@@ -32,18 +32,6 @@ using BeyondImmersion.BannouService.Configuration;
 
 namespace BeyondImmersion.BannouService.State;
 
-
-#pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
-/// <summary>
-/// Default consistency level for state operations
-/// </summary>
-public enum DefaultConsistency
-{
-    Strong,
-    Eventual,
-}
-#pragma warning restore CS1591
-
 /// <summary>
 /// Configuration class for State service.
 /// Properties are automatically bound from environment variables.
@@ -52,7 +40,7 @@ public enum DefaultConsistency
 /// <para>
 /// <b>IMPLEMENTATION TENETS - Configuration-First:</b> Access configuration via dependency injection.
 /// Never use <c>Environment.GetEnvironmentVariable()</c> directly in service code.
-/// ALL properties in this class MUST be referenced in the service implementation.
+/// ALL properties in this class MUST be referenced somewhere in the plugin.
 /// If a property is unused, remove it from the configuration schema.
 /// </para>
 /// <para>
@@ -66,10 +54,22 @@ public class StateServiceConfiguration : IServiceConfiguration
     public Guid? ForceServiceId { get; set; }
 
     /// <summary>
-    /// Use in-memory storage instead of Redis/MySQL. Data is NOT persisted. ONLY for testing/minimal infrastructure.
+    /// Use in-memory storage instead of Redis/MySQL. Data is NOT persisted. ONLY for testing/minimal infrastructure. Mutually exclusive with UseSqlite.
     /// Environment variable: STATE_USE_INMEMORY
     /// </summary>
     public bool UseInMemory { get; set; } = false;
+
+    /// <summary>
+    /// Use SQLite file storage instead of MySQL for SQL-backed stores. Redis-configured stores use in-memory. Data IS persisted to SQLite files at SqliteDataPath. Mutually exclusive with UseInMemory. In Docker: mount a volume at SqliteDataPath for external access/backups.
+    /// Environment variable: STATE_USE_SQLITE
+    /// </summary>
+    public bool UseSqlite { get; set; } = false;
+
+    /// <summary>
+    /// Directory path for SQLite database files. Each MySQL-configured store gets its own .db file in this directory. Default: ./data/state. In Docker containers the app runs from /app, so the effective default path is /app/data/state — mount a volume there for persistence and backup access.
+    /// Environment variable: STATE_SQLITE_DATA_PATH
+    /// </summary>
+    public string? SqliteDataPath { get; set; } = "./data/state";
 
     /// <summary>
     /// Redis connection string (host:port format) for Redis-backed state stores
@@ -87,24 +87,41 @@ public class StateServiceConfiguration : IServiceConfiguration
     /// Total timeout in seconds for establishing Redis/MySQL connections
     /// Environment variable: STATE_CONNECTION_TIMEOUT_SECONDS
     /// </summary>
+    [ConfigRange(Minimum = 1, Maximum = 300)]
     public int ConnectionTimeoutSeconds { get; set; } = 60;
 
     /// <summary>
-    /// Default consistency level for state operations
-    /// Environment variable: STATE_DEFAULT_CONSISTENCY
+    /// Maximum number of connection retry attempts for MySQL initialization
+    /// Environment variable: STATE_CONNECTION_RETRY_COUNT
     /// </summary>
-    public DefaultConsistency DefaultConsistency { get; set; } = DefaultConsistency.Strong;
+    [ConfigRange(Minimum = 0, Maximum = 100)]
+    public int ConnectionRetryCount { get; set; } = 10;
 
     /// <summary>
-    /// Enable metrics collection for state operations
-    /// Environment variable: STATE_ENABLE_METRICS
+    /// Minimum delay in milliseconds between MySQL connection retry attempts
+    /// Environment variable: STATE_MIN_RETRY_DELAY_MS
     /// </summary>
-    public bool EnableMetrics { get; set; } = true;
+    [ConfigRange(Minimum = 100, Maximum = 60000)]
+    public int MinRetryDelayMs { get; set; } = 1000;
 
     /// <summary>
-    /// Enable distributed tracing for state operations
-    /// Environment variable: STATE_ENABLE_TRACING
+    /// Maximum entries for in-memory LINQ fallback before throwing InvalidOperationException. Use JsonQueryAsync for large datasets.
+    /// Environment variable: STATE_INMEMORY_FALLBACK_LIMIT
     /// </summary>
-    public bool EnableTracing { get; set; } = true;
+    [ConfigRange(Minimum = 100, Maximum = 1000000)]
+    public int InMemoryFallbackLimit { get; set; } = 10000;
+
+    /// <summary>
+    /// Enable publishing error events when state store operations fail. Null uses service default (true). Events are deduplicated within the configured window to prevent storms during infrastructure failures.
+    /// Environment variable: STATE_ENABLE_ERROR_EVENT_PUBLISHING
+    /// </summary>
+    public bool EnableErrorEventPublishing { get; set; } = true;
+
+    /// <summary>
+    /// Time window in seconds for deduplicating identical error events. Events with the same store+operation+errorType are published at most once per window. Null uses service default (60).
+    /// Environment variable: STATE_ERROR_EVENT_DEDUPLICATION_WINDOW_SECONDS
+    /// </summary>
+    [ConfigRange(Minimum = 1, Maximum = 3600)]
+    public int ErrorEventDeduplicationWindowSeconds { get; set; } = 60;
 
 }

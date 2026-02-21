@@ -114,11 +114,45 @@ public partial class LocationController
                     "nullable": true,
                     "description": "Optional reason for deprecation"
                 },
+                "bounds": {
+                    "allOf": [
+                        {
+                            "type": "object"
+                        }
+                    ],
+                    "nullable": true,
+                    "description": "Optional spatial extent in world coordinates"
+                },
+                "boundsPrecision": {
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/BoundsPrecision"
+                        }
+                    ],
+                    "description": "Precision level of spatial bounds"
+                },
+                "coordinateMode": {
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/CoordinateMode"
+                        }
+                    ],
+                    "description": "How this location's coordinate system relates to its parent"
+                },
+                "localOrigin": {
+                    "allOf": [
+                        {
+                            "type": "object"
+                        }
+                    ],
+                    "nullable": true,
+                    "description": "Origin point for local or inherited coordinate systems"
+                },
                 "metadata": {
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Additional metadata for the location (JSON)"
+                    "description": "Client-provided location metadata. No Bannou plugin reads specific keys from this field by convention."
                 },
                 "createdAt": {
                     "type": "string",
@@ -146,6 +180,24 @@ public partial class LocationController
                 "WILDERNESS",
                 "DUNGEON",
                 "OTHER"
+            ]
+        },
+        "BoundsPrecision": {
+            "type": "string",
+            "description": "Precision level of spatial bounds for a location",
+            "enum": [
+                "exact",
+                "approximate",
+                "none"
+            ]
+        },
+        "CoordinateMode": {
+            "type": "string",
+            "description": "How this location's coordinate system relates to its parent",
+            "enum": [
+                "inherit",
+                "local",
+                "portal"
             ]
         }
     }
@@ -313,11 +365,45 @@ public partial class LocationController
                     "nullable": true,
                     "description": "Optional reason for deprecation"
                 },
+                "bounds": {
+                    "allOf": [
+                        {
+                            "type": "object"
+                        }
+                    ],
+                    "nullable": true,
+                    "description": "Optional spatial extent in world coordinates"
+                },
+                "boundsPrecision": {
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/BoundsPrecision"
+                        }
+                    ],
+                    "description": "Precision level of spatial bounds"
+                },
+                "coordinateMode": {
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/CoordinateMode"
+                        }
+                    ],
+                    "description": "How this location's coordinate system relates to its parent"
+                },
+                "localOrigin": {
+                    "allOf": [
+                        {
+                            "type": "object"
+                        }
+                    ],
+                    "nullable": true,
+                    "description": "Origin point for local or inherited coordinate systems"
+                },
                 "metadata": {
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Additional metadata for the location (JSON)"
+                    "description": "Client-provided location metadata. No Bannou plugin reads specific keys from this field by convention."
                 },
                 "createdAt": {
                     "type": "string",
@@ -345,6 +431,24 @@ public partial class LocationController
                 "WILDERNESS",
                 "DUNGEON",
                 "OTHER"
+            ]
+        },
+        "BoundsPrecision": {
+            "type": "string",
+            "description": "Precision level of spatial bounds for a location",
+            "enum": [
+                "exact",
+                "approximate",
+                "none"
+            ]
+        },
+        "CoordinateMode": {
+            "type": "string",
+            "description": "How this location's coordinate system relates to its parent",
+            "enum": [
+                "inherit",
+                "local",
+                "portal"
             ]
         }
     }
@@ -587,11 +691,45 @@ public partial class LocationController
                     "nullable": true,
                     "description": "Optional reason for deprecation"
                 },
+                "bounds": {
+                    "allOf": [
+                        {
+                            "type": "object"
+                        }
+                    ],
+                    "nullable": true,
+                    "description": "Optional spatial extent in world coordinates"
+                },
+                "boundsPrecision": {
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/BoundsPrecision"
+                        }
+                    ],
+                    "description": "Precision level of spatial bounds"
+                },
+                "coordinateMode": {
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/CoordinateMode"
+                        }
+                    ],
+                    "description": "How this location's coordinate system relates to its parent"
+                },
+                "localOrigin": {
+                    "allOf": [
+                        {
+                            "type": "object"
+                        }
+                    ],
+                    "nullable": true,
+                    "description": "Origin point for local or inherited coordinate systems"
+                },
                 "metadata": {
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Additional metadata for the location (JSON)"
+                    "description": "Client-provided location metadata. No Bannou plugin reads specific keys from this field by convention."
                 },
                 "createdAt": {
                     "type": "string",
@@ -619,6 +757,24 @@ public partial class LocationController
                 "WILDERNESS",
                 "DUNGEON",
                 "OTHER"
+            ]
+        },
+        "BoundsPrecision": {
+            "type": "string",
+            "description": "Precision level of spatial bounds for a location",
+            "enum": [
+                "exact",
+                "approximate",
+                "none"
+            ]
+        },
+        "CoordinateMode": {
+            "type": "string",
+            "description": "How this location's coordinate system relates to its parent",
+            "enum": [
+                "inherit",
+                "local",
+                "portal"
             ]
         }
     }
@@ -861,11 +1017,45 @@ public partial class LocationController
                     "nullable": true,
                     "description": "Optional reason for deprecation"
                 },
+                "bounds": {
+                    "allOf": [
+                        {
+                            "type": "object"
+                        }
+                    ],
+                    "nullable": true,
+                    "description": "Optional spatial extent in world coordinates"
+                },
+                "boundsPrecision": {
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/BoundsPrecision"
+                        }
+                    ],
+                    "description": "Precision level of spatial bounds"
+                },
+                "coordinateMode": {
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/CoordinateMode"
+                        }
+                    ],
+                    "description": "How this location's coordinate system relates to its parent"
+                },
+                "localOrigin": {
+                    "allOf": [
+                        {
+                            "type": "object"
+                        }
+                    ],
+                    "nullable": true,
+                    "description": "Origin point for local or inherited coordinate systems"
+                },
                 "metadata": {
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Additional metadata for the location (JSON)"
+                    "description": "Client-provided location metadata. No Bannou plugin reads specific keys from this field by convention."
                 },
                 "createdAt": {
                     "type": "string",
@@ -893,6 +1083,24 @@ public partial class LocationController
                 "WILDERNESS",
                 "DUNGEON",
                 "OTHER"
+            ]
+        },
+        "BoundsPrecision": {
+            "type": "string",
+            "description": "Precision level of spatial bounds for a location",
+            "enum": [
+                "exact",
+                "approximate",
+                "none"
+            ]
+        },
+        "CoordinateMode": {
+            "type": "string",
+            "description": "How this location's coordinate system relates to its parent",
+            "enum": [
+                "inherit",
+                "local",
+                "portal"
             ]
         }
     }
@@ -1135,11 +1343,45 @@ public partial class LocationController
                     "nullable": true,
                     "description": "Optional reason for deprecation"
                 },
+                "bounds": {
+                    "allOf": [
+                        {
+                            "type": "object"
+                        }
+                    ],
+                    "nullable": true,
+                    "description": "Optional spatial extent in world coordinates"
+                },
+                "boundsPrecision": {
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/BoundsPrecision"
+                        }
+                    ],
+                    "description": "Precision level of spatial bounds"
+                },
+                "coordinateMode": {
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/CoordinateMode"
+                        }
+                    ],
+                    "description": "How this location's coordinate system relates to its parent"
+                },
+                "localOrigin": {
+                    "allOf": [
+                        {
+                            "type": "object"
+                        }
+                    ],
+                    "nullable": true,
+                    "description": "Origin point for local or inherited coordinate systems"
+                },
                 "metadata": {
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Additional metadata for the location (JSON)"
+                    "description": "Client-provided location metadata. No Bannou plugin reads specific keys from this field by convention."
                 },
                 "createdAt": {
                     "type": "string",
@@ -1167,6 +1409,24 @@ public partial class LocationController
                 "WILDERNESS",
                 "DUNGEON",
                 "OTHER"
+            ]
+        },
+        "BoundsPrecision": {
+            "type": "string",
+            "description": "Precision level of spatial bounds for a location",
+            "enum": [
+                "exact",
+                "approximate",
+                "none"
+            ]
+        },
+        "CoordinateMode": {
+            "type": "string",
+            "description": "How this location's coordinate system relates to its parent",
+            "enum": [
+                "inherit",
+                "local",
+                "portal"
             ]
         }
     }
@@ -1409,11 +1669,45 @@ public partial class LocationController
                     "nullable": true,
                     "description": "Optional reason for deprecation"
                 },
+                "bounds": {
+                    "allOf": [
+                        {
+                            "type": "object"
+                        }
+                    ],
+                    "nullable": true,
+                    "description": "Optional spatial extent in world coordinates"
+                },
+                "boundsPrecision": {
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/BoundsPrecision"
+                        }
+                    ],
+                    "description": "Precision level of spatial bounds"
+                },
+                "coordinateMode": {
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/CoordinateMode"
+                        }
+                    ],
+                    "description": "How this location's coordinate system relates to its parent"
+                },
+                "localOrigin": {
+                    "allOf": [
+                        {
+                            "type": "object"
+                        }
+                    ],
+                    "nullable": true,
+                    "description": "Origin point for local or inherited coordinate systems"
+                },
                 "metadata": {
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Additional metadata for the location (JSON)"
+                    "description": "Client-provided location metadata. No Bannou plugin reads specific keys from this field by convention."
                 },
                 "createdAt": {
                     "type": "string",
@@ -1441,6 +1735,24 @@ public partial class LocationController
                 "WILDERNESS",
                 "DUNGEON",
                 "OTHER"
+            ]
+        },
+        "BoundsPrecision": {
+            "type": "string",
+            "description": "Precision level of spatial bounds for a location",
+            "enum": [
+                "exact",
+                "approximate",
+                "none"
+            ]
+        },
+        "CoordinateMode": {
+            "type": "string",
+            "description": "How this location's coordinate system relates to its parent",
+            "enum": [
+                "inherit",
+                "local",
+                "portal"
             ]
         }
     }
@@ -1640,11 +1952,45 @@ public partial class LocationController
                     "nullable": true,
                     "description": "Optional reason for deprecation"
                 },
+                "bounds": {
+                    "allOf": [
+                        {
+                            "type": "object"
+                        }
+                    ],
+                    "nullable": true,
+                    "description": "Optional spatial extent in world coordinates"
+                },
+                "boundsPrecision": {
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/BoundsPrecision"
+                        }
+                    ],
+                    "description": "Precision level of spatial bounds"
+                },
+                "coordinateMode": {
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/CoordinateMode"
+                        }
+                    ],
+                    "description": "How this location's coordinate system relates to its parent"
+                },
+                "localOrigin": {
+                    "allOf": [
+                        {
+                            "type": "object"
+                        }
+                    ],
+                    "nullable": true,
+                    "description": "Origin point for local or inherited coordinate systems"
+                },
                 "metadata": {
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Additional metadata for the location (JSON)"
+                    "description": "Client-provided location metadata. No Bannou plugin reads specific keys from this field by convention."
                 },
                 "createdAt": {
                     "type": "string",
@@ -1672,6 +2018,24 @@ public partial class LocationController
                 "WILDERNESS",
                 "DUNGEON",
                 "OTHER"
+            ]
+        },
+        "BoundsPrecision": {
+            "type": "string",
+            "description": "Precision level of spatial bounds for a location",
+            "enum": [
+                "exact",
+                "approximate",
+                "none"
+            ]
+        },
+        "CoordinateMode": {
+            "type": "string",
+            "description": "How this location's coordinate system relates to its parent",
+            "enum": [
+                "inherit",
+                "local",
+                "portal"
             ]
         }
     }
@@ -1729,6 +2093,146 @@ public partial class LocationController
             _GetLocationAncestors_Info,
             _GetLocationAncestors_RequestSchema,
             _GetLocationAncestors_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for ValidateTerritory
+
+    private static readonly string _ValidateTerritory_RequestSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/ValidateTerritoryRequest",
+    "$defs": {
+        "ValidateTerritoryRequest": {
+            "type": "object",
+            "description": "Request to validate a location against territory boundaries",
+            "additionalProperties": false,
+            "required": [
+                "locationId",
+                "territoryLocationIds"
+            ],
+            "properties": {
+                "locationId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "The location to validate"
+                },
+                "territoryLocationIds": {
+                    "type": "array",
+                    "items": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "description": "Territory boundary location IDs"
+                },
+                "territoryMode": {
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/TerritoryMode"
+                        }
+                    ],
+                    "nullable": true,
+                    "description": "Validation mode (exclusive or inclusive). Defaults to exclusive."
+                }
+            }
+        },
+        "TerritoryMode": {
+            "type": "string",
+            "description": "Territory validation mode for constraint checking",
+            "enum": [
+                "exclusive",
+                "inclusive"
+            ]
+        }
+    }
+}
+""";
+
+    private static readonly string _ValidateTerritory_ResponseSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/ValidateTerritoryResponse",
+    "$defs": {
+        "ValidateTerritoryResponse": {
+            "type": "object",
+            "description": "Territory validation result",
+            "additionalProperties": false,
+            "required": [
+                "isValid"
+            ],
+            "properties": {
+                "isValid": {
+                    "type": "boolean",
+                    "description": "True if location passes territory validation"
+                },
+                "violationReason": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Human-readable reason if validation failed"
+                },
+                "matchedTerritoryId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "The territory location that matched (for inclusive) or conflicted (for exclusive)"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _ValidateTerritory_Info = """
+{
+    "summary": "Validate location against territory boundaries",
+    "description": "Checks if a proposed location falls within or outside specified territory boundaries.\nUsed by Contract service's clause type handler system for territory validation.\n\nTerritory modes:\n- exclusive: Location must NOT be within any territory location (or descendants)\n- inclusive: Location MUST be within at least one territory location (or descendants)\n",
+    "tags": [
+        "Location"
+    ],
+    "deprecated": false,
+    "operationId": "validateTerritory"
+}
+""";
+
+    /// <summary>Returns endpoint information for ValidateTerritory</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/location/validate-territory/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> ValidateTerritory_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Location",
+            "POST",
+            "/location/validate-territory",
+            _ValidateTerritory_Info));
+
+    /// <summary>Returns request schema for ValidateTerritory</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/location/validate-territory/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> ValidateTerritory_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Location",
+            "POST",
+            "/location/validate-territory",
+            "request-schema",
+            _ValidateTerritory_RequestSchema));
+
+    /// <summary>Returns response schema for ValidateTerritory</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/location/validate-territory/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> ValidateTerritory_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Location",
+            "POST",
+            "/location/validate-territory",
+            "response-schema",
+            _ValidateTerritory_ResponseSchema));
+
+    /// <summary>Returns full schema for ValidateTerritory</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/location/validate-territory/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> ValidateTerritory_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Location",
+            "POST",
+            "/location/validate-territory",
+            _ValidateTerritory_Info,
+            _ValidateTerritory_RequestSchema,
+            _ValidateTerritory_ResponseSchema));
 
     #endregion
 
@@ -1921,11 +2425,45 @@ public partial class LocationController
                     "nullable": true,
                     "description": "Optional reason for deprecation"
                 },
+                "bounds": {
+                    "allOf": [
+                        {
+                            "type": "object"
+                        }
+                    ],
+                    "nullable": true,
+                    "description": "Optional spatial extent in world coordinates"
+                },
+                "boundsPrecision": {
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/BoundsPrecision"
+                        }
+                    ],
+                    "description": "Precision level of spatial bounds"
+                },
+                "coordinateMode": {
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/CoordinateMode"
+                        }
+                    ],
+                    "description": "How this location's coordinate system relates to its parent"
+                },
+                "localOrigin": {
+                    "allOf": [
+                        {
+                            "type": "object"
+                        }
+                    ],
+                    "nullable": true,
+                    "description": "Origin point for local or inherited coordinate systems"
+                },
                 "metadata": {
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Additional metadata for the location (JSON)"
+                    "description": "Client-provided location metadata. No Bannou plugin reads specific keys from this field by convention."
                 },
                 "createdAt": {
                     "type": "string",
@@ -1953,6 +2491,24 @@ public partial class LocationController
                 "WILDERNESS",
                 "DUNGEON",
                 "OTHER"
+            ]
+        },
+        "BoundsPrecision": {
+            "type": "string",
+            "description": "Precision level of spatial bounds for a location",
+            "enum": [
+                "exact",
+                "approximate",
+                "none"
+            ]
+        },
+        "CoordinateMode": {
+            "type": "string",
+            "description": "How this location's coordinate system relates to its parent",
+            "enum": [
+                "inherit",
+                "local",
+                "portal"
             ]
         }
     }
@@ -2065,11 +2621,47 @@ public partial class LocationController
                     "nullable": true,
                     "description": "Parent location ID for hierarchy (null for root locations)"
                 },
+                "bounds": {
+                    "allOf": [
+                        {
+                            "type": "object"
+                        }
+                    ],
+                    "nullable": true,
+                    "description": "Optional spatial extent in world coordinates"
+                },
+                "boundsPrecision": {
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/BoundsPrecision"
+                        }
+                    ],
+                    "nullable": true,
+                    "description": "Precision level of spatial bounds (defaults to none)"
+                },
+                "coordinateMode": {
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/CoordinateMode"
+                        }
+                    ],
+                    "nullable": true,
+                    "description": "How this location's coordinate system relates to its parent (defaults to inherit)"
+                },
+                "localOrigin": {
+                    "allOf": [
+                        {
+                            "type": "object"
+                        }
+                    ],
+                    "nullable": true,
+                    "description": "Origin point for local or inherited coordinate systems"
+                },
                 "metadata": {
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Additional metadata for the location (JSON)"
+                    "description": "Client-provided location metadata. No Bannou plugin reads specific keys from this field by convention."
                 }
             }
         },
@@ -2087,6 +2679,24 @@ public partial class LocationController
                 "WILDERNESS",
                 "DUNGEON",
                 "OTHER"
+            ]
+        },
+        "BoundsPrecision": {
+            "type": "string",
+            "description": "Precision level of spatial bounds for a location",
+            "enum": [
+                "exact",
+                "approximate",
+                "none"
+            ]
+        },
+        "CoordinateMode": {
+            "type": "string",
+            "description": "How this location's coordinate system relates to its parent",
+            "enum": [
+                "inherit",
+                "local",
+                "portal"
             ]
         }
     }
@@ -2166,11 +2776,45 @@ public partial class LocationController
                     "nullable": true,
                     "description": "Optional reason for deprecation"
                 },
+                "bounds": {
+                    "allOf": [
+                        {
+                            "type": "object"
+                        }
+                    ],
+                    "nullable": true,
+                    "description": "Optional spatial extent in world coordinates"
+                },
+                "boundsPrecision": {
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/BoundsPrecision"
+                        }
+                    ],
+                    "description": "Precision level of spatial bounds"
+                },
+                "coordinateMode": {
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/CoordinateMode"
+                        }
+                    ],
+                    "description": "How this location's coordinate system relates to its parent"
+                },
+                "localOrigin": {
+                    "allOf": [
+                        {
+                            "type": "object"
+                        }
+                    ],
+                    "nullable": true,
+                    "description": "Origin point for local or inherited coordinate systems"
+                },
                 "metadata": {
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Additional metadata for the location (JSON)"
+                    "description": "Client-provided location metadata. No Bannou plugin reads specific keys from this field by convention."
                 },
                 "createdAt": {
                     "type": "string",
@@ -2198,6 +2842,24 @@ public partial class LocationController
                 "WILDERNESS",
                 "DUNGEON",
                 "OTHER"
+            ]
+        },
+        "BoundsPrecision": {
+            "type": "string",
+            "description": "Precision level of spatial bounds for a location",
+            "enum": [
+                "exact",
+                "approximate",
+                "none"
+            ]
+        },
+        "CoordinateMode": {
+            "type": "string",
+            "description": "How this location's coordinate system relates to its parent",
+            "enum": [
+                "inherit",
+                "local",
+                "portal"
             ]
         }
     }
@@ -2300,11 +2962,47 @@ public partial class LocationController
                     "nullable": true,
                     "description": "Type of location"
                 },
+                "bounds": {
+                    "allOf": [
+                        {
+                            "type": "object"
+                        }
+                    ],
+                    "nullable": true,
+                    "description": "Optional spatial extent in world coordinates"
+                },
+                "boundsPrecision": {
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/BoundsPrecision"
+                        }
+                    ],
+                    "nullable": true,
+                    "description": "Precision level of spatial bounds"
+                },
+                "coordinateMode": {
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/CoordinateMode"
+                        }
+                    ],
+                    "nullable": true,
+                    "description": "How this location's coordinate system relates to its parent"
+                },
+                "localOrigin": {
+                    "allOf": [
+                        {
+                            "type": "object"
+                        }
+                    ],
+                    "nullable": true,
+                    "description": "Origin point for local or inherited coordinate systems"
+                },
                 "metadata": {
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Additional metadata"
+                    "description": "Updated client-provided location metadata. No Bannou plugin reads specific keys from this field by convention."
                 }
             }
         },
@@ -2322,6 +3020,24 @@ public partial class LocationController
                 "WILDERNESS",
                 "DUNGEON",
                 "OTHER"
+            ]
+        },
+        "BoundsPrecision": {
+            "type": "string",
+            "description": "Precision level of spatial bounds for a location",
+            "enum": [
+                "exact",
+                "approximate",
+                "none"
+            ]
+        },
+        "CoordinateMode": {
+            "type": "string",
+            "description": "How this location's coordinate system relates to its parent",
+            "enum": [
+                "inherit",
+                "local",
+                "portal"
             ]
         }
     }
@@ -2401,11 +3117,45 @@ public partial class LocationController
                     "nullable": true,
                     "description": "Optional reason for deprecation"
                 },
+                "bounds": {
+                    "allOf": [
+                        {
+                            "type": "object"
+                        }
+                    ],
+                    "nullable": true,
+                    "description": "Optional spatial extent in world coordinates"
+                },
+                "boundsPrecision": {
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/BoundsPrecision"
+                        }
+                    ],
+                    "description": "Precision level of spatial bounds"
+                },
+                "coordinateMode": {
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/CoordinateMode"
+                        }
+                    ],
+                    "description": "How this location's coordinate system relates to its parent"
+                },
+                "localOrigin": {
+                    "allOf": [
+                        {
+                            "type": "object"
+                        }
+                    ],
+                    "nullable": true,
+                    "description": "Origin point for local or inherited coordinate systems"
+                },
                 "metadata": {
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Additional metadata for the location (JSON)"
+                    "description": "Client-provided location metadata. No Bannou plugin reads specific keys from this field by convention."
                 },
                 "createdAt": {
                     "type": "string",
@@ -2433,6 +3183,24 @@ public partial class LocationController
                 "WILDERNESS",
                 "DUNGEON",
                 "OTHER"
+            ]
+        },
+        "BoundsPrecision": {
+            "type": "string",
+            "description": "Precision level of spatial bounds for a location",
+            "enum": [
+                "exact",
+                "approximate",
+                "none"
+            ]
+        },
+        "CoordinateMode": {
+            "type": "string",
+            "description": "How this location's coordinate system relates to its parent",
+            "enum": [
+                "inherit",
+                "local",
+                "portal"
             ]
         }
     }
@@ -2598,11 +3366,45 @@ public partial class LocationController
                     "nullable": true,
                     "description": "Optional reason for deprecation"
                 },
+                "bounds": {
+                    "allOf": [
+                        {
+                            "type": "object"
+                        }
+                    ],
+                    "nullable": true,
+                    "description": "Optional spatial extent in world coordinates"
+                },
+                "boundsPrecision": {
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/BoundsPrecision"
+                        }
+                    ],
+                    "description": "Precision level of spatial bounds"
+                },
+                "coordinateMode": {
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/CoordinateMode"
+                        }
+                    ],
+                    "description": "How this location's coordinate system relates to its parent"
+                },
+                "localOrigin": {
+                    "allOf": [
+                        {
+                            "type": "object"
+                        }
+                    ],
+                    "nullable": true,
+                    "description": "Origin point for local or inherited coordinate systems"
+                },
                 "metadata": {
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Additional metadata for the location (JSON)"
+                    "description": "Client-provided location metadata. No Bannou plugin reads specific keys from this field by convention."
                 },
                 "createdAt": {
                     "type": "string",
@@ -2630,6 +3432,24 @@ public partial class LocationController
                 "WILDERNESS",
                 "DUNGEON",
                 "OTHER"
+            ]
+        },
+        "BoundsPrecision": {
+            "type": "string",
+            "description": "Precision level of spatial bounds for a location",
+            "enum": [
+                "exact",
+                "approximate",
+                "none"
+            ]
+        },
+        "CoordinateMode": {
+            "type": "string",
+            "description": "How this location's coordinate system relates to its parent",
+            "enum": [
+                "inherit",
+                "local",
+                "portal"
             ]
         }
     }
@@ -2789,11 +3609,45 @@ public partial class LocationController
                     "nullable": true,
                     "description": "Optional reason for deprecation"
                 },
+                "bounds": {
+                    "allOf": [
+                        {
+                            "type": "object"
+                        }
+                    ],
+                    "nullable": true,
+                    "description": "Optional spatial extent in world coordinates"
+                },
+                "boundsPrecision": {
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/BoundsPrecision"
+                        }
+                    ],
+                    "description": "Precision level of spatial bounds"
+                },
+                "coordinateMode": {
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/CoordinateMode"
+                        }
+                    ],
+                    "description": "How this location's coordinate system relates to its parent"
+                },
+                "localOrigin": {
+                    "allOf": [
+                        {
+                            "type": "object"
+                        }
+                    ],
+                    "nullable": true,
+                    "description": "Origin point for local or inherited coordinate systems"
+                },
                 "metadata": {
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Additional metadata for the location (JSON)"
+                    "description": "Client-provided location metadata. No Bannou plugin reads specific keys from this field by convention."
                 },
                 "createdAt": {
                     "type": "string",
@@ -2821,6 +3675,24 @@ public partial class LocationController
                 "WILDERNESS",
                 "DUNGEON",
                 "OTHER"
+            ]
+        },
+        "BoundsPrecision": {
+            "type": "string",
+            "description": "Precision level of spatial bounds for a location",
+            "enum": [
+                "exact",
+                "approximate",
+                "none"
+            ]
+        },
+        "CoordinateMode": {
+            "type": "string",
+            "description": "How this location's coordinate system relates to its parent",
+            "enum": [
+                "inherit",
+                "local",
+                "portal"
             ]
         }
     }
@@ -2965,6 +3837,255 @@ public partial class LocationController
 
     #endregion
 
+    #region Meta Endpoints for TransferLocationToRealm
+
+    private static readonly string _TransferLocationToRealm_RequestSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/TransferLocationToRealmRequest",
+    "$defs": {
+        "TransferLocationToRealmRequest": {
+            "description": "Request to transfer a location from its current realm to a different realm",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "locationId",
+                "targetRealmId"
+            ],
+            "properties": {
+                "locationId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "ID of the location to transfer"
+                },
+                "targetRealmId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "ID of the target realm to transfer the location to"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _TransferLocationToRealm_ResponseSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/LocationResponse",
+    "$defs": {
+        "LocationResponse": {
+            "description": "Complete location data returned from API operations",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "locationId",
+                "realmId",
+                "code",
+                "name",
+                "locationType",
+                "depth",
+                "isDeprecated",
+                "createdAt",
+                "updatedAt"
+            ],
+            "properties": {
+                "locationId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Unique identifier for the location"
+                },
+                "realmId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Realm this location belongs to"
+                },
+                "code": {
+                    "type": "string",
+                    "description": "Unique code for the location within its realm"
+                },
+                "name": {
+                    "type": "string",
+                    "description": "Display name of the location"
+                },
+                "description": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Optional description of the location"
+                },
+                "locationType": {
+                    "$ref": "#/$defs/LocationType",
+                    "description": "Type classification of the location"
+                },
+                "parentLocationId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Parent location ID (null for root locations)"
+                },
+                "depth": {
+                    "type": "integer",
+                    "description": "Depth in hierarchy (0 for root locations)"
+                },
+                "isDeprecated": {
+                    "type": "boolean",
+                    "description": "Whether this location is deprecated and cannot be used"
+                },
+                "deprecatedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "Timestamp when this location was deprecated"
+                },
+                "deprecationReason": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Optional reason for deprecation"
+                },
+                "bounds": {
+                    "allOf": [
+                        {
+                            "type": "object"
+                        }
+                    ],
+                    "nullable": true,
+                    "description": "Optional spatial extent in world coordinates"
+                },
+                "boundsPrecision": {
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/BoundsPrecision"
+                        }
+                    ],
+                    "description": "Precision level of spatial bounds"
+                },
+                "coordinateMode": {
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/CoordinateMode"
+                        }
+                    ],
+                    "description": "How this location's coordinate system relates to its parent"
+                },
+                "localOrigin": {
+                    "allOf": [
+                        {
+                            "type": "object"
+                        }
+                    ],
+                    "nullable": true,
+                    "description": "Origin point for local or inherited coordinate systems"
+                },
+                "metadata": {
+                    "type": "object",
+                    "additionalProperties": true,
+                    "nullable": true,
+                    "description": "Client-provided location metadata. No Bannou plugin reads specific keys from this field by convention."
+                },
+                "createdAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "Timestamp when the location was created"
+                },
+                "updatedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "Timestamp when the location was last updated"
+                }
+            }
+        },
+        "LocationType": {
+            "type": "string",
+            "description": "Type classification for locations",
+            "enum": [
+                "CONTINENT",
+                "REGION",
+                "CITY",
+                "DISTRICT",
+                "BUILDING",
+                "ROOM",
+                "LANDMARK",
+                "WILDERNESS",
+                "DUNGEON",
+                "OTHER"
+            ]
+        },
+        "BoundsPrecision": {
+            "type": "string",
+            "description": "Precision level of spatial bounds for a location",
+            "enum": [
+                "exact",
+                "approximate",
+                "none"
+            ]
+        },
+        "CoordinateMode": {
+            "type": "string",
+            "description": "How this location's coordinate system relates to its parent",
+            "enum": [
+                "inherit",
+                "local",
+                "portal"
+            ]
+        }
+    }
+}
+""";
+
+    private static readonly string _TransferLocationToRealm_Info = """
+{
+    "summary": "Transfer a location to a different realm",
+    "description": "Moves a location from its current realm to a target realm.\nUpdates all realm-scoped indexes (code-index, realm-index, parent/root indexes).\nThe transferred location becomes a root location in the target realm (parent cleared).\nReturns Conflict if the target realm already has a location with the same code.\nDoes NOT move children \u2014 caller is responsible for tree ordering.\n",
+    "tags": [
+        "Location Admin"
+    ],
+    "deprecated": false,
+    "operationId": "transferLocationToRealm"
+}
+""";
+
+    /// <summary>Returns endpoint information for TransferLocationToRealm</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/location/transfer-realm/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> TransferLocationToRealm_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Location",
+            "POST",
+            "/location/transfer-realm",
+            _TransferLocationToRealm_Info));
+
+    /// <summary>Returns request schema for TransferLocationToRealm</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/location/transfer-realm/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> TransferLocationToRealm_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Location",
+            "POST",
+            "/location/transfer-realm",
+            "request-schema",
+            _TransferLocationToRealm_RequestSchema));
+
+    /// <summary>Returns response schema for TransferLocationToRealm</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/location/transfer-realm/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> TransferLocationToRealm_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Location",
+            "POST",
+            "/location/transfer-realm",
+            "response-schema",
+            _TransferLocationToRealm_ResponseSchema));
+
+    /// <summary>Returns full schema for TransferLocationToRealm</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/location/transfer-realm/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> TransferLocationToRealm_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Location",
+            "POST",
+            "/location/transfer-realm",
+            _TransferLocationToRealm_Info,
+            _TransferLocationToRealm_RequestSchema,
+            _TransferLocationToRealm_ResponseSchema));
+
+    #endregion
+
     #region Meta Endpoints for DeprecateLocation
 
     private static readonly string _DeprecateLocation_RequestSchema = """
@@ -3070,11 +4191,45 @@ public partial class LocationController
                     "nullable": true,
                     "description": "Optional reason for deprecation"
                 },
+                "bounds": {
+                    "allOf": [
+                        {
+                            "type": "object"
+                        }
+                    ],
+                    "nullable": true,
+                    "description": "Optional spatial extent in world coordinates"
+                },
+                "boundsPrecision": {
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/BoundsPrecision"
+                        }
+                    ],
+                    "description": "Precision level of spatial bounds"
+                },
+                "coordinateMode": {
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/CoordinateMode"
+                        }
+                    ],
+                    "description": "How this location's coordinate system relates to its parent"
+                },
+                "localOrigin": {
+                    "allOf": [
+                        {
+                            "type": "object"
+                        }
+                    ],
+                    "nullable": true,
+                    "description": "Origin point for local or inherited coordinate systems"
+                },
                 "metadata": {
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Additional metadata for the location (JSON)"
+                    "description": "Client-provided location metadata. No Bannou plugin reads specific keys from this field by convention."
                 },
                 "createdAt": {
                     "type": "string",
@@ -3102,6 +4257,24 @@ public partial class LocationController
                 "WILDERNESS",
                 "DUNGEON",
                 "OTHER"
+            ]
+        },
+        "BoundsPrecision": {
+            "type": "string",
+            "description": "Precision level of spatial bounds for a location",
+            "enum": [
+                "exact",
+                "approximate",
+                "none"
+            ]
+        },
+        "CoordinateMode": {
+            "type": "string",
+            "description": "How this location's coordinate system relates to its parent",
+            "enum": [
+                "inherit",
+                "local",
+                "portal"
             ]
         }
     }
@@ -3261,11 +4434,45 @@ public partial class LocationController
                     "nullable": true,
                     "description": "Optional reason for deprecation"
                 },
+                "bounds": {
+                    "allOf": [
+                        {
+                            "type": "object"
+                        }
+                    ],
+                    "nullable": true,
+                    "description": "Optional spatial extent in world coordinates"
+                },
+                "boundsPrecision": {
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/BoundsPrecision"
+                        }
+                    ],
+                    "description": "Precision level of spatial bounds"
+                },
+                "coordinateMode": {
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/CoordinateMode"
+                        }
+                    ],
+                    "description": "How this location's coordinate system relates to its parent"
+                },
+                "localOrigin": {
+                    "allOf": [
+                        {
+                            "type": "object"
+                        }
+                    ],
+                    "nullable": true,
+                    "description": "Origin point for local or inherited coordinate systems"
+                },
                 "metadata": {
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Additional metadata for the location (JSON)"
+                    "description": "Client-provided location metadata. No Bannou plugin reads specific keys from this field by convention."
                 },
                 "createdAt": {
                     "type": "string",
@@ -3293,6 +4500,24 @@ public partial class LocationController
                 "WILDERNESS",
                 "DUNGEON",
                 "OTHER"
+            ]
+        },
+        "BoundsPrecision": {
+            "type": "string",
+            "description": "Precision level of spatial bounds for a location",
+            "enum": [
+                "exact",
+                "approximate",
+                "none"
+            ]
+        },
+        "CoordinateMode": {
+            "type": "string",
+            "description": "How this location's coordinate system relates to its parent",
+            "enum": [
+                "inherit",
+                "local",
+                "portal"
             ]
         }
     }
@@ -3473,6 +4698,313 @@ public partial class LocationController
 
     #endregion
 
+    #region Meta Endpoints for QueryLocationsByPosition
+
+    private static readonly string _QueryLocationsByPosition_RequestSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/QueryLocationsByPositionRequest",
+    "$defs": {
+        "QueryLocationsByPositionRequest": {
+            "description": "Request to find all locations containing a spatial position",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "position",
+                "realmId"
+            ],
+            "properties": {
+                "position": {
+                    "type": "object",
+                    "description": "Position to query in world coordinates"
+                },
+                "realmId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Realm to search within"
+                },
+                "maxDepth": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "nullable": true,
+                    "description": "Maximum hierarchy depth to search (null for all depths)"
+                },
+                "page": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "default": 1,
+                    "description": "Page number for pagination (1-indexed)"
+                },
+                "pageSize": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 100,
+                    "default": 20,
+                    "description": "Number of results per page"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _QueryLocationsByPosition_ResponseSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/LocationListResponse",
+    "$defs": {
+        "LocationListResponse": {
+            "description": "Paginated list of locations with metadata for navigation",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "locations",
+                "totalCount",
+                "page",
+                "pageSize"
+            ],
+            "properties": {
+                "locations": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/LocationResponse"
+                    },
+                    "description": "List of locations matching the query"
+                },
+                "totalCount": {
+                    "type": "integer",
+                    "description": "Total number of locations matching the query (across all pages)"
+                },
+                "page": {
+                    "type": "integer",
+                    "description": "Current page number (1-indexed)"
+                },
+                "pageSize": {
+                    "type": "integer",
+                    "description": "Number of results per page"
+                },
+                "hasNextPage": {
+                    "type": "boolean",
+                    "description": "Whether there are more pages after the current page"
+                },
+                "hasPreviousPage": {
+                    "type": "boolean",
+                    "description": "Whether there are pages before the current page"
+                }
+            }
+        },
+        "LocationResponse": {
+            "description": "Complete location data returned from API operations",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "locationId",
+                "realmId",
+                "code",
+                "name",
+                "locationType",
+                "depth",
+                "isDeprecated",
+                "createdAt",
+                "updatedAt"
+            ],
+            "properties": {
+                "locationId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Unique identifier for the location"
+                },
+                "realmId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Realm this location belongs to"
+                },
+                "code": {
+                    "type": "string",
+                    "description": "Unique code for the location within its realm"
+                },
+                "name": {
+                    "type": "string",
+                    "description": "Display name of the location"
+                },
+                "description": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Optional description of the location"
+                },
+                "locationType": {
+                    "$ref": "#/$defs/LocationType",
+                    "description": "Type classification of the location"
+                },
+                "parentLocationId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Parent location ID (null for root locations)"
+                },
+                "depth": {
+                    "type": "integer",
+                    "description": "Depth in hierarchy (0 for root locations)"
+                },
+                "isDeprecated": {
+                    "type": "boolean",
+                    "description": "Whether this location is deprecated and cannot be used"
+                },
+                "deprecatedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "Timestamp when this location was deprecated"
+                },
+                "deprecationReason": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Optional reason for deprecation"
+                },
+                "bounds": {
+                    "allOf": [
+                        {
+                            "type": "object"
+                        }
+                    ],
+                    "nullable": true,
+                    "description": "Optional spatial extent in world coordinates"
+                },
+                "boundsPrecision": {
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/BoundsPrecision"
+                        }
+                    ],
+                    "description": "Precision level of spatial bounds"
+                },
+                "coordinateMode": {
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/CoordinateMode"
+                        }
+                    ],
+                    "description": "How this location's coordinate system relates to its parent"
+                },
+                "localOrigin": {
+                    "allOf": [
+                        {
+                            "type": "object"
+                        }
+                    ],
+                    "nullable": true,
+                    "description": "Origin point for local or inherited coordinate systems"
+                },
+                "metadata": {
+                    "type": "object",
+                    "additionalProperties": true,
+                    "nullable": true,
+                    "description": "Client-provided location metadata. No Bannou plugin reads specific keys from this field by convention."
+                },
+                "createdAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "Timestamp when the location was created"
+                },
+                "updatedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "Timestamp when the location was last updated"
+                }
+            }
+        },
+        "LocationType": {
+            "type": "string",
+            "description": "Type classification for locations",
+            "enum": [
+                "CONTINENT",
+                "REGION",
+                "CITY",
+                "DISTRICT",
+                "BUILDING",
+                "ROOM",
+                "LANDMARK",
+                "WILDERNESS",
+                "DUNGEON",
+                "OTHER"
+            ]
+        },
+        "BoundsPrecision": {
+            "type": "string",
+            "description": "Precision level of spatial bounds for a location",
+            "enum": [
+                "exact",
+                "approximate",
+                "none"
+            ]
+        },
+        "CoordinateMode": {
+            "type": "string",
+            "description": "How this location's coordinate system relates to its parent",
+            "enum": [
+                "inherit",
+                "local",
+                "portal"
+            ]
+        }
+    }
+}
+""";
+
+    private static readonly string _QueryLocationsByPosition_Info = """
+{
+    "summary": "Find locations containing a spatial position",
+    "description": "Given a Position3D and realmId, returns all locations whose bounds contain\nthat position, ordered by depth descending (most specific first). Only\nlocations with spatial bounds data are considered. A position is \"in\" a\nlocation if it falls within the location's axis-aligned bounding box.\n",
+    "tags": [
+        "Location"
+    ],
+    "deprecated": false,
+    "operationId": "queryLocationsByPosition"
+}
+""";
+
+    /// <summary>Returns endpoint information for QueryLocationsByPosition</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/location/query/by-position/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> QueryLocationsByPosition_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Location",
+            "POST",
+            "/location/query/by-position",
+            _QueryLocationsByPosition_Info));
+
+    /// <summary>Returns request schema for QueryLocationsByPosition</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/location/query/by-position/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> QueryLocationsByPosition_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Location",
+            "POST",
+            "/location/query/by-position",
+            "request-schema",
+            _QueryLocationsByPosition_RequestSchema));
+
+    /// <summary>Returns response schema for QueryLocationsByPosition</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/location/query/by-position/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> QueryLocationsByPosition_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Location",
+            "POST",
+            "/location/query/by-position",
+            "response-schema",
+            _QueryLocationsByPosition_ResponseSchema));
+
+    /// <summary>Returns full schema for QueryLocationsByPosition</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/location/query/by-position/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> QueryLocationsByPosition_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Location",
+            "POST",
+            "/location/query/by-position",
+            _QueryLocationsByPosition_Info,
+            _QueryLocationsByPosition_RequestSchema,
+            _QueryLocationsByPosition_ResponseSchema));
+
+    #endregion
+
     #region Meta Endpoints for SeedLocations
 
     private static readonly string _SeedLocations_RequestSchema = """
@@ -3539,11 +5071,47 @@ public partial class LocationController
                     "nullable": true,
                     "description": "Code of the parent location (resolved during seeding)"
                 },
+                "bounds": {
+                    "allOf": [
+                        {
+                            "type": "object"
+                        }
+                    ],
+                    "nullable": true,
+                    "description": "Optional spatial extent in world coordinates"
+                },
+                "boundsPrecision": {
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/BoundsPrecision"
+                        }
+                    ],
+                    "nullable": true,
+                    "description": "Precision level of spatial bounds (defaults to none)"
+                },
+                "coordinateMode": {
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/CoordinateMode"
+                        }
+                    ],
+                    "nullable": true,
+                    "description": "How this location's coordinate system relates to its parent (defaults to inherit)"
+                },
+                "localOrigin": {
+                    "allOf": [
+                        {
+                            "type": "object"
+                        }
+                    ],
+                    "nullable": true,
+                    "description": "Origin point for local or inherited coordinate systems"
+                },
                 "metadata": {
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Additional metadata for the location (JSON)"
+                    "description": "Client-provided location metadata. No Bannou plugin reads specific keys from this field by convention."
                 }
             }
         },
@@ -3561,6 +5129,24 @@ public partial class LocationController
                 "WILDERNESS",
                 "DUNGEON",
                 "OTHER"
+            ]
+        },
+        "BoundsPrecision": {
+            "type": "string",
+            "description": "Precision level of spatial bounds for a location",
+            "enum": [
+                "exact",
+                "approximate",
+                "none"
+            ]
+        },
+        "CoordinateMode": {
+            "type": "string",
+            "description": "How this location's coordinate system relates to its parent",
+            "enum": [
+                "inherit",
+                "local",
+                "portal"
             ]
         }
     }
@@ -3659,6 +5245,568 @@ public partial class LocationController
             _SeedLocations_Info,
             _SeedLocations_RequestSchema,
             _SeedLocations_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for ReportEntityPosition
+
+    private static readonly string _ReportEntityPosition_RequestSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/ReportEntityPositionRequest",
+    "$defs": {
+        "ReportEntityPositionRequest": {
+            "description": "Request to report an entity's presence at a location",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "entityType",
+                "entityId",
+                "locationId"
+            ],
+            "properties": {
+                "entityType": {
+                    "type": "string",
+                    "description": "Type of entity (opaque string - character, actor, npc, player, etc.)"
+                },
+                "entityId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "ID of the entity being reported"
+                },
+                "locationId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "ID of the location the entity is at"
+                },
+                "previousLocationId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Caller hint for the entity's previous location (optimization to skip GET on refresh)"
+                },
+                "realmId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "ID of the realm the location belongs to (included in arrival events if provided)"
+                },
+                "reportedBy": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Identifier of the reporter (service name or session ID)"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _ReportEntityPosition_ResponseSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/ReportEntityPositionResponse",
+    "$defs": {
+        "ReportEntityPositionResponse": {
+            "description": "Result of reporting entity presence",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "recorded"
+            ],
+            "properties": {
+                "recorded": {
+                    "type": "boolean",
+                    "description": "Whether the position was successfully recorded"
+                },
+                "arrivedAt": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Location ID the entity arrived at (only set when location changed)"
+                },
+                "departedFrom": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Location ID the entity departed from (only set when location changed)"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _ReportEntityPosition_Info = """
+{
+    "summary": "Report entity presence at a location",
+    "description": "Reports that an entity is present at a location. Creates or refreshes an ephemeral\npresence binding with configurable TTL. Reporters must call this periodically to\nkeep the presence alive. Publishes arrival/departure events only when the entity's\nlocation actually changes (pure refreshes are silent).\n\nThe optional previousLocationId provides a caller-hint optimization: if provided\nand matches the current stored location, only a TTL refresh occurs (no GET needed).\nIf omitted, the service reads the current value to detect location changes.\n",
+    "tags": [
+        "Location Presence"
+    ],
+    "deprecated": false,
+    "operationId": "reportEntityPosition"
+}
+""";
+
+    /// <summary>Returns endpoint information for ReportEntityPosition</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/location/report-entity-position/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> ReportEntityPosition_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Location",
+            "POST",
+            "/location/report-entity-position",
+            _ReportEntityPosition_Info));
+
+    /// <summary>Returns request schema for ReportEntityPosition</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/location/report-entity-position/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> ReportEntityPosition_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Location",
+            "POST",
+            "/location/report-entity-position",
+            "request-schema",
+            _ReportEntityPosition_RequestSchema));
+
+    /// <summary>Returns response schema for ReportEntityPosition</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/location/report-entity-position/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> ReportEntityPosition_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Location",
+            "POST",
+            "/location/report-entity-position",
+            "response-schema",
+            _ReportEntityPosition_ResponseSchema));
+
+    /// <summary>Returns full schema for ReportEntityPosition</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/location/report-entity-position/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> ReportEntityPosition_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Location",
+            "POST",
+            "/location/report-entity-position",
+            _ReportEntityPosition_Info,
+            _ReportEntityPosition_RequestSchema,
+            _ReportEntityPosition_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for GetEntityLocation
+
+    private static readonly string _GetEntityLocation_RequestSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/GetEntityLocationRequest",
+    "$defs": {
+        "GetEntityLocationRequest": {
+            "description": "Request to query an entity's current location",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "entityType",
+                "entityId"
+            ],
+            "properties": {
+                "entityType": {
+                    "type": "string",
+                    "description": "Type of entity (opaque string - character, actor, npc, player, etc.)"
+                },
+                "entityId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "ID of the entity to look up"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _GetEntityLocation_ResponseSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/GetEntityLocationResponse",
+    "$defs": {
+        "GetEntityLocationResponse": {
+            "description": "Result of querying an entity's current location",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "found"
+            ],
+            "properties": {
+                "found": {
+                    "type": "boolean",
+                    "description": "Whether a non-expired presence binding exists for this entity"
+                },
+                "locationId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "ID of the location the entity is currently at"
+                },
+                "realmId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "ID of the realm the location belongs to"
+                },
+                "entityType": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Type of entity (echoed back)"
+                },
+                "entityId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "ID of the entity (echoed back)"
+                },
+                "reportedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "When the presence was last reported"
+                },
+                "reportedBy": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Identifier of the last reporter"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _GetEntityLocation_Info = """
+{
+    "summary": "Get the current location of an entity",
+    "description": "Queries where an entity currently is. Returns the entity's location if a\nnon-expired presence binding exists.\n",
+    "tags": [
+        "Location Presence"
+    ],
+    "deprecated": false,
+    "operationId": "getEntityLocation"
+}
+""";
+
+    /// <summary>Returns endpoint information for GetEntityLocation</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/location/get-entity-location/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetEntityLocation_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Location",
+            "POST",
+            "/location/get-entity-location",
+            _GetEntityLocation_Info));
+
+    /// <summary>Returns request schema for GetEntityLocation</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/location/get-entity-location/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetEntityLocation_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Location",
+            "POST",
+            "/location/get-entity-location",
+            "request-schema",
+            _GetEntityLocation_RequestSchema));
+
+    /// <summary>Returns response schema for GetEntityLocation</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/location/get-entity-location/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetEntityLocation_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Location",
+            "POST",
+            "/location/get-entity-location",
+            "response-schema",
+            _GetEntityLocation_ResponseSchema));
+
+    /// <summary>Returns full schema for GetEntityLocation</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/location/get-entity-location/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetEntityLocation_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Location",
+            "POST",
+            "/location/get-entity-location",
+            _GetEntityLocation_Info,
+            _GetEntityLocation_RequestSchema,
+            _GetEntityLocation_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for ListEntitiesAtLocation
+
+    private static readonly string _ListEntitiesAtLocation_RequestSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/ListEntitiesAtLocationRequest",
+    "$defs": {
+        "ListEntitiesAtLocationRequest": {
+            "description": "Request to list entities at a specific location",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "locationId"
+            ],
+            "properties": {
+                "locationId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "ID of the location to query"
+                },
+                "entityType": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Optional filter by entity type (opaque string)"
+                },
+                "page": {
+                    "type": "integer",
+                    "default": 1,
+                    "description": "Page number (1-indexed)"
+                },
+                "pageSize": {
+                    "type": "integer",
+                    "default": 50,
+                    "description": "Number of entities per page"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _ListEntitiesAtLocation_ResponseSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/ListEntitiesAtLocationResponse",
+    "$defs": {
+        "ListEntitiesAtLocationResponse": {
+            "description": "Result of listing entities at a location",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "entities",
+                "totalCount",
+                "locationId"
+            ],
+            "properties": {
+                "entities": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/EntityPresenceEntry"
+                    },
+                    "description": "Entities currently present at the location"
+                },
+                "totalCount": {
+                    "type": "integer",
+                    "description": "Total number of entities matching the query"
+                },
+                "locationId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "ID of the queried location"
+                }
+            }
+        },
+        "EntityPresenceEntry": {
+            "description": "An entity currently present at a location",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "entityType",
+                "entityId"
+            ],
+            "properties": {
+                "entityType": {
+                    "type": "string",
+                    "description": "Type of entity (opaque string)"
+                },
+                "entityId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "ID of the entity"
+                },
+                "reportedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "When the presence was last reported"
+                },
+                "reportedBy": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Identifier of the last reporter"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _ListEntitiesAtLocation_Info = """
+{
+    "summary": "List entities currently at a location",
+    "description": "Queries which entities are currently present at a location. Supports optional\nentity type filtering and pagination. Results are hydrated from the entity\npresence store for reporting metadata.\n",
+    "tags": [
+        "Location Presence"
+    ],
+    "deprecated": false,
+    "operationId": "listEntitiesAtLocation"
+}
+""";
+
+    /// <summary>Returns endpoint information for ListEntitiesAtLocation</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/location/list-entities-at-location/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> ListEntitiesAtLocation_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Location",
+            "POST",
+            "/location/list-entities-at-location",
+            _ListEntitiesAtLocation_Info));
+
+    /// <summary>Returns request schema for ListEntitiesAtLocation</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/location/list-entities-at-location/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> ListEntitiesAtLocation_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Location",
+            "POST",
+            "/location/list-entities-at-location",
+            "request-schema",
+            _ListEntitiesAtLocation_RequestSchema));
+
+    /// <summary>Returns response schema for ListEntitiesAtLocation</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/location/list-entities-at-location/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> ListEntitiesAtLocation_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Location",
+            "POST",
+            "/location/list-entities-at-location",
+            "response-schema",
+            _ListEntitiesAtLocation_ResponseSchema));
+
+    /// <summary>Returns full schema for ListEntitiesAtLocation</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/location/list-entities-at-location/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> ListEntitiesAtLocation_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Location",
+            "POST",
+            "/location/list-entities-at-location",
+            _ListEntitiesAtLocation_Info,
+            _ListEntitiesAtLocation_RequestSchema,
+            _ListEntitiesAtLocation_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for ClearEntityPosition
+
+    private static readonly string _ClearEntityPosition_RequestSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/ClearEntityPositionRequest",
+    "$defs": {
+        "ClearEntityPositionRequest": {
+            "description": "Request to clear an entity's presence from its current location",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "entityType",
+                "entityId"
+            ],
+            "properties": {
+                "entityType": {
+                    "type": "string",
+                    "description": "Type of entity (opaque string - character, actor, npc, player, etc.)"
+                },
+                "entityId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "ID of the entity to clear"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _ClearEntityPosition_ResponseSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/ClearEntityPositionResponse",
+    "$defs": {
+        "ClearEntityPositionResponse": {
+            "description": "Result of clearing entity presence",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "cleared"
+            ],
+            "properties": {
+                "cleared": {
+                    "type": "boolean",
+                    "description": "Whether the entity had an active presence that was cleared"
+                },
+                "previousLocationId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Location the entity was removed from (null if entity had no active presence)"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _ClearEntityPosition_Info = """
+{
+    "summary": "Remove entity presence from its current location",
+    "description": "Clears an entity's presence binding, removing it from its current location.\nPublishes a departure event if the entity was present at a location.\n",
+    "tags": [
+        "Location Presence"
+    ],
+    "deprecated": false,
+    "operationId": "clearEntityPosition"
+}
+""";
+
+    /// <summary>Returns endpoint information for ClearEntityPosition</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/location/clear-entity-position/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> ClearEntityPosition_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Location",
+            "POST",
+            "/location/clear-entity-position",
+            _ClearEntityPosition_Info));
+
+    /// <summary>Returns request schema for ClearEntityPosition</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/location/clear-entity-position/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> ClearEntityPosition_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Location",
+            "POST",
+            "/location/clear-entity-position",
+            "request-schema",
+            _ClearEntityPosition_RequestSchema));
+
+    /// <summary>Returns response schema for ClearEntityPosition</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/location/clear-entity-position/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> ClearEntityPosition_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Location",
+            "POST",
+            "/location/clear-entity-position",
+            "response-schema",
+            _ClearEntityPosition_ResponseSchema));
+
+    /// <summary>Returns full schema for ClearEntityPosition</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/location/clear-entity-position/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> ClearEntityPosition_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Location",
+            "POST",
+            "/location/clear-entity-position",
+            _ClearEntityPosition_Info,
+            _ClearEntityPosition_RequestSchema,
+            _ClearEntityPosition_ResponseSchema));
 
     #endregion
 }

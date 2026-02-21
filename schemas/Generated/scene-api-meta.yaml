@@ -18,8 +18,11 @@ info:
     - Pushing data to other services (event-driven decoupling)
     - Interpreting node behavior (consumers decide what nodes mean)
 
-    **Schema Rules**: AI agents MUST review docs/reference/SCHEMA-RULES.md before modifying
-    this schema. Optional reference types require `nullable: true`.
+    **SCHEMA MODIFICATION GATE**: STOP. Before modifying this schema, you MUST:
+    1. Read docs/reference/SCHEMA-RULES.md
+    2. State which section applies to your change
+    3. Only then proceed with edits
+    Edits without stating the applicable rule are FORBIDDEN.
   version: 1.0.0
 servers:
 - url: http://localhost:5012
@@ -83,35 +86,35 @@ paths:
         string\"\n                    },\n                    \"description\": \"Searchable tags for filtering scenes\"\n\
         \                },\n                \"metadata\": {\n                    \"type\": \"object\",\n                \
         \    \"additionalProperties\": true,\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Scene-level metadata. Not interpreted by Scene service.\\nExamples: author, thumbnail, editor preferences, generator
-        config.\\n\"\n                },\n                \"createdAt\": {\n                    \"type\": \"string\",\n  \
-        \                  \"format\": \"date-time\",\n                    \"description\": \"When the scene was first created\"\
-        \n                },\n                \"updatedAt\": {\n                    \"type\": \"string\",\n              \
-        \      \"format\": \"date-time\",\n                    \"description\": \"When the scene was last modified\"\n   \
-        \             }\n            }\n        },\n        \"SceneType\": {\n            \"type\": \"string\",\n        \
-        \    \"description\": \"Scene classification for querying and validation rule lookup.\\nDifferent types may have different
-        validation requirements per game.\\n\",\n            \"enum\": [\n                \"unknown\",\n                \"\
-        region\",\n                \"city\",\n                \"district\",\n                \"lot\",\n                \"\
-        building\",\n                \"room\",\n                \"dungeon\",\n                \"arena\",\n               \
-        \ \"vehicle\",\n                \"prefab\",\n                \"cutscene\",\n                \"other\"\n          \
-        \  ]\n        },\n        \"SceneNode\": {\n            \"type\": \"object\",\n            \"description\": \"A node
-        in the scene hierarchy. Nodes can contain children to form\\na tree structure. Each node has a local transform relative
-        to its parent.\\n\",\n            \"required\": [\n                \"nodeId\",\n                \"refId\",\n     \
-        \           \"name\",\n                \"nodeType\",\n                \"localTransform\"\n            ],\n       \
-        \     \"properties\": {\n                \"nodeId\": {\n                    \"type\": \"string\",\n              \
-        \      \"format\": \"uuid\",\n                    \"description\": \"Globally unique node identifier\"\n         \
-        \       },\n                \"refId\": {\n                    \"type\": \"string\",\n                    \"pattern\"\
-        : \"^[a-z][a-z0-9_]*$\",\n                    \"description\": \"Scene-local reference identifier. Must be unique
-        within the scene.\\nUsed for scripting and cross-referencing. Examples: main_door, npc_spawn_1\\n\"\n            \
-        \    },\n                \"parentNodeId\": {\n                    \"type\": \"string\",\n                    \"format\"\
-        : \"uuid\",\n                    \"nullable\": true,\n                    \"description\": \"Parent node ID. Null
-        for the root node only.\"\n                },\n                \"name\": {\n                    \"type\": \"string\"\
-        ,\n                    \"description\": \"Human-readable display name for the node\"\n                },\n       \
-        \         \"nodeType\": {\n                    \"$ref\": \"#/$defs/NodeType\",\n                    \"description\"\
-        : \"The structural type of this node\"\n                },\n                \"localTransform\": {\n              \
-        \      \"$ref\": \"#/$defs/Transform\",\n                    \"description\": \"Transform relative to parent node\"\
-        \n                },\n                \"asset\": {\n                    \"$ref\": \"#/$defs/AssetReference\",\n  \
-        \                  \"nullable\": true,\n                    \"description\": \"Optional asset binding (mesh, sound,
+        : \"Client-only scene metadata (author, thumbnail, editor preferences). No Bannou plugin reads specific keys from
+        this field by convention.\"\n                },\n                \"createdAt\": {\n                    \"type\": \"\
+        string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"When the scene was
+        first created\"\n                },\n                \"updatedAt\": {\n                    \"type\": \"string\",\n\
+        \                    \"format\": \"date-time\",\n                    \"description\": \"When the scene was last modified\"\
+        \n                }\n            }\n        },\n        \"SceneType\": {\n            \"type\": \"string\",\n    \
+        \        \"description\": \"Scene classification for querying and validation rule lookup.\\nDifferent types may have
+        different validation requirements per game.\\n\",\n            \"enum\": [\n                \"unknown\",\n       \
+        \         \"region\",\n                \"city\",\n                \"district\",\n                \"lot\",\n      \
+        \          \"building\",\n                \"room\",\n                \"dungeon\",\n                \"arena\",\n  \
+        \              \"vehicle\",\n                \"prefab\",\n                \"cutscene\",\n                \"other\"\
+        \n            ]\n        },\n        \"SceneNode\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"A node in the scene hierarchy. Nodes can contain children to form\\na tree structure. Each node has a local transform
+        relative to its parent.\\n\",\n            \"required\": [\n                \"nodeId\",\n                \"refId\"\
+        ,\n                \"name\",\n                \"nodeType\",\n                \"localTransform\"\n            ],\n\
+        \            \"properties\": {\n                \"nodeId\": {\n                    \"type\": \"string\",\n       \
+        \             \"format\": \"uuid\",\n                    \"description\": \"Globally unique node identifier\"\n  \
+        \              },\n                \"refId\": {\n                    \"type\": \"string\",\n                    \"\
+        pattern\": \"^[a-z][a-z0-9_]*$\",\n                    \"description\": \"Scene-local reference identifier. Must be
+        unique within the scene.\\nUsed for scripting and cross-referencing. Examples: main_door, npc_spawn_1\\n\"\n     \
+        \           },\n                \"parentNodeId\": {\n                    \"type\": \"string\",\n                 \
+        \   \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\": \"Parent
+        node ID. Null for the root node only.\"\n                },\n                \"name\": {\n                    \"type\"\
+        : \"string\",\n                    \"description\": \"Human-readable display name for the node\"\n               \
+        \ },\n                \"nodeType\": {\n                    \"$ref\": \"#/$defs/NodeType\",\n                    \"\
+        description\": \"The structural type of this node\"\n                },\n                \"localTransform\": {\n \
+        \                   \"$ref\": \"#/$defs/Transform\",\n                    \"description\": \"Transform relative to
+        parent node\"\n                },\n                \"asset\": {\n                    \"$ref\": \"#/$defs/AssetReference\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"Optional asset binding (mesh, sound,
         particle effect)\"\n                },\n                \"children\": {\n                    \"type\": \"array\",\n\
         \                    \"items\": {\n                        \"$ref\": \"#/$defs/SceneNode\"\n                    },\n\
         \                    \"description\": \"Child nodes in the hierarchy\"\n                },\n                \"enabled\"\
@@ -123,10 +126,10 @@ paths:
         \n                    },\n                    \"description\": \"Arbitrary tags for consumer filtering (e.g., entrance,
         spawn, interactive)\"\n                },\n                \"annotations\": {\n                    \"type\": \"object\"\
         ,\n                    \"additionalProperties\": true,\n                    \"nullable\": true,\n                \
-        \    \"description\": \"Consumer-specific data stored without interpretation.\\nUse namespaced keys (e.g., render.castShadows,
-        game.interactionType).\\n\"\n                },\n                \"attachmentPoints\": {\n                    \"type\"\
-        : \"array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/AttachmentPoint\"\n  \
-        \                  },\n                    \"description\": \"Predefined locations for attaching child objects.\\\
+        \    \"description\": \"Client-only node annotations for game engines and editors. No Bannou plugin reads specific
+        keys from this field by convention.\"\n                },\n                \"attachmentPoints\": {\n             \
+        \       \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/AttachmentPoint\"\
+        \n                    },\n                    \"description\": \"Predefined locations for attaching child objects.\\
         nUsed by Scene Composer for furniture decoration, wall accessories, etc.\\n\"\n                },\n              \
         \  \"affordances\": {\n                    \"type\": \"array\",\n                    \"items\": {\n              \
         \          \"$ref\": \"#/$defs/Affordance\"\n                    },\n                    \"description\": \"Interaction
@@ -204,35 +207,34 @@ paths:
         \              \"$ref\": \"#/$defs/AffordanceType\",\n                    \"description\": \"The type of affordance\"\
         \n                },\n                \"parameters\": {\n                    \"type\": \"object\",\n             \
         \       \"additionalProperties\": true,\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Type-specific parameters. Examples:\\n- sittable: { height: 0.5, facing: [0,0,1] }\\n- door: { openAngle: 90,
-        locked: false }\\n- container: { capacity: 10, itemTypes: [\\\"weapon\\\", \\\"consumable\\\"] }\\n\"\n          \
-        \      }\n            }\n        },\n        \"AffordanceType\": {\n            \"type\": \"string\",\n          \
-        \  \"description\": \"Types of affordances describing what an object can do or how it can be interacted with.\\nUsed
-        by AI navigation, character controllers, and procedural content systems.\\n\",\n            \"enum\": [\n        \
-        \        \"walkable\",\n                \"climbable\",\n                \"sittable\",\n                \"interactive\"\
-        ,\n                \"collectible\",\n                \"destructible\",\n                \"container\",\n         \
-        \       \"door\",\n                \"teleport\"\n            ]\n        },\n        \"AssetSlot\": {\n           \
-        \ \"type\": \"object\",\n            \"description\": \"Defines acceptable asset types for procedural swapping at
-        this node.\\nUsed by procedural generation systems to substitute assets while\\nmaintaining scene coherence.\\n\"\
-        ,\n            \"required\": [\n                \"slotType\"\n            ],\n            \"properties\": {\n    \
-        \            \"slotType\": {\n                    \"type\": \"string\",\n                    \"description\": \"Category
-        of acceptable assets.\\nExamples: chair, table, wall_art, floor_lamp\\n\"\n                },\n                \"\
-        acceptsTags\": {\n                    \"type\": \"array\",\n                    \"items\": {\n                   \
-        \     \"type\": \"string\"\n                    },\n                    \"description\": \"Tags that acceptable assets
-        must have.\\nUsed for filtering when selecting random variations.\\n\"\n                },\n                \"defaultAsset\"\
-        : {\n                    \"$ref\": \"#/$defs/AssetReference\",\n                    \"nullable\": true,\n        \
-        \            \"description\": \"Default asset if no specific asset is bound\"\n                },\n              \
-        \  \"variations\": {\n                    \"type\": \"array\",\n                    \"items\": {\n               \
-        \         \"$ref\": \"#/$defs/AssetReference\"\n                    },\n                    \"description\": \"Pre-approved
-        asset variations for random selection.\\nProcedural systems pick from this list rather than searching all assets.\\\
-        n\"\n                }\n            }\n        },\n        \"MarkerType\": {\n            \"type\": \"string\",\n\
-        \            \"description\": \"Types of marker nodes for spawn points, waypoints, and other positional markers.\"\
-        ,\n            \"enum\": [\n                \"generic\",\n                \"spawn_point\",\n                \"npc_spawn\"\
-        ,\n                \"waypoint\",\n                \"camera_point\",\n                \"light_point\",\n          \
-        \      \"audio_point\",\n                \"trigger_point\"\n            ]\n        },\n        \"VolumeShape\": {\n\
-        \            \"type\": \"string\",\n            \"description\": \"Shape of a volume node for spatial bounds\",\n\
-        \            \"enum\": [\n                \"box\",\n                \"sphere\",\n                \"capsule\",\n  \
-        \              \"cylinder\"\n            ]\n        }\n    }\n}"
+        : \"Game-specific affordance parameters interpreted by game engines and AI systems. No Bannou plugin reads specific
+        keys from this field by convention.\"\n                }\n            }\n        },\n        \"AffordanceType\": {\n\
+        \            \"type\": \"string\",\n            \"description\": \"Types of affordances describing what an object
+        can do or how it can be interacted with.\\nUsed by AI navigation, character controllers, and procedural content systems.\\\
+        n\",\n            \"enum\": [\n                \"walkable\",\n                \"climbable\",\n                \"sittable\"\
+        ,\n                \"interactive\",\n                \"collectible\",\n                \"destructible\",\n       \
+        \         \"container\",\n                \"door\",\n                \"teleport\"\n            ]\n        },\n   \
+        \     \"AssetSlot\": {\n            \"type\": \"object\",\n            \"description\": \"Defines acceptable asset
+        types for procedural swapping at this node.\\nUsed by procedural generation systems to substitute assets while\\nmaintaining
+        scene coherence.\\n\",\n            \"required\": [\n                \"slotType\"\n            ],\n            \"\
+        properties\": {\n                \"slotType\": {\n                    \"type\": \"string\",\n                    \"\
+        description\": \"Category of acceptable assets.\\nExamples: chair, table, wall_art, floor_lamp\\n\"\n            \
+        \    },\n                \"acceptsTags\": {\n                    \"type\": \"array\",\n                    \"items\"\
+        : {\n                        \"type\": \"string\"\n                    },\n                    \"description\": \"\
+        Tags that acceptable assets must have.\\nUsed for filtering when selecting random variations.\\n\"\n             \
+        \   },\n                \"defaultAsset\": {\n                    \"$ref\": \"#/$defs/AssetReference\",\n         \
+        \           \"nullable\": true,\n                    \"description\": \"Default asset if no specific asset is bound\"\
+        \n                },\n                \"variations\": {\n                    \"type\": \"array\",\n              \
+        \      \"items\": {\n                        \"$ref\": \"#/$defs/AssetReference\"\n                    },\n      \
+        \              \"description\": \"Pre-approved asset variations for random selection.\\nProcedural systems pick from
+        this list rather than searching all assets.\\n\"\n                }\n            }\n        },\n        \"MarkerType\"\
+        : {\n            \"type\": \"string\",\n            \"description\": \"Types of marker nodes for spawn points, waypoints,
+        and other positional markers.\",\n            \"enum\": [\n                \"generic\",\n                \"spawn_point\"\
+        ,\n                \"npc_spawn\",\n                \"waypoint\",\n                \"camera_point\",\n            \
+        \    \"light_point\",\n                \"audio_point\",\n                \"trigger_point\"\n            ]\n      \
+        \  },\n        \"VolumeShape\": {\n            \"type\": \"string\",\n            \"description\": \"Shape of a volume
+        node for spatial bounds\",\n            \"enum\": [\n                \"box\",\n                \"sphere\",\n     \
+        \           \"capsule\",\n                \"cylinder\"\n            ]\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/SceneResponse\"\
         ,\n    \"$defs\": {\n        \"SceneResponse\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Standard response containing a scene\",\n            \"required\": [\n                \"scene\"\n            ],\n\
@@ -261,35 +263,35 @@ paths:
         string\"\n                    },\n                    \"description\": \"Searchable tags for filtering scenes\"\n\
         \                },\n                \"metadata\": {\n                    \"type\": \"object\",\n                \
         \    \"additionalProperties\": true,\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Scene-level metadata. Not interpreted by Scene service.\\nExamples: author, thumbnail, editor preferences, generator
-        config.\\n\"\n                },\n                \"createdAt\": {\n                    \"type\": \"string\",\n  \
-        \                  \"format\": \"date-time\",\n                    \"description\": \"When the scene was first created\"\
-        \n                },\n                \"updatedAt\": {\n                    \"type\": \"string\",\n              \
-        \      \"format\": \"date-time\",\n                    \"description\": \"When the scene was last modified\"\n   \
-        \             }\n            }\n        },\n        \"SceneType\": {\n            \"type\": \"string\",\n        \
-        \    \"description\": \"Scene classification for querying and validation rule lookup.\\nDifferent types may have different
-        validation requirements per game.\\n\",\n            \"enum\": [\n                \"unknown\",\n                \"\
-        region\",\n                \"city\",\n                \"district\",\n                \"lot\",\n                \"\
-        building\",\n                \"room\",\n                \"dungeon\",\n                \"arena\",\n               \
-        \ \"vehicle\",\n                \"prefab\",\n                \"cutscene\",\n                \"other\"\n          \
-        \  ]\n        },\n        \"SceneNode\": {\n            \"type\": \"object\",\n            \"description\": \"A node
-        in the scene hierarchy. Nodes can contain children to form\\na tree structure. Each node has a local transform relative
-        to its parent.\\n\",\n            \"required\": [\n                \"nodeId\",\n                \"refId\",\n     \
-        \           \"name\",\n                \"nodeType\",\n                \"localTransform\"\n            ],\n       \
-        \     \"properties\": {\n                \"nodeId\": {\n                    \"type\": \"string\",\n              \
-        \      \"format\": \"uuid\",\n                    \"description\": \"Globally unique node identifier\"\n         \
-        \       },\n                \"refId\": {\n                    \"type\": \"string\",\n                    \"pattern\"\
-        : \"^[a-z][a-z0-9_]*$\",\n                    \"description\": \"Scene-local reference identifier. Must be unique
-        within the scene.\\nUsed for scripting and cross-referencing. Examples: main_door, npc_spawn_1\\n\"\n            \
-        \    },\n                \"parentNodeId\": {\n                    \"type\": \"string\",\n                    \"format\"\
-        : \"uuid\",\n                    \"nullable\": true,\n                    \"description\": \"Parent node ID. Null
-        for the root node only.\"\n                },\n                \"name\": {\n                    \"type\": \"string\"\
-        ,\n                    \"description\": \"Human-readable display name for the node\"\n                },\n       \
-        \         \"nodeType\": {\n                    \"$ref\": \"#/$defs/NodeType\",\n                    \"description\"\
-        : \"The structural type of this node\"\n                },\n                \"localTransform\": {\n              \
-        \      \"$ref\": \"#/$defs/Transform\",\n                    \"description\": \"Transform relative to parent node\"\
-        \n                },\n                \"asset\": {\n                    \"$ref\": \"#/$defs/AssetReference\",\n  \
-        \                  \"nullable\": true,\n                    \"description\": \"Optional asset binding (mesh, sound,
+        : \"Client-only scene metadata (author, thumbnail, editor preferences). No Bannou plugin reads specific keys from
+        this field by convention.\"\n                },\n                \"createdAt\": {\n                    \"type\": \"\
+        string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"When the scene was
+        first created\"\n                },\n                \"updatedAt\": {\n                    \"type\": \"string\",\n\
+        \                    \"format\": \"date-time\",\n                    \"description\": \"When the scene was last modified\"\
+        \n                }\n            }\n        },\n        \"SceneType\": {\n            \"type\": \"string\",\n    \
+        \        \"description\": \"Scene classification for querying and validation rule lookup.\\nDifferent types may have
+        different validation requirements per game.\\n\",\n            \"enum\": [\n                \"unknown\",\n       \
+        \         \"region\",\n                \"city\",\n                \"district\",\n                \"lot\",\n      \
+        \          \"building\",\n                \"room\",\n                \"dungeon\",\n                \"arena\",\n  \
+        \              \"vehicle\",\n                \"prefab\",\n                \"cutscene\",\n                \"other\"\
+        \n            ]\n        },\n        \"SceneNode\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"A node in the scene hierarchy. Nodes can contain children to form\\na tree structure. Each node has a local transform
+        relative to its parent.\\n\",\n            \"required\": [\n                \"nodeId\",\n                \"refId\"\
+        ,\n                \"name\",\n                \"nodeType\",\n                \"localTransform\"\n            ],\n\
+        \            \"properties\": {\n                \"nodeId\": {\n                    \"type\": \"string\",\n       \
+        \             \"format\": \"uuid\",\n                    \"description\": \"Globally unique node identifier\"\n  \
+        \              },\n                \"refId\": {\n                    \"type\": \"string\",\n                    \"\
+        pattern\": \"^[a-z][a-z0-9_]*$\",\n                    \"description\": \"Scene-local reference identifier. Must be
+        unique within the scene.\\nUsed for scripting and cross-referencing. Examples: main_door, npc_spawn_1\\n\"\n     \
+        \           },\n                \"parentNodeId\": {\n                    \"type\": \"string\",\n                 \
+        \   \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\": \"Parent
+        node ID. Null for the root node only.\"\n                },\n                \"name\": {\n                    \"type\"\
+        : \"string\",\n                    \"description\": \"Human-readable display name for the node\"\n               \
+        \ },\n                \"nodeType\": {\n                    \"$ref\": \"#/$defs/NodeType\",\n                    \"\
+        description\": \"The structural type of this node\"\n                },\n                \"localTransform\": {\n \
+        \                   \"$ref\": \"#/$defs/Transform\",\n                    \"description\": \"Transform relative to
+        parent node\"\n                },\n                \"asset\": {\n                    \"$ref\": \"#/$defs/AssetReference\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"Optional asset binding (mesh, sound,
         particle effect)\"\n                },\n                \"children\": {\n                    \"type\": \"array\",\n\
         \                    \"items\": {\n                        \"$ref\": \"#/$defs/SceneNode\"\n                    },\n\
         \                    \"description\": \"Child nodes in the hierarchy\"\n                },\n                \"enabled\"\
@@ -301,10 +303,10 @@ paths:
         \n                    },\n                    \"description\": \"Arbitrary tags for consumer filtering (e.g., entrance,
         spawn, interactive)\"\n                },\n                \"annotations\": {\n                    \"type\": \"object\"\
         ,\n                    \"additionalProperties\": true,\n                    \"nullable\": true,\n                \
-        \    \"description\": \"Consumer-specific data stored without interpretation.\\nUse namespaced keys (e.g., render.castShadows,
-        game.interactionType).\\n\"\n                },\n                \"attachmentPoints\": {\n                    \"type\"\
-        : \"array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/AttachmentPoint\"\n  \
-        \                  },\n                    \"description\": \"Predefined locations for attaching child objects.\\\
+        \    \"description\": \"Client-only node annotations for game engines and editors. No Bannou plugin reads specific
+        keys from this field by convention.\"\n                },\n                \"attachmentPoints\": {\n             \
+        \       \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/AttachmentPoint\"\
+        \n                    },\n                    \"description\": \"Predefined locations for attaching child objects.\\
         nUsed by Scene Composer for furniture decoration, wall accessories, etc.\\n\"\n                },\n              \
         \  \"affordances\": {\n                    \"type\": \"array\",\n                    \"items\": {\n              \
         \          \"$ref\": \"#/$defs/Affordance\"\n                    },\n                    \"description\": \"Interaction
@@ -382,35 +384,34 @@ paths:
         \              \"$ref\": \"#/$defs/AffordanceType\",\n                    \"description\": \"The type of affordance\"\
         \n                },\n                \"parameters\": {\n                    \"type\": \"object\",\n             \
         \       \"additionalProperties\": true,\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Type-specific parameters. Examples:\\n- sittable: { height: 0.5, facing: [0,0,1] }\\n- door: { openAngle: 90,
-        locked: false }\\n- container: { capacity: 10, itemTypes: [\\\"weapon\\\", \\\"consumable\\\"] }\\n\"\n          \
-        \      }\n            }\n        },\n        \"AffordanceType\": {\n            \"type\": \"string\",\n          \
-        \  \"description\": \"Types of affordances describing what an object can do or how it can be interacted with.\\nUsed
-        by AI navigation, character controllers, and procedural content systems.\\n\",\n            \"enum\": [\n        \
-        \        \"walkable\",\n                \"climbable\",\n                \"sittable\",\n                \"interactive\"\
-        ,\n                \"collectible\",\n                \"destructible\",\n                \"container\",\n         \
-        \       \"door\",\n                \"teleport\"\n            ]\n        },\n        \"AssetSlot\": {\n           \
-        \ \"type\": \"object\",\n            \"description\": \"Defines acceptable asset types for procedural swapping at
-        this node.\\nUsed by procedural generation systems to substitute assets while\\nmaintaining scene coherence.\\n\"\
-        ,\n            \"required\": [\n                \"slotType\"\n            ],\n            \"properties\": {\n    \
-        \            \"slotType\": {\n                    \"type\": \"string\",\n                    \"description\": \"Category
-        of acceptable assets.\\nExamples: chair, table, wall_art, floor_lamp\\n\"\n                },\n                \"\
-        acceptsTags\": {\n                    \"type\": \"array\",\n                    \"items\": {\n                   \
-        \     \"type\": \"string\"\n                    },\n                    \"description\": \"Tags that acceptable assets
-        must have.\\nUsed for filtering when selecting random variations.\\n\"\n                },\n                \"defaultAsset\"\
-        : {\n                    \"$ref\": \"#/$defs/AssetReference\",\n                    \"nullable\": true,\n        \
-        \            \"description\": \"Default asset if no specific asset is bound\"\n                },\n              \
-        \  \"variations\": {\n                    \"type\": \"array\",\n                    \"items\": {\n               \
-        \         \"$ref\": \"#/$defs/AssetReference\"\n                    },\n                    \"description\": \"Pre-approved
-        asset variations for random selection.\\nProcedural systems pick from this list rather than searching all assets.\\\
-        n\"\n                }\n            }\n        },\n        \"MarkerType\": {\n            \"type\": \"string\",\n\
-        \            \"description\": \"Types of marker nodes for spawn points, waypoints, and other positional markers.\"\
-        ,\n            \"enum\": [\n                \"generic\",\n                \"spawn_point\",\n                \"npc_spawn\"\
-        ,\n                \"waypoint\",\n                \"camera_point\",\n                \"light_point\",\n          \
-        \      \"audio_point\",\n                \"trigger_point\"\n            ]\n        },\n        \"VolumeShape\": {\n\
-        \            \"type\": \"string\",\n            \"description\": \"Shape of a volume node for spatial bounds\",\n\
-        \            \"enum\": [\n                \"box\",\n                \"sphere\",\n                \"capsule\",\n  \
-        \              \"cylinder\"\n            ]\n        }\n    }\n}"
+        : \"Game-specific affordance parameters interpreted by game engines and AI systems. No Bannou plugin reads specific
+        keys from this field by convention.\"\n                }\n            }\n        },\n        \"AffordanceType\": {\n\
+        \            \"type\": \"string\",\n            \"description\": \"Types of affordances describing what an object
+        can do or how it can be interacted with.\\nUsed by AI navigation, character controllers, and procedural content systems.\\\
+        n\",\n            \"enum\": [\n                \"walkable\",\n                \"climbable\",\n                \"sittable\"\
+        ,\n                \"interactive\",\n                \"collectible\",\n                \"destructible\",\n       \
+        \         \"container\",\n                \"door\",\n                \"teleport\"\n            ]\n        },\n   \
+        \     \"AssetSlot\": {\n            \"type\": \"object\",\n            \"description\": \"Defines acceptable asset
+        types for procedural swapping at this node.\\nUsed by procedural generation systems to substitute assets while\\nmaintaining
+        scene coherence.\\n\",\n            \"required\": [\n                \"slotType\"\n            ],\n            \"\
+        properties\": {\n                \"slotType\": {\n                    \"type\": \"string\",\n                    \"\
+        description\": \"Category of acceptable assets.\\nExamples: chair, table, wall_art, floor_lamp\\n\"\n            \
+        \    },\n                \"acceptsTags\": {\n                    \"type\": \"array\",\n                    \"items\"\
+        : {\n                        \"type\": \"string\"\n                    },\n                    \"description\": \"\
+        Tags that acceptable assets must have.\\nUsed for filtering when selecting random variations.\\n\"\n             \
+        \   },\n                \"defaultAsset\": {\n                    \"$ref\": \"#/$defs/AssetReference\",\n         \
+        \           \"nullable\": true,\n                    \"description\": \"Default asset if no specific asset is bound\"\
+        \n                },\n                \"variations\": {\n                    \"type\": \"array\",\n              \
+        \      \"items\": {\n                        \"$ref\": \"#/$defs/AssetReference\"\n                    },\n      \
+        \              \"description\": \"Pre-approved asset variations for random selection.\\nProcedural systems pick from
+        this list rather than searching all assets.\\n\"\n                }\n            }\n        },\n        \"MarkerType\"\
+        : {\n            \"type\": \"string\",\n            \"description\": \"Types of marker nodes for spawn points, waypoints,
+        and other positional markers.\",\n            \"enum\": [\n                \"generic\",\n                \"spawn_point\"\
+        ,\n                \"npc_spawn\",\n                \"waypoint\",\n                \"camera_point\",\n            \
+        \    \"light_point\",\n                \"audio_point\",\n                \"trigger_point\"\n            ]\n      \
+        \  },\n        \"VolumeShape\": {\n            \"type\": \"string\",\n            \"description\": \"Shape of a volume
+        node for spatial bounds\",\n            \"enum\": [\n                \"box\",\n                \"sphere\",\n     \
+        \           \"capsule\",\n                \"cylinder\"\n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Create a new scene document\",\n    \"description\": \"Creates a new scene
         document and stores it in lib-asset.\\nPublishes scene.created event on success.\\nReturns Conflict if a scene with
         the same sceneId already exists.\\n\",\n    \"tags\": [\n        \"Scene\"\n    ],\n    \"deprecated\": false,\n \
@@ -492,18 +493,18 @@ paths:
         : {\n                        \"type\": \"string\"\n                    },\n                    \"description\": \"\
         Searchable tags for filtering scenes\"\n                },\n                \"metadata\": {\n                    \"\
         type\": \"object\",\n                    \"additionalProperties\": true,\n                    \"nullable\": true,\n\
-        \                    \"description\": \"Scene-level metadata. Not interpreted by Scene service.\\nExamples: author,
-        thumbnail, editor preferences, generator config.\\n\"\n                },\n                \"createdAt\": {\n    \
-        \                \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
-        : \"When the scene was first created\"\n                },\n                \"updatedAt\": {\n                   \
-        \ \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"When
-        the scene was last modified\"\n                }\n            }\n        },\n        \"SceneType\": {\n          \
-        \  \"type\": \"string\",\n            \"description\": \"Scene classification for querying and validation rule lookup.\\
-        nDifferent types may have different validation requirements per game.\\n\",\n            \"enum\": [\n           \
-        \     \"unknown\",\n                \"region\",\n                \"city\",\n                \"district\",\n      \
-        \          \"lot\",\n                \"building\",\n                \"room\",\n                \"dungeon\",\n    \
-        \            \"arena\",\n                \"vehicle\",\n                \"prefab\",\n                \"cutscene\",\n\
-        \                \"other\"\n            ]\n        },\n        \"SceneNode\": {\n            \"type\": \"object\"\
+        \                    \"description\": \"Client-only scene metadata (author, thumbnail, editor preferences). No Bannou
+        plugin reads specific keys from this field by convention.\"\n                },\n                \"createdAt\": {\n\
+        \                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"\
+        description\": \"When the scene was first created\"\n                },\n                \"updatedAt\": {\n      \
+        \              \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
+        : \"When the scene was last modified\"\n                }\n            }\n        },\n        \"SceneType\": {\n \
+        \           \"type\": \"string\",\n            \"description\": \"Scene classification for querying and validation
+        rule lookup.\\nDifferent types may have different validation requirements per game.\\n\",\n            \"enum\": [\n\
+        \                \"unknown\",\n                \"region\",\n                \"city\",\n                \"district\"\
+        ,\n                \"lot\",\n                \"building\",\n                \"room\",\n                \"dungeon\"\
+        ,\n                \"arena\",\n                \"vehicle\",\n                \"prefab\",\n                \"cutscene\"\
+        ,\n                \"other\"\n            ]\n        },\n        \"SceneNode\": {\n            \"type\": \"object\"\
         ,\n            \"description\": \"A node in the scene hierarchy. Nodes can contain children to form\\na tree structure.
         Each node has a local transform relative to its parent.\\n\",\n            \"required\": [\n                \"nodeId\"\
         ,\n                \"refId\",\n                \"name\",\n                \"nodeType\",\n                \"localTransform\"\
@@ -532,10 +533,10 @@ paths:
         \n                    },\n                    \"description\": \"Arbitrary tags for consumer filtering (e.g., entrance,
         spawn, interactive)\"\n                },\n                \"annotations\": {\n                    \"type\": \"object\"\
         ,\n                    \"additionalProperties\": true,\n                    \"nullable\": true,\n                \
-        \    \"description\": \"Consumer-specific data stored without interpretation.\\nUse namespaced keys (e.g., render.castShadows,
-        game.interactionType).\\n\"\n                },\n                \"attachmentPoints\": {\n                    \"type\"\
-        : \"array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/AttachmentPoint\"\n  \
-        \                  },\n                    \"description\": \"Predefined locations for attaching child objects.\\\
+        \    \"description\": \"Client-only node annotations for game engines and editors. No Bannou plugin reads specific
+        keys from this field by convention.\"\n                },\n                \"attachmentPoints\": {\n             \
+        \       \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/AttachmentPoint\"\
+        \n                    },\n                    \"description\": \"Predefined locations for attaching child objects.\\
         nUsed by Scene Composer for furniture decoration, wall accessories, etc.\\n\"\n                },\n              \
         \  \"affordances\": {\n                    \"type\": \"array\",\n                    \"items\": {\n              \
         \          \"$ref\": \"#/$defs/Affordance\"\n                    },\n                    \"description\": \"Interaction
@@ -613,50 +614,49 @@ paths:
         \              \"$ref\": \"#/$defs/AffordanceType\",\n                    \"description\": \"The type of affordance\"\
         \n                },\n                \"parameters\": {\n                    \"type\": \"object\",\n             \
         \       \"additionalProperties\": true,\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Type-specific parameters. Examples:\\n- sittable: { height: 0.5, facing: [0,0,1] }\\n- door: { openAngle: 90,
-        locked: false }\\n- container: { capacity: 10, itemTypes: [\\\"weapon\\\", \\\"consumable\\\"] }\\n\"\n          \
-        \      }\n            }\n        },\n        \"AffordanceType\": {\n            \"type\": \"string\",\n          \
-        \  \"description\": \"Types of affordances describing what an object can do or how it can be interacted with.\\nUsed
-        by AI navigation, character controllers, and procedural content systems.\\n\",\n            \"enum\": [\n        \
-        \        \"walkable\",\n                \"climbable\",\n                \"sittable\",\n                \"interactive\"\
-        ,\n                \"collectible\",\n                \"destructible\",\n                \"container\",\n         \
-        \       \"door\",\n                \"teleport\"\n            ]\n        },\n        \"AssetSlot\": {\n           \
-        \ \"type\": \"object\",\n            \"description\": \"Defines acceptable asset types for procedural swapping at
-        this node.\\nUsed by procedural generation systems to substitute assets while\\nmaintaining scene coherence.\\n\"\
-        ,\n            \"required\": [\n                \"slotType\"\n            ],\n            \"properties\": {\n    \
-        \            \"slotType\": {\n                    \"type\": \"string\",\n                    \"description\": \"Category
-        of acceptable assets.\\nExamples: chair, table, wall_art, floor_lamp\\n\"\n                },\n                \"\
-        acceptsTags\": {\n                    \"type\": \"array\",\n                    \"items\": {\n                   \
-        \     \"type\": \"string\"\n                    },\n                    \"description\": \"Tags that acceptable assets
-        must have.\\nUsed for filtering when selecting random variations.\\n\"\n                },\n                \"defaultAsset\"\
-        : {\n                    \"$ref\": \"#/$defs/AssetReference\",\n                    \"nullable\": true,\n        \
-        \            \"description\": \"Default asset if no specific asset is bound\"\n                },\n              \
-        \  \"variations\": {\n                    \"type\": \"array\",\n                    \"items\": {\n               \
-        \         \"$ref\": \"#/$defs/AssetReference\"\n                    },\n                    \"description\": \"Pre-approved
-        asset variations for random selection.\\nProcedural systems pick from this list rather than searching all assets.\\\
-        n\"\n                }\n            }\n        },\n        \"MarkerType\": {\n            \"type\": \"string\",\n\
-        \            \"description\": \"Types of marker nodes for spawn points, waypoints, and other positional markers.\"\
-        ,\n            \"enum\": [\n                \"generic\",\n                \"spawn_point\",\n                \"npc_spawn\"\
-        ,\n                \"waypoint\",\n                \"camera_point\",\n                \"light_point\",\n          \
-        \      \"audio_point\",\n                \"trigger_point\"\n            ]\n        },\n        \"VolumeShape\": {\n\
-        \            \"type\": \"string\",\n            \"description\": \"Shape of a volume node for spatial bounds\",\n\
-        \            \"enum\": [\n                \"box\",\n                \"sphere\",\n                \"capsule\",\n  \
-        \              \"cylinder\"\n            ]\n        },\n        \"ResolvedReference\": {\n            \"type\": \"\
-        object\",\n            \"description\": \"A successfully resolved scene reference\",\n            \"required\": [\n\
-        \                \"nodeId\",\n                \"refId\",\n                \"referencedSceneId\",\n               \
-        \ \"scene\"\n            ],\n            \"properties\": {\n                \"nodeId\": {\n                    \"\
-        type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Node ID containing
-        the reference\"\n                },\n                \"refId\": {\n                    \"type\": \"string\",\n   \
-        \                 \"description\": \"refId of the referencing node\"\n                },\n                \"referencedSceneId\"\
-        : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
-        description\": \"ID of the referenced scene\"\n                },\n                \"referencedVersion\": {\n    \
-        \                \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Version that was resolved\"\n                },\n                \"scene\": {\n                    \"$ref\": \"\
-        #/$defs/Scene\",\n                    \"description\": \"The resolved scene content\"\n                },\n      \
-        \          \"depth\": {\n                    \"type\": \"integer\",\n                    \"description\": \"Depth
-        level of this reference\"\n                }\n            }\n        },\n        \"UnresolvedReference\": {\n    \
-        \        \"type\": \"object\",\n            \"description\": \"A scene reference that could not be resolved\",\n \
-        \           \"required\": [\n                \"nodeId\",\n                \"refId\",\n                \"referencedSceneId\"\
+        : \"Game-specific affordance parameters interpreted by game engines and AI systems. No Bannou plugin reads specific
+        keys from this field by convention.\"\n                }\n            }\n        },\n        \"AffordanceType\": {\n\
+        \            \"type\": \"string\",\n            \"description\": \"Types of affordances describing what an object
+        can do or how it can be interacted with.\\nUsed by AI navigation, character controllers, and procedural content systems.\\\
+        n\",\n            \"enum\": [\n                \"walkable\",\n                \"climbable\",\n                \"sittable\"\
+        ,\n                \"interactive\",\n                \"collectible\",\n                \"destructible\",\n       \
+        \         \"container\",\n                \"door\",\n                \"teleport\"\n            ]\n        },\n   \
+        \     \"AssetSlot\": {\n            \"type\": \"object\",\n            \"description\": \"Defines acceptable asset
+        types for procedural swapping at this node.\\nUsed by procedural generation systems to substitute assets while\\nmaintaining
+        scene coherence.\\n\",\n            \"required\": [\n                \"slotType\"\n            ],\n            \"\
+        properties\": {\n                \"slotType\": {\n                    \"type\": \"string\",\n                    \"\
+        description\": \"Category of acceptable assets.\\nExamples: chair, table, wall_art, floor_lamp\\n\"\n            \
+        \    },\n                \"acceptsTags\": {\n                    \"type\": \"array\",\n                    \"items\"\
+        : {\n                        \"type\": \"string\"\n                    },\n                    \"description\": \"\
+        Tags that acceptable assets must have.\\nUsed for filtering when selecting random variations.\\n\"\n             \
+        \   },\n                \"defaultAsset\": {\n                    \"$ref\": \"#/$defs/AssetReference\",\n         \
+        \           \"nullable\": true,\n                    \"description\": \"Default asset if no specific asset is bound\"\
+        \n                },\n                \"variations\": {\n                    \"type\": \"array\",\n              \
+        \      \"items\": {\n                        \"$ref\": \"#/$defs/AssetReference\"\n                    },\n      \
+        \              \"description\": \"Pre-approved asset variations for random selection.\\nProcedural systems pick from
+        this list rather than searching all assets.\\n\"\n                }\n            }\n        },\n        \"MarkerType\"\
+        : {\n            \"type\": \"string\",\n            \"description\": \"Types of marker nodes for spawn points, waypoints,
+        and other positional markers.\",\n            \"enum\": [\n                \"generic\",\n                \"spawn_point\"\
+        ,\n                \"npc_spawn\",\n                \"waypoint\",\n                \"camera_point\",\n            \
+        \    \"light_point\",\n                \"audio_point\",\n                \"trigger_point\"\n            ]\n      \
+        \  },\n        \"VolumeShape\": {\n            \"type\": \"string\",\n            \"description\": \"Shape of a volume
+        node for spatial bounds\",\n            \"enum\": [\n                \"box\",\n                \"sphere\",\n     \
+        \           \"capsule\",\n                \"cylinder\"\n            ]\n        },\n        \"ResolvedReference\":
+        {\n            \"type\": \"object\",\n            \"description\": \"A successfully resolved scene reference\",\n\
+        \            \"required\": [\n                \"nodeId\",\n                \"refId\",\n                \"referencedSceneId\"\
+        ,\n                \"scene\"\n            ],\n            \"properties\": {\n                \"nodeId\": {\n     \
+        \               \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
+        : \"Node ID containing the reference\"\n                },\n                \"refId\": {\n                    \"type\"\
+        : \"string\",\n                    \"description\": \"refId of the referencing node\"\n                },\n      \
+        \          \"referencedSceneId\": {\n                    \"type\": \"string\",\n                    \"format\": \"\
+        uuid\",\n                    \"description\": \"ID of the referenced scene\"\n                },\n               \
+        \ \"referencedVersion\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n \
+        \                   \"description\": \"Version that was resolved\"\n                },\n                \"scene\"\
+        : {\n                    \"$ref\": \"#/$defs/Scene\",\n                    \"description\": \"The resolved scene content\"\
+        \n                },\n                \"depth\": {\n                    \"type\": \"integer\",\n                 \
+        \   \"description\": \"Depth level of this reference\"\n                }\n            }\n        },\n        \"UnresolvedReference\"\
+        : {\n            \"type\": \"object\",\n            \"description\": \"A scene reference that could not be resolved\"\
+        ,\n            \"required\": [\n                \"nodeId\",\n                \"refId\",\n                \"referencedSceneId\"\
         ,\n                \"reason\"\n            ],\n            \"properties\": {\n                \"nodeId\": {\n    \
         \                \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
         : \"Node ID containing the reference\"\n                },\n                \"refId\": {\n                    \"type\"\
@@ -829,35 +829,35 @@ paths:
         string\"\n                    },\n                    \"description\": \"Searchable tags for filtering scenes\"\n\
         \                },\n                \"metadata\": {\n                    \"type\": \"object\",\n                \
         \    \"additionalProperties\": true,\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Scene-level metadata. Not interpreted by Scene service.\\nExamples: author, thumbnail, editor preferences, generator
-        config.\\n\"\n                },\n                \"createdAt\": {\n                    \"type\": \"string\",\n  \
-        \                  \"format\": \"date-time\",\n                    \"description\": \"When the scene was first created\"\
-        \n                },\n                \"updatedAt\": {\n                    \"type\": \"string\",\n              \
-        \      \"format\": \"date-time\",\n                    \"description\": \"When the scene was last modified\"\n   \
-        \             }\n            }\n        },\n        \"SceneType\": {\n            \"type\": \"string\",\n        \
-        \    \"description\": \"Scene classification for querying and validation rule lookup.\\nDifferent types may have different
-        validation requirements per game.\\n\",\n            \"enum\": [\n                \"unknown\",\n                \"\
-        region\",\n                \"city\",\n                \"district\",\n                \"lot\",\n                \"\
-        building\",\n                \"room\",\n                \"dungeon\",\n                \"arena\",\n               \
-        \ \"vehicle\",\n                \"prefab\",\n                \"cutscene\",\n                \"other\"\n          \
-        \  ]\n        },\n        \"SceneNode\": {\n            \"type\": \"object\",\n            \"description\": \"A node
-        in the scene hierarchy. Nodes can contain children to form\\na tree structure. Each node has a local transform relative
-        to its parent.\\n\",\n            \"required\": [\n                \"nodeId\",\n                \"refId\",\n     \
-        \           \"name\",\n                \"nodeType\",\n                \"localTransform\"\n            ],\n       \
-        \     \"properties\": {\n                \"nodeId\": {\n                    \"type\": \"string\",\n              \
-        \      \"format\": \"uuid\",\n                    \"description\": \"Globally unique node identifier\"\n         \
-        \       },\n                \"refId\": {\n                    \"type\": \"string\",\n                    \"pattern\"\
-        : \"^[a-z][a-z0-9_]*$\",\n                    \"description\": \"Scene-local reference identifier. Must be unique
-        within the scene.\\nUsed for scripting and cross-referencing. Examples: main_door, npc_spawn_1\\n\"\n            \
-        \    },\n                \"parentNodeId\": {\n                    \"type\": \"string\",\n                    \"format\"\
-        : \"uuid\",\n                    \"nullable\": true,\n                    \"description\": \"Parent node ID. Null
-        for the root node only.\"\n                },\n                \"name\": {\n                    \"type\": \"string\"\
-        ,\n                    \"description\": \"Human-readable display name for the node\"\n                },\n       \
-        \         \"nodeType\": {\n                    \"$ref\": \"#/$defs/NodeType\",\n                    \"description\"\
-        : \"The structural type of this node\"\n                },\n                \"localTransform\": {\n              \
-        \      \"$ref\": \"#/$defs/Transform\",\n                    \"description\": \"Transform relative to parent node\"\
-        \n                },\n                \"asset\": {\n                    \"$ref\": \"#/$defs/AssetReference\",\n  \
-        \                  \"nullable\": true,\n                    \"description\": \"Optional asset binding (mesh, sound,
+        : \"Client-only scene metadata (author, thumbnail, editor preferences). No Bannou plugin reads specific keys from
+        this field by convention.\"\n                },\n                \"createdAt\": {\n                    \"type\": \"\
+        string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"When the scene was
+        first created\"\n                },\n                \"updatedAt\": {\n                    \"type\": \"string\",\n\
+        \                    \"format\": \"date-time\",\n                    \"description\": \"When the scene was last modified\"\
+        \n                }\n            }\n        },\n        \"SceneType\": {\n            \"type\": \"string\",\n    \
+        \        \"description\": \"Scene classification for querying and validation rule lookup.\\nDifferent types may have
+        different validation requirements per game.\\n\",\n            \"enum\": [\n                \"unknown\",\n       \
+        \         \"region\",\n                \"city\",\n                \"district\",\n                \"lot\",\n      \
+        \          \"building\",\n                \"room\",\n                \"dungeon\",\n                \"arena\",\n  \
+        \              \"vehicle\",\n                \"prefab\",\n                \"cutscene\",\n                \"other\"\
+        \n            ]\n        },\n        \"SceneNode\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"A node in the scene hierarchy. Nodes can contain children to form\\na tree structure. Each node has a local transform
+        relative to its parent.\\n\",\n            \"required\": [\n                \"nodeId\",\n                \"refId\"\
+        ,\n                \"name\",\n                \"nodeType\",\n                \"localTransform\"\n            ],\n\
+        \            \"properties\": {\n                \"nodeId\": {\n                    \"type\": \"string\",\n       \
+        \             \"format\": \"uuid\",\n                    \"description\": \"Globally unique node identifier\"\n  \
+        \              },\n                \"refId\": {\n                    \"type\": \"string\",\n                    \"\
+        pattern\": \"^[a-z][a-z0-9_]*$\",\n                    \"description\": \"Scene-local reference identifier. Must be
+        unique within the scene.\\nUsed for scripting and cross-referencing. Examples: main_door, npc_spawn_1\\n\"\n     \
+        \           },\n                \"parentNodeId\": {\n                    \"type\": \"string\",\n                 \
+        \   \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\": \"Parent
+        node ID. Null for the root node only.\"\n                },\n                \"name\": {\n                    \"type\"\
+        : \"string\",\n                    \"description\": \"Human-readable display name for the node\"\n               \
+        \ },\n                \"nodeType\": {\n                    \"$ref\": \"#/$defs/NodeType\",\n                    \"\
+        description\": \"The structural type of this node\"\n                },\n                \"localTransform\": {\n \
+        \                   \"$ref\": \"#/$defs/Transform\",\n                    \"description\": \"Transform relative to
+        parent node\"\n                },\n                \"asset\": {\n                    \"$ref\": \"#/$defs/AssetReference\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"Optional asset binding (mesh, sound,
         particle effect)\"\n                },\n                \"children\": {\n                    \"type\": \"array\",\n\
         \                    \"items\": {\n                        \"$ref\": \"#/$defs/SceneNode\"\n                    },\n\
         \                    \"description\": \"Child nodes in the hierarchy\"\n                },\n                \"enabled\"\
@@ -869,10 +869,10 @@ paths:
         \n                    },\n                    \"description\": \"Arbitrary tags for consumer filtering (e.g., entrance,
         spawn, interactive)\"\n                },\n                \"annotations\": {\n                    \"type\": \"object\"\
         ,\n                    \"additionalProperties\": true,\n                    \"nullable\": true,\n                \
-        \    \"description\": \"Consumer-specific data stored without interpretation.\\nUse namespaced keys (e.g., render.castShadows,
-        game.interactionType).\\n\"\n                },\n                \"attachmentPoints\": {\n                    \"type\"\
-        : \"array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/AttachmentPoint\"\n  \
-        \                  },\n                    \"description\": \"Predefined locations for attaching child objects.\\\
+        \    \"description\": \"Client-only node annotations for game engines and editors. No Bannou plugin reads specific
+        keys from this field by convention.\"\n                },\n                \"attachmentPoints\": {\n             \
+        \       \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/AttachmentPoint\"\
+        \n                    },\n                    \"description\": \"Predefined locations for attaching child objects.\\
         nUsed by Scene Composer for furniture decoration, wall accessories, etc.\\n\"\n                },\n              \
         \  \"affordances\": {\n                    \"type\": \"array\",\n                    \"items\": {\n              \
         \          \"$ref\": \"#/$defs/Affordance\"\n                    },\n                    \"description\": \"Interaction
@@ -950,35 +950,34 @@ paths:
         \              \"$ref\": \"#/$defs/AffordanceType\",\n                    \"description\": \"The type of affordance\"\
         \n                },\n                \"parameters\": {\n                    \"type\": \"object\",\n             \
         \       \"additionalProperties\": true,\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Type-specific parameters. Examples:\\n- sittable: { height: 0.5, facing: [0,0,1] }\\n- door: { openAngle: 90,
-        locked: false }\\n- container: { capacity: 10, itemTypes: [\\\"weapon\\\", \\\"consumable\\\"] }\\n\"\n          \
-        \      }\n            }\n        },\n        \"AffordanceType\": {\n            \"type\": \"string\",\n          \
-        \  \"description\": \"Types of affordances describing what an object can do or how it can be interacted with.\\nUsed
-        by AI navigation, character controllers, and procedural content systems.\\n\",\n            \"enum\": [\n        \
-        \        \"walkable\",\n                \"climbable\",\n                \"sittable\",\n                \"interactive\"\
-        ,\n                \"collectible\",\n                \"destructible\",\n                \"container\",\n         \
-        \       \"door\",\n                \"teleport\"\n            ]\n        },\n        \"AssetSlot\": {\n           \
-        \ \"type\": \"object\",\n            \"description\": \"Defines acceptable asset types for procedural swapping at
-        this node.\\nUsed by procedural generation systems to substitute assets while\\nmaintaining scene coherence.\\n\"\
-        ,\n            \"required\": [\n                \"slotType\"\n            ],\n            \"properties\": {\n    \
-        \            \"slotType\": {\n                    \"type\": \"string\",\n                    \"description\": \"Category
-        of acceptable assets.\\nExamples: chair, table, wall_art, floor_lamp\\n\"\n                },\n                \"\
-        acceptsTags\": {\n                    \"type\": \"array\",\n                    \"items\": {\n                   \
-        \     \"type\": \"string\"\n                    },\n                    \"description\": \"Tags that acceptable assets
-        must have.\\nUsed for filtering when selecting random variations.\\n\"\n                },\n                \"defaultAsset\"\
-        : {\n                    \"$ref\": \"#/$defs/AssetReference\",\n                    \"nullable\": true,\n        \
-        \            \"description\": \"Default asset if no specific asset is bound\"\n                },\n              \
-        \  \"variations\": {\n                    \"type\": \"array\",\n                    \"items\": {\n               \
-        \         \"$ref\": \"#/$defs/AssetReference\"\n                    },\n                    \"description\": \"Pre-approved
-        asset variations for random selection.\\nProcedural systems pick from this list rather than searching all assets.\\\
-        n\"\n                }\n            }\n        },\n        \"MarkerType\": {\n            \"type\": \"string\",\n\
-        \            \"description\": \"Types of marker nodes for spawn points, waypoints, and other positional markers.\"\
-        ,\n            \"enum\": [\n                \"generic\",\n                \"spawn_point\",\n                \"npc_spawn\"\
-        ,\n                \"waypoint\",\n                \"camera_point\",\n                \"light_point\",\n          \
-        \      \"audio_point\",\n                \"trigger_point\"\n            ]\n        },\n        \"VolumeShape\": {\n\
-        \            \"type\": \"string\",\n            \"description\": \"Shape of a volume node for spatial bounds\",\n\
-        \            \"enum\": [\n                \"box\",\n                \"sphere\",\n                \"capsule\",\n  \
-        \              \"cylinder\"\n            ]\n        }\n    }\n}"
+        : \"Game-specific affordance parameters interpreted by game engines and AI systems. No Bannou plugin reads specific
+        keys from this field by convention.\"\n                }\n            }\n        },\n        \"AffordanceType\": {\n\
+        \            \"type\": \"string\",\n            \"description\": \"Types of affordances describing what an object
+        can do or how it can be interacted with.\\nUsed by AI navigation, character controllers, and procedural content systems.\\\
+        n\",\n            \"enum\": [\n                \"walkable\",\n                \"climbable\",\n                \"sittable\"\
+        ,\n                \"interactive\",\n                \"collectible\",\n                \"destructible\",\n       \
+        \         \"container\",\n                \"door\",\n                \"teleport\"\n            ]\n        },\n   \
+        \     \"AssetSlot\": {\n            \"type\": \"object\",\n            \"description\": \"Defines acceptable asset
+        types for procedural swapping at this node.\\nUsed by procedural generation systems to substitute assets while\\nmaintaining
+        scene coherence.\\n\",\n            \"required\": [\n                \"slotType\"\n            ],\n            \"\
+        properties\": {\n                \"slotType\": {\n                    \"type\": \"string\",\n                    \"\
+        description\": \"Category of acceptable assets.\\nExamples: chair, table, wall_art, floor_lamp\\n\"\n            \
+        \    },\n                \"acceptsTags\": {\n                    \"type\": \"array\",\n                    \"items\"\
+        : {\n                        \"type\": \"string\"\n                    },\n                    \"description\": \"\
+        Tags that acceptable assets must have.\\nUsed for filtering when selecting random variations.\\n\"\n             \
+        \   },\n                \"defaultAsset\": {\n                    \"$ref\": \"#/$defs/AssetReference\",\n         \
+        \           \"nullable\": true,\n                    \"description\": \"Default asset if no specific asset is bound\"\
+        \n                },\n                \"variations\": {\n                    \"type\": \"array\",\n              \
+        \      \"items\": {\n                        \"$ref\": \"#/$defs/AssetReference\"\n                    },\n      \
+        \              \"description\": \"Pre-approved asset variations for random selection.\\nProcedural systems pick from
+        this list rather than searching all assets.\\n\"\n                }\n            }\n        },\n        \"MarkerType\"\
+        : {\n            \"type\": \"string\",\n            \"description\": \"Types of marker nodes for spawn points, waypoints,
+        and other positional markers.\",\n            \"enum\": [\n                \"generic\",\n                \"spawn_point\"\
+        ,\n                \"npc_spawn\",\n                \"waypoint\",\n                \"camera_point\",\n            \
+        \    \"light_point\",\n                \"audio_point\",\n                \"trigger_point\"\n            ]\n      \
+        \  },\n        \"VolumeShape\": {\n            \"type\": \"string\",\n            \"description\": \"Shape of a volume
+        node for spatial bounds\",\n            \"enum\": [\n                \"box\",\n                \"sphere\",\n     \
+        \           \"capsule\",\n                \"cylinder\"\n            ]\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/SceneResponse\"\
         ,\n    \"$defs\": {\n        \"SceneResponse\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Standard response containing a scene\",\n            \"required\": [\n                \"scene\"\n            ],\n\
@@ -1007,35 +1006,35 @@ paths:
         string\"\n                    },\n                    \"description\": \"Searchable tags for filtering scenes\"\n\
         \                },\n                \"metadata\": {\n                    \"type\": \"object\",\n                \
         \    \"additionalProperties\": true,\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Scene-level metadata. Not interpreted by Scene service.\\nExamples: author, thumbnail, editor preferences, generator
-        config.\\n\"\n                },\n                \"createdAt\": {\n                    \"type\": \"string\",\n  \
-        \                  \"format\": \"date-time\",\n                    \"description\": \"When the scene was first created\"\
-        \n                },\n                \"updatedAt\": {\n                    \"type\": \"string\",\n              \
-        \      \"format\": \"date-time\",\n                    \"description\": \"When the scene was last modified\"\n   \
-        \             }\n            }\n        },\n        \"SceneType\": {\n            \"type\": \"string\",\n        \
-        \    \"description\": \"Scene classification for querying and validation rule lookup.\\nDifferent types may have different
-        validation requirements per game.\\n\",\n            \"enum\": [\n                \"unknown\",\n                \"\
-        region\",\n                \"city\",\n                \"district\",\n                \"lot\",\n                \"\
-        building\",\n                \"room\",\n                \"dungeon\",\n                \"arena\",\n               \
-        \ \"vehicle\",\n                \"prefab\",\n                \"cutscene\",\n                \"other\"\n          \
-        \  ]\n        },\n        \"SceneNode\": {\n            \"type\": \"object\",\n            \"description\": \"A node
-        in the scene hierarchy. Nodes can contain children to form\\na tree structure. Each node has a local transform relative
-        to its parent.\\n\",\n            \"required\": [\n                \"nodeId\",\n                \"refId\",\n     \
-        \           \"name\",\n                \"nodeType\",\n                \"localTransform\"\n            ],\n       \
-        \     \"properties\": {\n                \"nodeId\": {\n                    \"type\": \"string\",\n              \
-        \      \"format\": \"uuid\",\n                    \"description\": \"Globally unique node identifier\"\n         \
-        \       },\n                \"refId\": {\n                    \"type\": \"string\",\n                    \"pattern\"\
-        : \"^[a-z][a-z0-9_]*$\",\n                    \"description\": \"Scene-local reference identifier. Must be unique
-        within the scene.\\nUsed for scripting and cross-referencing. Examples: main_door, npc_spawn_1\\n\"\n            \
-        \    },\n                \"parentNodeId\": {\n                    \"type\": \"string\",\n                    \"format\"\
-        : \"uuid\",\n                    \"nullable\": true,\n                    \"description\": \"Parent node ID. Null
-        for the root node only.\"\n                },\n                \"name\": {\n                    \"type\": \"string\"\
-        ,\n                    \"description\": \"Human-readable display name for the node\"\n                },\n       \
-        \         \"nodeType\": {\n                    \"$ref\": \"#/$defs/NodeType\",\n                    \"description\"\
-        : \"The structural type of this node\"\n                },\n                \"localTransform\": {\n              \
-        \      \"$ref\": \"#/$defs/Transform\",\n                    \"description\": \"Transform relative to parent node\"\
-        \n                },\n                \"asset\": {\n                    \"$ref\": \"#/$defs/AssetReference\",\n  \
-        \                  \"nullable\": true,\n                    \"description\": \"Optional asset binding (mesh, sound,
+        : \"Client-only scene metadata (author, thumbnail, editor preferences). No Bannou plugin reads specific keys from
+        this field by convention.\"\n                },\n                \"createdAt\": {\n                    \"type\": \"\
+        string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"When the scene was
+        first created\"\n                },\n                \"updatedAt\": {\n                    \"type\": \"string\",\n\
+        \                    \"format\": \"date-time\",\n                    \"description\": \"When the scene was last modified\"\
+        \n                }\n            }\n        },\n        \"SceneType\": {\n            \"type\": \"string\",\n    \
+        \        \"description\": \"Scene classification for querying and validation rule lookup.\\nDifferent types may have
+        different validation requirements per game.\\n\",\n            \"enum\": [\n                \"unknown\",\n       \
+        \         \"region\",\n                \"city\",\n                \"district\",\n                \"lot\",\n      \
+        \          \"building\",\n                \"room\",\n                \"dungeon\",\n                \"arena\",\n  \
+        \              \"vehicle\",\n                \"prefab\",\n                \"cutscene\",\n                \"other\"\
+        \n            ]\n        },\n        \"SceneNode\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"A node in the scene hierarchy. Nodes can contain children to form\\na tree structure. Each node has a local transform
+        relative to its parent.\\n\",\n            \"required\": [\n                \"nodeId\",\n                \"refId\"\
+        ,\n                \"name\",\n                \"nodeType\",\n                \"localTransform\"\n            ],\n\
+        \            \"properties\": {\n                \"nodeId\": {\n                    \"type\": \"string\",\n       \
+        \             \"format\": \"uuid\",\n                    \"description\": \"Globally unique node identifier\"\n  \
+        \              },\n                \"refId\": {\n                    \"type\": \"string\",\n                    \"\
+        pattern\": \"^[a-z][a-z0-9_]*$\",\n                    \"description\": \"Scene-local reference identifier. Must be
+        unique within the scene.\\nUsed for scripting and cross-referencing. Examples: main_door, npc_spawn_1\\n\"\n     \
+        \           },\n                \"parentNodeId\": {\n                    \"type\": \"string\",\n                 \
+        \   \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\": \"Parent
+        node ID. Null for the root node only.\"\n                },\n                \"name\": {\n                    \"type\"\
+        : \"string\",\n                    \"description\": \"Human-readable display name for the node\"\n               \
+        \ },\n                \"nodeType\": {\n                    \"$ref\": \"#/$defs/NodeType\",\n                    \"\
+        description\": \"The structural type of this node\"\n                },\n                \"localTransform\": {\n \
+        \                   \"$ref\": \"#/$defs/Transform\",\n                    \"description\": \"Transform relative to
+        parent node\"\n                },\n                \"asset\": {\n                    \"$ref\": \"#/$defs/AssetReference\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"Optional asset binding (mesh, sound,
         particle effect)\"\n                },\n                \"children\": {\n                    \"type\": \"array\",\n\
         \                    \"items\": {\n                        \"$ref\": \"#/$defs/SceneNode\"\n                    },\n\
         \                    \"description\": \"Child nodes in the hierarchy\"\n                },\n                \"enabled\"\
@@ -1047,10 +1046,10 @@ paths:
         \n                    },\n                    \"description\": \"Arbitrary tags for consumer filtering (e.g., entrance,
         spawn, interactive)\"\n                },\n                \"annotations\": {\n                    \"type\": \"object\"\
         ,\n                    \"additionalProperties\": true,\n                    \"nullable\": true,\n                \
-        \    \"description\": \"Consumer-specific data stored without interpretation.\\nUse namespaced keys (e.g., render.castShadows,
-        game.interactionType).\\n\"\n                },\n                \"attachmentPoints\": {\n                    \"type\"\
-        : \"array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/AttachmentPoint\"\n  \
-        \                  },\n                    \"description\": \"Predefined locations for attaching child objects.\\\
+        \    \"description\": \"Client-only node annotations for game engines and editors. No Bannou plugin reads specific
+        keys from this field by convention.\"\n                },\n                \"attachmentPoints\": {\n             \
+        \       \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/AttachmentPoint\"\
+        \n                    },\n                    \"description\": \"Predefined locations for attaching child objects.\\
         nUsed by Scene Composer for furniture decoration, wall accessories, etc.\\n\"\n                },\n              \
         \  \"affordances\": {\n                    \"type\": \"array\",\n                    \"items\": {\n              \
         \          \"$ref\": \"#/$defs/Affordance\"\n                    },\n                    \"description\": \"Interaction
@@ -1128,35 +1127,34 @@ paths:
         \              \"$ref\": \"#/$defs/AffordanceType\",\n                    \"description\": \"The type of affordance\"\
         \n                },\n                \"parameters\": {\n                    \"type\": \"object\",\n             \
         \       \"additionalProperties\": true,\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Type-specific parameters. Examples:\\n- sittable: { height: 0.5, facing: [0,0,1] }\\n- door: { openAngle: 90,
-        locked: false }\\n- container: { capacity: 10, itemTypes: [\\\"weapon\\\", \\\"consumable\\\"] }\\n\"\n          \
-        \      }\n            }\n        },\n        \"AffordanceType\": {\n            \"type\": \"string\",\n          \
-        \  \"description\": \"Types of affordances describing what an object can do or how it can be interacted with.\\nUsed
-        by AI navigation, character controllers, and procedural content systems.\\n\",\n            \"enum\": [\n        \
-        \        \"walkable\",\n                \"climbable\",\n                \"sittable\",\n                \"interactive\"\
-        ,\n                \"collectible\",\n                \"destructible\",\n                \"container\",\n         \
-        \       \"door\",\n                \"teleport\"\n            ]\n        },\n        \"AssetSlot\": {\n           \
-        \ \"type\": \"object\",\n            \"description\": \"Defines acceptable asset types for procedural swapping at
-        this node.\\nUsed by procedural generation systems to substitute assets while\\nmaintaining scene coherence.\\n\"\
-        ,\n            \"required\": [\n                \"slotType\"\n            ],\n            \"properties\": {\n    \
-        \            \"slotType\": {\n                    \"type\": \"string\",\n                    \"description\": \"Category
-        of acceptable assets.\\nExamples: chair, table, wall_art, floor_lamp\\n\"\n                },\n                \"\
-        acceptsTags\": {\n                    \"type\": \"array\",\n                    \"items\": {\n                   \
-        \     \"type\": \"string\"\n                    },\n                    \"description\": \"Tags that acceptable assets
-        must have.\\nUsed for filtering when selecting random variations.\\n\"\n                },\n                \"defaultAsset\"\
-        : {\n                    \"$ref\": \"#/$defs/AssetReference\",\n                    \"nullable\": true,\n        \
-        \            \"description\": \"Default asset if no specific asset is bound\"\n                },\n              \
-        \  \"variations\": {\n                    \"type\": \"array\",\n                    \"items\": {\n               \
-        \         \"$ref\": \"#/$defs/AssetReference\"\n                    },\n                    \"description\": \"Pre-approved
-        asset variations for random selection.\\nProcedural systems pick from this list rather than searching all assets.\\\
-        n\"\n                }\n            }\n        },\n        \"MarkerType\": {\n            \"type\": \"string\",\n\
-        \            \"description\": \"Types of marker nodes for spawn points, waypoints, and other positional markers.\"\
-        ,\n            \"enum\": [\n                \"generic\",\n                \"spawn_point\",\n                \"npc_spawn\"\
-        ,\n                \"waypoint\",\n                \"camera_point\",\n                \"light_point\",\n          \
-        \      \"audio_point\",\n                \"trigger_point\"\n            ]\n        },\n        \"VolumeShape\": {\n\
-        \            \"type\": \"string\",\n            \"description\": \"Shape of a volume node for spatial bounds\",\n\
-        \            \"enum\": [\n                \"box\",\n                \"sphere\",\n                \"capsule\",\n  \
-        \              \"cylinder\"\n            ]\n        }\n    }\n}"
+        : \"Game-specific affordance parameters interpreted by game engines and AI systems. No Bannou plugin reads specific
+        keys from this field by convention.\"\n                }\n            }\n        },\n        \"AffordanceType\": {\n\
+        \            \"type\": \"string\",\n            \"description\": \"Types of affordances describing what an object
+        can do or how it can be interacted with.\\nUsed by AI navigation, character controllers, and procedural content systems.\\\
+        n\",\n            \"enum\": [\n                \"walkable\",\n                \"climbable\",\n                \"sittable\"\
+        ,\n                \"interactive\",\n                \"collectible\",\n                \"destructible\",\n       \
+        \         \"container\",\n                \"door\",\n                \"teleport\"\n            ]\n        },\n   \
+        \     \"AssetSlot\": {\n            \"type\": \"object\",\n            \"description\": \"Defines acceptable asset
+        types for procedural swapping at this node.\\nUsed by procedural generation systems to substitute assets while\\nmaintaining
+        scene coherence.\\n\",\n            \"required\": [\n                \"slotType\"\n            ],\n            \"\
+        properties\": {\n                \"slotType\": {\n                    \"type\": \"string\",\n                    \"\
+        description\": \"Category of acceptable assets.\\nExamples: chair, table, wall_art, floor_lamp\\n\"\n            \
+        \    },\n                \"acceptsTags\": {\n                    \"type\": \"array\",\n                    \"items\"\
+        : {\n                        \"type\": \"string\"\n                    },\n                    \"description\": \"\
+        Tags that acceptable assets must have.\\nUsed for filtering when selecting random variations.\\n\"\n             \
+        \   },\n                \"defaultAsset\": {\n                    \"$ref\": \"#/$defs/AssetReference\",\n         \
+        \           \"nullable\": true,\n                    \"description\": \"Default asset if no specific asset is bound\"\
+        \n                },\n                \"variations\": {\n                    \"type\": \"array\",\n              \
+        \      \"items\": {\n                        \"$ref\": \"#/$defs/AssetReference\"\n                    },\n      \
+        \              \"description\": \"Pre-approved asset variations for random selection.\\nProcedural systems pick from
+        this list rather than searching all assets.\\n\"\n                }\n            }\n        },\n        \"MarkerType\"\
+        : {\n            \"type\": \"string\",\n            \"description\": \"Types of marker nodes for spawn points, waypoints,
+        and other positional markers.\",\n            \"enum\": [\n                \"generic\",\n                \"spawn_point\"\
+        ,\n                \"npc_spawn\",\n                \"waypoint\",\n                \"camera_point\",\n            \
+        \    \"light_point\",\n                \"audio_point\",\n                \"trigger_point\"\n            ]\n      \
+        \  },\n        \"VolumeShape\": {\n            \"type\": \"string\",\n            \"description\": \"Shape of a volume
+        node for spatial bounds\",\n            \"enum\": [\n                \"box\",\n                \"sphere\",\n     \
+        \           \"capsule\",\n                \"cylinder\"\n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Update a scene document\",\n    \"description\": \"Updates an existing
         scene document. Scene must not be checked out by\\nanother user. Increments the PATCH version automatically.\\nPublishes
         scene.updated event on success.\\n\",\n    \"tags\": [\n        \"Scene\"\n    ],\n    \"deprecated\": false,\n  \
@@ -1269,35 +1267,35 @@ paths:
         string\"\n                    },\n                    \"description\": \"Searchable tags for filtering scenes\"\n\
         \                },\n                \"metadata\": {\n                    \"type\": \"object\",\n                \
         \    \"additionalProperties\": true,\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Scene-level metadata. Not interpreted by Scene service.\\nExamples: author, thumbnail, editor preferences, generator
-        config.\\n\"\n                },\n                \"createdAt\": {\n                    \"type\": \"string\",\n  \
-        \                  \"format\": \"date-time\",\n                    \"description\": \"When the scene was first created\"\
-        \n                },\n                \"updatedAt\": {\n                    \"type\": \"string\",\n              \
-        \      \"format\": \"date-time\",\n                    \"description\": \"When the scene was last modified\"\n   \
-        \             }\n            }\n        },\n        \"SceneType\": {\n            \"type\": \"string\",\n        \
-        \    \"description\": \"Scene classification for querying and validation rule lookup.\\nDifferent types may have different
-        validation requirements per game.\\n\",\n            \"enum\": [\n                \"unknown\",\n                \"\
-        region\",\n                \"city\",\n                \"district\",\n                \"lot\",\n                \"\
-        building\",\n                \"room\",\n                \"dungeon\",\n                \"arena\",\n               \
-        \ \"vehicle\",\n                \"prefab\",\n                \"cutscene\",\n                \"other\"\n          \
-        \  ]\n        },\n        \"SceneNode\": {\n            \"type\": \"object\",\n            \"description\": \"A node
-        in the scene hierarchy. Nodes can contain children to form\\na tree structure. Each node has a local transform relative
-        to its parent.\\n\",\n            \"required\": [\n                \"nodeId\",\n                \"refId\",\n     \
-        \           \"name\",\n                \"nodeType\",\n                \"localTransform\"\n            ],\n       \
-        \     \"properties\": {\n                \"nodeId\": {\n                    \"type\": \"string\",\n              \
-        \      \"format\": \"uuid\",\n                    \"description\": \"Globally unique node identifier\"\n         \
-        \       },\n                \"refId\": {\n                    \"type\": \"string\",\n                    \"pattern\"\
-        : \"^[a-z][a-z0-9_]*$\",\n                    \"description\": \"Scene-local reference identifier. Must be unique
-        within the scene.\\nUsed for scripting and cross-referencing. Examples: main_door, npc_spawn_1\\n\"\n            \
-        \    },\n                \"parentNodeId\": {\n                    \"type\": \"string\",\n                    \"format\"\
-        : \"uuid\",\n                    \"nullable\": true,\n                    \"description\": \"Parent node ID. Null
-        for the root node only.\"\n                },\n                \"name\": {\n                    \"type\": \"string\"\
-        ,\n                    \"description\": \"Human-readable display name for the node\"\n                },\n       \
-        \         \"nodeType\": {\n                    \"$ref\": \"#/$defs/NodeType\",\n                    \"description\"\
-        : \"The structural type of this node\"\n                },\n                \"localTransform\": {\n              \
-        \      \"$ref\": \"#/$defs/Transform\",\n                    \"description\": \"Transform relative to parent node\"\
-        \n                },\n                \"asset\": {\n                    \"$ref\": \"#/$defs/AssetReference\",\n  \
-        \                  \"nullable\": true,\n                    \"description\": \"Optional asset binding (mesh, sound,
+        : \"Client-only scene metadata (author, thumbnail, editor preferences). No Bannou plugin reads specific keys from
+        this field by convention.\"\n                },\n                \"createdAt\": {\n                    \"type\": \"\
+        string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"When the scene was
+        first created\"\n                },\n                \"updatedAt\": {\n                    \"type\": \"string\",\n\
+        \                    \"format\": \"date-time\",\n                    \"description\": \"When the scene was last modified\"\
+        \n                }\n            }\n        },\n        \"SceneType\": {\n            \"type\": \"string\",\n    \
+        \        \"description\": \"Scene classification for querying and validation rule lookup.\\nDifferent types may have
+        different validation requirements per game.\\n\",\n            \"enum\": [\n                \"unknown\",\n       \
+        \         \"region\",\n                \"city\",\n                \"district\",\n                \"lot\",\n      \
+        \          \"building\",\n                \"room\",\n                \"dungeon\",\n                \"arena\",\n  \
+        \              \"vehicle\",\n                \"prefab\",\n                \"cutscene\",\n                \"other\"\
+        \n            ]\n        },\n        \"SceneNode\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"A node in the scene hierarchy. Nodes can contain children to form\\na tree structure. Each node has a local transform
+        relative to its parent.\\n\",\n            \"required\": [\n                \"nodeId\",\n                \"refId\"\
+        ,\n                \"name\",\n                \"nodeType\",\n                \"localTransform\"\n            ],\n\
+        \            \"properties\": {\n                \"nodeId\": {\n                    \"type\": \"string\",\n       \
+        \             \"format\": \"uuid\",\n                    \"description\": \"Globally unique node identifier\"\n  \
+        \              },\n                \"refId\": {\n                    \"type\": \"string\",\n                    \"\
+        pattern\": \"^[a-z][a-z0-9_]*$\",\n                    \"description\": \"Scene-local reference identifier. Must be
+        unique within the scene.\\nUsed for scripting and cross-referencing. Examples: main_door, npc_spawn_1\\n\"\n     \
+        \           },\n                \"parentNodeId\": {\n                    \"type\": \"string\",\n                 \
+        \   \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\": \"Parent
+        node ID. Null for the root node only.\"\n                },\n                \"name\": {\n                    \"type\"\
+        : \"string\",\n                    \"description\": \"Human-readable display name for the node\"\n               \
+        \ },\n                \"nodeType\": {\n                    \"$ref\": \"#/$defs/NodeType\",\n                    \"\
+        description\": \"The structural type of this node\"\n                },\n                \"localTransform\": {\n \
+        \                   \"$ref\": \"#/$defs/Transform\",\n                    \"description\": \"Transform relative to
+        parent node\"\n                },\n                \"asset\": {\n                    \"$ref\": \"#/$defs/AssetReference\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"Optional asset binding (mesh, sound,
         particle effect)\"\n                },\n                \"children\": {\n                    \"type\": \"array\",\n\
         \                    \"items\": {\n                        \"$ref\": \"#/$defs/SceneNode\"\n                    },\n\
         \                    \"description\": \"Child nodes in the hierarchy\"\n                },\n                \"enabled\"\
@@ -1309,10 +1307,10 @@ paths:
         \n                    },\n                    \"description\": \"Arbitrary tags for consumer filtering (e.g., entrance,
         spawn, interactive)\"\n                },\n                \"annotations\": {\n                    \"type\": \"object\"\
         ,\n                    \"additionalProperties\": true,\n                    \"nullable\": true,\n                \
-        \    \"description\": \"Consumer-specific data stored without interpretation.\\nUse namespaced keys (e.g., render.castShadows,
-        game.interactionType).\\n\"\n                },\n                \"attachmentPoints\": {\n                    \"type\"\
-        : \"array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/AttachmentPoint\"\n  \
-        \                  },\n                    \"description\": \"Predefined locations for attaching child objects.\\\
+        \    \"description\": \"Client-only node annotations for game engines and editors. No Bannou plugin reads specific
+        keys from this field by convention.\"\n                },\n                \"attachmentPoints\": {\n             \
+        \       \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/AttachmentPoint\"\
+        \n                    },\n                    \"description\": \"Predefined locations for attaching child objects.\\
         nUsed by Scene Composer for furniture decoration, wall accessories, etc.\\n\"\n                },\n              \
         \  \"affordances\": {\n                    \"type\": \"array\",\n                    \"items\": {\n              \
         \          \"$ref\": \"#/$defs/Affordance\"\n                    },\n                    \"description\": \"Interaction
@@ -1390,35 +1388,34 @@ paths:
         \              \"$ref\": \"#/$defs/AffordanceType\",\n                    \"description\": \"The type of affordance\"\
         \n                },\n                \"parameters\": {\n                    \"type\": \"object\",\n             \
         \       \"additionalProperties\": true,\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Type-specific parameters. Examples:\\n- sittable: { height: 0.5, facing: [0,0,1] }\\n- door: { openAngle: 90,
-        locked: false }\\n- container: { capacity: 10, itemTypes: [\\\"weapon\\\", \\\"consumable\\\"] }\\n\"\n          \
-        \      }\n            }\n        },\n        \"AffordanceType\": {\n            \"type\": \"string\",\n          \
-        \  \"description\": \"Types of affordances describing what an object can do or how it can be interacted with.\\nUsed
-        by AI navigation, character controllers, and procedural content systems.\\n\",\n            \"enum\": [\n        \
-        \        \"walkable\",\n                \"climbable\",\n                \"sittable\",\n                \"interactive\"\
-        ,\n                \"collectible\",\n                \"destructible\",\n                \"container\",\n         \
-        \       \"door\",\n                \"teleport\"\n            ]\n        },\n        \"AssetSlot\": {\n           \
-        \ \"type\": \"object\",\n            \"description\": \"Defines acceptable asset types for procedural swapping at
-        this node.\\nUsed by procedural generation systems to substitute assets while\\nmaintaining scene coherence.\\n\"\
-        ,\n            \"required\": [\n                \"slotType\"\n            ],\n            \"properties\": {\n    \
-        \            \"slotType\": {\n                    \"type\": \"string\",\n                    \"description\": \"Category
-        of acceptable assets.\\nExamples: chair, table, wall_art, floor_lamp\\n\"\n                },\n                \"\
-        acceptsTags\": {\n                    \"type\": \"array\",\n                    \"items\": {\n                   \
-        \     \"type\": \"string\"\n                    },\n                    \"description\": \"Tags that acceptable assets
-        must have.\\nUsed for filtering when selecting random variations.\\n\"\n                },\n                \"defaultAsset\"\
-        : {\n                    \"$ref\": \"#/$defs/AssetReference\",\n                    \"nullable\": true,\n        \
-        \            \"description\": \"Default asset if no specific asset is bound\"\n                },\n              \
-        \  \"variations\": {\n                    \"type\": \"array\",\n                    \"items\": {\n               \
-        \         \"$ref\": \"#/$defs/AssetReference\"\n                    },\n                    \"description\": \"Pre-approved
-        asset variations for random selection.\\nProcedural systems pick from this list rather than searching all assets.\\\
-        n\"\n                }\n            }\n        },\n        \"MarkerType\": {\n            \"type\": \"string\",\n\
-        \            \"description\": \"Types of marker nodes for spawn points, waypoints, and other positional markers.\"\
-        ,\n            \"enum\": [\n                \"generic\",\n                \"spawn_point\",\n                \"npc_spawn\"\
-        ,\n                \"waypoint\",\n                \"camera_point\",\n                \"light_point\",\n          \
-        \      \"audio_point\",\n                \"trigger_point\"\n            ]\n        },\n        \"VolumeShape\": {\n\
-        \            \"type\": \"string\",\n            \"description\": \"Shape of a volume node for spatial bounds\",\n\
-        \            \"enum\": [\n                \"box\",\n                \"sphere\",\n                \"capsule\",\n  \
-        \              \"cylinder\"\n            ]\n        }\n    }\n}"
+        : \"Game-specific affordance parameters interpreted by game engines and AI systems. No Bannou plugin reads specific
+        keys from this field by convention.\"\n                }\n            }\n        },\n        \"AffordanceType\": {\n\
+        \            \"type\": \"string\",\n            \"description\": \"Types of affordances describing what an object
+        can do or how it can be interacted with.\\nUsed by AI navigation, character controllers, and procedural content systems.\\\
+        n\",\n            \"enum\": [\n                \"walkable\",\n                \"climbable\",\n                \"sittable\"\
+        ,\n                \"interactive\",\n                \"collectible\",\n                \"destructible\",\n       \
+        \         \"container\",\n                \"door\",\n                \"teleport\"\n            ]\n        },\n   \
+        \     \"AssetSlot\": {\n            \"type\": \"object\",\n            \"description\": \"Defines acceptable asset
+        types for procedural swapping at this node.\\nUsed by procedural generation systems to substitute assets while\\nmaintaining
+        scene coherence.\\n\",\n            \"required\": [\n                \"slotType\"\n            ],\n            \"\
+        properties\": {\n                \"slotType\": {\n                    \"type\": \"string\",\n                    \"\
+        description\": \"Category of acceptable assets.\\nExamples: chair, table, wall_art, floor_lamp\\n\"\n            \
+        \    },\n                \"acceptsTags\": {\n                    \"type\": \"array\",\n                    \"items\"\
+        : {\n                        \"type\": \"string\"\n                    },\n                    \"description\": \"\
+        Tags that acceptable assets must have.\\nUsed for filtering when selecting random variations.\\n\"\n             \
+        \   },\n                \"defaultAsset\": {\n                    \"$ref\": \"#/$defs/AssetReference\",\n         \
+        \           \"nullable\": true,\n                    \"description\": \"Default asset if no specific asset is bound\"\
+        \n                },\n                \"variations\": {\n                    \"type\": \"array\",\n              \
+        \      \"items\": {\n                        \"$ref\": \"#/$defs/AssetReference\"\n                    },\n      \
+        \              \"description\": \"Pre-approved asset variations for random selection.\\nProcedural systems pick from
+        this list rather than searching all assets.\\n\"\n                }\n            }\n        },\n        \"MarkerType\"\
+        : {\n            \"type\": \"string\",\n            \"description\": \"Types of marker nodes for spawn points, waypoints,
+        and other positional markers.\",\n            \"enum\": [\n                \"generic\",\n                \"spawn_point\"\
+        ,\n                \"npc_spawn\",\n                \"waypoint\",\n                \"camera_point\",\n            \
+        \    \"light_point\",\n                \"audio_point\",\n                \"trigger_point\"\n            ]\n      \
+        \  },\n        \"VolumeShape\": {\n            \"type\": \"string\",\n            \"description\": \"Shape of a volume
+        node for spatial bounds\",\n            \"enum\": [\n                \"box\",\n                \"sphere\",\n     \
+        \           \"capsule\",\n                \"cylinder\"\n            ]\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ValidationResult\"\
         ,\n    \"$defs\": {\n        \"ValidationResult\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Result of scene validation\",\n            \"required\": [\n                \"valid\"\n            ],\n      \
@@ -1443,10 +1440,10 @@ paths:
         \   \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\": \"ID of the
         problematic node\"\n                },\n                \"context\": {\n                    \"type\": \"object\",\n\
         \                    \"additionalProperties\": true,\n                    \"nullable\": true,\n                  \
-        \  \"description\": \"Additional context for the error\"\n                }\n            }\n        },\n        \"\
-        ValidationSeverity\": {\n            \"type\": \"string\",\n            \"description\": \"Severity level of a validation
-        issue\",\n            \"enum\": [\n                \"error\",\n                \"warning\"\n            ]\n      \
-        \  }\n    }\n}"
+        \  \"description\": \"Client-only validation error context. No Bannou plugin reads specific keys from this field by
+        convention.\"\n                }\n            }\n        },\n        \"ValidationSeverity\": {\n            \"type\"\
+        : \"string\",\n            \"description\": \"Severity level of a validation issue\",\n            \"enum\": [\n \
+        \               \"error\",\n                \"warning\"\n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Validate a scene structure\",\n    \"description\": \"Validates a scene
         document without saving it. Checks structural validity\\nand optionally applies game-specific validation rules.\\\
         n\",\n    \"tags\": [\n        \"Scene\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"validateScene\"\
@@ -1496,32 +1493,33 @@ paths:
         \                \"worldTransform\": {\n                    \"$ref\": \"#/$defs/Transform\",\n                   \
         \ \"description\": \"World-space transform for scene origin\"\n                },\n                \"metadata\": {\n\
         \                    \"type\": \"object\",\n                    \"additionalProperties\": true,\n                \
-        \    \"nullable\": true,\n                    \"description\": \"Caller-provided metadata passed to event\"\n    \
-        \            }\n            }\n        },\n        \"Transform\": {\n            \"type\": \"object\",\n         \
-        \   \"description\": \"Position, rotation, and scale in 3D space\",\n            \"required\": [\n               \
-        \ \"position\",\n                \"rotation\",\n                \"scale\"\n            ],\n            \"properties\"\
-        : {\n                \"position\": {\n                    \"$ref\": \"#/$defs/Vector3\",\n                    \"description\"\
-        : \"Position relative to parent\"\n                },\n                \"rotation\": {\n                    \"$ref\"\
-        : \"#/$defs/Quaternion\",\n                    \"description\": \"Rotation relative to parent\"\n                },\n\
-        \                \"scale\": {\n                    \"$ref\": \"#/$defs/Vector3\",\n                    \"description\"\
-        : \"Scale relative to parent\"\n                }\n            }\n        },\n        \"Vector3\": {\n           \
-        \ \"type\": \"object\",\n            \"description\": \"A point or direction in 3D space\",\n            \"required\"\
-        : [\n                \"x\",\n                \"y\",\n                \"z\"\n            ],\n            \"properties\"\
-        : {\n                \"x\": {\n                    \"type\": \"number\",\n                    \"format\": \"double\"\
-        ,\n                    \"description\": \"X coordinate\"\n                },\n                \"y\": {\n         \
-        \           \"type\": \"number\",\n                    \"format\": \"double\",\n                    \"description\"\
-        : \"Y coordinate\"\n                },\n                \"z\": {\n                    \"type\": \"number\",\n    \
-        \                \"format\": \"double\",\n                    \"description\": \"Z coordinate\"\n                }\n\
-        \            }\n        },\n        \"Quaternion\": {\n            \"type\": \"object\",\n            \"description\"\
-        : \"Rotation represented as a quaternion\",\n            \"required\": [\n                \"x\",\n               \
-        \ \"y\",\n                \"z\",\n                \"w\"\n            ],\n            \"properties\": {\n         \
+        \    \"nullable\": true,\n                    \"description\": \"Caller-provided metadata passed through to instantiation
+        events. No Bannou plugin reads specific keys from this field by convention.\"\n                }\n            }\n\
+        \        },\n        \"Transform\": {\n            \"type\": \"object\",\n            \"description\": \"Position,
+        rotation, and scale in 3D space\",\n            \"required\": [\n                \"position\",\n                \"\
+        rotation\",\n                \"scale\"\n            ],\n            \"properties\": {\n                \"position\"\
+        : {\n                    \"$ref\": \"#/$defs/Vector3\",\n                    \"description\": \"Position relative
+        to parent\"\n                },\n                \"rotation\": {\n                    \"$ref\": \"#/$defs/Quaternion\"\
+        ,\n                    \"description\": \"Rotation relative to parent\"\n                },\n                \"scale\"\
+        : {\n                    \"$ref\": \"#/$defs/Vector3\",\n                    \"description\": \"Scale relative to
+        parent\"\n                }\n            }\n        },\n        \"Vector3\": {\n            \"type\": \"object\",\n\
+        \            \"description\": \"A point or direction in 3D space\",\n            \"required\": [\n               \
+        \ \"x\",\n                \"y\",\n                \"z\"\n            ],\n            \"properties\": {\n         \
         \       \"x\": {\n                    \"type\": \"number\",\n                    \"format\": \"double\",\n       \
-        \             \"description\": \"X component\"\n                },\n                \"y\": {\n                   \
-        \ \"type\": \"number\",\n                    \"format\": \"double\",\n                    \"description\": \"Y component\"\
+        \             \"description\": \"X coordinate\"\n                },\n                \"y\": {\n                  \
+        \  \"type\": \"number\",\n                    \"format\": \"double\",\n                    \"description\": \"Y coordinate\"\
         \n                },\n                \"z\": {\n                    \"type\": \"number\",\n                    \"\
-        format\": \"double\",\n                    \"description\": \"Z component\"\n                },\n                \"\
-        w\": {\n                    \"type\": \"number\",\n                    \"format\": \"double\",\n                 \
-        \   \"description\": \"W component (scalar)\"\n                }\n            }\n        }\n    }\n}"
+        format\": \"double\",\n                    \"description\": \"Z coordinate\"\n                }\n            }\n \
+        \       },\n        \"Quaternion\": {\n            \"type\": \"object\",\n            \"description\": \"Rotation
+        represented as a quaternion\",\n            \"required\": [\n                \"x\",\n                \"y\",\n    \
+        \            \"z\",\n                \"w\"\n            ],\n            \"properties\": {\n                \"x\":
+        {\n                    \"type\": \"number\",\n                    \"format\": \"double\",\n                    \"\
+        description\": \"X component\"\n                },\n                \"y\": {\n                    \"type\": \"number\"\
+        ,\n                    \"format\": \"double\",\n                    \"description\": \"Y component\"\n           \
+        \     },\n                \"z\": {\n                    \"type\": \"number\",\n                    \"format\": \"\
+        double\",\n                    \"description\": \"Z component\"\n                },\n                \"w\": {\n  \
+        \                  \"type\": \"number\",\n                    \"format\": \"double\",\n                    \"description\"\
+        : \"W component (scalar)\"\n                }\n            }\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/InstantiateSceneResponse\"\
         ,\n    \"$defs\": {\n        \"InstantiateSceneResponse\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Response confirming instantiation\",\n            \"required\": [\n                \"instanceId\",\n         \
@@ -1570,8 +1568,9 @@ paths:
         \ \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n    \
         \                \"description\": \"Scene asset ID (for event metadata)\"\n                },\n                \"\
         metadata\": {\n                    \"type\": \"object\",\n                    \"additionalProperties\": true,\n  \
-        \                  \"nullable\": true,\n                    \"description\": \"Caller-provided metadata\"\n      \
-        \          }\n            }\n        }\n    }\n}"
+        \                  \"nullable\": true,\n                    \"description\": \"Caller-provided metadata passed through
+        to destruction events. No Bannou plugin reads specific keys from this field by convention.\"\n                }\n\
+        \            }\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/DestroyInstanceResponse\"\
         ,\n    \"$defs\": {\n        \"DestroyInstanceResponse\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Response confirming destruction\",\n            \"required\": [\n                \"destroyed\"\n            ],\n\
@@ -1655,35 +1654,35 @@ paths:
         string\"\n                    },\n                    \"description\": \"Searchable tags for filtering scenes\"\n\
         \                },\n                \"metadata\": {\n                    \"type\": \"object\",\n                \
         \    \"additionalProperties\": true,\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Scene-level metadata. Not interpreted by Scene service.\\nExamples: author, thumbnail, editor preferences, generator
-        config.\\n\"\n                },\n                \"createdAt\": {\n                    \"type\": \"string\",\n  \
-        \                  \"format\": \"date-time\",\n                    \"description\": \"When the scene was first created\"\
-        \n                },\n                \"updatedAt\": {\n                    \"type\": \"string\",\n              \
-        \      \"format\": \"date-time\",\n                    \"description\": \"When the scene was last modified\"\n   \
-        \             }\n            }\n        },\n        \"SceneType\": {\n            \"type\": \"string\",\n        \
-        \    \"description\": \"Scene classification for querying and validation rule lookup.\\nDifferent types may have different
-        validation requirements per game.\\n\",\n            \"enum\": [\n                \"unknown\",\n                \"\
-        region\",\n                \"city\",\n                \"district\",\n                \"lot\",\n                \"\
-        building\",\n                \"room\",\n                \"dungeon\",\n                \"arena\",\n               \
-        \ \"vehicle\",\n                \"prefab\",\n                \"cutscene\",\n                \"other\"\n          \
-        \  ]\n        },\n        \"SceneNode\": {\n            \"type\": \"object\",\n            \"description\": \"A node
-        in the scene hierarchy. Nodes can contain children to form\\na tree structure. Each node has a local transform relative
-        to its parent.\\n\",\n            \"required\": [\n                \"nodeId\",\n                \"refId\",\n     \
-        \           \"name\",\n                \"nodeType\",\n                \"localTransform\"\n            ],\n       \
-        \     \"properties\": {\n                \"nodeId\": {\n                    \"type\": \"string\",\n              \
-        \      \"format\": \"uuid\",\n                    \"description\": \"Globally unique node identifier\"\n         \
-        \       },\n                \"refId\": {\n                    \"type\": \"string\",\n                    \"pattern\"\
-        : \"^[a-z][a-z0-9_]*$\",\n                    \"description\": \"Scene-local reference identifier. Must be unique
-        within the scene.\\nUsed for scripting and cross-referencing. Examples: main_door, npc_spawn_1\\n\"\n            \
-        \    },\n                \"parentNodeId\": {\n                    \"type\": \"string\",\n                    \"format\"\
-        : \"uuid\",\n                    \"nullable\": true,\n                    \"description\": \"Parent node ID. Null
-        for the root node only.\"\n                },\n                \"name\": {\n                    \"type\": \"string\"\
-        ,\n                    \"description\": \"Human-readable display name for the node\"\n                },\n       \
-        \         \"nodeType\": {\n                    \"$ref\": \"#/$defs/NodeType\",\n                    \"description\"\
-        : \"The structural type of this node\"\n                },\n                \"localTransform\": {\n              \
-        \      \"$ref\": \"#/$defs/Transform\",\n                    \"description\": \"Transform relative to parent node\"\
-        \n                },\n                \"asset\": {\n                    \"$ref\": \"#/$defs/AssetReference\",\n  \
-        \                  \"nullable\": true,\n                    \"description\": \"Optional asset binding (mesh, sound,
+        : \"Client-only scene metadata (author, thumbnail, editor preferences). No Bannou plugin reads specific keys from
+        this field by convention.\"\n                },\n                \"createdAt\": {\n                    \"type\": \"\
+        string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"When the scene was
+        first created\"\n                },\n                \"updatedAt\": {\n                    \"type\": \"string\",\n\
+        \                    \"format\": \"date-time\",\n                    \"description\": \"When the scene was last modified\"\
+        \n                }\n            }\n        },\n        \"SceneType\": {\n            \"type\": \"string\",\n    \
+        \        \"description\": \"Scene classification for querying and validation rule lookup.\\nDifferent types may have
+        different validation requirements per game.\\n\",\n            \"enum\": [\n                \"unknown\",\n       \
+        \         \"region\",\n                \"city\",\n                \"district\",\n                \"lot\",\n      \
+        \          \"building\",\n                \"room\",\n                \"dungeon\",\n                \"arena\",\n  \
+        \              \"vehicle\",\n                \"prefab\",\n                \"cutscene\",\n                \"other\"\
+        \n            ]\n        },\n        \"SceneNode\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"A node in the scene hierarchy. Nodes can contain children to form\\na tree structure. Each node has a local transform
+        relative to its parent.\\n\",\n            \"required\": [\n                \"nodeId\",\n                \"refId\"\
+        ,\n                \"name\",\n                \"nodeType\",\n                \"localTransform\"\n            ],\n\
+        \            \"properties\": {\n                \"nodeId\": {\n                    \"type\": \"string\",\n       \
+        \             \"format\": \"uuid\",\n                    \"description\": \"Globally unique node identifier\"\n  \
+        \              },\n                \"refId\": {\n                    \"type\": \"string\",\n                    \"\
+        pattern\": \"^[a-z][a-z0-9_]*$\",\n                    \"description\": \"Scene-local reference identifier. Must be
+        unique within the scene.\\nUsed for scripting and cross-referencing. Examples: main_door, npc_spawn_1\\n\"\n     \
+        \           },\n                \"parentNodeId\": {\n                    \"type\": \"string\",\n                 \
+        \   \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\": \"Parent
+        node ID. Null for the root node only.\"\n                },\n                \"name\": {\n                    \"type\"\
+        : \"string\",\n                    \"description\": \"Human-readable display name for the node\"\n               \
+        \ },\n                \"nodeType\": {\n                    \"$ref\": \"#/$defs/NodeType\",\n                    \"\
+        description\": \"The structural type of this node\"\n                },\n                \"localTransform\": {\n \
+        \                   \"$ref\": \"#/$defs/Transform\",\n                    \"description\": \"Transform relative to
+        parent node\"\n                },\n                \"asset\": {\n                    \"$ref\": \"#/$defs/AssetReference\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"Optional asset binding (mesh, sound,
         particle effect)\"\n                },\n                \"children\": {\n                    \"type\": \"array\",\n\
         \                    \"items\": {\n                        \"$ref\": \"#/$defs/SceneNode\"\n                    },\n\
         \                    \"description\": \"Child nodes in the hierarchy\"\n                },\n                \"enabled\"\
@@ -1695,10 +1694,10 @@ paths:
         \n                    },\n                    \"description\": \"Arbitrary tags for consumer filtering (e.g., entrance,
         spawn, interactive)\"\n                },\n                \"annotations\": {\n                    \"type\": \"object\"\
         ,\n                    \"additionalProperties\": true,\n                    \"nullable\": true,\n                \
-        \    \"description\": \"Consumer-specific data stored without interpretation.\\nUse namespaced keys (e.g., render.castShadows,
-        game.interactionType).\\n\"\n                },\n                \"attachmentPoints\": {\n                    \"type\"\
-        : \"array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/AttachmentPoint\"\n  \
-        \                  },\n                    \"description\": \"Predefined locations for attaching child objects.\\\
+        \    \"description\": \"Client-only node annotations for game engines and editors. No Bannou plugin reads specific
+        keys from this field by convention.\"\n                },\n                \"attachmentPoints\": {\n             \
+        \       \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/AttachmentPoint\"\
+        \n                    },\n                    \"description\": \"Predefined locations for attaching child objects.\\
         nUsed by Scene Composer for furniture decoration, wall accessories, etc.\\n\"\n                },\n              \
         \  \"affordances\": {\n                    \"type\": \"array\",\n                    \"items\": {\n              \
         \          \"$ref\": \"#/$defs/Affordance\"\n                    },\n                    \"description\": \"Interaction
@@ -1776,35 +1775,34 @@ paths:
         \              \"$ref\": \"#/$defs/AffordanceType\",\n                    \"description\": \"The type of affordance\"\
         \n                },\n                \"parameters\": {\n                    \"type\": \"object\",\n             \
         \       \"additionalProperties\": true,\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Type-specific parameters. Examples:\\n- sittable: { height: 0.5, facing: [0,0,1] }\\n- door: { openAngle: 90,
-        locked: false }\\n- container: { capacity: 10, itemTypes: [\\\"weapon\\\", \\\"consumable\\\"] }\\n\"\n          \
-        \      }\n            }\n        },\n        \"AffordanceType\": {\n            \"type\": \"string\",\n          \
-        \  \"description\": \"Types of affordances describing what an object can do or how it can be interacted with.\\nUsed
-        by AI navigation, character controllers, and procedural content systems.\\n\",\n            \"enum\": [\n        \
-        \        \"walkable\",\n                \"climbable\",\n                \"sittable\",\n                \"interactive\"\
-        ,\n                \"collectible\",\n                \"destructible\",\n                \"container\",\n         \
-        \       \"door\",\n                \"teleport\"\n            ]\n        },\n        \"AssetSlot\": {\n           \
-        \ \"type\": \"object\",\n            \"description\": \"Defines acceptable asset types for procedural swapping at
-        this node.\\nUsed by procedural generation systems to substitute assets while\\nmaintaining scene coherence.\\n\"\
-        ,\n            \"required\": [\n                \"slotType\"\n            ],\n            \"properties\": {\n    \
-        \            \"slotType\": {\n                    \"type\": \"string\",\n                    \"description\": \"Category
-        of acceptable assets.\\nExamples: chair, table, wall_art, floor_lamp\\n\"\n                },\n                \"\
-        acceptsTags\": {\n                    \"type\": \"array\",\n                    \"items\": {\n                   \
-        \     \"type\": \"string\"\n                    },\n                    \"description\": \"Tags that acceptable assets
-        must have.\\nUsed for filtering when selecting random variations.\\n\"\n                },\n                \"defaultAsset\"\
-        : {\n                    \"$ref\": \"#/$defs/AssetReference\",\n                    \"nullable\": true,\n        \
-        \            \"description\": \"Default asset if no specific asset is bound\"\n                },\n              \
-        \  \"variations\": {\n                    \"type\": \"array\",\n                    \"items\": {\n               \
-        \         \"$ref\": \"#/$defs/AssetReference\"\n                    },\n                    \"description\": \"Pre-approved
-        asset variations for random selection.\\nProcedural systems pick from this list rather than searching all assets.\\\
-        n\"\n                }\n            }\n        },\n        \"MarkerType\": {\n            \"type\": \"string\",\n\
-        \            \"description\": \"Types of marker nodes for spawn points, waypoints, and other positional markers.\"\
-        ,\n            \"enum\": [\n                \"generic\",\n                \"spawn_point\",\n                \"npc_spawn\"\
-        ,\n                \"waypoint\",\n                \"camera_point\",\n                \"light_point\",\n          \
-        \      \"audio_point\",\n                \"trigger_point\"\n            ]\n        },\n        \"VolumeShape\": {\n\
-        \            \"type\": \"string\",\n            \"description\": \"Shape of a volume node for spatial bounds\",\n\
-        \            \"enum\": [\n                \"box\",\n                \"sphere\",\n                \"capsule\",\n  \
-        \              \"cylinder\"\n            ]\n        }\n    }\n}"
+        : \"Game-specific affordance parameters interpreted by game engines and AI systems. No Bannou plugin reads specific
+        keys from this field by convention.\"\n                }\n            }\n        },\n        \"AffordanceType\": {\n\
+        \            \"type\": \"string\",\n            \"description\": \"Types of affordances describing what an object
+        can do or how it can be interacted with.\\nUsed by AI navigation, character controllers, and procedural content systems.\\\
+        n\",\n            \"enum\": [\n                \"walkable\",\n                \"climbable\",\n                \"sittable\"\
+        ,\n                \"interactive\",\n                \"collectible\",\n                \"destructible\",\n       \
+        \         \"container\",\n                \"door\",\n                \"teleport\"\n            ]\n        },\n   \
+        \     \"AssetSlot\": {\n            \"type\": \"object\",\n            \"description\": \"Defines acceptable asset
+        types for procedural swapping at this node.\\nUsed by procedural generation systems to substitute assets while\\nmaintaining
+        scene coherence.\\n\",\n            \"required\": [\n                \"slotType\"\n            ],\n            \"\
+        properties\": {\n                \"slotType\": {\n                    \"type\": \"string\",\n                    \"\
+        description\": \"Category of acceptable assets.\\nExamples: chair, table, wall_art, floor_lamp\\n\"\n            \
+        \    },\n                \"acceptsTags\": {\n                    \"type\": \"array\",\n                    \"items\"\
+        : {\n                        \"type\": \"string\"\n                    },\n                    \"description\": \"\
+        Tags that acceptable assets must have.\\nUsed for filtering when selecting random variations.\\n\"\n             \
+        \   },\n                \"defaultAsset\": {\n                    \"$ref\": \"#/$defs/AssetReference\",\n         \
+        \           \"nullable\": true,\n                    \"description\": \"Default asset if no specific asset is bound\"\
+        \n                },\n                \"variations\": {\n                    \"type\": \"array\",\n              \
+        \      \"items\": {\n                        \"$ref\": \"#/$defs/AssetReference\"\n                    },\n      \
+        \              \"description\": \"Pre-approved asset variations for random selection.\\nProcedural systems pick from
+        this list rather than searching all assets.\\n\"\n                }\n            }\n        },\n        \"MarkerType\"\
+        : {\n            \"type\": \"string\",\n            \"description\": \"Types of marker nodes for spawn points, waypoints,
+        and other positional markers.\",\n            \"enum\": [\n                \"generic\",\n                \"spawn_point\"\
+        ,\n                \"npc_spawn\",\n                \"waypoint\",\n                \"camera_point\",\n            \
+        \    \"light_point\",\n                \"audio_point\",\n                \"trigger_point\"\n            ]\n      \
+        \  },\n        \"VolumeShape\": {\n            \"type\": \"string\",\n            \"description\": \"Shape of a volume
+        node for spatial bounds\",\n            \"enum\": [\n                \"box\",\n                \"sphere\",\n     \
+        \           \"capsule\",\n                \"cylinder\"\n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Lock a scene for editing\",\n    \"description\": \"Acquires an exclusive
         lock on the scene for editing.\\nReturns a checkout token required for commit.\\nLock expires after TTL if not extended
         via heartbeat.\\n\",\n    \"tags\": [\n        \"Versioning\"\n    ],\n    \"deprecated\": false,\n    \"operationId\"\
@@ -1871,27 +1869,27 @@ paths:
         : \"array\",\n                    \"items\": {\n                        \"type\": \"string\"\n                   \
         \ },\n                    \"description\": \"Searchable tags for filtering scenes\"\n                },\n        \
         \        \"metadata\": {\n                    \"type\": \"object\",\n                    \"additionalProperties\"\
-        : true,\n                    \"nullable\": true,\n                    \"description\": \"Scene-level metadata. Not
-        interpreted by Scene service.\\nExamples: author, thumbnail, editor preferences, generator config.\\n\"\n        \
-        \        },\n                \"createdAt\": {\n                    \"type\": \"string\",\n                    \"format\"\
-        : \"date-time\",\n                    \"description\": \"When the scene was first created\"\n                },\n\
-        \                \"updatedAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\"\
-        ,\n                    \"description\": \"When the scene was last modified\"\n                }\n            }\n \
-        \       },\n        \"SceneType\": {\n            \"type\": \"string\",\n            \"description\": \"Scene classification
-        for querying and validation rule lookup.\\nDifferent types may have different validation requirements per game.\\\
-        n\",\n            \"enum\": [\n                \"unknown\",\n                \"region\",\n                \"city\"\
-        ,\n                \"district\",\n                \"lot\",\n                \"building\",\n                \"room\"\
-        ,\n                \"dungeon\",\n                \"arena\",\n                \"vehicle\",\n                \"prefab\"\
-        ,\n                \"cutscene\",\n                \"other\"\n            ]\n        },\n        \"SceneNode\": {\n\
-        \            \"type\": \"object\",\n            \"description\": \"A node in the scene hierarchy. Nodes can contain
-        children to form\\na tree structure. Each node has a local transform relative to its parent.\\n\",\n            \"\
-        required\": [\n                \"nodeId\",\n                \"refId\",\n                \"name\",\n              \
-        \  \"nodeType\",\n                \"localTransform\"\n            ],\n            \"properties\": {\n            \
-        \    \"nodeId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n       \
-        \             \"description\": \"Globally unique node identifier\"\n                },\n                \"refId\"\
-        : {\n                    \"type\": \"string\",\n                    \"pattern\": \"^[a-z][a-z0-9_]*$\",\n        \
-        \            \"description\": \"Scene-local reference identifier. Must be unique within the scene.\\nUsed for scripting
-        and cross-referencing. Examples: main_door, npc_spawn_1\\n\"\n                },\n                \"parentNodeId\"\
+        : true,\n                    \"nullable\": true,\n                    \"description\": \"Client-only scene metadata
+        (author, thumbnail, editor preferences). No Bannou plugin reads specific keys from this field by convention.\"\n \
+        \               },\n                \"createdAt\": {\n                    \"type\": \"string\",\n                \
+        \    \"format\": \"date-time\",\n                    \"description\": \"When the scene was first created\"\n     \
+        \           },\n                \"updatedAt\": {\n                    \"type\": \"string\",\n                    \"\
+        format\": \"date-time\",\n                    \"description\": \"When the scene was last modified\"\n            \
+        \    }\n            }\n        },\n        \"SceneType\": {\n            \"type\": \"string\",\n            \"description\"\
+        : \"Scene classification for querying and validation rule lookup.\\nDifferent types may have different validation
+        requirements per game.\\n\",\n            \"enum\": [\n                \"unknown\",\n                \"region\",\n\
+        \                \"city\",\n                \"district\",\n                \"lot\",\n                \"building\"\
+        ,\n                \"room\",\n                \"dungeon\",\n                \"arena\",\n                \"vehicle\"\
+        ,\n                \"prefab\",\n                \"cutscene\",\n                \"other\"\n            ]\n        },\n\
+        \        \"SceneNode\": {\n            \"type\": \"object\",\n            \"description\": \"A node in the scene hierarchy.
+        Nodes can contain children to form\\na tree structure. Each node has a local transform relative to its parent.\\n\"\
+        ,\n            \"required\": [\n                \"nodeId\",\n                \"refId\",\n                \"name\"\
+        ,\n                \"nodeType\",\n                \"localTransform\"\n            ],\n            \"properties\":
+        {\n                \"nodeId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\"\
+        ,\n                    \"description\": \"Globally unique node identifier\"\n                },\n                \"\
+        refId\": {\n                    \"type\": \"string\",\n                    \"pattern\": \"^[a-z][a-z0-9_]*$\",\n \
+        \                   \"description\": \"Scene-local reference identifier. Must be unique within the scene.\\nUsed for
+        scripting and cross-referencing. Examples: main_door, npc_spawn_1\\n\"\n                },\n                \"parentNodeId\"\
         : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
         nullable\": true,\n                    \"description\": \"Parent node ID. Null for the root node only.\"\n       \
         \         },\n                \"name\": {\n                    \"type\": \"string\",\n                    \"description\"\
@@ -1912,20 +1910,20 @@ paths:
         \              \"description\": \"Arbitrary tags for consumer filtering (e.g., entrance, spawn, interactive)\"\n \
         \               },\n                \"annotations\": {\n                    \"type\": \"object\",\n              \
         \      \"additionalProperties\": true,\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Consumer-specific data stored without interpretation.\\nUse namespaced keys (e.g., render.castShadows, game.interactionType).\\\
-        n\"\n                },\n                \"attachmentPoints\": {\n                    \"type\": \"array\",\n     \
-        \               \"items\": {\n                        \"$ref\": \"#/$defs/AttachmentPoint\"\n                    },\n\
-        \                    \"description\": \"Predefined locations for attaching child objects.\\nUsed by Scene Composer
-        for furniture decoration, wall accessories, etc.\\n\"\n                },\n                \"affordances\": {\n  \
-        \                  \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/Affordance\"\
-        \n                    },\n                    \"description\": \"Interaction capabilities of this node.\\nUsed by
-        AI navigation and character controllers.\\n\"\n                },\n                \"assetSlot\": {\n            \
-        \        \"$ref\": \"#/$defs/AssetSlot\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Procedural asset swapping configuration.\\nDefines which assets can substitute for this node's asset.\\n\"\n \
-        \               },\n                \"markerType\": {\n                    \"$ref\": \"#/$defs/MarkerType\",\n   \
-        \                 \"nullable\": true,\n                    \"description\": \"Type of marker for marker nodes.\\nOnly
-        relevant when nodeType is 'marker'.\\n\"\n                },\n                \"volumeShape\": {\n               \
-        \     \"$ref\": \"#/$defs/VolumeShape\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Client-only node annotations for game engines and editors. No Bannou plugin reads specific keys from this field
+        by convention.\"\n                },\n                \"attachmentPoints\": {\n                    \"type\": \"array\"\
+        ,\n                    \"items\": {\n                        \"$ref\": \"#/$defs/AttachmentPoint\"\n             \
+        \       },\n                    \"description\": \"Predefined locations for attaching child objects.\\nUsed by Scene
+        Composer for furniture decoration, wall accessories, etc.\\n\"\n                },\n                \"affordances\"\
+        : {\n                    \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\"\
+        : \"#/$defs/Affordance\"\n                    },\n                    \"description\": \"Interaction capabilities
+        of this node.\\nUsed by AI navigation and character controllers.\\n\"\n                },\n                \"assetSlot\"\
+        : {\n                    \"$ref\": \"#/$defs/AssetSlot\",\n                    \"nullable\": true,\n             \
+        \       \"description\": \"Procedural asset swapping configuration.\\nDefines which assets can substitute for this
+        node's asset.\\n\"\n                },\n                \"markerType\": {\n                    \"$ref\": \"#/$defs/MarkerType\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"Type of marker for marker nodes.\\
+        nOnly relevant when nodeType is 'marker'.\\n\"\n                },\n                \"volumeShape\": {\n         \
+        \           \"$ref\": \"#/$defs/VolumeShape\",\n                    \"nullable\": true,\n                    \"description\"\
         : \"Shape of volume for volume nodes.\\nOnly relevant when nodeType is 'volume'.\\n\"\n                },\n      \
         \          \"volumeSize\": {\n                    \"$ref\": \"#/$defs/Vector3\",\n                    \"nullable\"\
         : true,\n                    \"description\": \"Size/extents of the volume (interpretation depends on volumeShape).\\
@@ -1993,35 +1991,34 @@ paths:
         \    \"$ref\": \"#/$defs/AffordanceType\",\n                    \"description\": \"The type of affordance\"\n    \
         \            },\n                \"parameters\": {\n                    \"type\": \"object\",\n                  \
         \  \"additionalProperties\": true,\n                    \"nullable\": true,\n                    \"description\":
-        \"Type-specific parameters. Examples:\\n- sittable: { height: 0.5, facing: [0,0,1] }\\n- door: { openAngle: 90, locked:
-        false }\\n- container: { capacity: 10, itemTypes: [\\\"weapon\\\", \\\"consumable\\\"] }\\n\"\n                }\n\
-        \            }\n        },\n        \"AffordanceType\": {\n            \"type\": \"string\",\n            \"description\"\
-        : \"Types of affordances describing what an object can do or how it can be interacted with.\\nUsed by AI navigation,
-        character controllers, and procedural content systems.\\n\",\n            \"enum\": [\n                \"walkable\"\
-        ,\n                \"climbable\",\n                \"sittable\",\n                \"interactive\",\n             \
-        \   \"collectible\",\n                \"destructible\",\n                \"container\",\n                \"door\"\
-        ,\n                \"teleport\"\n            ]\n        },\n        \"AssetSlot\": {\n            \"type\": \"object\"\
-        ,\n            \"description\": \"Defines acceptable asset types for procedural swapping at this node.\\nUsed by procedural
-        generation systems to substitute assets while\\nmaintaining scene coherence.\\n\",\n            \"required\": [\n\
-        \                \"slotType\"\n            ],\n            \"properties\": {\n                \"slotType\": {\n  \
-        \                  \"type\": \"string\",\n                    \"description\": \"Category of acceptable assets.\\\
-        nExamples: chair, table, wall_art, floor_lamp\\n\"\n                },\n                \"acceptsTags\": {\n     \
-        \               \"type\": \"array\",\n                    \"items\": {\n                        \"type\": \"string\"\
-        \n                    },\n                    \"description\": \"Tags that acceptable assets must have.\\nUsed for
-        filtering when selecting random variations.\\n\"\n                },\n                \"defaultAsset\": {\n      \
-        \              \"$ref\": \"#/$defs/AssetReference\",\n                    \"nullable\": true,\n                  \
-        \  \"description\": \"Default asset if no specific asset is bound\"\n                },\n                \"variations\"\
-        : {\n                    \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\"\
-        : \"#/$defs/AssetReference\"\n                    },\n                    \"description\": \"Pre-approved asset variations
-        for random selection.\\nProcedural systems pick from this list rather than searching all assets.\\n\"\n          \
-        \      }\n            }\n        },\n        \"MarkerType\": {\n            \"type\": \"string\",\n            \"\
-        description\": \"Types of marker nodes for spawn points, waypoints, and other positional markers.\",\n           \
-        \ \"enum\": [\n                \"generic\",\n                \"spawn_point\",\n                \"npc_spawn\",\n  \
-        \              \"waypoint\",\n                \"camera_point\",\n                \"light_point\",\n              \
-        \  \"audio_point\",\n                \"trigger_point\"\n            ]\n        },\n        \"VolumeShape\": {\n  \
-        \          \"type\": \"string\",\n            \"description\": \"Shape of a volume node for spatial bounds\",\n  \
-        \          \"enum\": [\n                \"box\",\n                \"sphere\",\n                \"capsule\",\n    \
-        \            \"cylinder\"\n            ]\n        }\n    }\n}"
+        \"Game-specific affordance parameters interpreted by game engines and AI systems. No Bannou plugin reads specific
+        keys from this field by convention.\"\n                }\n            }\n        },\n        \"AffordanceType\": {\n\
+        \            \"type\": \"string\",\n            \"description\": \"Types of affordances describing what an object
+        can do or how it can be interacted with.\\nUsed by AI navigation, character controllers, and procedural content systems.\\\
+        n\",\n            \"enum\": [\n                \"walkable\",\n                \"climbable\",\n                \"sittable\"\
+        ,\n                \"interactive\",\n                \"collectible\",\n                \"destructible\",\n       \
+        \         \"container\",\n                \"door\",\n                \"teleport\"\n            ]\n        },\n   \
+        \     \"AssetSlot\": {\n            \"type\": \"object\",\n            \"description\": \"Defines acceptable asset
+        types for procedural swapping at this node.\\nUsed by procedural generation systems to substitute assets while\\nmaintaining
+        scene coherence.\\n\",\n            \"required\": [\n                \"slotType\"\n            ],\n            \"\
+        properties\": {\n                \"slotType\": {\n                    \"type\": \"string\",\n                    \"\
+        description\": \"Category of acceptable assets.\\nExamples: chair, table, wall_art, floor_lamp\\n\"\n            \
+        \    },\n                \"acceptsTags\": {\n                    \"type\": \"array\",\n                    \"items\"\
+        : {\n                        \"type\": \"string\"\n                    },\n                    \"description\": \"\
+        Tags that acceptable assets must have.\\nUsed for filtering when selecting random variations.\\n\"\n             \
+        \   },\n                \"defaultAsset\": {\n                    \"$ref\": \"#/$defs/AssetReference\",\n         \
+        \           \"nullable\": true,\n                    \"description\": \"Default asset if no specific asset is bound\"\
+        \n                },\n                \"variations\": {\n                    \"type\": \"array\",\n              \
+        \      \"items\": {\n                        \"$ref\": \"#/$defs/AssetReference\"\n                    },\n      \
+        \              \"description\": \"Pre-approved asset variations for random selection.\\nProcedural systems pick from
+        this list rather than searching all assets.\\n\"\n                }\n            }\n        },\n        \"MarkerType\"\
+        : {\n            \"type\": \"string\",\n            \"description\": \"Types of marker nodes for spawn points, waypoints,
+        and other positional markers.\",\n            \"enum\": [\n                \"generic\",\n                \"spawn_point\"\
+        ,\n                \"npc_spawn\",\n                \"waypoint\",\n                \"camera_point\",\n            \
+        \    \"light_point\",\n                \"audio_point\",\n                \"trigger_point\"\n            ]\n      \
+        \  },\n        \"VolumeShape\": {\n            \"type\": \"string\",\n            \"description\": \"Shape of a volume
+        node for spatial bounds\",\n            \"enum\": [\n                \"box\",\n                \"sphere\",\n     \
+        \           \"capsule\",\n                \"cylinder\"\n            ]\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/CommitResponse\"\
         ,\n    \"$defs\": {\n        \"CommitResponse\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Response confirming commit\",\n            \"required\": [\n                \"committed\",\n                \"\
@@ -2053,27 +2050,27 @@ paths:
         : \"array\",\n                    \"items\": {\n                        \"type\": \"string\"\n                   \
         \ },\n                    \"description\": \"Searchable tags for filtering scenes\"\n                },\n        \
         \        \"metadata\": {\n                    \"type\": \"object\",\n                    \"additionalProperties\"\
-        : true,\n                    \"nullable\": true,\n                    \"description\": \"Scene-level metadata. Not
-        interpreted by Scene service.\\nExamples: author, thumbnail, editor preferences, generator config.\\n\"\n        \
-        \        },\n                \"createdAt\": {\n                    \"type\": \"string\",\n                    \"format\"\
-        : \"date-time\",\n                    \"description\": \"When the scene was first created\"\n                },\n\
-        \                \"updatedAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\"\
-        ,\n                    \"description\": \"When the scene was last modified\"\n                }\n            }\n \
-        \       },\n        \"SceneType\": {\n            \"type\": \"string\",\n            \"description\": \"Scene classification
-        for querying and validation rule lookup.\\nDifferent types may have different validation requirements per game.\\\
-        n\",\n            \"enum\": [\n                \"unknown\",\n                \"region\",\n                \"city\"\
-        ,\n                \"district\",\n                \"lot\",\n                \"building\",\n                \"room\"\
-        ,\n                \"dungeon\",\n                \"arena\",\n                \"vehicle\",\n                \"prefab\"\
-        ,\n                \"cutscene\",\n                \"other\"\n            ]\n        },\n        \"SceneNode\": {\n\
-        \            \"type\": \"object\",\n            \"description\": \"A node in the scene hierarchy. Nodes can contain
-        children to form\\na tree structure. Each node has a local transform relative to its parent.\\n\",\n            \"\
-        required\": [\n                \"nodeId\",\n                \"refId\",\n                \"name\",\n              \
-        \  \"nodeType\",\n                \"localTransform\"\n            ],\n            \"properties\": {\n            \
-        \    \"nodeId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n       \
-        \             \"description\": \"Globally unique node identifier\"\n                },\n                \"refId\"\
-        : {\n                    \"type\": \"string\",\n                    \"pattern\": \"^[a-z][a-z0-9_]*$\",\n        \
-        \            \"description\": \"Scene-local reference identifier. Must be unique within the scene.\\nUsed for scripting
-        and cross-referencing. Examples: main_door, npc_spawn_1\\n\"\n                },\n                \"parentNodeId\"\
+        : true,\n                    \"nullable\": true,\n                    \"description\": \"Client-only scene metadata
+        (author, thumbnail, editor preferences). No Bannou plugin reads specific keys from this field by convention.\"\n \
+        \               },\n                \"createdAt\": {\n                    \"type\": \"string\",\n                \
+        \    \"format\": \"date-time\",\n                    \"description\": \"When the scene was first created\"\n     \
+        \           },\n                \"updatedAt\": {\n                    \"type\": \"string\",\n                    \"\
+        format\": \"date-time\",\n                    \"description\": \"When the scene was last modified\"\n            \
+        \    }\n            }\n        },\n        \"SceneType\": {\n            \"type\": \"string\",\n            \"description\"\
+        : \"Scene classification for querying and validation rule lookup.\\nDifferent types may have different validation
+        requirements per game.\\n\",\n            \"enum\": [\n                \"unknown\",\n                \"region\",\n\
+        \                \"city\",\n                \"district\",\n                \"lot\",\n                \"building\"\
+        ,\n                \"room\",\n                \"dungeon\",\n                \"arena\",\n                \"vehicle\"\
+        ,\n                \"prefab\",\n                \"cutscene\",\n                \"other\"\n            ]\n        },\n\
+        \        \"SceneNode\": {\n            \"type\": \"object\",\n            \"description\": \"A node in the scene hierarchy.
+        Nodes can contain children to form\\na tree structure. Each node has a local transform relative to its parent.\\n\"\
+        ,\n            \"required\": [\n                \"nodeId\",\n                \"refId\",\n                \"name\"\
+        ,\n                \"nodeType\",\n                \"localTransform\"\n            ],\n            \"properties\":
+        {\n                \"nodeId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\"\
+        ,\n                    \"description\": \"Globally unique node identifier\"\n                },\n                \"\
+        refId\": {\n                    \"type\": \"string\",\n                    \"pattern\": \"^[a-z][a-z0-9_]*$\",\n \
+        \                   \"description\": \"Scene-local reference identifier. Must be unique within the scene.\\nUsed for
+        scripting and cross-referencing. Examples: main_door, npc_spawn_1\\n\"\n                },\n                \"parentNodeId\"\
         : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
         nullable\": true,\n                    \"description\": \"Parent node ID. Null for the root node only.\"\n       \
         \         },\n                \"name\": {\n                    \"type\": \"string\",\n                    \"description\"\
@@ -2094,20 +2091,20 @@ paths:
         \              \"description\": \"Arbitrary tags for consumer filtering (e.g., entrance, spawn, interactive)\"\n \
         \               },\n                \"annotations\": {\n                    \"type\": \"object\",\n              \
         \      \"additionalProperties\": true,\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Consumer-specific data stored without interpretation.\\nUse namespaced keys (e.g., render.castShadows, game.interactionType).\\\
-        n\"\n                },\n                \"attachmentPoints\": {\n                    \"type\": \"array\",\n     \
-        \               \"items\": {\n                        \"$ref\": \"#/$defs/AttachmentPoint\"\n                    },\n\
-        \                    \"description\": \"Predefined locations for attaching child objects.\\nUsed by Scene Composer
-        for furniture decoration, wall accessories, etc.\\n\"\n                },\n                \"affordances\": {\n  \
-        \                  \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/Affordance\"\
-        \n                    },\n                    \"description\": \"Interaction capabilities of this node.\\nUsed by
-        AI navigation and character controllers.\\n\"\n                },\n                \"assetSlot\": {\n            \
-        \        \"$ref\": \"#/$defs/AssetSlot\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Procedural asset swapping configuration.\\nDefines which assets can substitute for this node's asset.\\n\"\n \
-        \               },\n                \"markerType\": {\n                    \"$ref\": \"#/$defs/MarkerType\",\n   \
-        \                 \"nullable\": true,\n                    \"description\": \"Type of marker for marker nodes.\\nOnly
-        relevant when nodeType is 'marker'.\\n\"\n                },\n                \"volumeShape\": {\n               \
-        \     \"$ref\": \"#/$defs/VolumeShape\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Client-only node annotations for game engines and editors. No Bannou plugin reads specific keys from this field
+        by convention.\"\n                },\n                \"attachmentPoints\": {\n                    \"type\": \"array\"\
+        ,\n                    \"items\": {\n                        \"$ref\": \"#/$defs/AttachmentPoint\"\n             \
+        \       },\n                    \"description\": \"Predefined locations for attaching child objects.\\nUsed by Scene
+        Composer for furniture decoration, wall accessories, etc.\\n\"\n                },\n                \"affordances\"\
+        : {\n                    \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\"\
+        : \"#/$defs/Affordance\"\n                    },\n                    \"description\": \"Interaction capabilities
+        of this node.\\nUsed by AI navigation and character controllers.\\n\"\n                },\n                \"assetSlot\"\
+        : {\n                    \"$ref\": \"#/$defs/AssetSlot\",\n                    \"nullable\": true,\n             \
+        \       \"description\": \"Procedural asset swapping configuration.\\nDefines which assets can substitute for this
+        node's asset.\\n\"\n                },\n                \"markerType\": {\n                    \"$ref\": \"#/$defs/MarkerType\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"Type of marker for marker nodes.\\
+        nOnly relevant when nodeType is 'marker'.\\n\"\n                },\n                \"volumeShape\": {\n         \
+        \           \"$ref\": \"#/$defs/VolumeShape\",\n                    \"nullable\": true,\n                    \"description\"\
         : \"Shape of volume for volume nodes.\\nOnly relevant when nodeType is 'volume'.\\n\"\n                },\n      \
         \          \"volumeSize\": {\n                    \"$ref\": \"#/$defs/Vector3\",\n                    \"nullable\"\
         : true,\n                    \"description\": \"Size/extents of the volume (interpretation depends on volumeShape).\\
@@ -2175,35 +2172,34 @@ paths:
         \    \"$ref\": \"#/$defs/AffordanceType\",\n                    \"description\": \"The type of affordance\"\n    \
         \            },\n                \"parameters\": {\n                    \"type\": \"object\",\n                  \
         \  \"additionalProperties\": true,\n                    \"nullable\": true,\n                    \"description\":
-        \"Type-specific parameters. Examples:\\n- sittable: { height: 0.5, facing: [0,0,1] }\\n- door: { openAngle: 90, locked:
-        false }\\n- container: { capacity: 10, itemTypes: [\\\"weapon\\\", \\\"consumable\\\"] }\\n\"\n                }\n\
-        \            }\n        },\n        \"AffordanceType\": {\n            \"type\": \"string\",\n            \"description\"\
-        : \"Types of affordances describing what an object can do or how it can be interacted with.\\nUsed by AI navigation,
-        character controllers, and procedural content systems.\\n\",\n            \"enum\": [\n                \"walkable\"\
-        ,\n                \"climbable\",\n                \"sittable\",\n                \"interactive\",\n             \
-        \   \"collectible\",\n                \"destructible\",\n                \"container\",\n                \"door\"\
-        ,\n                \"teleport\"\n            ]\n        },\n        \"AssetSlot\": {\n            \"type\": \"object\"\
-        ,\n            \"description\": \"Defines acceptable asset types for procedural swapping at this node.\\nUsed by procedural
-        generation systems to substitute assets while\\nmaintaining scene coherence.\\n\",\n            \"required\": [\n\
-        \                \"slotType\"\n            ],\n            \"properties\": {\n                \"slotType\": {\n  \
-        \                  \"type\": \"string\",\n                    \"description\": \"Category of acceptable assets.\\\
-        nExamples: chair, table, wall_art, floor_lamp\\n\"\n                },\n                \"acceptsTags\": {\n     \
-        \               \"type\": \"array\",\n                    \"items\": {\n                        \"type\": \"string\"\
-        \n                    },\n                    \"description\": \"Tags that acceptable assets must have.\\nUsed for
-        filtering when selecting random variations.\\n\"\n                },\n                \"defaultAsset\": {\n      \
-        \              \"$ref\": \"#/$defs/AssetReference\",\n                    \"nullable\": true,\n                  \
-        \  \"description\": \"Default asset if no specific asset is bound\"\n                },\n                \"variations\"\
-        : {\n                    \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\"\
-        : \"#/$defs/AssetReference\"\n                    },\n                    \"description\": \"Pre-approved asset variations
-        for random selection.\\nProcedural systems pick from this list rather than searching all assets.\\n\"\n          \
-        \      }\n            }\n        },\n        \"MarkerType\": {\n            \"type\": \"string\",\n            \"\
-        description\": \"Types of marker nodes for spawn points, waypoints, and other positional markers.\",\n           \
-        \ \"enum\": [\n                \"generic\",\n                \"spawn_point\",\n                \"npc_spawn\",\n  \
-        \              \"waypoint\",\n                \"camera_point\",\n                \"light_point\",\n              \
-        \  \"audio_point\",\n                \"trigger_point\"\n            ]\n        },\n        \"VolumeShape\": {\n  \
-        \          \"type\": \"string\",\n            \"description\": \"Shape of a volume node for spatial bounds\",\n  \
-        \          \"enum\": [\n                \"box\",\n                \"sphere\",\n                \"capsule\",\n    \
-        \            \"cylinder\"\n            ]\n        }\n    }\n}"
+        \"Game-specific affordance parameters interpreted by game engines and AI systems. No Bannou plugin reads specific
+        keys from this field by convention.\"\n                }\n            }\n        },\n        \"AffordanceType\": {\n\
+        \            \"type\": \"string\",\n            \"description\": \"Types of affordances describing what an object
+        can do or how it can be interacted with.\\nUsed by AI navigation, character controllers, and procedural content systems.\\\
+        n\",\n            \"enum\": [\n                \"walkable\",\n                \"climbable\",\n                \"sittable\"\
+        ,\n                \"interactive\",\n                \"collectible\",\n                \"destructible\",\n       \
+        \         \"container\",\n                \"door\",\n                \"teleport\"\n            ]\n        },\n   \
+        \     \"AssetSlot\": {\n            \"type\": \"object\",\n            \"description\": \"Defines acceptable asset
+        types for procedural swapping at this node.\\nUsed by procedural generation systems to substitute assets while\\nmaintaining
+        scene coherence.\\n\",\n            \"required\": [\n                \"slotType\"\n            ],\n            \"\
+        properties\": {\n                \"slotType\": {\n                    \"type\": \"string\",\n                    \"\
+        description\": \"Category of acceptable assets.\\nExamples: chair, table, wall_art, floor_lamp\\n\"\n            \
+        \    },\n                \"acceptsTags\": {\n                    \"type\": \"array\",\n                    \"items\"\
+        : {\n                        \"type\": \"string\"\n                    },\n                    \"description\": \"\
+        Tags that acceptable assets must have.\\nUsed for filtering when selecting random variations.\\n\"\n             \
+        \   },\n                \"defaultAsset\": {\n                    \"$ref\": \"#/$defs/AssetReference\",\n         \
+        \           \"nullable\": true,\n                    \"description\": \"Default asset if no specific asset is bound\"\
+        \n                },\n                \"variations\": {\n                    \"type\": \"array\",\n              \
+        \      \"items\": {\n                        \"$ref\": \"#/$defs/AssetReference\"\n                    },\n      \
+        \              \"description\": \"Pre-approved asset variations for random selection.\\nProcedural systems pick from
+        this list rather than searching all assets.\\n\"\n                }\n            }\n        },\n        \"MarkerType\"\
+        : {\n            \"type\": \"string\",\n            \"description\": \"Types of marker nodes for spawn points, waypoints,
+        and other positional markers.\",\n            \"enum\": [\n                \"generic\",\n                \"spawn_point\"\
+        ,\n                \"npc_spawn\",\n                \"waypoint\",\n                \"camera_point\",\n            \
+        \    \"light_point\",\n                \"audio_point\",\n                \"trigger_point\"\n            ]\n      \
+        \  },\n        \"VolumeShape\": {\n            \"type\": \"string\",\n            \"description\": \"Shape of a volume
+        node for spatial bounds\",\n            \"enum\": [\n                \"box\",\n                \"sphere\",\n     \
+        \           \"capsule\",\n                \"cylinder\"\n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Save changes and release lock\",\n    \"description\": \"Commits the changes
         made during checkout, increments version,\\nand releases the lock. Publishes scene.committed event.\\n\",\n    \"\
         tags\": [\n        \"Versioning\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"commitScene\"\n}"
@@ -2801,35 +2797,35 @@ paths:
         string\"\n                    },\n                    \"description\": \"Searchable tags for filtering scenes\"\n\
         \                },\n                \"metadata\": {\n                    \"type\": \"object\",\n                \
         \    \"additionalProperties\": true,\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Scene-level metadata. Not interpreted by Scene service.\\nExamples: author, thumbnail, editor preferences, generator
-        config.\\n\"\n                },\n                \"createdAt\": {\n                    \"type\": \"string\",\n  \
-        \                  \"format\": \"date-time\",\n                    \"description\": \"When the scene was first created\"\
-        \n                },\n                \"updatedAt\": {\n                    \"type\": \"string\",\n              \
-        \      \"format\": \"date-time\",\n                    \"description\": \"When the scene was last modified\"\n   \
-        \             }\n            }\n        },\n        \"SceneType\": {\n            \"type\": \"string\",\n        \
-        \    \"description\": \"Scene classification for querying and validation rule lookup.\\nDifferent types may have different
-        validation requirements per game.\\n\",\n            \"enum\": [\n                \"unknown\",\n                \"\
-        region\",\n                \"city\",\n                \"district\",\n                \"lot\",\n                \"\
-        building\",\n                \"room\",\n                \"dungeon\",\n                \"arena\",\n               \
-        \ \"vehicle\",\n                \"prefab\",\n                \"cutscene\",\n                \"other\"\n          \
-        \  ]\n        },\n        \"SceneNode\": {\n            \"type\": \"object\",\n            \"description\": \"A node
-        in the scene hierarchy. Nodes can contain children to form\\na tree structure. Each node has a local transform relative
-        to its parent.\\n\",\n            \"required\": [\n                \"nodeId\",\n                \"refId\",\n     \
-        \           \"name\",\n                \"nodeType\",\n                \"localTransform\"\n            ],\n       \
-        \     \"properties\": {\n                \"nodeId\": {\n                    \"type\": \"string\",\n              \
-        \      \"format\": \"uuid\",\n                    \"description\": \"Globally unique node identifier\"\n         \
-        \       },\n                \"refId\": {\n                    \"type\": \"string\",\n                    \"pattern\"\
-        : \"^[a-z][a-z0-9_]*$\",\n                    \"description\": \"Scene-local reference identifier. Must be unique
-        within the scene.\\nUsed for scripting and cross-referencing. Examples: main_door, npc_spawn_1\\n\"\n            \
-        \    },\n                \"parentNodeId\": {\n                    \"type\": \"string\",\n                    \"format\"\
-        : \"uuid\",\n                    \"nullable\": true,\n                    \"description\": \"Parent node ID. Null
-        for the root node only.\"\n                },\n                \"name\": {\n                    \"type\": \"string\"\
-        ,\n                    \"description\": \"Human-readable display name for the node\"\n                },\n       \
-        \         \"nodeType\": {\n                    \"$ref\": \"#/$defs/NodeType\",\n                    \"description\"\
-        : \"The structural type of this node\"\n                },\n                \"localTransform\": {\n              \
-        \      \"$ref\": \"#/$defs/Transform\",\n                    \"description\": \"Transform relative to parent node\"\
-        \n                },\n                \"asset\": {\n                    \"$ref\": \"#/$defs/AssetReference\",\n  \
-        \                  \"nullable\": true,\n                    \"description\": \"Optional asset binding (mesh, sound,
+        : \"Client-only scene metadata (author, thumbnail, editor preferences). No Bannou plugin reads specific keys from
+        this field by convention.\"\n                },\n                \"createdAt\": {\n                    \"type\": \"\
+        string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"When the scene was
+        first created\"\n                },\n                \"updatedAt\": {\n                    \"type\": \"string\",\n\
+        \                    \"format\": \"date-time\",\n                    \"description\": \"When the scene was last modified\"\
+        \n                }\n            }\n        },\n        \"SceneType\": {\n            \"type\": \"string\",\n    \
+        \        \"description\": \"Scene classification for querying and validation rule lookup.\\nDifferent types may have
+        different validation requirements per game.\\n\",\n            \"enum\": [\n                \"unknown\",\n       \
+        \         \"region\",\n                \"city\",\n                \"district\",\n                \"lot\",\n      \
+        \          \"building\",\n                \"room\",\n                \"dungeon\",\n                \"arena\",\n  \
+        \              \"vehicle\",\n                \"prefab\",\n                \"cutscene\",\n                \"other\"\
+        \n            ]\n        },\n        \"SceneNode\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"A node in the scene hierarchy. Nodes can contain children to form\\na tree structure. Each node has a local transform
+        relative to its parent.\\n\",\n            \"required\": [\n                \"nodeId\",\n                \"refId\"\
+        ,\n                \"name\",\n                \"nodeType\",\n                \"localTransform\"\n            ],\n\
+        \            \"properties\": {\n                \"nodeId\": {\n                    \"type\": \"string\",\n       \
+        \             \"format\": \"uuid\",\n                    \"description\": \"Globally unique node identifier\"\n  \
+        \              },\n                \"refId\": {\n                    \"type\": \"string\",\n                    \"\
+        pattern\": \"^[a-z][a-z0-9_]*$\",\n                    \"description\": \"Scene-local reference identifier. Must be
+        unique within the scene.\\nUsed for scripting and cross-referencing. Examples: main_door, npc_spawn_1\\n\"\n     \
+        \           },\n                \"parentNodeId\": {\n                    \"type\": \"string\",\n                 \
+        \   \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\": \"Parent
+        node ID. Null for the root node only.\"\n                },\n                \"name\": {\n                    \"type\"\
+        : \"string\",\n                    \"description\": \"Human-readable display name for the node\"\n               \
+        \ },\n                \"nodeType\": {\n                    \"$ref\": \"#/$defs/NodeType\",\n                    \"\
+        description\": \"The structural type of this node\"\n                },\n                \"localTransform\": {\n \
+        \                   \"$ref\": \"#/$defs/Transform\",\n                    \"description\": \"Transform relative to
+        parent node\"\n                },\n                \"asset\": {\n                    \"$ref\": \"#/$defs/AssetReference\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"Optional asset binding (mesh, sound,
         particle effect)\"\n                },\n                \"children\": {\n                    \"type\": \"array\",\n\
         \                    \"items\": {\n                        \"$ref\": \"#/$defs/SceneNode\"\n                    },\n\
         \                    \"description\": \"Child nodes in the hierarchy\"\n                },\n                \"enabled\"\
@@ -2841,10 +2837,10 @@ paths:
         \n                    },\n                    \"description\": \"Arbitrary tags for consumer filtering (e.g., entrance,
         spawn, interactive)\"\n                },\n                \"annotations\": {\n                    \"type\": \"object\"\
         ,\n                    \"additionalProperties\": true,\n                    \"nullable\": true,\n                \
-        \    \"description\": \"Consumer-specific data stored without interpretation.\\nUse namespaced keys (e.g., render.castShadows,
-        game.interactionType).\\n\"\n                },\n                \"attachmentPoints\": {\n                    \"type\"\
-        : \"array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/AttachmentPoint\"\n  \
-        \                  },\n                    \"description\": \"Predefined locations for attaching child objects.\\\
+        \    \"description\": \"Client-only node annotations for game engines and editors. No Bannou plugin reads specific
+        keys from this field by convention.\"\n                },\n                \"attachmentPoints\": {\n             \
+        \       \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/AttachmentPoint\"\
+        \n                    },\n                    \"description\": \"Predefined locations for attaching child objects.\\
         nUsed by Scene Composer for furniture decoration, wall accessories, etc.\\n\"\n                },\n              \
         \  \"affordances\": {\n                    \"type\": \"array\",\n                    \"items\": {\n              \
         \          \"$ref\": \"#/$defs/Affordance\"\n                    },\n                    \"description\": \"Interaction
@@ -2922,35 +2918,34 @@ paths:
         \              \"$ref\": \"#/$defs/AffordanceType\",\n                    \"description\": \"The type of affordance\"\
         \n                },\n                \"parameters\": {\n                    \"type\": \"object\",\n             \
         \       \"additionalProperties\": true,\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Type-specific parameters. Examples:\\n- sittable: { height: 0.5, facing: [0,0,1] }\\n- door: { openAngle: 90,
-        locked: false }\\n- container: { capacity: 10, itemTypes: [\\\"weapon\\\", \\\"consumable\\\"] }\\n\"\n          \
-        \      }\n            }\n        },\n        \"AffordanceType\": {\n            \"type\": \"string\",\n          \
-        \  \"description\": \"Types of affordances describing what an object can do or how it can be interacted with.\\nUsed
-        by AI navigation, character controllers, and procedural content systems.\\n\",\n            \"enum\": [\n        \
-        \        \"walkable\",\n                \"climbable\",\n                \"sittable\",\n                \"interactive\"\
-        ,\n                \"collectible\",\n                \"destructible\",\n                \"container\",\n         \
-        \       \"door\",\n                \"teleport\"\n            ]\n        },\n        \"AssetSlot\": {\n           \
-        \ \"type\": \"object\",\n            \"description\": \"Defines acceptable asset types for procedural swapping at
-        this node.\\nUsed by procedural generation systems to substitute assets while\\nmaintaining scene coherence.\\n\"\
-        ,\n            \"required\": [\n                \"slotType\"\n            ],\n            \"properties\": {\n    \
-        \            \"slotType\": {\n                    \"type\": \"string\",\n                    \"description\": \"Category
-        of acceptable assets.\\nExamples: chair, table, wall_art, floor_lamp\\n\"\n                },\n                \"\
-        acceptsTags\": {\n                    \"type\": \"array\",\n                    \"items\": {\n                   \
-        \     \"type\": \"string\"\n                    },\n                    \"description\": \"Tags that acceptable assets
-        must have.\\nUsed for filtering when selecting random variations.\\n\"\n                },\n                \"defaultAsset\"\
-        : {\n                    \"$ref\": \"#/$defs/AssetReference\",\n                    \"nullable\": true,\n        \
-        \            \"description\": \"Default asset if no specific asset is bound\"\n                },\n              \
-        \  \"variations\": {\n                    \"type\": \"array\",\n                    \"items\": {\n               \
-        \         \"$ref\": \"#/$defs/AssetReference\"\n                    },\n                    \"description\": \"Pre-approved
-        asset variations for random selection.\\nProcedural systems pick from this list rather than searching all assets.\\\
-        n\"\n                }\n            }\n        },\n        \"MarkerType\": {\n            \"type\": \"string\",\n\
-        \            \"description\": \"Types of marker nodes for spawn points, waypoints, and other positional markers.\"\
-        ,\n            \"enum\": [\n                \"generic\",\n                \"spawn_point\",\n                \"npc_spawn\"\
-        ,\n                \"waypoint\",\n                \"camera_point\",\n                \"light_point\",\n          \
-        \      \"audio_point\",\n                \"trigger_point\"\n            ]\n        },\n        \"VolumeShape\": {\n\
-        \            \"type\": \"string\",\n            \"description\": \"Shape of a volume node for spatial bounds\",\n\
-        \            \"enum\": [\n                \"box\",\n                \"sphere\",\n                \"capsule\",\n  \
-        \              \"cylinder\"\n            ]\n        }\n    }\n}"
+        : \"Game-specific affordance parameters interpreted by game engines and AI systems. No Bannou plugin reads specific
+        keys from this field by convention.\"\n                }\n            }\n        },\n        \"AffordanceType\": {\n\
+        \            \"type\": \"string\",\n            \"description\": \"Types of affordances describing what an object
+        can do or how it can be interacted with.\\nUsed by AI navigation, character controllers, and procedural content systems.\\\
+        n\",\n            \"enum\": [\n                \"walkable\",\n                \"climbable\",\n                \"sittable\"\
+        ,\n                \"interactive\",\n                \"collectible\",\n                \"destructible\",\n       \
+        \         \"container\",\n                \"door\",\n                \"teleport\"\n            ]\n        },\n   \
+        \     \"AssetSlot\": {\n            \"type\": \"object\",\n            \"description\": \"Defines acceptable asset
+        types for procedural swapping at this node.\\nUsed by procedural generation systems to substitute assets while\\nmaintaining
+        scene coherence.\\n\",\n            \"required\": [\n                \"slotType\"\n            ],\n            \"\
+        properties\": {\n                \"slotType\": {\n                    \"type\": \"string\",\n                    \"\
+        description\": \"Category of acceptable assets.\\nExamples: chair, table, wall_art, floor_lamp\\n\"\n            \
+        \    },\n                \"acceptsTags\": {\n                    \"type\": \"array\",\n                    \"items\"\
+        : {\n                        \"type\": \"string\"\n                    },\n                    \"description\": \"\
+        Tags that acceptable assets must have.\\nUsed for filtering when selecting random variations.\\n\"\n             \
+        \   },\n                \"defaultAsset\": {\n                    \"$ref\": \"#/$defs/AssetReference\",\n         \
+        \           \"nullable\": true,\n                    \"description\": \"Default asset if no specific asset is bound\"\
+        \n                },\n                \"variations\": {\n                    \"type\": \"array\",\n              \
+        \      \"items\": {\n                        \"$ref\": \"#/$defs/AssetReference\"\n                    },\n      \
+        \              \"description\": \"Pre-approved asset variations for random selection.\\nProcedural systems pick from
+        this list rather than searching all assets.\\n\"\n                }\n            }\n        },\n        \"MarkerType\"\
+        : {\n            \"type\": \"string\",\n            \"description\": \"Types of marker nodes for spawn points, waypoints,
+        and other positional markers.\",\n            \"enum\": [\n                \"generic\",\n                \"spawn_point\"\
+        ,\n                \"npc_spawn\",\n                \"waypoint\",\n                \"camera_point\",\n            \
+        \    \"light_point\",\n                \"audio_point\",\n                \"trigger_point\"\n            ]\n      \
+        \  },\n        \"VolumeShape\": {\n            \"type\": \"string\",\n            \"description\": \"Shape of a volume
+        node for spatial bounds\",\n            \"enum\": [\n                \"box\",\n                \"sphere\",\n     \
+        \           \"capsule\",\n                \"cylinder\"\n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Duplicate a scene with a new ID\",\n    \"description\": \"Creates a copy
         of a scene with a new sceneId and name.\\nAll node IDs are regenerated. Version resets to 1.0.0.\\n\",\n    \"tags\"\
         : [\n        \"Scene\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"duplicateScene\"\n}"
@@ -3074,11 +3069,9 @@ components:
           type: object
           additionalProperties: true
           nullable: true
-          description: |
-            Type-specific parameters. Examples:
-            - sittable: { height: 0.5, facing: [0,0,1] }
-            - door: { openAngle: 90, locked: false }
-            - container: { capacity: 10, itemTypes: ["weapon", "consumable"] }
+          description: >-
+            Game-specific affordance parameters interpreted by game engines and AI systems.
+            No Bannou plugin reads specific keys from this field by convention.
     AssetSlot:
       type: object
       description: |
@@ -3285,9 +3278,9 @@ components:
           type: object
           additionalProperties: true
           nullable: true
-          description: |
-            Consumer-specific data stored without interpretation.
-            Use namespaced keys (e.g., render.castShadows, game.interactionType).
+          description: >-
+            Client-only node annotations for game engines and editors.
+            No Bannou plugin reads specific keys from this field by convention.
         attachmentPoints:
           type: array
           items:
@@ -3384,9 +3377,9 @@ components:
           type: object
           additionalProperties: true
           nullable: true
-          description: |
-            Scene-level metadata. Not interpreted by Scene service.
-            Examples: author, thumbnail, editor preferences, generator config.
+          description: >-
+            Client-only scene metadata (author, thumbnail, editor preferences).
+            No Bannou plugin reads specific keys from this field by convention.
         createdAt:
           type: string
           format: date-time
@@ -3744,7 +3737,9 @@ components:
           type: object
           additionalProperties: true
           nullable: true
-          description: Additional context for the error
+          description: >-
+            Client-only validation error context.
+            No Bannou plugin reads specific keys from this field by convention.
     InstantiateSceneRequest:
       type: object
       description: Request to record a scene instantiation
@@ -3777,7 +3772,9 @@ components:
           type: object
           additionalProperties: true
           nullable: true
-          description: Caller-provided metadata passed to event
+          description: >-
+            Caller-provided metadata passed through to instantiation events.
+            No Bannou plugin reads specific keys from this field by convention.
     InstantiateSceneResponse:
       type: object
       description: Response confirming instantiation
@@ -3819,7 +3816,9 @@ components:
           type: object
           additionalProperties: true
           nullable: true
-          description: Caller-provided metadata
+          description: >-
+            Caller-provided metadata passed through to destruction events.
+            No Bannou plugin reads specific keys from this field by convention.
     DestroyInstanceResponse:
       type: object
       description: Response confirming destruction

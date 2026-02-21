@@ -1,9 +1,11 @@
 using BeyondImmersion.BannouService.Actor;
-using BeyondImmersion.BannouService.Actor.Caching;
 using BeyondImmersion.BannouService.Actor.Pool;
 using BeyondImmersion.BannouService.Actor.Runtime;
+using BeyondImmersion.BannouService.Character;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Messaging;
+using BeyondImmersion.BannouService.Providers;
+using BeyondImmersion.BannouService.Resource;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State;
 using BeyondImmersion.BannouService.TestUtilities;
@@ -24,10 +26,11 @@ public class ActorServiceTests
     private readonly Mock<IActorRegistry> _mockActorRegistry;
     private readonly Mock<IActorRunnerFactory> _mockActorRunnerFactory;
     private readonly Mock<IEventConsumer> _mockEventConsumer;
-    private readonly Mock<IBehaviorDocumentCache> _mockBehaviorCache;
+    private readonly Mock<IBehaviorDocumentLoader> _mockBehaviorLoader;
     private readonly Mock<IActorPoolManager> _mockPoolManager;
-    private readonly Mock<IPersonalityCache> _mockPersonalityCache;
     private readonly Mock<IMeshInvocationClient> _mockMeshClient;
+    private readonly Mock<IResourceClient> _mockResourceClient;
+    private readonly Mock<ICharacterClient> _mockCharacterClient;
     private readonly Mock<IStateStore<ActorTemplateData>> _mockTemplateStore;
     private readonly Mock<IStateStore<List<string>>> _mockIndexStore;
 
@@ -46,10 +49,11 @@ public class ActorServiceTests
         _mockActorRegistry = new Mock<IActorRegistry>();
         _mockActorRunnerFactory = new Mock<IActorRunnerFactory>();
         _mockEventConsumer = new Mock<IEventConsumer>();
-        _mockBehaviorCache = new Mock<IBehaviorDocumentCache>();
+        _mockBehaviorLoader = new Mock<IBehaviorDocumentLoader>();
         _mockPoolManager = new Mock<IActorPoolManager>();
-        _mockPersonalityCache = new Mock<IPersonalityCache>();
         _mockMeshClient = new Mock<IMeshInvocationClient>();
+        _mockResourceClient = new Mock<IResourceClient>();
+        _mockCharacterClient = new Mock<ICharacterClient>();
         _mockTemplateStore = new Mock<IStateStore<ActorTemplateData>>();
         _mockIndexStore = new Mock<IStateStore<List<string>>>();
 
@@ -72,10 +76,11 @@ public class ActorServiceTests
             _mockActorRegistry.Object,
             _mockActorRunnerFactory.Object,
             _mockEventConsumer.Object,
-            _mockBehaviorCache.Object,
+            _mockBehaviorLoader.Object,
             _mockPoolManager.Object,
-            _mockPersonalityCache.Object,
-            _mockMeshClient.Object);
+            _mockMeshClient.Object,
+            _mockResourceClient.Object,
+            _mockCharacterClient.Object);
     }
 
     #region Constructor Tests
@@ -392,7 +397,8 @@ public class ActorServiceTests
             BehaviorRef = "behaviors/test.abml"
         };
 
-        var request = new SpawnActorRequest { TemplateId = templateId };
+        var realmId = Guid.NewGuid();
+        var request = new SpawnActorRequest { TemplateId = templateId, RealmId = realmId };
 
         _mockTemplateStore.Setup(s => s.GetAsync(templateId.ToString(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(template);
@@ -405,6 +411,7 @@ public class ActorServiceTests
             ActorId = "test-actor",
             TemplateId = templateId,
             Category = "test-category",
+            RealmId = realmId,
             Status = ActorStatus.Running,
             StartedAt = DateTimeOffset.UtcNow
         });
@@ -413,6 +420,7 @@ public class ActorServiceTests
             It.IsAny<string>(),
             It.IsAny<ActorTemplateData>(),
             It.IsAny<Guid?>(),
+            It.IsAny<Guid>(),
             It.IsAny<object?>(),
             It.IsAny<object?>()))
             .Returns(mockRunner.Object);
@@ -461,7 +469,7 @@ public class ActorServiceTests
             BehaviorRef = "behaviors/test.abml"
         };
 
-        var request = new SpawnActorRequest { TemplateId = templateId, ActorId = "existing-actor" };
+        var request = new SpawnActorRequest { TemplateId = templateId, ActorId = "existing-actor", RealmId = Guid.NewGuid() };
 
         _mockTemplateStore.Setup(s => s.GetAsync(templateId.ToString(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(template);
@@ -637,23 +645,30 @@ public class ActorServiceTests
         });
         spawnedRunner.SetupGet(r => r.StartedAt).Returns(DateTimeOffset.UtcNow);
 
+        // Mock character client to resolve realm from characterId
+        var realmId = Guid.NewGuid();
+        _mockCharacterClient.Setup(c => c.GetCharacterAsync(
+                It.Is<Character.GetCharacterRequest>(r => r.CharacterId == characterId),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new Character.CharacterResponse { CharacterId = characterId, RealmId = realmId, Name = "Test", SpeciesId = Guid.NewGuid(), BirthDate = DateTimeOffset.UtcNow, Status = Character.CharacterStatus.Alive, CreatedAt = DateTimeOffset.UtcNow });
+
         // Setup spawn registration
         _mockActorRegistry.Setup(r => r.TryRegister(actorId, It.IsAny<IActorRunner>())).Returns(true);
-        _mockActorRunnerFactory.Setup(f => f.Create(actorId, It.IsAny<ActorTemplateData>(), characterId, It.IsAny<object?>(), It.IsAny<object?>()))
+        _mockActorRunnerFactory.Setup(f => f.Create(actorId, It.IsAny<ActorTemplateData>(), characterId, It.IsAny<Guid>(), It.IsAny<object?>(), It.IsAny<object?>()))
             .Returns(spawnedRunner.Object);
 
         // Act
         var (status, response) = await service.GetActorAsync(request, CancellationToken.None);
 
         // Assert
-        // Verify that Create was called with the extracted characterId
+        // Verify that Create was called with the extracted characterId and resolved realmId
         _mockActorRunnerFactory.Verify(
-            f => f.Create(actorId, It.IsAny<ActorTemplateData>(), characterId, It.IsAny<object?>(), It.IsAny<object?>()),
+            f => f.Create(actorId, It.IsAny<ActorTemplateData>(), characterId, It.IsAny<Guid>(), It.IsAny<object?>(), It.IsAny<object?>()),
             Times.Once);
     }
 
     [Fact]
-    public async Task GetActorAsync_AutoSpawnWithoutCaptureGroup_CharacterIdIsNull()
+    public async Task GetActorAsync_AutoSpawnWithoutCaptureGroup_NoRealmId_ReturnsNotFound()
     {
         // Arrange
         var service = CreateService();
@@ -694,34 +709,19 @@ public class ActorServiceTests
         _mockTemplateStore.Setup(s => s.GetAsync(templateId.ToString(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(template);
 
-        // Mock spawn flow
-        var spawnedRunner = new Mock<IActorRunner>();
-        spawnedRunner.Setup(r => r.GetStateSnapshot()).Returns(new ActorStateSnapshot
-        {
-            ActorId = actorId,
-            TemplateId = templateId,
-            Category = "npc-merchant",
-            Status = ActorStatus.Running,
-            StartedAt = DateTimeOffset.UtcNow
-        });
-        spawnedRunner.SetupGet(r => r.StartedAt).Returns(DateTimeOffset.UtcNow);
-
-        _mockActorRegistry.Setup(r => r.TryRegister(actorId, It.IsAny<IActorRunner>())).Returns(true);
-        _mockActorRunnerFactory.Setup(f => f.Create(actorId, It.IsAny<ActorTemplateData>(), null, It.IsAny<object?>(), It.IsAny<object?>()))
-            .Returns(spawnedRunner.Object);
-
         // Act
         var (status, response) = await service.GetActorAsync(request, CancellationToken.None);
 
         // Assert
-        // Verify that Create was called with null characterId
+        // Without characterId, realmId cannot be resolved, so auto-spawn fails
+        Assert.Equal(StatusCodes.NotFound, status);
         _mockActorRunnerFactory.Verify(
-            f => f.Create(actorId, It.IsAny<ActorTemplateData>(), null, It.IsAny<object?>(), It.IsAny<object?>()),
-            Times.Once);
+            f => f.Create(It.IsAny<string>(), It.IsAny<ActorTemplateData>(), It.IsAny<Guid?>(), It.IsAny<Guid>(), It.IsAny<object?>(), It.IsAny<object?>()),
+            Times.Never);
     }
 
     [Fact]
-    public async Task GetActorAsync_AutoSpawnInvalidGuidInCaptureGroup_CharacterIdIsNull()
+    public async Task GetActorAsync_AutoSpawnInvalidGuidInCaptureGroup_NoRealmId_ReturnsNotFound()
     {
         // Arrange
         var service = CreateService();
@@ -762,30 +762,15 @@ public class ActorServiceTests
         _mockTemplateStore.Setup(s => s.GetAsync(templateId.ToString(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(template);
 
-        // Mock spawn flow
-        var spawnedRunner = new Mock<IActorRunner>();
-        spawnedRunner.Setup(r => r.GetStateSnapshot()).Returns(new ActorStateSnapshot
-        {
-            ActorId = actorId,
-            TemplateId = templateId,
-            Category = "npc-brain",
-            Status = ActorStatus.Running,
-            StartedAt = DateTimeOffset.UtcNow
-        });
-        spawnedRunner.SetupGet(r => r.StartedAt).Returns(DateTimeOffset.UtcNow);
-
-        _mockActorRegistry.Setup(r => r.TryRegister(actorId, It.IsAny<IActorRunner>())).Returns(true);
-        _mockActorRunnerFactory.Setup(f => f.Create(actorId, It.IsAny<ActorTemplateData>(), null, It.IsAny<object?>(), It.IsAny<object?>()))
-            .Returns(spawnedRunner.Object);
-
         // Act
         var (status, response) = await service.GetActorAsync(request, CancellationToken.None);
 
         // Assert
-        // Verify that Create was called with null characterId (invalid GUID gracefully handled)
+        // Invalid GUID means characterId is null, so realmId cannot be resolved, auto-spawn fails
+        Assert.Equal(StatusCodes.NotFound, status);
         _mockActorRunnerFactory.Verify(
-            f => f.Create(actorId, It.IsAny<ActorTemplateData>(), null, It.IsAny<object?>(), It.IsAny<object?>()),
-            Times.Once);
+            f => f.Create(It.IsAny<string>(), It.IsAny<ActorTemplateData>(), It.IsAny<Guid?>(), It.IsAny<Guid>(), It.IsAny<object?>(), It.IsAny<object?>()),
+            Times.Never);
     }
 
     #endregion
@@ -859,6 +844,163 @@ public class ActorServiceTests
         Assert.NotNull(response);
         Assert.Single(response.Actors);
         Assert.Equal("target-category", response.Actors.First().Category);
+    }
+
+    [Fact]
+    public async Task ListActorsAsync_BannouModeWithMatchingNodeId_ReturnsLocalActors()
+    {
+        // Arrange
+        var service = CreateService();
+        var request = new ListActorsRequest { NodeId = "bannou-local", Limit = 10, Offset = 0 };
+
+        var mockRunner = new Mock<IActorRunner>();
+        mockRunner.SetupGet(r => r.Category).Returns("test-category");
+        mockRunner.SetupGet(r => r.Status).Returns(ActorStatus.Running);
+        mockRunner.SetupGet(r => r.CharacterId).Returns((Guid?)null);
+        mockRunner.Setup(r => r.GetStateSnapshot()).Returns(new ActorStateSnapshot
+        {
+            ActorId = "actor-1",
+            TemplateId = Guid.NewGuid(),
+            Category = "test-category",
+            Status = ActorStatus.Running,
+            StartedAt = DateTimeOffset.UtcNow
+        });
+
+        _mockActorRegistry.Setup(r => r.GetAllRunners()).Returns(new[] { mockRunner.Object });
+
+        // Act
+        var (status, response) = await service.ListActorsAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Single(response.Actors);
+        Assert.Equal(1, response.Total);
+    }
+
+    [Fact]
+    public async Task ListActorsAsync_BannouModeWithNonMatchingNodeId_ReturnsEmpty()
+    {
+        // Arrange
+        var service = CreateService();
+        var request = new ListActorsRequest { NodeId = "other-node", Limit = 10, Offset = 0 };
+
+        var mockRunner = new Mock<IActorRunner>();
+        mockRunner.SetupGet(r => r.Category).Returns("test-category");
+        mockRunner.SetupGet(r => r.Status).Returns(ActorStatus.Running);
+        mockRunner.SetupGet(r => r.CharacterId).Returns((Guid?)null);
+
+        _mockActorRegistry.Setup(r => r.GetAllRunners()).Returns(new[] { mockRunner.Object });
+
+        // Act
+        var (status, response) = await service.ListActorsAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Empty(response.Actors);
+        Assert.Equal(0, response.Total);
+        _mockActorRegistry.Verify(r => r.GetAllRunners(), Times.Never());
+    }
+
+    [Fact]
+    public async Task ListActorsAsync_PoolModeWithNodeId_QueriesPoolAssignments()
+    {
+        // Arrange
+        _configuration.DeploymentMode = DeploymentMode.PoolPerType;
+        var service = CreateService();
+        var request = new ListActorsRequest { NodeId = "pool-node-1", Limit = 10, Offset = 0 };
+
+        var assignments = new List<ActorAssignment>
+        {
+            new ActorAssignment
+            {
+                ActorId = "actor-1",
+                NodeId = "pool-node-1",
+                NodeAppId = "bannou-pool-1",
+                TemplateId = Guid.NewGuid(),
+                Category = "npc",
+                Status = ActorStatus.Running,
+                AssignedAt = DateTimeOffset.UtcNow,
+                StartedAt = DateTimeOffset.UtcNow
+            },
+            new ActorAssignment
+            {
+                ActorId = "actor-2",
+                NodeId = "pool-node-1",
+                NodeAppId = "bannou-pool-1",
+                TemplateId = Guid.NewGuid(),
+                Category = "event-brain",
+                Status = ActorStatus.Running,
+                AssignedAt = DateTimeOffset.UtcNow,
+                StartedAt = DateTimeOffset.UtcNow
+            }
+        };
+
+        _mockPoolManager
+            .Setup(p => p.ListActorsByNodeAsync("pool-node-1", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(assignments);
+
+        // Act
+        var (status, response) = await service.ListActorsAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Equal(2, response.Actors.Count);
+        Assert.Equal(2, response.Total);
+        Assert.Equal("pool-node-1", response.Actors.First().NodeId);
+        _mockPoolManager.Verify(p => p.ListActorsByNodeAsync("pool-node-1", It.IsAny<CancellationToken>()), Times.Once());
+        _mockActorRegistry.Verify(r => r.GetAllRunners(), Times.Never());
+    }
+
+    [Fact]
+    public async Task ListActorsAsync_PoolModeWithNodeIdAndCategoryFilter_ReturnsFilteredAssignments()
+    {
+        // Arrange
+        _configuration.DeploymentMode = DeploymentMode.PoolPerType;
+        var service = CreateService();
+        var request = new ListActorsRequest { NodeId = "pool-node-1", Category = "npc", Limit = 10, Offset = 0 };
+
+        var assignments = new List<ActorAssignment>
+        {
+            new ActorAssignment
+            {
+                ActorId = "actor-1",
+                NodeId = "pool-node-1",
+                NodeAppId = "bannou-pool-1",
+                TemplateId = Guid.NewGuid(),
+                Category = "npc",
+                Status = ActorStatus.Running,
+                AssignedAt = DateTimeOffset.UtcNow,
+                StartedAt = DateTimeOffset.UtcNow
+            },
+            new ActorAssignment
+            {
+                ActorId = "actor-2",
+                NodeId = "pool-node-1",
+                NodeAppId = "bannou-pool-1",
+                TemplateId = Guid.NewGuid(),
+                Category = "event-brain",
+                Status = ActorStatus.Running,
+                AssignedAt = DateTimeOffset.UtcNow,
+                StartedAt = DateTimeOffset.UtcNow
+            }
+        };
+
+        _mockPoolManager
+            .Setup(p => p.ListActorsByNodeAsync("pool-node-1", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(assignments);
+
+        // Act
+        var (status, response) = await service.ListActorsAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Single(response.Actors);
+        Assert.Equal(1, response.Total);
+        Assert.Equal("npc", response.Actors.First().Category);
     }
 
     #endregion

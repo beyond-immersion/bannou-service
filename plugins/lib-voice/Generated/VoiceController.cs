@@ -32,12 +32,11 @@ public interface IVoiceController : BeyondImmersion.BannouService.Controllers.IB
 {
 
     /// <summary>
-    /// Create voice room for a game session
+    /// Create a new voice room
     /// </summary>
 
     /// <remarks>
-    /// Creates a new voice room associated with a game session.
-    /// <br/>Called by GameSession service when creating a session with voice enabled.
+    /// Creates a new voice room associated with a session. Any service can call this.
     /// <br/>Returns room ID and initial configuration.
     /// </remarks>
 
@@ -51,7 +50,6 @@ public interface IVoiceController : BeyondImmersion.BannouService.Controllers.IB
 
     /// <remarks>
     /// Retrieves current state of a voice room including participant list.
-    /// <br/>Called by GameSession service to check room status.
     /// </remarks>
 
     /// <returns>Voice room retrieved successfully</returns>
@@ -63,8 +61,8 @@ public interface IVoiceController : BeyondImmersion.BannouService.Controllers.IB
     /// </summary>
 
     /// <remarks>
-    /// Registers a participant's SIP endpoint with the voice room.
-    /// <br/>Called by GameSession service when a player joins a session.
+    /// Registers a participant in the voice room. If AdHocRoomsEnabled and room
+    /// <br/>doesn't exist, auto-creates it.
     /// <br/>Returns connection info and current peer list for P2P mode,
     /// <br/>or RTP server details for scaled mode.
     /// </remarks>
@@ -78,8 +76,7 @@ public interface IVoiceController : BeyondImmersion.BannouService.Controllers.IB
     /// </summary>
 
     /// <remarks>
-    /// Removes a participant from the voice room and notifies other peers.
-    /// <br/>Called by GameSession service when a player leaves a session.
+    /// Removes a participant from the voice room.
     /// </remarks>
 
     /// <returns>Successfully left voice room</returns>
@@ -92,7 +89,6 @@ public interface IVoiceController : BeyondImmersion.BannouService.Controllers.IB
 
     /// <remarks>
     /// Deletes a voice room and notifies all participants.
-    /// <br/>Called by GameSession service when a session is deleted.
     /// </remarks>
 
     /// <returns>Voice room deleted successfully</returns>
@@ -130,6 +126,55 @@ public interface IVoiceController : BeyondImmersion.BannouService.Controllers.IB
 
     System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> AnswerPeerAsync(AnswerPeerRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
+    /// <summary>
+    /// Request broadcast consent from all room participants
+    /// </summary>
+
+    /// <remarks>
+    /// Initiates the broadcast consent flow. All current room participants receive a VoiceBroadcastConsentRequestEvent. Broadcasting only starts after all participants consent. If ANY participant declines, the broadcast request is denied.
+    /// <br/>This endpoint is the ONLY way to initiate voice room broadcasting. lib-stream subscribes to the resulting approval/decline events.
+    /// </remarks>
+
+    /// <returns>Consent request sent to all participants</returns>
+
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<BroadcastConsentStatus>> RequestBroadcastConsentAsync(BroadcastConsentRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
+    /// <summary>
+    /// Respond to a broadcast consent request
+    /// </summary>
+
+    /// <remarks>
+    /// Called by each participant to consent or decline broadcasting. When all participants consent, lib-voice publishes voice.room.broadcast.approved. If any participant declines, lib-voice publishes voice.room.broadcast.declined.
+    /// </remarks>
+
+    /// <returns>Consent response recorded</returns>
+
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<BroadcastConsentStatus>> RespondBroadcastConsentAsync(BroadcastConsentResponse body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
+    /// <summary>
+    /// Stop broadcasting from a voice room
+    /// </summary>
+
+    /// <remarks>
+    /// Any participant can stop an active broadcast at any time. This is equivalent to revoking consent. Publishes voice.room.broadcast.stopped with reason ConsentRevoked.
+    /// </remarks>
+
+    /// <returns>Broadcast stopped</returns>
+
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> StopBroadcastAsync(StopBroadcastConsentRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
+    /// <summary>
+    /// Get broadcast status for a voice room
+    /// </summary>
+
+    /// <remarks>
+    /// Returns the current broadcast state: whether consent is pending, active, or inactive.
+    /// </remarks>
+
+    /// <returns>Broadcast status</returns>
+
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<BroadcastConsentStatus>> GetBroadcastStatusAsync(BroadcastStatusRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 }
 
 [System.CodeDom.Compiler.GeneratedCode("NSwag", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
@@ -137,10 +182,12 @@ public interface IVoiceController : BeyondImmersion.BannouService.Controllers.IB
 public partial class VoiceController : Microsoft.AspNetCore.Mvc.ControllerBase
 {
     private IVoiceService _implementation;
+    private BeyondImmersion.BannouService.Services.ITelemetryProvider _telemetryProvider;
 
-    public VoiceController(IVoiceService implementation)
+    public VoiceController(IVoiceService implementation, BeyondImmersion.BannouService.Services.ITelemetryProvider telemetryProvider)
     {
         _implementation = implementation;
+        _telemetryProvider = telemetryProvider;
     }
 
     /// <summary>
@@ -180,11 +227,10 @@ public partial class VoiceController : Microsoft.AspNetCore.Mvc.ControllerBase
     }
 
     /// <summary>
-    /// Create voice room for a game session
+    /// Create a new voice room
     /// </summary>
     /// <remarks>
-    /// Creates a new voice room associated with a game session.
-    /// <br/>Called by GameSession service when creating a session with voice enabled.
+    /// Creates a new voice room associated with a session. Any service can call this.
     /// <br/>Returns room ID and initial configuration.
     /// </remarks>
     /// <returns>Voice room created successfully</returns>
@@ -193,8 +239,40 @@ public partial class VoiceController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<VoiceRoomResponse>> CreateVoiceRoom([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] CreateVoiceRoomRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
-        var (statusCode, result) = await _implementation.CreateVoiceRoomAsync(body, cancellationToken);
-        return ConvertToActionResult(statusCode, result);
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.voice",
+            "VoiceController.CreateVoiceRoom",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "voice/room/create");
+        try
+        {
+
+            var (statusCode, result) = await _implementation.CreateVoiceRoomAsync(body, cancellationToken);
+            return ConvertToActionResult(statusCode, result);
+        }
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<VoiceController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:voice/room/create");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
+            return StatusCode(503);
+        }
+        catch (System.Exception ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<VoiceController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogError(logger_, ex_, "Unexpected error in {Endpoint}", "post:voice/room/create");
+            var messageBus_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<BeyondImmersion.BannouService.Services.IMessageBus>(HttpContext.RequestServices);
+            await messageBus_.TryPublishErrorAsync(
+                "voice",
+                "CreateVoiceRoom",
+                "unexpected_exception",
+                ex_.Message,
+                endpoint: "post:voice/room/create",
+                stack: ex_.StackTrace,
+                cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
+            return StatusCode(500);
+        }
     }
 
     /// <summary>
@@ -202,7 +280,6 @@ public partial class VoiceController : Microsoft.AspNetCore.Mvc.ControllerBase
     /// </summary>
     /// <remarks>
     /// Retrieves current state of a voice room including participant list.
-    /// <br/>Called by GameSession service to check room status.
     /// </remarks>
     /// <returns>Voice room retrieved successfully</returns>
     [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("voice/room/get")]
@@ -210,16 +287,48 @@ public partial class VoiceController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<VoiceRoomResponse>> GetVoiceRoom([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] GetVoiceRoomRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
-        var (statusCode, result) = await _implementation.GetVoiceRoomAsync(body, cancellationToken);
-        return ConvertToActionResult(statusCode, result);
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.voice",
+            "VoiceController.GetVoiceRoom",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "voice/room/get");
+        try
+        {
+
+            var (statusCode, result) = await _implementation.GetVoiceRoomAsync(body, cancellationToken);
+            return ConvertToActionResult(statusCode, result);
+        }
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<VoiceController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:voice/room/get");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
+            return StatusCode(503);
+        }
+        catch (System.Exception ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<VoiceController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogError(logger_, ex_, "Unexpected error in {Endpoint}", "post:voice/room/get");
+            var messageBus_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<BeyondImmersion.BannouService.Services.IMessageBus>(HttpContext.RequestServices);
+            await messageBus_.TryPublishErrorAsync(
+                "voice",
+                "GetVoiceRoom",
+                "unexpected_exception",
+                ex_.Message,
+                endpoint: "post:voice/room/get",
+                stack: ex_.StackTrace,
+                cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
+            return StatusCode(500);
+        }
     }
 
     /// <summary>
     /// Join voice room and register SIP endpoint
     /// </summary>
     /// <remarks>
-    /// Registers a participant's SIP endpoint with the voice room.
-    /// <br/>Called by GameSession service when a player joins a session.
+    /// Registers a participant in the voice room. If AdHocRoomsEnabled and room
+    /// <br/>doesn't exist, auto-creates it.
     /// <br/>Returns connection info and current peer list for P2P mode,
     /// <br/>or RTP server details for scaled mode.
     /// </remarks>
@@ -229,16 +338,47 @@ public partial class VoiceController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<JoinVoiceRoomResponse>> JoinVoiceRoom([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] JoinVoiceRoomRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
-        var (statusCode, result) = await _implementation.JoinVoiceRoomAsync(body, cancellationToken);
-        return ConvertToActionResult(statusCode, result);
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.voice",
+            "VoiceController.JoinVoiceRoom",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "voice/room/join");
+        try
+        {
+
+            var (statusCode, result) = await _implementation.JoinVoiceRoomAsync(body, cancellationToken);
+            return ConvertToActionResult(statusCode, result);
+        }
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<VoiceController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:voice/room/join");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
+            return StatusCode(503);
+        }
+        catch (System.Exception ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<VoiceController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogError(logger_, ex_, "Unexpected error in {Endpoint}", "post:voice/room/join");
+            var messageBus_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<BeyondImmersion.BannouService.Services.IMessageBus>(HttpContext.RequestServices);
+            await messageBus_.TryPublishErrorAsync(
+                "voice",
+                "JoinVoiceRoom",
+                "unexpected_exception",
+                ex_.Message,
+                endpoint: "post:voice/room/join",
+                stack: ex_.StackTrace,
+                cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
+            return StatusCode(500);
+        }
     }
 
     /// <summary>
     /// Leave voice room
     /// </summary>
     /// <remarks>
-    /// Removes a participant from the voice room and notifies other peers.
-    /// <br/>Called by GameSession service when a player leaves a session.
+    /// Removes a participant from the voice room.
     /// </remarks>
     /// <returns>Successfully left voice room</returns>
     [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("voice/room/leave")]
@@ -246,8 +386,40 @@ public partial class VoiceController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> LeaveVoiceRoom([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] LeaveVoiceRoomRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
-        var statusCode = await _implementation.LeaveVoiceRoomAsync(body, cancellationToken);
-        return ConvertToActionResult(statusCode);
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.voice",
+            "VoiceController.LeaveVoiceRoom",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "voice/room/leave");
+        try
+        {
+
+            var statusCode = await _implementation.LeaveVoiceRoomAsync(body, cancellationToken);
+            return ConvertToActionResult(statusCode);
+        }
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<VoiceController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:voice/room/leave");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
+            return StatusCode(503);
+        }
+        catch (System.Exception ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<VoiceController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogError(logger_, ex_, "Unexpected error in {Endpoint}", "post:voice/room/leave");
+            var messageBus_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<BeyondImmersion.BannouService.Services.IMessageBus>(HttpContext.RequestServices);
+            await messageBus_.TryPublishErrorAsync(
+                "voice",
+                "LeaveVoiceRoom",
+                "unexpected_exception",
+                ex_.Message,
+                endpoint: "post:voice/room/leave",
+                stack: ex_.StackTrace,
+                cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
+            return StatusCode(500);
+        }
     }
 
     /// <summary>
@@ -255,7 +427,6 @@ public partial class VoiceController : Microsoft.AspNetCore.Mvc.ControllerBase
     /// </summary>
     /// <remarks>
     /// Deletes a voice room and notifies all participants.
-    /// <br/>Called by GameSession service when a session is deleted.
     /// </remarks>
     /// <returns>Voice room deleted successfully</returns>
     [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("voice/room/delete")]
@@ -263,8 +434,40 @@ public partial class VoiceController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> DeleteVoiceRoom([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] DeleteVoiceRoomRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
-        var statusCode = await _implementation.DeleteVoiceRoomAsync(body, cancellationToken);
-        return ConvertToActionResult(statusCode);
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.voice",
+            "VoiceController.DeleteVoiceRoom",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "voice/room/delete");
+        try
+        {
+
+            var statusCode = await _implementation.DeleteVoiceRoomAsync(body, cancellationToken);
+            return ConvertToActionResult(statusCode);
+        }
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<VoiceController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:voice/room/delete");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
+            return StatusCode(503);
+        }
+        catch (System.Exception ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<VoiceController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogError(logger_, ex_, "Unexpected error in {Endpoint}", "post:voice/room/delete");
+            var messageBus_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<BeyondImmersion.BannouService.Services.IMessageBus>(HttpContext.RequestServices);
+            await messageBus_.TryPublishErrorAsync(
+                "voice",
+                "DeleteVoiceRoom",
+                "unexpected_exception",
+                ex_.Message,
+                endpoint: "post:voice/room/delete",
+                stack: ex_.StackTrace,
+                cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
+            return StatusCode(500);
+        }
     }
 
     /// <summary>
@@ -280,8 +483,40 @@ public partial class VoiceController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> PeerHeartbeat([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] PeerHeartbeatRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
-        var statusCode = await _implementation.PeerHeartbeatAsync(body, cancellationToken);
-        return ConvertToActionResult(statusCode);
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.voice",
+            "VoiceController.PeerHeartbeat",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "voice/peer/heartbeat");
+        try
+        {
+
+            var statusCode = await _implementation.PeerHeartbeatAsync(body, cancellationToken);
+            return ConvertToActionResult(statusCode);
+        }
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<VoiceController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:voice/peer/heartbeat");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
+            return StatusCode(503);
+        }
+        catch (System.Exception ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<VoiceController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogError(logger_, ex_, "Unexpected error in {Endpoint}", "post:voice/peer/heartbeat");
+            var messageBus_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<BeyondImmersion.BannouService.Services.IMessageBus>(HttpContext.RequestServices);
+            await messageBus_.TryPublishErrorAsync(
+                "voice",
+                "PeerHeartbeat",
+                "unexpected_exception",
+                ex_.Message,
+                endpoint: "post:voice/peer/heartbeat",
+                stack: ex_.StackTrace,
+                cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
+            return StatusCode(500);
+        }
     }
 
     /// <summary>
@@ -302,8 +537,233 @@ public partial class VoiceController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> AnswerPeer([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] AnswerPeerRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
-        var statusCode = await _implementation.AnswerPeerAsync(body, cancellationToken);
-        return ConvertToActionResult(statusCode);
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.voice",
+            "VoiceController.AnswerPeer",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "voice/peer/answer");
+        try
+        {
+
+            var statusCode = await _implementation.AnswerPeerAsync(body, cancellationToken);
+            return ConvertToActionResult(statusCode);
+        }
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<VoiceController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:voice/peer/answer");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
+            return StatusCode(503);
+        }
+        catch (System.Exception ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<VoiceController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogError(logger_, ex_, "Unexpected error in {Endpoint}", "post:voice/peer/answer");
+            var messageBus_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<BeyondImmersion.BannouService.Services.IMessageBus>(HttpContext.RequestServices);
+            await messageBus_.TryPublishErrorAsync(
+                "voice",
+                "AnswerPeer",
+                "unexpected_exception",
+                ex_.Message,
+                endpoint: "post:voice/peer/answer",
+                stack: ex_.StackTrace,
+                cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
+            return StatusCode(500);
+        }
+    }
+
+    /// <summary>
+    /// Request broadcast consent from all room participants
+    /// </summary>
+    /// <remarks>
+    /// Initiates the broadcast consent flow. All current room participants receive a VoiceBroadcastConsentRequestEvent. Broadcasting only starts after all participants consent. If ANY participant declines, the broadcast request is denied.
+    /// <br/>This endpoint is the ONLY way to initiate voice room broadcasting. lib-stream subscribes to the resulting approval/decline events.
+    /// </remarks>
+    /// <returns>Consent request sent to all participants</returns>
+    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("voice/room/broadcast/request")]
+
+    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<BroadcastConsentStatus>> RequestBroadcastConsent([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] BroadcastConsentRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    {
+
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.voice",
+            "VoiceController.RequestBroadcastConsent",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "voice/room/broadcast/request");
+        try
+        {
+
+            var (statusCode, result) = await _implementation.RequestBroadcastConsentAsync(body, cancellationToken);
+            return ConvertToActionResult(statusCode, result);
+        }
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<VoiceController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:voice/room/broadcast/request");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
+            return StatusCode(503);
+        }
+        catch (System.Exception ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<VoiceController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogError(logger_, ex_, "Unexpected error in {Endpoint}", "post:voice/room/broadcast/request");
+            var messageBus_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<BeyondImmersion.BannouService.Services.IMessageBus>(HttpContext.RequestServices);
+            await messageBus_.TryPublishErrorAsync(
+                "voice",
+                "RequestBroadcastConsent",
+                "unexpected_exception",
+                ex_.Message,
+                endpoint: "post:voice/room/broadcast/request",
+                stack: ex_.StackTrace,
+                cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
+            return StatusCode(500);
+        }
+    }
+
+    /// <summary>
+    /// Respond to a broadcast consent request
+    /// </summary>
+    /// <remarks>
+    /// Called by each participant to consent or decline broadcasting. When all participants consent, lib-voice publishes voice.room.broadcast.approved. If any participant declines, lib-voice publishes voice.room.broadcast.declined.
+    /// </remarks>
+    /// <returns>Consent response recorded</returns>
+    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("voice/room/broadcast/consent")]
+
+    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<BroadcastConsentStatus>> RespondBroadcastConsent([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] BroadcastConsentResponse body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    {
+
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.voice",
+            "VoiceController.RespondBroadcastConsent",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "voice/room/broadcast/consent");
+        try
+        {
+
+            var (statusCode, result) = await _implementation.RespondBroadcastConsentAsync(body, cancellationToken);
+            return ConvertToActionResult(statusCode, result);
+        }
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<VoiceController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:voice/room/broadcast/consent");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
+            return StatusCode(503);
+        }
+        catch (System.Exception ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<VoiceController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogError(logger_, ex_, "Unexpected error in {Endpoint}", "post:voice/room/broadcast/consent");
+            var messageBus_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<BeyondImmersion.BannouService.Services.IMessageBus>(HttpContext.RequestServices);
+            await messageBus_.TryPublishErrorAsync(
+                "voice",
+                "RespondBroadcastConsent",
+                "unexpected_exception",
+                ex_.Message,
+                endpoint: "post:voice/room/broadcast/consent",
+                stack: ex_.StackTrace,
+                cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
+            return StatusCode(500);
+        }
+    }
+
+    /// <summary>
+    /// Stop broadcasting from a voice room
+    /// </summary>
+    /// <remarks>
+    /// Any participant can stop an active broadcast at any time. This is equivalent to revoking consent. Publishes voice.room.broadcast.stopped with reason ConsentRevoked.
+    /// </remarks>
+    /// <returns>Broadcast stopped</returns>
+    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("voice/room/broadcast/stop")]
+
+    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> StopBroadcast([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] StopBroadcastConsentRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    {
+
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.voice",
+            "VoiceController.StopBroadcast",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "voice/room/broadcast/stop");
+        try
+        {
+
+            var statusCode = await _implementation.StopBroadcastAsync(body, cancellationToken);
+            return ConvertToActionResult(statusCode);
+        }
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<VoiceController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:voice/room/broadcast/stop");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
+            return StatusCode(503);
+        }
+        catch (System.Exception ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<VoiceController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogError(logger_, ex_, "Unexpected error in {Endpoint}", "post:voice/room/broadcast/stop");
+            var messageBus_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<BeyondImmersion.BannouService.Services.IMessageBus>(HttpContext.RequestServices);
+            await messageBus_.TryPublishErrorAsync(
+                "voice",
+                "StopBroadcast",
+                "unexpected_exception",
+                ex_.Message,
+                endpoint: "post:voice/room/broadcast/stop",
+                stack: ex_.StackTrace,
+                cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
+            return StatusCode(500);
+        }
+    }
+
+    /// <summary>
+    /// Get broadcast status for a voice room
+    /// </summary>
+    /// <remarks>
+    /// Returns the current broadcast state: whether consent is pending, active, or inactive.
+    /// </remarks>
+    /// <returns>Broadcast status</returns>
+    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("voice/room/broadcast/status")]
+
+    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<BroadcastConsentStatus>> GetBroadcastStatus([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] BroadcastStatusRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    {
+
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.voice",
+            "VoiceController.GetBroadcastStatus",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "voice/room/broadcast/status");
+        try
+        {
+
+            var (statusCode, result) = await _implementation.GetBroadcastStatusAsync(body, cancellationToken);
+            return ConvertToActionResult(statusCode, result);
+        }
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<VoiceController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:voice/room/broadcast/status");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
+            return StatusCode(503);
+        }
+        catch (System.Exception ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<VoiceController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogError(logger_, ex_, "Unexpected error in {Endpoint}", "post:voice/room/broadcast/status");
+            var messageBus_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<BeyondImmersion.BannouService.Services.IMessageBus>(HttpContext.RequestServices);
+            await messageBus_.TryPublishErrorAsync(
+                "voice",
+                "GetBroadcastStatus",
+                "unexpected_exception",
+                ex_.Message,
+                endpoint: "post:voice/room/broadcast/status",
+                stack: ex_.StackTrace,
+                cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
+            return StatusCode(500);
+        }
     }
 
 }

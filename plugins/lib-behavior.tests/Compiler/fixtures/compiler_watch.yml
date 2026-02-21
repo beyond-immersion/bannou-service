@@ -1,0 +1,14 @@
+# Test fixture for watch action parsing
+version: "2.0"
+metadata:
+  id: test_watch
+
+flows:
+  main:
+    actions:
+      - watch:
+          resource_type: character
+          resource_id: ${self.character_id}
+          sources:
+            - character-personality
+            - character-history

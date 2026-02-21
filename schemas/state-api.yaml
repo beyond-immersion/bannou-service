@@ -11,8 +11,12 @@ info:
     All endpoints use POST-only pattern per FOUNDATION TENETS to enable
     zero-copy WebSocket routing with static endpoint GUIDs.
 
-    **Schema Rules**: AI agents MUST review docs/reference/SCHEMA-RULES.md before modifying this schema. Optional reference types require `nullable: true`.
-
+    **SCHEMA MODIFICATION GATE**: STOP. Before modifying this schema, you MUST:
+    1. Read docs/reference/SCHEMA-RULES.md
+    2. State which section applies to your change
+    3. Only then proceed with edits
+    Edits without stating the applicable rule are FORBIDDEN.
+x-service-layer: Infrastructure
 servers:
 - url: http://localhost:5012
 
@@ -128,6 +132,69 @@ paths:
               schema:
                 $ref: '#/components/schemas/BulkGetStateResponse'
 
+  /state/bulk-save:
+    post:
+      operationId: bulkSaveState
+      summary: Bulk save multiple key-value pairs
+      tags:
+      - State
+      x-permissions: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BulkSaveStateRequest'
+      responses:
+        '200':
+          description: Bulk save results
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BulkSaveStateResponse'
+
+  /state/bulk-exists:
+    post:
+      operationId: bulkExistsState
+      summary: Check existence of multiple keys
+      tags:
+      - State
+      x-permissions: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BulkExistsStateRequest'
+      responses:
+        '200':
+          description: Bulk exists results
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BulkExistsStateResponse'
+
+  /state/bulk-delete:
+    post:
+      operationId: bulkDeleteState
+      summary: Delete multiple keys
+      tags:
+      - State
+      x-permissions: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BulkDeleteStateRequest'
+      responses:
+        '200':
+          description: Bulk delete results
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BulkDeleteStateResponse'
+
   /state/list-stores:
     post:
       operationId: listStores
@@ -161,13 +228,17 @@ components:
       properties:
         storeName:
           type: string
+          minLength: 1
+          maxLength: 100
           description: Name of the state store
         key:
           type: string
+          minLength: 1
+          maxLength: 255
           description: Key to retrieve
 
     GetStateResponse:
-      description: Response containing a retrieved state value with its metadata and ETag
+      description: Response containing a retrieved state value with its ETag for optimistic concurrency
       type: object
       additionalProperties: false
       properties:
@@ -180,9 +251,6 @@ components:
           type: string
           nullable: true
           description: ETag for optimistic concurrency
-        metadata:
-          $ref: '#/components/schemas/StateMetadata'
-          description: Metadata about the state entry including timestamps and version
 
     SaveStateRequest:
       description: Request to save a state value to a state store with optional TTL and consistency settings
@@ -195,9 +263,13 @@ components:
       properties:
         storeName:
           type: string
+          minLength: 1
+          maxLength: 100
           description: Name of the state store
         key:
           type: string
+          minLength: 1
+          maxLength: 255
           description: Key to save
         value:
           type: object
@@ -215,6 +287,8 @@ components:
       properties:
         etag:
           type: string
+          minLength: 1
+          maxLength: 100
           description: New ETag after save
 
     DeleteStateRequest:
@@ -227,9 +301,13 @@ components:
       properties:
         storeName:
           type: string
+          minLength: 1
+          maxLength: 100
           description: Name of the state store
         key:
           type: string
+          minLength: 1
+          maxLength: 255
           description: Key to delete
 
     DeleteStateResponse:
@@ -242,48 +320,26 @@ components:
           description: Whether the key was deleted (false if not found)
 
     StateOptions:
-      description: Configuration options for state save operations including TTL, consistency level, and optimistic 
+      description: Configuration options for state save operations including TTL, consistency level, and optimistic
         concurrency
       type: object
       additionalProperties: false
       properties:
         ttl:
           type: integer
+          minimum: 1
+          maximum: 31536000
           nullable: true
-          description: TTL in seconds (Redis only)
-        consistency:
-          type: string
-          enum:
-          - strong
-          - eventual
-          default: strong
-          description: Consistency level
+          description: TTL in seconds (Redis only). Maximum 1 year (31536000 seconds).
         etag:
           type: string
+          minLength: 1
+          maxLength: 100
           nullable: true
           description: Optimistic concurrency check - save fails if ETag mismatch
 
-    StateMetadata:
-      description: Metadata associated with a state entry including creation time, last update time, and version
-      type: object
-      additionalProperties: false
-      properties:
-        createdAt:
-          type: string
-          format: date-time
-          nullable: true
-          description: When the state was created
-        updatedAt:
-          type: string
-          format: date-time
-          nullable: true
-          description: When the state was last updated
-        version:
-          type: integer
-          description: Version number for optimistic concurrency
-
     QueryStateRequest:
-      description: Request to query state entries with filtering, sorting, and pagination support for MySQL and Redis 
+      description: Request to query state entries with filtering, sorting, and pagination support for MySQL and Redis
         backends
       type: object
       additionalProperties: false
@@ -292,23 +348,30 @@ components:
       properties:
         storeName:
           type: string
+          minLength: 1
+          maxLength: 100
           description: Name of the state store (MySQL or Redis with search enabled)
         conditions:
           type: array
           items:
             $ref: '#/components/schemas/QueryCondition'
+          maxItems: 50
           nullable: true
           description: |
             Query conditions for MySQL JSON queries. Multiple conditions are combined with AND.
             For Redis search, use indexName and query properties instead.
         indexName:
           type: string
+          minLength: 1
+          maxLength: 100
           nullable: true
           description: |
             Redis search index name. Defaults to "{storeName}-idx".
             Only used for Redis stores with search enabled.
         query:
           type: string
+          minLength: 1
+          maxLength: 1000
           nullable: true
           description: |
             RedisSearch query string (e.g., "@name:John", "@age:[18 +inf]", "*").
@@ -317,14 +380,18 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/SortField'
+          maxItems: 10
           nullable: true
           description: Sort order (first field only is used) (null for default ordering)
         page:
           type: integer
+          minimum: 0
           default: 0
           description: Page number (0-indexed)
         pageSize:
           type: integer
+          minimum: 1
+          maximum: 1000
           default: 100
           description: Items per page (max 1000)
 
@@ -335,6 +402,8 @@ components:
       properties:
         field:
           type: string
+          minLength: 1
+          maxLength: 200
           description: Field name to sort by (JSON path for MySQL, field name for Redis)
         order:
           type: string
@@ -353,6 +422,8 @@ components:
       properties:
         path:
           type: string
+          minLength: 1
+          maxLength: 200
           description: JSON path to query (e.g., "$.name", "$.address.city", "$.tags[0]")
         operator:
           $ref: '#/components/schemas/QueryOperator'
@@ -392,12 +463,16 @@ components:
           description: Query results
         totalCount:
           type: integer
+          minimum: 0
           description: Total matching items (for pagination)
         page:
           type: integer
+          minimum: 0
           description: Current page number
         pageSize:
           type: integer
+          minimum: 1
+          maximum: 1000
           description: Items per page
 
     BulkGetStateRequest:
@@ -410,11 +485,17 @@ components:
       properties:
         storeName:
           type: string
+          minLength: 1
+          maxLength: 100
           description: Name of the state store
         keys:
           type: array
           items:
             type: string
+            minLength: 1
+            maxLength: 255
+          minItems: 1
+          maxItems: 1000
           description: Keys to retrieve
 
     BulkGetStateResponse:
@@ -435,6 +516,8 @@ components:
       properties:
         key:
           type: string
+          minLength: 1
+          maxLength: 255
           description: The key
         value:
           type: object
@@ -443,11 +526,160 @@ components:
           description: The value (null if not found)
         etag:
           type: string
+          minLength: 1
+          maxLength: 100
           nullable: true
           description: ETag for this item
         found:
           type: boolean
           description: Whether the key was found
+
+    BulkSaveStateRequest:
+      description: Request to save multiple key-value pairs in a single operation
+      type: object
+      additionalProperties: false
+      required:
+      - storeName
+      - items
+      properties:
+        storeName:
+          type: string
+          minLength: 1
+          maxLength: 100
+          description: Name of the state store
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/BulkSaveItem'
+          minItems: 1
+          maxItems: 1000
+          description: Items to save
+        options:
+          nullable: true
+          allOf:
+          - $ref: '#/components/schemas/StateOptions'
+          description: Optional settings applied to all items
+
+    BulkSaveItem:
+      description: A single item to save in a bulk operation
+      type: object
+      additionalProperties: false
+      required:
+      - key
+      - value
+      properties:
+        key:
+          type: string
+          minLength: 1
+          maxLength: 255
+          description: The key to save
+        value:
+          type: object
+          additionalProperties: true
+          description: The value to store
+
+    BulkSaveStateResponse:
+      description: Response from a bulk save operation with ETags for each saved item
+      type: object
+      additionalProperties: false
+      required:
+      - results
+      properties:
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/BulkSaveResult'
+          description: Results for each saved item
+
+    BulkSaveResult:
+      description: Result for a single item in a bulk save operation
+      type: object
+      additionalProperties: false
+      required:
+      - key
+      - etag
+      properties:
+        key:
+          type: string
+          minLength: 1
+          maxLength: 255
+          description: The key that was saved
+        etag:
+          type: string
+          minLength: 1
+          maxLength: 100
+          description: New ETag after save
+
+    BulkExistsStateRequest:
+      description: Request to check existence of multiple keys
+      type: object
+      additionalProperties: false
+      required:
+      - storeName
+      - keys
+      properties:
+        storeName:
+          type: string
+          minLength: 1
+          maxLength: 100
+          description: Name of the state store
+        keys:
+          type: array
+          items:
+            type: string
+            minLength: 1
+            maxLength: 255
+          minItems: 1
+          maxItems: 1000
+          description: Keys to check for existence
+
+    BulkExistsStateResponse:
+      description: Response indicating which keys exist in the store
+      type: object
+      additionalProperties: false
+      required:
+      - existingKeys
+      properties:
+        existingKeys:
+          type: array
+          items:
+            type: string
+          description: Keys that exist in the store
+
+    BulkDeleteStateRequest:
+      description: Request to delete multiple keys
+      type: object
+      additionalProperties: false
+      required:
+      - storeName
+      - keys
+      properties:
+        storeName:
+          type: string
+          minLength: 1
+          maxLength: 100
+          description: Name of the state store
+        keys:
+          type: array
+          items:
+            type: string
+            minLength: 1
+            maxLength: 255
+          minItems: 1
+          maxItems: 1000
+          description: Keys to delete
+
+    BulkDeleteStateResponse:
+      description: Response from a bulk delete operation
+      type: object
+      additionalProperties: false
+      required:
+      - deletedCount
+      properties:
+        deletedCount:
+          type: integer
+          minimum: 0
+          description: Number of keys actually deleted
 
     ListStoresRequest:
       type: object
@@ -484,6 +716,8 @@ components:
       properties:
         name:
           type: string
+          minLength: 1
+          maxLength: 100
           description: Store name
         backend:
           type: string
@@ -493,5 +727,6 @@ components:
           description: Backend type
         keyCount:
           type: integer
+          minimum: 0
           nullable: true
           description: Number of keys (only if includeStats=true)

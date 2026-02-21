@@ -1,0 +1,171 @@
+openapi: 3.0.3
+info:
+  title: Account Service Events Lifecycle Events
+  description: "AUTO-RESOLVED: Complex cross-file refs have been inlined for NSwag compatibility.\nDO NOT EDIT - Regenerate
+    with scripts/resolve-event-refs.py\nSource: account-lifecycle-events.yaml\n\nAuto-generated lifecycle event schemas for
+    account service.\nDO NOT EDIT - This file is completely overwritten by generate-lifecycle-events.py.\nSource of truth:
+    account-events.yaml x-lifecycle section."
+  version: 1.0.0
+paths: {}
+components:
+  schemas:
+    AccountCreatedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+      type: object
+      additionalProperties: false
+      description: Published to account.created when a account is created
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - accountId
+      - emailVerified
+      - createdAt
+      properties:
+        eventName:
+          type: string
+          default: account.created
+          description: 'Event type identifier: account.created'
+        accountId: &id001
+          type: string
+          format: uuid
+          description: "Unique identifier for the account"
+        email: &id002
+          type: string
+          format: email
+          nullable: true
+          description: "Email address associated with the account. Null for OAuth/Steam accounts without email."
+        displayName: &id003
+          type: string
+          nullable: true
+          description: "User-chosen display name for the account"
+        emailVerified: &id004
+          type: boolean
+          description: "Whether the email address has been verified"
+        roles: &id005
+          type: array
+          items: {type: string}
+          nullable: true
+          description: "List of roles assigned to the account"
+        authMethods: &id006
+          type: array
+          nullable: true
+          description: "Authentication methods linked to the account. Useful for identifying OAuth accounts when email is
+            null."
+          items:
+            $ref: '#/components/schemas/AuthMethodInfo'
+        createdAt: &id007
+          type: string
+          format: date-time
+          description: "Timestamp when the account was created"
+        updatedAt: &id008
+          type: string
+          format: date-time
+          nullable: true
+          description: "Timestamp when the account was last updated"
+        metadata: &id009
+          type: object
+          additionalProperties: true
+          nullable: true
+          description: "Additional metadata associated with the account"
+    AccountUpdatedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+      type: object
+      additionalProperties: false
+      description: Published to account.updated when a account is updated
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - accountId
+      - emailVerified
+      - createdAt
+      - changedFields
+      properties:
+        eventName:
+          type: string
+          default: account.updated
+          description: 'Event type identifier: account.updated'
+        accountId: *id001
+        email: *id002
+        displayName: *id003
+        emailVerified: *id004
+        roles: *id005
+        authMethods: *id006
+        createdAt: *id007
+        updatedAt: *id008
+        metadata: *id009
+        changedFields:
+          type: array
+          items:
+            type: string
+          description: List of field names that were modified
+    AccountDeletedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+      type: object
+      additionalProperties: false
+      description: Published to account.deleted when a account is deleted
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - accountId
+      - emailVerified
+      - createdAt
+      properties:
+        eventName:
+          type: string
+          default: account.deleted
+          description: 'Event type identifier: account.deleted'
+        accountId: *id001
+        email: *id002
+        displayName: *id003
+        emailVerified: *id004
+        roles: *id005
+        authMethods: *id006
+        createdAt: *id007
+        updatedAt: *id008
+        metadata: *id009
+        deletedReason:
+          type: string
+          nullable: true
+          description: Optional reason for deletion (e.g., "Merged into {targetId}")
+    AuthMethodInfo:
+      type: object
+      description: Information about a linked authentication method
+      additionalProperties: false
+      required:
+      - provider
+      - linkedAt
+      properties:
+        methodId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Unique identifier for the authentication method
+        provider:
+          $ref: '#/components/schemas/AuthProvider'
+          description: Authentication provider type
+        externalId:
+          type: string
+          nullable: true
+          description: External user ID from the authentication provider
+        displayName:
+          type: string
+          nullable: true
+          description: Display name from the authentication provider
+        linkedAt:
+          type: string
+          format: date-time
+          description: Timestamp when the authentication method was linked
+
+    AuthProvider:
+      type: string
+      description: All authentication provider types including email
+      enum: [email, google, discord, twitch, steam]
+x-inlined-types:
+- AuthMethodInfo
+- AuthProvider

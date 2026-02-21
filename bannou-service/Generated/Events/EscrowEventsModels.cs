@@ -402,6 +402,188 @@ public partial class EscrowFinalizingEvent
 }
 
 /// <summary>
+/// Event published when escrow transitions to Releasing state.
+/// <br/>Downstream services (currency, inventory) subscribe to execute actual asset transfers.
+/// <br/>Parties may also need to confirm receipt depending on ReleaseMode.
+/// <br/>
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class EscrowReleasingEvent
+{
+
+    /// <summary>
+    /// Unique event identifier
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("eventId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid EventId { get; set; } = default!;
+
+    /// <summary>
+    /// When the release was initiated
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("timestamp")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset Timestamp { get; set; } = default!;
+
+    /// <summary>
+    /// The escrow transitioning to Releasing
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("escrowId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid EscrowId { get; set; } = default!;
+
+    /// <summary>
+    /// The confirmation mode for this release
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("releaseMode")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public ReleaseMode ReleaseMode { get; set; } = default!;
+
+    /// <summary>
+    /// Per-party allocations with confirmation details
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("allocations")]
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Collections.Generic.ICollection<ReleaseAllocationWithConfirmation> Allocations { get; set; } = new System.Collections.ObjectModel.Collection<ReleaseAllocationWithConfirmation>();
+
+    /// <summary>
+    /// Deadline for party confirmations (if applicable)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("confirmationDeadline")]
+    public System.DateTimeOffset? ConfirmationDeadline { get; set; } = default!;
+
+    /// <summary>
+    /// Associated contract ID if this is a contract-driven release
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("boundContractId")]
+    public System.Guid? BoundContractId { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Release allocation details with confirmation information
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class ReleaseAllocationWithConfirmation
+{
+
+    /// <summary>
+    /// Party receiving these assets
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("recipientPartyId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid RecipientPartyId { get; set; } = default!;
+
+    /// <summary>
+    /// Type of the recipient party
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("recipientPartyType")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public EntityType RecipientPartyType { get; set; } = default!;
+
+    /// <summary>
+    /// Assets being released to this party
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("assets")]
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Collections.Generic.ICollection<EscrowAsset> Assets { get; set; } = new System.Collections.ObjectModel.Collection<EscrowAsset>();
+
+    /// <summary>
+    /// Target wallet for currency assets
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("destinationWalletId")]
+    public System.Guid? DestinationWalletId { get; set; } = default!;
+
+    /// <summary>
+    /// Target container for item assets
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("destinationContainerId")]
+    public System.Guid? DestinationContainerId { get; set; } = default!;
+
+    /// <summary>
+    /// Token for this party to confirm release
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("releaseToken")]
+    public string? ReleaseToken { get; set; } = default!;
+
+    /// <summary>
+    /// Prebound API shortcut for client confirmation (pushed via WebSocket)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("confirmationShortcut")]
+    public object? ConfirmationShortcut { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Event published when escrow transitions to Refunding state.
+/// <br/>Downstream services subscribe to execute actual refund transfers.
+/// <br/>Parties may also need to confirm receipt depending on RefundMode.
+/// <br/>
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class EscrowRefundingEvent
+{
+
+    /// <summary>
+    /// Unique event identifier
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("eventId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid EventId { get; set; } = default!;
+
+    /// <summary>
+    /// When the refund was initiated
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("timestamp")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset Timestamp { get; set; } = default!;
+
+    /// <summary>
+    /// The escrow transitioning to Refunding
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("escrowId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid EscrowId { get; set; } = default!;
+
+    /// <summary>
+    /// The confirmation mode for this refund
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("refundMode")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public RefundMode RefundMode { get; set; } = default!;
+
+    /// <summary>
+    /// Deposits being refunded
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("deposits")]
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Collections.Generic.ICollection<EscrowDeposit> Deposits { get; set; } = new System.Collections.ObjectModel.Collection<EscrowDeposit>();
+
+    /// <summary>
+    /// Reason for refund
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("reason")]
+    public string? Reason { get; set; } = default!;
+
+}
+
+/// <summary>
 /// Event published when assets are released
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]

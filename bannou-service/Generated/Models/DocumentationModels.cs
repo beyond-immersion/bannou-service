@@ -838,7 +838,7 @@ public partial class CreateDocumentRequest
     public System.Collections.Generic.ICollection<System.Guid>? RelatedDocuments { get; set; } = default!;
 
     /// <summary>
-    /// Custom metadata key-value pairs (null if not needed)
+    /// Client-provided custom metadata. No Bannou plugin reads specific keys from this field by convention.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("metadata")]
     public object? Metadata { get; set; } = default!;
@@ -951,7 +951,7 @@ public partial class UpdateDocumentRequest
     public System.Collections.Generic.ICollection<System.Guid>? RelatedDocuments { get; set; } = default!;
 
     /// <summary>
-    /// New custom metadata key-value pairs (null to keep unchanged)
+    /// Updated client-provided custom metadata (null to keep unchanged). No Bannou plugin reads specific keys from this field by convention.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("metadata")]
     public object? Metadata { get; set; } = default!;
@@ -1340,7 +1340,7 @@ public partial class ImportDocument
     public System.Collections.Generic.ICollection<string>? Tags { get; set; } = default!;
 
     /// <summary>
-    /// Custom metadata key-value pairs (null if not needed)
+    /// Client-provided custom metadata. No Bannou plugin reads specific keys from this field by convention.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("metadata")]
     public object? Metadata { get; set; } = default!;
@@ -1716,7 +1716,7 @@ public partial class Document
     public System.Collections.Generic.ICollection<System.Guid> RelatedDocuments { get; set; } = default!;
 
     /// <summary>
-    /// Custom metadata key-value pairs
+    /// Client-provided custom metadata. No Bannou plugin reads specific keys from this field by convention.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("metadata")]
     public object Metadata { get; set; } = default!;

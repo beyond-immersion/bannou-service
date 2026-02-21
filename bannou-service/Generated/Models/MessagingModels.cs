@@ -113,7 +113,7 @@ public partial class PublishOptions
     public System.TimeSpan? Expiration { get; set; } = default!;
 
     /// <summary>
-    /// Custom headers to include with the message
+    /// Caller-provided custom headers included with the message. No Bannou plugin reads specific keys from this field by convention.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("headers")]
     public object? Headers { get; set; } = default!;
@@ -188,10 +188,10 @@ public partial class SubscriptionOptions
     public bool Exclusive { get; set; } = false;
 
     /// <summary>
-    /// Whether messages should be auto-acknowledged
+    /// Whether messages should be auto-acknowledged (null uses DefaultAutoAck config)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("autoAck")]
-    public bool AutoAck { get; set; } = false;
+    public bool? AutoAck { get; set; } = default!;
 
     /// <summary>
     /// Number of messages to prefetch

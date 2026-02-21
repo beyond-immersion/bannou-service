@@ -112,40 +112,61 @@ public class ActorRegistryTests : IAsyncLifetime
     #region Remove Tests
 
     [Fact]
-    public void TryRemove_RegisteredActor_RemovesAndReturnsRunner()
+    public async Task TryRemove_RegisteredActor_RemovesAndReturnsRunner()
     {
         // Arrange
         var registry = new ActorRegistry();
         var runner = CreateMockRunner("actor-1", Guid.NewGuid());
         registry.TryRegister("actor-1", runner);
 
-        // Act
-        // CA2000: removedRunner is the same object as runner, which is already tracked in _createdRunners
-#pragma warning disable CA2000
-        var result = registry.TryRemove("actor-1", out var removedRunner);
-#pragma warning restore CA2000
+        // Act - runner is already tracked in _createdRunners for disposal
+        IActorRunner? removedRunner = null;
+        try
+        {
+            var result = registry.TryRemove("actor-1", out removedRunner);
 
-        // Assert
-        Assert.True(result);
-        Assert.Same(runner, removedRunner);
-        Assert.Equal(0, registry.Count);
+            // Assert
+            Assert.True(result);
+            Assert.Same(runner, removedRunner);
+            Assert.Equal(0, registry.Count);
+
+            // Same object as runner - mark as transferred to _createdRunners tracking
+            removedRunner = null;
+        }
+        finally
+        {
+            // If removedRunner is still set, it wasn't the same as our tracked runner
+            if (removedRunner != null)
+            {
+                await removedRunner.DisposeAsync();
+            }
+        }
     }
 
     [Fact]
-    public void TryRemove_NotRegistered_ReturnsFalse()
+    public async Task TryRemove_NotRegistered_ReturnsFalse()
     {
         // Arrange
         var registry = new ActorRegistry();
 
         // Act
-        // CA2000: runner is null when TryRemove returns false - nothing to dispose
-#pragma warning disable CA2000
-        var result = registry.TryRemove("nonexistent", out var runner);
-#pragma warning restore CA2000
+        IActorRunner? runner = null;
+        try
+        {
+            var result = registry.TryRemove("nonexistent", out runner);
 
-        // Assert
-        Assert.False(result);
-        Assert.Null(runner);
+            // Assert
+            Assert.False(result);
+            Assert.Null(runner); // Nothing to dispose - TryRemove returns null when not found
+        }
+        finally
+        {
+            // Dispose if returned (it won't be in this case)
+            if (runner != null)
+            {
+                await runner.DisposeAsync();
+            }
+        }
     }
 
     #endregion

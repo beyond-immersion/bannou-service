@@ -26,6 +26,9 @@ public enum ResponseCodes : byte
     /// <summary>Invalid channel number in request header.</summary>
     InvalidRequestChannel = 13,
 
+    /// <summary>Text WebSocket frame received; binary protocol required after AUTH.</summary>
+    TextProtocolNotSupported = 14,
+
     /// <summary>Authentication required but not provided or invalid.</summary>
     Unauthorized = 20,
 

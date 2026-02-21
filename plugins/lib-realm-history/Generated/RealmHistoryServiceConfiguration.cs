@@ -12,7 +12,7 @@
 //
 //     IMPLEMENTATION TENETS - Configuration-First:
 //     - Access configuration via dependency injection, never Environment.GetEnvironmentVariable.
-//     - ALL properties below MUST be referenced in RealmHistoryService.cs (no dead config).
+//     - ALL properties below MUST be referenced somewhere in the plugin (no dead config).
 //     - Any hardcoded tunable (limit, timeout, threshold, capacity) in service code means
 //       a configuration property is MISSING - add it to the configuration schema.
 //     - If a property is unused, remove it from the configuration schema.
@@ -40,7 +40,7 @@ namespace BeyondImmersion.BannouService.RealmHistory;
 /// <para>
 /// <b>IMPLEMENTATION TENETS - Configuration-First:</b> Access configuration via dependency injection.
 /// Never use <c>Environment.GetEnvironmentVariable()</c> directly in service code.
-/// ALL properties in this class MUST be referenced in the service implementation.
+/// ALL properties in this class MUST be referenced somewhere in the plugin.
 /// If a property is unused, remove it from the configuration schema.
 /// </para>
 /// <para>
@@ -52,5 +52,31 @@ public class RealmHistoryServiceConfiguration : IServiceConfiguration
 {
     /// <inheritdoc />
     public Guid? ForceServiceId { get; set; }
+
+    /// <summary>
+    /// Maximum number of lore elements allowed per realm. Prevents unbounded growth from repeated AddLoreElement or SetLore calls. Returns BadRequest when limit would be exceeded.
+    /// Environment variable: REALM_HISTORY_MAX_LORE_ELEMENTS
+    /// </summary>
+    public int MaxLoreElements { get; set; } = 100;
+
+    /// <summary>
+    /// Maximum number of key lore points to include in archive text summaries generated during realm compression. Higher values produce more detailed archives.
+    /// Environment variable: REALM_HISTORY_ARCHIVE_SUMMARY_MAX_LORE_POINTS
+    /// </summary>
+    [ConfigRange(Minimum = 1, Maximum = 50)]
+    public int ArchiveSummaryMaxLorePoints { get; set; } = 10;
+
+    /// <summary>
+    /// Maximum number of major historical events to include in archive text summaries generated during realm compression. Higher values produce more detailed archives.
+    /// Environment variable: REALM_HISTORY_ARCHIVE_SUMMARY_MAX_HISTORICAL_EVENTS
+    /// </summary>
+    [ConfigRange(Minimum = 1, Maximum = 50)]
+    public int ArchiveSummaryMaxHistoricalEvents { get; set; } = 10;
+
+    /// <summary>
+    /// Timeout in seconds for distributed locks during index and lore write operations. Matches established patterns in Currency, Inventory, and Contract services.
+    /// Environment variable: REALM_HISTORY_INDEX_LOCK_TIMEOUT_SECONDS
+    /// </summary>
+    public int IndexLockTimeoutSeconds { get; set; } = 15;
 
 }

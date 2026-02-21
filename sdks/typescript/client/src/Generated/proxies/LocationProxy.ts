@@ -153,6 +153,24 @@ export class LocationProxy {
   }
 
   /**
+   * Validate location against territory boundaries
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async validateTerritoryAsync(
+    request: Schemas['ValidateTerritoryRequest'],
+    channel: number = 0,
+    timeout?: number
+  ): Promise<ApiResponse<Schemas['ValidateTerritoryResponse']>> {
+    return this.client.invokeAsync<
+      Schemas['ValidateTerritoryRequest'],
+      Schemas['ValidateTerritoryResponse']
+    >('/location/validate-territory', request, channel, timeout);
+  }
+
+  /**
    * Get all descendants of a location
    * @param request - The request payload.
    * @param channel - Message channel for ordering (default 0).
@@ -186,5 +204,95 @@ export class LocationProxy {
       Schemas['LocationExistsRequest'],
       Schemas['LocationExistsResponse']
     >('/location/exists', request, channel, timeout);
+  }
+
+  /**
+   * Find locations containing a spatial position
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async queryLocationsByPositionAsync(
+    request: Schemas['QueryLocationsByPositionRequest'],
+    channel: number = 0,
+    timeout?: number
+  ): Promise<ApiResponse<Schemas['LocationListResponse']>> {
+    return this.client.invokeAsync<
+      Schemas['QueryLocationsByPositionRequest'],
+      Schemas['LocationListResponse']
+    >('/location/query/by-position', request, channel, timeout);
+  }
+
+  /**
+   * Report entity presence at a location
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async reportEntityPositionAsync(
+    request: Schemas['ReportEntityPositionRequest'],
+    channel: number = 0,
+    timeout?: number
+  ): Promise<ApiResponse<Schemas['ReportEntityPositionResponse']>> {
+    return this.client.invokeAsync<
+      Schemas['ReportEntityPositionRequest'],
+      Schemas['ReportEntityPositionResponse']
+    >('/location/report-entity-position', request, channel, timeout);
+  }
+
+  /**
+   * Get the current location of an entity
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async getEntityLocationAsync(
+    request: Schemas['GetEntityLocationRequest'],
+    channel: number = 0,
+    timeout?: number
+  ): Promise<ApiResponse<Schemas['GetEntityLocationResponse']>> {
+    return this.client.invokeAsync<
+      Schemas['GetEntityLocationRequest'],
+      Schemas['GetEntityLocationResponse']
+    >('/location/get-entity-location', request, channel, timeout);
+  }
+
+  /**
+   * List entities currently at a location
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async listEntitiesAtLocationAsync(
+    request: Schemas['ListEntitiesAtLocationRequest'],
+    channel: number = 0,
+    timeout?: number
+  ): Promise<ApiResponse<Schemas['ListEntitiesAtLocationResponse']>> {
+    return this.client.invokeAsync<
+      Schemas['ListEntitiesAtLocationRequest'],
+      Schemas['ListEntitiesAtLocationResponse']
+    >('/location/list-entities-at-location', request, channel, timeout);
+  }
+
+  /**
+   * Remove entity presence from its current location
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async clearEntityPositionAsync(
+    request: Schemas['ClearEntityPositionRequest'],
+    channel: number = 0,
+    timeout?: number
+  ): Promise<ApiResponse<Schemas['ClearEntityPositionResponse']>> {
+    return this.client.invokeAsync<
+      Schemas['ClearEntityPositionRequest'],
+      Schemas['ClearEntityPositionResponse']
+    >('/location/clear-entity-position', request, channel, timeout);
   }
 }

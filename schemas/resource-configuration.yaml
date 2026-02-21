@@ -1,0 +1,99 @@
+openapi: 3.0.3
+info:
+  title: Resource Lifecycle Service Configuration
+  description: |
+    Configuration schema for Resource service.
+    Properties are bound to environment variables with BANNOU_ prefix.
+
+    **SCHEMA MODIFICATION GATE**: STOP. Before modifying this schema, you MUST:
+    1. Read docs/reference/SCHEMA-RULES.md
+    2. State which section applies to your change
+    3. Only then proceed with edits
+    Edits without stating the applicable rule are FORBIDDEN.
+  version: 1.0.0
+paths: {}
+x-service-configuration:
+  properties:
+    # === Grace Period Configuration ===
+    DefaultGracePeriodSeconds:
+      type: integer
+      env: RESOURCE_DEFAULT_GRACE_PERIOD_SECONDS
+      default: 604800
+      minimum: 0
+      description: Default grace period in seconds before cleanup eligible (7 days default)
+
+    # === Cleanup Callback Configuration ===
+    CleanupCallbackTimeoutSeconds:
+      type: integer
+      env: RESOURCE_CLEANUP_CALLBACK_TIMEOUT_SECONDS
+      default: 30
+      minimum: 5
+      maximum: 300
+      description: Timeout for each cleanup callback execution
+
+    # NOTE: Retry configuration is handled by lib-mesh (MESH_MAX_RETRIES, MESH_RETRY_DELAY_MILLISECONDS)
+    # at the infrastructure level. Per-service retry config was removed as redundant.
+
+    # === Distributed Lock Configuration ===
+    CleanupLockExpirySeconds:
+      type: integer
+      env: RESOURCE_CLEANUP_LOCK_EXPIRY_SECONDS
+      default: 300
+      minimum: 60
+      maximum: 3600
+      description: Distributed lock timeout during cleanup execution
+
+    # === Default Cleanup Policy ===
+    DefaultCleanupPolicy:
+      $ref: 'resource-api.yaml#/components/schemas/CleanupPolicy'
+      env: RESOURCE_DEFAULT_CLEANUP_POLICY
+      default: BEST_EFFORT
+      description: Default cleanup policy when not specified per-resource-type
+
+    # === Compression Configuration ===
+    DefaultCompressionPolicy:
+      $ref: 'resource-api.yaml#/components/schemas/CompressionPolicy'
+      env: RESOURCE_DEFAULT_COMPRESSION_POLICY
+      default: ALL_REQUIRED
+      description: Default compression policy when not specified per-request
+
+    CompressionCallbackTimeoutSeconds:
+      type: integer
+      env: RESOURCE_COMPRESSION_CALLBACK_TIMEOUT_SECONDS
+      default: 60
+      minimum: 10
+      maximum: 600
+      description: Timeout for each compression callback execution
+
+    CompressionLockExpirySeconds:
+      type: integer
+      env: RESOURCE_COMPRESSION_LOCK_EXPIRY_SECONDS
+      default: 600
+      minimum: 120
+      maximum: 3600
+      description: Distributed lock timeout during compression execution
+
+    # === Snapshot Configuration ===
+    SnapshotDefaultTtlSeconds:
+      type: integer
+      env: RESOURCE_SNAPSHOT_DEFAULT_TTL_SECONDS
+      default: 3600
+      minimum: 60
+      maximum: 86400
+      description: Default TTL for snapshots when not specified in request (1 hour default)
+
+    SnapshotMinTtlSeconds:
+      type: integer
+      env: RESOURCE_SNAPSHOT_MIN_TTL_SECONDS
+      default: 60
+      minimum: 1
+      maximum: 3600
+      description: Minimum allowed TTL for snapshots (1 minute default)
+
+    SnapshotMaxTtlSeconds:
+      type: integer
+      env: RESOURCE_SNAPSHOT_MAX_TTL_SECONDS
+      default: 86400
+      minimum: 3600
+      maximum: 604800
+      description: Maximum allowed TTL for snapshots (24 hours default, max 7 days)

@@ -1,0 +1,33 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <Import Project="../ServiceLib.targets" />
+  <!--
+    ServiceLib.targets provides:
+    - TargetFramework (net9.0)
+    - ImplicitUsings (enable)
+    - Nullable (enable)
+    - RootNamespace base (BeyondImmersion.BannouService)
+    - ProjectReference to bannou-service with Private="false"
+
+    DO NOT redefine these properties - extend RootNamespace using $(RootNamespace).YourExtension
+  -->
+
+  <PropertyGroup>
+    <!-- Extends base RootNamespace from ServiceLib.targets -->
+    <RootNamespace>$(RootNamespace).Faction</RootNamespace>
+    <ServiceLib>faction</ServiceLib>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Infrastructure libs (lib-state, lib-messaging, lib-mesh) are accessed via DI interfaces -->
+    <!-- from bannou-service (IStateStoreFactory, IMessageBus, I*Client, etc.) -->
+    <!-- DO NOT add ProjectReferences to infrastructure libs - use injected interfaces instead -->
+    <!-- Add plugin-to-plugin references here ONLY for non-infrastructure cross-plugin types -->
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Only packages NOT provided by bannou-service - NSwag, etc. come transitively -->
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.Core" Version="2.3.0" />
+    <PackageReference Include="System.ComponentModel.Annotations" Version="5.0.0" />
+  </ItemGroup>
+
+</Project>

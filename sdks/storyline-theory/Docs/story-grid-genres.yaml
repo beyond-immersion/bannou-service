@@ -1,0 +1,1654 @@
+# Story Grid Genre System (Shawn Coyne)
+# Structured data for genre conventions and obligatory scenes
+#
+# Sources:
+#   - ~/repos/story-analysis/research/THE-FOUR-CORE-FRAMEWORK.md
+#   - ~/repos/story-analysis/research/Action Genre
+#   - ~/repos/story-analysis/research/Horror Genre
+#   - ~/repos/story-analysis/research/Thriller Genre
+#   - ~/repos/story-analysis/research/Crime Genre
+#   - ~/repos/story-analysis/research/Love Genre
+#   - ~/repos/story-analysis/research/War Genre
+#   - ~/repos/story-analysis/research/Society Genre
+#   - ~/repos/story-analysis/research/Performance Genre
+#   - ~/repos/story-analysis/research/Western/Eastern Genre
+#   - ~/repos/story-analysis/research/Worldview Genre
+#   - ~/repos/story-analysis/research/Morality Genre
+#   - ~/repos/story-analysis/research/Status Genre
+#   - storygrid.com (official documentation)
+
+version: "1.0"
+source: "Shawn Coyne, Story Grid Publishing"
+
+# =============================================================================
+# STORY UNIT HIERARCHY
+# =============================================================================
+# Source: docs/research/STORY-GRID-101.md
+# Stories are composed of nested units like Russian dolls
+
+story_units:
+  description: "Hierarchical structure of narrative units"
+  principle: "Each unit contains the next like Russian dolls"
+
+  hierarchy:
+    global:
+      id: 6
+      name: "Global Story"
+      description: "Complete story arc - the entire work"
+      change_type: "Transformation providing knowledge about how to act"
+      requirement: "Must contain all five commandments at this level"
+      contains: ["act", "subplot"]
+
+    act:
+      id: 5
+      name: "Act"
+      description: "Major story division (typically 3: Beginning Hook, Middle Build, Ending Payoff)"
+      change_type: "Permanent, irreversible change in protagonist"
+      standard_structure:
+        beginning_hook:
+          purpose: "Grab attention, establish world, incite global story"
+          percentage: "~25%"
+        middle_build:
+          purpose: "Complicate, raise stakes, deepen conflict"
+          percentage: "~50%"
+        ending_payoff:
+          purpose: "Climax and resolution of global story"
+          percentage: "~25%"
+      requirement: "Must contain all five commandments at act level"
+      contains: ["subplot", "sequence"]
+
+    subplot:
+      id: 4
+      name: "Subplot"
+      description: "Secondary storyline that amplifies or contrasts theme"
+      change_type: "Supports or contrasts primary arc change"
+      purposes:
+        - "Amplify main theme"
+        - "Provide contrast to main theme"
+        - "Develop secondary characters"
+        - "Add depth and complexity"
+      contains: ["sequence", "scene"]
+
+    sequence:
+      id: 3
+      name: "Sequence"
+      description: "Two or more scenes with shared purpose"
+      change_type: "Progress toward or away from sequence goal"
+      requirement: "Minimum 2 scenes"
+      contains: ["scene"]
+
+    scene:
+      id: 2
+      name: "Scene"
+      description: "Micro unit with value change"
+      change_type: "Value shift from positive to negative (or reverse)"
+      requirement: "Must contain all five commandments at scene level"
+      analysis_method: "See scene_analysis section"
+      contains: ["beat"]
+
+    beat:
+      id: 1
+      name: "Beat"
+      description: "Smallest unit - moment of behavior change"
+      change_type: "Single action/reaction exchange"
+      characteristics:
+        - "One character's action"
+        - "Another character's reaction"
+        - "Moment-to-moment progression"
+      contains: []
+
+# =============================================================================
+# SCENE ANALYSIS
+# =============================================================================
+# Source: docs/research/STORY-GRID-101.md
+# Four questions for generating Story Event summaries
+
+scene_analysis:
+  description: "Method for analyzing and generating scene content"
+  purpose: "Distill scene into one-sentence Story Event"
+
+  four_questions:
+    literal_action:
+      id: 1
+      question: "What are the characters physically doing?"
+      description: "On-the-ground actions and movements"
+      focus: "Observable behavior"
+
+    essential_tactic:
+      id: 2
+      question: "What macro behavior toward a human value?"
+      description: "The underlying tactic being employed"
+      focus: "Connection to value spectrum"
+
+    value_shift:
+      id: 3
+      question: "What changed from beginning to end?"
+      description: "Movement on value spectrum"
+      structure:
+        spectrum: "The relevant value axis (e.g., Life-Death)"
+        start_value: "Normalized position at scene start (0-1)"
+        end_value: "Normalized position at scene end (0-1)"
+        start_label: "Human-readable label (e.g., 'Safe')"
+        end_label: "Human-readable label (e.g., 'In Danger')"
+
+    story_event:
+      id: 4
+      question: "What is the synthesis sentence combining the above?"
+      description: "One-sentence distillation of scene content"
+      format: "[Subject] [tactic/action] causing [value shift]"
+
+# =============================================================================
+# VALUE POLES
+# =============================================================================
+# Source: docs/research/STORY-GRID-101.md
+# Universal human values with positive/negative poles
+
+value_poles:
+  description: "Value spectrums that change occurs on"
+  usage: "Scene and act level tracking of value progression"
+
+  spectrums:
+    life_death:
+      positive: "Life"
+      negative: "Death"
+      genres: ["Action", "Thriller", "Horror"]
+
+    safety_danger:
+      positive: "Safety"
+      negative: "Danger"
+      genres: ["Action", "War"]
+
+    love_hate:
+      positive: "Love"
+      negative: "Hate"
+      genres: ["Love"]
+
+    justice_injustice:
+      positive: "Justice"
+      negative: "Injustice"
+      genres: ["Crime"]
+
+    respect_disrespect:
+      positive: "Respect"
+      negative: "Disrespect"
+      genres: ["Performance", "Status"]
+
+    knowledge_ignorance:
+      positive: "Knowledge"
+      negative: "Ignorance"
+      genres: ["Worldview"]
+
+    freedom_subjugation:
+      positive: "Freedom"
+      negative: "Subjugation"
+      genres: ["Western", "Society"]
+
+    success_failure:
+      positive: "Success"
+      negative: "Failure"
+      genres: ["Status"]
+
+    honor_dishonor:
+      positive: "Honor"
+      negative: "Dishonor"
+      genres: ["War"]
+
+    power_impotence:
+      positive: "Power"
+      negative: "Impotence"
+      genres: ["Society"]
+
+    altruism_selfishness:
+      positive: "Altruism"
+      negative: "Selfishness"
+      genres: ["Morality"]
+
+    wisdom_naivete:
+      positive: "Wisdom/Sophistication"
+      negative: "Ignorance/Naivete"
+      genres: ["Worldview"]
+
+# =============================================================================
+# STORY BOUNDARIES
+# =============================================================================
+# Source: docs/research/STORY-GRID-101.md
+# All stories exist between two fundamental genres
+
+story_boundaries:
+  description: "The two fundamental boundaries all stories exist between"
+  insight: "Every story contains both action and worldview components"
+
+  action:
+    name: "Action (On the Ground)"
+    boundary: "External"
+    description: "Characters ACT to create change in environment"
+    characteristics:
+      - "Motor movements from Point A to Point Z"
+      - "Pursuit of external goals"
+      - "Physical problem-solving"
+      - "Environmental manipulation"
+
+  worldview:
+    name: "Worldview (In the Clouds)"
+    boundary: "Internal"
+    description: "Characters TRANSFORM their understanding"
+    characteristics:
+      - "Cognitive frame breaking when knowledge fails"
+      - "Transcendence to higher vantage point"
+      - "Internal transformation"
+      - "Meaning-making"
+
+# =============================================================================
+# PLANNING TOOLS
+# =============================================================================
+# Source: docs/research/STORY-GRID-101.md
+# Tools for story analysis and planning
+
+planning_tools:
+  foolscap:
+    description: "Single-page global story planning template"
+    purpose: "Answer six core questions for story structure"
+
+    questions:
+      global_genre:
+        id: 1
+        question: "What is the global genre?"
+        components:
+          external: "Action, War, Horror, Crime, Thriller, Western, Love, Performance, Society"
+          internal: "Status, Morality, Worldview"
+        note: "Stories often combine external + internal"
+
+      conventions_obligatory:
+        id: 2
+        question: "What are the conventions and obligatory events?"
+        components:
+          conventions: "Genre-required elements"
+          obligatory_events: "Genre-required scenes"
+
+      pov_narrative:
+        id: 3
+        question: "What is the POV and narrative device?"
+        components:
+          pov: "Vantage point (first, third limited, third omniscient, etc.)"
+          narrative_device: "Presentation form (memoir, epistolary, etc.)"
+
+      objects_of_desire:
+        id: 4
+        question: "What are the objects of desire?"
+        components:
+          want: "Conscious, external goal"
+          need: "Subconscious, internal requirement"
+
+      controlling_idea:
+        id: 5
+        question: "What is the controlling idea/theme?"
+        format: "[Value] is achieved/lost when [action/condition]"
+        description: "One-sentence takeaway message"
+
+      three_acts:
+        id: 6
+        question: "What are the beginning hook, middle build, and ending payoff?"
+        components:
+          beginning_hook: "Five Commandments summary for Act 1"
+          middle_build: "Five Commandments summary for Act 2"
+          ending_payoff: "Five Commandments summary for Act 3"
+
+  spreadsheet:
+    description: "Scene-by-scene tracking tool"
+    purpose: "Detailed analysis of scene progression"
+
+    tracked_elements:
+      - "Word count / duration"
+      - "Story Event (one-sentence summary)"
+      - "Value shift (spectrum + start/end points)"
+      - "Turning point type (action or revelation)"
+      - "Point of view character"
+      - "Time period and duration"
+      - "Location"
+      - "Onstage characters"
+      - "Offstage characters"
+
+    reveals:
+      - "Pacing variation (scene length patterns)"
+      - "Character appearance frequency"
+      - "Value progression over time"
+      - "Location usage patterns"
+
+  infographic:
+    description: "Visual progression chart"
+    purpose: "Show 'shape' of story's emotional journey"
+
+    axes:
+      x: "Time / scene progression"
+      y: "Value spectrum position"
+
+    tracking:
+      external: "External genre value position over time"
+      internal: "Internal genre value position over time"
+
+    integration: "See emotional-arcs.yaml for SVD-based arc shapes"
+
+# =============================================================================
+# THE FIVE COMMANDMENTS
+# =============================================================================
+# Every scene/beat/act/story must contain all five
+
+five_commandments:
+  inciting_incident:
+    id: 1
+    name: "Inciting Incident"
+    description: "A disruptive event that upsets the protagonist's equilibrium"
+    types:
+      causal:
+        description: "Caused by another character's choice"
+        examples: ["Villain attacks", "Someone proposes marriage", "Boss fires hero"]
+      coincidental:
+        description: "Random occurrence beyond anyone's control"
+        examples: ["Natural disaster", "Car accident", "Chance meeting"]
+    requirement: "Must compel action - protagonist cannot ignore it"
+
+  progressive_complications:
+    id: 2
+    name: "Progressive Complications"
+    description: "Escalating micro-irritants that build tension"
+    rules:
+      - "Each complication more intense than previous"
+      - "Creates momentum toward crisis"
+      - "Often includes turning point"
+    turning_point:
+      description: "The complication that forces the crisis"
+      types:
+        - "action": "A character does something"
+        - "revelation": "Information comes to light"
+
+  crisis:
+    id: 3
+    name: "Crisis"
+    description: "A forced choice between two options"
+    types:
+      best_bad_choice:
+        description: "Two undesirable options"
+        example: "Save yourself or save your friend"
+      irreconcilable_goods:
+        description: "Two positive options that cannot both be chosen"
+        example: "Stay loyal to family or follow your dream"
+    anti_patterns:
+      - "False choice (obvious answer)"
+      - "Meaningless choice (no stakes)"
+      - "No choice (forced outcome)"
+
+  climax:
+    id: 4
+    name: "Climax"
+    description: "The action taken in response to the crisis"
+    requirement: "Must be a choice enacted through action"
+    reveals: "Character's true nature under pressure"
+
+  resolution:
+    id: 5
+    name: "Resolution"
+    description: "The follow-up state after the climax"
+    purpose: "Establishes new circumstances for next unit"
+    rules:
+      - "Shows effects, not restatement"
+      - "Sets up next inciting incident"
+      - "Gives audience catharsis"
+
+# =============================================================================
+# THE FOUR CORE FRAMEWORK
+# =============================================================================
+# Every genre defined by four elements
+
+four_core_framework:
+  core_need:
+    description: "The universal human need the genre addresses"
+    hierarchy: "Based on Maslow's hierarchy of needs"
+    levels:
+      - "Survival"
+      - "Safety"
+      - "Individual Sovereignty"
+      - "Connection"
+      - "Esteem"
+      - "Recognition"
+      - "Self-Actualization"
+      - "Self-Transcendence"
+
+  core_value:
+    description: "The spectrum of values at stake"
+    structure: "Negative <-> Positive"
+    examples:
+      - "Death <-> Life"
+      - "Injustice <-> Justice"
+      - "Hate <-> Love"
+
+  core_emotion:
+    description: "The emotional experience delivered to the audience"
+    examples:
+      - "Excitement"
+      - "Fear"
+      - "Romance"
+      - "Triumph"
+
+  core_event:
+    description: "The climactic scene where protagonist actuates learning"
+    requirement: "Core need must be in peril"
+
+# =============================================================================
+# EXTERNAL GENRES (9)
+# =============================================================================
+# Plot-driven; focus on external conflict
+
+external_genres:
+
+  action:
+    name: "Action"
+    type: "external"
+    core_framework:
+      need: "Survival"
+      value_spectrum:
+        negative: "Death"
+        positive: "Life"
+        negation_of_negation: "Damnation (fate worse than death)"
+      emotion: "Excitement"
+      event: "Hero at the Mercy of the Villain"
+
+    conventions:
+      - name: "Intense Setting"
+        description: "Disturbed, unbalanced environment"
+      - name: "Dueling Hierarchies"
+        description: "Growth hierarchy vs power/dominance hierarchy"
+      - name: "Hero Seeks to Stop"
+        description: "Hero actively works to stop antagonism and save victims"
+      - name: "Villain More Powerful"
+        description: "Antagonist uses resources to harm innocents"
+      - name: "Victim Less Powerful"
+        description: "Someone requiring rescue who cannot save themselves"
+      - name: "Speech Praising Villain"
+        description: "Moment highlighting villain's apparent invincibility"
+      - name: "Deadline/Clock"
+        description: "Limited time element adding urgency"
+      - name: "Fast-Paced Set Pieces"
+        description: "Action sequences delivering genre promise"
+      - name: "Extreme Situations"
+        description: "High stakes and dangerous risks"
+
+    obligatory_scenes:
+      - name: "Inciting Attack"
+        description: "Villain attacks or threatens victim(s)"
+        five_commandments_beat: "inciting_incident"
+      - name: "Hero Sidesteps"
+        description: "Hero initially avoids responsibility"
+      - name: "Forced to Leave"
+        description: "Hero lashes out when forced from ordinary world"
+      - name: "Discovers MacGuffin"
+        description: "Protagonist learns what antagonist wants"
+      - name: "Initial Strategy Fails"
+        description: "Hero's first approach doesn't work"
+      - name: "All Is Lost"
+        description: "Hero at lowest point"
+        five_commandments_beat: "crisis"
+      - name: "Hero at Mercy of Villain"
+        description: "Core event - villain has upper hand"
+        is_core_event: true
+      - name: "Sacrifice Rewarded"
+        description: "Hero's sacrifice leads to success"
+        five_commandments_beat: "resolution"
+
+    subgenres:
+      adventure:
+        description: "Quest-driven action through hostile environments"
+        plots: ["Labyrinth", "Monster", "Environment", "Doomsday"]
+        arc_direction: "either"  # Quest outcome varies by plot
+        compatible_arcs: ["rags_to_riches", "tragedy", "man_in_hole", "icarus", "cinderella", "oedipus"]
+      duel:
+        description: "Personal combat between antagonists"
+        plots: ["Revenge", "Hunted", "Machiavellian", "Collision"]
+        arc_direction: "either"  # Revenge can succeed or destroy the avenger
+        compatible_arcs: ["rags_to_riches", "tragedy", "man_in_hole", "icarus", "cinderella", "oedipus"]
+      epic:
+        description: "Large-scale heroic struggle against systemic evil"
+        plots: ["Rebellion", "Conspiracy", "Vigilante", "Savior"]
+        arc_direction: "positive"  # Rebellion/savior typically triumphs
+        compatible_arcs: ["rags_to_riches", "man_in_hole", "cinderella"]
+      clock:
+        description: "Time-pressured action with deadline stakes"
+        plots: ["Ransom", "Countdown", "Holdout", "Fate"]
+        arc_direction: "either"  # Time pressure, outcome varies by story
+        compatible_arcs: ["rags_to_riches", "tragedy", "man_in_hole", "icarus", "cinderella", "oedipus"]
+
+  horror:
+    name: "Horror"
+    type: "external"
+    core_framework:
+      need: "Safety"
+      value_spectrum:
+        negative: "Damnation"
+        positive: "Life"
+        negation_of_negation: "Fate worse than death"
+      emotion: "Fear"
+      event: "Victim at Mercy of Monster"
+
+    conventions:
+      - name: "Conventional Setting with Fantastical"
+        description: "Normal world invaded by supernatural/unexplained"
+      - name: "Labyrinths"
+        description: "Claustrophobic, danger-concealing spaces"
+      - name: "Unreasonable Monster"
+        description: "Cannot be reasoned with; possessed by pure evil"
+      - name: "Perpetual Discomfort"
+        description: "Random attacks keep audience off-balance"
+      - name: "Progressive Revelation"
+        description: "Monster's full power revealed gradually"
+      - name: "Sadomasochistic Flip-Flop"
+        description: "Power dynamics alternate between victim and monster"
+
+    obligatory_scenes:
+      - name: "Inciting Attack"
+        description: "Monster attacks or makes presence known"
+      - name: "Non-Heroic Protagonist"
+        description: "Ordinary person forced to face extraordinary evil"
+      - name: "Speech Praising Monster"
+        description: "Moment establishing monster's terrifying nature"
+      - name: "Final Victim"
+        description: "Protagonist becomes target after others die"
+      - name: "Victim at Mercy of Monster"
+        description: "Core event - protagonist faces monster directly"
+        is_core_event: true
+      - name: "False Ending"
+        description: "TWO endings required - monster appears defeated but isn't"
+
+    subgenres:
+      uncanny:
+        name: "Uncanny"
+        description: "Rational evil (psychopaths, aliens)"
+        arc_direction: "negative"  # Rational evil usually prevails or corrupts
+        compatible_arcs: ["tragedy", "icarus", "oedipus"]
+      supernatural:
+        name: "Supernatural"
+        description: "Spirit-world evil (possession, undead)"
+        arc_direction: "negative"  # Cosmic/demonic horror typically ends badly
+        compatible_arcs: ["tragedy", "icarus", "oedipus"]
+      ambiguous:
+        name: "Ambiguous"
+        description: "Unexplained evil"
+        arc_direction: "either"  # Ending uncertain by design
+        compatible_arcs: ["rags_to_riches", "tragedy", "man_in_hole", "icarus", "cinderella", "oedipus"]
+
+  thriller:
+    name: "Thriller"
+    type: "external"
+    core_framework:
+      need: "Safety"
+      value_spectrum:
+        negative: "Damnation"
+        positive: "Life"
+      emotion: "Excitement"
+      event: "Hero at Mercy of Villain"
+
+    conventions:
+      - name: "MacGuffin"
+        description: "Object villain desires; drives plot"
+      - name: "Red Herrings"
+        description: "False leads and misdirection"
+      - name: "Making It Personal"
+        description: "Antagonist specifically targets protagonist"
+      - name: "Clock/Deadline"
+        description: "Limited time to act"
+
+    obligatory_scenes:
+      - name: "Inciting Crime"
+        description: "Crime indicative of master villain (multiple victims)"
+      - name: "Speech Praising Villain"
+        description: "Establishes villain's intelligence and danger"
+      - name: "Protagonist Becomes Victim"
+        description: "Stakes become personal to hero"
+      - name: "Hero at Mercy of Villain"
+        description: "Core event - villain has protagonist cornered"
+        is_core_event: true
+      - name: "False Ending"
+        description: "Two endings required"
+
+    # Thriller subgenres are domain-based (setting/context), not arc-determinative
+    # The domain adds flavor but does not constrain narrative outcome
+    subgenres:
+      serial_killer:
+        name: "Serial Killer"
+        description: "Hunting a methodical murderer"
+        example: "Red Dragon"
+        arc_direction: "either"  # Hero can triumph or face damnation
+        compatible_arcs: ["rags_to_riches", "tragedy", "man_in_hole", "icarus", "cinderella", "oedipus"]
+      medical:
+        name: "Medical"
+        description: "Conspiracy or threat in healthcare setting"
+        example: "Coma"
+        arc_direction: "either"
+        compatible_arcs: ["rags_to_riches", "tragedy", "man_in_hole", "icarus", "cinderella", "oedipus"]
+      legal:
+        name: "Legal"
+        description: "Courtroom or judicial thriller"
+        example: "And Justice for All"
+        arc_direction: "either"
+        compatible_arcs: ["rags_to_riches", "tragedy", "man_in_hole", "icarus", "cinderella", "oedipus"]
+      psychological:
+        name: "Psychological"
+        description: "Mind games and mental manipulation"
+        example: "Primal Fear"
+        arc_direction: "either"
+        compatible_arcs: ["rags_to_riches", "tragedy", "man_in_hole", "icarus", "cinderella", "oedipus"]
+      espionage:
+        name: "Espionage"
+        description: "Spy thriller with intelligence agencies"
+        example: "The Bourne Identity"
+        arc_direction: "either"
+        compatible_arcs: ["rags_to_riches", "tragedy", "man_in_hole", "icarus", "cinderella", "oedipus"]
+      child_in_jeopardy:
+        name: "Child in Jeopardy"
+        description: "Child as victim or target"
+        example: "The Client"
+        arc_direction: "either"
+        compatible_arcs: ["rags_to_riches", "tragedy", "man_in_hole", "icarus", "cinderella", "oedipus"]
+      military:
+        name: "Military"
+        description: "Military context thriller"
+        example: "Seven Days in May"
+        arc_direction: "either"
+        compatible_arcs: ["rags_to_riches", "tragedy", "man_in_hole", "icarus", "cinderella", "oedipus"]
+      political:
+        name: "Political"
+        description: "Political intrigue and conspiracy"
+        example: "Marathon Man"
+        arc_direction: "either"
+        compatible_arcs: ["rags_to_riches", "tragedy", "man_in_hole", "icarus", "cinderella", "oedipus"]
+      journalism:
+        name: "Journalism"
+        description: "Reporter uncovering dangerous truth"
+        example: "The Scarecrow"
+        arc_direction: "either"
+        compatible_arcs: ["rags_to_riches", "tragedy", "man_in_hole", "icarus", "cinderella", "oedipus"]
+      financial:
+        name: "Financial"
+        description: "Financial world conspiracy"
+        example: "Numbered Account"
+        arc_direction: "either"
+        compatible_arcs: ["rags_to_riches", "tragedy", "man_in_hole", "icarus", "cinderella", "oedipus"]
+      woman_in_jeopardy:
+        name: "Woman in Jeopardy"
+        description: "Female protagonist facing stalker/threat"
+        example: "The Girl on the Train"
+        arc_direction: "either"
+        compatible_arcs: ["rags_to_riches", "tragedy", "man_in_hole", "icarus", "cinderella", "oedipus"]
+      hitchcock:
+        name: "Hitchcock"
+        description: "Ordinary person caught in extraordinary circumstances"
+        example: "Rear Window"
+        arc_direction: "either"
+        compatible_arcs: ["rags_to_riches", "tragedy", "man_in_hole", "icarus", "cinderella", "oedipus"]
+
+  crime:
+    name: "Crime"
+    type: "external"
+    core_framework:
+      need: "Safety"
+      value_spectrum:
+        negative: "Injustice"
+        positive: "Justice"
+        negation_of_negation: "Tyranny"
+      emotion: "Intrigue"
+      event: "Exposure of Criminal"
+
+    conventions:
+      - name: "MacGuffin"
+        description: "Object of the crime"
+      - name: "Red Herrings"
+        description: "Misleading evidence and suspects"
+      - name: "Making It Personal"
+        description: "Detective develops personal stake"
+      - name: "Clock/Deadline"
+        description: "Time pressure on investigation"
+      - name: "Clever Criminal"
+        description: "Antagonist capable of concealment"
+      - name: "Clever Detective"
+        description: "Protagonist capable of solving"
+      - name: "Clues Available"
+        description: "Fair play - evidence available to audience"
+
+    obligatory_scenes:
+      - name: "Inciting Crime"
+        description: "The crime that launches investigation"
+      - name: "Speech Praising Villain"
+        description: "Establishes criminal's capability"
+      - name: "Discovery of MacGuffin"
+        description: "Learning what was stolen/at stake"
+      - name: "Progressive Clue Following"
+        description: "Investigation unfolds"
+      - name: "Exposure of Criminal"
+        description: "Core event - perpetrator revealed"
+        is_core_event: true
+      - name: "Brought to Justice"
+        description: "Criminal faces consequences (or escapes)"
+
+    subgenres:
+      murder_mystery:
+        name: "Murder Mystery"
+        description: "Detective solves homicide case"
+        types: ["Master Detective", "Cozy", "Historical", "Paranormal", "Police Procedural"]
+        arc_direction: "positive"  # Detective restores justice
+        compatible_arcs: ["rags_to_riches", "man_in_hole", "cinderella"]
+      noir:
+        name: "Noir/Hardboiled"
+        description: "Cynical world where corruption often wins"
+        types: ["Classic Noir", "Neo-Noir", "Tech Noir"]
+        arc_direction: "negative"  # Corruption wins, detective compromised
+        compatible_arcs: ["tragedy", "icarus", "oedipus"]
+      caper:
+        name: "Caper/Heist"
+        description: "Criminal crew pulls off elaborate scheme"
+        types: ["Heist", "Con Game", "Jewel Theft"]
+        arc_direction: "positive"  # Crew achieves goal (typically)
+        compatible_arcs: ["rags_to_riches", "man_in_hole", "cinderella"]
+      organized_crime:
+        name: "Organized Crime"
+        description: "Crime family or syndicate dynamics"
+        types: ["Mafia", "Cartel", "Gang"]
+        arc_direction: "either"  # Rise or fall within organization
+        compatible_arcs: ["rags_to_riches", "tragedy", "man_in_hole", "icarus", "cinderella", "oedipus"]
+      courtroom:
+        name: "Courtroom"
+        description: "Legal proceedings reveal truth"
+        types: ["Criminal Trial", "Civil Case", "Legal Procedural"]
+        arc_direction: "either"  # Justice may or may not prevail
+        compatible_arcs: ["rags_to_riches", "tragedy", "man_in_hole", "icarus", "cinderella", "oedipus"]
+      prison:
+        name: "Prison"
+        description: "Survival and justice within penal system"
+        types: ["Escape", "Reform", "Survival"]
+        arc_direction: "either"  # Redemption or corruption
+        compatible_arcs: ["rags_to_riches", "tragedy", "man_in_hole", "icarus", "cinderella", "oedipus"]
+
+  love:
+    name: "Love"
+    type: "external"
+    core_framework:
+      need: "Connection"
+      value_spectrum:
+        negative: "Hate"
+        positive: "Love"
+        negation_of_negation: "Hate masquerading as love"
+      emotion: "Romance"
+      event: "Proof of Love"
+
+    conventions:
+      - name: "Triangle"
+        description: "Includes rival for affection"
+      - name: "Helpers and Harmers"
+        description: "Supporting characters who help or hinder"
+      - name: "Ordered and Chaotic"
+        description: "Contrasting approaches to life"
+      - name: "External Need"
+        description: "Something beyond love drives initial action"
+      - name: "Opposing Forces"
+        description: "Society's rules creating obstacles"
+      - name: "Secrets"
+        description: "Four types: societal, couple-to-society, couple-to-each-other, internal"
+      - name: "Rituals of Intimacy"
+        description: "Moments of connection and vulnerability"
+      - name: "Moral Weight"
+        description: "Consequences of choices"
+
+    obligatory_scenes:
+      - name: "Lovers Meet"
+        description: "First encounter (cute meet)"
+      - name: "First Kiss/Connection"
+        description: "Initial intimate moment"
+      - name: "Confession of Love"
+        description: "Feelings declared"
+      - name: "Lovers Break Up"
+        description: "Separation seems final"
+      - name: "Proof of Love"
+        description: "Core event - love demonstrated through action"
+        is_core_event: true
+      - name: "Lovers Reunite"
+        description: "Final coming together"
+
+    subgenres:
+      obsession:
+        name: "Obsession (Desire)"
+        description: "Cautionary tale of intoxicating passion, often tragic"
+        arc_direction: "negative"  # Obsessive love destroys
+        compatible_arcs: ["tragedy", "icarus", "oedipus"]
+      courtship:
+        name: "Courtship (Commitment)"
+        description: "Prescriptive romance leading to happily ever after"
+        arc_direction: "positive"  # Love triumphs
+        compatible_arcs: ["rags_to_riches", "man_in_hole", "cinderella"]
+      marriage:
+        name: "Marriage (Intimacy)"
+        description: "Realistic story of maintaining or repairing existing love"
+        arc_direction: "either"  # Can repair or dissolve
+        compatible_arcs: ["rags_to_riches", "tragedy", "man_in_hole", "icarus", "cinderella", "oedipus"]
+
+  war:
+    name: "War"
+    type: "external"
+    core_framework:
+      need: "Safety"
+      value_spectrum:
+        negative: "Dishonor"
+        positive: "Honor"
+        negation_of_negation: "Dishonorable defeat presented as honorable"
+      emotion: "Intrigue"
+      event: "Big Battle Scene"
+
+    conventions:
+      - name: "Central Avatar"
+        description: "Main character with offshoots embodying traits"
+      - name: "Big Canvas"
+        description: "Wide scope showing war's reach"
+      - name: "Overwhelming Odds"
+        description: "Protagonists outnumbered"
+      - name: "Point of No Return"
+        description: "Accepting death's inevitability"
+      - name: "Sacrifice for Kinship"
+        description: "Moments of selfless action for comrades"
+
+    obligatory_scenes:
+      - name: "Inciting Attack"
+        description: "War begins or unit deployed"
+      - name: "Denial of Responsibility"
+        description: "Characters resist involvement"
+      - name: "Forced Response"
+        description: "Must act per military hierarchy"
+      - name: "Discover Antagonist's Goal"
+        description: "Learn what enemy wants"
+      - name: "Initial Strategy Fails"
+        description: "First approach doesn't work"
+      - name: "All Is Lost"
+        description: "Darkest moment before battle"
+      - name: "Big Battle Scene"
+        description: "Core event - major combat"
+        is_core_event: true
+      - name: "Satisfaction Rewarded"
+        description: "Survivors receive recognition"
+
+    subgenres:
+      pro_war:
+        name: "Pro War"
+        description: "War as honorable necessity, victory through valor"
+        arc_direction: "positive"  # Honor achieved through victory
+        compatible_arcs: ["rags_to_riches", "man_in_hole", "cinderella"]
+      anti_war:
+        name: "Anti-War"
+        description: "War as destructive tragedy that destroys all it touches"
+        arc_direction: "negative"  # War destroys everyone
+        compatible_arcs: ["tragedy", "icarus", "oedipus"]
+      kinship:
+        name: "Kinship of War"
+        description: "Focus on brotherhood and bonds formed under fire"
+        arc_direction: "either"  # Brotherhood focus, outcome varies
+        compatible_arcs: ["rags_to_riches", "tragedy", "man_in_hole", "icarus", "cinderella", "oedipus"]
+
+  society:
+    name: "Society"
+    type: "external"
+    core_framework:
+      need: "Recognition"
+      value_spectrum:
+        negative: "Impotence"
+        positive: "Power"
+        negation_of_negation: "Power used for tyranny"
+      emotion: "Intrigue/Triumph"
+      event: "Revolution Scene"
+
+    conventions:
+      - name: "Central Character with Facets"
+        description: "Supporting characters embody aspects of protagonist"
+      - name: "Expansive Setting"
+        description: "External (world) or internal (organization)"
+      - name: "Revolutionary Point of No Return"
+        description: "Character commits fully"
+      - name: "Vanquished Face Exile"
+        description: "Losers expelled from society"
+      - name: "Power Disparity"
+        description: "Substantial difference in resources"
+      - name: "Bittersweet Endings"
+        description: "Victory with cost"
+
+    obligatory_scenes:
+      - name: "External Threat/Opportunity"
+        description: "Incites protagonist to action"
+      - name: "Refuses to Act"
+        description: "Initial reluctance"
+      - name: "Forced Engagement"
+        description: "Must act due to position"
+      - name: "Discover Antagonist's Objective"
+        description: "Learn what oppressor wants"
+      - name: "Initial Strategy Fails"
+        description: "First approach doesn't work"
+      - name: "All Is Lost Crisis"
+        description: "Darkest moment"
+      - name: "Revolution Scene"
+        description: "Core event - uprising/confrontation"
+        is_core_event: true
+      - name: "Recognition Awarded"
+        description: "Protagonist's sacrifice acknowledged"
+
+    subgenres:
+      first_party:
+        name: "First Party"
+        description: "Family members or close friends vs domestic tyrant"
+        examples: ["Ethan Frome", "Ordinary People", "Long Day's Journey into Night"]
+        arc_direction: "either"  # Family struggles often bittersweet
+        compatible_arcs: ["rags_to_riches", "tragedy", "man_in_hole", "icarus", "cinderella", "oedipus"]
+      second_party:
+        name: "Second Party"
+        description: "Tribe or identity group vs institutional tyrant"
+        examples: ["Animal Farm", "Dead Poets Society"]
+        arc_direction: "either"  # Revolution can succeed or fail (Animal Farm ends badly)
+        compatible_arcs: ["rags_to_riches", "tragedy", "man_in_hole", "icarus", "cinderella", "oedipus"]
+      third_party:
+        name: "Third Party"
+        description: "Mass groups vs societal/governmental tyrant"
+        examples: ["1984", "Brave New World", "Ragtime"]
+        arc_direction: "either"  # Tyrants can win (1984) or fall
+        compatible_arcs: ["rags_to_riches", "tragedy", "man_in_hole", "icarus", "cinderella", "oedipus"]
+
+  western_eastern:
+    name: "Western/Eastern"
+    type: "external"
+    core_framework:
+      need: "Individual Sovereignty"
+      value_spectrum:
+        negative: "Subjugation"
+        positive: "Freedom"
+      emotion: "Intrigue"
+      event: "Showdown"
+
+    conventions:
+      - name: "Harsh Landscape"
+        description: "Hostile, wide-open environment"
+      - name: "Hero, Victim, Villain"
+        description: "Clear role distinctions"
+      - name: "MacGuffin"
+        description: "Object villain desires"
+      - name: "Hero Outside Law"
+        description: "Operates beyond conventional justice"
+      - name: "Power Disparity"
+        description: "Significant difference in resources"
+      - name: "Speech Praising Villain"
+        description: "Establishes villain's danger"
+
+    obligatory_scenes:
+      - name: "Inciting Attack"
+        description: "Villain or environment attacks"
+      - name: "Hero Sidesteps"
+        description: "Initial reluctance to engage"
+      - name: "Forced from Ordinary World"
+        description: "Must leave normal life"
+      - name: "Discovers MacGuffin"
+        description: "Learns what's at stake"
+      - name: "Initial Strategy Fails"
+        description: "First approach doesn't work"
+      - name: "All Is Lost"
+        description: "Darkest moment"
+      - name: "Showdown"
+        description: "Core event - direct confrontation"
+        is_core_event: true
+      - name: "Sacrifice Rewarded"
+        description: "Hero's actions validated"
+
+    subgenres:
+      vengeance:
+        name: "Vengeance"
+        description: "Stranger arrives to right a wrong, typically succeeds"
+        arc_direction: "positive"  # Stranger restores justice/balance
+        compatible_arcs: ["rags_to_riches", "man_in_hole"]
+      transition:
+        name: "Transition"
+        description: "Old ways vs new, hero exiled or caught between worlds"
+        arc_direction: "either"  # Hero may win new world or lose everything
+        compatible_arcs: ["rags_to_riches", "tragedy", "man_in_hole", "icarus", "cinderella", "oedipus"]
+      professional:
+        name: "Professional"
+        description: "Hero doing a job, outcome secondary to method"
+        arc_direction: "either"  # Job completed but personal cost varies
+        compatible_arcs: ["rags_to_riches", "tragedy", "man_in_hole", "icarus", "cinderella", "oedipus"]
+
+  performance:
+    name: "Performance"
+    type: "external"
+    core_framework:
+      need: "Esteem"
+      value_spectrum:
+        negative: "Shame"
+        positive: "Respect"
+      emotion: "Triumph"
+      event: "Big Performance Scene"
+
+    conventions:
+      - name: "Strong Mentor"
+        description: "Guide figure who trains protagonist"
+      - name: "Training Sequences"
+        description: "Preparation montages"
+      - name: "Explicit All Is Lost"
+        description: "Clear failure moment"
+      - name: "Mentor Arc"
+        description: "Mentor recovers moral compass or betrays"
+      - name: "Wide Power Divide"
+        description: "Protagonist starts inferior"
+      - name: "Win-But-Lose or Lose-But-Win"
+        description: "Bittersweet outcome"
+
+    obligatory_scenes:
+      - name: "Inciting Opportunity"
+        description: "Chance to perform/compete"
+      - name: "Sidesteps Responsibility"
+        description: "Initial reluctance"
+      - name: "Lashes Out"
+        description: "Anger when forced to commit"
+      - name: "Discovers Antagonist's Goal"
+        description: "Learns what opponent wants"
+      - name: "Initial Strategy Fails"
+        description: "First approach doesn't work"
+      - name: "All Is Lost"
+        description: "Training/preparation fails"
+      - name: "Big Performance Scene"
+        description: "Core event - the competition/show"
+        is_core_event: true
+      - name: "Rewarded"
+        description: "Recognition (external, interpersonal, or internal)"
+
+    # Performance subgenres all follow "win-but-lose or lose-but-win" convention
+    # External victory/defeat is often inverted against internal growth
+    subgenres:
+      sports:
+        name: "Sports"
+        description: "Athletic competition as proving ground"
+        arc_direction: "either"  # Win-but-lose or lose-but-win convention
+        compatible_arcs: ["rags_to_riches", "tragedy", "man_in_hole", "icarus", "cinderella", "oedipus"]
+      business:
+        name: "Business/Profession"
+        description: "Corporate or professional competition"
+        arc_direction: "either"  # Same bittersweet pattern as sports
+        compatible_arcs: ["rags_to_riches", "tragedy", "man_in_hole", "icarus", "cinderella", "oedipus"]
+      art:
+        name: "Art"
+        description: "Artistic achievement and recognition"
+        arc_direction: "either"  # External success often at personal cost
+        compatible_arcs: ["rags_to_riches", "tragedy", "man_in_hole", "icarus", "cinderella", "oedipus"]
+      performing_arts:
+        name: "Performing Arts"
+        description: "Stage, music, or entertainment performance"
+        arc_direction: "either"  # Show must go on, but at what cost?
+        compatible_arcs: ["rags_to_riches", "tragedy", "man_in_hole", "icarus", "cinderella", "oedipus"]
+
+# =============================================================================
+# INTERNAL GENRES (3)
+# =============================================================================
+# Character-driven; focus on internal transformation
+
+internal_genres:
+
+  worldview:
+    name: "Worldview"
+    type: "internal"
+    core_framework:
+      need: "Self-Actualization"
+      value_spectrum:
+        negative: "Ignorance"
+        positive: "Wisdom"
+        negative_variant: "Naivete"
+        positive_variant: "Sophistication"
+      emotion: "Satisfaction/Pity"
+      event: "Acceptance"
+
+    conventions:
+      - name: "Mentor Figure"
+        description: "Guide who helps protagonist see truth"
+      - name: "Social Problem as Subtext"
+        description: "Larger issue beneath personal story"
+      - name: "Shapeshifters as Hypocrites"
+        description: "Characters who pretend to be other than they are"
+      - name: "Clear Point of No Return"
+        description: "Moment of full commitment"
+      - name: "Bittersweet Ending"
+        description: "Wisdom gained at cost"
+
+    obligatory_scenes:
+      - name: "Inciting Challenge"
+        description: "Worldview confronted"
+      - name: "Denies Responsibility"
+        description: "Clings to old beliefs"
+      - name: "Lashes Out"
+        description: "Anger when forced to change"
+      - name: "Learns Antagonist's Goal"
+        description: "Understands opposing worldview"
+      - name: "Initial Strategy Fails"
+        description: "Old worldview doesn't work"
+      - name: "All Is Lost"
+        description: "Must abandon black-and-white thinking"
+      - name: "Gifts Expressed"
+        description: "Core event - accepts new worldview"
+        is_core_event: true
+      - name: "Deeper Understanding"
+        description: "Ignorance replaced with wisdom"
+
+    subgenres:
+      maturation:
+        name: "Maturation"
+        description: "Coming of age, naive protagonist grows sophisticated"
+        spectrum: "Naivete → Sophistication"
+        arc_direction: "positive"  # Growth toward sophistication
+        compatible_arcs: ["rags_to_riches", "man_in_hole"]
+      disillusionment:
+        name: "Disillusionment"
+        description: "Idealist confronts harsh reality, beliefs shattered"
+        spectrum: "Belief → Disillusionment"
+        arc_direction: "negative"  # Loss of belief/hope
+        compatible_arcs: ["tragedy", "icarus"]
+      education:
+        name: "Education"
+        description: "Protagonist discovers meaning in meaningless world"
+        spectrum: "Meaninglessness → Meaning"
+        arc_direction: "positive"  # Gains meaning/purpose
+        compatible_arcs: ["rags_to_riches", "man_in_hole"]
+      revelation:
+        name: "Revelation"
+        description: "Hidden truth revealed, protagonist gains wisdom"
+        spectrum: "Ignorance → Wisdom"
+        arc_direction: "either"  # Truth can liberate or devastate
+        compatible_arcs: ["rags_to_riches", "tragedy", "man_in_hole", "icarus", "cinderella", "oedipus"]
+
+  morality:
+    name: "Morality"
+    type: "internal"
+    core_framework:
+      need: "Self-Transcendence"
+      value_spectrum:
+        negative: "Selfishness"
+        positive: "Altruism"
+        negation_of_negation: "Selfishness disguised as altruism"
+      emotion: "Satisfaction or Contempt"
+      event: "Sacrifice"
+
+    conventions:
+      - name: "Despicable Protagonist"
+        description: "Starts at moral worst"
+      - name: "Spiritual Mentor/Sidekick"
+        description: "Guide toward moral path"
+      - name: "Impossible External Conflict"
+        description: "Situation forcing moral choice"
+      - name: "Ghosts from Past"
+        description: "Past actions haunting protagonist"
+      - name: "Aid from Unexpected Sources"
+        description: "Help from unlikely places"
+
+    obligatory_scenes:
+      - name: "Shock"
+        description: "Event awakens dormant conscience"
+      - name: "Expresses Inner Darkness"
+        description: "Shows selfish nature, refuses call"
+      - name: "All Is Lost"
+        description: "Must recover moral code or choose immoral path"
+      - name: "Sacrifice"
+        description: "Core event - protagonist sacrifices self (prescriptive) or remains selfish (cautionary)"
+        is_core_event: true
+      - name: "Faces Death"
+        description: "Literal or metaphorical death with consequences"
+
+    subgenres:
+      punitive:
+        name: "Punitive"
+        description: "Protagonist suffers deserved misfortune for moral failings"
+        arc_direction: "negative"  # Bad → worse
+        compatible_arcs: ["tragedy", "icarus"]
+      redemption:
+        name: "Redemption"
+        description: "Morally compromised protagonist finds path to good"
+        arc_direction: "positive"  # Bad → good
+        compatible_arcs: ["rags_to_riches", "man_in_hole"]
+      testing_triumph:
+        name: "Testing - Triumph"
+        description: "Good protagonist remains morally steadfast under pressure"
+        arc_direction: "either"  # Outcome depends on cost of moral victory
+        compatible_arcs: ["rags_to_riches", "tragedy", "man_in_hole", "icarus", "cinderella", "oedipus"]
+      testing_surrender:
+        name: "Testing - Surrender"
+        description: "Good protagonist fails to maintain moral code under pressure"
+        arc_direction: "negative"  # Moral failure
+        compatible_arcs: ["tragedy", "icarus", "oedipus"]
+
+  status:
+    name: "Status"
+    type: "internal"
+    core_framework:
+      need: "Respect"
+      value_spectrum:
+        negative: "Failure"
+        positive: "Success"
+      emotion: "Admiration or Pity"
+      event: "Big Choice"
+
+    conventions:
+      - name: "Strong Mentor Figure"
+        description: "Guide in new world"
+      - name: "Big Social Problem"
+        description: "Larger issue as subtext"
+      - name: "Shapeshifters as Hypocrites"
+        description: "Pretenders in status hierarchy"
+      - name: "Herald/Threshold Guardian"
+        description: "Sellout who shows wrong path"
+      - name: "Clear Point of No Return"
+        description: "Full commitment moment"
+      - name: "Paradoxical Ending"
+        description: "Win-but-lose or lose-but-win"
+
+    obligatory_scenes:
+      - name: "Inciting Challenge"
+        description: "Status opportunity appears"
+      - name: "Leaves Home"
+        description: "Enters new status world"
+      - name: "Forced Adaptation"
+        description: "Humiliation in new environment"
+      - name: "Learns and Pursues"
+        description: "Understands and chases status goal"
+      - name: "Initial Strategy Fails"
+        description: "First approach doesn't work"
+      - name: "All Is Lost"
+        description: "Must redefine success or risk values"
+      - name: "Big Choice"
+        description: "Core event - pursue status or reject that world"
+        is_core_event: true
+      - name: "Salvation or Loss"
+        description: "Outcome based on choice made"
+
+    subgenres:
+      pathetic:
+        name: "Pathetic"
+        description: "Protagonist attempts to rise but fails due to character flaws"
+        arc_direction: "negative"  # Rise then fall (Icarus pattern)
+        compatible_arcs: ["icarus"]
+      tragic:
+        name: "Tragic"
+        description: "Protagonist's fatal mistake causes their downfall"
+        arc_direction: "negative"  # Fall from grace
+        compatible_arcs: ["tragedy"]
+      sentimental:
+        name: "Sentimental"
+        description: "Weak or underdog protagonist succeeds against odds"
+        arc_direction: "positive"  # Cinderella pattern - rise-fall-rise
+        compatible_arcs: ["cinderella"]
+      admiration:
+        name: "Admiration"
+        description: "Principled protagonist rises without compromising values"
+        arc_direction: "positive"  # Steady rise to success
+        compatible_arcs: ["rags_to_riches", "man_in_hole"]
+
+# =============================================================================
+# META-GENRE CATEGORIES (FIVE-LEAF GENRE CLOVER)
+# =============================================================================
+# Source: docs/research/FIVE-LEAF-GENRE-CLOVER.md
+# Every story classified across five orthogonal dimensions
+
+meta_genres:
+  # ---------------------------------------------------------------------------
+  # LEAF 1: CONTENT GENRE
+  # ---------------------------------------------------------------------------
+  content:
+    description: "The emotional experience - what the story is about"
+    question: "What emotional experience does this story deliver?"
+    note: "Stories often combine external + internal genres"
+    types: "See external_genres and internal_genres sections above (12 total)"
+
+  # ---------------------------------------------------------------------------
+  # LEAF 2: STRUCTURE GENRE
+  # ---------------------------------------------------------------------------
+  structure:
+    description: "Who or what does the change of the story affect?"
+    question: "How is the narrative architecturally organized?"
+
+    types:
+      arch_plot:
+        name: "Arch-Plot"
+        description: "Single active protagonist pursuing an object of desire"
+        focus: "Single protagonist change"
+        antagonism: "Primarily external forces"
+        ending: "Closed - absolute and irreversible change"
+        characteristics:
+          - "Clear protagonist with clear goal"
+          - "Cause-and-effect chain of events"
+          - "Rising action toward single climax"
+          - "Definitive resolution"
+          - "Linear time"
+          - "Consistent reality"
+        examples: ["The Firm", "Pride and Prejudice", "The Hobbit"]
+
+      mini_plot:
+        name: "Mini-Plot"
+        description: "System change shown through multiple POV characters"
+        focus: "System/multiple protagonist change"
+        structure: "Each character follows their own mini arch-plot"
+        effect: "Shows how interconnected nodes transform a whole system"
+        characteristics:
+          - "Multiple protagonists as 'nodes' in a system"
+          - "Parallel storylines that intersect"
+          - "Emergent change at system level"
+          - "May have multiple climaxes"
+          - "Internal conflict emphasis"
+          - "Open ending possible"
+        examples: ["Ragtime", "Game of Thrones", "Lord of the Rings"]
+
+      anti_plot:
+        name: "Anti-Plot"
+        description: "Rebellion against formal storytelling structure"
+        focus: "No coherent change (experimental)"
+        causality: "Absent or inverted"
+        change: "No coherent transformation"
+        characteristics:
+          - "Deliberately breaks storytelling rules"
+          - "Events may be random or circular"
+          - "Characters don't grow or change"
+          - "World makes no sense by design"
+          - "Coincidence-driven"
+          - "Nonlinear time"
+          - "Inconsistent realities"
+        examples: ["Waiting for Godot", "No Exit"]
+
+  # ---------------------------------------------------------------------------
+  # LEAF 3: REALITY GENRE
+  # ---------------------------------------------------------------------------
+  reality:
+    description: "How much must the reader suspend disbelief?"
+    question: "What is the relationship between the story world and reality?"
+    spectrum: "Chaos → Complexity → Order"
+
+    types:
+      absurdism:
+        name: "Absurdism"
+        position: "Chaos"
+        certainty_level: "Anything can happen anytime for any/no reason"
+        description: "Deliberately illogical or irrational"
+        characteristics:
+          - "No consistent rules"
+          - "Logic deliberately subverted"
+          - "Meaning may be absent"
+
+      factualism:
+        name: "Factualism"
+        position: "Complexity"
+        certainty_level: "Based on real historical events"
+        description: "Based on true events from historical record"
+        characteristics:
+          - "Historical accuracy expected"
+          - "Real people/events depicted"
+          - "Documentary approach"
+
+      realism:
+        name: "Realism"
+        position: "Complexity"
+        certainty_level: "Could happen in real life (imagined)"
+        description: "Could happen in the real world"
+        characteristics:
+          - "Natural laws apply"
+          - "No supernatural elements"
+          - "Plausible cause and effect"
+
+      fantasy:
+        name: "Fantasy"
+        position: "Order"
+        certainty_level: "Systematic rules that must be understood"
+        description: "Includes impossible elements with consistent rules"
+
+        subtypes:
+          fantasy_human:
+            name: "Human Fantasy"
+            description: "Fantastical elements highlighting human behavior patterns"
+            characteristics:
+              - "Anthropomorphic elements"
+              - "Fantastical premise serves human insight"
+            examples: ["Animal Farm", "Groundhog Day"]
+
+          fantasy_magical:
+            name: "Magical Fantasy"
+            description: "Magic laws mastered by certain characters"
+            characteristics:
+              - "Nostalgic, often medieval settings"
+              - "Magic requires earning/training"
+              - "Clear magic system rules"
+            subcategories:
+              - code: "EPIC_FANTASY"
+                name: "Epic Fantasy"
+                description: "Large-scale world with deep lore"
+              - code: "PORTAL_FANTASY"
+                name: "Portal Fantasy"
+                description: "Character enters magical world from mundane"
+              - code: "DARK_FANTASY"
+                name: "Dark Fantasy"
+                description: "Horror elements mixed with fantasy"
+              - code: "GRIMDARK_FANTASY"
+                name: "Grimdark Fantasy"
+                description: "Morally ambiguous, violent, pessimistic"
+              - code: "URBAN_FANTASY"
+                name: "Urban Fantasy"
+                description: "Magic in modern city settings"
+
+          science_fiction:
+            name: "Science Fiction"
+            description: "Imagined technologies distributed to all"
+            characteristics:
+              - "Futuristic, utopian striving"
+              - "Technology accessible without special requirements"
+              - "Extrapolation from current science"
+            subcategories:
+              - code: "ALTERNATE_HISTORY"
+                name: "Alternate History"
+                description: "Historical divergence point"
+              - code: "CYBERPUNK"
+                name: "Cyberpunk"
+                description: "High tech, low life"
+              - code: "HARD_SCIENCE"
+                name: "Hard Science"
+                description: "Scientifically rigorous"
+              - code: "SOFT_SCIENCE"
+                name: "Soft Science"
+                description: "Social sciences focus"
+              - code: "MILITARY_SF"
+                name: "Military SF"
+                description: "Military operations in future"
+              - code: "POST_APOCALYPTIC"
+                name: "Post-Apocalyptic"
+                description: "After civilization collapse"
+              - code: "ROMANTIC_SF"
+                name: "Romantic SF"
+                description: "Romance in SF setting"
+              - code: "SPACE_OPERA"
+                name: "Space Opera"
+                description: "Epic adventures in space"
+
+  # ---------------------------------------------------------------------------
+  # LEAF 4: TIME GENRE
+  # ---------------------------------------------------------------------------
+  time:
+    description: "Duration and pacing of the story"
+    question: "How long does the story take to consume and how long does it last in-story?"
+
+    dimensions:
+      consumption_time:
+        description: "Reader/viewer experience duration"
+        types:
+          short_form:
+            name: "Short Form"
+            word_count: "under 7,500 words"
+            duration: "under 30 minutes"
+            examples: ["Short stories", "Short films", "Individual scenes"]
+          medium_form:
+            name: "Medium Form"
+            word_count: "7,500-25,000 words"
+            duration: "30-120 minutes"
+            examples: ["Novellas", "TV episodes", "One-act plays"]
+          long_form:
+            name: "Long Form"
+            word_count: "25,000+ words"
+            duration: "over 120 minutes"
+            examples: ["Novels", "Feature films", "Multi-act plays"]
+
+      story_time:
+        description: "In-story elapsed time (simulation time)"
+        note: "Independent of consumption time"
+        examples:
+          - "Ulysses (265,000 words) covers a single day"
+          - "A Rose for Emily (3,720 words) spans generations"
+
+  # ---------------------------------------------------------------------------
+  # LEAF 5: STYLE GENRE
+  # ---------------------------------------------------------------------------
+  style:
+    description: "Tone and form of presentation"
+    question: "What tone and form does the story take?"
+
+    tone:
+      drama:
+        name: "Drama"
+        description: "Solemnity; truth and pain experienced directly"
+        characteristics:
+          - "Solemn tone"
+          - "Characters face reality directly"
+          - "Pain experienced truthfully"
+          - "Emotions are fulfilling"
+
+      comedy:
+        name: "Comedy"
+        description: "Humor; jokes to avoid truthful emotion/pain"
+        characteristics:
+          - "Funny tone"
+          - "Characters use humor to deflect"
+          - "Pain avoided through jokes"
+          - "Emotions are deflected"
+
+    medium:
+      documentary:
+        name: "Documentary"
+        description: "Fact-based or mockumentary tone"
+        examples: ["Battle of Algiers", "Spinal Tap"]
+
+      musical:
+        name: "Musical"
+        description: "Characters break into song"
+        examples: ["Hamilton", "Hairspray"]
+
+      dance:
+        name: "Dance"
+        description: "Movement-based storytelling (ballet, martial arts films)"
+        examples: ["Swan Lake", "Crouching Tiger Hidden Dragon"]
+
+      literary:
+        name: "Literary"
+        description: "'High art' sensibility"
+        examples: ["Ulysses", "Pale Fire"]
+        subtypes:
+          - code: "POETRY"
+            name: "Poetry"
+            description: "Metrical verse"
+          - code: "MINIMALISM"
+            name: "Minimalism"
+            description: "Sparse, short fiction"
+          - code: "META"
+            name: "Meta"
+            description: "Self-referential stories about stories"
+          - code: "POSTMODERN"
+            name: "PostModern"
+            description: "Fragmented, subversive of structure"
+
+      theatrical:
+        name: "Theatrical"
+        description: "Qualities of live theater"
+        examples: ["Our Town", "A Midsummer Night's Dream"]
+
+      cinematic:
+        name: "Cinematic"
+        description: "Qualities of film"
+        examples: ["The Matrix", "A Fish Called Wanda"]
+
+      epistolary:
+        name: "Epistolary"
+        description: "Letters/written communication format"
+        examples: ["Frankenstein", "Dracula"]
+
+      animation:
+        name: "Animation"
+        description: "Series of images simulating movement"
+        examples: ["The Incredibles", "Iron Giant"]
+
+# =============================================================================
+# COMPLETE CLASSIFICATION STRUCTURE
+# =============================================================================
+# Source: docs/research/FIVE-LEAF-GENRE-CLOVER.md
+
+five_leaf_classification:
+  description: "Complete story classification using all five dimensions"
+
+  structure:
+    primary_content_genre: "External genre from content genres"
+    secondary_content_genre: "Internal genre (optional)"
+    subgenre: "Content subgenre (optional)"
+    structure_genre: "arch_plot | mini_plot | anti_plot"
+    reality_genre: "absurdism | factualism | realism | fantasy"
+    reality_subgenre: "Fantasy/SF subcategory (optional)"
+    time_form: "short_form | medium_form | long_form"
+    style_tone: "drama | comedy"
+    style_medium: "documentary | musical | dance | literary | theatrical | cinematic | epistolary | animation"
+
+  examples:
+    silence_of_the_lambs:
+      primary_content_genre: "thriller"
+      secondary_content_genre: "worldview"
+      subgenre: "serial_killer"
+      structure_genre: "arch_plot"
+      reality_genre: "realism"
+      time_form: "long_form"
+      style_tone: "drama"
+      style_medium: "cinematic"
+
+    lord_of_the_rings:
+      primary_content_genre: "action"
+      secondary_content_genre: "morality"
+      subgenre: "savior"
+      structure_genre: "mini_plot"
+      reality_genre: "fantasy"
+      reality_subgenre: "epic_fantasy"
+      time_form: "long_form"
+      style_tone: "drama"
+      style_medium: "literary"
+
+    groundhog_day:
+      primary_content_genre: "love"
+      secondary_content_genre: "worldview"
+      subgenre: "courtship"
+      structure_genre: "arch_plot"
+      reality_genre: "fantasy"
+      reality_subgenre: "fantasy_human"
+      time_form: "long_form"
+      style_tone: "comedy"
+      style_medium: "cinematic"
+
+# =============================================================================
+# REFERENCES
+# =============================================================================
+
+references:
+  primary:
+    - title: "The Story Grid: What Good Editors Know"
+      author: "Shawn Coyne"
+      year: 2015
+      publisher: "Story Grid Publishing"
+
+    - title: "Story Grid 101: The Five First Principles of the Story Grid Methodology"
+      author: "Shawn Coyne"
+      year: 2020
+
+    - title: "The Four Core Framework"
+      author: "Shawn Coyne"
+      notes: "Defines Core Need, Value, Emotion, Event"
+
+  website: "https://storygrid.com"
+
+  research_location: "~/repos/story-analysis/research/"

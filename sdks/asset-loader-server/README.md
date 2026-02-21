@@ -140,7 +140,7 @@ var levelData = await loader.GetAssetBytesAsync("polygon-adventure/level-1");
 
 ## Further Reading
 
-- [Asset SDK Guide](../../docs/guides/ASSET_SDK.md) - Comprehensive documentation
+- [Asset SDK Guide](../../docs/guides/ASSET-SDK.md) - Comprehensive documentation
 - [Asset Loader Core](../asset-loader/README.md) - Engine-agnostic core SDK
 - [Asset Loader Client](../asset-loader-client/README.md) - Game client SDK
 

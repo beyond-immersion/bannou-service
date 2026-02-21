@@ -5,8 +5,11 @@ info:
     Event models for Species service RabbitMQ pub/sub via MassTransit.
     Lifecycle events are auto-generated from x-lifecycle definition.
 
-    **Schema Rules**: AI agents MUST review docs/reference/SCHEMA-RULES.md before
-    modifying this schema. Optional reference types require `nullable: true`.
+    **SCHEMA MODIFICATION GATE**: STOP. Before modifying this schema, you MUST:
+    1. Read docs/reference/SCHEMA-RULES.md
+    2. State which section applies to your change
+    3. Only then proceed with edits
+    Edits without stating the applicable rule are FORBIDDEN.
   version: 1.0.0
   x-event-subscriptions: []  # Species service doesn't subscribe to external events
   x-event-publications:
@@ -37,13 +40,13 @@ x-lifecycle:
       category: { type: string, nullable: true, description: "Category grouping for the species" }
       isPlayable: { type: boolean, required: true, description: "Whether players can create characters of this species" }
       isDeprecated: { type: boolean, required: true, description: "Whether this species is deprecated and should not be used for new characters" }
-      deprecatedAt: { type: string, format: date-time, description: "Timestamp when the species was deprecated" }
+      deprecatedAt: { type: string, format: date-time, nullable: true, description: "Timestamp when the species was deprecated" }
       deprecationReason: { type: string, nullable: true, description: "Explanation for why the species was deprecated" }
       baseLifespan: { type: integer, description: "Average lifespan in years for this species" }
       maturityAge: { type: integer, description: "Age at which members of this species reach maturity" }
-      traitModifiers: { type: object, additionalProperties: true, description: "Modifiers applied to character traits for this species" }
+      traitModifiers: { type: object, additionalProperties: true, description: "Client-only trait modifiers. No Bannou plugin reads specific keys from this field by convention." }
       realmIds: { type: array, items: { type: string, format: uuid }, description: "IDs of realms where this species can exist" }
-      metadata: { type: object, additionalProperties: true, description: "Additional custom metadata for the species" }
+      metadata: { type: object, additionalProperties: true, nullable: true, description: "Client-only metadata. No Bannou plugin reads specific keys from this field by convention." }
       createdAt: { type: string, format: date-time, required: true, description: "Timestamp when the species was created" }
       updatedAt: { type: string, format: date-time, required: true, description: "Timestamp when the species was last updated" }
 

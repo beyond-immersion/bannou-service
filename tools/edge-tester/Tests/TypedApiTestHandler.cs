@@ -148,7 +148,7 @@ public class TypedApiTestHandler : BaseWebSocketTestHandler
     /// <summary>
     /// Demonstrates the new typed event subscription pattern:
     /// Before: client.OnEvent("game_session.chat_received", json => { var doc = JsonDocument.Parse(json); ... })
-    /// After:  client.OnEvent&lt;ChatMessageReceivedEvent&gt;(evt => Console.WriteLine(evt.Message))
+    /// After:  client.OnEvent&lt;SessionChatReceivedEvent&gt;(evt => Console.WriteLine(evt.Message))
     /// </summary>
     private void TestTypedEventSubscription(string[] args)
     {
@@ -158,9 +158,9 @@ public class TypedApiTestHandler : BaseWebSocketTestHandler
         RunWebSocketTest("Typed event subscription test", async adminClient =>
         {
             // Subscribe to chat messages with typed handler
-            Console.WriteLine("   Subscribing to ChatMessageReceivedEvent...");
+            Console.WriteLine("   Subscribing to SessionChatReceivedEvent...");
 
-            using var subscription = adminClient.OnEvent<ChatMessageReceivedEvent>(evt =>
+            using var subscription = adminClient.OnEvent<SessionChatReceivedEvent>(evt =>
             {
                 Console.WriteLine($"   Received typed event: SessionId={evt.SessionId}, Message={evt.Message}");
             });
@@ -168,7 +168,7 @@ public class TypedApiTestHandler : BaseWebSocketTestHandler
             Console.WriteLine($"   Subscription active: {subscription.IsActive}, EventName: {subscription.EventName}");
 
             // The subscription is active and typed - it will automatically deserialize
-            // any ChatMessageReceivedEvent that arrives on the WebSocket
+            // any SessionChatReceivedEvent that arrives on the WebSocket
 
             // For this test, we verify the subscription mechanism works
             // In a real scenario, you would join a game session and send chat messages

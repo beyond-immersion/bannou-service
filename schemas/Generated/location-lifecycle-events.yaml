@@ -24,6 +24,8 @@ components:
       - locationType
       - depth
       - isDeprecated
+      - boundsPrecision
+      - coordinateMode
       - createdAt
       - updatedAt
       properties:
@@ -55,6 +57,7 @@ components:
         parentLocationId: &id007
           type: string
           format: uuid
+          nullable: true
           description: "ID of the parent location for hierarchical structures"
         depth: &id008
           type: integer
@@ -65,20 +68,36 @@ components:
         deprecatedAt: &id010
           type: string
           format: date-time
+          nullable: true
           description: "Timestamp when the location was deprecated"
         deprecationReason: &id011
           type: string
           nullable: true
           description: "Explanation for why the location was deprecated"
-        metadata: &id012
+        bounds: &id012
+          $ref: ../common-api.yaml#/components/schemas/BoundingBox3D
+          nullable: true
+          description: "Optional spatial extent in world coordinates"
+        boundsPrecision: &id013
+          $ref: ../location-api.yaml#/components/schemas/BoundsPrecision
+          description: "Precision level of spatial bounds"
+        coordinateMode: &id014
+          $ref: ../location-api.yaml#/components/schemas/CoordinateMode
+          description: "How this location's coordinate system relates to its parent"
+        localOrigin: &id015
+          $ref: ../common-api.yaml#/components/schemas/Position3D
+          nullable: true
+          description: "Origin point for local or inherited coordinate systems"
+        metadata: &id016
           type: object
           additionalProperties: true
+          nullable: true
           description: "Additional custom metadata associated with the location"
-        createdAt: &id013
+        createdAt: &id017
           type: string
           format: date-time
           description: "Timestamp when the location was created"
-        updatedAt: &id014
+        updatedAt: &id018
           type: string
           format: date-time
           description: "Timestamp when the location was last updated"
@@ -99,6 +118,8 @@ components:
       - locationType
       - depth
       - isDeprecated
+      - boundsPrecision
+      - coordinateMode
       - createdAt
       - updatedAt
       - changedFields
@@ -118,9 +139,13 @@ components:
         isDeprecated: *id009
         deprecatedAt: *id010
         deprecationReason: *id011
-        metadata: *id012
-        createdAt: *id013
-        updatedAt: *id014
+        bounds: *id012
+        boundsPrecision: *id013
+        coordinateMode: *id014
+        localOrigin: *id015
+        metadata: *id016
+        createdAt: *id017
+        updatedAt: *id018
         changedFields:
           type: array
           items:
@@ -143,6 +168,8 @@ components:
       - locationType
       - depth
       - isDeprecated
+      - boundsPrecision
+      - coordinateMode
       - createdAt
       - updatedAt
       properties:
@@ -161,9 +188,13 @@ components:
         isDeprecated: *id009
         deprecatedAt: *id010
         deprecationReason: *id011
-        metadata: *id012
-        createdAt: *id013
-        updatedAt: *id014
+        bounds: *id012
+        boundsPrecision: *id013
+        coordinateMode: *id014
+        localOrigin: *id015
+        metadata: *id016
+        createdAt: *id017
+        updatedAt: *id018
         deletedReason:
           type: string
           nullable: true

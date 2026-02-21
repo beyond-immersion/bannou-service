@@ -83,7 +83,6 @@ public static class MessageRouter
             // ServiceName format: "servicename:METHOD:/path" for RouteToServiceAsync
             routeInfo.ServiceName = $"{shortcut.TargetService}:{shortcut.TargetMethod}:{shortcut.TargetEndpoint}";
 
-            routeInfo.Priority = message.IsHighPriority ? MessagePriority.High : MessagePriority.Normal;
             routeInfo.Channel = message.Channel;
             routeInfo.RequiresResponse = message.ExpectsResponse;
 
@@ -108,7 +107,6 @@ public static class MessageRouter
                 routeInfo.ErrorMessage = "Broadcast requires Client flag (0x20)";
             }
 
-            routeInfo.Priority = message.IsHighPriority ? MessagePriority.High : MessagePriority.Normal;
             routeInfo.Channel = message.Channel;
             routeInfo.RequiresResponse = message.ExpectsResponse;
             return routeInfo;
@@ -140,9 +138,6 @@ public static class MessageRouter
                 return routeInfo;
             }
         }
-
-        // Determine processing priority
-        routeInfo.Priority = message.IsHighPriority ? MessagePriority.High : MessagePriority.Normal;
 
         // Validate channel
         if (message.Channel > 1000) // Arbitrary reasonable limit
@@ -176,7 +171,8 @@ public static class MessageRouter
     }
 
     /// <summary>
-    /// Validates message rate limiting.
+    /// Validates message rate limiting using a sliding window counter.
+    /// Records the current message and checks if the rate limit is exceeded.
     /// </summary>
     public static RateLimitResult CheckRateLimit(
         ConnectionState connectionState,
@@ -184,13 +180,14 @@ public static class MessageRouter
         int rateLimitWindowMinutes = 1)
     {
         var now = DateTimeOffset.UtcNow;
-        var windowStart = now.AddMinutes(-rateLimitWindowMinutes);
 
-        // Count recent messages within the configured window
-        var recentMessageCount = connectionState.PendingMessages.Values
-            .Count(p => p.SentAt > windowStart);
+        // Record this message in the rate limit tracker (counts ALL messages, not just pending ones)
+        connectionState.RecordMessageForRateLimit();
 
-        if (recentMessageCount >= maxMessagesPerMinute)
+        // Count messages in window (also cleans up expired entries)
+        var recentMessageCount = connectionState.GetMessageCountInWindow(rateLimitWindowMinutes);
+
+        if (recentMessageCount > maxMessagesPerMinute)
         {
             return new RateLimitResult
             {
@@ -234,7 +231,6 @@ public class MessageRouteInfo
     public string? ServiceName { get; set; }
 
     public ushort Channel { get; set; }
-    public MessagePriority Priority { get; set; }
     public bool RequiresResponse { get; set; }
 
     #region Session Shortcut Properties
@@ -273,15 +269,6 @@ public enum RouteType
 
     /// <summary>Broadcast to all connected peers (Relayed/Internal modes only).</summary>
     Broadcast
-}
-
-/// <summary>
-/// Message processing priority levels.
-/// </summary>
-public enum MessagePriority
-{
-    Normal,
-    High
 }
 
 /// <summary>

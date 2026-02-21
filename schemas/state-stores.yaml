@@ -3,8 +3,11 @@
 # This file defines all state stores used by Bannou services.
 # Generated code provides typed constants and configuration.
 #
-# Schema Rules: AI agents MUST review docs/reference/SCHEMA-RULES.md before
-# modifying this schema.
+# SCHEMA MODIFICATION GATE: STOP. Before modifying this schema, you MUST:
+# 1. Read docs/reference/SCHEMA-RULES.md
+# 2. State which section applies to your change
+# 3. Only then proceed with edits
+# Edits without stating the applicable rule are FORBIDDEN.
 #
 # Schema: x-state-stores defines each store with:
 #   - backend: redis | mysql | memory
@@ -37,6 +40,12 @@ x-state-stores:
     service: Auth
     purpose: Session and token state (ephemeral)
 
+  edge-revocation-statestore:
+    backend: redis
+    prefix: "auth:edge"
+    service: Auth
+    purpose: Edge revocation tracking for CDN/firewall layer blocking
+
   connect-statestore:
     backend: redis
     prefix: connect
@@ -48,6 +57,54 @@ x-state-stores:
     prefix: permission
     service: Permission
     purpose: Permission cache and session capabilities
+
+  # ============================================================================
+  # Chat Stores (L1 AppFoundation Service)
+  # ============================================================================
+
+  chat-room-types:
+    backend: mysql
+    service: Chat
+    purpose: Room type definitions (durable, queryable by code/gameServiceId)
+
+  chat-rooms:
+    backend: mysql
+    service: Chat
+    purpose: Chat room records (durable, queryable by type/session/status)
+
+  chat-rooms-cache:
+    backend: redis
+    prefix: "chat:room"
+    service: Chat
+    purpose: Active room state cache (participant lists, room metadata)
+
+  chat-messages:
+    backend: mysql
+    service: Chat
+    purpose: Persistent message history for durable rooms
+
+  chat-messages-ephemeral:
+    backend: redis
+    prefix: "chat:msg"
+    service: Chat
+    purpose: Ephemeral message buffer for non-persistent rooms (TTL-based)
+
+  chat-participants:
+    backend: redis
+    prefix: "chat:part"
+    service: Chat
+    purpose: Active participant tracking (room membership, mute state, last activity)
+
+  chat-bans:
+    backend: mysql
+    service: Chat
+    purpose: Ban records (durable, queryable by roomId/participant)
+
+  chat-lock:
+    backend: redis
+    prefix: "chat:lock"
+    service: Chat
+    purpose: Distributed locks for room and participant modifications
 
   voice-statestore:
     backend: redis
@@ -106,8 +163,8 @@ x-state-stores:
   agent-memories:
     backend: redis
     prefix: "agent:mem"
-    service: Actor
-    purpose: Agent memory and cognitive state
+    service: Behavior
+    purpose: Cognition pipeline memory storage (used by lib-behavior's ActorLocalMemoryStore)
 
   actor-state:
     backend: redis
@@ -154,6 +211,7 @@ x-state-stores:
     prefix: doc
     service: Documentation
     purpose: Documentation content and metadata
+    enableSearch: true
 
   # ============================================================================
   # Test Stores
@@ -196,12 +254,6 @@ x-state-stores:
     prefix: "analytics:rating"
     service: Analytics
     purpose: Glicko-2 skill ratings
-
-  analytics-history:
-    backend: redis
-    prefix: "analytics:hist"
-    service: Analytics
-    purpose: Event buffer and legacy controller history (Redis for backward compatibility)
 
   analytics-history-data:
     backend: mysql
@@ -285,10 +337,22 @@ x-state-stores:
     service: Account
     purpose: Persistent account data
 
+  account-lock:
+    backend: redis
+    prefix: "account:lock"
+    service: Account
+    purpose: Distributed locks for account email uniqueness during creation
+
   character-statestore:
     backend: mysql
     service: Character
     purpose: Persistent character data
+
+  character-lock:
+    backend: redis
+    prefix: "character:lock"
+    service: Character
+    purpose: Distributed locks for character update and compression operations
 
   character-history-statestore:
     backend: mysql
@@ -315,6 +379,30 @@ x-state-stores:
     service: Location
     purpose: Location hierarchy and metadata
 
+  location-cache:
+    backend: redis
+    prefix: "location"
+    service: Location
+    purpose: Location lookup cache for frequently-accessed locations
+
+  location-lock:
+    backend: redis
+    prefix: "location:lock"
+    service: Location
+    purpose: Distributed locks for concurrent index modifications
+
+  location-entity-presence:
+    backend: redis
+    prefix: "location:presence"
+    service: Location
+    purpose: Ephemeral entity-to-location bindings with TTL for presence tracking
+
+  location-entity-set:
+    backend: redis
+    prefix: "location:entities"
+    service: Location
+    purpose: Redis Sets tracking which entities are at each location
+
   realm-statestore:
     backend: mysql
     service: Realm
@@ -332,8 +420,14 @@ x-state-stores:
 
   relationship-type-statestore:
     backend: mysql
-    service: RelationshipType
+    service: Relationship
     purpose: Relationship type definitions
+
+  relationship-lock:
+    backend: redis
+    prefix: "relationship:lock"
+    service: Relationship
+    purpose: Distributed locks for composite uniqueness and index modifications
 
   game-service-statestore:
     backend: mysql
@@ -397,6 +491,12 @@ x-state-stores:
     service: Mesh
     purpose: Global endpoint index for discovery
 
+  mesh-circuit-breaker:
+    backend: redis
+    prefix: "mesh:cb"
+    service: Mesh
+    purpose: Distributed circuit breaker state for cross-instance failure tracking
+
   # ============================================================================
   # Music Stores
   # ============================================================================
@@ -421,6 +521,7 @@ x-state-stores:
     prefix: contract
     service: Contract
     purpose: Contract templates, instances, breaches, and indexes
+    enableSearch: true
 
   # ============================================================================
   # Currency Stores
@@ -565,3 +666,436 @@ x-state-stores:
     backend: mysql
     service: Escrow
     purpose: Custom asset type handler registrations
+
+  # ============================================================================
+  # Quest Stores (L4 GameFeatures Service)
+  # ============================================================================
+
+  quest-definition-statestore:
+    backend: mysql
+    service: Quest
+    purpose: Quest definitions with contract template IDs and metadata
+
+  quest-instance-statestore:
+    backend: mysql
+    service: Quest
+    purpose: Quest instances with status and party information
+
+  quest-objective-progress:
+    backend: redis
+    prefix: "quest:prog"
+    service: Quest
+    purpose: Real-time objective progress tracking
+
+  quest-definition-cache:
+    backend: redis
+    prefix: "quest:def"
+    service: Quest
+    purpose: Quest definition read-through cache
+
+  quest-character-index:
+    backend: redis
+    prefix: "quest:char"
+    service: Quest
+    purpose: Character to active quest instance mapping
+
+  quest-cooldown:
+    backend: redis
+    prefix: "quest:cd"
+    service: Quest
+    purpose: Per-character quest cooldown tracking
+
+  quest-idempotency:
+    backend: redis
+    prefix: "quest:idem"
+    service: Quest
+    purpose: Idempotency keys for accept/complete operations
+
+  # ============================================================================
+  # Resource Lifecycle Stores
+  # ============================================================================
+
+  resource-refcounts:
+    backend: redis
+    prefix: "resource:ref"
+    service: Resource
+    purpose: Reference counts and source tracking per resource
+
+  resource-cleanup:
+    backend: redis
+    prefix: "resource:cleanup"
+    service: Resource
+    purpose: Cleanup callback definitions per resource type
+
+  resource-grace:
+    backend: redis
+    prefix: "resource:grace"
+    service: Resource
+    purpose: Grace period timestamps for resources with zero references
+
+  resource-compress:
+    backend: redis
+    prefix: "resource:compress"
+    service: Resource
+    purpose: Compression callback definitions and callback index sets
+
+  resource-archives:
+    backend: mysql
+    service: Resource
+    purpose: Compressed archive bundles (durable storage for long-term archival)
+
+  resource-snapshots:
+    backend: redis
+    prefix: "resource:snapshot"
+    service: Resource
+    purpose: Ephemeral snapshots of living resources (TTL-based auto-expiry for storyline/actor consumption)
+
+  # ============================================================================
+  # Storyline Stores
+  # ============================================================================
+
+  storyline-plans:
+    backend: redis
+    prefix: "storyline:plan"
+    service: Storyline
+    purpose: Cached composed storyline plans (ephemeral, TTL from config)
+
+  storyline-plan-index:
+    backend: redis
+    prefix: "storyline:idx"
+    service: Storyline
+    purpose: Plan index by realm for list queries
+
+  # Scenario stores
+
+  storyline-scenario-definitions:
+    backend: mysql
+    service: Storyline
+    purpose: Durable scenario template definitions with conditions and mutations
+
+  storyline-scenario-executions:
+    backend: mysql
+    service: Storyline
+    purpose: Scenario execution history with outcome tracking
+
+  storyline-scenario-cache:
+    backend: redis
+    prefix: "storyline:scenario:cache"
+    service: Storyline
+    purpose: Scenario definition read-through cache (TTL from config)
+
+  storyline-scenario-cooldown:
+    backend: redis
+    prefix: "storyline:scenario:cd"
+    service: Storyline
+    purpose: Per-character scenario cooldowns with TTL-based auto-expiry
+
+  storyline-scenario-active:
+    backend: redis
+    prefix: "storyline:scenario:active"
+    service: Storyline
+    purpose: Active scenario tracking per character (set membership)
+
+  storyline-scenario-idempotency:
+    backend: redis
+    prefix: "storyline:scenario:idemp"
+    service: Storyline
+    purpose: Scenario trigger idempotency keys for deduplication
+
+  # ============================================================================
+  # Seed Stores - Progressive Growth Entities
+  # ============================================================================
+
+  seed-statestore:
+    backend: mysql
+    service: Seed
+    purpose: Seed entity records (durable, queryable by owner/type)
+
+  seed-growth-statestore:
+    backend: mysql
+    service: Seed
+    purpose: Growth domain records per seed (durable, queryable)
+
+  seed-capabilities-cache:
+    backend: redis
+    prefix: "seed:cap"
+    service: Seed
+    purpose: Computed capability manifests (cached, frequently read)
+
+  seed-bonds-statestore:
+    backend: mysql
+    service: Seed
+    purpose: Bond records between seeds (durable)
+
+  seed-type-definitions-statestore:
+    backend: mysql
+    service: Seed
+    purpose: Registered seed type definitions (durable, admin-managed)
+
+  seed-lock:
+    backend: redis
+    prefix: "seed:lock"
+    service: Seed
+    purpose: Distributed locks for seed modifications
+
+  # ============================================================================
+  # Faction Stores (L4 GameFeatures Service)
+  # ============================================================================
+
+  faction-statestore:
+    backend: mysql
+    service: Faction
+    purpose: Faction entity records (durable, queryable by realm/game service/status)
+
+  faction-membership-statestore:
+    backend: mysql
+    service: Faction
+    purpose: Faction membership records linking characters to factions with roles
+
+  faction-territory-statestore:
+    backend: mysql
+    service: Faction
+    purpose: Territory claim records linking factions to controlled locations
+
+  faction-norm-statestore:
+    backend: mysql
+    service: Faction
+    purpose: Behavioral norm definitions per faction (durable, queryable by violation type)
+
+  faction-cache:
+    backend: redis
+    prefix: "faction:cache"
+    service: Faction
+    purpose: Faction lookup and norm resolution cache (frequently read, TTL-based)
+
+  faction-lock:
+    backend: redis
+    prefix: "faction:lock"
+    service: Faction
+    purpose: Distributed locks for faction, membership, and territory mutations
+
+  # ============================================================================
+  # License Stores (L4 GameFeatures Service)
+  # ============================================================================
+
+  license-board-templates:
+    backend: mysql
+    service: License
+    purpose: Board template definitions with grid layout and contract references
+
+  license-definitions:
+    backend: mysql
+    service: License
+    purpose: License definitions (nodes) per board template with grid positions
+
+  license-boards:
+    backend: mysql
+    service: License
+    purpose: Character board instances linking characters to board templates
+
+  license-board-cache:
+    backend: redis
+    prefix: "license:board"
+    service: License
+    purpose: Board state cache (unlocked license positions per board)
+
+  license-lock:
+    backend: redis
+    prefix: "license:lock"
+    service: License
+    purpose: Distributed locks for board mutations and unlock operations
+
+  # ============================================================================
+  # Collection Stores (L4 GameFeatures Service)
+  # ============================================================================
+
+  collection-entry-templates:
+    backend: mysql
+    service: Collection
+    purpose: Entry template definitions per collection type and game service
+
+  collection-instances:
+    backend: mysql
+    service: Collection
+    purpose: Per-owner collection containers linking entities to collection types
+
+  collection-area-content-configs:
+    backend: mysql
+    service: Collection
+    purpose: Area-to-theme mappings for dynamic content selection
+
+  collection-cache:
+    backend: redis
+    prefix: "collection:state"
+    service: Collection
+    purpose: Collection state cache (unlocked entries per collection)
+
+  collection-lock:
+    backend: redis
+    prefix: "collection:lock"
+    service: Collection
+    purpose: Distributed locks for collection mutations and grant operations
+
+  # ============================================================================
+  # Gardener Stores (L4 GameFeatures Service)
+  # ============================================================================
+
+  gardener-garden-instances:
+    backend: redis
+    prefix: "gardener:garden"
+    service: Gardener
+    purpose: Active garden instance state per player (ephemeral, TTL-based)
+
+  gardener-pois:
+    backend: redis
+    prefix: "gardener:poi"
+    service: Gardener
+    purpose: Active POI state within garden instances (ephemeral, TTL-based)
+
+  gardener-scenario-templates:
+    backend: mysql
+    service: Gardener
+    purpose: Scenario template definitions (durable, queryable by category/status)
+
+  gardener-scenario-instances:
+    backend: redis
+    prefix: "gardener:scenario"
+    service: Gardener
+    purpose: Active scenario instance state (ephemeral, keyed by instance ID)
+
+  gardener-scenario-history:
+    backend: mysql
+    service: Gardener
+    purpose: Completed scenario history per player (durable, queryable for cooldown)
+
+  gardener-phase-config:
+    backend: mysql
+    service: Gardener
+    purpose: Deployment phase configuration and transition history (durable)
+
+  gardener-lock:
+    backend: redis
+    prefix: "gardener:lock"
+    service: Gardener
+    purpose: Distributed locks for garden orchestration and scenario mutations
+
+  # =========================================================================
+  # Divine (L4 GameFeatures)
+  # =========================================================================
+
+  divine-deities:
+    backend: mysql
+    service: Divine
+    purpose: Deity entity records (durable, queryable by game service, domain, status)
+
+  divine-blessings:
+    backend: mysql
+    service: Divine
+    purpose: Blessing grant records linking deities to characters via items (durable, queryable)
+
+  divine-attention:
+    backend: redis
+    prefix: "divine:attention"
+    service: Divine
+    purpose: Active attention slot tracking per deity (ephemeral, high-frequency reads)
+
+  divine-divinity-events:
+    backend: redis
+    prefix: "divine:divevt"
+    service: Divine
+    purpose: Pending divinity generation events awaiting batch processing (ephemeral queue)
+
+  divine-lock:
+    backend: redis
+    prefix: "divine:lock"
+    service: Divine
+    purpose: Distributed locks for deity and blessing mutations
+
+  # =========================================================================
+  # Obligation Stores (L4 GameFeatures)
+  # =========================================================================
+
+  obligation-cache:
+    backend: redis
+    prefix: "obligation:cache"
+    service: Obligation
+    purpose: Cached obligation manifests per character (ephemeral, event-driven invalidation)
+
+  obligation-action-mappings:
+    backend: mysql
+    service: Obligation
+    purpose: Action tag to violation type code mappings (durable, queryable)
+
+  obligation-violations:
+    backend: mysql
+    service: Obligation
+    purpose: Violation history records (durable, queryable by character/contract/type)
+
+  obligation-idempotency:
+    backend: redis
+    prefix: "obligation:idemp"
+    service: Obligation
+    purpose: Violation report idempotency key deduplication
+
+  obligation-lock:
+    backend: redis
+    prefix: "obligation:lock"
+    service: Obligation
+    purpose: Distributed locks for obligation cache rebuild operations
+
+  # ============================================================================
+  # Status Stores - Unified Entity Effects Layer
+  # ============================================================================
+
+  status-templates:
+    backend: mysql
+    service: Status
+    purpose: Status template definitions (durable, queryable by category/code/gameServiceId)
+
+  status-instances:
+    backend: mysql
+    service: Status
+    purpose: Status instance records with metadata (durable, queryable by entity/source/category)
+
+  status-containers:
+    backend: mysql
+    service: Status
+    purpose: Status container records mapping entities to inventory containers (durable)
+
+  status-active-cache:
+    backend: redis
+    prefix: "status:active"
+    service: Status
+    purpose: Active status cache per entity (fast lookup, rebuilt from instances on miss)
+
+  status-seed-effects-cache:
+    backend: redis
+    prefix: "status:seed"
+    service: Status
+    purpose: Cached seed-derived effects per entity (invalidated on capability.updated events)
+
+  status-lock:
+    backend: redis
+    prefix: "status:lock"
+    service: Status
+    purpose: Distributed locks for status mutations and template updates
+
+  # ============================================================================
+  # Worldstate Stores (L2 GameFoundation Service)
+  # ============================================================================
+
+  worldstate-realm-clock:
+    backend: redis
+    prefix: "worldstate:clock"
+    service: Worldstate
+    purpose: Current game time per realm (hot reads, updated every ClockTickIntervalSeconds)
+
+  worldstate-calendar:
+    backend: mysql
+    service: Worldstate
+    purpose: Calendar template definitions and per-realm worldstate configuration (durable, queryable)
+
+  worldstate-ratio-history:
+    backend: mysql
+    service: Worldstate
+    purpose: Time ratio change history per realm for elapsed game-time computation (append-only, compacted)

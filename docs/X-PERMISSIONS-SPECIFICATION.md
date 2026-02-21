@@ -25,7 +25,7 @@ paths:
 
 | Property | Type | Required | Description |
 |----------|------|----------|-------------|
-| `role` | string | Yes | Role required for access (e.g., `user`, `admin`, `npc`, `anonymous`) |
+| `role` | string | Yes | Role required for access (e.g., `user`, `admin`, `developer`, `anonymous`) |
 | `states` | object | No | Map of service states required. Empty object means no state requirements. |
 
 ### State Requirements
@@ -53,9 +53,8 @@ x-permissions:
 |------|-------------|
 | `anonymous` | Unauthenticated users (pre-login) |
 | `user` | Standard authenticated users |
-| `admin` | Administrative users with elevated privileges |
-| `npc` | AI agent NPCs (server-side entities) |
-| `service` | Service-to-service calls (internal APIs) |
+| `developer` | Developers with elevated privileges |
+| `admin` | Administrators with elevated privileges |
 
 ## Standard States
 
@@ -65,13 +64,6 @@ States are for contextual navigation, **not authentication status**. Authenticat
 - `in_lobby`: User is in a game lobby
 - `in_game`: User is in an active game session
 - `spectating`: User is watching a game as spectator
-
-### Character States (set by character service)
-- `selected`: User has selected a character
-- `in_creation`: User is creating a character
-
-### Realm States (set by realm service)
-- `in_realm`: User is in a specific realm instance
 
 ## Examples
 
@@ -83,8 +75,6 @@ States are for contextual navigation, **not authentication status**. Authenticat
     x-permissions:
       - role: anonymous
         states: {}
-      - role: user
-        states: {}  # Already logged in users can also call login
 ```
 
 ### Authenticated User Endpoint
@@ -94,8 +84,6 @@ States are for contextual navigation, **not authentication status**. Authenticat
   get:
     x-permissions:
       - role: user
-        states: {}
-      - role: admin
         states: {}
 ```
 
@@ -120,39 +108,22 @@ States are for contextual navigation, **not authentication status**. Authenticat
           game-session: in_game  # Must be in active game
 ```
 
-### NPC Endpoint (Server-Side Only)
-
-```yaml
-/npc/behavior/update:
-  post:
-    x-permissions:
-      - role: npc
-        states: {}
-      - role: service
-        states: {}
-```
-
 ## Generation Output
 
-When services start, they call `RegisterServicePermissionsAsync()` which publishes a `ServiceRegistrationEvent` containing:
+When services start, PluginLoader calls `RegisterServicePermissionsAsync()` on each service, which pushes the permission matrix to `IPermissionRegistry`:
 
-```json
+```csharp
+// Generated in {Service}PermissionRegistration.cs
+async Task IBannouService.RegisterServicePermissionsAsync(
+    string appId, IPermissionRegistry? registry)
 {
-  "eventId": "uuid",
-  "timestamp": "2025-01-19T12:00:00Z",
-  "serviceId": "auth",
-  "version": "3.0.0",
-  "appId": "bannou",
-  "endpoints": [
+    if (registry != null)
     {
-      "path": "/auth/login",
-      "method": "POST",
-      "permissions": [
-        { "role": "anonymous", "requiredStates": {} },
-        { "role": "user", "requiredStates": {} }
-      ]
+        await registry.RegisterServiceAsync(
+            ServiceId,       // e.g., "auth"
+            ServiceVersion,  // e.g., "3.0.0"
+            BuildPermissionMatrix());  // state -> role -> [endpoints]
     }
-  ]
 }
 ```
 
@@ -160,8 +131,8 @@ When services start, they call `RegisterServicePermissionsAsync()` which publish
 
 1. **Build Time**: `generate-permissions.sh` extracts x-permissions from schema
 2. **Generated Code**: Creates `{Service}PermissionRegistration.cs` in `Generated/` with permission matrix
-3. **Service Startup**: `RegisterServicePermissionsAsync()` publishes `ServiceRegistrationEvent`
-4. **Permission Service**: Receives event, updates Redis permission matrices
+3. **Service Startup**: PluginLoader calls `RegisterServicePermissionsAsync()` with the resolved `IPermissionRegistry`
+4. **Permission Service**: Receives registration via DI, updates Redis permission matrices
 5. **Session Recompilation**: All active sessions get updated capabilities
 6. **Connect Service**: Receives capability updates, notifies WebSocket clients
 

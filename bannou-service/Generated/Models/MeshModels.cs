@@ -65,6 +65,7 @@ public partial class MeshEndpoint
     /// Service port (typically 80)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("port")]
+    [System.ComponentModel.DataAnnotations.Range(1, 65535)]
     public int Port { get; set; } = default!;
 
     /// <summary>
@@ -80,22 +81,25 @@ public partial class MeshEndpoint
     /// Current load as percentage (0-100)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("loadPercent")]
+    [System.ComponentModel.DataAnnotations.Range(0F, 100F)]
     public float LoadPercent { get; set; } = 0F;
 
     /// <summary>
-    /// Maximum concurrent connections
+    /// Maximum concurrent connections this endpoint can handle
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("maxConnections")]
+    [System.ComponentModel.DataAnnotations.Range(0, int.MaxValue)]
     public int MaxConnections { get; set; } = default!;
 
     /// <summary>
     /// Current active connections
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("currentConnections")]
+    [System.ComponentModel.DataAnnotations.Range(0, int.MaxValue)]
     public int CurrentConnections { get; set; } = default!;
 
     /// <summary>
-    /// List of service names hosted on this endpoint
+    /// List of service names hosted on this endpoint (without lib- prefix, e.g., 'account', 'auth')
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("services")]
     public System.Collections.Generic.ICollection<string> Services { get; set; } = default!;
@@ -111,6 +115,12 @@ public partial class MeshEndpoint
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("registeredAt")]
     public System.DateTimeOffset RegisteredAt { get; set; } = default!;
+
+    /// <summary>
+    /// List of non-critical issues reported via heartbeat (null if none)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("issues")]
+    public System.Collections.Generic.ICollection<string>? Issues { get; set; } = default!;
 
 }
 
@@ -154,8 +164,11 @@ public enum LoadBalancerAlgorithm
     [System.Runtime.Serialization.EnumMember(Value = @"Weighted")]
     Weighted = 2,
 
+    [System.Runtime.Serialization.EnumMember(Value = @"WeightedRoundRobin")]
+    WeightedRoundRobin = 3,
+
     [System.Runtime.Serialization.EnumMember(Value = @"Random")]
-    Random = 3,
+    Random = 4,
 
 }
 #pragma warning restore CS1591
@@ -347,6 +360,7 @@ public partial class RegisterEndpointRequest
     /// Service port
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("port")]
+    [System.ComponentModel.DataAnnotations.Range(1, 65535)]
     public int Port { get; set; } = 80;
 
     /// <summary>
@@ -356,16 +370,11 @@ public partial class RegisterEndpointRequest
     public System.Collections.Generic.ICollection<string>? Services { get; set; } = default!;
 
     /// <summary>
-    /// Maximum concurrent connections
+    /// Maximum concurrent connections this endpoint can handle
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("maxConnections")]
+    [System.ComponentModel.DataAnnotations.Range(0, int.MaxValue)]
     public int MaxConnections { get; set; } = 1000;
-
-    /// <summary>
-    /// Optional metadata key-value pairs (null if none)
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("metadata")]
-    public System.Collections.Generic.IDictionary<string, string>? Metadata { get; set; } = default!;
 
 }
 
@@ -435,12 +444,14 @@ public partial class HeartbeatRequest
     /// Current load 0-100 (null defaults to 0)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("loadPercent")]
+    [System.ComponentModel.DataAnnotations.Range(0F, 100F)]
     public float? LoadPercent { get; set; } = default!;
 
     /// <summary>
     /// Current active connections (null defaults to 0)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("currentConnections")]
+    [System.ComponentModel.DataAnnotations.Range(0, int.MaxValue)]
     public int? CurrentConnections { get; set; } = default!;
 
     /// <summary>
@@ -488,17 +499,17 @@ public partial class GetRouteRequest
     public string AppId { get; set; } = default!;
 
     /// <summary>
-    /// Optional service name for affinity routing (null for no affinity)
+    /// Optional filter to select only endpoints hosting this specific service (null for any endpoint)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("serviceName")]
     public string? ServiceName { get; set; } = default!;
 
     /// <summary>
-    /// Load balancing algorithm to use for endpoint selection
+    /// Load balancing algorithm to use for endpoint selection (null uses service default from configuration)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("algorithm")]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public LoadBalancerAlgorithm Algorithm { get; set; } = default!;
+    public LoadBalancerAlgorithm? Algorithm { get; set; } = default!;
 
 }
 

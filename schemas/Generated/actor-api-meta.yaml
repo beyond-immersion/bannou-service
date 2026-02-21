@@ -7,9 +7,22 @@ info:
     and other long-running behavior loops. Actors output behavioral state (feelings,
     goals, memories) to characters - NOT physics data.
 
-    **Schema Rules**: AI agents MUST review docs/reference/SCHEMA-RULES.md before modifying this schema. Optional reference types require `nullable: true`.
+    **SCHEMA MODIFICATION GATE**: STOP. Before modifying this schema, you MUST:
+    1. Read docs/reference/SCHEMA-RULES.md
+    2. State which section applies to your change
+    3. Only then proceed with edits
+    Edits without stating the applicable rule are FORBIDDEN.
+  x-references:
+  - target: character
+    sourceType: actor
+    field: characterId
+    onDelete: cascade
+    cleanup:
+      endpoint: /actor/cleanup-by-character
+      payloadTemplate: '{"characterId": "{{resourceId}}"}'
 servers:
 - url: http://localhost:5012
+x-service-layer: GameFoundation
 paths:
   /actor/template/create:
     post:
@@ -40,17 +53,27 @@ paths:
         \             \"description\": \"Reference to behavior in lib-assets (e.g., \\\"asset://behaviors/npc-brain-v1\\\"\
         )\"\n                },\n                \"configuration\": {\n                    \"type\": \"object\",\n       \
         \             \"additionalProperties\": true,\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Default configuration passed to behavior execution\"\n                },\n                \"autoSpawn\": {\n \
-        \                   \"description\": \"Auto-spawn configuration for instantiate-on-access\",\n                   \
-        \ \"nullable\": true,\n                    \"$ref\": \"#/$defs/AutoSpawnConfig\"\n                },\n           \
-        \     \"tickIntervalMs\": {\n                    \"type\": \"integer\",\n                    \"default\": 1000,\n\
-        \                    \"description\": \"Milliseconds between behavior loop iterations\"\n                },\n    \
-        \            \"autoSaveIntervalSeconds\": {\n                    \"type\": \"integer\",\n                    \"default\"\
-        : 60,\n                    \"description\": \"Seconds between automatic state saves (0 to disable)\"\n           \
-        \     },\n                \"maxInstancesPerNode\": {\n                    \"type\": \"integer\",\n               \
-        \     \"default\": 100,\n                    \"description\": \"Maximum actors of this category per pool node\"\n\
-        \                }\n            }\n        },\n        \"AutoSpawnConfig\": {\n            \"type\": \"object\",\n\
-        \            \"additionalProperties\": false,\n            \"description\": \"Configuration for instantiate-on-access
+        : \"Game-specific configuration passed to ABML behavior execution scope. No Bannou plugin reads specific keys from
+        this field by convention. Different ABML behaviors define their own expected configuration structure.\"\n        \
+        \        },\n                \"autoSpawn\": {\n                    \"description\": \"Auto-spawn configuration for
+        instantiate-on-access\",\n                    \"nullable\": true,\n                    \"$ref\": \"#/$defs/AutoSpawnConfig\"\
+        \n                },\n                \"tickIntervalMs\": {\n                    \"type\": \"integer\",\n        \
+        \            \"default\": 1000,\n                    \"description\": \"Milliseconds between behavior loop iterations\"\
+        \n                },\n                \"autoSaveIntervalSeconds\": {\n                    \"type\": \"integer\",\n\
+        \                    \"default\": 60,\n                    \"description\": \"Seconds between automatic state saves
+        (0 to disable)\"\n                },\n                \"maxInstancesPerNode\": {\n                    \"type\": \"\
+        integer\",\n                    \"default\": 100,\n                    \"description\": \"Maximum actors of this category
+        per pool node\"\n                },\n                \"cognitionTemplateId\": {\n                    \"type\": \"\
+        string\",\n                    \"nullable\": true,\n                    \"description\": \"Cognition template ID for
+        this actor type. Primary source for cognition\\npipeline resolution. When null, falls back to ABML metadata, then
+        category default.\\nExamples: \\\"humanoid-cognition-base\\\", \\\"creature-cognition-base\\\", \\\"object-cognition-base\\\
+        \"\\n\"\n                },\n                \"cognitionOverrides\": {\n                    \"type\": \"object\",\n\
+        \                    \"additionalProperties\": true,\n                    \"nullable\": true,\n                  \
+        \  \"description\": \"Static template-level cognition overrides (polymorphic JSON). Deserialized internally to CognitionOverrides
+        type with discriminated subtypes. Applied as the first layer in the three-layer override composition (template, instance,
+        ABML metadata). Structure defined by ICognitionOverride interface hierarchy in bannou-service/Behavior/.\"\n     \
+        \           }\n            }\n        },\n        \"AutoSpawnConfig\": {\n            \"type\": \"object\",\n    \
+        \        \"additionalProperties\": false,\n            \"description\": \"Configuration for instantiate-on-access
         behavior\",\n            \"properties\": {\n                \"enabled\": {\n                    \"type\": \"boolean\"\
         ,\n                    \"default\": false,\n                    \"description\": \"If true, accessing a non-existent
         actor creates it\"\n                },\n                \"idPattern\": {\n                    \"type\": \"string\"\
@@ -62,7 +85,11 @@ paths:
         \               \"minimum\": 1,\n                    \"nullable\": true,\n                    \"description\": \"\
         1-based regex capture group index for extracting CharacterId from actor ID.\\nExample: With idPattern \\\"npc-brain-([a-f0-9-]+)\\\
         \" and characterIdCaptureGroup: 1,\\nactor ID \\\"npc-brain-abc-123-def\\\" extracts \\\"abc-123-def\\\" as CharacterId
-        (parsed as GUID).\\n\"\n                }\n            }\n        }\n    }\n}"
+        (parsed as GUID).\\n\"\n                },\n                \"defaultRealmId\": {\n                    \"type\": \"\
+        string\",\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n                  \
+        \  \"description\": \"Default realm ID for auto-spawned actors when no CharacterId is available to resolve a realm.\\
+        nRequired when characterIdCaptureGroup is not configured and auto-spawn is enabled.\\n\"\n                }\n    \
+        \        }\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ActorTemplateResponse\"\
         ,\n    \"$defs\": {\n        \"ActorTemplateResponse\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
         : false,\n            \"description\": \"Response containing actor template details\",\n            \"required\":
@@ -75,32 +102,43 @@ paths:
         \             },\n                \"behaviorRef\": {\n                    \"type\": \"string\",\n                \
         \    \"description\": \"Reference to behavior in lib-assets\"\n                },\n                \"configuration\"\
         : {\n                    \"type\": \"object\",\n                    \"additionalProperties\": true,\n            \
-        \        \"nullable\": true,\n                    \"description\": \"Default configuration passed to behavior execution\"\
-        \n                },\n                \"autoSpawn\": {\n                    \"description\": \"Auto-spawn configuration
-        for instantiate-on-access\",\n                    \"nullable\": true,\n                    \"$ref\": \"#/$defs/AutoSpawnConfig\"\
-        \n                },\n                \"tickIntervalMs\": {\n                    \"type\": \"integer\",\n        \
-        \            \"description\": \"Milliseconds between behavior loop iterations\"\n                },\n            \
-        \    \"autoSaveIntervalSeconds\": {\n                    \"type\": \"integer\",\n                    \"description\"\
-        : \"Seconds between automatic state saves\"\n                },\n                \"maxInstancesPerNode\": {\n    \
-        \                \"type\": \"integer\",\n                    \"description\": \"Maximum actors of this category per
-        pool node\"\n                },\n                \"createdAt\": {\n                    \"type\": \"string\",\n   \
-        \                 \"format\": \"date-time\",\n                    \"description\": \"When the template was created\"\
-        \n                },\n                \"updatedAt\": {\n                    \"type\": \"string\",\n              \
-        \      \"format\": \"date-time\",\n                    \"description\": \"When the template was last updated\"\n \
-        \               }\n            }\n        },\n        \"AutoSpawnConfig\": {\n            \"type\": \"object\",\n\
-        \            \"additionalProperties\": false,\n            \"description\": \"Configuration for instantiate-on-access
-        behavior\",\n            \"properties\": {\n                \"enabled\": {\n                    \"type\": \"boolean\"\
-        ,\n                    \"default\": false,\n                    \"description\": \"If true, accessing a non-existent
-        actor creates it\"\n                },\n                \"idPattern\": {\n                    \"type\": \"string\"\
-        ,\n                    \"nullable\": true,\n                    \"description\": \"Regex pattern for actor IDs that
-        trigger auto-spawn.\\nExamples: \\\"npc-.*\\\" matches \\\"npc-grok\\\", \\\"npc-merchant-123\\\"\\n\"\n         \
-        \       },\n                \"maxInstances\": {\n                    \"type\": \"integer\",\n                    \"\
-        nullable\": true,\n                    \"description\": \"Maximum auto-spawned instances (0 = unlimited)\"\n     \
-        \           },\n                \"characterIdCaptureGroup\": {\n                    \"type\": \"integer\",\n     \
-        \               \"minimum\": 1,\n                    \"nullable\": true,\n                    \"description\": \"\
-        1-based regex capture group index for extracting CharacterId from actor ID.\\nExample: With idPattern \\\"npc-brain-([a-f0-9-]+)\\\
+        \        \"nullable\": true,\n                    \"description\": \"Game-specific configuration passed to ABML behavior
+        execution scope. No Bannou plugin reads specific keys from this field by convention.\"\n                },\n     \
+        \           \"autoSpawn\": {\n                    \"description\": \"Auto-spawn configuration for instantiate-on-access\"\
+        ,\n                    \"nullable\": true,\n                    \"$ref\": \"#/$defs/AutoSpawnConfig\"\n          \
+        \      },\n                \"tickIntervalMs\": {\n                    \"type\": \"integer\",\n                   \
+        \ \"description\": \"Milliseconds between behavior loop iterations\"\n                },\n                \"autoSaveIntervalSeconds\"\
+        : {\n                    \"type\": \"integer\",\n                    \"description\": \"Seconds between automatic
+        state saves\"\n                },\n                \"maxInstancesPerNode\": {\n                    \"type\": \"integer\"\
+        ,\n                    \"description\": \"Maximum actors of this category per pool node\"\n                },\n  \
+        \              \"cognitionTemplateId\": {\n                    \"type\": \"string\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Cognition template ID for this actor type. Primary source for cognition\\
+        npipeline resolution. When null, falls back to ABML metadata, then category default.\\n\"\n                },\n  \
+        \              \"cognitionOverrides\": {\n                    \"type\": \"object\",\n                    \"additionalProperties\"\
+        : true,\n                    \"nullable\": true,\n                    \"description\": \"Static template-level cognition
+        overrides (polymorphic JSON). Deserialized internally to CognitionOverrides type with discriminated subtypes.\"\n\
+        \                },\n                \"createdAt\": {\n                    \"type\": \"string\",\n               \
+        \     \"format\": \"date-time\",\n                    \"description\": \"When the template was created\"\n       \
+        \         },\n                \"updatedAt\": {\n                    \"type\": \"string\",\n                    \"\
+        format\": \"date-time\",\n                    \"description\": \"When the template was last updated\"\n          \
+        \      }\n            }\n        },\n        \"AutoSpawnConfig\": {\n            \"type\": \"object\",\n         \
+        \   \"additionalProperties\": false,\n            \"description\": \"Configuration for instantiate-on-access behavior\"\
+        ,\n            \"properties\": {\n                \"enabled\": {\n                    \"type\": \"boolean\",\n   \
+        \                 \"default\": false,\n                    \"description\": \"If true, accessing a non-existent actor
+        creates it\"\n                },\n                \"idPattern\": {\n                    \"type\": \"string\",\n  \
+        \                  \"nullable\": true,\n                    \"description\": \"Regex pattern for actor IDs that trigger
+        auto-spawn.\\nExamples: \\\"npc-.*\\\" matches \\\"npc-grok\\\", \\\"npc-merchant-123\\\"\\n\"\n                },\n\
+        \                \"maxInstances\": {\n                    \"type\": \"integer\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Maximum auto-spawned instances (0 = unlimited)\"\n               \
+        \ },\n                \"characterIdCaptureGroup\": {\n                    \"type\": \"integer\",\n               \
+        \     \"minimum\": 1,\n                    \"nullable\": true,\n                    \"description\": \"1-based regex
+        capture group index for extracting CharacterId from actor ID.\\nExample: With idPattern \\\"npc-brain-([a-f0-9-]+)\\\
         \" and characterIdCaptureGroup: 1,\\nactor ID \\\"npc-brain-abc-123-def\\\" extracts \\\"abc-123-def\\\" as CharacterId
-        (parsed as GUID).\\n\"\n                }\n            }\n        }\n    }\n}"
+        (parsed as GUID).\\n\"\n                },\n                \"defaultRealmId\": {\n                    \"type\": \"\
+        string\",\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n                  \
+        \  \"description\": \"Default realm ID for auto-spawned actors when no CharacterId is available to resolve a realm.\\
+        nRequired when characterIdCaptureGroup is not configured and auto-spawn is enabled.\\n\"\n                }\n    \
+        \        }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Create an actor template (category definition)\",\n    \"description\"\
         : \"\",\n    \"tags\": [],\n    \"deprecated\": false,\n    \"operationId\": \"CreateActorTemplate\"\n}"
   /actor/template/get:
@@ -143,32 +181,43 @@ paths:
         \             },\n                \"behaviorRef\": {\n                    \"type\": \"string\",\n                \
         \    \"description\": \"Reference to behavior in lib-assets\"\n                },\n                \"configuration\"\
         : {\n                    \"type\": \"object\",\n                    \"additionalProperties\": true,\n            \
-        \        \"nullable\": true,\n                    \"description\": \"Default configuration passed to behavior execution\"\
-        \n                },\n                \"autoSpawn\": {\n                    \"description\": \"Auto-spawn configuration
-        for instantiate-on-access\",\n                    \"nullable\": true,\n                    \"$ref\": \"#/$defs/AutoSpawnConfig\"\
-        \n                },\n                \"tickIntervalMs\": {\n                    \"type\": \"integer\",\n        \
-        \            \"description\": \"Milliseconds between behavior loop iterations\"\n                },\n            \
-        \    \"autoSaveIntervalSeconds\": {\n                    \"type\": \"integer\",\n                    \"description\"\
-        : \"Seconds between automatic state saves\"\n                },\n                \"maxInstancesPerNode\": {\n    \
-        \                \"type\": \"integer\",\n                    \"description\": \"Maximum actors of this category per
-        pool node\"\n                },\n                \"createdAt\": {\n                    \"type\": \"string\",\n   \
-        \                 \"format\": \"date-time\",\n                    \"description\": \"When the template was created\"\
-        \n                },\n                \"updatedAt\": {\n                    \"type\": \"string\",\n              \
-        \      \"format\": \"date-time\",\n                    \"description\": \"When the template was last updated\"\n \
-        \               }\n            }\n        },\n        \"AutoSpawnConfig\": {\n            \"type\": \"object\",\n\
-        \            \"additionalProperties\": false,\n            \"description\": \"Configuration for instantiate-on-access
-        behavior\",\n            \"properties\": {\n                \"enabled\": {\n                    \"type\": \"boolean\"\
-        ,\n                    \"default\": false,\n                    \"description\": \"If true, accessing a non-existent
-        actor creates it\"\n                },\n                \"idPattern\": {\n                    \"type\": \"string\"\
-        ,\n                    \"nullable\": true,\n                    \"description\": \"Regex pattern for actor IDs that
-        trigger auto-spawn.\\nExamples: \\\"npc-.*\\\" matches \\\"npc-grok\\\", \\\"npc-merchant-123\\\"\\n\"\n         \
-        \       },\n                \"maxInstances\": {\n                    \"type\": \"integer\",\n                    \"\
-        nullable\": true,\n                    \"description\": \"Maximum auto-spawned instances (0 = unlimited)\"\n     \
-        \           },\n                \"characterIdCaptureGroup\": {\n                    \"type\": \"integer\",\n     \
-        \               \"minimum\": 1,\n                    \"nullable\": true,\n                    \"description\": \"\
-        1-based regex capture group index for extracting CharacterId from actor ID.\\nExample: With idPattern \\\"npc-brain-([a-f0-9-]+)\\\
+        \        \"nullable\": true,\n                    \"description\": \"Game-specific configuration passed to ABML behavior
+        execution scope. No Bannou plugin reads specific keys from this field by convention.\"\n                },\n     \
+        \           \"autoSpawn\": {\n                    \"description\": \"Auto-spawn configuration for instantiate-on-access\"\
+        ,\n                    \"nullable\": true,\n                    \"$ref\": \"#/$defs/AutoSpawnConfig\"\n          \
+        \      },\n                \"tickIntervalMs\": {\n                    \"type\": \"integer\",\n                   \
+        \ \"description\": \"Milliseconds between behavior loop iterations\"\n                },\n                \"autoSaveIntervalSeconds\"\
+        : {\n                    \"type\": \"integer\",\n                    \"description\": \"Seconds between automatic
+        state saves\"\n                },\n                \"maxInstancesPerNode\": {\n                    \"type\": \"integer\"\
+        ,\n                    \"description\": \"Maximum actors of this category per pool node\"\n                },\n  \
+        \              \"cognitionTemplateId\": {\n                    \"type\": \"string\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Cognition template ID for this actor type. Primary source for cognition\\
+        npipeline resolution. When null, falls back to ABML metadata, then category default.\\n\"\n                },\n  \
+        \              \"cognitionOverrides\": {\n                    \"type\": \"object\",\n                    \"additionalProperties\"\
+        : true,\n                    \"nullable\": true,\n                    \"description\": \"Static template-level cognition
+        overrides (polymorphic JSON). Deserialized internally to CognitionOverrides type with discriminated subtypes.\"\n\
+        \                },\n                \"createdAt\": {\n                    \"type\": \"string\",\n               \
+        \     \"format\": \"date-time\",\n                    \"description\": \"When the template was created\"\n       \
+        \         },\n                \"updatedAt\": {\n                    \"type\": \"string\",\n                    \"\
+        format\": \"date-time\",\n                    \"description\": \"When the template was last updated\"\n          \
+        \      }\n            }\n        },\n        \"AutoSpawnConfig\": {\n            \"type\": \"object\",\n         \
+        \   \"additionalProperties\": false,\n            \"description\": \"Configuration for instantiate-on-access behavior\"\
+        ,\n            \"properties\": {\n                \"enabled\": {\n                    \"type\": \"boolean\",\n   \
+        \                 \"default\": false,\n                    \"description\": \"If true, accessing a non-existent actor
+        creates it\"\n                },\n                \"idPattern\": {\n                    \"type\": \"string\",\n  \
+        \                  \"nullable\": true,\n                    \"description\": \"Regex pattern for actor IDs that trigger
+        auto-spawn.\\nExamples: \\\"npc-.*\\\" matches \\\"npc-grok\\\", \\\"npc-merchant-123\\\"\\n\"\n                },\n\
+        \                \"maxInstances\": {\n                    \"type\": \"integer\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Maximum auto-spawned instances (0 = unlimited)\"\n               \
+        \ },\n                \"characterIdCaptureGroup\": {\n                    \"type\": \"integer\",\n               \
+        \     \"minimum\": 1,\n                    \"nullable\": true,\n                    \"description\": \"1-based regex
+        capture group index for extracting CharacterId from actor ID.\\nExample: With idPattern \\\"npc-brain-([a-f0-9-]+)\\\
         \" and characterIdCaptureGroup: 1,\\nactor ID \\\"npc-brain-abc-123-def\\\" extracts \\\"abc-123-def\\\" as CharacterId
-        (parsed as GUID).\\n\"\n                }\n            }\n        }\n    }\n}"
+        (parsed as GUID).\\n\"\n                },\n                \"defaultRealmId\": {\n                    \"type\": \"\
+        string\",\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n                  \
+        \  \"description\": \"Default realm ID for auto-spawned actors when no CharacterId is available to resolve a realm.\\
+        nRequired when characterIdCaptureGroup is not configured and auto-spawn is enabled.\\n\"\n                }\n    \
+        \        }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Get an actor template by ID or category\",\n    \"description\": \"\",\n\
         \    \"tags\": [],\n    \"deprecated\": false,\n    \"operationId\": \"GetActorTemplate\"\n}"
   /actor/template/list:
@@ -218,15 +267,22 @@ paths:
         \          \"type\": \"string\",\n                    \"description\": \"Reference to behavior in lib-assets\"\n \
         \               },\n                \"configuration\": {\n                    \"type\": \"object\",\n            \
         \        \"additionalProperties\": true,\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Default configuration passed to behavior execution\"\n                },\n                \"autoSpawn\": {\n \
-        \                   \"description\": \"Auto-spawn configuration for instantiate-on-access\",\n                   \
-        \ \"nullable\": true,\n                    \"$ref\": \"#/$defs/AutoSpawnConfig\"\n                },\n           \
-        \     \"tickIntervalMs\": {\n                    \"type\": \"integer\",\n                    \"description\": \"Milliseconds
-        between behavior loop iterations\"\n                },\n                \"autoSaveIntervalSeconds\": {\n         \
-        \           \"type\": \"integer\",\n                    \"description\": \"Seconds between automatic state saves\"\
-        \n                },\n                \"maxInstancesPerNode\": {\n                    \"type\": \"integer\",\n   \
-        \                 \"description\": \"Maximum actors of this category per pool node\"\n                },\n       \
-        \         \"createdAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\"\
+        : \"Game-specific configuration passed to ABML behavior execution scope. No Bannou plugin reads specific keys from
+        this field by convention.\"\n                },\n                \"autoSpawn\": {\n                    \"description\"\
+        : \"Auto-spawn configuration for instantiate-on-access\",\n                    \"nullable\": true,\n             \
+        \       \"$ref\": \"#/$defs/AutoSpawnConfig\"\n                },\n                \"tickIntervalMs\": {\n       \
+        \             \"type\": \"integer\",\n                    \"description\": \"Milliseconds between behavior loop iterations\"\
+        \n                },\n                \"autoSaveIntervalSeconds\": {\n                    \"type\": \"integer\",\n\
+        \                    \"description\": \"Seconds between automatic state saves\"\n                },\n            \
+        \    \"maxInstancesPerNode\": {\n                    \"type\": \"integer\",\n                    \"description\":
+        \"Maximum actors of this category per pool node\"\n                },\n                \"cognitionTemplateId\": {\n\
+        \                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Cognition template ID for this actor type. Primary source for cognition\\npipeline resolution. When null, falls
+        back to ABML metadata, then category default.\\n\"\n                },\n                \"cognitionOverrides\": {\n\
+        \                    \"type\": \"object\",\n                    \"additionalProperties\": true,\n                \
+        \    \"nullable\": true,\n                    \"description\": \"Static template-level cognition overrides (polymorphic
+        JSON). Deserialized internally to CognitionOverrides type with discriminated subtypes.\"\n                },\n   \
+        \             \"createdAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\"\
         ,\n                    \"description\": \"When the template was created\"\n                },\n                \"\
         updatedAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n      \
         \              \"description\": \"When the template was last updated\"\n                }\n            }\n       \
@@ -242,8 +298,11 @@ paths:
         : {\n                    \"type\": \"integer\",\n                    \"minimum\": 1,\n                    \"nullable\"\
         : true,\n                    \"description\": \"1-based regex capture group index for extracting CharacterId from
         actor ID.\\nExample: With idPattern \\\"npc-brain-([a-f0-9-]+)\\\" and characterIdCaptureGroup: 1,\\nactor ID \\\"\
-        npc-brain-abc-123-def\\\" extracts \\\"abc-123-def\\\" as CharacterId (parsed as GUID).\\n\"\n                }\n\
-        \            }\n        }\n    }\n}"
+        npc-brain-abc-123-def\\\" extracts \\\"abc-123-def\\\" as CharacterId (parsed as GUID).\\n\"\n                },\n\
+        \                \"defaultRealmId\": {\n                    \"type\": \"string\",\n                    \"format\"\
+        : \"uuid\",\n                    \"nullable\": true,\n                    \"description\": \"Default realm ID for
+        auto-spawned actors when no CharacterId is available to resolve a realm.\\nRequired when characterIdCaptureGroup is
+        not configured and auto-spawn is enabled.\\n\"\n                }\n            }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"List all actor templates\",\n    \"description\": \"\",\n    \"tags\":
         [],\n    \"deprecated\": false,\n    \"operationId\": \"ListActorTemplates\"\n}"
   /actor/template/update:
@@ -274,27 +333,37 @@ paths:
         : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
         : \"New behavior reference (triggers behavior.updated subscription)\"\n                },\n                \"configuration\"\
         : {\n                    \"type\": \"object\",\n                    \"additionalProperties\": true,\n            \
-        \        \"nullable\": true,\n                    \"description\": \"Updated configuration settings\"\n          \
-        \      },\n                \"autoSpawn\": {\n                    \"description\": \"Updated auto-spawn configuration\"\
-        ,\n                    \"nullable\": true,\n                    \"$ref\": \"#/$defs/AutoSpawnConfig\"\n          \
-        \      },\n                \"tickIntervalMs\": {\n                    \"type\": \"integer\",\n                   \
-        \ \"nullable\": true,\n                    \"description\": \"Updated tick interval in milliseconds\"\n          \
-        \      },\n                \"autoSaveIntervalSeconds\": {\n                    \"type\": \"integer\",\n          \
-        \          \"nullable\": true,\n                    \"description\": \"Updated auto-save interval in seconds\"\n \
-        \               }\n            }\n        },\n        \"AutoSpawnConfig\": {\n            \"type\": \"object\",\n\
-        \            \"additionalProperties\": false,\n            \"description\": \"Configuration for instantiate-on-access
-        behavior\",\n            \"properties\": {\n                \"enabled\": {\n                    \"type\": \"boolean\"\
-        ,\n                    \"default\": false,\n                    \"description\": \"If true, accessing a non-existent
-        actor creates it\"\n                },\n                \"idPattern\": {\n                    \"type\": \"string\"\
-        ,\n                    \"nullable\": true,\n                    \"description\": \"Regex pattern for actor IDs that
-        trigger auto-spawn.\\nExamples: \\\"npc-.*\\\" matches \\\"npc-grok\\\", \\\"npc-merchant-123\\\"\\n\"\n         \
-        \       },\n                \"maxInstances\": {\n                    \"type\": \"integer\",\n                    \"\
-        nullable\": true,\n                    \"description\": \"Maximum auto-spawned instances (0 = unlimited)\"\n     \
-        \           },\n                \"characterIdCaptureGroup\": {\n                    \"type\": \"integer\",\n     \
-        \               \"minimum\": 1,\n                    \"nullable\": true,\n                    \"description\": \"\
-        1-based regex capture group index for extracting CharacterId from actor ID.\\nExample: With idPattern \\\"npc-brain-([a-f0-9-]+)\\\
-        \" and characterIdCaptureGroup: 1,\\nactor ID \\\"npc-brain-abc-123-def\\\" extracts \\\"abc-123-def\\\" as CharacterId
-        (parsed as GUID).\\n\"\n                }\n            }\n        }\n    }\n}"
+        \        \"nullable\": true,\n                    \"description\": \"Updated game-specific configuration for ABML
+        behavior execution scope. No Bannou plugin reads specific keys from this field by convention.\"\n                },\n\
+        \                \"autoSpawn\": {\n                    \"description\": \"Updated auto-spawn configuration\",\n  \
+        \                  \"nullable\": true,\n                    \"$ref\": \"#/$defs/AutoSpawnConfig\"\n              \
+        \  },\n                \"tickIntervalMs\": {\n                    \"type\": \"integer\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Updated tick interval in milliseconds\"\n                },\n    \
+        \            \"autoSaveIntervalSeconds\": {\n                    \"type\": \"integer\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Updated auto-save interval in seconds\"\n                },\n    \
+        \            \"cognitionTemplateId\": {\n                    \"type\": \"string\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Updated cognition template ID. Set to override the cognition pipeline\\
+        nfor actors created from this template.\\n\"\n                },\n                \"cognitionOverrides\": {\n    \
+        \                \"type\": \"object\",\n                    \"additionalProperties\": true,\n                    \"\
+        nullable\": true,\n                    \"description\": \"Updated cognition overrides (polymorphic JSON). Deserialized
+        internally to CognitionOverrides type with discriminated subtypes.\"\n                }\n            }\n        },\n\
+        \        \"AutoSpawnConfig\": {\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n\
+        \            \"description\": \"Configuration for instantiate-on-access behavior\",\n            \"properties\": {\n\
+        \                \"enabled\": {\n                    \"type\": \"boolean\",\n                    \"default\": false,\n\
+        \                    \"description\": \"If true, accessing a non-existent actor creates it\"\n                },\n\
+        \                \"idPattern\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n\
+        \                    \"description\": \"Regex pattern for actor IDs that trigger auto-spawn.\\nExamples: \\\"npc-.*\\\
+        \" matches \\\"npc-grok\\\", \\\"npc-merchant-123\\\"\\n\"\n                },\n                \"maxInstances\":
+        {\n                    \"type\": \"integer\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Maximum auto-spawned instances (0 = unlimited)\"\n                },\n                \"characterIdCaptureGroup\"\
+        : {\n                    \"type\": \"integer\",\n                    \"minimum\": 1,\n                    \"nullable\"\
+        : true,\n                    \"description\": \"1-based regex capture group index for extracting CharacterId from
+        actor ID.\\nExample: With idPattern \\\"npc-brain-([a-f0-9-]+)\\\" and characterIdCaptureGroup: 1,\\nactor ID \\\"\
+        npc-brain-abc-123-def\\\" extracts \\\"abc-123-def\\\" as CharacterId (parsed as GUID).\\n\"\n                },\n\
+        \                \"defaultRealmId\": {\n                    \"type\": \"string\",\n                    \"format\"\
+        : \"uuid\",\n                    \"nullable\": true,\n                    \"description\": \"Default realm ID for
+        auto-spawned actors when no CharacterId is available to resolve a realm.\\nRequired when characterIdCaptureGroup is
+        not configured and auto-spawn is enabled.\\n\"\n                }\n            }\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ActorTemplateResponse\"\
         ,\n    \"$defs\": {\n        \"ActorTemplateResponse\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
         : false,\n            \"description\": \"Response containing actor template details\",\n            \"required\":
@@ -307,32 +376,43 @@ paths:
         \             },\n                \"behaviorRef\": {\n                    \"type\": \"string\",\n                \
         \    \"description\": \"Reference to behavior in lib-assets\"\n                },\n                \"configuration\"\
         : {\n                    \"type\": \"object\",\n                    \"additionalProperties\": true,\n            \
-        \        \"nullable\": true,\n                    \"description\": \"Default configuration passed to behavior execution\"\
-        \n                },\n                \"autoSpawn\": {\n                    \"description\": \"Auto-spawn configuration
-        for instantiate-on-access\",\n                    \"nullable\": true,\n                    \"$ref\": \"#/$defs/AutoSpawnConfig\"\
-        \n                },\n                \"tickIntervalMs\": {\n                    \"type\": \"integer\",\n        \
-        \            \"description\": \"Milliseconds between behavior loop iterations\"\n                },\n            \
-        \    \"autoSaveIntervalSeconds\": {\n                    \"type\": \"integer\",\n                    \"description\"\
-        : \"Seconds between automatic state saves\"\n                },\n                \"maxInstancesPerNode\": {\n    \
-        \                \"type\": \"integer\",\n                    \"description\": \"Maximum actors of this category per
-        pool node\"\n                },\n                \"createdAt\": {\n                    \"type\": \"string\",\n   \
-        \                 \"format\": \"date-time\",\n                    \"description\": \"When the template was created\"\
-        \n                },\n                \"updatedAt\": {\n                    \"type\": \"string\",\n              \
-        \      \"format\": \"date-time\",\n                    \"description\": \"When the template was last updated\"\n \
-        \               }\n            }\n        },\n        \"AutoSpawnConfig\": {\n            \"type\": \"object\",\n\
-        \            \"additionalProperties\": false,\n            \"description\": \"Configuration for instantiate-on-access
-        behavior\",\n            \"properties\": {\n                \"enabled\": {\n                    \"type\": \"boolean\"\
-        ,\n                    \"default\": false,\n                    \"description\": \"If true, accessing a non-existent
-        actor creates it\"\n                },\n                \"idPattern\": {\n                    \"type\": \"string\"\
-        ,\n                    \"nullable\": true,\n                    \"description\": \"Regex pattern for actor IDs that
-        trigger auto-spawn.\\nExamples: \\\"npc-.*\\\" matches \\\"npc-grok\\\", \\\"npc-merchant-123\\\"\\n\"\n         \
-        \       },\n                \"maxInstances\": {\n                    \"type\": \"integer\",\n                    \"\
-        nullable\": true,\n                    \"description\": \"Maximum auto-spawned instances (0 = unlimited)\"\n     \
-        \           },\n                \"characterIdCaptureGroup\": {\n                    \"type\": \"integer\",\n     \
-        \               \"minimum\": 1,\n                    \"nullable\": true,\n                    \"description\": \"\
-        1-based regex capture group index for extracting CharacterId from actor ID.\\nExample: With idPattern \\\"npc-brain-([a-f0-9-]+)\\\
+        \        \"nullable\": true,\n                    \"description\": \"Game-specific configuration passed to ABML behavior
+        execution scope. No Bannou plugin reads specific keys from this field by convention.\"\n                },\n     \
+        \           \"autoSpawn\": {\n                    \"description\": \"Auto-spawn configuration for instantiate-on-access\"\
+        ,\n                    \"nullable\": true,\n                    \"$ref\": \"#/$defs/AutoSpawnConfig\"\n          \
+        \      },\n                \"tickIntervalMs\": {\n                    \"type\": \"integer\",\n                   \
+        \ \"description\": \"Milliseconds between behavior loop iterations\"\n                },\n                \"autoSaveIntervalSeconds\"\
+        : {\n                    \"type\": \"integer\",\n                    \"description\": \"Seconds between automatic
+        state saves\"\n                },\n                \"maxInstancesPerNode\": {\n                    \"type\": \"integer\"\
+        ,\n                    \"description\": \"Maximum actors of this category per pool node\"\n                },\n  \
+        \              \"cognitionTemplateId\": {\n                    \"type\": \"string\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Cognition template ID for this actor type. Primary source for cognition\\
+        npipeline resolution. When null, falls back to ABML metadata, then category default.\\n\"\n                },\n  \
+        \              \"cognitionOverrides\": {\n                    \"type\": \"object\",\n                    \"additionalProperties\"\
+        : true,\n                    \"nullable\": true,\n                    \"description\": \"Static template-level cognition
+        overrides (polymorphic JSON). Deserialized internally to CognitionOverrides type with discriminated subtypes.\"\n\
+        \                },\n                \"createdAt\": {\n                    \"type\": \"string\",\n               \
+        \     \"format\": \"date-time\",\n                    \"description\": \"When the template was created\"\n       \
+        \         },\n                \"updatedAt\": {\n                    \"type\": \"string\",\n                    \"\
+        format\": \"date-time\",\n                    \"description\": \"When the template was last updated\"\n          \
+        \      }\n            }\n        },\n        \"AutoSpawnConfig\": {\n            \"type\": \"object\",\n         \
+        \   \"additionalProperties\": false,\n            \"description\": \"Configuration for instantiate-on-access behavior\"\
+        ,\n            \"properties\": {\n                \"enabled\": {\n                    \"type\": \"boolean\",\n   \
+        \                 \"default\": false,\n                    \"description\": \"If true, accessing a non-existent actor
+        creates it\"\n                },\n                \"idPattern\": {\n                    \"type\": \"string\",\n  \
+        \                  \"nullable\": true,\n                    \"description\": \"Regex pattern for actor IDs that trigger
+        auto-spawn.\\nExamples: \\\"npc-.*\\\" matches \\\"npc-grok\\\", \\\"npc-merchant-123\\\"\\n\"\n                },\n\
+        \                \"maxInstances\": {\n                    \"type\": \"integer\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Maximum auto-spawned instances (0 = unlimited)\"\n               \
+        \ },\n                \"characterIdCaptureGroup\": {\n                    \"type\": \"integer\",\n               \
+        \     \"minimum\": 1,\n                    \"nullable\": true,\n                    \"description\": \"1-based regex
+        capture group index for extracting CharacterId from actor ID.\\nExample: With idPattern \\\"npc-brain-([a-f0-9-]+)\\\
         \" and characterIdCaptureGroup: 1,\\nactor ID \\\"npc-brain-abc-123-def\\\" extracts \\\"abc-123-def\\\" as CharacterId
-        (parsed as GUID).\\n\"\n                }\n            }\n        }\n    }\n}"
+        (parsed as GUID).\\n\"\n                },\n                \"defaultRealmId\": {\n                    \"type\": \"\
+        string\",\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n                  \
+        \  \"description\": \"Default realm ID for auto-spawned actors when no CharacterId is available to resolve a realm.\\
+        nRequired when characterIdCaptureGroup is not configured and auto-spawn is enabled.\\n\"\n                }\n    \
+        \        }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Update an actor template\",\n    \"description\": \"\",\n    \"tags\":
         [],\n    \"deprecated\": false,\n    \"operationId\": \"UpdateActorTemplate\"\n}"
   /actor/template/delete:
@@ -400,12 +480,18 @@ paths:
         \        \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Optional
         custom actor ID (auto-generated if not provided)\"\n                },\n                \"configurationOverrides\"\
         : {\n                    \"type\": \"object\",\n                    \"additionalProperties\": true,\n            \
-        \        \"nullable\": true,\n                    \"description\": \"Override template defaults\"\n              \
-        \  },\n                \"initialState\": {\n                    \"type\": \"object\",\n                    \"additionalProperties\"\
-        : true,\n                    \"nullable\": true,\n                    \"description\": \"Initial state passed to behavior\"\
+        \        \"nullable\": true,\n                    \"description\": \"Game-specific configuration overrides merged
+        with template defaults. No Bannou plugin reads specific keys from this field by convention.\"\n                },\n\
+        \                \"initialState\": {\n                    \"type\": \"object\",\n                    \"additionalProperties\"\
+        : true,\n                    \"nullable\": true,\n                    \"description\": \"Initial actor state snapshot.
+        Deserialized internally to ActorStateSnapshot. No Bannou plugin reads specific keys from this field by convention.\"\
         \n                },\n                \"characterId\": {\n                    \"type\": \"string\",\n            \
         \        \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\": \"Optional
-        character ID for NPC brain actors\"\n                }\n            }\n        }\n    }\n}"
+        character ID for NPC brain actors\"\n                },\n                \"realmId\": {\n                    \"type\"\
+        : \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n              \
+        \      \"description\": \"Realm the actor operates in. Optional on request -- when not provided and characterId is
+        set, the service looks up the character's realm automatically. Required for non-character actors that operate in a
+        specific realm.\"\n                }\n            }\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ActorInstanceResponse\"\
         ,\n    \"$defs\": {\n        \"ActorInstanceResponse\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
         : false,\n            \"description\": \"Response containing actor instance details\",\n            \"required\":
@@ -423,17 +509,19 @@ paths:
         \     \"description\": \"Current actor lifecycle state\",\n                    \"$ref\": \"#/$defs/ActorStatus\"\n\
         \                },\n                \"characterId\": {\n                    \"type\": \"string\",\n             \
         \       \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\": \"Associated
-        character ID (for NPC brains)\"\n                },\n                \"startedAt\": {\n                    \"type\"\
-        : \"string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"When the actor
-        started running\"\n                },\n                \"lastHeartbeat\": {\n                    \"type\": \"string\"\
-        ,\n                    \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"\
-        description\": \"Last heartbeat timestamp from the actor\"\n                },\n                \"loopIterations\"\
-        : {\n                    \"type\": \"integer\",\n                    \"format\": \"int64\",\n                    \"\
-        description\": \"Number of behavior loop iterations executed\"\n                }\n            }\n        },\n   \
-        \     \"ActorStatus\": {\n            \"type\": \"string\",\n            \"enum\": [\n                \"pending\"\
-        ,\n                \"starting\",\n                \"running\",\n                \"paused\",\n                \"stopping\"\
-        ,\n                \"stopped\",\n                \"error\"\n            ],\n            \"description\": \"Current
-        actor lifecycle state\"\n        }\n    }\n}"
+        character ID (for NPC brains)\"\n                },\n                \"realmId\": {\n                    \"type\"\
+        : \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n              \
+        \      \"description\": \"Realm the actor operates in (resolved at spawn time)\"\n                },\n           \
+        \     \"startedAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n\
+        \                    \"description\": \"When the actor started running\"\n                },\n                \"lastHeartbeat\"\
+        : {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                 \
+        \   \"nullable\": true,\n                    \"description\": \"Last heartbeat timestamp from the actor\"\n      \
+        \          },\n                \"loopIterations\": {\n                    \"type\": \"integer\",\n               \
+        \     \"format\": \"int64\",\n                    \"description\": \"Number of behavior loop iterations executed\"\
+        \n                }\n            }\n        },\n        \"ActorStatus\": {\n            \"type\": \"string\",\n  \
+        \          \"enum\": [\n                \"pending\",\n                \"starting\",\n                \"running\",\n\
+        \                \"paused\",\n                \"stopping\",\n                \"stopped\",\n                \"error\"\
+        \n            ],\n            \"description\": \"Current actor lifecycle state\"\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Spawn a new actor from a template\",\n    \"description\": \"\",\n    \"\
         tags\": [],\n    \"deprecated\": false,\n    \"operationId\": \"SpawnActor\"\n}"
   /actor/get:
@@ -483,17 +571,19 @@ paths:
         \     \"description\": \"Current actor lifecycle state\",\n                    \"$ref\": \"#/$defs/ActorStatus\"\n\
         \                },\n                \"characterId\": {\n                    \"type\": \"string\",\n             \
         \       \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\": \"Associated
-        character ID (for NPC brains)\"\n                },\n                \"startedAt\": {\n                    \"type\"\
-        : \"string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"When the actor
-        started running\"\n                },\n                \"lastHeartbeat\": {\n                    \"type\": \"string\"\
-        ,\n                    \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"\
-        description\": \"Last heartbeat timestamp from the actor\"\n                },\n                \"loopIterations\"\
-        : {\n                    \"type\": \"integer\",\n                    \"format\": \"int64\",\n                    \"\
-        description\": \"Number of behavior loop iterations executed\"\n                }\n            }\n        },\n   \
-        \     \"ActorStatus\": {\n            \"type\": \"string\",\n            \"enum\": [\n                \"pending\"\
-        ,\n                \"starting\",\n                \"running\",\n                \"paused\",\n                \"stopping\"\
-        ,\n                \"stopped\",\n                \"error\"\n            ],\n            \"description\": \"Current
-        actor lifecycle state\"\n        }\n    }\n}"
+        character ID (for NPC brains)\"\n                },\n                \"realmId\": {\n                    \"type\"\
+        : \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n              \
+        \      \"description\": \"Realm the actor operates in (resolved at spawn time)\"\n                },\n           \
+        \     \"startedAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n\
+        \                    \"description\": \"When the actor started running\"\n                },\n                \"lastHeartbeat\"\
+        : {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                 \
+        \   \"nullable\": true,\n                    \"description\": \"Last heartbeat timestamp from the actor\"\n      \
+        \          },\n                \"loopIterations\": {\n                    \"type\": \"integer\",\n               \
+        \     \"format\": \"int64\",\n                    \"description\": \"Number of behavior loop iterations executed\"\
+        \n                }\n            }\n        },\n        \"ActorStatus\": {\n            \"type\": \"string\",\n  \
+        \          \"enum\": [\n                \"pending\",\n                \"starting\",\n                \"running\",\n\
+        \                \"paused\",\n                \"stopping\",\n                \"stopped\",\n                \"error\"\
+        \n            ],\n            \"description\": \"Current actor lifecycle state\"\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Get actor instance (instantiate-on-access if template allows)\",\n    \"\
         description\": \"If the actor exists, returns its current state.\\nIf the actor doesn't exist but a matching template
         has auto-spawn enabled,\\ninstantiates the actor and returns it.\\n\",\n    \"tags\": [],\n    \"deprecated\": false,\n\
@@ -538,6 +628,121 @@ paths:
         \n            ],\n            \"description\": \"Current actor lifecycle state\"\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Stop a running actor\",\n    \"description\": \"\",\n    \"tags\": [],\n\
         \    \"deprecated\": false,\n    \"operationId\": \"StopActor\"\n}"
+  /actor/bind-character:
+    post:
+      operationId: BindActorCharacter
+      summary: Bind an unbound actor to a character
+      description: |
+        Transitions an unbound (event-mode) actor to a bound (character-mode) actor.
+        After binding, the actor receives character perception events and variable
+        providers begin loading character-specific data on subsequent ticks.
+        Fails if the actor is already bound to a character.
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BindActorCharacterRequest'
+      responses:
+        '200':
+          description: Actor bound to character successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ActorInstanceResponse'
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/BindActorCharacterRequest\"\
+        ,\n    \"$defs\": {\n        \"BindActorCharacterRequest\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"description\": \"Request to bind an unbound actor to a character. After binding, the actor
+        subscribes to the character's perception stream and variable providers begin loading character-specific data. The
+        actor's behavior document continues executing \\u2014 it should already handle both unbound and bound modes gracefully.\"\
+        ,\n            \"required\": [\n                \"actorId\",\n                \"characterId\"\n            ],\n  \
+        \          \"properties\": {\n                \"actorId\": {\n                    \"type\": \"string\",\n        \
+        \            \"description\": \"ID of the actor to bind\"\n                },\n                \"characterId\": {\n\
+        \                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
+        : \"ID of the character to bind to\"\n                }\n            }\n        }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ActorInstanceResponse\"\
+        ,\n    \"$defs\": {\n        \"ActorInstanceResponse\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"description\": \"Response containing actor instance details\",\n            \"required\":
+        [\n                \"actorId\",\n                \"templateId\",\n                \"category\",\n                \"\
+        status\",\n                \"startedAt\",\n                \"loopIterations\"\n            ],\n            \"properties\"\
+        : {\n                \"actorId\": {\n                    \"type\": \"string\",\n                    \"description\"\
+        : \"Unique actor identifier\"\n                },\n                \"templateId\": {\n                    \"type\"\
+        : \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Template this actor
+        was instantiated from\"\n                },\n                \"category\": {\n                    \"type\": \"string\"\
+        ,\n                    \"description\": \"Actor category from template\"\n                },\n                \"nodeId\"\
+        : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Pool node running this actor (null in bannou mode)\"\n                },\n                \"nodeAppId\": {\n \
+        \                   \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Pool node's app-id for direct messaging\"\n                },\n                \"status\": {\n               \
+        \     \"description\": \"Current actor lifecycle state\",\n                    \"$ref\": \"#/$defs/ActorStatus\"\n\
+        \                },\n                \"characterId\": {\n                    \"type\": \"string\",\n             \
+        \       \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\": \"Associated
+        character ID (for NPC brains)\"\n                },\n                \"realmId\": {\n                    \"type\"\
+        : \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n              \
+        \      \"description\": \"Realm the actor operates in (resolved at spawn time)\"\n                },\n           \
+        \     \"startedAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n\
+        \                    \"description\": \"When the actor started running\"\n                },\n                \"lastHeartbeat\"\
+        : {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                 \
+        \   \"nullable\": true,\n                    \"description\": \"Last heartbeat timestamp from the actor\"\n      \
+        \          },\n                \"loopIterations\": {\n                    \"type\": \"integer\",\n               \
+        \     \"format\": \"int64\",\n                    \"description\": \"Number of behavior loop iterations executed\"\
+        \n                }\n            }\n        },\n        \"ActorStatus\": {\n            \"type\": \"string\",\n  \
+        \          \"enum\": [\n                \"pending\",\n                \"starting\",\n                \"running\",\n\
+        \                \"paused\",\n                \"stopping\",\n                \"stopped\",\n                \"error\"\
+        \n            ],\n            \"description\": \"Current actor lifecycle state\"\n        }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Bind an unbound actor to a character\",\n    \"description\": \"Transitions
+        an unbound (event-mode) actor to a bound (character-mode) actor.\\nAfter binding, the actor receives character perception
+        events and variable\\nproviders begin loading character-specific data on subsequent ticks.\\nFails if the actor is
+        already bound to a character.\\n\",\n    \"tags\": [],\n    \"deprecated\": false,\n    \"operationId\": \"BindActorCharacter\"\
+        \n}"
+  /actor/cleanup-by-character:
+    post:
+      operationId: CleanupByCharacter
+      summary: Cleanup actors referencing a deleted character
+      description: |
+        Called by lib-resource cleanup coordination when a character is deleted.
+        Stops and removes all actors that reference the specified characterId.
+        This endpoint is designed for internal service-to-service calls during
+        cascading resource cleanup.
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CleanupByCharacterRequest'
+      responses:
+        '200':
+          description: Cleanup completed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CleanupByCharacterResponse'
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/CleanupByCharacterRequest\"\
+        ,\n    \"$defs\": {\n        \"CleanupByCharacterRequest\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"description\": \"Request to cleanup actors referencing a deleted character\",\n          \
+        \  \"required\": [\n                \"characterId\"\n            ],\n            \"properties\": {\n             \
+        \   \"characterId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n   \
+        \                 \"description\": \"ID of the character that was deleted\"\n                }\n            }\n  \
+        \      }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/CleanupByCharacterResponse\"\
+        ,\n    \"$defs\": {\n        \"CleanupByCharacterResponse\": {\n            \"type\": \"object\",\n            \"\
+        additionalProperties\": false,\n            \"description\": \"Response from character cleanup operation\",\n    \
+        \        \"required\": [\n                \"actorsCleanedUp\",\n                \"success\"\n            ],\n    \
+        \        \"properties\": {\n                \"actorsCleanedUp\": {\n                    \"type\": \"integer\",\n \
+        \                   \"description\": \"Number of actors that were stopped and cleaned up\"\n                },\n \
+        \               \"actorIds\": {\n                    \"type\": \"array\",\n                    \"items\": {\n    \
+        \                    \"type\": \"string\"\n                    },\n                    \"description\": \"IDs of actors
+        that were cleaned up\"\n                },\n                \"success\": {\n                    \"type\": \"boolean\"\
+        ,\n                    \"description\": \"Whether cleanup completed successfully\"\n                }\n          \
+        \  }\n        }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Cleanup actors referencing a deleted character\",\n    \"description\"\
+        : \"Called by lib-resource cleanup coordination when a character is deleted.\\nStops and removes all actors that reference
+        the specified characterId.\\nThis endpoint is designed for internal service-to-service calls during\\ncascading resource
+        cleanup.\\n\",\n    \"tags\": [],\n    \"deprecated\": false,\n    \"operationId\": \"CleanupByCharacter\"\n}"
   /actor/list:
     post:
       operationId: ListActors
@@ -600,17 +805,19 @@ paths:
         \     \"description\": \"Current actor lifecycle state\",\n                    \"$ref\": \"#/$defs/ActorStatus\"\n\
         \                },\n                \"characterId\": {\n                    \"type\": \"string\",\n             \
         \       \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\": \"Associated
-        character ID (for NPC brains)\"\n                },\n                \"startedAt\": {\n                    \"type\"\
-        : \"string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"When the actor
-        started running\"\n                },\n                \"lastHeartbeat\": {\n                    \"type\": \"string\"\
-        ,\n                    \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"\
-        description\": \"Last heartbeat timestamp from the actor\"\n                },\n                \"loopIterations\"\
-        : {\n                    \"type\": \"integer\",\n                    \"format\": \"int64\",\n                    \"\
-        description\": \"Number of behavior loop iterations executed\"\n                }\n            }\n        },\n   \
-        \     \"ActorStatus\": {\n            \"type\": \"string\",\n            \"enum\": [\n                \"pending\"\
-        ,\n                \"starting\",\n                \"running\",\n                \"paused\",\n                \"stopping\"\
-        ,\n                \"stopped\",\n                \"error\"\n            ],\n            \"description\": \"Current
-        actor lifecycle state\"\n        }\n    }\n}"
+        character ID (for NPC brains)\"\n                },\n                \"realmId\": {\n                    \"type\"\
+        : \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n              \
+        \      \"description\": \"Realm the actor operates in (resolved at spawn time)\"\n                },\n           \
+        \     \"startedAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n\
+        \                    \"description\": \"When the actor started running\"\n                },\n                \"lastHeartbeat\"\
+        : {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                 \
+        \   \"nullable\": true,\n                    \"description\": \"Last heartbeat timestamp from the actor\"\n      \
+        \          },\n                \"loopIterations\": {\n                    \"type\": \"integer\",\n               \
+        \     \"format\": \"int64\",\n                    \"description\": \"Number of behavior loop iterations executed\"\
+        \n                }\n            }\n        },\n        \"ActorStatus\": {\n            \"type\": \"string\",\n  \
+        \          \"enum\": [\n                \"pending\",\n                \"starting\",\n                \"running\",\n\
+        \                \"paused\",\n                \"stopping\",\n                \"stopped\",\n                \"error\"\
+        \n            ],\n            \"description\": \"Current actor lifecycle state\"\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"List actors with optional filters\",\n    \"description\": \"\",\n    \"\
         tags\": [],\n    \"deprecated\": false,\n    \"operationId\": \"ListActors\"\n}"
   /actor/inject-perception:
@@ -659,33 +866,38 @@ paths:
         \        \"nullable\": true,\n                    \"description\": \"Type of source (character, npc, object, environment,
         coordinator, scheduled, message)\"\n                },\n                \"data\": {\n                    \"type\"\
         : \"object\",\n                    \"additionalProperties\": true,\n                    \"nullable\": true,\n    \
-        \                \"description\": \"Perception-specific data. For perceptionType=\\\"spatial\\\", this can contain\\
-        ngame-specific spatial context in any format the game server defines.\\n\"\n                },\n                \"\
-        urgency\": {\n                    \"type\": \"number\",\n                    \"format\": \"float\",\n            \
-        \        \"minimum\": 0,\n                    \"maximum\": 1,\n                    \"default\": 0.5,\n           \
-        \         \"description\": \"How urgent this perception is (0-1)\"\n                },\n                \"spatialContext\"\
-        : {\n                    \"allOf\": [\n                        {\n                            \"$ref\": \"#/$defs/SpatialContext\"\
-        \n                        }\n                    ],\n                    \"nullable\": true,\n                   \
-        \ \"description\": \"Optional typed spatial context from game server's local spatial state.\\nProvides structured
-        information about terrain, nearby objects, hazards, etc.\\nAlternative to using perceptionType=\\\"spatial\\\" with
-        schema-less data.\\n\"\n                }\n            }\n        },\n        \"PerceptionSourceType\": {\n      \
-        \      \"type\": \"string\",\n            \"description\": \"Type of source generating a perception event\",\n   \
-        \         \"enum\": [\n                \"character\",\n                \"npc\",\n                \"object\",\n   \
-        \             \"environment\",\n                \"coordinator\",\n                \"scheduled\",\n               \
-        \ \"message\",\n                \"service\",\n                \"system\"\n            ]\n        },\n        \"SpatialContext\"\
-        : {\n            \"type\": \"object\",\n            \"additionalProperties\": true,\n            \"description\":
-        \"Spatial context derived from game server's authoritative spatial state.\\nIncluded in perception events to give
-        NPC actors awareness of their environment\\nwithout requiring direct map subscriptions.\\n\\nNote: additionalProperties=true
-        allows game-specific extensions.\\n\",\n            \"properties\": {\n                \"terrainType\": {\n      \
-        \              \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Terrain type at character position (grass, stone, water, etc.)\"\n                },\n                \"elevation\"\
-        : {\n                    \"type\": \"number\",\n                    \"format\": \"float\",\n                    \"\
-        nullable\": true,\n                    \"description\": \"Elevation at character position\"\n                },\n\
-        \                \"nearbyObjects\": {\n                    \"type\": \"array\",\n                    \"nullable\"\
-        : true,\n                    \"description\": \"Objects within perception radius\",\n                    \"items\"\
-        : {\n                        \"$ref\": \"#/$defs/NearbyObject\"\n                    }\n                },\n     \
-        \           \"hazardsInRange\": {\n                    \"type\": \"array\",\n                    \"nullable\": true,\n\
-        \                    \"description\": \"Active hazards within detection range\",\n                    \"items\": {\n\
+        \                \"description\": \"Game-specific perception payload passed to ABML behavior execution scope. No Bannou
+        plugin reads specific keys from this field by convention. Different perception types carry different data structures
+        defined by the game.\"\n                },\n                \"urgency\": {\n                    \"type\": \"number\"\
+        ,\n                    \"format\": \"float\",\n                    \"minimum\": 0,\n                    \"maximum\"\
+        : 1,\n                    \"default\": 0.5,\n                    \"description\": \"How urgent this perception is
+        (0-1)\"\n                },\n                \"locationId\": {\n                    \"type\": \"string\",\n      \
+        \              \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Current location ID of the entity sending this perception. Used by ActorRunner to track the actor's current location
+        for location-aware variable providers. Updated on each perception event that carries this field.\"\n             \
+        \   },\n                \"spatialContext\": {\n                    \"allOf\": [\n                        {\n     \
+        \                       \"$ref\": \"#/$defs/SpatialContext\"\n                        }\n                    ],\n\
+        \                    \"nullable\": true,\n                    \"description\": \"Optional typed spatial context from
+        game server's local spatial state.\\nProvides structured information about terrain, nearby objects, hazards, etc.\\
+        nAlternative to using perceptionType=\\\"spatial\\\" with schema-less data.\\n\"\n                }\n            }\n\
+        \        },\n        \"PerceptionSourceType\": {\n            \"type\": \"string\",\n            \"description\":
+        \"Type of source generating a perception event\",\n            \"enum\": [\n                \"character\",\n     \
+        \           \"npc\",\n                \"object\",\n                \"environment\",\n                \"coordinator\"\
+        ,\n                \"scheduled\",\n                \"message\",\n                \"service\",\n                \"\
+        system\"\n            ]\n        },\n        \"SpatialContext\": {\n            \"type\": \"object\",\n          \
+        \  \"additionalProperties\": true,\n            \"description\": \"Spatial context derived from game server's authoritative
+        spatial state. Included in perception events to give NPC actors awareness of their environment. Core properties are
+        schema-defined; additionalProperties allows game-specific spatial extensions. No Bannou plugin reads specific extension
+        keys by convention.\",\n            \"properties\": {\n                \"terrainType\": {\n                    \"\
+        type\": \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Terrain type
+        at character position (grass, stone, water, etc.)\"\n                },\n                \"elevation\": {\n      \
+        \              \"type\": \"number\",\n                    \"format\": \"float\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Elevation at character position\"\n                },\n          \
+        \      \"nearbyObjects\": {\n                    \"type\": \"array\",\n                    \"nullable\": true,\n \
+        \                   \"description\": \"Objects within perception radius\",\n                    \"items\": {\n   \
+        \                     \"$ref\": \"#/$defs/NearbyObject\"\n                    }\n                },\n            \
+        \    \"hazardsInRange\": {\n                    \"type\": \"array\",\n                    \"nullable\": true,\n  \
+        \                  \"description\": \"Active hazards within detection range\",\n                    \"items\": {\n\
         \                        \"$ref\": \"#/$defs/HazardInfo\"\n                    }\n                },\n           \
         \     \"pathableDirections\": {\n                    \"type\": \"array\",\n                    \"nullable\": true,\n\
         \                    \"description\": \"Directions the character can move (for navigation awareness)\",\n        \
@@ -697,35 +909,38 @@ paths:
         nullable\": true,\n                    \"description\": \"Whether character is currently indoors/under roof\"\n  \
         \              }\n            }\n        },\n        \"NearbyObject\": {\n            \"type\": \"object\",\n    \
         \        \"additionalProperties\": true,\n            \"description\": \"Information about a nearby object perceived
-        by the character\",\n            \"properties\": {\n                \"objectId\": {\n                    \"type\"\
-        : \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Unique identifier
-        of the object\"\n                },\n                \"objectType\": {\n                    \"type\": \"string\",\n\
-        \                    \"description\": \"Type of object (boulder_cluster, tree, building, etc.)\"\n               \
-        \ },\n                \"distance\": {\n                    \"type\": \"number\",\n                    \"format\":
-        \"float\",\n                    \"description\": \"Distance from character in game units\"\n                },\n \
-        \               \"direction\": {\n                    \"type\": \"string\",\n                    \"description\":
-        \"Relative direction (north, south, east, west, above, below, etc.)\"\n                },\n                \"position\"\
-        : {\n                    \"allOf\": [\n                        {\n                            \"$ref\": \"#/$defs/Position3D\"\
-        \n                        }\n                    ],\n                    \"nullable\": true,\n                   \
-        \ \"description\": \"Optional absolute position\"\n                }\n            }\n        },\n        \"Position3D\"\
-        : {\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"description\"\
-        : \"3D position in world coordinates\",\n            \"required\": [\n                \"x\",\n                \"y\"\
-        ,\n                \"z\"\n            ],\n            \"properties\": {\n                \"x\": {\n              \
-        \      \"type\": \"number\",\n                    \"format\": \"float\",\n                    \"description\": \"\
-        X coordinate\"\n                },\n                \"y\": {\n                    \"type\": \"number\",\n        \
-        \            \"format\": \"float\",\n                    \"description\": \"Y coordinate (typically vertical)\"\n\
-        \                },\n                \"z\": {\n                    \"type\": \"number\",\n                    \"format\"\
-        : \"float\",\n                    \"description\": \"Z coordinate\"\n                }\n            }\n        },\n\
-        \        \"HazardInfo\": {\n            \"type\": \"object\",\n            \"additionalProperties\": true,\n     \
-        \       \"description\": \"Information about a hazard in range\",\n            \"properties\": {\n               \
-        \ \"hazardType\": {\n                    \"type\": \"string\",\n                    \"description\": \"Type of hazard
-        (fire, poison, radiation, deep_water, etc.)\"\n                },\n                \"distance\": {\n             \
-        \       \"type\": \"number\",\n                    \"format\": \"float\",\n                    \"description\": \"\
-        Distance to hazard edge\"\n                },\n                \"severity\": {\n                    \"type\": \"number\"\
-        ,\n                    \"format\": \"float\",\n                    \"minimum\": 0,\n                    \"maximum\"\
-        : 1,\n                    \"description\": \"Hazard severity (0-1)\"\n                },\n                \"direction\"\
-        : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Direction to hazard center\"\n                }\n            }\n        }\n    }\n}"
+        by the character. Core properties are schema-defined; additionalProperties allows game-specific object data. No Bannou
+        plugin reads specific extension keys by convention.\",\n            \"properties\": {\n                \"objectId\"\
+        : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
+        description\": \"Unique identifier of the object\"\n                },\n                \"objectType\": {\n      \
+        \              \"type\": \"string\",\n                    \"description\": \"Type of object (boulder_cluster, tree,
+        building, etc.)\"\n                },\n                \"distance\": {\n                    \"type\": \"number\",\n\
+        \                    \"format\": \"float\",\n                    \"description\": \"Distance from character in game
+        units\"\n                },\n                \"direction\": {\n                    \"type\": \"string\",\n       \
+        \             \"description\": \"Relative direction (north, south, east, west, above, below, etc.)\"\n           \
+        \     },\n                \"position\": {\n                    \"allOf\": [\n                        {\n         \
+        \                   \"$ref\": \"#/$defs/Position3D\"\n                        }\n                    ],\n        \
+        \            \"nullable\": true,\n                    \"description\": \"Optional absolute position\"\n          \
+        \      }\n            }\n        },\n        \"Position3D\": {\n            \"type\": \"object\",\n            \"\
+        additionalProperties\": false,\n            \"description\": \"3D position in world coordinates\",\n            \"\
+        required\": [\n                \"x\",\n                \"y\",\n                \"z\"\n            ],\n           \
+        \ \"properties\": {\n                \"x\": {\n                    \"type\": \"number\",\n                    \"format\"\
+        : \"float\",\n                    \"description\": \"X coordinate\"\n                },\n                \"y\": {\n\
+        \                    \"type\": \"number\",\n                    \"format\": \"float\",\n                    \"description\"\
+        : \"Y coordinate (typically vertical)\"\n                },\n                \"z\": {\n                    \"type\"\
+        : \"number\",\n                    \"format\": \"float\",\n                    \"description\": \"Z coordinate\"\n\
+        \                }\n            }\n        },\n        \"HazardInfo\": {\n            \"type\": \"object\",\n    \
+        \        \"additionalProperties\": true,\n            \"description\": \"Information about a hazard in range. Core
+        properties are schema-defined; additionalProperties allows game-specific hazard data. No Bannou plugin reads specific
+        extension keys by convention.\",\n            \"properties\": {\n                \"hazardType\": {\n             \
+        \       \"type\": \"string\",\n                    \"description\": \"Type of hazard (fire, poison, radiation, deep_water,
+        etc.)\"\n                },\n                \"distance\": {\n                    \"type\": \"number\",\n        \
+        \            \"format\": \"float\",\n                    \"description\": \"Distance to hazard edge\"\n          \
+        \      },\n                \"severity\": {\n                    \"type\": \"number\",\n                    \"format\"\
+        : \"float\",\n                    \"minimum\": 0,\n                    \"maximum\": 1,\n                    \"description\"\
+        : \"Hazard severity (0-1)\"\n                },\n                \"direction\": {\n                    \"type\": \"\
+        string\",\n                    \"nullable\": true,\n                    \"description\": \"Direction to hazard center\"\
+        \n                }\n            }\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/InjectPerceptionResponse\"\
         ,\n    \"$defs\": {\n        \"InjectPerceptionResponse\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
         : false,\n            \"description\": \"Response confirming perception injection\",\n            \"required\": [\n\
@@ -793,24 +1008,26 @@ paths:
         \            \"fresh\",\n                \"cached\",\n                \"stale_ok\"\n            ],\n            \"\
         default\": \"cached\"\n        },\n        \"OptionsQueryContext\": {\n            \"type\": \"object\",\n       \
         \     \"additionalProperties\": true,\n            \"description\": \"Context provided with a fresh query. Injected
-        as a perception to the actor\\nto trigger context-sensitive option recomputation.\\n\",\n            \"properties\"\
-        : {\n                \"combatState\": {\n                    \"type\": \"string\",\n                    \"nullable\"\
-        : true,\n                    \"description\": \"Current combat state (approaching, engaged, retreating, etc.)\"\n\
-        \                },\n                \"opponentIds\": {\n                    \"type\": \"array\",\n              \
-        \      \"nullable\": true,\n                    \"description\": \"IDs of opponents in the current encounter\",\n\
-        \                    \"items\": {\n                        \"type\": \"string\"\n                    }\n         \
-        \       },\n                \"allyIds\": {\n                    \"type\": \"array\",\n                    \"nullable\"\
-        : true,\n                    \"description\": \"IDs of allies in the current encounter\",\n                    \"\
-        items\": {\n                        \"type\": \"string\"\n                    }\n                },\n            \
-        \    \"environmentTags\": {\n                    \"type\": \"array\",\n                    \"nullable\": true,\n \
-        \                   \"description\": \"Environment tags (indoor, elevated, destructibles, narrow, etc.)\",\n     \
-        \               \"items\": {\n                        \"type\": \"string\"\n                    }\n              \
-        \  },\n                \"urgency\": {\n                    \"type\": \"number\",\n                    \"format\":
-        \"float\",\n                    \"minimum\": 0,\n                    \"maximum\": 1,\n                    \"nullable\"\
-        : true,\n                    \"description\": \"How urgent is this query (affects option prioritization)\"\n     \
-        \           },\n                \"customContext\": {\n                    \"type\": \"object\",\n                \
-        \    \"additionalProperties\": true,\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Actor-specific context data\"\n                }\n            }\n        }\n    }\n}"
+        as a perception to the actor to trigger context-sensitive option recomputation. Core properties are schema-defined;
+        use customContext for game-specific extensions. No Bannou plugin reads specific extension keys by convention.\",\n\
+        \            \"properties\": {\n                \"combatState\": {\n                    \"type\": \"string\",\n  \
+        \                  \"nullable\": true,\n                    \"description\": \"Current combat state (approaching,
+        engaged, retreating, etc.)\"\n                },\n                \"opponentIds\": {\n                    \"type\"\
+        : \"array\",\n                    \"nullable\": true,\n                    \"description\": \"IDs of opponents in
+        the current encounter\",\n                    \"items\": {\n                        \"type\": \"string\"\n       \
+        \             }\n                },\n                \"allyIds\": {\n                    \"type\": \"array\",\n  \
+        \                  \"nullable\": true,\n                    \"description\": \"IDs of allies in the current encounter\"\
+        ,\n                    \"items\": {\n                        \"type\": \"string\"\n                    }\n       \
+        \         },\n                \"environmentTags\": {\n                    \"type\": \"array\",\n                 \
+        \   \"nullable\": true,\n                    \"description\": \"Environment tags (indoor, elevated, destructibles,
+        narrow, etc.)\",\n                    \"items\": {\n                        \"type\": \"string\"\n               \
+        \     }\n                },\n                \"urgency\": {\n                    \"type\": \"number\",\n         \
+        \           \"format\": \"float\",\n                    \"minimum\": 0,\n                    \"maximum\": 1,\n   \
+        \                 \"nullable\": true,\n                    \"description\": \"How urgent is this query (affects option
+        prioritization)\"\n                },\n                \"customContext\": {\n                    \"type\": \"object\"\
+        ,\n                    \"additionalProperties\": true,\n                    \"nullable\": true,\n                \
+        \    \"description\": \"Game-specific context data passed through to ABML behavior scope. No Bannou plugin reads specific
+        keys from this field by convention.\"\n                }\n            }\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/QueryOptionsResponse\"\
         ,\n    \"$defs\": {\n        \"QueryOptionsResponse\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
         : false,\n            \"description\": \"Response containing the actor's available options\",\n            \"required\"\
@@ -833,42 +1050,43 @@ paths:
         custom types.\\n\",\n            \"enum\": [\n                \"combat\",\n                \"dialogue\",\n       \
         \         \"exploration\",\n                \"social\",\n                \"custom\"\n            ]\n        },\n \
         \       \"ActorOption\": {\n            \"type\": \"object\",\n            \"additionalProperties\": true,\n     \
-        \       \"description\": \"A single option available to the actor. The standardized fields enable\\nEvent Brain to
-        reason about options; additional fields allow actor-specific data.\\n\",\n            \"required\": [\n          \
-        \      \"actionId\",\n                \"preference\",\n                \"available\"\n            ],\n           \
-        \ \"properties\": {\n                \"actionId\": {\n                    \"type\": \"string\",\n                \
-        \    \"description\": \"Unique identifier for this action within the option type.\\nExamples: \\\"sword_slash\\\"\
-        , \\\"greet_friendly\\\", \\\"climb_wall\\\"\\n\"\n                },\n                \"preference\": {\n       \
-        \             \"type\": \"number\",\n                    \"format\": \"float\",\n                    \"minimum\":
-        0,\n                    \"maximum\": 1,\n                    \"description\": \"How much the actor prefers this option
-        (0-1), based on personality,\\ncombat preferences, current state, etc. Higher = more preferred.\\n\"\n           \
-        \     },\n                \"risk\": {\n                    \"type\": \"number\",\n                    \"format\":
-        \"float\",\n                    \"minimum\": 0,\n                    \"maximum\": 1,\n                    \"nullable\"\
-        : true,\n                    \"description\": \"Estimated risk of this action (0=safe, 1=very risky)\"\n         \
-        \       },\n                \"available\": {\n                    \"type\": \"boolean\",\n                    \"description\"\
-        : \"Whether this option is currently available (requirements met)\"\n                },\n                \"requirements\"\
-        : {\n                    \"type\": \"array\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Requirements that must be met for this option\",\n                    \"items\": {\n                        \"\
-        type\": \"string\"\n                    }\n                },\n                \"cooldownMs\": {\n               \
-        \     \"type\": \"integer\",\n                    \"nullable\": true,\n                    \"description\": \"Milliseconds
-        until this option becomes available again (if on cooldown)\"\n                },\n                \"tags\": {\n  \
-        \                  \"type\": \"array\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Tags for categorization (e.g., [\\\"melee\\\", \\\"aggressive\\\", \\\"loud\\\"])\",\n                    \"items\"\
-        : {\n                        \"type\": \"string\"\n                    }\n                }\n            }\n     \
-        \   },\n        \"CharacterOptionContext\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
-        : false,\n            \"description\": \"Character-specific context that influenced option computation\",\n      \
-        \      \"properties\": {\n                \"combatStyle\": {\n                    \"type\": \"string\",\n        \
-        \            \"nullable\": true,\n                    \"description\": \"Character's combat style (aggressive, defensive,
-        balanced, etc.)\"\n                },\n                \"riskTolerance\": {\n                    \"type\": \"number\"\
-        ,\n                    \"format\": \"float\",\n                    \"minimum\": 0,\n                    \"maximum\"\
-        : 1,\n                    \"nullable\": true,\n                    \"description\": \"Character's risk tolerance (0=cautious,
-        1=reckless)\"\n                },\n                \"protectAllies\": {\n                    \"type\": \"boolean\"\
-        ,\n                    \"nullable\": true,\n                    \"description\": \"Whether character prioritizes ally
-        protection\"\n                },\n                \"currentGoal\": {\n                    \"type\": \"string\",\n\
-        \                    \"nullable\": true,\n                    \"description\": \"Character's current primary goal\"\
-        \n                },\n                \"emotionalState\": {\n                    \"type\": \"string\",\n         \
-        \           \"nullable\": true,\n                    \"description\": \"Character's current dominant emotion\"\n \
-        \               }\n            }\n        }\n    }\n}"
+        \       \"description\": \"A single option available to the actor. Core properties (actionId, preference, risk, available,
+        etc.) are schema-defined and used by Actor internally. additionalProperties allows game-specific option extensions.
+        No Bannou plugin reads specific extension keys by convention.\",\n            \"required\": [\n                \"\
+        actionId\",\n                \"preference\",\n                \"available\"\n            ],\n            \"properties\"\
+        : {\n                \"actionId\": {\n                    \"type\": \"string\",\n                    \"description\"\
+        : \"Unique identifier for this action within the option type.\\nExamples: \\\"sword_slash\\\", \\\"greet_friendly\\\
+        \", \\\"climb_wall\\\"\\n\"\n                },\n                \"preference\": {\n                    \"type\":
+        \"number\",\n                    \"format\": \"float\",\n                    \"minimum\": 0,\n                   \
+        \ \"maximum\": 1,\n                    \"description\": \"How much the actor prefers this option (0-1), based on personality,\\
+        ncombat preferences, current state, etc. Higher = more preferred.\\n\"\n                },\n                \"risk\"\
+        : {\n                    \"type\": \"number\",\n                    \"format\": \"float\",\n                    \"\
+        minimum\": 0,\n                    \"maximum\": 1,\n                    \"nullable\": true,\n                    \"\
+        description\": \"Estimated risk of this action (0=safe, 1=very risky)\"\n                },\n                \"available\"\
+        : {\n                    \"type\": \"boolean\",\n                    \"description\": \"Whether this option is currently
+        available (requirements met)\"\n                },\n                \"requirements\": {\n                    \"type\"\
+        : \"array\",\n                    \"nullable\": true,\n                    \"description\": \"Requirements that must
+        be met for this option\",\n                    \"items\": {\n                        \"type\": \"string\"\n      \
+        \              }\n                },\n                \"cooldownMs\": {\n                    \"type\": \"integer\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"Milliseconds until this option
+        becomes available again (if on cooldown)\"\n                },\n                \"tags\": {\n                    \"\
+        type\": \"array\",\n                    \"nullable\": true,\n                    \"description\": \"Tags for categorization
+        (e.g., [\\\"melee\\\", \\\"aggressive\\\", \\\"loud\\\"])\",\n                    \"items\": {\n                 \
+        \       \"type\": \"string\"\n                    }\n                }\n            }\n        },\n        \"CharacterOptionContext\"\
+        : {\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"description\"\
+        : \"Character-specific context that influenced option computation\",\n            \"properties\": {\n            \
+        \    \"combatStyle\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n    \
+        \                \"description\": \"Character's combat style (aggressive, defensive, balanced, etc.)\"\n         \
+        \       },\n                \"riskTolerance\": {\n                    \"type\": \"number\",\n                    \"\
+        format\": \"float\",\n                    \"minimum\": 0,\n                    \"maximum\": 1,\n                 \
+        \   \"nullable\": true,\n                    \"description\": \"Character's risk tolerance (0=cautious, 1=reckless)\"\
+        \n                },\n                \"protectAllies\": {\n                    \"type\": \"boolean\",\n         \
+        \           \"nullable\": true,\n                    \"description\": \"Whether character prioritizes ally protection\"\
+        \n                },\n                \"currentGoal\": {\n                    \"type\": \"string\",\n            \
+        \        \"nullable\": true,\n                    \"description\": \"Character's current primary goal\"\n        \
+        \        },\n                \"emotionalState\": {\n                    \"type\": \"string\",\n                  \
+        \  \"nullable\": true,\n                    \"description\": \"Character's current dominant emotion\"\n          \
+        \      }\n            }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Query an actor for its available options\",\n    \"description\": \"Query
         an actor for its available options (combat, dialogue, exploration, etc.).\\nOptions are maintained by the actor in
         its state and returned based on requested\\nfreshness level. This enables Event Brain actors to ask participants \\\
@@ -910,7 +1128,8 @@ paths:
         : {\n                        \"type\": \"string\",\n                        \"format\": \"uuid\"\n               \
         \     }\n                },\n                \"initialData\": {\n                    \"type\": \"object\",\n     \
         \               \"additionalProperties\": true,\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Optional initial data for the encounter\"\n                }\n            }\n        }\n    }\n}"
+        : \"Game-specific encounter initialization data passed to ABML behavior scope. No Bannou plugin reads specific keys
+        from this field by convention.\"\n                }\n            }\n        }\n    }\n}"
       x-response-schema-json: '{}'
       x-endpoint-info-json: "{\n    \"summary\": \"Start an encounter managed by an Event Brain actor\",\n    \"description\"\
         : \"Initializes an encounter with the specified participants. The Event Brain actor\\nwill coordinate the encounter,
@@ -1055,7 +1274,8 @@ paths:
         ,\n                    \"format\": \"date-time\",\n                    \"description\": \"When the encounter started\"\
         \n                },\n                \"data\": {\n                    \"type\": \"object\",\n                   \
         \ \"additionalProperties\": true,\n                    \"nullable\": true,\n                    \"description\": \"\
-        Custom encounter-specific data\"\n                }\n            }\n        }\n    }\n}"
+        Game-specific encounter state data passed to ABML behavior scope. No Bannou plugin reads specific keys from this field
+        by convention.\"\n                }\n            }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Get the current encounter state for an actor\",\n    \"description\": \"\
         Retrieves the current encounter state for an Event Brain actor. Returns\\nnull encounter data if the actor is not
         managing an encounter.\\n\",\n    \"tags\": [],\n    \"deprecated\": false,\n    \"operationId\": \"GetEncounter\"\
@@ -1080,7 +1300,10 @@ components:
           type: object
           additionalProperties: true
           nullable: true
-          description: Default configuration passed to behavior execution
+          description: >-
+            Game-specific configuration passed to ABML behavior execution scope.
+            No Bannou plugin reads specific keys from this field by convention.
+            Different ABML behaviors define their own expected configuration structure.
         autoSpawn:
           description: Auto-spawn configuration for instantiate-on-access
           nullable: true
@@ -1097,6 +1320,23 @@ components:
           type: integer
           default: 100
           description: Maximum actors of this category per pool node
+        cognitionTemplateId:
+          type: string
+          nullable: true
+          description: |
+            Cognition template ID for this actor type. Primary source for cognition
+            pipeline resolution. When null, falls back to ABML metadata, then category default.
+            Examples: "humanoid-cognition-base", "creature-cognition-base", "object-cognition-base"
+        cognitionOverrides:
+          type: object
+          additionalProperties: true
+          nullable: true
+          description: >-
+            Static template-level cognition overrides (polymorphic JSON).
+            Deserialized internally to CognitionOverrides type with discriminated subtypes.
+            Applied as the first layer in the three-layer override composition
+            (template, instance, ABML metadata). Structure defined by ICognitionOverride
+            interface hierarchy in bannou-service/Behavior/.
     AutoSpawnConfig:
       type: object
       additionalProperties: false
@@ -1124,6 +1364,13 @@ components:
             1-based regex capture group index for extracting CharacterId from actor ID.
             Example: With idPattern "npc-brain-([a-f0-9-]+)" and characterIdCaptureGroup: 1,
             actor ID "npc-brain-abc-123-def" extracts "abc-123-def" as CharacterId (parsed as GUID).
+        defaultRealmId:
+          type: string
+          format: uuid
+          nullable: true
+          description: |
+            Default realm ID for auto-spawned actors when no CharacterId is available to resolve a realm.
+            Required when characterIdCaptureGroup is not configured and auto-spawn is enabled.
     ActorTemplateResponse:
       type: object
       additionalProperties: false
@@ -1152,7 +1399,9 @@ components:
           type: object
           additionalProperties: true
           nullable: true
-          description: Default configuration passed to behavior execution
+          description: >-
+            Game-specific configuration passed to ABML behavior execution scope.
+            No Bannou plugin reads specific keys from this field by convention.
         autoSpawn:
           description: Auto-spawn configuration for instantiate-on-access
           nullable: true
@@ -1166,6 +1415,19 @@ components:
         maxInstancesPerNode:
           type: integer
           description: Maximum actors of this category per pool node
+        cognitionTemplateId:
+          type: string
+          nullable: true
+          description: |
+            Cognition template ID for this actor type. Primary source for cognition
+            pipeline resolution. When null, falls back to ABML metadata, then category default.
+        cognitionOverrides:
+          type: object
+          additionalProperties: true
+          nullable: true
+          description: >-
+            Static template-level cognition overrides (polymorphic JSON).
+            Deserialized internally to CognitionOverrides type with discriminated subtypes.
         createdAt:
           type: string
           format: date-time
@@ -1236,7 +1498,9 @@ components:
           type: object
           additionalProperties: true
           nullable: true
-          description: Updated configuration settings
+          description: >-
+            Updated game-specific configuration for ABML behavior execution scope.
+            No Bannou plugin reads specific keys from this field by convention.
         autoSpawn:
           description: Updated auto-spawn configuration
           nullable: true
@@ -1249,6 +1513,19 @@ components:
           type: integer
           nullable: true
           description: Updated auto-save interval in seconds
+        cognitionTemplateId:
+          type: string
+          nullable: true
+          description: |
+            Updated cognition template ID. Set to override the cognition pipeline
+            for actors created from this template.
+        cognitionOverrides:
+          type: object
+          additionalProperties: true
+          nullable: true
+          description: >-
+            Updated cognition overrides (polymorphic JSON).
+            Deserialized internally to CognitionOverrides type with discriminated subtypes.
     DeleteActorTemplateRequest:
       type: object
       additionalProperties: false
@@ -1297,17 +1574,30 @@ components:
           type: object
           additionalProperties: true
           nullable: true
-          description: Override template defaults
+          description: >-
+            Game-specific configuration overrides merged with template defaults.
+            No Bannou plugin reads specific keys from this field by convention.
         initialState:
           type: object
           additionalProperties: true
           nullable: true
-          description: Initial state passed to behavior
+          description: >-
+            Initial actor state snapshot. Deserialized internally to ActorStateSnapshot.
+            No Bannou plugin reads specific keys from this field by convention.
         characterId:
           type: string
           format: uuid
           nullable: true
           description: Optional character ID for NPC brain actors
+        realmId:
+          type: string
+          format: uuid
+          nullable: true
+          description: >-
+            Realm the actor operates in. Optional on request -- when not provided
+            and characterId is set, the service looks up the character's realm
+            automatically. Required for non-character actors that operate in a
+            specific realm.
     GetActorRequest:
       type: object
       additionalProperties: false
@@ -1356,6 +1646,11 @@ components:
           format: uuid
           nullable: true
           description: Associated character ID (for NPC brains)
+        realmId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Realm the actor operates in (resolved at spawn time)
         startedAt:
           type: string
           format: date-time
@@ -1421,6 +1716,55 @@ components:
         finalStatus:
           description: Final status of the actor after stopping
           $ref: '#/components/schemas/ActorStatus'
+    BindActorCharacterRequest:
+      type: object
+      additionalProperties: false
+      description: >-
+        Request to bind an unbound actor to a character. After binding, the actor
+        subscribes to the character's perception stream and variable providers begin
+        loading character-specific data. The actor's behavior document continues
+        executing — it should already handle both unbound and bound modes gracefully.
+      required:
+      - actorId
+      - characterId
+      properties:
+        actorId:
+          type: string
+          description: ID of the actor to bind
+        characterId:
+          type: string
+          format: uuid
+          description: ID of the character to bind to
+    CleanupByCharacterRequest:
+      type: object
+      additionalProperties: false
+      description: Request to cleanup actors referencing a deleted character
+      required:
+      - characterId
+      properties:
+        characterId:
+          type: string
+          format: uuid
+          description: ID of the character that was deleted
+    CleanupByCharacterResponse:
+      type: object
+      additionalProperties: false
+      description: Response from character cleanup operation
+      required:
+      - actorsCleanedUp
+      - success
+      properties:
+        actorsCleanedUp:
+          type: integer
+          description: Number of actors that were stopped and cleaned up
+        actorIds:
+          type: array
+          items:
+            type: string
+          description: IDs of actors that were cleaned up
+        success:
+          type: boolean
+          description: Whether cleanup completed successfully
     ListActorsRequest:
       type: object
       additionalProperties: false
@@ -1513,9 +1857,10 @@ components:
           type: object
           additionalProperties: true
           nullable: true
-          description: |
-            Perception-specific data. For perceptionType="spatial", this can contain
-            game-specific spatial context in any format the game server defines.
+          description: >-
+            Game-specific perception payload passed to ABML behavior execution scope.
+            No Bannou plugin reads specific keys from this field by convention.
+            Different perception types carry different data structures defined by the game.
         urgency:
           type: number
           format: float
@@ -1523,6 +1868,15 @@ components:
           maximum: 1
           default: 0.5
           description: How urgent this perception is (0-1)
+        locationId:
+          type: string
+          format: uuid
+          nullable: true
+          description: >-
+            Current location ID of the entity sending this perception.
+            Used by ActorRunner to track the actor's current location for
+            location-aware variable providers. Updated on each perception
+            event that carries this field.
         spatialContext:
           allOf:
           - $ref: '#/components/schemas/SpatialContext'
@@ -1534,12 +1888,11 @@ components:
     SpatialContext:
       type: object
       additionalProperties: true
-      description: |
+      description: >-
         Spatial context derived from game server's authoritative spatial state.
-        Included in perception events to give NPC actors awareness of their environment
-        without requiring direct map subscriptions.
-
-        Note: additionalProperties=true allows game-specific extensions.
+        Included in perception events to give NPC actors awareness of their environment.
+        Core properties are schema-defined; additionalProperties allows game-specific
+        spatial extensions. No Bannou plugin reads specific extension keys by convention.
       properties:
         terrainType:
           type: string
@@ -1580,7 +1933,10 @@ components:
     NearbyObject:
       type: object
       additionalProperties: true
-      description: Information about a nearby object perceived by the character
+      description: >-
+        Information about a nearby object perceived by the character.
+        Core properties are schema-defined; additionalProperties allows game-specific
+        object data. No Bannou plugin reads specific extension keys by convention.
       properties:
         objectId:
           type: string
@@ -1604,7 +1960,10 @@ components:
     HazardInfo:
       type: object
       additionalProperties: true
-      description: Information about a hazard in range
+      description: >-
+        Information about a hazard in range.
+        Core properties are schema-defined; additionalProperties allows game-specific
+        hazard data. No Bannou plugin reads specific extension keys by convention.
       properties:
         hazardType:
           type: string
@@ -1754,9 +2113,11 @@ components:
     ActorOption:
       type: object
       additionalProperties: true
-      description: |
-        A single option available to the actor. The standardized fields enable
-        Event Brain to reason about options; additional fields allow actor-specific data.
+      description: >-
+        A single option available to the actor. Core properties (actionId, preference,
+        risk, available, etc.) are schema-defined and used by Actor internally.
+        additionalProperties allows game-specific option extensions.
+        No Bannou plugin reads specific extension keys by convention.
       required:
       - actionId
       - preference
@@ -1804,9 +2165,11 @@ components:
     OptionsQueryContext:
       type: object
       additionalProperties: true
-      description: |
+      description: >-
         Context provided with a fresh query. Injected as a perception to the actor
-        to trigger context-sensitive option recomputation.
+        to trigger context-sensitive option recomputation. Core properties are schema-defined;
+        use customContext for game-specific extensions.
+        No Bannou plugin reads specific extension keys by convention.
       properties:
         combatState:
           type: string
@@ -1841,7 +2204,9 @@ components:
           type: object
           additionalProperties: true
           nullable: true
-          description: Actor-specific context data
+          description: >-
+            Game-specific context data passed through to ABML behavior scope.
+            No Bannou plugin reads specific keys from this field by convention.
     CharacterOptionContext:
       type: object
       additionalProperties: false
@@ -1928,9 +2293,11 @@ components:
     ChoreographyAction:
       type: object
       additionalProperties: true
-      description: |
-        A single action within a choreographed sequence.
-        ActionId should match one from the participant's options.
+      description: >-
+        A single action within a choreographed sequence. Core properties (actionId,
+        targetId, position, durationMs, style, delayMs) are schema-defined.
+        additionalProperties allows game-specific action extensions.
+        No Bannou plugin reads specific extension keys by convention.
       required:
       - actionId
       properties:
@@ -2070,7 +2437,9 @@ components:
           type: object
           additionalProperties: true
           nullable: true
-          description: Optional initial data for the encounter
+          description: >-
+            Game-specific encounter initialization data passed to ABML behavior scope.
+            No Bannou plugin reads specific keys from this field by convention.
     UpdateEncounterPhaseRequest:
       type: object
       additionalProperties: false
@@ -2195,4 +2564,6 @@ components:
           type: object
           additionalProperties: true
           nullable: true
-          description: Custom encounter-specific data
+          description: >-
+            Game-specific encounter state data passed to ABML behavior scope.
+            No Bannou plugin reads specific keys from this field by convention.

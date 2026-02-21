@@ -12,7 +12,7 @@
 //
 //     IMPLEMENTATION TENETS - Configuration-First:
 //     - Access configuration via dependency injection, never Environment.GetEnvironmentVariable.
-//     - ALL properties below MUST be referenced in SceneService.cs (no dead config).
+//     - ALL properties below MUST be referenced somewhere in the plugin (no dead config).
 //     - Any hardcoded tunable (limit, timeout, threshold, capacity) in service code means
 //       a configuration property is MISSING - add it to the configuration schema.
 //     - If a property is unused, remove it from the configuration schema.
@@ -40,7 +40,7 @@ namespace BeyondImmersion.BannouService.Scene;
 /// <para>
 /// <b>IMPLEMENTATION TENETS - Configuration-First:</b> Access configuration via dependency injection.
 /// Never use <c>Environment.GetEnvironmentVariable()</c> directly in service code.
-/// ALL properties in this class MUST be referenced in the service implementation.
+/// ALL properties in this class MUST be referenced somewhere in the plugin.
 /// If a property is unused, remove it from the configuration schema.
 /// </para>
 /// <para>
@@ -52,18 +52,6 @@ public class SceneServiceConfiguration : IServiceConfiguration
 {
     /// <inheritdoc />
     public Guid? ForceServiceId { get; set; }
-
-    /// <summary>
-    /// lib-asset bucket for storing scene documents
-    /// Environment variable: SCENE_ASSET_BUCKET
-    /// </summary>
-    public string AssetBucket { get; set; } = "scenes";
-
-    /// <summary>
-    /// Content type for scene assets (YAML format)
-    /// Environment variable: SCENE_ASSET_CONTENT_TYPE
-    /// </summary>
-    public string AssetContentType { get; set; } = "application/x-bannou-scene+yaml";
 
     /// <summary>
     /// Default lock TTL for checkout operations in minutes

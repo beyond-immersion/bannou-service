@@ -15,10 +15,12 @@ public sealed class BannouClientEvents
 {
     private readonly BannouClient _client;
     private AssetEventSubscriptions? _asset;
+    private ChatEventSubscriptions? _chat;
     private GameSessionEventSubscriptions? _gamesession;
     private MatchmakingEventSubscriptions? _matchmaking;
     private SystemEventSubscriptions? _system;
     private VoiceEventSubscriptions? _voice;
+    private WorldstateEventSubscriptions? _worldstate;
 
     internal BannouClientEvents(BannouClient client)
     {
@@ -30,6 +32,12 @@ public sealed class BannouClientEvents
     /// </summary>
     public AssetEventSubscriptions Asset =>
         _asset ??= new AssetEventSubscriptions(_client);
+
+    /// <summary>
+    /// Event subscriptions for Chat service.
+    /// </summary>
+    public ChatEventSubscriptions Chat =>
+        _chat ??= new ChatEventSubscriptions(_client);
 
     /// <summary>
     /// Event subscriptions for GameSession service.
@@ -54,4 +62,10 @@ public sealed class BannouClientEvents
     /// </summary>
     public VoiceEventSubscriptions Voice =>
         _voice ??= new VoiceEventSubscriptions(_client);
+
+    /// <summary>
+    /// Event subscriptions for Worldstate service.
+    /// </summary>
+    public WorldstateEventSubscriptions Worldstate =>
+        _worldstate ??= new WorldstateEventSubscriptions(_client);
 }

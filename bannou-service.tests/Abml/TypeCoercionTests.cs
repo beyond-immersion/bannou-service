@@ -2,7 +2,7 @@
 // ABML Type Coercion Tests
 // ═══════════════════════════════════════════════════════════════════════════
 
-using BeyondImmersion.BannouService.Abml.Expressions;
+using BeyondImmersion.Bannou.BehaviorExpressions.Expressions;
 using Xunit;
 
 namespace BeyondImmersion.BannouService.Tests.Abml;

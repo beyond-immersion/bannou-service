@@ -72,6 +72,122 @@ public enum LocationType
 #pragma warning restore CS1591
 
 /// <summary>
+/// Precision level of spatial bounds for a location
+/// </summary>
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public enum BoundsPrecision
+{
+
+    [System.Runtime.Serialization.EnumMember(Value = @"exact")]
+    Exact = 0,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"approximate")]
+    Approximate = 1,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"none")]
+    None = 2,
+
+}
+#pragma warning restore CS1591
+
+/// <summary>
+/// How this location's coordinate system relates to its parent
+/// </summary>
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public enum CoordinateMode
+{
+
+    [System.Runtime.Serialization.EnumMember(Value = @"inherit")]
+    Inherit = 0,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"local")]
+    Local = 1,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"portal")]
+    Portal = 2,
+
+}
+#pragma warning restore CS1591
+
+/// <summary>
+/// Territory validation mode for constraint checking
+/// </summary>
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public enum TerritoryMode
+{
+
+    [System.Runtime.Serialization.EnumMember(Value = @"exclusive")]
+    Exclusive = 0,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"inclusive")]
+    Inclusive = 1,
+
+}
+#pragma warning restore CS1591
+
+/// <summary>
+/// Request to validate a location against territory boundaries
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class ValidateTerritoryRequest
+{
+
+    /// <summary>
+    /// The location to validate
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("locationId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid LocationId { get; set; } = default!;
+
+    /// <summary>
+    /// Territory boundary location IDs
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("territoryLocationIds")]
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Collections.Generic.ICollection<System.Guid> TerritoryLocationIds { get; set; } = new System.Collections.ObjectModel.Collection<System.Guid>();
+
+    /// <summary>
+    /// Validation mode (exclusive or inclusive). Defaults to exclusive.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("territoryMode")]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public TerritoryMode? TerritoryMode { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Territory validation result
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class ValidateTerritoryResponse
+{
+
+    /// <summary>
+    /// True if location passes territory validation
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("isValid")]
+    public bool IsValid { get; set; } = default!;
+
+    /// <summary>
+    /// Human-readable reason if validation failed
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("violationReason")]
+    public string? ViolationReason { get; set; } = default!;
+
+    /// <summary>
+    /// The territory location that matched (for inclusive) or conflicted (for exclusive)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("matchedTerritoryId")]
+    public System.Guid? MatchedTerritoryId { get; set; } = default!;
+
+}
+
+/// <summary>
 /// Request to retrieve a location by its unique identifier
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
@@ -416,7 +532,33 @@ public partial class CreateLocationRequest
     public System.Guid? ParentLocationId { get; set; } = default!;
 
     /// <summary>
-    /// Additional metadata for the location (JSON)
+    /// Optional spatial extent in world coordinates
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("bounds")]
+    public BoundingBox3D? Bounds { get; set; } = default!;
+
+    /// <summary>
+    /// Precision level of spatial bounds (defaults to none)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("boundsPrecision")]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public BoundsPrecision? BoundsPrecision { get; set; } = default!;
+
+    /// <summary>
+    /// How this location's coordinate system relates to its parent (defaults to inherit)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("coordinateMode")]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public CoordinateMode? CoordinateMode { get; set; } = default!;
+
+    /// <summary>
+    /// Origin point for local or inherited coordinate systems
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("localOrigin")]
+    public Position3D? LocalOrigin { get; set; } = default!;
+
+    /// <summary>
+    /// Client-provided location metadata. No Bannou plugin reads specific keys from this field by convention.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("metadata")]
     public object? Metadata { get; set; } = default!;
@@ -460,7 +602,33 @@ public partial class UpdateLocationRequest
     public LocationType? LocationType { get; set; } = default!;
 
     /// <summary>
-    /// Additional metadata
+    /// Optional spatial extent in world coordinates
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("bounds")]
+    public BoundingBox3D? Bounds { get; set; } = default!;
+
+    /// <summary>
+    /// Precision level of spatial bounds
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("boundsPrecision")]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public BoundsPrecision? BoundsPrecision { get; set; } = default!;
+
+    /// <summary>
+    /// How this location's coordinate system relates to its parent
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("coordinateMode")]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public CoordinateMode? CoordinateMode { get; set; } = default!;
+
+    /// <summary>
+    /// Origin point for local or inherited coordinate systems
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("localOrigin")]
+    public Position3D? LocalOrigin { get; set; } = default!;
+
+    /// <summary>
+    /// Updated client-provided location metadata. No Bannou plugin reads specific keys from this field by convention.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("metadata")]
     public object? Metadata { get; set; } = default!;
@@ -523,6 +691,31 @@ public partial class DeleteLocationRequest
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public System.Guid LocationId { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Request to transfer a location from its current realm to a different realm
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class TransferLocationToRealmRequest
+{
+
+    /// <summary>
+    /// ID of the location to transfer
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("locationId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid LocationId { get; set; } = default!;
+
+    /// <summary>
+    /// ID of the target realm to transfer the location to
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("targetRealmId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid TargetRealmId { get; set; } = default!;
 
 }
 
@@ -693,10 +886,82 @@ public partial class SeedLocation
     public string? ParentLocationCode { get; set; } = default!;
 
     /// <summary>
-    /// Additional metadata for the location (JSON)
+    /// Optional spatial extent in world coordinates
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("bounds")]
+    public BoundingBox3D? Bounds { get; set; } = default!;
+
+    /// <summary>
+    /// Precision level of spatial bounds (defaults to none)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("boundsPrecision")]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public BoundsPrecision? BoundsPrecision { get; set; } = default!;
+
+    /// <summary>
+    /// How this location's coordinate system relates to its parent (defaults to inherit)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("coordinateMode")]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public CoordinateMode? CoordinateMode { get; set; } = default!;
+
+    /// <summary>
+    /// Origin point for local or inherited coordinate systems
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("localOrigin")]
+    public Position3D? LocalOrigin { get; set; } = default!;
+
+    /// <summary>
+    /// Client-provided location metadata. No Bannou plugin reads specific keys from this field by convention.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("metadata")]
     public object? Metadata { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Request to find all locations containing a spatial position
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class QueryLocationsByPositionRequest
+{
+
+    /// <summary>
+    /// Position to query in world coordinates
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("position")]
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
+    public Position3D Position { get; set; } = new Position3D();
+
+    /// <summary>
+    /// Realm to search within
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("realmId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid RealmId { get; set; } = default!;
+
+    /// <summary>
+    /// Maximum hierarchy depth to search (null for all depths)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("maxDepth")]
+    [System.ComponentModel.DataAnnotations.Range(0, int.MaxValue)]
+    public int? MaxDepth { get; set; } = default!;
+
+    /// <summary>
+    /// Page number for pagination (1-indexed)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("page")]
+    [System.ComponentModel.DataAnnotations.Range(1, int.MaxValue)]
+    public int Page { get; set; } = 1;
+
+    /// <summary>
+    /// Number of results per page
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("pageSize")]
+    [System.ComponentModel.DataAnnotations.Range(1, 100)]
+    public int PageSize { get; set; } = 20;
 
 }
 
@@ -785,7 +1050,33 @@ public partial class LocationResponse
     public string? DeprecationReason { get; set; } = default!;
 
     /// <summary>
-    /// Additional metadata for the location (JSON)
+    /// Optional spatial extent in world coordinates
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("bounds")]
+    public BoundingBox3D? Bounds { get; set; } = default!;
+
+    /// <summary>
+    /// Precision level of spatial bounds
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("boundsPrecision")]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public BoundsPrecision BoundsPrecision { get; set; } = default!;
+
+    /// <summary>
+    /// How this location's coordinate system relates to its parent
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("coordinateMode")]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public CoordinateMode CoordinateMode { get; set; } = default!;
+
+    /// <summary>
+    /// Origin point for local or inherited coordinate systems
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("localOrigin")]
+    public Position3D? LocalOrigin { get; set; } = default!;
+
+    /// <summary>
+    /// Client-provided location metadata. No Bannou plugin reads specific keys from this field by convention.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("metadata")]
     public object? Metadata { get; set; } = default!;
@@ -887,6 +1178,309 @@ public partial class SeedLocationsResponse
     [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
     public System.Collections.Generic.ICollection<string> Errors { get; set; } = new System.Collections.ObjectModel.Collection<string>();
+
+}
+
+/// <summary>
+/// Request to report an entity's presence at a location
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class ReportEntityPositionRequest
+{
+
+    /// <summary>
+    /// Type of entity (opaque string - character, actor, npc, player, etc.)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("entityType")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string EntityType { get; set; } = default!;
+
+    /// <summary>
+    /// ID of the entity being reported
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("entityId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid EntityId { get; set; } = default!;
+
+    /// <summary>
+    /// ID of the location the entity is at
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("locationId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid LocationId { get; set; } = default!;
+
+    /// <summary>
+    /// Caller hint for the entity's previous location (optimization to skip GET on refresh)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("previousLocationId")]
+    public System.Guid? PreviousLocationId { get; set; } = default!;
+
+    /// <summary>
+    /// ID of the realm the location belongs to (included in arrival events if provided)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("realmId")]
+    public System.Guid? RealmId { get; set; } = default!;
+
+    /// <summary>
+    /// Identifier of the reporter (service name or session ID)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("reportedBy")]
+    public string? ReportedBy { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Result of reporting entity presence
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class ReportEntityPositionResponse
+{
+
+    /// <summary>
+    /// Whether the position was successfully recorded
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("recorded")]
+    public bool Recorded { get; set; } = default!;
+
+    /// <summary>
+    /// Location ID the entity arrived at (only set when location changed)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("arrivedAt")]
+    public System.Guid? ArrivedAt { get; set; } = default!;
+
+    /// <summary>
+    /// Location ID the entity departed from (only set when location changed)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("departedFrom")]
+    public System.Guid? DepartedFrom { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Request to query an entity's current location
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class GetEntityLocationRequest
+{
+
+    /// <summary>
+    /// Type of entity (opaque string - character, actor, npc, player, etc.)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("entityType")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string EntityType { get; set; } = default!;
+
+    /// <summary>
+    /// ID of the entity to look up
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("entityId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid EntityId { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Result of querying an entity's current location
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class GetEntityLocationResponse
+{
+
+    /// <summary>
+    /// Whether a non-expired presence binding exists for this entity
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("found")]
+    public bool Found { get; set; } = default!;
+
+    /// <summary>
+    /// ID of the location the entity is currently at
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("locationId")]
+    public System.Guid? LocationId { get; set; } = default!;
+
+    /// <summary>
+    /// ID of the realm the location belongs to
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("realmId")]
+    public System.Guid? RealmId { get; set; } = default!;
+
+    /// <summary>
+    /// Type of entity (echoed back)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("entityType")]
+    public string? EntityType { get; set; } = default!;
+
+    /// <summary>
+    /// ID of the entity (echoed back)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("entityId")]
+    public System.Guid? EntityId { get; set; } = default!;
+
+    /// <summary>
+    /// When the presence was last reported
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("reportedAt")]
+    public System.DateTimeOffset? ReportedAt { get; set; } = default!;
+
+    /// <summary>
+    /// Identifier of the last reporter
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("reportedBy")]
+    public string? ReportedBy { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Request to list entities at a specific location
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class ListEntitiesAtLocationRequest
+{
+
+    /// <summary>
+    /// ID of the location to query
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("locationId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid LocationId { get; set; } = default!;
+
+    /// <summary>
+    /// Optional filter by entity type (opaque string)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("entityType")]
+    public string? EntityType { get; set; } = default!;
+
+    /// <summary>
+    /// Page number (1-indexed)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("page")]
+    public int Page { get; set; } = 1;
+
+    /// <summary>
+    /// Number of entities per page
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("pageSize")]
+    public int PageSize { get; set; } = 50;
+
+}
+
+/// <summary>
+/// Result of listing entities at a location
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class ListEntitiesAtLocationResponse
+{
+
+    /// <summary>
+    /// Entities currently present at the location
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("entities")]
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Collections.Generic.ICollection<EntityPresenceEntry> Entities { get; set; } = new System.Collections.ObjectModel.Collection<EntityPresenceEntry>();
+
+    /// <summary>
+    /// Total number of entities matching the query
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("totalCount")]
+    public int TotalCount { get; set; } = default!;
+
+    /// <summary>
+    /// ID of the queried location
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("locationId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid LocationId { get; set; } = default!;
+
+}
+
+/// <summary>
+/// An entity currently present at a location
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class EntityPresenceEntry
+{
+
+    /// <summary>
+    /// Type of entity (opaque string)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("entityType")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string EntityType { get; set; } = default!;
+
+    /// <summary>
+    /// ID of the entity
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("entityId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid EntityId { get; set; } = default!;
+
+    /// <summary>
+    /// When the presence was last reported
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("reportedAt")]
+    public System.DateTimeOffset? ReportedAt { get; set; } = default!;
+
+    /// <summary>
+    /// Identifier of the last reporter
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("reportedBy")]
+    public string? ReportedBy { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Request to clear an entity's presence from its current location
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class ClearEntityPositionRequest
+{
+
+    /// <summary>
+    /// Type of entity (opaque string - character, actor, npc, player, etc.)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("entityType")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string EntityType { get; set; } = default!;
+
+    /// <summary>
+    /// ID of the entity to clear
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("entityId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid EntityId { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Result of clearing entity presence
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class ClearEntityPositionResponse
+{
+
+    /// <summary>
+    /// Whether the entity had an active presence that was cleared
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("cleared")]
+    public bool Cleared { get; set; } = default!;
+
+    /// <summary>
+    /// Location the entity was removed from (null if entity had no active presence)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("previousLocationId")]
+    public System.Guid? PreviousLocationId { get; set; } = default!;
 
 }
 

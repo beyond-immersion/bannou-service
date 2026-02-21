@@ -1,0 +1,313 @@
+openapi: 3.0.3
+info:
+  title: Divine Service Events
+  description: |
+    Event subscription and publication declarations for Divine service.
+    Lifecycle events (Created, Updated, Deleted) are auto-generated from x-lifecycle
+    for Deity entities. Custom events cover blessing orchestration, divinity economy,
+    follower management, and deity activation status changes.
+
+    **Cross-Service Integration**:
+    - Subscribes to analytics.score.updated for domain-relevant divinity generation.
+      Analytics is L4 (soft dependency) -- if disabled, divinity generation from
+      analytics events is disabled but manual credit still works.
+    - Character deletion cleanup is handled via x-references + cleanup endpoints
+      (FOUNDATION TENETS: Resource-Managed Cleanup), NOT via character.deleted event
+      subscription.
+
+    **Topic Naming**: Uses dot-separated format (divine.blessing.granted).
+
+    **SCHEMA MODIFICATION GATE**: STOP. Before modifying this schema, you MUST:
+    1. Read docs/reference/SCHEMA-RULES.md
+    2. State which section applies to your change
+    3. Only then proceed with edits
+    Edits without stating the applicable rule are FORBIDDEN.
+  version: 1.0.0
+  x-event-subscriptions:
+    # Analytics score updates for divinity generation (soft dependency on L4)
+    - topic: analytics.score.updated
+      event: AnalyticsScoreUpdatedEvent
+      handler: HandleAnalyticsScoreUpdated
+  x-event-publications:
+    # Deity lifecycle events (auto-generated from x-lifecycle)
+    - topic: deity.created
+      event: DeityCreatedEvent
+      description: Published when a new deity is created
+    - topic: deity.updated
+      event: DeityUpdatedEvent
+      description: Published when a deity is updated
+    - topic: deity.deleted
+      event: DeityDeletedEvent
+      description: Published when a deity is deleted
+    # Custom events - Blessing
+    - topic: divine.blessing.granted
+      event: DivineBlessingGrantedEvent
+      description: Published when a god grants a blessing to an entity
+    - topic: divine.blessing.revoked
+      event: DivineBlessingRevokedEvent
+      description: Published when a blessing is revoked
+    # Custom events - Divinity
+    - topic: divine.divinity.credited
+      event: DivineDivinityCreditedEvent
+      description: Published when divinity is earned by a deity
+    - topic: divine.divinity.debited
+      event: DivineDivinityDebitedEvent
+      description: Published when divinity is spent by a deity
+    # Custom events - Follower
+    - topic: divine.follower.registered
+      event: DivineFollowerRegisteredEvent
+      description: Published when a character becomes a follower of a deity
+    - topic: divine.follower.removed
+      event: DivineFollowerRemovedEvent
+      description: Published when a character is removed as a follower
+    # Custom events - Deity Status
+    - topic: divine.deity.activated
+      event: DivineDeityActivatedEvent
+      description: Published when a deity becomes active in the world
+    - topic: divine.deity.dormant
+      event: DivineDeityDormantEvent
+      description: Published when a deity goes dormant
+
+# Lifecycle events auto-generated from this definition
+# Output: schemas/Generated/divine-lifecycle-events.yaml
+x-lifecycle:
+  Deity:
+    model:
+      deityId: { type: string, format: uuid, primary: true, required: true, description: "Unique identifier for the deity" }
+      gameServiceId: { type: string, format: uuid, required: true, description: "Game service this deity belongs to" }
+      code: { type: string, required: true, description: "Unique code within the game service" }
+      displayName: { type: string, required: true, description: "Human-readable display name" }
+      description: { type: string, required: true, description: "Description of the deity" }
+      domains:
+        type: array
+        items:
+          $ref: 'divine-api.yaml#/components/schemas/DomainInfluence'
+        required: true
+        description: "Domain influences"
+      status: { $ref: 'divine-api.yaml#/components/schemas/DeityStatus', required: true, description: "Current lifecycle status" }
+      followerCount: { type: integer, required: true, description: "Number of active followers" }
+      maxAttentionSlots: { type: integer, required: true, description: "Maximum characters the deity can actively monitor" }
+      actorId: { type: string, format: uuid, nullable: true, description: "Associated actor ID for the deity watcher brain" }
+      seedId: { type: string, format: uuid, nullable: true, description: "Domain power seed ID" }
+      currencyWalletId: { type: string, format: uuid, nullable: true, description: "Divinity currency wallet ID" }
+      realmId: { type: string, format: uuid, nullable: true, description: "Home realm for this deity" }
+      createdAt: { type: string, format: date-time, required: true, description: "When the deity was created" }
+      updatedAt: { type: string, format: date-time, required: true, description: "When the deity was last updated" }
+    sensitive: [personalityTraits]
+
+paths: {}  # Events don't have HTTP paths
+
+# Note: DeityCreatedEvent, DeityUpdatedEvent, DeityDeletedEvent
+# are auto-generated from x-lifecycle. See: schemas/Generated/divine-lifecycle-events.yaml
+
+components:
+  schemas:
+    # =========================================================================
+    # Custom Published Events (non-lifecycle)
+    # =========================================================================
+
+    DivineBlessingGrantedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
+      type: object
+      additionalProperties: false
+      description: Published when a god grants a blessing to an entity
+      required:
+        - deityId
+        - entityId
+        - entityType
+        - blessingId
+        - tier
+        - itemInstanceId
+      properties:
+        deityId:
+          type: string
+          format: uuid
+          description: The deity granting the blessing
+        entityId:
+          type: string
+          format: uuid
+          description: The entity receiving the blessing
+        entityType:
+          type: string
+          description: Type of entity receiving the blessing (e.g., character, account, deity)
+        blessingId:
+          type: string
+          format: uuid
+          description: The blessing record identifier
+        tier:
+          $ref: 'divine-api.yaml#/components/schemas/BlessingTier'
+          description: Tier of the granted blessing
+        itemInstanceId:
+          type: string
+          format: uuid
+          description: The item instance created for this blessing
+
+    DivineBlessingRevokedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
+      type: object
+      additionalProperties: false
+      description: Published when a blessing is revoked
+      required:
+        - blessingId
+        - deityId
+        - entityId
+        - entityType
+        - reason
+      properties:
+        blessingId:
+          type: string
+          format: uuid
+          description: The revoked blessing
+        deityId:
+          type: string
+          format: uuid
+          description: The deity revoking the blessing
+        entityId:
+          type: string
+          format: uuid
+          description: The entity losing the blessing
+        entityType:
+          type: string
+          description: Type of entity losing the blessing
+        reason:
+          type: string
+          description: Why the blessing was revoked
+
+    DivineDivinityCreditedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
+      type: object
+      additionalProperties: false
+      description: Published when divinity is earned by a deity from mortal actions or direct grant
+      required:
+        - deityId
+        - amount
+        - source
+      properties:
+        deityId:
+          type: string
+          format: uuid
+          description: The deity receiving divinity
+        amount:
+          type: number
+          format: double
+          description: Amount of divinity credited
+        source:
+          type: string
+          description: Source of the divinity gain
+        sourceEventId:
+          type: string
+          format: uuid
+          nullable: true
+          description: The triggering event if applicable
+
+    DivineDivinityDebitedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
+      type: object
+      additionalProperties: false
+      description: Published when divinity is spent by a deity for blessings or other purposes
+      required:
+        - deityId
+        - amount
+        - purpose
+      properties:
+        deityId:
+          type: string
+          format: uuid
+          description: The deity spending divinity
+        amount:
+          type: number
+          format: double
+          description: Amount of divinity spent
+        purpose:
+          type: string
+          description: What the divinity was spent on
+        targetCharacterId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Target character if blessing-related
+
+    DivineFollowerRegisteredEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
+      type: object
+      additionalProperties: false
+      description: Published when a character becomes a follower of a deity
+      required:
+        - deityId
+        - characterId
+        - relationshipId
+      properties:
+        deityId:
+          type: string
+          format: uuid
+          description: The deity gaining a follower
+        characterId:
+          type: string
+          format: uuid
+          description: The new follower
+        relationshipId:
+          type: string
+          format: uuid
+          description: The Relationship record for this bond
+
+    DivineFollowerRemovedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
+      type: object
+      additionalProperties: false
+      description: Published when a character is removed as a follower
+      required:
+        - deityId
+        - characterId
+      properties:
+        deityId:
+          type: string
+          format: uuid
+          description: The deity losing a follower
+        characterId:
+          type: string
+          format: uuid
+          description: The removed follower
+
+    DivineDeityActivatedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
+      type: object
+      additionalProperties: false
+      description: Published when a deity becomes active in the world
+      required:
+        - deityId
+        - gameServiceId
+      properties:
+        deityId:
+          type: string
+          format: uuid
+          description: The activated deity
+        gameServiceId:
+          type: string
+          format: uuid
+          description: The game service scope
+
+    DivineDeityDormantEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
+      type: object
+      additionalProperties: false
+      description: Published when a deity goes dormant
+      required:
+        - deityId
+        - gameServiceId
+      properties:
+        deityId:
+          type: string
+          format: uuid
+          description: The dormant deity
+        gameServiceId:
+          type: string
+          format: uuid
+          description: The game service scope

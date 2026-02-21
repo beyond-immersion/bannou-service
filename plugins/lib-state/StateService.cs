@@ -13,23 +13,30 @@ namespace BeyondImmersion.BannouService.State;
 /// Implementation of the State service.
 /// Provides HTTP API layer over native Redis/MySQL state management infrastructure.
 /// </summary>
-[BannouService("state", typeof(IStateService), lifetime: ServiceLifetime.Scoped)]
+[BannouService("state", typeof(IStateService), lifetime: ServiceLifetime.Scoped, layer: ServiceLayer.Infrastructure)]
 public partial class StateService : IStateService
 {
     private readonly ILogger<StateService> _logger;
     private readonly StateServiceConfiguration _configuration;
-    private readonly IMessageBus _messageBus;
+    private readonly IServiceProvider _serviceProvider;
     private readonly IStateStoreFactory _stateStoreFactory;
+
+    /// <summary>
+    /// Lazily resolved IMessageBus. State loads before Messaging in L0 infrastructure order,
+    /// so we cannot inject IMessageBus directly in the constructor. Instead, we resolve it
+    /// on first use when all plugins are guaranteed to be loaded.
+    /// </summary>
+    private IMessageBus MessageBus => _serviceProvider.GetRequiredService<IMessageBus>();
 
     public StateService(
         ILogger<StateService> logger,
         StateServiceConfiguration configuration,
-        IMessageBus messageBus,
+        IServiceProvider serviceProvider,
         IStateStoreFactory stateStoreFactory)
     {
         _logger = logger;
         _configuration = configuration;
-        _messageBus = messageBus;
+        _serviceProvider = serviceProvider;
         _stateStoreFactory = stateStoreFactory;
     }
 
@@ -40,45 +47,26 @@ public partial class StateService : IStateService
     {
         _logger.LogDebug("Getting state from store {StoreName} with key {Key}", body.StoreName, body.Key);
 
-        try
+        if (!_stateStoreFactory.HasStore(body.StoreName))
         {
-            if (!_stateStoreFactory.HasStore(body.StoreName))
-            {
-                _logger.LogWarning("State store {StoreName} not configured", body.StoreName);
-                return (StatusCodes.NotFound, null);
-            }
-
-            var store = _stateStoreFactory.GetStore<object>(body.StoreName);
-            var (value, etag) = await store.GetWithETagAsync(body.Key, cancellationToken);
-
-            if (value == null)
-            {
-                _logger.LogDebug("Key {Key} not found in store {StoreName}", body.Key, body.StoreName);
-                return (StatusCodes.NotFound, null);
-            }
-
-            return (StatusCodes.OK, new GetStateResponse
-            {
-                Value = value,
-                Etag = etag,
-                Metadata = new StateMetadata()
-            });
+            _logger.LogWarning("State store {StoreName} not configured", body.StoreName);
+            return (StatusCodes.NotFound, null);
         }
-        catch (Exception ex)
+
+        var store = _stateStoreFactory.GetStore<object>(body.StoreName);
+        var (value, etag) = await store.GetWithETagAsync(body.Key, cancellationToken);
+
+        if (value == null)
         {
-            _logger.LogError(ex, "Failed to get state from store {StoreName} with key {Key}", body.StoreName, body.Key);
-            await _messageBus.TryPublishErrorAsync(
-                "state",
-                "GetState",
-                ex.GetType().Name,
-                ex.Message,
-                dependency: body.StoreName,
-                endpoint: "post:/state/get",
-                details: new { StoreName = body.StoreName, Key = body.Key },
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
+            _logger.LogDebug("Key {Key} not found in store {StoreName}", body.Key, body.StoreName);
+            return (StatusCodes.NotFound, null);
         }
+
+        return (StatusCodes.OK, new GetStateResponse
+        {
+            Value = value,
+            Etag = etag
+        });
     }
 
     /// <inheritdoc />
@@ -88,53 +76,35 @@ public partial class StateService : IStateService
     {
         _logger.LogDebug("Saving state to store {StoreName} with key {Key}", body.StoreName, body.Key);
 
-        try
+        if (!_stateStoreFactory.HasStore(body.StoreName))
         {
-            if (!_stateStoreFactory.HasStore(body.StoreName))
+            _logger.LogWarning("State store {StoreName} not configured", body.StoreName);
+            return (StatusCodes.NotFound, null);
+        }
+
+        var store = _stateStoreFactory.GetStore<object>(body.StoreName);
+
+        // If ETag is provided, use optimistic concurrency
+        if (!string.IsNullOrEmpty(body.Options?.Etag))
+        {
+            var optimisticEtag = await store.TrySaveAsync(body.Key, body.Value, body.Options.Etag, cancellationToken);
+            if (optimisticEtag == null)
             {
-                _logger.LogWarning("State store {StoreName} not configured", body.StoreName);
-                return (StatusCodes.NotFound, null);
+                _logger.LogDebug("ETag mismatch for key {Key} in store {StoreName}", body.Key, body.StoreName);
+                return (StatusCodes.Conflict, null);
             }
 
-            var store = _stateStoreFactory.GetStore<object>(body.StoreName);
-
-            // If ETag is provided, use optimistic concurrency
-            if (!string.IsNullOrEmpty(body.Options?.Etag))
-            {
-                var optimisticEtag = await store.TrySaveAsync(body.Key, body.Value, body.Options.Etag, cancellationToken);
-                if (optimisticEtag == null)
-                {
-                    _logger.LogDebug("ETag mismatch for key {Key} in store {StoreName}", body.Key, body.StoreName);
-                    return (StatusCodes.Conflict, null);
-                }
-
-                return (StatusCodes.OK, new SaveStateResponse { Etag = optimisticEtag });
-            }
-
-            // Standard save - pass options directly (generated StateOptions type)
-            var newEtag = await store.SaveAsync(body.Key, body.Value, body.Options, cancellationToken);
-
-            _logger.LogDebug("Saved state to store {StoreName} with key {Key}", body.StoreName, body.Key);
-            return (StatusCodes.OK, new SaveStateResponse
-            {
-                Etag = newEtag
-            });
+            return (StatusCodes.OK, new SaveStateResponse { Etag = optimisticEtag });
         }
-        catch (Exception ex)
+
+        // Standard save - pass options directly (generated StateOptions type)
+        var newEtag = await store.SaveAsync(body.Key, body.Value, body.Options, cancellationToken);
+
+        _logger.LogDebug("Saved state to store {StoreName} with key {Key}", body.StoreName, body.Key);
+        return (StatusCodes.OK, new SaveStateResponse
         {
-            _logger.LogError(ex, "Failed to save state to store {StoreName} with key {Key}", body.StoreName, body.Key);
-            await _messageBus.TryPublishErrorAsync(
-                "state",
-                "SaveState",
-                ex.GetType().Name,
-                ex.Message,
-                dependency: body.StoreName,
-                endpoint: "post:/state/save",
-                details: new { StoreName = body.StoreName, Key = body.Key },
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
+            Etag = newEtag
+        });
     }
 
     /// <inheritdoc />
@@ -144,35 +114,17 @@ public partial class StateService : IStateService
     {
         _logger.LogDebug("Deleting state from store {StoreName} with key {Key}", body.StoreName, body.Key);
 
-        try
+        if (!_stateStoreFactory.HasStore(body.StoreName))
         {
-            if (!_stateStoreFactory.HasStore(body.StoreName))
-            {
-                _logger.LogWarning("State store {StoreName} not configured", body.StoreName);
-                return (StatusCodes.NotFound, null);
-            }
-
-            var store = _stateStoreFactory.GetStore<object>(body.StoreName);
-            var deleted = await store.DeleteAsync(body.Key, cancellationToken);
-
-            _logger.LogDebug("Delete result for key {Key} in store {StoreName}: {Deleted}", body.Key, body.StoreName, deleted);
-            return (StatusCodes.OK, new DeleteStateResponse { Deleted = deleted });
+            _logger.LogWarning("State store {StoreName} not configured", body.StoreName);
+            return (StatusCodes.NotFound, null);
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Failed to delete state from store {StoreName} with key {Key}", body.StoreName, body.Key);
-            await _messageBus.TryPublishErrorAsync(
-                "state",
-                "DeleteState",
-                ex.GetType().Name,
-                ex.Message,
-                dependency: body.StoreName,
-                endpoint: "post:/state/delete",
-                details: new { StoreName = body.StoreName, Key = body.Key },
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
+
+        var store = _stateStoreFactory.GetStore<object>(body.StoreName);
+        var deleted = await store.DeleteAsync(body.Key, cancellationToken);
+
+        _logger.LogDebug("Delete result for key {Key} in store {StoreName}: {Deleted}", body.Key, body.StoreName, deleted);
+        return (StatusCodes.OK, new DeleteStateResponse { Deleted = deleted });
     }
 
     /// <inheritdoc />
@@ -182,45 +134,27 @@ public partial class StateService : IStateService
     {
         _logger.LogDebug("Querying state from store {StoreName}", body.StoreName);
 
-        try
+        if (!_stateStoreFactory.HasStore(body.StoreName))
         {
-            if (!_stateStoreFactory.HasStore(body.StoreName))
-            {
-                _logger.LogWarning("State store {StoreName} not configured", body.StoreName);
-                return (StatusCodes.NotFound, null);
-            }
-
-            var backend = _stateStoreFactory.GetBackendType(body.StoreName);
-
-            // Route to appropriate backend
-            if (backend == StateBackend.MySql)
-            {
-                return await QueryMySqlAsync(body, cancellationToken);
-            }
-            else if (_stateStoreFactory.SupportsSearch(body.StoreName))
-            {
-                return await QueryRedisSearchAsync(body, cancellationToken);
-            }
-            else
-            {
-                _logger.LogWarning("Query not supported for Redis store {StoreName} without search enabled", body.StoreName);
-                return (StatusCodes.BadRequest, null);
-            }
+            _logger.LogWarning("State store {StoreName} not configured", body.StoreName);
+            return (StatusCodes.NotFound, null);
         }
-        catch (Exception ex)
+
+        var backend = _stateStoreFactory.GetBackendType(body.StoreName);
+
+        // Route to appropriate backend
+        if (backend == StateBackend.MySql)
         {
-            _logger.LogError(ex, "Failed to query state from store {StoreName}", body.StoreName);
-            await _messageBus.TryPublishErrorAsync(
-                "state",
-                "QueryState",
-                ex.GetType().Name,
-                ex.Message,
-                dependency: body.StoreName,
-                endpoint: "post:/state/query",
-                details: new { StoreName = body.StoreName },
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
+            return await QueryMySqlAsync(body, cancellationToken);
+        }
+        else if (_stateStoreFactory.SupportsSearch(body.StoreName))
+        {
+            return await QueryRedisSearchAsync(body, cancellationToken);
+        }
+        else
+        {
+            _logger.LogWarning("Query not supported for Redis store {StoreName} without search enabled", body.StoreName);
+            return (StatusCodes.BadRequest, null);
         }
     }
 
@@ -350,61 +284,116 @@ public partial class StateService : IStateService
     {
         _logger.LogDebug("Bulk getting {Count} keys from store {StoreName}", body.Keys.Count, body.StoreName);
 
-        try
+        if (!_stateStoreFactory.HasStore(body.StoreName))
         {
-            if (!_stateStoreFactory.HasStore(body.StoreName))
-            {
-                _logger.LogWarning("State store {StoreName} not configured", body.StoreName);
-                return (StatusCodes.NotFound, null);
-            }
-
-            var store = _stateStoreFactory.GetStore<object>(body.StoreName);
-            var results = await store.GetBulkAsync(body.Keys, cancellationToken);
-
-            // Build response items for all requested keys
-            var items = new List<BulkStateItem>();
-            foreach (var key in body.Keys)
-            {
-                if (results.TryGetValue(key, out var value))
-                {
-                    items.Add(new BulkStateItem
-                    {
-                        Key = key,
-                        Value = value,
-                        Found = true
-                    });
-                }
-                else
-                {
-                    items.Add(new BulkStateItem
-                    {
-                        Key = key,
-                        Value = null,
-                        Found = false
-                    });
-                }
-            }
-
-            _logger.LogDebug("Bulk get returned {Found}/{Total} keys from store {StoreName}",
-                items.Count(i => i.Found), body.Keys.Count, body.StoreName);
-
-            return (StatusCodes.OK, new BulkGetStateResponse { Items = items });
+            _logger.LogWarning("State store {StoreName} not configured", body.StoreName);
+            return (StatusCodes.NotFound, null);
         }
-        catch (Exception ex)
+
+        var store = _stateStoreFactory.GetStore<object>(body.StoreName);
+        var results = await store.GetBulkAsync(body.Keys, cancellationToken);
+
+        // Build response items for all requested keys
+        var items = new List<BulkStateItem>();
+        foreach (var key in body.Keys)
         {
-            _logger.LogError(ex, "Failed to bulk get from store {StoreName}", body.StoreName);
-            await _messageBus.TryPublishErrorAsync(
-                "state",
-                "BulkGetState",
-                ex.GetType().Name,
-                ex.Message,
-                dependency: body.StoreName,
-                endpoint: "post:/state/bulk-get",
-                details: new { StoreName = body.StoreName, KeyCount = body.Keys.Count },
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
+            if (results.TryGetValue(key, out var value))
+            {
+                items.Add(new BulkStateItem
+                {
+                    Key = key,
+                    Value = value,
+                    Found = true
+                });
+            }
+            else
+            {
+                items.Add(new BulkStateItem
+                {
+                    Key = key,
+                    Value = null,
+                    Found = false
+                });
+            }
         }
+
+        _logger.LogDebug("Bulk get returned {Found}/{Total} keys from store {StoreName}",
+            items.Count(i => i.Found), body.Keys.Count, body.StoreName);
+
+        return (StatusCodes.OK, new BulkGetStateResponse { Items = items });
+    }
+
+    /// <inheritdoc />
+    public async Task<(StatusCodes, BulkSaveStateResponse?)> BulkSaveStateAsync(
+        BulkSaveStateRequest body,
+        CancellationToken cancellationToken)
+    {
+        _logger.LogDebug("Bulk saving {Count} items to store {StoreName}", body.Items.Count, body.StoreName);
+
+        if (!_stateStoreFactory.HasStore(body.StoreName))
+        {
+            _logger.LogWarning("State store {StoreName} not configured", body.StoreName);
+            return (StatusCodes.NotFound, null);
+        }
+
+        var store = _stateStoreFactory.GetStore<object>(body.StoreName);
+        var items = body.Items.Select(i => new KeyValuePair<string, object>(i.Key, i.Value));
+        var etags = await store.SaveBulkAsync(items, body.Options, cancellationToken);
+
+        var results = etags.Select(kv => new BulkSaveResult
+        {
+            Key = kv.Key,
+            Etag = kv.Value
+        }).ToList();
+
+        _logger.LogDebug("Bulk save completed {Count} items to store {StoreName}",
+            results.Count, body.StoreName);
+
+        return (StatusCodes.OK, new BulkSaveStateResponse { Results = results });
+    }
+
+    /// <inheritdoc />
+    public async Task<(StatusCodes, BulkExistsStateResponse?)> BulkExistsStateAsync(
+        BulkExistsStateRequest body,
+        CancellationToken cancellationToken)
+    {
+        _logger.LogDebug("Bulk checking existence of {Count} keys in store {StoreName}", body.Keys.Count, body.StoreName);
+
+        if (!_stateStoreFactory.HasStore(body.StoreName))
+        {
+            _logger.LogWarning("State store {StoreName} not configured", body.StoreName);
+            return (StatusCodes.NotFound, null);
+        }
+
+        var store = _stateStoreFactory.GetStore<object>(body.StoreName);
+        var existingKeys = await store.ExistsBulkAsync(body.Keys, cancellationToken);
+
+        _logger.LogDebug("Bulk exists check returned {Found}/{Total} keys from store {StoreName}",
+            existingKeys.Count, body.Keys.Count, body.StoreName);
+
+        return (StatusCodes.OK, new BulkExistsStateResponse { ExistingKeys = existingKeys.ToList() });
+    }
+
+    /// <inheritdoc />
+    public async Task<(StatusCodes, BulkDeleteStateResponse?)> BulkDeleteStateAsync(
+        BulkDeleteStateRequest body,
+        CancellationToken cancellationToken)
+    {
+        _logger.LogDebug("Bulk deleting {Count} keys from store {StoreName}", body.Keys.Count, body.StoreName);
+
+        if (!_stateStoreFactory.HasStore(body.StoreName))
+        {
+            _logger.LogWarning("State store {StoreName} not configured", body.StoreName);
+            return (StatusCodes.NotFound, null);
+        }
+
+        var store = _stateStoreFactory.GetStore<object>(body.StoreName);
+        var deletedCount = await store.DeleteBulkAsync(body.Keys, cancellationToken);
+
+        _logger.LogDebug("Bulk delete removed {Deleted}/{Total} keys from store {StoreName}",
+            deletedCount, body.Keys.Count, body.StoreName);
+
+        return (StatusCodes.OK, new BulkDeleteStateResponse { DeletedCount = deletedCount });
     }
 
     /// <inheritdoc />
@@ -414,68 +403,50 @@ public partial class StateService : IStateService
     {
         _logger.LogDebug("Listing state stores with filter {BackendFilter}", body?.BackendFilter);
 
-        try
+        IEnumerable<string> storeNames;
+
+        // Get store names, optionally filtered by backend
+        if (body?.BackendFilter != null)
         {
-            IEnumerable<string> storeNames;
-
-            // Get store names, optionally filtered by backend
-            if (body?.BackendFilter != null)
-            {
-                var backend = body.BackendFilter == ListStoresRequestBackendFilter.Redis
-                    ? StateBackend.Redis
-                    : StateBackend.MySql;
-                storeNames = _stateStoreFactory.GetStoreNames(backend);
-            }
-            else
-            {
-                storeNames = _stateStoreFactory.GetStoreNames();
-            }
-
-            // Build store info list
-            var stores = storeNames.Select(name =>
-            {
-                var backend = _stateStoreFactory.GetBackendType(name);
-                return new StoreInfo
-                {
-                    Name = name,
-                    Backend = backend == StateBackend.Redis
-                        ? StoreInfoBackend.Redis
-                        : StoreInfoBackend.Mysql,
-                    KeyCount = null // Key counts require backend-specific queries, skip for now
-                };
-            }).ToList();
-
-            _logger.LogDebug("Listed {Count} state stores", stores.Count);
-            return (StatusCodes.OK, new ListStoresResponse { Stores = stores });
+            var backend = body.BackendFilter == ListStoresRequestBackendFilter.Redis
+                ? StateBackend.Redis
+                : StateBackend.MySql;
+            storeNames = _stateStoreFactory.GetStoreNames(backend);
         }
-        catch (Exception ex)
+        else
         {
-            _logger.LogError(ex, "Failed to list state stores");
-            await _messageBus.TryPublishErrorAsync(
-                "state",
-                "ListStores",
-                ex.GetType().Name,
-                ex.Message,
-                dependency: "state-factory",
-                endpoint: "post:/state/list-stores",
-                details: new { BackendFilter = body?.BackendFilter },
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
+            storeNames = _stateStoreFactory.GetStoreNames();
         }
+
+        // Build store info list
+        var includeStats = body?.IncludeStats ?? false;
+        var stores = new List<StoreInfo>();
+
+        foreach (var name in storeNames)
+        {
+            var backend = _stateStoreFactory.GetBackendType(name);
+            long? keyCount = null;
+
+            if (includeStats)
+            {
+                keyCount = await _stateStoreFactory.GetKeyCountAsync(name, cancellationToken);
+            }
+
+            stores.Add(new StoreInfo
+            {
+                Name = name,
+                Backend = backend == StateBackend.Redis
+                    ? StoreInfoBackend.Redis
+                    : StoreInfoBackend.Mysql,
+                KeyCount = keyCount.HasValue ? (int)keyCount.Value : null
+            });
+        }
+
+        _logger.LogDebug("Listed {Count} state stores (includeStats={IncludeStats})", stores.Count, includeStats);
+        return (StatusCodes.OK, new ListStoresResponse { Stores = stores });
     }
 
     #region Permission Registration
-
-    /// <summary>
-    /// Registers this service's API permissions with the Permission service on startup.
-    /// Overrides the default IBannouService implementation to use generated permission data.
-    /// </summary>
-    public async Task RegisterServicePermissionsAsync(string appId)
-    {
-        _logger.LogInformation("Registering State service permissions...");
-        await StatePermissionRegistration.RegisterViaEventAsync(_messageBus, appId, _logger);
-    }
 
     #endregion
 }

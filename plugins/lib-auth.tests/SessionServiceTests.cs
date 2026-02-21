@@ -25,6 +25,7 @@ public class SessionServiceTests
     private readonly Mock<IStateStore<string>> _mockStringStore;
     private readonly Mock<IStateStore<SessionDataModel>> _mockSessionStore;
     private readonly Mock<IMessageBus> _mockMessageBus;
+    private readonly Mock<IEdgeRevocationService> _mockEdgeRevocationService;
     private readonly Mock<ILogger<SessionService>> _mockLogger;
     private readonly AuthServiceConfiguration _configuration;
     private readonly SessionService _service;
@@ -39,12 +40,16 @@ public class SessionServiceTests
         _mockStringStore = new Mock<IStateStore<string>>();
         _mockSessionStore = new Mock<IStateStore<SessionDataModel>>();
         _mockMessageBus = new Mock<IMessageBus>();
+        _mockEdgeRevocationService = new Mock<IEdgeRevocationService>();
         _mockLogger = new Mock<ILogger<SessionService>>();
 
         _configuration = new AuthServiceConfiguration
         {
             JwtExpirationMinutes = 60
         };
+
+        // Setup edge revocation service (disabled by default for tests)
+        _mockEdgeRevocationService.Setup(e => e.IsEnabled).Returns(false);
 
         // Setup state store factory to return typed stores
         _mockStateStoreFactory.Setup(f => f.GetStore<List<string>>(STATE_STORE))
@@ -58,6 +63,7 @@ public class SessionServiceTests
             _mockStateStoreFactory.Object,
             _mockMessageBus.Object,
             _configuration,
+            _mockEdgeRevocationService.Object,
             _mockLogger.Object);
     }
 
@@ -527,7 +533,7 @@ public class SessionServiceTests
         // Session keys are stored as Guid.ToString("N") format
         var sessionIds = new List<string> { sessionId1.ToString("N"), sessionId2.ToString("N") };
         var expectedSessionGuids = new List<Guid> { sessionId1, sessionId2 };
-        var reason = SessionInvalidatedEventReason.Account_deleted;
+        var reason = SessionInvalidatedEventReason.AccountDeleted;
 
         _mockMessageBus.Setup(m => m.TryPublishAsync(
             "session.invalidated",
@@ -565,7 +571,7 @@ public class SessionServiceTests
         var sessionId = Guid.NewGuid();
         var roles = new List<string> { "user", "admin" };
         var authorizations = new List<string> { "auth1" };
-        var reason = SessionUpdatedEventReason.Role_changed;
+        var reason = SessionUpdatedEventReason.RoleChanged;
 
         _mockMessageBus.Setup(m => m.TryPublishAsync(
             "session.updated",

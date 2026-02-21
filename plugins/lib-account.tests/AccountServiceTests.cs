@@ -24,7 +24,8 @@ public class AccountServiceTests
     private readonly Mock<IStateStore<List<AuthMethodInfo>>> _mockAuthMethodsStore;
     private readonly Mock<IJsonQueryableStateStore<AccountModel>> _mockJsonQueryableStore;
     private readonly Mock<IMessageBus> _mockMessageBus;
-    private readonly Mock<IEventConsumer> _mockEventConsumer;
+    private readonly Mock<IDistributedLockProvider> _mockLockProvider;
+    private readonly Mock<ILockResponse> _mockLockResponse;
 
     private const string ACCOUNT_STATE_STORE = "account-statestore";
 
@@ -38,7 +39,19 @@ public class AccountServiceTests
         _mockAuthMethodsStore = new Mock<IStateStore<List<AuthMethodInfo>>>();
         _mockJsonQueryableStore = new Mock<IJsonQueryableStateStore<AccountModel>>();
         _mockMessageBus = new Mock<IMessageBus>();
-        _mockEventConsumer = new Mock<IEventConsumer>();
+        _mockLockProvider = new Mock<IDistributedLockProvider>();
+        _mockLockResponse = new Mock<ILockResponse>();
+
+        // Default lock behavior: always succeeds
+        _mockLockResponse.Setup(r => r.Success).Returns(true);
+        _mockLockProvider
+            .Setup(l => l.LockAsync(
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<int>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(_mockLockResponse.Object);
 
         // Setup default factory returns
         _mockStateStoreFactory
@@ -66,7 +79,7 @@ public class AccountServiceTests
         // Assert
         Assert.NotNull(endpoints);
         Assert.NotEmpty(endpoints);
-        Assert.Equal(16, endpoints.Count); // 16 endpoints defined in account-api.yaml with x-permissions
+        Assert.Equal(18, endpoints.Count); // 16 endpoints defined in account-api.yaml with x-permissions
     }
 
     [Fact]
@@ -78,7 +91,7 @@ public class AccountServiceTests
         // Assert - POST-only pattern: /account/list replaces GET /account
         var listEndpoint = endpoints.FirstOrDefault(e =>
             e.Path == "/account/list" &&
-            e.Method == BeyondImmersion.BannouService.Events.ServiceEndpointMethod.POST);
+            e.Method == ServiceEndpointMethod.POST);
 
         Assert.NotNull(listEndpoint);
         Assert.NotNull(listEndpoint.Permissions);
@@ -94,26 +107,18 @@ public class AccountServiceTests
         var guardedEndpoints = endpoints.Where(e =>
             e.Permissions.All(p => p.Role == "user" || p.Role == "admin")).ToList();
 
-        Assert.Equal(16, guardedEndpoints.Count);
-        Assert.Equal(13, guardedEndpoints.Count(e => e.Permissions.Any(p => p.Role == "admin")));
-        Assert.Equal(3, guardedEndpoints.Count(e => e.Permissions.Any(p => p.Role == "user")));
+        Assert.Equal(18, guardedEndpoints.Count);
+        Assert.Equal(14, guardedEndpoints.Count(e => e.Permissions.Any(p => p.Role == "admin")));
+        Assert.Equal(4, guardedEndpoints.Count(e => e.Permissions.Any(p => p.Role == "user")));
     }
 
     [Fact]
-    public void AccountPermissionRegistration_CreateRegistrationEvent_ShouldGenerateValidEvent()
+    public void AccountPermissionRegistration_BuildPermissionMatrix_ShouldBeValid()
     {
-        // Arrange
-        var instanceId = Guid.NewGuid();
-
-        // Act
-        var registrationEvent = AccountPermissionRegistration.CreateRegistrationEvent(instanceId, "test-app");
-
-        // Assert
-        Assert.NotNull(registrationEvent);
-        Assert.Equal("account", registrationEvent.ServiceName);
-        Assert.Equal(instanceId, registrationEvent.ServiceId);
-        Assert.NotNull(registrationEvent.Endpoints);
-        Assert.Equal(16, registrationEvent.Endpoints.Count);
+        PermissionMatrixValidator.ValidatePermissionMatrix(
+            AccountPermissionRegistration.ServiceId,
+            AccountPermissionRegistration.ServiceVersion,
+            AccountPermissionRegistration.BuildPermissionMatrix());
     }
 
     [Fact]
@@ -143,7 +148,7 @@ public class AccountServiceTests
             configuration,
             _mockStateStoreFactory.Object,
             _mockMessageBus.Object,
-            _mockEventConsumer.Object);
+            _mockLockProvider.Object);
     }
 
     [Fact]
@@ -570,7 +575,7 @@ public class AccountServiceTests
             _configuration,
             _mockStateStoreFactory.Object,
             _mockMessageBus.Object,
-            _mockEventConsumer.Object);
+            _mockLockProvider.Object);
 
         // Mock empty JSON query result
         _mockJsonQueryableStore
@@ -601,7 +606,7 @@ public class AccountServiceTests
             _configuration,
             _mockStateStoreFactory.Object,
             _mockMessageBus.Object,
-            _mockEventConsumer.Object);
+            _mockLockProvider.Object);
 
         // Mock empty JSON query result
         _mockJsonQueryableStore
@@ -632,7 +637,7 @@ public class AccountServiceTests
             _configuration,
             _mockStateStoreFactory.Object,
             _mockMessageBus.Object,
-            _mockEventConsumer.Object);
+            _mockLockProvider.Object);
 
         // Mock empty JSON query result
         _mockJsonQueryableStore
@@ -663,7 +668,7 @@ public class AccountServiceTests
             _configuration,
             _mockStateStoreFactory.Object,
             _mockMessageBus.Object,
-            _mockEventConsumer.Object);
+            _mockLockProvider.Object);
 
         // Mock empty JSON query result
         _mockJsonQueryableStore
@@ -698,7 +703,7 @@ public class AccountServiceTests
             _configuration,
             _mockStateStoreFactory.Object,
             _mockMessageBus.Object,
-            _mockEventConsumer.Object);
+            _mockLockProvider.Object);
 
         var request = new CreateAccountRequest
         {
@@ -745,7 +750,7 @@ public class AccountServiceTests
             _configuration,
             _mockStateStoreFactory.Object,
             _mockMessageBus.Object,
-            _mockEventConsumer.Object);
+            _mockLockProvider.Object);
 
         var request = new CreateAccountRequest
         {
@@ -791,7 +796,7 @@ public class AccountServiceTests
             _configuration,
             _mockStateStoreFactory.Object,
             _mockMessageBus.Object,
-            _mockEventConsumer.Object);
+            _mockLockProvider.Object);
 
         var request = new CreateAccountRequest
         {
@@ -837,7 +842,7 @@ public class AccountServiceTests
             _configuration,
             _mockStateStoreFactory.Object,
             _mockMessageBus.Object,
-            _mockEventConsumer.Object);
+            _mockLockProvider.Object);
 
         // Mock email index lookup
         _mockStringStore
@@ -888,7 +893,7 @@ public class AccountServiceTests
             _configuration,
             _mockStateStoreFactory.Object,
             _mockMessageBus.Object,
-            _mockEventConsumer.Object);
+            _mockLockProvider.Object);
 
         // Mock email index lookup
         _mockStringStore
@@ -942,7 +947,7 @@ public class AccountServiceTests
             _configuration,
             _mockStateStoreFactory.Object,
             _mockMessageBus.Object,
-            _mockEventConsumer.Object);
+            _mockLockProvider.Object);
 
         var request = new CreateAccountRequest
         {

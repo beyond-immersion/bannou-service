@@ -30,6 +30,11 @@ public class AchievementTestHandler : BaseHttpTestHandler
 
         // Error Handling Tests
         new ServiceTest(TestGetNonExistentAchievement, "GetNonExistent", "Achievement", "Test 404 for non-existent achievement"),
+
+        // Additional Coverage Tests
+        new ServiceTest(TestUpdateAchievementDefinition, "UpdateDefinition", "Achievement", "Test achievement definition update"),
+        new ServiceTest(TestSyncPlatformAchievements, "SyncPlatform", "Achievement", "Test platform achievement sync"),
+        new ServiceTest(TestGetPlatformSyncStatus, "GetSyncStatus", "Achievement", "Test platform sync status retrieval"),
     ];
 
     /// <summary>
@@ -253,4 +258,69 @@ public class AchievementTestHandler : BaseHttpTestHandler
             },
             404,
             "Get non-existent achievement");
+
+    // =========================================================================
+    // Additional Coverage Tests
+    // =========================================================================
+
+    private static async Task<TestResult> TestUpdateAchievementDefinition(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
+        {
+            var achievementClient = GetServiceClient<IAchievementClient>();
+            var created = await CreateTestAchievementAsync(achievementClient, "update");
+
+            var updated = await achievementClient.UpdateAchievementDefinitionAsync(new UpdateAchievementDefinitionRequest
+            {
+                GameServiceId = TestGameServiceId,
+                AchievementId = created.AchievementId,
+                DisplayName = "Updated Achievement Name",
+                Description = "Updated description for test",
+                IsActive = false
+            });
+
+            if (updated.DisplayName != "Updated Achievement Name")
+                return TestResult.Failed($"Display name not updated: {updated.DisplayName}");
+
+            if (updated.IsActive != false)
+                return TestResult.Failed($"IsActive not updated: {updated.IsActive}");
+
+            return TestResult.Successful($"Achievement updated: ID={updated.AchievementId}");
+        }, "Update achievement definition");
+
+    private static async Task<TestResult> TestSyncPlatformAchievements(ITestClient client, string[] args) =>
+        // Without Steam provider configured, sync returns 400 (platform not supported/configured)
+        await ExecuteExpectingStatusAsync(
+            async () =>
+            {
+                var achievementClient = GetServiceClient<IAchievementClient>();
+                var entityId = Guid.NewGuid();
+
+                await achievementClient.SyncPlatformAchievementsAsync(new SyncPlatformAchievementsRequest
+                {
+                    GameServiceId = TestGameServiceId,
+                    EntityId = entityId,
+                    EntityType = EntityType.Account,
+                    Platform = Platform.Steam
+                });
+            },
+            400, // Expected: Steam provider not configured in test environment
+            "Sync platform achievements (no provider)");
+
+    private static async Task<TestResult> TestGetPlatformSyncStatus(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
+        {
+            var achievementClient = GetServiceClient<IAchievementClient>();
+            var entityId = Guid.NewGuid();
+
+            var response = await achievementClient.GetPlatformSyncStatusAsync(new GetPlatformSyncStatusRequest
+            {
+                GameServiceId = TestGameServiceId,
+                EntityId = entityId,
+                EntityType = EntityType.Account,
+                Platform = Platform.Steam
+            });
+
+            return TestResult.Successful(
+                $"Sync status retrieved: entityId={response.EntityId}, platforms={response.Platforms.Count}");
+        }, "Get platform sync status");
 }

@@ -5,16 +5,22 @@ info:
     Event models for Mesh service RabbitMQ pub/sub.
     Mesh publishes endpoint lifecycle events and subscribes to heartbeats.
 
-    **Schema Rules**: AI agents MUST review docs/reference/SCHEMA-RULES.md before
-    modifying this schema. Optional reference types require `nullable: true`.
+    **SCHEMA MODIFICATION GATE**: STOP. Before modifying this schema, you MUST:
+    1. Read docs/reference/SCHEMA-RULES.md
+    2. State which section applies to your change
+    3. Only then proceed with edits
+    Edits without stating the applicable rule are FORBIDDEN.
   version: 1.0.0
   x-event-subscriptions:
-    - topic: bannou.service-heartbeats
+    - topic: bannou.service-heartbeat
       event: ServiceHeartbeatEvent
       handler: HandleServiceHeartbeat
     - topic: bannou.full-service-mappings
       event: FullServiceMappingsEvent
       handler: HandleServiceMappings
+    - topic: mesh.circuit.changed
+      event: MeshCircuitStateChangedEvent
+      handler: HandleCircuitStateChanged
   x-event-publications:
     - topic: mesh.endpoint.registered
       event: MeshEndpointRegisteredEvent
@@ -22,6 +28,15 @@ info:
     - topic: mesh.endpoint.deregistered
       event: MeshEndpointDeregisteredEvent
       description: Published when an endpoint is removed from the mesh
+    - topic: mesh.circuit.changed
+      event: MeshCircuitStateChangedEvent
+      description: Published when circuit breaker state changes for an app-id
+    - topic: mesh.endpoint.health.failed
+      event: MeshEndpointHealthCheckFailedEvent
+      description: Published when a health check probe fails (before deregistration threshold)
+    - topic: mesh.endpoint.degraded
+      event: MeshEndpointDegradedEvent
+      description: Published when an endpoint transitions to Degraded status
 
 paths: {}
 
@@ -92,3 +107,129 @@ components:
             - HealthCheckFailed
             - CircuitBreakerTripped
           description: Why the endpoint was removed
+
+    # =========================================================================
+    # Circuit Breaker Events
+    # =========================================================================
+    CircuitState:
+      type: string
+      enum:
+        - Closed
+        - Open
+        - HalfOpen
+      description: Circuit breaker state for mesh endpoints
+
+    MeshCircuitStateChangedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
+      type: object
+      additionalProperties: false
+      description: |
+        Published when circuit breaker state changes for an app-id.
+        Consumed by all mesh instances to update local caches.
+      required:
+        - appId
+        - newState
+        - consecutiveFailures
+        - changedAt
+      properties:
+        appId:
+          type: string
+          description: The app-id whose circuit state changed
+        newState:
+          $ref: '#/components/schemas/CircuitState'
+          description: The new circuit breaker state
+        previousState:
+          $ref: '#/components/schemas/CircuitState'
+          nullable: true
+          description: Previous circuit state (null for first state change)
+        consecutiveFailures:
+          type: integer
+          minimum: 0
+          description: Current consecutive failure count
+        changedAt:
+          type: string
+          format: date-time
+          description: When the state change occurred
+        openedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When the circuit was opened (null if not Open state)
+
+    # =========================================================================
+    # Endpoint Degradation Events (for monitoring/orchestration)
+    # =========================================================================
+    MeshEndpointHealthCheckFailedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
+      type: object
+      additionalProperties: false
+      description: |
+        Published when a health check probe fails (before deregistration threshold is reached).
+        Enables proactive monitoring - consumers can alert or prepare replacement instances.
+      required:
+        - instanceId
+        - appId
+        - consecutiveFailures
+        - failureThreshold
+      properties:
+        instanceId:
+          type: string
+          format: uuid
+          description: Instance ID of the endpoint that failed health check
+        appId:
+          type: string
+          description: App-id of the endpoint
+        consecutiveFailures:
+          type: integer
+          minimum: 1
+          description: Current consecutive failure count
+        failureThreshold:
+          type: integer
+          description: Configured threshold for deregistration (0 if disabled)
+        lastError:
+          type: string
+          nullable: true
+          description: Error message from the failed health check (if available)
+
+    MeshEndpointDegradedEventReason:
+      type: string
+      enum:
+        - MissedHeartbeat
+        - HighLoad
+        - HighConnectionCount
+      description: Reason why endpoint was marked as degraded
+
+    MeshEndpointDegradedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
+      type: object
+      additionalProperties: false
+      description: |
+        Published when an endpoint transitions to Degraded status.
+        Enables proactive orchestration - consumers can spin up replacements or rebalance.
+      required:
+        - instanceId
+        - appId
+        - reason
+      properties:
+        instanceId:
+          type: string
+          format: uuid
+          description: Instance ID of the degraded endpoint
+        appId:
+          type: string
+          description: App-id of the endpoint
+        reason:
+          $ref: '#/components/schemas/MeshEndpointDegradedEventReason'
+          description: Why the endpoint was marked as degraded
+        loadPercent:
+          type: number
+          nullable: true
+          description: Current load percentage (for HighLoad reason)
+        lastHeartbeatAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When the last heartbeat was received (for MissedHeartbeat reason)

@@ -1,5 +1,6 @@
 #nullable enable
 
+using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.Utilities;
 using System.Diagnostics;
 using System.Net.Http.Headers;
@@ -14,23 +15,14 @@ namespace BeyondImmersion.BannouService.ServiceClients;
 /// These methods enable direct service invocation with JSON or byte payloads,
 /// supporting both typed prebound API execution with template substitution
 /// and zero-copy byte forwarding for Connect service routing.
+/// Uses IMeshInvocationClient.InvokeRawAsync for retry support without circuit breaker participation.
 /// </remarks>
 public partial class ServiceNavigator
 {
     /// <summary>
-    /// HTTP client name for raw API execution.
-    /// </summary>
-    private const string RawApiHttpClientName = "ServiceNavigator.RawApi";
-
-    /// <summary>
     /// Cached JSON content type header for reuse.
     /// </summary>
     private static readonly MediaTypeHeaderValue s_jsonContentType = new("application/json") { CharSet = "utf-8" };
-
-    /// <summary>
-    /// Cached JSON accept header for reuse.
-    /// </summary>
-    private static readonly MediaTypeWithQualityHeaderValue s_jsonAcceptHeader = new("application/json");
 
     // ═══════════════════════════════════════════════════════════════════════════
     // Raw API Execution Methods
@@ -73,25 +65,16 @@ public partial class ServiceNavigator
             // Resolve app-id for routing
             var appId = _appMappingResolver.GetAppIdForService(serviceName);
 
-            // Build mesh URL using direct path
-            var bannouHttpEndpoint = _configuration.EffectiveHttpEndpoint;
-            var meshUrl = $"{bannouHttpEndpoint}/{endpoint.TrimStart('/')}";
+            // Create request via mesh client (handles endpoint resolution and retry)
+            using var request = _meshInvocationClient.CreateInvokeMethodRequest(httpMethod, appId, endpoint);
 
-            // Create HTTP request with proper headers
-            using var request = new HttpRequestMessage(httpMethod, meshUrl);
-
-            // Add bannou-app-id header for routing (like ServiceClientBase.PrepareRequest)
-            request.Headers.Add("bannou-app-id", appId);
-            request.Headers.Accept.Add(s_jsonAcceptHeader);
-
-            // Pass session context for tracing (if available)
+            // Add session/correlation context
             var sessionId = ServiceRequestContext.SessionId;
             if (!string.IsNullOrEmpty(sessionId))
             {
                 request.Headers.Add("X-Bannou-Session-Id", sessionId);
             }
 
-            // Add correlation ID if available
             var correlationId = ServiceRequestContext.CorrelationId;
             if (!string.IsNullOrEmpty(correlationId))
             {
@@ -106,11 +89,8 @@ public partial class ServiceNavigator
                 request.Content = content;
             }
 
-            // Create HttpClient from factory (properly pooled)
-            using var httpClient = _httpClientFactory.CreateClient(RawApiHttpClientName);
-
-            // Execute the request
-            using var response = await httpClient.SendAsync(request, ct);
+            // Execute via mesh with retries (no circuit breaker participation)
+            using var response = await _meshInvocationClient.InvokeRawAsync(request, ct);
 
             stopwatch.Stop();
 
@@ -118,15 +98,7 @@ public partial class ServiceNavigator
             var responseBody = await response.Content.ReadAsStringAsync(ct);
 
             // Extract response headers
-            var headers = new Dictionary<string, IEnumerable<string>>();
-            foreach (var header in response.Headers)
-            {
-                headers[header.Key] = header.Value;
-            }
-            foreach (var header in response.Content.Headers)
-            {
-                headers[header.Key] = header.Value;
-            }
+            var headers = ExtractHeaders(response);
 
             return RawApiResult.Success(
                 statusCode: (int)response.StatusCode,
@@ -135,6 +107,17 @@ public partial class ServiceNavigator
                 serviceName: serviceName,
                 endpoint: endpoint,
                 headers: headers);
+        }
+        catch (MeshInvocationException mex)
+        {
+            stopwatch.Stop();
+            return RawApiResult.Failure(
+                errorMessage: mex.Message,
+                exception: mex,
+                duration: stopwatch.Elapsed,
+                serviceName: serviceName,
+                endpoint: endpoint,
+                statusCode: mex.StatusCode ?? 502);
         }
         catch (TaskCanceledException tcEx) when (tcEx.InnerException is TimeoutException || !ct.IsCancellationRequested)
         {
@@ -158,17 +141,6 @@ public partial class ServiceNavigator
                 endpoint: endpoint,
                 statusCode: 0);
         }
-        catch (HttpRequestException httpEx)
-        {
-            stopwatch.Stop();
-            return RawApiResult.Failure(
-                errorMessage: $"HTTP request failed: {httpEx.Message}",
-                exception: httpEx,
-                duration: stopwatch.Elapsed,
-                serviceName: serviceName,
-                endpoint: endpoint,
-                statusCode: (int?)httpEx.StatusCode ?? 502); // Bad Gateway
-        }
         catch (Exception ex)
         {
             stopwatch.Stop();
@@ -180,6 +152,23 @@ public partial class ServiceNavigator
                 endpoint: endpoint,
                 statusCode: 500);
         }
+    }
+
+    /// <summary>
+    /// Extracts all headers from an HTTP response.
+    /// </summary>
+    private static Dictionary<string, IEnumerable<string>> ExtractHeaders(HttpResponseMessage response)
+    {
+        var headers = new Dictionary<string, IEnumerable<string>>();
+        foreach (var header in response.Headers)
+        {
+            headers[header.Key] = header.Value;
+        }
+        foreach (var header in response.Content.Headers)
+        {
+            headers[header.Key] = header.Value;
+        }
+        return headers;
     }
 
     /// <inheritdoc />

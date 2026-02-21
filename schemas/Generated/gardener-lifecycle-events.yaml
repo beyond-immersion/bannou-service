@@ -1,0 +1,139 @@
+openapi: 3.0.3
+info:
+  title: Gardener Service Events Lifecycle Events
+  description: "Auto-generated lifecycle event schemas for gardener service.\nDO NOT EDIT - This file is completely overwritten
+    by generate-lifecycle-events.py.\nSource of truth: gardener-events.yaml x-lifecycle section."
+  version: 1.0.0
+paths: {}
+components:
+  schemas:
+    ScenarioTemplateCreatedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+      type: object
+      additionalProperties: false
+      description: Published to scenario-template.created when a scenariotemplate is created
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - scenarioTemplateId
+      - code
+      - displayName
+      - description
+      - category
+      - connectivityMode
+      - status
+      - createdAt
+      - updatedAt
+      properties:
+        eventName:
+          type: string
+          default: scenario-template.created
+          description: 'Event type identifier: scenario-template.created'
+        scenarioTemplateId: &id001
+          type: string
+          format: uuid
+          description: "Unique identifier for the scenario template"
+        code: &id002
+          type: string
+          description: "Unique template code for reference"
+        displayName: &id003
+          type: string
+          description: "Human-readable template name"
+        description: &id004
+          type: string
+          description: "Template description"
+        category: &id005
+          $ref: ../gardener-api.yaml#/components/schemas/ScenarioCategory
+          description: "Primary gameplay category"
+        connectivityMode: &id006
+          $ref: ../gardener-api.yaml#/components/schemas/ConnectivityMode
+          description: "World connectivity mode"
+        status: &id007
+          $ref: ../gardener-api.yaml#/components/schemas/TemplateStatus
+          description: "Current lifecycle status"
+        createdAt: &id008
+          type: string
+          format: date-time
+          description: "When the template was created"
+        updatedAt: &id009
+          type: string
+          format: date-time
+          description: "When the template was last updated"
+    ScenarioTemplateUpdatedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+      type: object
+      additionalProperties: false
+      description: Published to scenario-template.updated when a scenariotemplate is updated
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - scenarioTemplateId
+      - code
+      - displayName
+      - description
+      - category
+      - connectivityMode
+      - status
+      - createdAt
+      - updatedAt
+      - changedFields
+      properties:
+        eventName:
+          type: string
+          default: scenario-template.updated
+          description: 'Event type identifier: scenario-template.updated'
+        scenarioTemplateId: *id001
+        code: *id002
+        displayName: *id003
+        description: *id004
+        category: *id005
+        connectivityMode: *id006
+        status: *id007
+        createdAt: *id008
+        updatedAt: *id009
+        changedFields:
+          type: array
+          items:
+            type: string
+          description: List of field names that were modified
+    ScenarioTemplateDeletedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+      type: object
+      additionalProperties: false
+      description: Published to scenario-template.deleted when a scenariotemplate is deleted
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - scenarioTemplateId
+      - code
+      - displayName
+      - description
+      - category
+      - connectivityMode
+      - status
+      - createdAt
+      - updatedAt
+      properties:
+        eventName:
+          type: string
+          default: scenario-template.deleted
+          description: 'Event type identifier: scenario-template.deleted'
+        scenarioTemplateId: *id001
+        code: *id002
+        displayName: *id003
+        description: *id004
+        category: *id005
+        connectivityMode: *id006
+        status: *id007
+        createdAt: *id008
+        updatedAt: *id009
+        deletedReason:
+          type: string
+          nullable: true
+          description: Optional reason for deletion (e.g., "Merged into {targetId}")

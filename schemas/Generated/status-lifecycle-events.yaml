@@ -1,0 +1,146 @@
+openapi: 3.0.3
+info:
+  title: Status Service Events Lifecycle Events
+  description: "Auto-generated lifecycle event schemas for status service.\nDO NOT EDIT - This file is completely overwritten
+    by generate-lifecycle-events.py.\nSource of truth: status-events.yaml x-lifecycle section."
+  version: 1.0.0
+paths: {}
+components:
+  schemas:
+    StatusTemplateCreatedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+      type: object
+      additionalProperties: false
+      description: Published to status-template.created when a statustemplate is created
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - statusTemplateId
+      - gameServiceId
+      - code
+      - displayName
+      - category
+      - stackable
+      - maxStacks
+      - stackBehavior
+      - createdAt
+      properties:
+        eventName:
+          type: string
+          default: status-template.created
+          description: 'Event type identifier: status-template.created'
+        statusTemplateId: &id001
+          type: string
+          format: uuid
+          description: "Unique status template identifier"
+        gameServiceId: &id002
+          type: string
+          format: uuid
+          description: "Game service this template is scoped to"
+        code: &id003
+          type: string
+          description: "Unique status code within this game service"
+        displayName: &id004
+          type: string
+          description: "Human-readable display name"
+        category: &id005
+          $ref: ../status-api.yaml#/components/schemas/StatusCategory
+          description: "Classification of this status effect"
+        stackable: &id006
+          type: boolean
+          description: "Whether this status can stack"
+        maxStacks: &id007
+          type: integer
+          description: "Maximum number of stacks"
+        stackBehavior: &id008
+          $ref: ../status-api.yaml#/components/schemas/StackBehavior
+          description: "How multiple applications interact"
+        createdAt: &id009
+          type: string
+          format: date-time
+          description: "When this template was created"
+        updatedAt: &id010
+          type: string
+          format: date-time
+          nullable: true
+          description: "When this template was last updated"
+    StatusTemplateUpdatedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+      type: object
+      additionalProperties: false
+      description: Published to status-template.updated when a statustemplate is updated
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - statusTemplateId
+      - gameServiceId
+      - code
+      - displayName
+      - category
+      - stackable
+      - maxStacks
+      - stackBehavior
+      - createdAt
+      - changedFields
+      properties:
+        eventName:
+          type: string
+          default: status-template.updated
+          description: 'Event type identifier: status-template.updated'
+        statusTemplateId: *id001
+        gameServiceId: *id002
+        code: *id003
+        displayName: *id004
+        category: *id005
+        stackable: *id006
+        maxStacks: *id007
+        stackBehavior: *id008
+        createdAt: *id009
+        updatedAt: *id010
+        changedFields:
+          type: array
+          items:
+            type: string
+          description: List of field names that were modified
+    StatusTemplateDeletedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+      type: object
+      additionalProperties: false
+      description: Published to status-template.deleted when a statustemplate is deleted
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - statusTemplateId
+      - gameServiceId
+      - code
+      - displayName
+      - category
+      - stackable
+      - maxStacks
+      - stackBehavior
+      - createdAt
+      properties:
+        eventName:
+          type: string
+          default: status-template.deleted
+          description: 'Event type identifier: status-template.deleted'
+        statusTemplateId: *id001
+        gameServiceId: *id002
+        code: *id003
+        displayName: *id004
+        category: *id005
+        stackable: *id006
+        maxStacks: *id007
+        stackBehavior: *id008
+        createdAt: *id009
+        updatedAt: *id010
+        deletedReason:
+          type: string
+          nullable: true
+          description: Optional reason for deletion (e.g., "Merged into {targetId}")

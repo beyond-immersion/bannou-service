@@ -3,13 +3,14 @@
 > **Plugin**: lib-scene
 > **Schema**: schemas/scene-api.yaml
 > **Version**: 1.0.0
+> **Layer**: GameFeatures
 > **State Stores**: scene-statestore (MySQL)
 
 ---
 
 ## Overview
 
-Hierarchical composition storage for game worlds. Stores and retrieves scene documents as YAML-serialized node trees with support for multiple node types (group, mesh, marker, volume, emitter, reference, custom), scene-to-scene references with recursive resolution, an exclusive checkout/commit/discard workflow with heartbeat-extended TTL locks, game-specific validation rules registered per gameId+sceneType, full-text search across names/descriptions/tags, reverse reference and asset usage tracking via secondary indexes, scene duplication with regenerated node IDs, and version history with configurable retention. Does NOT compute world transforms, determine affordances, push data to other services, or interpret node behavior at runtime -- consumers decide what nodes mean. Scene content is serialized to YAML using YamlDotNet and stored in a single MySQL-backed state store under multiple key prefixes. The Scene Composer SDK extensions (attachment points, affordances, asset slots, marker types, volume shapes) are stored as node properties but not interpreted by the service.
+Hierarchical composition storage (L4 GameFeatures) for game worlds. Stores scene documents as node trees with support for multiple node types (group, mesh, marker, volume, emitter, reference, custom), scene-to-scene references with recursive resolution, an exclusive checkout/commit/discard workflow, game-specific validation rules, full-text search, and version history. Does not compute world transforms or interpret node behavior at runtime -- consumers decide what nodes mean.
 
 ---
 
@@ -46,14 +47,16 @@ Hierarchical composition storage for game worlds. Stores and retrieves scene doc
 |-------------|-----------|---------|
 | `scene:index:{sceneId}` | `SceneIndexEntry` | Scene metadata index (name, version, tags, nodeCount, checkout status) |
 | `scene:content:{sceneId}` | `SceneContentEntry` | YAML-serialized scene document content |
-| `scene:global-index` | `HashSet<string>` | Set of all scene IDs in the system |
-| `scene:by-game:{gameId}` | `HashSet<string>` | Scene IDs partitioned by game |
-| `scene:by-type:{gameId}:{sceneType}` | `HashSet<string>` | Scene IDs by game and scene type |
-| `scene:references:{sceneId}` | `HashSet<string>` | Scene IDs that reference the given scene (reverse index) |
-| `scene:assets:{assetId}` | `HashSet<string>` | Scene IDs that use the given asset (reverse index) |
+| `scene:global-index` | `HashSet<Guid>` | Set of all scene IDs in the system |
+| `scene:by-game:{gameId}` | `HashSet<Guid>` | Scene IDs partitioned by game |
+| `scene:by-type:{gameId}:{sceneType}` | `HashSet<Guid>` | Scene IDs by game and scene type |
+| `scene:references:{sceneId}` | `HashSet<Guid>` | Scene IDs that reference the given scene (reverse index) |
+| `scene:assets:{assetId}` | `HashSet<Guid>` | Scene IDs that use the given asset (reverse index) |
 | `scene:checkout:{sceneId}` | `CheckoutState` | Active checkout lock (token, editor, expiry, extension count) |
 | `scene:validation:{gameId}:{sceneType}` | `List<ValidationRule>` | Registered validation rules per game+type |
 | `scene:version-history:{sceneId}` | `List<VersionHistoryEntry>` | Version history entries ordered by creation time |
+| `scene:checkout-ext:{sceneId}` | (unused) | Defined constant `SCENE_CHECKOUT_EXT_PREFIX` but never referenced in code |
+| `scene:version-retention:{sceneId}` | (unused) | Defined constant `VERSION_RETENTION_PREFIX` but never referenced in code |
 
 ---
 
@@ -85,8 +88,6 @@ This plugin does not currently consume external events. The `IEventConsumer` is 
 
 | Property | Env Var | Default | Purpose |
 |----------|---------|---------|---------|
-| `AssetBucket` | `SCENE_ASSET_BUCKET` | `"scenes"` | lib-asset bucket name (not currently used; content stored in state store) |
-| `AssetContentType` | `SCENE_ASSET_CONTENT_TYPE` | `"application/x-bannou-scene+yaml"` | Content type identifier (not currently used; content stored in state store) |
 | `DefaultCheckoutTtlMinutes` | `SCENE_DEFAULT_CHECKOUT_TTL_MINUTES` | `60` | Default checkout lock TTL in minutes |
 | `CheckoutTtlBufferMinutes` | `SCENE_CHECKOUT_TTL_BUFFER_MINUTES` | `5` | Buffer time added to TTL for state store expiry |
 | `MaxCheckoutExtensions` | `SCENE_MAX_CHECKOUT_EXTENSIONS` | `10` | Maximum heartbeat extensions per checkout |
@@ -140,7 +141,7 @@ Extracted from `SceneService` for testability. Handles:
 
 - **CreateScene** (`/scene/create`): Validates structure via `ISceneValidationService.ValidateStructure()`. Validates tag counts (scene-level and per-node) against configuration limits. Checks for existing scene with same ID (returns 409 Conflict). Sets timestamps and default version "1.0.0". Serializes scene to YAML via YamlDotNet and stores in `scene:content:{id}`. Creates `SceneIndexEntry`. Adds to global index. Updates game/type secondary indexes. Extracts and indexes scene references and asset references. Records initial version history entry. Publishes `scene.created`.
 
-- **GetScene** (`/scene/get`): Loads index entry to find asset ID. Loads YAML content from state store and deserializes. If `resolveReferences=true`, recursively resolves reference nodes (nodeType=Reference with annotations containing `reference.sceneAssetId`). Respects `maxReferenceDepth` capped by `MaxReferenceDepthLimit`. Detects circular references via visited set. Returns resolved references, unresolved references (with reason: not_found, circular_reference, depth_exceeded), and error messages.
+- **GetScene** (`/scene/get`): Loads index entry to find asset ID. Loads YAML content from state store and deserializes. If `resolveReferences=true`, recursively resolves reference nodes using `GetReferenceSceneId()` which checks the typed `ReferenceSceneId` field first, then falls back to `annotations.reference.sceneAssetId` for legacy data. Respects `maxReferenceDepth` capped by `MaxReferenceDepthLimit`. Detects circular references via visited set. Returns resolved references, unresolved references (with reason: not_found, circular_reference, depth_exceeded), and error messages.
 
 - **ListScenes** (`/scene/list`): Filters candidates using secondary indexes (game index, type index, multi-type union). Falls back to global index scan when no filters provided. Applies additional in-memory filters: nameContains (case-insensitive), tags (ALL must match). Creates `SceneSummary` objects (excludes full node tree). Sorts by updatedAt descending. Applies pagination with offset/limit capped by `MaxListResults`.
 
@@ -224,8 +225,7 @@ Scene Document Hierarchy
             ├── SceneNode (reference)
             │    ├── refId: "back_room"
             │    ├── nodeType: reference
-            │    ├── referenceSceneId: uuid (points to another Scene)
-            │    └── annotations: {reference: {sceneAssetId: "..."}}
+            │    └── referenceSceneId: uuid (points to another Scene)
             │
             └── SceneNode (mesh + attachmentPoints)
                  ├── refId: "wall_section_1"
@@ -285,7 +285,7 @@ Reference Resolution
        ├── visited = {A}
        │
        ├── Walk nodes of A:
-       │    └── Node(type=reference, annotations.reference.sceneAssetId = B)
+       │    └── Node(type=reference, referenceSceneId = B)
        │         ├── depth=1, maxDepth=3 → proceed
        │         ├── B not in visited → load scene B
        │         ├── visited = {A, B}
@@ -368,17 +368,19 @@ Optimistic Concurrency Pattern (Checkout)
 
 ## Stubs & Unimplemented Features
 
-1. **lib-asset integration**: The configuration has `AssetBucket` and `AssetContentType` properties suggesting scene content should be stored in lib-asset. The actual implementation stores YAML content directly in the state store (`scene:content:{id}` key). The asset integration is stubbed out.
+1. ~~**lib-asset integration**~~: **RESOLVED** (2026-01-31) - Removed dead config properties `AssetBucket` and `AssetContentType` per IMPLEMENTATION TENETS (T21 Configuration-First: no dead config). Scene content is stored directly in the state store via `scene:content:{id}` key. If lib-asset integration is needed in the future (e.g., for version content snapshots), the config properties can be re-added at that time.
 
-2. **Version-specific retrieval**: `LoadSceneAssetAsync` accepts a `version` parameter but ignores it. Only the latest version's content is stored. Historical version content is not preserved -- only version metadata (version string, timestamp, editor) is retained.
+2. **Version-specific retrieval**: `LoadSceneAssetAsync` accepts a `version` parameter but ignores it. Only the latest version's content is stored. Historical version content is not preserved -- only version metadata (version string, timestamp, editor) is retained. [Issue #187](https://github.com/beyond-immersion/bannou-service/issues/187)
 
 3. **SceneCheckoutExpiredEvent**: The topic constant and event type exist, but no background process monitors and expires stale checkouts. Expiry is checked lazily when another user attempts checkout (can take over expired locks), but the event is never published.
+<!-- AUDIT:NEEDS_DESIGN:2026-02-01:https://github.com/beyond-immersion/bannou-service/issues/254 -->
 
 4. **SceneReferenceBrokenEvent**: The topic and event type are defined in the events schema, but no code path currently publishes this event. It would need to be triggered when a scene is force-deleted despite references (currently blocked by the 409 Conflict check).
+<!-- AUDIT:NEEDS_DESIGN:2026-02-01:https://github.com/beyond-immersion/bannou-service/issues/257 -->
 
-5. **require_annotation and custom_expression validation rules**: The `ValidationRuleType` enum includes these values, but `ApplyValidationRule` in `SceneValidationService` only handles `require_tag`, `forbid_tag`, and `require_node_type`. The other types silently pass.
+5. ~~**require_annotation and custom_expression validation rules silently ignored**~~: **FIXED** (2026-02-08) - `ApplyValidationRule` now returns a `Warning`-severity `ValidationError` for unimplemented rule types (`RequireAnnotation`, `CustomExpression`) and unknown types (default case). Rules are no longer silently skipped. See [#310](https://github.com/beyond-immersion/bannou-service/issues/310).
 
-6. **referenceSceneId field on SceneNode**: The schema defines a `referenceSceneId` field on nodes for reference type, but the implementation reads reference scene IDs from `annotations.reference.sceneAssetId` instead. The generated model field appears unused in business logic.
+6. ~~**referenceSceneId field on SceneNode**~~: **Implemented**. The `GetReferenceSceneId()` helper uses the typed `ReferenceSceneId` field directly. Legacy annotations-based fallback was removed per FOUNDATION TENETS (T29 No Metadata Bag Contracts).
 
 7. **node_name search match type**: The `SearchMatchType` enum includes `node_name`, but the search implementation only checks index-level fields (name, description, tags). Searching node names would require loading full scene content, which is not done for performance.
 
@@ -401,6 +403,12 @@ Optimistic Concurrency Pattern (Checkout)
 6. **Attachment point validation**: Validate that attached nodes match the `acceptsTags` constraints on attachment points during scene creation/update.
 
 7. **Node-level search**: Index node names and refIds in a secondary search structure to support the `node_name` match type without loading full scene documents.
+
+8. **Voxel node type**: A `voxel` node type referencing `.bvox` assets from the Voxel Builder SDK ([VOXEL-BUILDER-SDK.md](../planning/VOXEL-BUILDER-SDK.md)). Voxel nodes carry annotations for grid scale (`voxel.gridScale`), meshing strategy (`voxel.mesher`: greedy/culled/marching-cubes), and collision mesher. The SceneComposer SDK's engine bridge delegates voxel node rendering to the VoxelBuilder engine bridge. Key consumers: player housing (interactive voxel construction within housing gardens), dungeon cores (chamber reshaping), NPC builders (structure construction). Voxel assets stored in MinIO via the Asset service, with chunk-level delta saves through Save-Load for modified housing/dungeon grids.
+
+9. **Item-scene node binding via annotations**: Convention for tracking item instance placement within scenes. Scene nodes carry `annotations.item.instanceId` referencing the placed Item instance; the Item instance carries `customStats` with `placed_scene_id` and `placed_node_id` back-references. Consistency enforced by ABML gardener behaviors using Scene's checkout/commit as the transaction boundary. Enables the housing garden pattern where furniture items move between Inventory containers and Scene node trees. See [Gardener: Housing Garden Pattern](GARDENER.md#housing-garden-pattern-no-plugin-required).
+
+10. **Housing-specific Scene validation rules**: Authored validation rules (via existing `/scene/register-validation-rules`) for housing scenes: maximum furniture per room (require_tag with max count), forbidden node types per zone (forbid_tag for forge-in-bedroom), spatial overlap prevention (requires custom_expression implementation). These are data, not code -- game designers author rules that the Scene service validates on commit.
 
 ---
 
@@ -426,11 +434,11 @@ No bugs identified.
 
 ### Design Considerations
 
-1. **Global index unbounded growth**: The `scene:global-index` key holds ALL scene IDs in a single `HashSet<string>`. At scale (millions of scenes), this set becomes a memory and serialization bottleneck. Consider partitioned indexes or cursor-based iteration.
+1. **Global index unbounded growth**: The `scene:global-index` key holds ALL scene IDs in a single `HashSet<Guid>`. At scale (millions of scenes), this set becomes a memory and serialization bottleneck. Consider partitioned indexes or cursor-based iteration.
 
-2. **N+1 query pattern in ListScenes**: After resolving candidate IDs via secondary indexes, each scene's index entry is loaded individually. A page of 200 results generates 200 state store reads.
+2. ~~**N+1 query pattern in ListScenes**~~: **FIXED** (2026-01-31) - ListScenes now uses `GetBulkAsync` for single database round-trip when loading index entries. Filtering still happens in-memory after bulk load.
 
-3. **N+1 in SearchScenes**: Even worse than ListScenes -- loads ALL scene IDs globally and iterates one-by-one. A system with 100,000 scenes requires 100,000 index reads per search.
+3. ~~**N+1 in SearchScenes**~~: **FIXED** (2026-01-31) - SearchScenes now uses `GetBulkAsync` for single database round-trip. The global index scan remains, but individual index entry loading is now bulk.
 
 4. **Secondary index race conditions**: Index updates (game, type, reference, asset) are not atomic with the primary index write. A crash between primary save and secondary index update leaves indexes inconsistent. There is no reconciliation mechanism.
 
@@ -442,7 +450,21 @@ No bugs identified.
 
 8. **Asset/reference index staleness**: If a scene is updated and the YAML deserialization produces different reference/asset sets, the index diff logic handles adds and removes. However, if deserialization fails or produces different results than what was stored, indexes become stale with no self-healing mechanism.
 
-9. **No pagination in FindReferences/FindAssetUsage**: These endpoints return all results without pagination. A heavily-referenced scene or widely-used asset could produce unbounded response sizes.
+9. **No pagination in FindReferences/FindAssetUsage**: These endpoints return all results without pagination. A heavily-referenced scene or widely-used asset could produce unbounded response sizes. Note: Index entry loading was optimized to use `GetBulkAsync` (2026-01-31), but scene content loading for node traversal remains sequential.
 
-10. **Internal model type safety**: `SceneIndexEntry.SceneType` is stored as `string` instead of the typed `SceneType` enum, requiring `Enum.TryParse` conversions throughout business logic. Refactoring to use the enum type directly would improve type safety and eliminate parsing overhead.
+10. **Unused key prefix constants**: The service defines `SCENE_CHECKOUT_EXT_PREFIX` ("scene:checkout-ext:") and `VERSION_RETENTION_PREFIX` ("scene:version-retention:") but never references them. These appear to be dead code from planned features that were never implemented or were refactored away.
+
+---
+
+## Work Tracking
+
+This section tracks active development work on items from the quirks/bugs lists above. Items here are managed by the `/audit-plugin` workflow.
+
+### Completed
+
+- **2026-02-08**: Fixed unimplemented validation rule types silently passing ([#310](https://github.com/beyond-immersion/bannou-service/issues/310)). `RequireAnnotation`, `CustomExpression`, and any future enum values now return `Warning`-severity `ValidationError` instead of being silently skipped. Callers can see which rules were not applied.
+
+- **2026-01-31**: Removed dead config properties `AssetBucket` and `AssetContentType` from scene-configuration.yaml per IMPLEMENTATION TENETS (T21 Configuration-First). These were never used in SceneService.cs - scene content is stored directly in state store. Updated tests accordingly.
+
+- **2026-01-31**: N+1 bulk loading optimization - Replaced N+1 `GetAsync` calls with `GetBulkAsync` in `ListScenesAsync`, `SearchScenesAsync`, `FindReferencesAsync`, and `FindAssetUsageAsync`. Index entry loading now uses single database round-trips. See Issue #168 for `IStateStore` bulk operations.
 

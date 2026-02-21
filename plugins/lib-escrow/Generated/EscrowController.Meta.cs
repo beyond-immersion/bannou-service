@@ -115,7 +115,25 @@ public partial class EscrowController
                     "type": "object",
                     "nullable": true,
                     "additionalProperties": true,
-                    "description": "Application metadata"
+                    "description": "Client-provided application-specific metadata. No Bannou plugin reads specific keys from this field by convention."
+                },
+                "releaseMode": {
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/ReleaseMode"
+                        }
+                    ],
+                    "nullable": true,
+                    "description": "How release confirmation is handled. Defaults to service_only if not specified.\nOnly applies to unbound escrows; contract-bound escrows follow contract fulfillment.\n"
+                },
+                "refundMode": {
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/RefundMode"
+                        }
+                    ],
+                    "nullable": true,
+                    "description": "How refund confirmation is handled. Defaults to immediate if not specified."
                 },
                 "idempotencyKey": {
                     "type": "string",
@@ -190,7 +208,7 @@ public partial class EscrowController
         },
         "EscrowPartyRole": {
             "type": "string",
-            "description": "Role of a party in the escrow.\n- depositor: Deposits assets into escrow\n- recipient: Receives assets when released\ n- depositor_recipient: Both deposits and can receive (typical for trades)\n- arbiter: Can resolve disputes, does not deposit or receive\n- observer: Can view status but cannot act\n",
+            "description": "Role of a party in the escrow.\n- depositor: Deposits assets into escrow\n- recipient: Receives assets when released\n- depositor_recipient: Both deposits and can receive (typical for trades)\n- arbiter: Can resolve disputes, does not deposit or receive\n- observer: Can view status but cannot act\n",
             "enum": [
                 "depositor",
                 "recipient",
@@ -326,13 +344,13 @@ public partial class EscrowController
                     "type": "object",
                     "nullable": true,
                     "additionalProperties": true,
-                    "description": "Custom asset data"
+                    "description": "Custom asset handler-specific data. No Bannou plugin reads specific keys from this field by convention."
                 }
             }
         },
         "AssetType": {
             "type": "string",
-            "description": "Type of asset held in escrow.\n- currency: Currency amount held in escrow wallet\n- item: Item instance held in escrow container\n- item_stack: Stackable items (quantity) held in escrow container\n- contract: Contract instance locked under escrow guardianship\ n- custom: Custom asset type via registered handler\n",
+            "description": "Type of asset held in escrow.\n- currency: Currency amount held in escrow wallet\n- item: Item instance held in escrow container\n- item_stack: Stackable items (quantity) held in escrow container\n- contract: Contract instance locked under escrow guardianship\n- custom: Custom asset type via registered handler\n",
             "enum": [
                 "currency",
                 "item",
@@ -379,6 +397,25 @@ public partial class EscrowController
                     "description": "Destination container"
                 }
             }
+        },
+        "ReleaseMode": {
+            "type": "string",
+            "description": "Controls how release confirmation is handled:\n- immediate: Finalizing \u2192 Released (skip Releasing state entirely).\n  \ u26a0\ufe0f WARNING: Use only for trusted/low-value scenarios (NPC vendors, system rewards).\n  Assets are marked as released BEFORE downstream services confirm transfers.\n  If downstream services fail, manual intervention may be required.\n- service_only: Wait for downstream services (currency, inventory) to confirm transfers complete.\ n- party_required: Wait for all parties to call /confirm-release.\n- service_and_party: Wait for both service completion AND party confirmation.\n",
+            "enum": [
+                "immediate",
+                "service_only",
+                "party_required",
+                "service_and_party"
+            ]
+        },
+        "RefundMode": {
+            "type": "string",
+            "description": "Controls how refund confirmation is handled. Same semantics as ReleaseMode.\nRefunds typically use 'immediate' since parties get their own assets back.\n",
+            "enum": [
+                "immediate",
+                "service_only",
+                "party_required"
+            ]
         }
     }
 }
@@ -577,7 +614,7 @@ public partial class EscrowController
                     "type": "object",
                     "nullable": true,
                     "additionalProperties": true,
-                    "description": "Game/application specific metadata"
+                    "description": "Client-provided application-specific metadata. No Bannou plugin reads specific keys from this field by convention."
                 },
                 "resolution": {
                     "$ref": "#/$defs/EscrowResolution",
@@ -588,6 +625,20 @@ public partial class EscrowController
                     "type": "string",
                     "nullable": true,
                     "description": "Notes about the resolution"
+                },
+                "releaseMode": {
+                    "$ref": "#/$defs/ReleaseMode",
+                    "description": "How release confirmation is handled for this escrow."
+                },
+                "refundMode": {
+                    "$ref": "#/$defs/RefundMode",
+                    "description": "How refund confirmation is handled for this escrow."
+                },
+                "confirmationDeadline": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "Deadline for party confirmations when in Releasing/Refunding state."
                 }
             }
         },
@@ -845,7 +896,7 @@ public partial class EscrowController
                     "type": "object",
                     "nullable": true,
                     "additionalProperties": true,
-                    "description": "Handler-specific data"
+                    "description": "Custom asset handler-specific data. No Bannou plugin reads specific keys from this field by convention."
                 },
                 "sourceOwnerId": {
                     "type": "string",
@@ -1050,7 +1101,7 @@ public partial class EscrowController
         },
         "EscrowStatus": {
             "type": "string",
-            "description": "Current status of the escrow agreement.\n- pending_deposits: Waiting for parties to deposit\n- partially_funded: Some but not all deposits received\n- funded: All deposits received, awaiting consent/condition\ n- pending_consent: Some consents received, waiting for more\n- pending_condition: Waiting for contract fulfillment or external verification\n- finalizing: Running contract finalizer prebound APIs (transient)\n- releasing: Release in progress (transient)\n- released: Assets transferred to recipients\n- refunding: Refund in progress (transient)\ n- refunded: Assets returned to depositors\n- disputed: In dispute, arbiter must resolve\n- expired: Timed out without completion\n- cancelled: Cancelled before funding complete\n- validation_failed: Held assets changed, awaiting re-affirmation\n",
+            "description": "Current status of the escrow agreement.\n- pending_deposits: Waiting for parties to deposit\n- partially_funded: Some but not all deposits received\n- funded: All deposits received, awaiting consent/condition\n- pending_consent: Some consents received, waiting for more\n- pending_condition: Waiting for contract fulfillment or external verification\n- finalizing: Running contract finalizer prebound APIs (transient)\ n- releasing: Release in progress (transient)\n- released: Assets transferred to recipients\n- refunding: Refund in progress (transient)\n- refunded: Assets returned to depositors\n- disputed: In dispute, arbiter must resolve\ n- expired: Timed out without completion\n- cancelled: Cancelled before funding complete\n- validation_failed: Held assets changed, awaiting re-affirmation\n",
             "enum": [
                 "pending_deposits",
                 "partially_funded",
@@ -1110,7 +1161,7 @@ public partial class EscrowController
                     "type": "object",
                     "nullable": true,
                     "additionalProperties": true,
-                    "description": "Additional failure details"
+                    "description": "Validation failure diagnostic details. No Bannou plugin reads specific keys from this field by convention."
                 }
             }
         },
@@ -1134,6 +1185,25 @@ public partial class EscrowController
                 "expired_refunded",
                 "cancelled_refunded",
                 "violation_refunded"
+            ]
+        },
+        "ReleaseMode": {
+            "type": "string",
+            "description": "Controls how release confirmation is handled:\n- immediate: Finalizing \u2192 Released (skip Releasing state entirely).\n  \u26a0\ufe0f WARNING: Use only for trusted/low-value scenarios (NPC vendors, system rewards).\n  Assets are marked as released BEFORE downstream services confirm transfers.\n  If downstream services fail, manual intervention may be required.\n- service_only: Wait for downstream services (currency, inventory) to confirm transfers complete.\n- party_required: Wait for all parties to call /confirm-release.\ n- service_and_party: Wait for both service completion AND party confirmation.\n",
+            "enum": [
+                "immediate",
+                "service_only",
+                "party_required",
+                "service_and_party"
+            ]
+        },
+        "RefundMode": {
+            "type": "string",
+            "description": "Controls how refund confirmation is handled. Same semantics as ReleaseMode.\nRefunds typically use 'immediate' since parties get their own assets back.\n",
+            "enum": [
+                "immediate",
+                "service_only",
+                "party_required"
             ]
         },
         "PartyToken": {
@@ -1428,7 +1498,7 @@ public partial class EscrowController
                     "type": "object",
                     "nullable": true,
                     "additionalProperties": true,
-                    "description": "Game/application specific metadata"
+                    "description": "Client-provided application-specific metadata. No Bannou plugin reads specific keys from this field by convention."
                 },
                 "resolution": {
                     "$ref": "#/$defs/EscrowResolution",
@@ -1439,12 +1509,26 @@ public partial class EscrowController
                     "type": "string",
                     "nullable": true,
                     "description": "Notes about the resolution"
+                },
+                "releaseMode": {
+                    "$ref": "#/$defs/ReleaseMode",
+                    "description": "How release confirmation is handled for this escrow."
+                },
+                "refundMode": {
+                    "$ref": "#/$defs/RefundMode",
+                    "description": "How refund confirmation is handled for this escrow."
+                },
+                "confirmationDeadline": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "Deadline for party confirmations when in Releasing/Refunding state."
                 }
             }
         },
         "EscrowType": {
             "type": "string",
-            "description": "Type of escrow agreement.\ n- two_party: Simple trade escrow between Party A and Party B\n- multi_party: N parties with complex deposit/receive rules\n- conditional: Release based on external condition or contract fulfillment\n- auction: Winner-takes-all with refunds to losers\n",
+            "description": "Type of escrow agreement.\n- two_party: Simple trade escrow between Party A and Party B\n- multi_party: N parties with complex deposit/receive rules\n- conditional: Release based on external condition or contract fulfillment\n- auction: Winner-takes-all with refunds to losers\n",
             "enum": [
                 "two_party",
                 "multi_party",
@@ -1696,7 +1780,7 @@ public partial class EscrowController
                     "type": "object",
                     "nullable": true,
                     "additionalProperties": true,
-                    "description": "Handler-specific data"
+                    "description": "Custom asset handler-specific data. No Bannou plugin reads specific keys from this field by convention."
                 },
                 "sourceOwnerId": {
                     "type": "string",
@@ -1901,7 +1985,7 @@ public partial class EscrowController
         },
         "EscrowStatus": {
             "type": "string",
-            "description": "Current status of the escrow agreement.\n- pending_deposits: Waiting for parties to deposit\n- partially_funded: Some but not all deposits received\n- funded: All deposits received, awaiting consent/condition\ n- pending_consent: Some consents received, waiting for more\n- pending_condition: Waiting for contract fulfillment or external verification\n- finalizing: Running contract finalizer prebound APIs (transient)\n- releasing: Release in progress (transient)\n- released: Assets transferred to recipients\n- refunding: Refund in progress (transient)\ n- refunded: Assets returned to depositors\n- disputed: In dispute, arbiter must resolve\n- expired: Timed out without completion\n- cancelled: Cancelled before funding complete\n- validation_failed: Held assets changed, awaiting re-affirmation\n",
+            "description": "Current status of the escrow agreement.\n- pending_deposits: Waiting for parties to deposit\n- partially_funded: Some but not all deposits received\n- funded: All deposits received, awaiting consent/condition\n- pending_consent: Some consents received, waiting for more\n- pending_condition: Waiting for contract fulfillment or external verification\n- finalizing: Running contract finalizer prebound APIs (transient)\ n- releasing: Release in progress (transient)\n- released: Assets transferred to recipients\n- refunding: Refund in progress (transient)\n- refunded: Assets returned to depositors\n- disputed: In dispute, arbiter must resolve\ n- expired: Timed out without completion\n- cancelled: Cancelled before funding complete\n- validation_failed: Held assets changed, awaiting re-affirmation\n",
             "enum": [
                 "pending_deposits",
                 "partially_funded",
@@ -1961,7 +2045,7 @@ public partial class EscrowController
                     "type": "object",
                     "nullable": true,
                     "additionalProperties": true,
-                    "description": "Additional failure details"
+                    "description": "Validation failure diagnostic details. No Bannou plugin reads specific keys from this field by convention."
                 }
             }
         },
@@ -1985,6 +2069,25 @@ public partial class EscrowController
                 "expired_refunded",
                 "cancelled_refunded",
                 "violation_refunded"
+            ]
+        },
+        "ReleaseMode": {
+            "type": "string",
+            "description": "Controls how release confirmation is handled:\n- immediate: Finalizing \u2192 Released (skip Releasing state entirely).\n  \u26a0\ufe0f WARNING: Use only for trusted/low-value scenarios (NPC vendors, system rewards).\n  Assets are marked as released BEFORE downstream services confirm transfers.\n  If downstream services fail, manual intervention may be required.\n- service_only: Wait for downstream services (currency, inventory) to confirm transfers complete.\n- party_required: Wait for all parties to call /confirm-release.\ n- service_and_party: Wait for both service completion AND party confirmation.\n",
+            "enum": [
+                "immediate",
+                "service_only",
+                "party_required",
+                "service_and_party"
+            ]
+        },
+        "RefundMode": {
+            "type": "string",
+            "description": "Controls how refund confirmation is handled. Same semantics as ReleaseMode.\nRefunds typically use 'immediate' since parties get their own assets back.\n",
+            "enum": [
+                "immediate",
+                "service_only",
+                "party_required"
             ]
         }
     }
@@ -2331,7 +2434,7 @@ public partial class EscrowController
                     "type": "object",
                     "nullable": true,
                     "additionalProperties": true,
-                    "description": "Game/application specific metadata"
+                    "description": "Client-provided application-specific metadata. No Bannou plugin reads specific keys from this field by convention."
                 },
                 "resolution": {
                     "$ref": "#/$defs/EscrowResolution",
@@ -2342,6 +2445,20 @@ public partial class EscrowController
                     "type": "string",
                     "nullable": true,
                     "description": "Notes about the resolution"
+                },
+                "releaseMode": {
+                    "$ref": "#/$defs/ReleaseMode",
+                    "description": "How release confirmation is handled for this escrow."
+                },
+                "refundMode": {
+                    "$ref": "#/$defs/RefundMode",
+                    "description": "How refund confirmation is handled for this escrow."
+                },
+                "confirmationDeadline": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "Deadline for party confirmations when in Releasing/Refunding state."
                 }
             }
         },
@@ -2599,7 +2716,7 @@ public partial class EscrowController
                     "type": "object",
                     "nullable": true,
                     "additionalProperties": true,
-                    "description": "Handler-specific data"
+                    "description": "Custom asset handler-specific data. No Bannou plugin reads specific keys from this field by convention."
                 },
                 "sourceOwnerId": {
                     "type": "string",
@@ -2804,7 +2921,7 @@ public partial class EscrowController
         },
         "EscrowStatus": {
             "type": "string",
-            "description": "Current status of the escrow agreement.\n- pending_deposits: Waiting for parties to deposit\n- partially_funded: Some but not all deposits received\n- funded: All deposits received, awaiting consent/condition\ n- pending_consent: Some consents received, waiting for more\n- pending_condition: Waiting for contract fulfillment or external verification\n- finalizing: Running contract finalizer prebound APIs (transient)\n- releasing: Release in progress (transient)\n- released: Assets transferred to recipients\n- refunding: Refund in progress (transient)\ n- refunded: Assets returned to depositors\n- disputed: In dispute, arbiter must resolve\n- expired: Timed out without completion\n- cancelled: Cancelled before funding complete\n- validation_failed: Held assets changed, awaiting re-affirmation\n",
+            "description": "Current status of the escrow agreement.\n- pending_deposits: Waiting for parties to deposit\n- partially_funded: Some but not all deposits received\n- funded: All deposits received, awaiting consent/condition\n- pending_consent: Some consents received, waiting for more\n- pending_condition: Waiting for contract fulfillment or external verification\n- finalizing: Running contract finalizer prebound APIs (transient)\ n- releasing: Release in progress (transient)\n- released: Assets transferred to recipients\n- refunding: Refund in progress (transient)\n- refunded: Assets returned to depositors\n- disputed: In dispute, arbiter must resolve\ n- expired: Timed out without completion\n- cancelled: Cancelled before funding complete\n- validation_failed: Held assets changed, awaiting re-affirmation\n",
             "enum": [
                 "pending_deposits",
                 "partially_funded",
@@ -2864,7 +2981,7 @@ public partial class EscrowController
                     "type": "object",
                     "nullable": true,
                     "additionalProperties": true,
-                    "description": "Additional failure details"
+                    "description": "Validation failure diagnostic details. No Bannou plugin reads specific keys from this field by convention."
                 }
             }
         },
@@ -2888,6 +3005,25 @@ public partial class EscrowController
                 "expired_refunded",
                 "cancelled_refunded",
                 "violation_refunded"
+            ]
+        },
+        "ReleaseMode": {
+            "type": "string",
+            "description": "Controls how release confirmation is handled:\n- immediate: Finalizing \u2192 Released (skip Releasing state entirely).\n  \u26a0\ufe0f WARNING: Use only for trusted/low-value scenarios (NPC vendors, system rewards).\n  Assets are marked as released BEFORE downstream services confirm transfers.\n  If downstream services fail, manual intervention may be required.\n- service_only: Wait for downstream services (currency, inventory) to confirm transfers complete.\n- party_required: Wait for all parties to call /confirm-release.\ n- service_and_party: Wait for both service completion AND party confirmation.\n",
+            "enum": [
+                "immediate",
+                "service_only",
+                "party_required",
+                "service_and_party"
+            ]
+        },
+        "RefundMode": {
+            "type": "string",
+            "description": "Controls how refund confirmation is handled. Same semantics as ReleaseMode.\nRefunds typically use 'immediate' since parties get their own assets back.\n",
+            "enum": [
+                "immediate",
+                "service_only",
+                "party_required"
             ]
         }
     }
@@ -3246,13 +3382,13 @@ public partial class EscrowController
                     "type": "object",
                     "nullable": true,
                     "additionalProperties": true,
-                    "description": "Custom asset data"
+                    "description": "Custom asset handler-specific data. No Bannou plugin reads specific keys from this field by convention."
                 }
             }
         },
         "AssetType": {
             "type": "string",
-            "description": "Type of asset held in escrow.\n- currency: Currency amount held in escrow wallet\n- item: Item instance held in escrow container\n- item_stack: Stackable items (quantity) held in escrow container\n- contract: Contract instance locked under escrow guardianship\ n- custom: Custom asset type via registered handler\n",
+            "description": "Type of asset held in escrow.\n- currency: Currency amount held in escrow wallet\n- item: Item instance held in escrow container\n- item_stack: Stackable items (quantity) held in escrow container\n- contract: Contract instance locked under escrow guardianship\n- custom: Custom asset type via registered handler\n",
             "enum": [
                 "currency",
                 "item",
@@ -3468,7 +3604,7 @@ public partial class EscrowController
                     "type": "object",
                     "nullable": true,
                     "additionalProperties": true,
-                    "description": "Game/application specific metadata"
+                    "description": "Client-provided application-specific metadata. No Bannou plugin reads specific keys from this field by convention."
                 },
                 "resolution": {
                     "$ref": "#/$defs/EscrowResolution",
@@ -3479,12 +3615,26 @@ public partial class EscrowController
                     "type": "string",
                     "nullable": true,
                     "description": "Notes about the resolution"
+                },
+                "releaseMode": {
+                    "$ref": "#/$defs/ReleaseMode",
+                    "description": "How release confirmation is handled for this escrow."
+                },
+                "refundMode": {
+                    "$ref": "#/$defs/RefundMode",
+                    "description": "How refund confirmation is handled for this escrow."
+                },
+                "confirmationDeadline": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "Deadline for party confirmations when in Releasing/Refunding state."
                 }
             }
         },
         "EscrowType": {
             "type": "string",
-            "description": "Type of escrow agreement.\ n- two_party: Simple trade escrow between Party A and Party B\n- multi_party: N parties with complex deposit/receive rules\n- conditional: Release based on external condition or contract fulfillment\n- auction: Winner-takes-all with refunds to losers\n",
+            "description": "Type of escrow agreement.\n- two_party: Simple trade escrow between Party A and Party B\n- multi_party: N parties with complex deposit/receive rules\n- conditional: Release based on external condition or contract fulfillment\n- auction: Winner-takes-all with refunds to losers\n",
             "enum": [
                 "two_party",
                 "multi_party",
@@ -3736,7 +3886,7 @@ public partial class EscrowController
                     "type": "object",
                     "nullable": true,
                     "additionalProperties": true,
-                    "description": "Handler-specific data"
+                    "description": "Custom asset handler-specific data. No Bannou plugin reads specific keys from this field by convention."
                 },
                 "sourceOwnerId": {
                     "type": "string",
@@ -3941,7 +4091,7 @@ public partial class EscrowController
         },
         "EscrowStatus": {
             "type": "string",
-            "description": "Current status of the escrow agreement.\n- pending_deposits: Waiting for parties to deposit\n- partially_funded: Some but not all deposits received\n- funded: All deposits received, awaiting consent/condition\ n- pending_consent: Some consents received, waiting for more\n- pending_condition: Waiting for contract fulfillment or external verification\n- finalizing: Running contract finalizer prebound APIs (transient)\n- releasing: Release in progress (transient)\n- released: Assets transferred to recipients\n- refunding: Refund in progress (transient)\ n- refunded: Assets returned to depositors\n- disputed: In dispute, arbiter must resolve\n- expired: Timed out without completion\n- cancelled: Cancelled before funding complete\n- validation_failed: Held assets changed, awaiting re-affirmation\n",
+            "description": "Current status of the escrow agreement.\n- pending_deposits: Waiting for parties to deposit\n- partially_funded: Some but not all deposits received\n- funded: All deposits received, awaiting consent/condition\n- pending_consent: Some consents received, waiting for more\n- pending_condition: Waiting for contract fulfillment or external verification\n- finalizing: Running contract finalizer prebound APIs (transient)\ n- releasing: Release in progress (transient)\n- released: Assets transferred to recipients\n- refunding: Refund in progress (transient)\n- refunded: Assets returned to depositors\n- disputed: In dispute, arbiter must resolve\ n- expired: Timed out without completion\n- cancelled: Cancelled before funding complete\n- validation_failed: Held assets changed, awaiting re-affirmation\n",
             "enum": [
                 "pending_deposits",
                 "partially_funded",
@@ -4001,7 +4151,7 @@ public partial class EscrowController
                     "type": "object",
                     "nullable": true,
                     "additionalProperties": true,
-                    "description": "Additional failure details"
+                    "description": "Validation failure diagnostic details. No Bannou plugin reads specific keys from this field by convention."
                 }
             }
         },
@@ -4025,6 +4175,25 @@ public partial class EscrowController
                 "expired_refunded",
                 "cancelled_refunded",
                 "violation_refunded"
+            ]
+        },
+        "ReleaseMode": {
+            "type": "string",
+            "description": "Controls how release confirmation is handled:\n- immediate: Finalizing \u2192 Released (skip Releasing state entirely).\n  \u26a0\ufe0f WARNING: Use only for trusted/low-value scenarios (NPC vendors, system rewards).\n  Assets are marked as released BEFORE downstream services confirm transfers.\n  If downstream services fail, manual intervention may be required.\n- service_only: Wait for downstream services (currency, inventory) to confirm transfers complete.\n- party_required: Wait for all parties to call /confirm-release.\ n- service_and_party: Wait for both service completion AND party confirmation.\n",
+            "enum": [
+                "immediate",
+                "service_only",
+                "party_required",
+                "service_and_party"
+            ]
+        },
+        "RefundMode": {
+            "type": "string",
+            "description": "Controls how refund confirmation is handled. Same semantics as ReleaseMode.\nRefunds typically use 'immediate' since parties get their own assets back.\n",
+            "enum": [
+                "immediate",
+                "service_only",
+                "party_required"
             ]
         },
         "PartyToken": {
@@ -4261,13 +4430,13 @@ public partial class EscrowController
                     "type": "object",
                     "nullable": true,
                     "additionalProperties": true,
-                    "description": "Custom asset data"
+                    "description": "Custom asset handler-specific data. No Bannou plugin reads specific keys from this field by convention."
                 }
             }
         },
         "AssetType": {
             "type": "string",
-            "description": "Type of asset held in escrow.\n- currency: Currency amount held in escrow wallet\n- item: Item instance held in escrow container\n- item_stack: Stackable items (quantity) held in escrow container\n- contract: Contract instance locked under escrow guardianship\ n- custom: Custom asset type via registered handler\n",
+            "description": "Type of asset held in escrow.\n- currency: Currency amount held in escrow wallet\n- item: Item instance held in escrow container\n- item_stack: Stackable items (quantity) held in escrow container\n- contract: Contract instance locked under escrow guardianship\n- custom: Custom asset type via registered handler\n",
             "enum": [
                 "currency",
                 "item",
@@ -4544,7 +4713,7 @@ public partial class EscrowController
                     "type": "object",
                     "nullable": true,
                     "additionalProperties": true,
-                    "description": "Handler-specific data"
+                    "description": "Custom asset handler-specific data. No Bannou plugin reads specific keys from this field by convention."
                 },
                 "sourceOwnerId": {
                     "type": "string",
@@ -4898,7 +5067,7 @@ public partial class EscrowController
                     "type": "object",
                     "nullable": true,
                     "additionalProperties": true,
-                    "description": "Game/application specific metadata"
+                    "description": "Client-provided application-specific metadata. No Bannou plugin reads specific keys from this field by convention."
                 },
                 "resolution": {
                     "$ref": "#/$defs/EscrowResolution",
@@ -4909,12 +5078,26 @@ public partial class EscrowController
                     "type": "string",
                     "nullable": true,
                     "description": "Notes about the resolution"
+                },
+                "releaseMode": {
+                    "$ref": "#/$defs/ReleaseMode",
+                    "description": "How release confirmation is handled for this escrow."
+                },
+                "refundMode": {
+                    "$ref": "#/$defs/RefundMode",
+                    "description": "How refund confirmation is handled for this escrow."
+                },
+                "confirmationDeadline": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "Deadline for party confirmations when in Releasing/Refunding state."
                 }
             }
         },
         "EscrowType": {
             "type": "string",
-            "description": "Type of escrow agreement.\ n- two_party: Simple trade escrow between Party A and Party B\n- multi_party: N parties with complex deposit/receive rules\n- conditional: Release based on external condition or contract fulfillment\n- auction: Winner-takes-all with refunds to losers\n",
+            "description": "Type of escrow agreement.\n- two_party: Simple trade escrow between Party A and Party B\n- multi_party: N parties with complex deposit/receive rules\n- conditional: Release based on external condition or contract fulfillment\n- auction: Winner-takes-all with refunds to losers\n",
             "enum": [
                 "two_party",
                 "multi_party",
@@ -5166,7 +5349,7 @@ public partial class EscrowController
                     "type": "object",
                     "nullable": true,
                     "additionalProperties": true,
-                    "description": "Handler-specific data"
+                    "description": "Custom asset handler-specific data. No Bannou plugin reads specific keys from this field by convention."
                 },
                 "sourceOwnerId": {
                     "type": "string",
@@ -5371,7 +5554,7 @@ public partial class EscrowController
         },
         "EscrowStatus": {
             "type": "string",
-            "description": "Current status of the escrow agreement.\n- pending_deposits: Waiting for parties to deposit\n- partially_funded: Some but not all deposits received\n- funded: All deposits received, awaiting consent/condition\ n- pending_consent: Some consents received, waiting for more\n- pending_condition: Waiting for contract fulfillment or external verification\n- finalizing: Running contract finalizer prebound APIs (transient)\n- releasing: Release in progress (transient)\n- released: Assets transferred to recipients\n- refunding: Refund in progress (transient)\ n- refunded: Assets returned to depositors\n- disputed: In dispute, arbiter must resolve\n- expired: Timed out without completion\n- cancelled: Cancelled before funding complete\n- validation_failed: Held assets changed, awaiting re-affirmation\n",
+            "description": "Current status of the escrow agreement.\n- pending_deposits: Waiting for parties to deposit\n- partially_funded: Some but not all deposits received\n- funded: All deposits received, awaiting consent/condition\n- pending_consent: Some consents received, waiting for more\n- pending_condition: Waiting for contract fulfillment or external verification\n- finalizing: Running contract finalizer prebound APIs (transient)\ n- releasing: Release in progress (transient)\n- released: Assets transferred to recipients\n- refunding: Refund in progress (transient)\n- refunded: Assets returned to depositors\n- disputed: In dispute, arbiter must resolve\ n- expired: Timed out without completion\n- cancelled: Cancelled before funding complete\n- validation_failed: Held assets changed, awaiting re-affirmation\n",
             "enum": [
                 "pending_deposits",
                 "partially_funded",
@@ -5431,7 +5614,7 @@ public partial class EscrowController
                     "type": "object",
                     "nullable": true,
                     "additionalProperties": true,
-                    "description": "Additional failure details"
+                    "description": "Validation failure diagnostic details. No Bannou plugin reads specific keys from this field by convention."
                 }
             }
         },
@@ -5455,6 +5638,25 @@ public partial class EscrowController
                 "expired_refunded",
                 "cancelled_refunded",
                 "violation_refunded"
+            ]
+        },
+        "ReleaseMode": {
+            "type": "string",
+            "description": "Controls how release confirmation is handled:\n- immediate: Finalizing \u2192 Released (skip Releasing state entirely).\n  \u26a0\ufe0f WARNING: Use only for trusted/low-value scenarios (NPC vendors, system rewards).\n  Assets are marked as released BEFORE downstream services confirm transfers.\n  If downstream services fail, manual intervention may be required.\n- service_only: Wait for downstream services (currency, inventory) to confirm transfers complete.\n- party_required: Wait for all parties to call /confirm-release.\ n- service_and_party: Wait for both service completion AND party confirmation.\n",
+            "enum": [
+                "immediate",
+                "service_only",
+                "party_required",
+                "service_and_party"
+            ]
+        },
+        "RefundMode": {
+            "type": "string",
+            "description": "Controls how refund confirmation is handled. Same semantics as ReleaseMode.\nRefunds typically use 'immediate' since parties get their own assets back.\n",
+            "enum": [
+                "immediate",
+                "service_only",
+                "party_required"
             ]
         }
     }
@@ -5930,7 +6132,7 @@ public partial class EscrowController
                     "type": "object",
                     "nullable": true,
                     "additionalProperties": true,
-                    "description": "Game/application specific metadata"
+                    "description": "Client-provided application-specific metadata. No Bannou plugin reads specific keys from this field by convention."
                 },
                 "resolution": {
                     "$ref": "#/$defs/EscrowResolution",
@@ -5941,12 +6143,26 @@ public partial class EscrowController
                     "type": "string",
                     "nullable": true,
                     "description": "Notes about the resolution"
+                },
+                "releaseMode": {
+                    "$ref": "#/$defs/ReleaseMode",
+                    "description": "How release confirmation is handled for this escrow."
+                },
+                "refundMode": {
+                    "$ref": "#/$defs/RefundMode",
+                    "description": "How refund confirmation is handled for this escrow."
+                },
+                "confirmationDeadline": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "Deadline for party confirmations when in Releasing/Refunding state."
                 }
             }
         },
         "EscrowType": {
             "type": "string",
-            "description": "Type of escrow agreement.\ n- two_party: Simple trade escrow between Party A and Party B\n- multi_party: N parties with complex deposit/receive rules\n- conditional: Release based on external condition or contract fulfillment\n- auction: Winner-takes-all with refunds to losers\n",
+            "description": "Type of escrow agreement.\n- two_party: Simple trade escrow between Party A and Party B\n- multi_party: N parties with complex deposit/receive rules\n- conditional: Release based on external condition or contract fulfillment\n- auction: Winner-takes-all with refunds to losers\n",
             "enum": [
                 "two_party",
                 "multi_party",
@@ -6198,7 +6414,7 @@ public partial class EscrowController
                     "type": "object",
                     "nullable": true,
                     "additionalProperties": true,
-                    "description": "Handler-specific data"
+                    "description": "Custom asset handler-specific data. No Bannou plugin reads specific keys from this field by convention."
                 },
                 "sourceOwnerId": {
                     "type": "string",
@@ -6403,7 +6619,7 @@ public partial class EscrowController
         },
         "EscrowStatus": {
             "type": "string",
-            "description": "Current status of the escrow agreement.\n- pending_deposits: Waiting for parties to deposit\n- partially_funded: Some but not all deposits received\n- funded: All deposits received, awaiting consent/condition\ n- pending_consent: Some consents received, waiting for more\n- pending_condition: Waiting for contract fulfillment or external verification\n- finalizing: Running contract finalizer prebound APIs (transient)\n- releasing: Release in progress (transient)\n- released: Assets transferred to recipients\n- refunding: Refund in progress (transient)\ n- refunded: Assets returned to depositors\n- disputed: In dispute, arbiter must resolve\n- expired: Timed out without completion\n- cancelled: Cancelled before funding complete\n- validation_failed: Held assets changed, awaiting re-affirmation\n",
+            "description": "Current status of the escrow agreement.\n- pending_deposits: Waiting for parties to deposit\n- partially_funded: Some but not all deposits received\n- funded: All deposits received, awaiting consent/condition\n- pending_consent: Some consents received, waiting for more\n- pending_condition: Waiting for contract fulfillment or external verification\n- finalizing: Running contract finalizer prebound APIs (transient)\ n- releasing: Release in progress (transient)\n- released: Assets transferred to recipients\n- refunding: Refund in progress (transient)\n- refunded: Assets returned to depositors\n- disputed: In dispute, arbiter must resolve\ n- expired: Timed out without completion\n- cancelled: Cancelled before funding complete\n- validation_failed: Held assets changed, awaiting re-affirmation\n",
             "enum": [
                 "pending_deposits",
                 "partially_funded",
@@ -6463,7 +6679,7 @@ public partial class EscrowController
                     "type": "object",
                     "nullable": true,
                     "additionalProperties": true,
-                    "description": "Additional failure details"
+                    "description": "Validation failure diagnostic details. No Bannou plugin reads specific keys from this field by convention."
                 }
             }
         },
@@ -6487,6 +6703,25 @@ public partial class EscrowController
                 "expired_refunded",
                 "cancelled_refunded",
                 "violation_refunded"
+            ]
+        },
+        "ReleaseMode": {
+            "type": "string",
+            "description": "Controls how release confirmation is handled:\n- immediate: Finalizing \u2192 Released (skip Releasing state entirely).\n  \u26a0\ufe0f WARNING: Use only for trusted/low-value scenarios (NPC vendors, system rewards).\n  Assets are marked as released BEFORE downstream services confirm transfers.\n  If downstream services fail, manual intervention may be required.\n- service_only: Wait for downstream services (currency, inventory) to confirm transfers complete.\n- party_required: Wait for all parties to call /confirm-release.\ n- service_and_party: Wait for both service completion AND party confirmation.\n",
+            "enum": [
+                "immediate",
+                "service_only",
+                "party_required",
+                "service_and_party"
+            ]
+        },
+        "RefundMode": {
+            "type": "string",
+            "description": "Controls how refund confirmation is handled. Same semantics as ReleaseMode.\nRefunds typically use 'immediate' since parties get their own assets back.\n",
+            "enum": [
+                "immediate",
+                "service_only",
+                "party_required"
             ]
         },
         "FinalizerResult": {
@@ -6832,7 +7067,7 @@ public partial class EscrowController
                     "type": "object",
                     "nullable": true,
                     "additionalProperties": true,
-                    "description": "Game/application specific metadata"
+                    "description": "Client-provided application-specific metadata. No Bannou plugin reads specific keys from this field by convention."
                 },
                 "resolution": {
                     "$ref": "#/$defs/EscrowResolution",
@@ -6843,12 +7078,26 @@ public partial class EscrowController
                     "type": "string",
                     "nullable": true,
                     "description": "Notes about the resolution"
+                },
+                "releaseMode": {
+                    "$ref": "#/$defs/ReleaseMode",
+                    "description": "How release confirmation is handled for this escrow."
+                },
+                "refundMode": {
+                    "$ref": "#/$defs/RefundMode",
+                    "description": "How refund confirmation is handled for this escrow."
+                },
+                "confirmationDeadline": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "Deadline for party confirmations when in Releasing/Refunding state."
                 }
             }
         },
         "EscrowType": {
             "type": "string",
-            "description": "Type of escrow agreement.\ n- two_party: Simple trade escrow between Party A and Party B\n- multi_party: N parties with complex deposit/receive rules\n- conditional: Release based on external condition or contract fulfillment\n- auction: Winner-takes-all with refunds to losers\n",
+            "description": "Type of escrow agreement.\n- two_party: Simple trade escrow between Party A and Party B\n- multi_party: N parties with complex deposit/receive rules\n- conditional: Release based on external condition or contract fulfillment\n- auction: Winner-takes-all with refunds to losers\n",
             "enum": [
                 "two_party",
                 "multi_party",
@@ -7100,7 +7349,7 @@ public partial class EscrowController
                     "type": "object",
                     "nullable": true,
                     "additionalProperties": true,
-                    "description": "Handler-specific data"
+                    "description": "Custom asset handler-specific data. No Bannou plugin reads specific keys from this field by convention."
                 },
                 "sourceOwnerId": {
                     "type": "string",
@@ -7305,7 +7554,7 @@ public partial class EscrowController
         },
         "EscrowStatus": {
             "type": "string",
-            "description": "Current status of the escrow agreement.\n- pending_deposits: Waiting for parties to deposit\n- partially_funded: Some but not all deposits received\n- funded: All deposits received, awaiting consent/condition\ n- pending_consent: Some consents received, waiting for more\n- pending_condition: Waiting for contract fulfillment or external verification\n- finalizing: Running contract finalizer prebound APIs (transient)\n- releasing: Release in progress (transient)\n- released: Assets transferred to recipients\n- refunding: Refund in progress (transient)\ n- refunded: Assets returned to depositors\n- disputed: In dispute, arbiter must resolve\n- expired: Timed out without completion\n- cancelled: Cancelled before funding complete\n- validation_failed: Held assets changed, awaiting re-affirmation\n",
+            "description": "Current status of the escrow agreement.\n- pending_deposits: Waiting for parties to deposit\n- partially_funded: Some but not all deposits received\n- funded: All deposits received, awaiting consent/condition\n- pending_consent: Some consents received, waiting for more\n- pending_condition: Waiting for contract fulfillment or external verification\n- finalizing: Running contract finalizer prebound APIs (transient)\ n- releasing: Release in progress (transient)\n- released: Assets transferred to recipients\n- refunding: Refund in progress (transient)\n- refunded: Assets returned to depositors\n- disputed: In dispute, arbiter must resolve\ n- expired: Timed out without completion\n- cancelled: Cancelled before funding complete\n- validation_failed: Held assets changed, awaiting re-affirmation\n",
             "enum": [
                 "pending_deposits",
                 "partially_funded",
@@ -7365,7 +7614,7 @@ public partial class EscrowController
                     "type": "object",
                     "nullable": true,
                     "additionalProperties": true,
-                    "description": "Additional failure details"
+                    "description": "Validation failure diagnostic details. No Bannou plugin reads specific keys from this field by convention."
                 }
             }
         },
@@ -7389,6 +7638,25 @@ public partial class EscrowController
                 "expired_refunded",
                 "cancelled_refunded",
                 "violation_refunded"
+            ]
+        },
+        "ReleaseMode": {
+            "type": "string",
+            "description": "Controls how release confirmation is handled:\n- immediate: Finalizing \u2192 Released (skip Releasing state entirely).\n  \u26a0\ufe0f WARNING: Use only for trusted/low-value scenarios (NPC vendors, system rewards).\n  Assets are marked as released BEFORE downstream services confirm transfers.\n  If downstream services fail, manual intervention may be required.\n- service_only: Wait for downstream services (currency, inventory) to confirm transfers complete.\n- party_required: Wait for all parties to call /confirm-release.\ n- service_and_party: Wait for both service completion AND party confirmation.\n",
+            "enum": [
+                "immediate",
+                "service_only",
+                "party_required",
+                "service_and_party"
+            ]
+        },
+        "RefundMode": {
+            "type": "string",
+            "description": "Controls how refund confirmation is handled. Same semantics as ReleaseMode.\nRefunds typically use 'immediate' since parties get their own assets back.\n",
+            "enum": [
+                "immediate",
+                "service_only",
+                "party_required"
             ]
         },
         "RefundResult": {
@@ -7706,7 +7974,7 @@ public partial class EscrowController
                     "type": "object",
                     "nullable": true,
                     "additionalProperties": true,
-                    "description": "Game/application specific metadata"
+                    "description": "Client-provided application-specific metadata. No Bannou plugin reads specific keys from this field by convention."
                 },
                 "resolution": {
                     "$ref": "#/$defs/EscrowResolution",
@@ -7717,12 +7985,26 @@ public partial class EscrowController
                     "type": "string",
                     "nullable": true,
                     "description": "Notes about the resolution"
+                },
+                "releaseMode": {
+                    "$ref": "#/$defs/ReleaseMode",
+                    "description": "How release confirmation is handled for this escrow."
+                },
+                "refundMode": {
+                    "$ref": "#/$defs/RefundMode",
+                    "description": "How refund confirmation is handled for this escrow."
+                },
+                "confirmationDeadline": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "Deadline for party confirmations when in Releasing/Refunding state."
                 }
             }
         },
         "EscrowType": {
             "type": "string",
-            "description": "Type of escrow agreement.\ n- two_party: Simple trade escrow between Party A and Party B\n- multi_party: N parties with complex deposit/receive rules\n- conditional: Release based on external condition or contract fulfillment\n- auction: Winner-takes-all with refunds to losers\n",
+            "description": "Type of escrow agreement.\n- two_party: Simple trade escrow between Party A and Party B\n- multi_party: N parties with complex deposit/receive rules\n- conditional: Release based on external condition or contract fulfillment\n- auction: Winner-takes-all with refunds to losers\n",
             "enum": [
                 "two_party",
                 "multi_party",
@@ -7974,7 +8256,7 @@ public partial class EscrowController
                     "type": "object",
                     "nullable": true,
                     "additionalProperties": true,
-                    "description": "Handler-specific data"
+                    "description": "Custom asset handler-specific data. No Bannou plugin reads specific keys from this field by convention."
                 },
                 "sourceOwnerId": {
                     "type": "string",
@@ -8179,7 +8461,7 @@ public partial class EscrowController
         },
         "EscrowStatus": {
             "type": "string",
-            "description": "Current status of the escrow agreement.\n- pending_deposits: Waiting for parties to deposit\n- partially_funded: Some but not all deposits received\n- funded: All deposits received, awaiting consent/condition\ n- pending_consent: Some consents received, waiting for more\n- pending_condition: Waiting for contract fulfillment or external verification\n- finalizing: Running contract finalizer prebound APIs (transient)\n- releasing: Release in progress (transient)\n- released: Assets transferred to recipients\n- refunding: Refund in progress (transient)\ n- refunded: Assets returned to depositors\n- disputed: In dispute, arbiter must resolve\n- expired: Timed out without completion\n- cancelled: Cancelled before funding complete\n- validation_failed: Held assets changed, awaiting re-affirmation\n",
+            "description": "Current status of the escrow agreement.\n- pending_deposits: Waiting for parties to deposit\n- partially_funded: Some but not all deposits received\n- funded: All deposits received, awaiting consent/condition\n- pending_consent: Some consents received, waiting for more\n- pending_condition: Waiting for contract fulfillment or external verification\n- finalizing: Running contract finalizer prebound APIs (transient)\ n- releasing: Release in progress (transient)\n- released: Assets transferred to recipients\n- refunding: Refund in progress (transient)\n- refunded: Assets returned to depositors\n- disputed: In dispute, arbiter must resolve\ n- expired: Timed out without completion\n- cancelled: Cancelled before funding complete\n- validation_failed: Held assets changed, awaiting re-affirmation\n",
             "enum": [
                 "pending_deposits",
                 "partially_funded",
@@ -8239,7 +8521,7 @@ public partial class EscrowController
                     "type": "object",
                     "nullable": true,
                     "additionalProperties": true,
-                    "description": "Additional failure details"
+                    "description": "Validation failure diagnostic details. No Bannou plugin reads specific keys from this field by convention."
                 }
             }
         },
@@ -8263,6 +8545,25 @@ public partial class EscrowController
                 "expired_refunded",
                 "cancelled_refunded",
                 "violation_refunded"
+            ]
+        },
+        "ReleaseMode": {
+            "type": "string",
+            "description": "Controls how release confirmation is handled:\n- immediate: Finalizing \u2192 Released (skip Releasing state entirely).\n  \u26a0\ufe0f WARNING: Use only for trusted/low-value scenarios (NPC vendors, system rewards).\n  Assets are marked as released BEFORE downstream services confirm transfers.\n  If downstream services fail, manual intervention may be required.\n- service_only: Wait for downstream services (currency, inventory) to confirm transfers complete.\n- party_required: Wait for all parties to call /confirm-release.\ n- service_and_party: Wait for both service completion AND party confirmation.\n",
+            "enum": [
+                "immediate",
+                "service_only",
+                "party_required",
+                "service_and_party"
+            ]
+        },
+        "RefundMode": {
+            "type": "string",
+            "description": "Controls how refund confirmation is handled. Same semantics as ReleaseMode.\nRefunds typically use 'immediate' since parties get their own assets back.\n",
+            "enum": [
+                "immediate",
+                "service_only",
+                "party_required"
             ]
         },
         "RefundResult": {
@@ -8588,7 +8889,7 @@ public partial class EscrowController
                     "type": "object",
                     "nullable": true,
                     "additionalProperties": true,
-                    "description": "Game/application specific metadata"
+                    "description": "Client-provided application-specific metadata. No Bannou plugin reads specific keys from this field by convention."
                 },
                 "resolution": {
                     "$ref": "#/$defs/EscrowResolution",
@@ -8599,12 +8900,26 @@ public partial class EscrowController
                     "type": "string",
                     "nullable": true,
                     "description": "Notes about the resolution"
+                },
+                "releaseMode": {
+                    "$ref": "#/$defs/ReleaseMode",
+                    "description": "How release confirmation is handled for this escrow."
+                },
+                "refundMode": {
+                    "$ref": "#/$defs/RefundMode",
+                    "description": "How refund confirmation is handled for this escrow."
+                },
+                "confirmationDeadline": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "Deadline for party confirmations when in Releasing/Refunding state."
                 }
             }
         },
         "EscrowType": {
             "type": "string",
-            "description": "Type of escrow agreement.\ n- two_party: Simple trade escrow between Party A and Party B\n- multi_party: N parties with complex deposit/receive rules\n- conditional: Release based on external condition or contract fulfillment\n- auction: Winner-takes-all with refunds to losers\n",
+            "description": "Type of escrow agreement.\n- two_party: Simple trade escrow between Party A and Party B\n- multi_party: N parties with complex deposit/receive rules\n- conditional: Release based on external condition or contract fulfillment\n- auction: Winner-takes-all with refunds to losers\n",
             "enum": [
                 "two_party",
                 "multi_party",
@@ -8856,7 +9171,7 @@ public partial class EscrowController
                     "type": "object",
                     "nullable": true,
                     "additionalProperties": true,
-                    "description": "Handler-specific data"
+                    "description": "Custom asset handler-specific data. No Bannou plugin reads specific keys from this field by convention."
                 },
                 "sourceOwnerId": {
                     "type": "string",
@@ -9061,7 +9376,7 @@ public partial class EscrowController
         },
         "EscrowStatus": {
             "type": "string",
-            "description": "Current status of the escrow agreement.\n- pending_deposits: Waiting for parties to deposit\n- partially_funded: Some but not all deposits received\n- funded: All deposits received, awaiting consent/condition\ n- pending_consent: Some consents received, waiting for more\n- pending_condition: Waiting for contract fulfillment or external verification\n- finalizing: Running contract finalizer prebound APIs (transient)\n- releasing: Release in progress (transient)\n- released: Assets transferred to recipients\n- refunding: Refund in progress (transient)\ n- refunded: Assets returned to depositors\n- disputed: In dispute, arbiter must resolve\n- expired: Timed out without completion\n- cancelled: Cancelled before funding complete\n- validation_failed: Held assets changed, awaiting re-affirmation\n",
+            "description": "Current status of the escrow agreement.\n- pending_deposits: Waiting for parties to deposit\n- partially_funded: Some but not all deposits received\n- funded: All deposits received, awaiting consent/condition\n- pending_consent: Some consents received, waiting for more\n- pending_condition: Waiting for contract fulfillment or external verification\n- finalizing: Running contract finalizer prebound APIs (transient)\ n- releasing: Release in progress (transient)\n- released: Assets transferred to recipients\n- refunding: Refund in progress (transient)\n- refunded: Assets returned to depositors\n- disputed: In dispute, arbiter must resolve\ n- expired: Timed out without completion\n- cancelled: Cancelled before funding complete\n- validation_failed: Held assets changed, awaiting re-affirmation\n",
             "enum": [
                 "pending_deposits",
                 "partially_funded",
@@ -9121,7 +9436,7 @@ public partial class EscrowController
                     "type": "object",
                     "nullable": true,
                     "additionalProperties": true,
-                    "description": "Additional failure details"
+                    "description": "Validation failure diagnostic details. No Bannou plugin reads specific keys from this field by convention."
                 }
             }
         },
@@ -9145,6 +9460,25 @@ public partial class EscrowController
                 "expired_refunded",
                 "cancelled_refunded",
                 "violation_refunded"
+            ]
+        },
+        "ReleaseMode": {
+            "type": "string",
+            "description": "Controls how release confirmation is handled:\n- immediate: Finalizing \u2192 Released (skip Releasing state entirely).\n  \u26a0\ufe0f WARNING: Use only for trusted/low-value scenarios (NPC vendors, system rewards).\n  Assets are marked as released BEFORE downstream services confirm transfers.\n  If downstream services fail, manual intervention may be required.\n- service_only: Wait for downstream services (currency, inventory) to confirm transfers complete.\n- party_required: Wait for all parties to call /confirm-release.\ n- service_and_party: Wait for both service completion AND party confirmation.\n",
+            "enum": [
+                "immediate",
+                "service_only",
+                "party_required",
+                "service_and_party"
+            ]
+        },
+        "RefundMode": {
+            "type": "string",
+            "description": "Controls how refund confirmation is handled. Same semantics as ReleaseMode.\nRefunds typically use 'immediate' since parties get their own assets back.\n",
+            "enum": [
+                "immediate",
+                "service_only",
+                "party_required"
             ]
         }
     }
@@ -9202,6 +9536,311 @@ public partial class EscrowController
             _Dispute_Info,
             _Dispute_RequestSchema,
             _Dispute_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for ConfirmRelease
+
+    private static readonly string _ConfirmRelease_RequestSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/ConfirmReleaseRequest",
+    "$defs": {
+        "ConfirmReleaseRequest": {
+            "type": "object",
+            "description": "Request to confirm receipt of released assets",
+            "additionalProperties": false,
+            "required": [
+                "escrowId",
+                "partyId",
+                "releaseToken"
+            ],
+            "properties": {
+                "escrowId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "The escrow being confirmed."
+                },
+                "partyId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "The party confirming receipt."
+                },
+                "releaseToken": {
+                    "type": "string",
+                    "description": "The party's release token (received via confirmation shortcut)."
+                },
+                "notes": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Optional confirmation notes."
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _ConfirmRelease_ResponseSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/ConfirmReleaseResponse",
+    "$defs": {
+        "ConfirmReleaseResponse": {
+            "type": "object",
+            "description": "Response from confirming release receipt",
+            "additionalProperties": false,
+            "required": [
+                "escrowId",
+                "confirmed",
+                "allPartiesConfirmed"
+            ],
+            "properties": {
+                "escrowId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "The escrow ID."
+                },
+                "confirmed": {
+                    "type": "boolean",
+                    "description": "Whether this party's confirmation was recorded."
+                },
+                "allPartiesConfirmed": {
+                    "type": "boolean",
+                    "description": "Whether all parties have now confirmed (triggers Released transition)."
+                },
+                "status": {
+                    "$ref": "#/$defs/EscrowStatus",
+                    "description": "Current escrow status after confirmation.",
+                    "nullable": true
+                }
+            }
+        },
+        "EscrowStatus": {
+            "type": "string",
+            "description": "Current status of the escrow agreement.\n- pending_deposits: Waiting for parties to deposit\n- partially_funded: Some but not all deposits received\n- funded: All deposits received, awaiting consent/condition\n- pending_consent: Some consents received, waiting for more\n- pending_condition: Waiting for contract fulfillment or external verification\n- finalizing: Running contract finalizer prebound APIs (transient)\n- releasing: Release in progress (transient)\n- released: Assets transferred to recipients\ n- refunding: Refund in progress (transient)\n- refunded: Assets returned to depositors\n- disputed: In dispute, arbiter must resolve\n- expired: Timed out without completion\n- cancelled: Cancelled before funding complete\n- validation_failed: Held assets changed, awaiting re-affirmation\n",
+            "enum": [
+                "pending_deposits",
+                "partially_funded",
+                "funded",
+                "pending_consent",
+                "pending_condition",
+                "finalizing",
+                "releasing",
+                "released",
+                "refunding",
+                "refunded",
+                "disputed",
+                "expired",
+                "cancelled",
+                "validation_failed"
+            ]
+        }
+    }
+}
+""";
+
+    private static readonly string _ConfirmRelease_Info = """
+{
+    "summary": "Confirm receipt of released assets",
+    "description": "Called by parties to confirm they received their released assets.\nRequired when ReleaseMode is party_required or service_and_party.\n",
+    "tags": [
+        "Completion"
+    ],
+    "deprecated": false,
+    "operationId": "confirmRelease"
+}
+""";
+
+    /// <summary>Returns endpoint information for ConfirmRelease</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/escrow/confirm-release/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> ConfirmRelease_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Escrow",
+            "POST",
+            "/escrow/confirm-release",
+            _ConfirmRelease_Info));
+
+    /// <summary>Returns request schema for ConfirmRelease</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/escrow/confirm-release/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> ConfirmRelease_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Escrow",
+            "POST",
+            "/escrow/confirm-release",
+            "request-schema",
+            _ConfirmRelease_RequestSchema));
+
+    /// <summary>Returns response schema for ConfirmRelease</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/escrow/confirm-release/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> ConfirmRelease_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Escrow",
+            "POST",
+            "/escrow/confirm-release",
+            "response-schema",
+            _ConfirmRelease_ResponseSchema));
+
+    /// <summary>Returns full schema for ConfirmRelease</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/escrow/confirm-release/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> ConfirmRelease_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Escrow",
+            "POST",
+            "/escrow/confirm-release",
+            _ConfirmRelease_Info,
+            _ConfirmRelease_RequestSchema,
+            _ConfirmRelease_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for ConfirmRefund
+
+    private static readonly string _ConfirmRefund_RequestSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/ConfirmRefundRequest",
+    "$defs": {
+        "ConfirmRefundRequest": {
+            "type": "object",
+            "description": "Request to confirm receipt of refunded assets",
+            "additionalProperties": false,
+            "required": [
+                "escrowId",
+                "partyId"
+            ],
+            "properties": {
+                "escrowId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "The escrow being confirmed."
+                },
+                "partyId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "The party confirming receipt of refund."
+                },
+                "notes": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Optional confirmation notes."
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _ConfirmRefund_ResponseSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/ConfirmRefundResponse",
+    "$defs": {
+        "ConfirmRefundResponse": {
+            "type": "object",
+            "description": "Response from confirming refund receipt",
+            "additionalProperties": false,
+            "required": [
+                "escrowId",
+                "confirmed",
+                "allPartiesConfirmed"
+            ],
+            "properties": {
+                "escrowId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "The escrow ID."
+                },
+                "confirmed": {
+                    "type": "boolean",
+                    "description": "Whether this party's confirmation was recorded."
+                },
+                "allPartiesConfirmed": {
+                    "type": "boolean",
+                    "description": "Whether all parties have now confirmed (triggers Refunded transition)."
+                },
+                "status": {
+                    "$ref": "#/$defs/EscrowStatus",
+                    "description": "Current escrow status after confirmation.",
+                    "nullable": true
+                }
+            }
+        },
+        "EscrowStatus": {
+            "type": "string",
+            "description": "Current status of the escrow agreement.\n- pending_deposits: Waiting for parties to deposit\n- partially_funded: Some but not all deposits received\n- funded: All deposits received, awaiting consent/condition\n- pending_consent: Some consents received, waiting for more\n- pending_condition: Waiting for contract fulfillment or external verification\n- finalizing: Running contract finalizer prebound APIs (transient)\n- releasing: Release in progress (transient)\n- released: Assets transferred to recipients\ n- refunding: Refund in progress (transient)\n- refunded: Assets returned to depositors\n- disputed: In dispute, arbiter must resolve\n- expired: Timed out without completion\n- cancelled: Cancelled before funding complete\n- validation_failed: Held assets changed, awaiting re-affirmation\n",
+            "enum": [
+                "pending_deposits",
+                "partially_funded",
+                "funded",
+                "pending_consent",
+                "pending_condition",
+                "finalizing",
+                "releasing",
+                "released",
+                "refunding",
+                "refunded",
+                "disputed",
+                "expired",
+                "cancelled",
+                "validation_failed"
+            ]
+        }
+    }
+}
+""";
+
+    private static readonly string _ConfirmRefund_Info = """
+{
+    "summary": "Confirm receipt of refunded assets",
+    "description": "Called by parties to confirm they received their refunded deposits.\nRequired when RefundMode is party_required.\n",
+    "tags": [
+        "Completion"
+    ],
+    "deprecated": false,
+    "operationId": "confirmRefund"
+}
+""";
+
+    /// <summary>Returns endpoint information for ConfirmRefund</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/escrow/confirm-refund/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> ConfirmRefund_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Escrow",
+            "POST",
+            "/escrow/confirm-refund",
+            _ConfirmRefund_Info));
+
+    /// <summary>Returns request schema for ConfirmRefund</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/escrow/confirm-refund/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> ConfirmRefund_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Escrow",
+            "POST",
+            "/escrow/confirm-refund",
+            "request-schema",
+            _ConfirmRefund_RequestSchema));
+
+    /// <summary>Returns response schema for ConfirmRefund</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/escrow/confirm-refund/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> ConfirmRefund_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Escrow",
+            "POST",
+            "/escrow/confirm-refund",
+            "response-schema",
+            _ConfirmRefund_ResponseSchema));
+
+    /// <summary>Returns full schema for ConfirmRefund</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/escrow/confirm-refund/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> ConfirmRefund_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Escrow",
+            "POST",
+            "/escrow/confirm-refund",
+            _ConfirmRefund_Info,
+            _ConfirmRefund_RequestSchema,
+            _ConfirmRefund_ResponseSchema));
 
     #endregion
 
@@ -9388,13 +10027,13 @@ public partial class EscrowController
                     "type": "object",
                     "nullable": true,
                     "additionalProperties": true,
-                    "description": "Custom asset data"
+                    "description": "Custom asset handler-specific data. No Bannou plugin reads specific keys from this field by convention."
                 }
             }
         },
         "AssetType": {
             "type": "string",
-            "description": "Type of asset held in escrow.\n- currency: Currency amount held in escrow wallet\ n- item: Item instance held in escrow container\n- item_stack: Stackable items (quantity) held in escrow container\ n- contract: Contract instance locked under escrow guardianship\n- custom: Custom asset type via registered handler\n",
+            "description": "Type of asset held in escrow.\n- currency: Currency amount held in escrow wallet\n- item: Item instance held in escrow container\n- item_stack: Stackable items (quantity) held in escrow container\n- contract: Contract instance locked under escrow guardianship\n- custom: Custom asset type via registered handler\n",
             "enum": [
                 "currency",
                 "item",
@@ -9600,7 +10239,7 @@ public partial class EscrowController
                     "type": "object",
                     "nullable": true,
                     "additionalProperties": true,
-                    "description": "Game/application specific metadata"
+                    "description": "Client-provided application-specific metadata. No Bannou plugin reads specific keys from this field by convention."
                 },
                 "resolution": {
                     "$ref": "#/$defs/EscrowResolution",
@@ -9611,12 +10250,26 @@ public partial class EscrowController
                     "type": "string",
                     "nullable": true,
                     "description": "Notes about the resolution"
+                },
+                "releaseMode": {
+                    "$ref": "#/$defs/ReleaseMode",
+                    "description": "How release confirmation is handled for this escrow."
+                },
+                "refundMode": {
+                    "$ref": "#/$defs/RefundMode",
+                    "description": "How refund confirmation is handled for this escrow."
+                },
+                "confirmationDeadline": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "Deadline for party confirmations when in Releasing/Refunding state."
                 }
             }
         },
         "EscrowType": {
             "type": "string",
-            "description": "Type of escrow agreement.\ n- two_party: Simple trade escrow between Party A and Party B\n- multi_party: N parties with complex deposit/receive rules\n- conditional: Release based on external condition or contract fulfillment\n- auction: Winner-takes-all with refunds to losers\n",
+            "description": "Type of escrow agreement.\n- two_party: Simple trade escrow between Party A and Party B\n- multi_party: N parties with complex deposit/receive rules\n- conditional: Release based on external condition or contract fulfillment\n- auction: Winner-takes-all with refunds to losers\n",
             "enum": [
                 "two_party",
                 "multi_party",
@@ -9868,7 +10521,7 @@ public partial class EscrowController
                     "type": "object",
                     "nullable": true,
                     "additionalProperties": true,
-                    "description": "Handler-specific data"
+                    "description": "Custom asset handler-specific data. No Bannou plugin reads specific keys from this field by convention."
                 },
                 "sourceOwnerId": {
                     "type": "string",
@@ -10073,7 +10726,7 @@ public partial class EscrowController
         },
         "EscrowStatus": {
             "type": "string",
-            "description": "Current status of the escrow agreement.\n- pending_deposits: Waiting for parties to deposit\n- partially_funded: Some but not all deposits received\n- funded: All deposits received, awaiting consent/condition\ n- pending_consent: Some consents received, waiting for more\n- pending_condition: Waiting for contract fulfillment or external verification\n- finalizing: Running contract finalizer prebound APIs (transient)\n- releasing: Release in progress (transient)\n- released: Assets transferred to recipients\n- refunding: Refund in progress (transient)\ n- refunded: Assets returned to depositors\n- disputed: In dispute, arbiter must resolve\n- expired: Timed out without completion\n- cancelled: Cancelled before funding complete\n- validation_failed: Held assets changed, awaiting re-affirmation\n",
+            "description": "Current status of the escrow agreement.\n- pending_deposits: Waiting for parties to deposit\n- partially_funded: Some but not all deposits received\n- funded: All deposits received, awaiting consent/condition\n- pending_consent: Some consents received, waiting for more\n- pending_condition: Waiting for contract fulfillment or external verification\n- finalizing: Running contract finalizer prebound APIs (transient)\ n- releasing: Release in progress (transient)\n- released: Assets transferred to recipients\n- refunding: Refund in progress (transient)\n- refunded: Assets returned to depositors\n- disputed: In dispute, arbiter must resolve\ n- expired: Timed out without completion\n- cancelled: Cancelled before funding complete\n- validation_failed: Held assets changed, awaiting re-affirmation\n",
             "enum": [
                 "pending_deposits",
                 "partially_funded",
@@ -10133,7 +10786,7 @@ public partial class EscrowController
                     "type": "object",
                     "nullable": true,
                     "additionalProperties": true,
-                    "description": "Additional failure details"
+                    "description": "Validation failure diagnostic details. No Bannou plugin reads specific keys from this field by convention."
                 }
             }
         },
@@ -10157,6 +10810,25 @@ public partial class EscrowController
                 "expired_refunded",
                 "cancelled_refunded",
                 "violation_refunded"
+            ]
+        },
+        "ReleaseMode": {
+            "type": "string",
+            "description": "Controls how release confirmation is handled:\n- immediate: Finalizing \u2192 Released (skip Releasing state entirely).\n  \u26a0\ufe0f WARNING: Use only for trusted/low-value scenarios (NPC vendors, system rewards).\n  Assets are marked as released BEFORE downstream services confirm transfers.\n  If downstream services fail, manual intervention may be required.\n- service_only: Wait for downstream services (currency, inventory) to confirm transfers complete.\n- party_required: Wait for all parties to call /confirm-release.\ n- service_and_party: Wait for both service completion AND party confirmation.\n",
+            "enum": [
+                "immediate",
+                "service_only",
+                "party_required",
+                "service_and_party"
+            ]
+        },
+        "RefundMode": {
+            "type": "string",
+            "description": "Controls how refund confirmation is handled. Same semantics as ReleaseMode.\nRefunds typically use 'immediate' since parties get their own assets back.\n",
+            "enum": [
+                "immediate",
+                "service_only",
+                "party_required"
             ]
         },
         "TransferResult": {
@@ -10286,7 +10958,7 @@ public partial class EscrowController
                     "type": "object",
                     "nullable": true,
                     "additionalProperties": true,
-                    "description": "Proof/evidence data"
+                    "description": "Caller-provided proof/evidence data for condition verification. No Bannou plugin reads specific keys from this field by convention."
                 },
                 "idempotencyKey": {
                     "type": "string",
@@ -10488,7 +11160,7 @@ public partial class EscrowController
                     "type": "object",
                     "nullable": true,
                     "additionalProperties": true,
-                    "description": "Game/application specific metadata"
+                    "description": "Client-provided application-specific metadata. No Bannou plugin reads specific keys from this field by convention."
                 },
                 "resolution": {
                     "$ref": "#/$defs/EscrowResolution",
@@ -10499,12 +11171,26 @@ public partial class EscrowController
                     "type": "string",
                     "nullable": true,
                     "description": "Notes about the resolution"
+                },
+                "releaseMode": {
+                    "$ref": "#/$defs/ReleaseMode",
+                    "description": "How release confirmation is handled for this escrow."
+                },
+                "refundMode": {
+                    "$ref": "#/$defs/RefundMode",
+                    "description": "How refund confirmation is handled for this escrow."
+                },
+                "confirmationDeadline": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "Deadline for party confirmations when in Releasing/Refunding state."
                 }
             }
         },
         "EscrowType": {
             "type": "string",
-            "description": "Type of escrow agreement.\ n- two_party: Simple trade escrow between Party A and Party B\n- multi_party: N parties with complex deposit/receive rules\n- conditional: Release based on external condition or contract fulfillment\n- auction: Winner-takes-all with refunds to losers\n",
+            "description": "Type of escrow agreement.\n- two_party: Simple trade escrow between Party A and Party B\n- multi_party: N parties with complex deposit/receive rules\n- conditional: Release based on external condition or contract fulfillment\n- auction: Winner-takes-all with refunds to losers\n",
             "enum": [
                 "two_party",
                 "multi_party",
@@ -10756,7 +11442,7 @@ public partial class EscrowController
                     "type": "object",
                     "nullable": true,
                     "additionalProperties": true,
-                    "description": "Handler-specific data"
+                    "description": "Custom asset handler-specific data. No Bannou plugin reads specific keys from this field by convention."
                 },
                 "sourceOwnerId": {
                     "type": "string",
@@ -10961,7 +11647,7 @@ public partial class EscrowController
         },
         "EscrowStatus": {
             "type": "string",
-            "description": "Current status of the escrow agreement.\n- pending_deposits: Waiting for parties to deposit\n- partially_funded: Some but not all deposits received\n- funded: All deposits received, awaiting consent/condition\ n- pending_consent: Some consents received, waiting for more\n- pending_condition: Waiting for contract fulfillment or external verification\n- finalizing: Running contract finalizer prebound APIs (transient)\n- releasing: Release in progress (transient)\n- released: Assets transferred to recipients\n- refunding: Refund in progress (transient)\ n- refunded: Assets returned to depositors\n- disputed: In dispute, arbiter must resolve\n- expired: Timed out without completion\n- cancelled: Cancelled before funding complete\n- validation_failed: Held assets changed, awaiting re-affirmation\n",
+            "description": "Current status of the escrow agreement.\n- pending_deposits: Waiting for parties to deposit\n- partially_funded: Some but not all deposits received\n- funded: All deposits received, awaiting consent/condition\n- pending_consent: Some consents received, waiting for more\n- pending_condition: Waiting for contract fulfillment or external verification\n- finalizing: Running contract finalizer prebound APIs (transient)\ n- releasing: Release in progress (transient)\n- released: Assets transferred to recipients\n- refunding: Refund in progress (transient)\n- refunded: Assets returned to depositors\n- disputed: In dispute, arbiter must resolve\ n- expired: Timed out without completion\n- cancelled: Cancelled before funding complete\n- validation_failed: Held assets changed, awaiting re-affirmation\n",
             "enum": [
                 "pending_deposits",
                 "partially_funded",
@@ -11021,7 +11707,7 @@ public partial class EscrowController
                     "type": "object",
                     "nullable": true,
                     "additionalProperties": true,
-                    "description": "Additional failure details"
+                    "description": "Validation failure diagnostic details. No Bannou plugin reads specific keys from this field by convention."
                 }
             }
         },
@@ -11045,6 +11731,25 @@ public partial class EscrowController
                 "expired_refunded",
                 "cancelled_refunded",
                 "violation_refunded"
+            ]
+        },
+        "ReleaseMode": {
+            "type": "string",
+            "description": "Controls how release confirmation is handled:\n- immediate: Finalizing \u2192 Released (skip Releasing state entirely).\n  \u26a0\ufe0f WARNING: Use only for trusted/low-value scenarios (NPC vendors, system rewards).\n  Assets are marked as released BEFORE downstream services confirm transfers.\n  If downstream services fail, manual intervention may be required.\n- service_only: Wait for downstream services (currency, inventory) to confirm transfers complete.\n- party_required: Wait for all parties to call /confirm-release.\ n- service_and_party: Wait for both service completion AND party confirmation.\n",
+            "enum": [
+                "immediate",
+                "service_only",
+                "party_required",
+                "service_and_party"
+            ]
+        },
+        "RefundMode": {
+            "type": "string",
+            "description": "Controls how refund confirmation is handled. Same semantics as ReleaseMode.\nRefunds typically use 'immediate' since parties get their own assets back.\n",
+            "enum": [
+                "immediate",
+                "service_only",
+                "party_required"
             ]
         }
     }
@@ -11203,7 +11908,7 @@ public partial class EscrowController
                     "type": "object",
                     "nullable": true,
                     "additionalProperties": true,
-                    "description": "Additional failure details"
+                    "description": "Validation failure diagnostic details. No Bannou plugin reads specific keys from this field by convention."
                 }
             }
         },
@@ -11220,7 +11925,7 @@ public partial class EscrowController
         },
         "ValidationFailureType": {
             "type": "string",
-            "description": "Type of validation failure detected.\n- asset_missing: Asset no longer exists in escrow custody\n- asset_mutated: Asset properties changed (e.g., item durability)\n- asset_expired: Asset has a time-based expiration that triggered\ n- balance_mismatch: Wallet balance does not match expected held amount\n",
+            "description": "Type of validation failure detected.\n- asset_missing: Asset no longer exists in escrow custody\n- asset_mutated: Asset properties changed (e.g., item durability)\n- asset_expired: Asset has a time-based expiration that triggered\n- balance_mismatch: Wallet balance does not match expected held amount\n",
             "enum": [
                 "asset_missing",
                 "asset_mutated",
@@ -11395,7 +12100,7 @@ public partial class EscrowController
                     "type": "object",
                     "nullable": true,
                     "additionalProperties": true,
-                    "description": "Game/application specific metadata"
+                    "description": "Client-provided application-specific metadata. No Bannou plugin reads specific keys from this field by convention."
                 },
                 "resolution": {
                     "$ref": "#/$defs/EscrowResolution",
@@ -11406,12 +12111,26 @@ public partial class EscrowController
                     "type": "string",
                     "nullable": true,
                     "description": "Notes about the resolution"
+                },
+                "releaseMode": {
+                    "$ref": "#/$defs/ReleaseMode",
+                    "description": "How release confirmation is handled for this escrow."
+                },
+                "refundMode": {
+                    "$ref": "#/$defs/RefundMode",
+                    "description": "How refund confirmation is handled for this escrow."
+                },
+                "confirmationDeadline": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "Deadline for party confirmations when in Releasing/Refunding state."
                 }
             }
         },
         "EscrowType": {
             "type": "string",
-            "description": "Type of escrow agreement.\ n- two_party: Simple trade escrow between Party A and Party B\n- multi_party: N parties with complex deposit/receive rules\n- conditional: Release based on external condition or contract fulfillment\n- auction: Winner-takes-all with refunds to losers\n",
+            "description": "Type of escrow agreement.\n- two_party: Simple trade escrow between Party A and Party B\n- multi_party: N parties with complex deposit/receive rules\n- conditional: Release based on external condition or contract fulfillment\n- auction: Winner-takes-all with refunds to losers\n",
             "enum": [
                 "two_party",
                 "multi_party",
@@ -11663,7 +12382,7 @@ public partial class EscrowController
                     "type": "object",
                     "nullable": true,
                     "additionalProperties": true,
-                    "description": "Handler-specific data"
+                    "description": "Custom asset handler-specific data. No Bannou plugin reads specific keys from this field by convention."
                 },
                 "sourceOwnerId": {
                     "type": "string",
@@ -11885,6 +12604,25 @@ public partial class EscrowController
                 "expired_refunded",
                 "cancelled_refunded",
                 "violation_refunded"
+            ]
+        },
+        "ReleaseMode": {
+            "type": "string",
+            "description": "Controls how release confirmation is handled:\n- immediate: Finalizing \u2192 Released (skip Releasing state entirely).\n  \u26a0\ufe0f WARNING: Use only for trusted/low-value scenarios (NPC vendors, system rewards).\n  Assets are marked as released BEFORE downstream services confirm transfers.\n  If downstream services fail, manual intervention may be required.\n- service_only: Wait for downstream services (currency, inventory) to confirm transfers complete.\ n- party_required: Wait for all parties to call /confirm-release.\n- service_and_party: Wait for both service completion AND party confirmation.\n",
+            "enum": [
+                "immediate",
+                "service_only",
+                "party_required",
+                "service_and_party"
+            ]
+        },
+        "RefundMode": {
+            "type": "string",
+            "description": "Controls how refund confirmation is handled. Same semantics as ReleaseMode.\nRefunds typically use 'immediate' since parties get their own assets back.\n",
+            "enum": [
+                "immediate",
+                "service_only",
+                "party_required"
             ]
         }
     }
@@ -12181,7 +12919,7 @@ public partial class EscrowController
                     "type": "object",
                     "nullable": true,
                     "additionalProperties": true,
-                    "description": "Game/application specific metadata"
+                    "description": "Client-provided application-specific metadata. No Bannou plugin reads specific keys from this field by convention."
                 },
                 "resolution": {
                     "$ref": "#/$defs/EscrowResolution",
@@ -12192,6 +12930,20 @@ public partial class EscrowController
                     "type": "string",
                     "nullable": true,
                     "description": "Notes about the resolution"
+                },
+                "releaseMode": {
+                    "$ref": "#/$defs/ReleaseMode",
+                    "description": "How release confirmation is handled for this escrow."
+                },
+                "refundMode": {
+                    "$ref": "#/$defs/RefundMode",
+                    "description": "How refund confirmation is handled for this escrow."
+                },
+                "confirmationDeadline": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "Deadline for party confirmations when in Releasing/Refunding state."
                 }
             }
         },
@@ -12449,7 +13201,7 @@ public partial class EscrowController
                     "type": "object",
                     "nullable": true,
                     "additionalProperties": true,
-                    "description": "Handler-specific data"
+                    "description": "Custom asset handler-specific data. No Bannou plugin reads specific keys from this field by convention."
                 },
                 "sourceOwnerId": {
                     "type": "string",
@@ -12654,7 +13406,7 @@ public partial class EscrowController
         },
         "EscrowStatus": {
             "type": "string",
-            "description": "Current status of the escrow agreement.\n- pending_deposits: Waiting for parties to deposit\n- partially_funded: Some but not all deposits received\n- funded: All deposits received, awaiting consent/condition\ n- pending_consent: Some consents received, waiting for more\n- pending_condition: Waiting for contract fulfillment or external verification\n- finalizing: Running contract finalizer prebound APIs (transient)\n- releasing: Release in progress (transient)\n- released: Assets transferred to recipients\n- refunding: Refund in progress (transient)\ n- refunded: Assets returned to depositors\n- disputed: In dispute, arbiter must resolve\n- expired: Timed out without completion\n- cancelled: Cancelled before funding complete\n- validation_failed: Held assets changed, awaiting re-affirmation\n",
+            "description": "Current status of the escrow agreement.\n- pending_deposits: Waiting for parties to deposit\n- partially_funded: Some but not all deposits received\n- funded: All deposits received, awaiting consent/condition\n- pending_consent: Some consents received, waiting for more\n- pending_condition: Waiting for contract fulfillment or external verification\n- finalizing: Running contract finalizer prebound APIs (transient)\ n- releasing: Release in progress (transient)\n- released: Assets transferred to recipients\n- refunding: Refund in progress (transient)\n- refunded: Assets returned to depositors\n- disputed: In dispute, arbiter must resolve\ n- expired: Timed out without completion\n- cancelled: Cancelled before funding complete\n- validation_failed: Held assets changed, awaiting re-affirmation\n",
             "enum": [
                 "pending_deposits",
                 "partially_funded",
@@ -12714,7 +13466,7 @@ public partial class EscrowController
                     "type": "object",
                     "nullable": true,
                     "additionalProperties": true,
-                    "description": "Additional failure details"
+                    "description": "Validation failure diagnostic details. No Bannou plugin reads specific keys from this field by convention."
                 }
             }
         },
@@ -12738,6 +13490,25 @@ public partial class EscrowController
                 "expired_refunded",
                 "cancelled_refunded",
                 "violation_refunded"
+            ]
+        },
+        "ReleaseMode": {
+            "type": "string",
+            "description": "Controls how release confirmation is handled:\n- immediate: Finalizing \u2192 Released (skip Releasing state entirely).\n  \u26a0\ufe0f WARNING: Use only for trusted/low-value scenarios (NPC vendors, system rewards).\n  Assets are marked as released BEFORE downstream services confirm transfers.\n  If downstream services fail, manual intervention may be required.\n- service_only: Wait for downstream services (currency, inventory) to confirm transfers complete.\n- party_required: Wait for all parties to call /confirm-release.\ n- service_and_party: Wait for both service completion AND party confirmation.\n",
+            "enum": [
+                "immediate",
+                "service_only",
+                "party_required",
+                "service_and_party"
+            ]
+        },
+        "RefundMode": {
+            "type": "string",
+            "description": "Controls how refund confirmation is handled. Same semantics as ReleaseMode.\nRefunds typically use 'immediate' since parties get their own assets back.\n",
+            "enum": [
+                "immediate",
+                "service_only",
+                "party_required"
             ]
         }
     }

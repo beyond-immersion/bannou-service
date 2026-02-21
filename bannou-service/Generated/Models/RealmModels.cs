@@ -162,7 +162,13 @@ public partial class CreateRealmRequest
     public bool IsActive { get; set; } = true;
 
     /// <summary>
-    /// Additional metadata for the realm (JSON)
+    /// Whether this realm is a system infrastructure realm (e.g., VOID). System realms cannot be merged as source.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("isSystemType")]
+    public bool IsSystemType { get; set; } = false;
+
+    /// <summary>
+    /// Client-only metadata. No Bannou plugin reads specific keys from this field by convention.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("metadata")]
     public object? Metadata { get; set; } = default!;
@@ -218,7 +224,13 @@ public partial class UpdateRealmRequest
     public bool? IsActive { get; set; } = default!;
 
     /// <summary>
-    /// Additional metadata
+    /// Whether this realm is a system infrastructure realm (e.g., VOID). System realms cannot be merged as source.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("isSystemType")]
+    public bool? IsSystemType { get; set; } = default!;
+
+    /// <summary>
+    /// Client-only metadata. No Bannou plugin reads specific keys from this field by convention.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("metadata")]
     public object? Metadata { get; set; } = default!;
@@ -328,6 +340,66 @@ public partial class RealmExistsResponse
 }
 
 /// <summary>
+/// Request to check if multiple realms exist and are available for use
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class RealmsExistBatchRequest
+{
+
+    /// <summary>
+    /// List of realm IDs to validate (max 100)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("realmIds")]
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.MinLength(1)]
+    [System.ComponentModel.DataAnnotations.MaxLength(100)]
+    public System.Collections.Generic.ICollection<System.Guid> RealmIds { get; set; } = new System.Collections.ObjectModel.Collection<System.Guid>();
+
+}
+
+/// <summary>
+/// Batch validation results for multiple realms
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class RealmsExistBatchResponse
+{
+
+    /// <summary>
+    /// Validation result for each requested realm ID (in same order as request)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("results")]
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Collections.Generic.ICollection<RealmExistsResponse> Results { get; set; } = new System.Collections.ObjectModel.Collection<RealmExistsResponse>();
+
+    /// <summary>
+    /// True if all requested realms exist
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("allExist")]
+    public bool AllExist { get; set; } = default!;
+
+    /// <summary>
+    /// True if all requested realms exist AND are active (not deprecated)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("allActive")]
+    public bool AllActive { get; set; } = default!;
+
+    /// <summary>
+    /// List of realm IDs that do not exist (empty if all exist)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("invalidRealmIds")]
+    public System.Collections.Generic.ICollection<System.Guid> InvalidRealmIds { get; set; } = default!;
+
+    /// <summary>
+    /// List of realm IDs that exist but are deprecated (empty if none deprecated)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("deprecatedRealmIds")]
+    public System.Collections.Generic.ICollection<System.Guid> DeprecatedRealmIds { get; set; } = default!;
+
+}
+
+/// <summary>
 /// Request to seed multiple realms from configuration data
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
@@ -400,7 +472,13 @@ public partial class SeedRealm
     public bool IsActive { get; set; } = true;
 
     /// <summary>
-    /// Additional custom metadata for the realm (JSON)
+    /// Whether this realm is a system infrastructure realm (e.g., VOID). System realms cannot be merged as source.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("isSystemType")]
+    public bool IsSystemType { get; set; } = false;
+
+    /// <summary>
+    /// Client-only metadata. No Bannou plugin reads specific keys from this field by convention.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("metadata")]
     public object? Metadata { get; set; } = default!;
@@ -465,6 +543,12 @@ public partial class RealmResponse
     public bool IsActive { get; set; } = default!;
 
     /// <summary>
+    /// Whether this realm is a system infrastructure realm (e.g., VOID). System realms cannot be merged as source.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("isSystemType")]
+    public bool IsSystemType { get; set; } = default!;
+
+    /// <summary>
     /// Whether this realm is deprecated and cannot be used for new entities
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("isDeprecated")]
@@ -483,7 +567,7 @@ public partial class RealmResponse
     public string? DeprecationReason { get; set; } = default!;
 
     /// <summary>
-    /// Additional custom metadata for the realm
+    /// Client-only metadata. No Bannou plugin reads specific keys from this field by convention.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("metadata")]
     public object? Metadata { get; set; } = default!;
@@ -585,6 +669,104 @@ public partial class SeedRealmsResponse
     [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
     public System.Collections.Generic.ICollection<string> Errors { get; set; } = new System.Collections.ObjectModel.Collection<string>();
+
+}
+
+/// <summary>
+/// Request to migrate all entities from a deprecated realm into a target realm
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class MergeRealmsRequest
+{
+
+    /// <summary>
+    /// ID of the deprecated realm to merge from (must be deprecated)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("sourceRealmId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid SourceRealmId { get; set; } = default!;
+
+    /// <summary>
+    /// ID of the realm to merge into (must exist)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("targetRealmId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid TargetRealmId { get; set; } = default!;
+
+    /// <summary>
+    /// If true, hard-delete the source realm after successful merge (skipped if any failures)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("deleteAfterMerge")]
+    public bool DeleteAfterMerge { get; set; } = false;
+
+}
+
+/// <summary>
+/// Result of a realm merge operation including per-entity-type migration statistics
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class MergeRealmsResponse
+{
+
+    /// <summary>
+    /// ID of the source realm that was merged from
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("sourceRealmId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid SourceRealmId { get; set; } = default!;
+
+    /// <summary>
+    /// ID of the target realm that entities were merged into
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("targetRealmId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid TargetRealmId { get; set; } = default!;
+
+    /// <summary>
+    /// Number of species successfully added to target realm and removed from source
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("speciesMigrated")]
+    public int SpeciesMigrated { get; set; } = default!;
+
+    /// <summary>
+    /// Number of species that failed to migrate
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("speciesFailed")]
+    public int SpeciesFailed { get; set; } = default!;
+
+    /// <summary>
+    /// Number of locations successfully transferred to target realm
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("locationsMigrated")]
+    public int LocationsMigrated { get; set; } = default!;
+
+    /// <summary>
+    /// Number of locations that failed to transfer
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("locationsFailed")]
+    public int LocationsFailed { get; set; } = default!;
+
+    /// <summary>
+    /// Number of characters successfully transferred to target realm
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("charactersMigrated")]
+    public int CharactersMigrated { get; set; } = default!;
+
+    /// <summary>
+    /// Number of characters that failed to transfer
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("charactersFailed")]
+    public int CharactersFailed { get; set; } = default!;
+
+    /// <summary>
+    /// Whether the source realm was hard-deleted after merge
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("sourceDeleted")]
+    public bool SourceDeleted { get; set; } = default!;
 
 }
 

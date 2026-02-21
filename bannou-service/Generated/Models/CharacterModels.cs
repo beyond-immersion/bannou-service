@@ -265,6 +265,31 @@ public partial class GetCharactersByRealmRequest
 }
 
 /// <summary>
+/// Request payload for transferring a character to a different realm
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class TransferCharacterToRealmRequest
+{
+
+    /// <summary>
+    /// ID of the character to transfer
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("characterId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid CharacterId { get; set; } = default!;
+
+    /// <summary>
+    /// ID of the realm to transfer the character to
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("targetRealmId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid TargetRealmId { get; set; } = default!;
+
+}
+
+/// <summary>
 /// Complete character data returned from character operations
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
@@ -786,10 +811,10 @@ public partial class FamilyTreeResponse
     public System.Collections.Generic.ICollection<FamilyMember> Siblings { get; set; } = default!;
 
     /// <summary>
-    /// Current spouse (if any)
+    /// Spousal relationships (spouse, husband, wife)
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("spouse")]
-    public FamilyMember? Spouse { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonPropertyName("spouses")]
+    public System.Collections.Generic.ICollection<FamilyMember> Spouses { get; set; } = default!;
 
     /// <summary>
     /// Previous incarnations (if reincarnation tracked)
@@ -1070,6 +1095,115 @@ public partial class CharacterRefCount
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("zeroRefSince")]
     public System.DateTimeOffset? ZeroRefSince { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Request to get character data for compression
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class GetCompressDataRequest
+{
+
+    /// <summary>
+    /// ID of the character to get compress data for
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("characterId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid CharacterId { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Core character data for archive storage and storyline SDK consumption.
+/// <br/>Inherits base archive properties from ResourceArchiveBase.
+/// <br/>The characterId field equals resourceId for convenience.
+/// <br/>
+/// <br/>Note: This is distinct from CharacterArchive which contains text summaries
+/// <br/>for cleanup. CharacterBaseArchive contains structured data for SDK consumption.
+/// <br/>
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class CharacterBaseArchive : ResourceArchiveBase
+{
+
+    /// <summary>
+    /// Unique identifier for the character (equals resourceId)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("characterId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid CharacterId { get; set; } = default!;
+
+    /// <summary>
+    /// Display name of the character
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("name")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string Name { get; set; } = default!;
+
+    /// <summary>
+    /// Realm ID (partition key)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("realmId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid RealmId { get; set; } = default!;
+
+    /// <summary>
+    /// Species ID (foreign key to Species service)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("speciesId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid SpeciesId { get; set; } = default!;
+
+    /// <summary>
+    /// In-game birth timestamp
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("birthDate")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset BirthDate { get; set; } = default!;
+
+    /// <summary>
+    /// In-game death timestamp (required for compression)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("deathDate")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset DeathDate { get; set; } = default!;
+
+    /// <summary>
+    /// Current lifecycle status (must be dead for compression)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("status")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public CharacterStatus Status { get; set; } = default!;
+
+    /// <summary>
+    /// Text summary of family relationships.
+    /// <br/>Example: "Father of 3, married to Elena, orphaned at young age"
+    /// <br/>
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("familySummary")]
+    public string? FamilySummary { get; set; } = default!;
+
+    /// <summary>
+    /// Real-world creation timestamp
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
+    public System.DateTimeOffset CreatedAt { get; set; } = default!;
+
+    /// <summary>
+    /// Real-world last update timestamp
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
+    public System.DateTimeOffset? UpdatedAt { get; set; } = default!;
 
 }
 

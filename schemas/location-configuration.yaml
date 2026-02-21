@@ -5,8 +5,11 @@ info:
     Configuration schema for Location service.
     Properties are bound to environment variables with BANNOU_ prefix.
 
-    **Schema Rules**: AI agents MUST review docs/reference/SCHEMA-RULES.md before
-    modifying this schema. Optional reference types require `nullable: true`.
+    **SCHEMA MODIFICATION GATE**: STOP. Before modifying this schema, you MUST:
+    1. Read docs/reference/SCHEMA-RULES.md
+    2. State which section applies to your change
+    3. Only then proceed with edits
+    Edits without stating the applicable rule are FORBIDDEN.
   version: 1.0.0
 paths: {}
 x-service-configuration:
@@ -26,3 +29,55 @@ x-service-configuration:
       description: Safety limit for descendant traversal and circular reference checks
       default: 20
       env: LOCATION_MAX_DESCENDANT_DEPTH
+    CacheTtlSeconds:
+      type: integer
+      description: TTL for location cache entries in seconds (locations change infrequently)
+      default: 3600
+      env: LOCATION_CACHE_TTL_SECONDS
+    IndexLockTimeoutSeconds:
+      type: integer
+      description: Timeout for acquiring distributed locks on index operations (realm, parent, root indexes)
+      default: 5
+      env: LOCATION_INDEX_LOCK_TIMEOUT_SECONDS
+    EntityPresenceTtlSeconds:
+      type: integer
+      description: Default TTL for entity presence entries in seconds (reporters must refresh within this window)
+      default: 30
+      minimum: 5
+      maximum: 300
+      env: LOCATION_ENTITY_PRESENCE_TTL_SECONDS
+    EntityPresenceCleanupIntervalSeconds:
+      type: integer
+      description: Interval in seconds between background cleanup cycles for expired location-entities set members
+      default: 60
+      minimum: 10
+      maximum: 600
+      env: LOCATION_ENTITY_PRESENCE_CLEANUP_INTERVAL_SECONDS
+    EntityPresenceCleanupStartupDelaySeconds:
+      type: integer
+      description: Delay in seconds before entity presence cleanup worker starts processing
+      default: 15
+      minimum: 5
+      maximum: 120
+      env: LOCATION_ENTITY_PRESENCE_CLEANUP_STARTUP_DELAY_SECONDS
+    MaxEntitiesPerLocationQuery:
+      type: integer
+      description: Maximum entities returned by list-entities-at-location (pagination cap)
+      default: 100
+      minimum: 10
+      maximum: 1000
+      env: LOCATION_MAX_ENTITIES_PER_LOCATION_QUERY
+    ContextCacheTtlSeconds:
+      type: integer
+      description: TTL for location context provider cache entries in seconds, distinct from the main location CacheTtlSeconds (spatial context for ABML variable resolution)
+      default: 10
+      minimum: 1
+      maximum: 300
+      env: LOCATION_CONTEXT_CACHE_TTL_SECONDS
+    ContextNearbyPoisLimit:
+      type: integer
+      description: Maximum number of sibling locations to include in the nearby_pois ABML variable for the location context provider
+      default: 50
+      minimum: 1
+      maximum: 200
+      env: LOCATION_CONTEXT_NEARBY_POIS_LIMIT

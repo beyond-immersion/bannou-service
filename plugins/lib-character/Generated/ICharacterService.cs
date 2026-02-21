@@ -79,4 +79,14 @@ public partial interface ICharacterService : IBannouService
         /// </summary>
         Task<(StatusCodes, CharacterListResponse?)> GetCharactersByRealmAsync(GetCharactersByRealmRequest body, CancellationToken cancellationToken = default(CancellationToken));
 
+        /// <summary>
+        /// TransferCharacterToRealm operation
+        /// </summary>
+        Task<(StatusCodes, CharacterResponse?)> TransferCharacterToRealmAsync(TransferCharacterToRealmRequest body, CancellationToken cancellationToken = default(CancellationToken));
+
+        /// <summary>
+        /// GetCompressData operation
+        /// </summary>
+        Task<(StatusCodes, CharacterBaseArchive?)> GetCompressDataAsync(GetCompressDataRequest body, CancellationToken cancellationToken = default(CancellationToken));
+
 }

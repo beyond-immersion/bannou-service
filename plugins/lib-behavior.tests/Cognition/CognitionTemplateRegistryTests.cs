@@ -65,11 +65,12 @@ public sealed class CognitionTemplateRegistryTests : IDisposable
         // Assert
         Assert.NotNull(template);
         Assert.Equal(CognitionTemplates.HumanoidBase, template.Id);
-        Assert.Equal(5, template.Stages.Count); // All 5 cognition stages
+        Assert.Equal(6, template.Stages.Count); // All 6 cognition stages
         Assert.Contains(template.Stages, s => s.Name == CognitionStages.Filter);
         Assert.Contains(template.Stages, s => s.Name == CognitionStages.MemoryQuery);
         Assert.Contains(template.Stages, s => s.Name == CognitionStages.Significance);
         Assert.Contains(template.Stages, s => s.Name == CognitionStages.Storage);
+        Assert.Contains(template.Stages, s => s.Name == CognitionStages.EvaluateConsequences);
         Assert.Contains(template.Stages, s => s.Name == CognitionStages.Intention);
     }
 

@@ -24,6 +24,7 @@
 
 using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.BannouService;
+using BeyondImmersion.BannouService.Account;
 
 
 namespace BeyondImmersion.BannouService.Events;
@@ -54,12 +55,10 @@ public partial class AccountCreatedEvent : BaseServiceEvent
     public System.Guid AccountId { get; set; } = default!;
 
     /// <summary>
-    /// Email address associated with the account
+    /// Email address associated with the account. Null for OAuth/Steam accounts without email.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("email")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public string Email { get; set; } = default!;
+    public string? Email { get; set; } = default!;
 
     /// <summary>
     /// User-chosen display name for the account
@@ -78,6 +77,12 @@ public partial class AccountCreatedEvent : BaseServiceEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("roles")]
     public System.Collections.Generic.ICollection<string>? Roles { get; set; } = default!;
+
+    /// <summary>
+    /// Authentication methods linked to the account. Useful for identifying OAuth accounts when email is null.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("authMethods")]
+    public System.Collections.Generic.ICollection<AuthMethodInfo>? AuthMethods { get; set; } = default!;
 
     /// <summary>
     /// Timestamp when the account was created
@@ -125,12 +130,10 @@ public partial class AccountUpdatedEvent : BaseServiceEvent
     public System.Guid AccountId { get; set; } = default!;
 
     /// <summary>
-    /// Email address associated with the account
+    /// Email address associated with the account. Null for OAuth/Steam accounts without email.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("email")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public string Email { get; set; } = default!;
+    public string? Email { get; set; } = default!;
 
     /// <summary>
     /// User-chosen display name for the account
@@ -149,6 +152,12 @@ public partial class AccountUpdatedEvent : BaseServiceEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("roles")]
     public System.Collections.Generic.ICollection<string>? Roles { get; set; } = default!;
+
+    /// <summary>
+    /// Authentication methods linked to the account. Useful for identifying OAuth accounts when email is null.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("authMethods")]
+    public System.Collections.Generic.ICollection<AuthMethodInfo>? AuthMethods { get; set; } = default!;
 
     /// <summary>
     /// Timestamp when the account was created
@@ -204,12 +213,10 @@ public partial class AccountDeletedEvent : BaseServiceEvent
     public System.Guid AccountId { get; set; } = default!;
 
     /// <summary>
-    /// Email address associated with the account
+    /// Email address associated with the account. Null for OAuth/Steam accounts without email.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("email")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public string Email { get; set; } = default!;
+    public string? Email { get; set; } = default!;
 
     /// <summary>
     /// User-chosen display name for the account
@@ -228,6 +235,12 @@ public partial class AccountDeletedEvent : BaseServiceEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("roles")]
     public System.Collections.Generic.ICollection<string>? Roles { get; set; } = default!;
+
+    /// <summary>
+    /// Authentication methods linked to the account. Useful for identifying OAuth accounts when email is null.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("authMethods")]
+    public System.Collections.Generic.ICollection<AuthMethodInfo>? AuthMethods { get; set; } = default!;
 
     /// <summary>
     /// Timestamp when the account was created

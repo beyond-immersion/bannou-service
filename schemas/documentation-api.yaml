@@ -13,8 +13,13 @@ info:
     **Browser Endpoint**: The GET /documentation/view/{slug} endpoint is browser-facing
     (NGINX-routed) per FOUNDATION TENETS.
 
-    **Schema Rules**: AI agents MUST review docs/reference/SCHEMA-RULES.md before modifying this schema. Optional reference types require `nullable: true`.
+    **SCHEMA MODIFICATION GATE**: STOP. Before modifying this schema, you MUST:
+    1. Read docs/reference/SCHEMA-RULES.md
+    2. State which section applies to your change
+    3. Only then proceed with edits
+    Edits without stating the applicable rule are FORBIDDEN.
   version: 1.0.0
+x-service-layer: AppFeatures
 servers:
 - url: http://localhost:5012
   description: Bannou service endpoint (MUST use "bannou" app-id)
@@ -1296,7 +1301,9 @@ components:
           type: object
           additionalProperties: true
           nullable: true
-          description: Custom metadata key-value pairs (null if not needed)
+          description: >-
+            Client-provided custom metadata.
+            No Bannou plugin reads specific keys from this field by convention.
 
     CreateDocumentResponse:
       description: Response confirming document creation with assigned identifiers
@@ -1376,7 +1383,9 @@ components:
           type: object
           additionalProperties: true
           nullable: true
-          description: New custom metadata key-value pairs (null to keep unchanged)
+          description: >-
+            Updated client-provided custom metadata (null to keep unchanged).
+            No Bannou plugin reads specific keys from this field by convention.
 
     UpdateDocumentResponse:
       description: Response confirming document update with timestamp
@@ -1655,7 +1664,9 @@ components:
           type: object
           additionalProperties: true
           nullable: true
-          description: Custom metadata key-value pairs (null if not needed)
+          description: >-
+            Client-provided custom metadata.
+            No Bannou plugin reads specific keys from this field by convention.
 
     ImportDocumentationResponse:
       description: Response reporting import results with counts and failure details
@@ -1904,7 +1915,9 @@ components:
         metadata:
           type: object
           additionalProperties: true
-          description: Custom metadata key-value pairs
+          description: >-
+            Client-provided custom metadata.
+            No Bannou plugin reads specific keys from this field by convention.
         createdAt:
           type: string
           format: date-time

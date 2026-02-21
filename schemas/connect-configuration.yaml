@@ -5,8 +5,11 @@ info:
     Configuration schema for Connect service.
     Properties are bound to environment variables with BANNOU_ prefix.
 
-    **Schema Rules**: AI agents MUST review docs/reference/SCHEMA-RULES.md before
-    modifying this schema. Optional reference types require `nullable: true`.
+    **SCHEMA MODIFICATION GATE**: STOP. Before modifying this schema, you MUST:
+    1. Read docs/reference/SCHEMA-RULES.md
+    2. State which section applies to your change
+    3. Only then proceed with edits
+    Edits without stating the applicable rule are FORBIDDEN.
   version: 1.0.0
 paths: {}
 x-service-configuration:
@@ -21,11 +24,6 @@ x-service-configuration:
       description: Interval between heartbeat messages
       default: 30
       env: CONNECT_HEARTBEAT_INTERVAL_SECONDS
-    MessageQueueSize:
-      type: integer
-      description: Maximum number of queued messages per connection
-      default: 1000
-      env: CONNECT_MESSAGE_QUEUE_SIZE
     BufferSize:
       type: integer
       description: Size of message buffers in bytes
@@ -91,13 +89,6 @@ x-service-configuration:
       default: 300
       description: Window for client reconnection after disconnect in seconds (default 5 minutes)
 
-    # === HTTP Client Configuration (Tier 2) ===
-    HttpClientTimeoutSeconds:
-      type: integer
-      env: CONNECT_HTTP_CLIENT_TIMEOUT_SECONDS
-      default: 120
-      description: Timeout in seconds for HTTP client requests to backend services
-
     # === WebSocket Connection Management (Tier 2) ===
     RpcCleanupIntervalSeconds:
       type: integer
@@ -139,6 +130,35 @@ x-service-configuration:
       env: CONNECT_RECONNECTION_WINDOW_EXTENSION_MINUTES
       default: 1
       description: Additional minutes added to reconnection window on each extension
+
+    CompanionRoomMode:
+      $ref: 'connect-api.yaml#/components/schemas/CompanionRoomMode'
+      env: CONNECT_COMPANION_ROOM_MODE
+      default: Disabled
+      description: How Connect manages companion chat rooms (Disabled, AutoJoinLazy, AutoJoin, Manual)
+
+    # === Outbound Payload Compression ===
+    CompressionEnabled:
+      type: boolean
+      env: CONNECT_COMPRESSION_ENABLED
+      default: false
+      description: Enable Brotli compression for outbound WebSocket payloads above the size threshold
+
+    CompressionThresholdBytes:
+      type: integer
+      env: CONNECT_COMPRESSION_THRESHOLD_BYTES
+      default: 1024
+      minimum: 64
+      maximum: 1048576
+      description: Minimum payload size in bytes before compression is applied (payloads below this are sent uncompressed)
+
+    CompressionQuality:
+      type: integer
+      env: CONNECT_COMPRESSION_QUALITY
+      default: 1
+      minimum: 0
+      maximum: 11
+      description: Brotli compression quality level (0=no compression, 1=fastest, 11=best ratio). Quality 1 recommended for real-time traffic.
 
 # Note: Event subscriptions are handled via MassTransit consumers in ConnectEventsController.cs
 # Topics subscribed: session.invalidated, permission.capabilities-updated

@@ -12,7 +12,7 @@
 //
 //     IMPLEMENTATION TENETS - Configuration-First:
 //     - Access configuration via dependency injection, never Environment.GetEnvironmentVariable.
-//     - ALL properties below MUST be referenced in VoiceService.cs (no dead config).
+//     - ALL properties below MUST be referenced somewhere in the plugin (no dead config).
 //     - Any hardcoded tunable (limit, timeout, threshold, capacity) in service code means
 //       a configuration property is MISSING - add it to the configuration schema.
 //     - If a property is unused, remove it from the configuration schema.
@@ -40,7 +40,7 @@ namespace BeyondImmersion.BannouService.Voice;
 /// <para>
 /// <b>IMPLEMENTATION TENETS - Configuration-First:</b> Access configuration via dependency injection.
 /// Never use <c>Environment.GetEnvironmentVariable()</c> directly in service code.
-/// ALL properties in this class MUST be referenced in the service implementation.
+/// ALL properties in this class MUST be referenced somewhere in the plugin.
 /// If a property is unused, remove it from the configuration schema.
 /// </para>
 /// <para>
@@ -135,6 +135,13 @@ public class VoiceServiceConfiguration : IServiceConfiguration
     public int RtpEnginePort { get; set; } = 22222;
 
     /// <summary>
+    /// Timeout in seconds for RTPEngine UDP requests
+    /// Environment variable: VOICE_RTPENGINE_TIMEOUT_SECONDS
+    /// </summary>
+    [ConfigRange(Minimum = 1, Maximum = 60)]
+    public int RtpEngineTimeoutSeconds { get; set; } = 5;
+
+    /// <summary>
     /// Timeout in seconds for Kamailio service requests
     /// Environment variable: VOICE_KAMAILIO_REQUEST_TIMEOUT_SECONDS
     /// </summary>
@@ -146,5 +153,46 @@ public class VoiceServiceConfiguration : IServiceConfiguration
     /// Environment variable: VOICE_SIP_CREDENTIAL_EXPIRATION_HOURS
     /// </summary>
     public int SipCredentialExpirationHours { get; set; } = 24;
+
+    /// <summary>
+    /// Seconds to wait after startup before the first eviction cycle runs
+    /// Environment variable: VOICE_EVICTION_WORKER_INITIAL_DELAY_SECONDS
+    /// </summary>
+    [ConfigRange(Minimum = 0, Maximum = 120)]
+    public int EvictionWorkerInitialDelaySeconds { get; set; } = 10;
+
+    /// <summary>
+    /// Seconds of missed heartbeats before participant is evicted
+    /// Environment variable: VOICE_PARTICIPANT_HEARTBEAT_TIMEOUT_SECONDS
+    /// </summary>
+    [ConfigRange(Minimum = 10, Maximum = 600)]
+    public int ParticipantHeartbeatTimeoutSeconds { get; set; } = 60;
+
+    /// <summary>
+    /// How often the background worker checks for stale participants
+    /// Environment variable: VOICE_PARTICIPANT_EVICTION_CHECK_INTERVAL_SECONDS
+    /// </summary>
+    [ConfigRange(Minimum = 5, Maximum = 120)]
+    public int ParticipantEvictionCheckIntervalSeconds { get; set; } = 15;
+
+    /// <summary>
+    /// Seconds to wait for all participants to respond before auto-declining
+    /// Environment variable: VOICE_BROADCAST_CONSENT_TIMEOUT_SECONDS
+    /// </summary>
+    [ConfigRange(Minimum = 10, Maximum = 120)]
+    public int BroadcastConsentTimeoutSeconds { get; set; } = 30;
+
+    /// <summary>
+    /// If true, joining a non-existent room auto-creates it with autoCleanup enabled
+    /// Environment variable: VOICE_AD_HOC_ROOMS_ENABLED
+    /// </summary>
+    public bool AdHocRoomsEnabled { get; set; } = false;
+
+    /// <summary>
+    /// Seconds an empty autoCleanup room persists before auto-deletion
+    /// Environment variable: VOICE_EMPTY_ROOM_GRACE_PERIOD_SECONDS
+    /// </summary>
+    [ConfigRange(Minimum = 0, Maximum = 3600)]
+    public int EmptyRoomGracePeriodSeconds { get; set; } = 300;
 
 }

@@ -5,8 +5,11 @@ info:
     Event models for Realm History service RabbitMQ pub/sub via MassTransit.
     These events are published when historical participation or lore data changes.
 
-    **Schema Rules**: AI agents MUST review docs/reference/SCHEMA-RULES.md before
-    modifying this schema. Optional reference types require `nullable: true`.
+    **SCHEMA MODIFICATION GATE**: STOP. Before modifying this schema, you MUST:
+    1. Read docs/reference/SCHEMA-RULES.md
+    2. State which section applies to your change
+    3. Only then proceed with edits
+    Edits without stating the applicable rule are FORBIDDEN.
   version: 1.0.0
   x-event-subscriptions: []  # Realm History doesn't subscribe to external events
   x-event-publications:
@@ -37,6 +40,10 @@ components:
       type: object
       additionalProperties: false
       description: Published when a realm's participation in a historical event is recorded
+      x-resource-mapping:
+        resource_type: realm
+        resource_id_field: realmId
+        source_type: realm-history
       required:
         - eventId
         - timestamp
@@ -105,6 +112,10 @@ components:
       type: object
       additionalProperties: false
       description: Published when a realm's lore is first created
+      x-resource-mapping:
+        resource_type: realm
+        resource_id_field: realmId
+        source_type: realm-history
       required:
         - eventId
         - timestamp
@@ -131,6 +142,10 @@ components:
       type: object
       additionalProperties: false
       description: Published when a realm's lore is updated
+      x-resource-mapping:
+        resource_type: realm
+        resource_id_field: realmId
+        source_type: realm-history
       required:
         - eventId
         - timestamp

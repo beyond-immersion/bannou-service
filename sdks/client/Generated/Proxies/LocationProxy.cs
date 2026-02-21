@@ -153,6 +153,24 @@ public sealed class LocationProxy
     }
 
     /// <summary>
+    /// Validate location against territory boundaries
+    /// </summary>
+    /// <param name="request">The request payload.</param>
+    /// <param name="channel">Message channel for ordering (default 0).</param>
+    /// <param name="timeout">Request timeout.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>ApiResponse containing ValidateTerritoryResponse on success.</returns>
+    public Task<ApiResponse<ValidateTerritoryResponse>> ValidateTerritoryAsync(
+        ValidateTerritoryRequest request,
+        ushort channel = 0,
+        TimeSpan? timeout = null,
+        CancellationToken cancellationToken = default)
+    {
+        return _client.InvokeAsync<ValidateTerritoryRequest, ValidateTerritoryResponse>(
+            "/location/validate-territory", request, channel, timeout, cancellationToken);
+    }
+
+    /// <summary>
     /// Get all descendants of a location
     /// </summary>
     /// <param name="request">The request payload.</param>
@@ -259,6 +277,24 @@ public sealed class LocationProxy
     }
 
     /// <summary>
+    /// Transfer a location to a different realm
+    /// </summary>
+    /// <param name="request">The request payload.</param>
+    /// <param name="channel">Message channel for ordering (default 0).</param>
+    /// <param name="timeout">Request timeout.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>ApiResponse containing LocationResponse on success.</returns>
+    public Task<ApiResponse<LocationResponse>> TransferLocationToRealmAsync(
+        TransferLocationToRealmRequest request,
+        ushort channel = 0,
+        TimeSpan? timeout = null,
+        CancellationToken cancellationToken = default)
+    {
+        return _client.InvokeAsync<TransferLocationToRealmRequest, LocationResponse>(
+            "/location/transfer-realm", request, channel, timeout, cancellationToken);
+    }
+
+    /// <summary>
     /// Deprecate a location
     /// </summary>
     /// <param name="request">The request payload.</param>
@@ -313,6 +349,24 @@ public sealed class LocationProxy
     }
 
     /// <summary>
+    /// Find locations containing a spatial position
+    /// </summary>
+    /// <param name="request">The request payload.</param>
+    /// <param name="channel">Message channel for ordering (default 0).</param>
+    /// <param name="timeout">Request timeout.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>ApiResponse containing LocationListResponse on success.</returns>
+    public Task<ApiResponse<LocationListResponse>> QueryLocationsByPositionAsync(
+        QueryLocationsByPositionRequest request,
+        ushort channel = 0,
+        TimeSpan? timeout = null,
+        CancellationToken cancellationToken = default)
+    {
+        return _client.InvokeAsync<QueryLocationsByPositionRequest, LocationListResponse>(
+            "/location/query/by-position", request, channel, timeout, cancellationToken);
+    }
+
+    /// <summary>
     /// Seed locations from configuration
     /// </summary>
     /// <param name="request">The request payload.</param>
@@ -328,5 +382,77 @@ public sealed class LocationProxy
     {
         return _client.InvokeAsync<SeedLocationsRequest, SeedLocationsResponse>(
             "/location/seed", request, channel, timeout, cancellationToken);
+    }
+
+    /// <summary>
+    /// Report entity presence at a location
+    /// </summary>
+    /// <param name="request">The request payload.</param>
+    /// <param name="channel">Message channel for ordering (default 0).</param>
+    /// <param name="timeout">Request timeout.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>ApiResponse containing ReportEntityPositionResponse on success.</returns>
+    public Task<ApiResponse<ReportEntityPositionResponse>> ReportEntityPositionAsync(
+        ReportEntityPositionRequest request,
+        ushort channel = 0,
+        TimeSpan? timeout = null,
+        CancellationToken cancellationToken = default)
+    {
+        return _client.InvokeAsync<ReportEntityPositionRequest, ReportEntityPositionResponse>(
+            "/location/report-entity-position", request, channel, timeout, cancellationToken);
+    }
+
+    /// <summary>
+    /// Get the current location of an entity
+    /// </summary>
+    /// <param name="request">The request payload.</param>
+    /// <param name="channel">Message channel for ordering (default 0).</param>
+    /// <param name="timeout">Request timeout.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>ApiResponse containing GetEntityLocationResponse on success.</returns>
+    public Task<ApiResponse<GetEntityLocationResponse>> GetEntityLocationAsync(
+        GetEntityLocationRequest request,
+        ushort channel = 0,
+        TimeSpan? timeout = null,
+        CancellationToken cancellationToken = default)
+    {
+        return _client.InvokeAsync<GetEntityLocationRequest, GetEntityLocationResponse>(
+            "/location/get-entity-location", request, channel, timeout, cancellationToken);
+    }
+
+    /// <summary>
+    /// List entities currently at a location
+    /// </summary>
+    /// <param name="request">The request payload.</param>
+    /// <param name="channel">Message channel for ordering (default 0).</param>
+    /// <param name="timeout">Request timeout.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>ApiResponse containing ListEntitiesAtLocationResponse on success.</returns>
+    public Task<ApiResponse<ListEntitiesAtLocationResponse>> ListEntitiesAtLocationAsync(
+        ListEntitiesAtLocationRequest request,
+        ushort channel = 0,
+        TimeSpan? timeout = null,
+        CancellationToken cancellationToken = default)
+    {
+        return _client.InvokeAsync<ListEntitiesAtLocationRequest, ListEntitiesAtLocationResponse>(
+            "/location/list-entities-at-location", request, channel, timeout, cancellationToken);
+    }
+
+    /// <summary>
+    /// Remove entity presence from its current location
+    /// </summary>
+    /// <param name="request">The request payload.</param>
+    /// <param name="channel">Message channel for ordering (default 0).</param>
+    /// <param name="timeout">Request timeout.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>ApiResponse containing ClearEntityPositionResponse on success.</returns>
+    public Task<ApiResponse<ClearEntityPositionResponse>> ClearEntityPositionAsync(
+        ClearEntityPositionRequest request,
+        ushort channel = 0,
+        TimeSpan? timeout = null,
+        CancellationToken cancellationToken = default)
+    {
+        return _client.InvokeAsync<ClearEntityPositionRequest, ClearEntityPositionResponse>(
+            "/location/clear-entity-position", request, channel, timeout, cancellationToken);
     }
 }

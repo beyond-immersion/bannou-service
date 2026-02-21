@@ -168,7 +168,7 @@ public partial class EncounterModel
     public System.Collections.Generic.ICollection<System.Guid> ParticipantIds { get; set; } = new System.Collections.ObjectModel.Collection<System.Guid>();
 
     /// <summary>
-    /// Additional encounter-specific data
+    /// Client-provided encounter-specific data. No Bannou plugin reads specific keys from this field by convention.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("metadata")]
     public object? Metadata { get; set; } = default!;
@@ -222,6 +222,13 @@ public partial class EncounterPerspectiveModel
     [System.Text.Json.Serialization.JsonRequired]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public EmotionalImpact EmotionalImpact { get; set; } = default!;
+
+    /// <summary>
+    /// Intensity of emotional impact (0.0-1.0). Used for kernel extraction threshold (&gt;0.7 indicates high-impact encounter).
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("impactIntensity")]
+    [System.ComponentModel.DataAnnotations.Range(0.0F, 1.0F)]
+    public float ImpactIntensity { get; set; } = default!;
 
     /// <summary>
     /// Opinion change toward other participants (-1.0 to +1.0)
@@ -564,12 +571,13 @@ public partial class RecordEncounterRequest
     public EncounterOutcome Outcome { get; set; } = default!;
 
     /// <summary>
-    /// Character IDs involved (minimum 2)
+    /// Character IDs involved (minimum 2, server enforces MaxParticipantsPerEncounter config limit)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("participantIds")]
     [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
     [System.ComponentModel.DataAnnotations.MinLength(2)]
+    [System.ComponentModel.DataAnnotations.MaxLength(100)]
     public System.Collections.Generic.ICollection<System.Guid> ParticipantIds { get; set; } = new System.Collections.ObjectModel.Collection<System.Guid>();
 
     /// <summary>
@@ -579,7 +587,7 @@ public partial class RecordEncounterRequest
     public System.Collections.Generic.ICollection<PerspectiveInput>? Perspectives { get; set; } = default!;
 
     /// <summary>
-    /// Additional encounter data
+    /// Client-provided encounter-specific data. No Bannou plugin reads specific keys from this field by convention.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("metadata")]
     public object? Metadata { get; set; } = default!;
@@ -609,6 +617,13 @@ public partial class PerspectiveInput
     [System.Text.Json.Serialization.JsonRequired]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public EmotionalImpact EmotionalImpact { get; set; } = default!;
+
+    /// <summary>
+    /// Intensity of emotional impact (0.0-1.0). Defaults based on emotionalImpact if not provided.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("impactIntensity")]
+    [System.ComponentModel.DataAnnotations.Range(0.0F, 1.0F)]
+    public float? ImpactIntensity { get; set; } = default!;
 
     /// <summary>
     /// Opinion change toward other participants
@@ -922,6 +937,13 @@ public partial class UpdatePerspectiveRequest
     [System.Text.Json.Serialization.JsonPropertyName("emotionalImpact")]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public EmotionalImpact? EmotionalImpact { get; set; } = default!;
+
+    /// <summary>
+    /// New impact intensity (0.0-1.0)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("impactIntensity")]
+    [System.ComponentModel.DataAnnotations.Range(0.0F, 1.0F)]
+    public float? ImpactIntensity { get; set; } = default!;
 
     /// <summary>
     /// New sentiment shift
@@ -1404,6 +1426,135 @@ public partial class DecayMemoriesResponse
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("dryRun")]
     public bool DryRun { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Request to get encounter data for compression
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class GetCompressDataRequest
+{
+
+    /// <summary>
+    /// ID of the character to get compress data for
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("characterId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid CharacterId { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Complete encounter data for archive storage and storyline SDK consumption.
+/// <br/>Inherits base archive properties from ResourceArchiveBase.
+/// <br/>The characterId field equals resourceId for convenience.
+/// <br/>
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class CharacterEncounterArchive : ResourceArchiveBase
+{
+
+    /// <summary>
+    /// Character this data belongs to (equals resourceId)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("characterId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid CharacterId { get; set; } = default!;
+
+    /// <summary>
+    /// Whether encounters exist for this character
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("hasEncounters")]
+    public bool HasEncounters { get; set; } = default!;
+
+    /// <summary>
+    /// Number of encounters archived
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("encounterCount")]
+    public int EncounterCount { get; set; } = default!;
+
+    /// <summary>
+    /// Encounters with perspectives (empty if hasEncounters=false)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("encounters")]
+    public System.Collections.Generic.ICollection<EncounterResponse> Encounters { get; set; } = default!;
+
+    /// <summary>
+    /// Map of target characterId to aggregate sentiment.
+    /// <br/>Preserves sentiment relationships for historical reference.
+    /// <br/>
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("aggregateSentiment")]
+    public System.Collections.Generic.IDictionary<string, float>? AggregateSentiment { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Request to restore encounter data from archive
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class RestoreFromArchiveRequest
+{
+
+    /// <summary>
+    /// ID of the character to restore data for
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("characterId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid CharacterId { get; set; } = default!;
+
+    /// <summary>
+    /// Base64-encoded gzipped CharacterEncounterArchive JSON
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("data")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string Data { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Result of restoration from archive
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class RestoreFromArchiveResponse
+{
+
+    /// <summary>
+    /// Character data was restored for
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("characterId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid CharacterId { get; set; } = default!;
+
+    /// <summary>
+    /// Number of encounters restored
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("encountersRestored")]
+    public int EncountersRestored { get; set; } = default!;
+
+    /// <summary>
+    /// Number of perspectives restored
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("perspectivesRestored")]
+    public int PerspectivesRestored { get; set; } = default!;
+
+    /// <summary>
+    /// Whether restoration completed successfully
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("success")]
+    public bool Success { get; set; } = default!;
+
+    /// <summary>
+    /// Error details if restoration failed
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("errorMessage")]
+    public string? ErrorMessage { get; set; } = default!;
 
 }
 

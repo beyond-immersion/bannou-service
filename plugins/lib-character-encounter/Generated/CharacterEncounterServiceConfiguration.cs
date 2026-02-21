@@ -12,7 +12,7 @@
 //
 //     IMPLEMENTATION TENETS - Configuration-First:
 //     - Access configuration via dependency injection, never Environment.GetEnvironmentVariable.
-//     - ALL properties below MUST be referenced in CharacterEncounterService.cs (no dead config).
+//     - ALL properties below MUST be referenced somewhere in the plugin (no dead config).
 //     - Any hardcoded tunable (limit, timeout, threshold, capacity) in service code means
 //       a configuration property is MISSING - add it to the configuration schema.
 //     - If a property is unused, remove it from the configuration schema.
@@ -52,7 +52,7 @@ public enum MemoryDecayMode
 /// <para>
 /// <b>IMPLEMENTATION TENETS - Configuration-First:</b> Access configuration via dependency injection.
 /// Never use <c>Environment.GetEnvironmentVariable()</c> directly in service code.
-/// ALL properties in this class MUST be referenced in the service implementation.
+/// ALL properties in this class MUST be referenced somewhere in the plugin.
 /// If a property is unused, remove it from the configuration schema.
 /// </para>
 /// <para>
@@ -66,12 +66,6 @@ public class CharacterEncounterServiceConfiguration : IServiceConfiguration
     public Guid? ForceServiceId { get; set; }
 
     /// <summary>
-    /// Server salt for GUID generation. Must be shared across all instances for encounter GUIDs to work correctly. Change in production.
-    /// Environment variable: CHARACTER_ENCOUNTER_SERVER_SALT
-    /// </summary>
-    public string ServerSalt { get; set; } = "bannou-dev-encounter-salt-change-in-production";
-
-    /// <summary>
     /// Enable time-based memory decay for encounter perspectives
     /// Environment variable: CHARACTER_ENCOUNTER_MEMORY_DECAY_ENABLED
     /// </summary>
@@ -82,6 +76,20 @@ public class CharacterEncounterServiceConfiguration : IServiceConfiguration
     /// Environment variable: CHARACTER_ENCOUNTER_MEMORY_DECAY_MODE
     /// </summary>
     public MemoryDecayMode MemoryDecayMode { get; set; } = MemoryDecayMode.Lazy;
+
+    /// <summary>
+    /// Interval between scheduled decay checks in minutes (only used when MemoryDecayMode is 'scheduled')
+    /// Environment variable: CHARACTER_ENCOUNTER_SCHEDULED_DECAY_CHECK_INTERVAL_MINUTES
+    /// </summary>
+    [ConfigRange(Minimum = 1, Maximum = 1440)]
+    public int ScheduledDecayCheckIntervalMinutes { get; set; } = 60;
+
+    /// <summary>
+    /// Startup delay before first scheduled decay check in seconds (allows other services to initialize)
+    /// Environment variable: CHARACTER_ENCOUNTER_SCHEDULED_DECAY_STARTUP_DELAY_SECONDS
+    /// </summary>
+    [ConfigRange(Minimum = 0, Maximum = 300)]
+    public int ScheduledDecayStartupDelaySeconds { get; set; } = 30;
 
     /// <summary>
     /// Hours between decay checks (used for calculating decay amount)
@@ -172,5 +180,33 @@ public class CharacterEncounterServiceConfiguration : IServiceConfiguration
     /// Environment variable: CHARACTER_ENCOUNTER_SEED_BUILTIN_TYPES_ON_STARTUP
     /// </summary>
     public bool SeedBuiltInTypesOnStartup { get; set; } = true;
+
+    /// <summary>
+    /// TTL in minutes for the in-memory encounter data cache used by Actor behavior execution
+    /// Environment variable: CHARACTER_ENCOUNTER_CACHE_TTL_MINUTES
+    /// </summary>
+    [ConfigRange(Minimum = 1, Maximum = 60)]
+    public int EncounterCacheTtlMinutes { get; set; } = 5;
+
+    /// <summary>
+    /// Maximum encounter results loaded per cache query for Actor behavior execution
+    /// Environment variable: CHARACTER_ENCOUNTER_CACHE_MAX_RESULTS_PER_QUERY
+    /// </summary>
+    [ConfigRange(Minimum = 10, Maximum = 500)]
+    public int EncounterCacheMaxResultsPerQuery { get; set; } = 50;
+
+    /// <summary>
+    /// Maximum participants allowed per encounter (caps O(N^2) pair index creation)
+    /// Environment variable: CHARACTER_ENCOUNTER_MAX_PARTICIPANTS_PER_ENCOUNTER
+    /// </summary>
+    [ConfigRange(Minimum = 2, Maximum = 100)]
+    public int MaxParticipantsPerEncounter { get; set; } = 20;
+
+    /// <summary>
+    /// Time window in minutes for duplicate encounter detection. Encounters with the same participants, type, and timestamp within this window are considered duplicates.
+    /// Environment variable: CHARACTER_ENCOUNTER_DUPLICATE_TIMESTAMP_TOLERANCE_MINUTES
+    /// </summary>
+    [ConfigRange(Minimum = 0, Maximum = 60)]
+    public int DuplicateTimestampToleranceMinutes { get; set; } = 5;
 
 }

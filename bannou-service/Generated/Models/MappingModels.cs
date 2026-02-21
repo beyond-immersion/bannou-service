@@ -357,10 +357,7 @@ public partial class MapPayload
     public Bounds? Bounds { get; set; } = default!;
 
     /// <summary>
-    /// SCHEMA-LESS. Can contain anything.
-    /// <br/>lib-mapping does not validate this.
-    /// <br/>Examples: cover_rating, health, respawn_delay, etc.
-    /// <br/>
+    /// Game-specific spatial object data. lib-mapping stores and returns this as-is. No Bannou plugin reads specific keys from this field by convention.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("data")]
     public object? Data { get; set; } = default!;
@@ -432,7 +429,7 @@ public partial class MapObject
     public Bounds? Bounds { get; set; } = default!;
 
     /// <summary>
-    /// Schema-less object data (publisher-defined)
+    /// Game-specific spatial object data. No Bannou plugin reads specific keys from this field by convention.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("data")]
     public object? Data { get; set; } = default!;
@@ -516,7 +513,7 @@ public partial class ObjectChange
     public Bounds? Bounds { get; set; } = default!;
 
     /// <summary>
-    /// Object state (for created/updated)
+    /// Game-specific object state data. No Bannou plugin reads specific keys from this field by convention.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("data")]
     public object? Data { get; set; } = default!;
@@ -731,25 +728,19 @@ public partial class CustomAffordance
     public string? Description { get; set; } = default!;
 
     /// <summary>
-    /// Required criteria. Object types, property constraints.
-    /// <br/>Example: { "objectTypes": ["boulder"], "cover_rating": { "min": 0.5 } }
-    /// <br/>
+    /// Game-specific required criteria for affordance matching. No Bannou plugin reads specific keys from this field by convention.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("requires")]
     public object? Requires { get; set; } = default!;
 
     /// <summary>
-    /// Preferred criteria (boost score but not required).
-    /// <br/>Example: { "elevation": { "prefer_higher": true } }
-    /// <br/>
+    /// Game-specific preferred criteria (boost score but not required). No Bannou plugin reads specific keys from this field by convention.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("prefers")]
     public object? Prefers { get; set; } = default!;
 
     /// <summary>
-    /// Exclusion criteria. Reject candidates matching these.
-    /// <br/>Example: { "hazards": true, "contested": true }
-    /// <br/>
+    /// Game-specific exclusion criteria for affordance matching. No Bannou plugin reads specific keys from this field by convention.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("excludes")]
     public object? Excludes { get; set; } = default!;
@@ -1682,9 +1673,7 @@ public partial class AffordanceLocation
     public double Score { get; set; } = default!;
 
     /// <summary>
-    /// What makes this location suitable.
-    /// <br/>Example: { "cover_rating": 0.8, "sightlines": ["north"], "terrain": "rocky" }
-    /// <br/>
+    /// Game-specific features of this affordance result. No Bannou plugin reads specific keys from this field by convention.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("features")]
     public object? Features { get; set; } = default!;
@@ -2078,7 +2067,7 @@ public partial class MapDefinition
     public Bounds? DefaultBounds { get; set; } = default!;
 
     /// <summary>
-    /// Additional metadata (schema-less)
+    /// Client-provided definition metadata. No Bannou plugin reads specific keys from this field by convention.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("metadata")]
     public object? Metadata { get; set; } = default!;
@@ -2201,7 +2190,7 @@ public partial class CreateDefinitionRequest
     public Bounds? DefaultBounds { get; set; } = default!;
 
     /// <summary>
-    /// Additional metadata
+    /// Client-provided definition metadata. No Bannou plugin reads specific keys from this field by convention.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("metadata")]
     public object? Metadata { get; set; } = default!;
@@ -2373,7 +2362,7 @@ public partial class UpdateDefinitionRequest
     public Bounds? DefaultBounds { get; set; } = default!;
 
     /// <summary>
-    /// New metadata (replaces existing)
+    /// Updated client-provided definition metadata (replaces existing). No Bannou plugin reads specific keys from this field by convention.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("metadata")]
     public object? Metadata { get; set; } = default!;

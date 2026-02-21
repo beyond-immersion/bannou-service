@@ -104,72 +104,54 @@ public partial class AchievementService : IAchievementService
         _logger.LogDebug("Creating achievement {AchievementId} for game service {GameServiceId}",
             body.AchievementId, body.GameServiceId);
 
-        try
+        var definitionStore = _stateStoreFactory.GetCacheableStore<AchievementDefinitionData>(StateStoreDefinitions.AchievementDefinition);
+        var key = GetDefinitionKey(body.GameServiceId, body.AchievementId);
+
+        // Check if already exists
+        var existing = await definitionStore.GetAsync(key, cancellationToken);
+        if (existing != null)
         {
-            var definitionStore = _stateStoreFactory.GetStore<AchievementDefinitionData>(StateStoreDefinitions.AchievementDefinition);
-            var key = GetDefinitionKey(body.GameServiceId, body.AchievementId);
-
-            // Check if already exists
-            var existing = await definitionStore.GetAsync(key, cancellationToken);
-            if (existing != null)
-            {
-                _logger.LogWarning("Achievement {AchievementId} already exists", body.AchievementId);
-                return (StatusCodes.Conflict, null);
-            }
-
-            var now = DateTimeOffset.UtcNow;
-            var definition = new AchievementDefinitionData
-            {
-                GameServiceId = body.GameServiceId,
-                AchievementId = body.AchievementId,
-                DisplayName = body.DisplayName,
-                Description = body.Description,
-                HiddenDescription = body.HiddenDescription,
-                AchievementType = body.AchievementType,
-                EntityTypes = body.EntityTypes?.ToList() ?? new List<EntityType> { EntityType.Account },
-                ProgressTarget = body.ProgressTarget,
-                Points = body.Points,
-                IconUrl = body.IconUrl,
-                Platforms = body.Platforms?.ToList() ?? new List<Platform> { Platform.Internal },
-                PlatformIds = ParsePlatformIds(body.PlatformIds),
-                Prerequisites = body.Prerequisites?.ToList(),
-                IsActive = body.IsActive,
-                CreatedAt = now,
-                Metadata = MetadataHelper.ConvertToDictionary(body.Metadata)
-            };
-
-            await definitionStore.SaveAsync(key, definition, options: null, cancellationToken);
-            await definitionStore.AddToSetAsync(
-                GetDefinitionIndexKey(body.GameServiceId),
-                body.AchievementId,
-                cancellationToken: cancellationToken);
-
-            // Track the game service ID for background rarity recalculation
-            await definitionStore.AddToSetAsync(
-                GAME_SERVICE_INDEX_KEY,
-                body.GameServiceId.ToString(),
-                cancellationToken: cancellationToken);
-
-            // Publish definition created event
-            await PublishDefinitionCreatedEventAsync(definition, cancellationToken);
-
-            return (StatusCodes.OK, MapToResponse(definition, 0));
+            _logger.LogWarning("Achievement {AchievementId} already exists", body.AchievementId);
+            return (StatusCodes.Conflict, null);
         }
-        catch (Exception ex)
+
+        var now = DateTimeOffset.UtcNow;
+        var definition = new AchievementDefinitionData
         {
-            _logger.LogError(ex, "Error creating achievement definition");
-            await _messageBus.TryPublishErrorAsync(
-                "achievement",
-                "CreateAchievementDefinition",
-                "unexpected_exception",
-                ex.Message,
-                dependency: null,
-                endpoint: "post:/achievement/definition/create",
-                details: null,
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
+            GameServiceId = body.GameServiceId,
+            AchievementId = body.AchievementId,
+            DisplayName = body.DisplayName,
+            Description = body.Description,
+            HiddenDescription = body.HiddenDescription,
+            AchievementType = body.AchievementType,
+            EntityTypes = body.EntityTypes?.ToList() ?? new List<EntityType> { EntityType.Account },
+            ProgressTarget = body.ProgressTarget,
+            Points = body.Points,
+            IconUrl = body.IconUrl,
+            Platforms = body.Platforms?.ToList() ?? new List<Platform> { Platform.Internal },
+            PlatformIds = ParsePlatformIds(body.PlatformIds),
+            Prerequisites = body.Prerequisites?.ToList(),
+            IsActive = body.IsActive,
+            CreatedAt = now,
+            Metadata = MetadataHelper.ConvertToDictionary(body.Metadata)
+        };
+
+        await definitionStore.SaveAsync(key, definition, options: null, cancellationToken);
+        await definitionStore.AddToSetAsync(
+            GetDefinitionIndexKey(body.GameServiceId),
+            body.AchievementId,
+            cancellationToken: cancellationToken);
+
+        // Track the game service ID for background rarity recalculation
+        await definitionStore.AddToSetAsync(
+            GAME_SERVICE_INDEX_KEY,
+            body.GameServiceId.ToString(),
+            cancellationToken: cancellationToken);
+
+        // Publish definition created event
+        await PublishDefinitionCreatedEventAsync(definition, cancellationToken);
+
+        return (StatusCodes.OK, MapToResponse(definition, 0));
     }
 
     /// <summary>
@@ -180,34 +162,16 @@ public partial class AchievementService : IAchievementService
     {
         _logger.LogDebug("Getting achievement {AchievementId}", body.AchievementId);
 
-        try
-        {
-            var definitionStore = _stateStoreFactory.GetStore<AchievementDefinitionData>(StateStoreDefinitions.AchievementDefinition);
-            var key = GetDefinitionKey(body.GameServiceId, body.AchievementId);
+        var definitionStore = _stateStoreFactory.GetCacheableStore<AchievementDefinitionData>(StateStoreDefinitions.AchievementDefinition);
+        var key = GetDefinitionKey(body.GameServiceId, body.AchievementId);
 
-            var definition = await definitionStore.GetAsync(key, cancellationToken);
-            if (definition == null)
-            {
-                return (StatusCodes.NotFound, null);
-            }
-
-            return (StatusCodes.OK, MapToResponse(definition, definition.EarnedCount));
-        }
-        catch (Exception ex)
+        var definition = await definitionStore.GetAsync(key, cancellationToken);
+        if (definition == null)
         {
-            _logger.LogError(ex, "Error getting achievement definition");
-            await _messageBus.TryPublishErrorAsync(
-                "achievement",
-                "GetAchievementDefinition",
-                "unexpected_exception",
-                ex.Message,
-                dependency: null,
-                endpoint: "post:/achievement/definition/get",
-                details: null,
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
+            return (StatusCodes.NotFound, null);
         }
+
+        return (StatusCodes.OK, MapToResponse(definition, definition.EarnedCount));
     }
 
     /// <summary>
@@ -218,80 +182,62 @@ public partial class AchievementService : IAchievementService
     {
         _logger.LogDebug("Listing achievements for game service {GameServiceId}", body.GameServiceId);
 
-        try
+        var definitionStore = _stateStoreFactory.GetCacheableStore<AchievementDefinitionData>(StateStoreDefinitions.AchievementDefinition);
+        var indexKey = GetDefinitionIndexKey(body.GameServiceId);
+        var achievementIds = await definitionStore.GetSetAsync<string>(indexKey, cancellationToken);
+
+        if (achievementIds.Count == 0)
         {
-            var definitionStore = _stateStoreFactory.GetStore<AchievementDefinitionData>(StateStoreDefinitions.AchievementDefinition);
-            var indexKey = GetDefinitionIndexKey(body.GameServiceId);
-            var achievementIds = await definitionStore.GetSetAsync<string>(indexKey, cancellationToken);
-
-            if (achievementIds.Count == 0)
-            {
-                return (StatusCodes.OK, new ListAchievementDefinitionsResponse
-                {
-                    Achievements = new List<AchievementDefinitionResponse>()
-                });
-            }
-
-            var achievements = new List<AchievementDefinitionResponse>();
-
-            foreach (var achievementId in achievementIds)
-            {
-                var defKey = GetDefinitionKey(body.GameServiceId, achievementId);
-                var definition = await definitionStore.GetAsync(defKey, cancellationToken);
-                if (definition == null)
-                {
-                    continue;
-                }
-
-                if (body.Platform.HasValue &&
-                    (definition.Platforms == null || !definition.Platforms.Contains(body.Platform.Value)))
-                {
-                    continue;
-                }
-
-                if (body.AchievementType.HasValue && definition.AchievementType != body.AchievementType.Value)
-                {
-                    continue;
-                }
-
-                if (body.IsActive.HasValue && definition.IsActive != body.IsActive.Value)
-                {
-                    continue;
-                }
-
-                if (!body.IncludeHidden &&
-                    (definition.AchievementType == AchievementType.Hidden || definition.AchievementType == AchievementType.Secret))
-                {
-                    continue;
-                }
-
-                achievements.Add(MapToResponse(definition, definition.EarnedCount));
-            }
-
-            var ordered = achievements
-                .OrderBy(a => a.AchievementId, StringComparer.OrdinalIgnoreCase)
-                .ToList();
-
             return (StatusCodes.OK, new ListAchievementDefinitionsResponse
             {
-                Achievements = ordered
+                Achievements = new List<AchievementDefinitionResponse>()
             });
         }
-        catch (Exception ex)
+
+        var achievements = new List<AchievementDefinitionResponse>();
+
+        foreach (var achievementId in achievementIds)
         {
-            _logger.LogError(ex, "Error listing achievement definitions");
-            await _messageBus.TryPublishErrorAsync(
-                "achievement",
-                "ListAchievementDefinitions",
-                "unexpected_exception",
-                ex.Message,
-                dependency: null,
-                endpoint: "post:/achievement/definition/list",
-                details: null,
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
+            var defKey = GetDefinitionKey(body.GameServiceId, achievementId);
+            var definition = await definitionStore.GetAsync(defKey, cancellationToken);
+            if (definition == null)
+            {
+                continue;
+            }
+
+            if (body.Platform.HasValue &&
+                (definition.Platforms == null || !definition.Platforms.Contains(body.Platform.Value)))
+            {
+                continue;
+            }
+
+            if (body.AchievementType.HasValue && definition.AchievementType != body.AchievementType.Value)
+            {
+                continue;
+            }
+
+            if (body.IsActive.HasValue && definition.IsActive != body.IsActive.Value)
+            {
+                continue;
+            }
+
+            if (!body.IncludeHidden &&
+                (definition.AchievementType == AchievementType.Hidden || definition.AchievementType == AchievementType.Secret))
+            {
+                continue;
+            }
+
+            achievements.Add(MapToResponse(definition, definition.EarnedCount));
         }
+
+        var ordered = achievements
+            .OrderBy(a => a.AchievementId, StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
+        return (StatusCodes.OK, new ListAchievementDefinitionsResponse
+        {
+            Achievements = ordered
+        });
     }
 
     /// <summary>
@@ -302,75 +248,57 @@ public partial class AchievementService : IAchievementService
     {
         _logger.LogDebug("Updating achievement {AchievementId}", body.AchievementId);
 
-        try
+        var definitionStore = _stateStoreFactory.GetCacheableStore<AchievementDefinitionData>(StateStoreDefinitions.AchievementDefinition);
+        var key = GetDefinitionKey(body.GameServiceId, body.AchievementId);
+
+        var (definition, etag) = await definitionStore.GetWithETagAsync(key, cancellationToken);
+        if (definition == null)
         {
-            var definitionStore = _stateStoreFactory.GetStore<AchievementDefinitionData>(StateStoreDefinitions.AchievementDefinition);
-            var key = GetDefinitionKey(body.GameServiceId, body.AchievementId);
+            return (StatusCodes.NotFound, null);
+        }
 
-            var (definition, etag) = await definitionStore.GetWithETagAsync(key, cancellationToken);
-            if (definition == null)
-            {
-                return (StatusCodes.NotFound, null);
-            }
+        // Track which fields are being updated
+        var changedFields = new List<string>();
 
-            // Track which fields are being updated
-            var changedFields = new List<string>();
+        // Apply updates
+        if (!string.IsNullOrEmpty(body.DisplayName) && body.DisplayName != definition.DisplayName)
+        {
+            definition.DisplayName = body.DisplayName;
+            changedFields.Add("displayName");
+        }
+        if (body.Description != null && body.Description != definition.Description)
+        {
+            definition.Description = body.Description;
+            changedFields.Add("description");
+        }
+        if (body.IsActive.HasValue && body.IsActive.Value != definition.IsActive)
+        {
+            definition.IsActive = body.IsActive.Value;
+            changedFields.Add("isActive");
+        }
+        if (body.PlatformIds != null)
+        {
+            definition.PlatformIds = ParsePlatformIds(body.PlatformIds);
+            changedFields.Add("platformIds");
+        }
 
-            // Apply updates
-            if (!string.IsNullOrEmpty(body.DisplayName) && body.DisplayName != definition.DisplayName)
-            {
-                definition.DisplayName = body.DisplayName;
-                changedFields.Add("displayName");
-            }
-            if (body.Description != null && body.Description != definition.Description)
-            {
-                definition.Description = body.Description;
-                changedFields.Add("description");
-            }
-            if (body.IsActive.HasValue && body.IsActive.Value != definition.IsActive)
-            {
-                definition.IsActive = body.IsActive.Value;
-                changedFields.Add("isActive");
-            }
-            if (body.PlatformIds != null)
-            {
-                definition.PlatformIds = ParsePlatformIds(body.PlatformIds);
-                changedFields.Add("platformIds");
-            }
-
-            if (changedFields.Count == 0)
-            {
-                // No changes
-                return (StatusCodes.OK, MapToResponse(definition, definition.EarnedCount));
-            }
-
-            var newEtag = await definitionStore.TrySaveAsync(key, definition, etag ?? string.Empty, cancellationToken);
-            if (newEtag == null)
-            {
-                _logger.LogWarning("Concurrent modification detected for achievement definition {AchievementId}", body.AchievementId);
-                return (StatusCodes.Conflict, null);
-            }
-
-            // Publish definition updated event
-            await PublishDefinitionUpdatedEventAsync(definition, changedFields, cancellationToken);
-
+        if (changedFields.Count == 0)
+        {
+            // No changes
             return (StatusCodes.OK, MapToResponse(definition, definition.EarnedCount));
         }
-        catch (Exception ex)
+
+        var newEtag = await definitionStore.TrySaveAsync(key, definition, etag ?? string.Empty, cancellationToken);
+        if (newEtag == null)
         {
-            _logger.LogError(ex, "Error updating achievement definition");
-            await _messageBus.TryPublishErrorAsync(
-                "achievement",
-                "UpdateAchievementDefinition",
-                "unexpected_exception",
-                ex.Message,
-                dependency: null,
-                endpoint: "post:/achievement/definition/update",
-                details: null,
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
+            _logger.LogWarning("Concurrent modification detected for achievement definition {AchievementId}", body.AchievementId);
+            return (StatusCodes.Conflict, null);
         }
+
+        // Publish definition updated event
+        await PublishDefinitionUpdatedEventAsync(definition, changedFields, cancellationToken);
+
+        return (StatusCodes.OK, MapToResponse(definition, definition.EarnedCount));
     }
 
     /// <summary>
@@ -381,43 +309,25 @@ public partial class AchievementService : IAchievementService
     {
         _logger.LogDebug("Deleting achievement {AchievementId}", body.AchievementId);
 
-        try
+        var definitionStore = _stateStoreFactory.GetCacheableStore<AchievementDefinitionData>(StateStoreDefinitions.AchievementDefinition);
+        var key = GetDefinitionKey(body.GameServiceId, body.AchievementId);
+
+        var definition = await definitionStore.GetAsync(key, cancellationToken);
+        if (definition == null)
         {
-            var definitionStore = _stateStoreFactory.GetStore<AchievementDefinitionData>(StateStoreDefinitions.AchievementDefinition);
-            var key = GetDefinitionKey(body.GameServiceId, body.AchievementId);
-
-            var definition = await definitionStore.GetAsync(key, cancellationToken);
-            if (definition == null)
-            {
-                return StatusCodes.NotFound;
-            }
-
-            await definitionStore.DeleteAsync(key, cancellationToken);
-            await definitionStore.RemoveFromSetAsync(
-                GetDefinitionIndexKey(body.GameServiceId),
-                body.AchievementId,
-                cancellationToken);
-
-            // Publish definition deleted event
-            await PublishDefinitionDeletedEventAsync(definition, cancellationToken);
-
-            return StatusCodes.OK;
+            return StatusCodes.NotFound;
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error deleting achievement definition");
-            await _messageBus.TryPublishErrorAsync(
-                "achievement",
-                "DeleteAchievementDefinition",
-                "unexpected_exception",
-                ex.Message,
-                dependency: null,
-                endpoint: "post:/achievement/definition/delete",
-                details: null,
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return StatusCodes.InternalServerError;
-        }
+
+        await definitionStore.DeleteAsync(key, cancellationToken);
+        await definitionStore.RemoveFromSetAsync(
+            GetDefinitionIndexKey(body.GameServiceId),
+            body.AchievementId,
+            cancellationToken);
+
+        // Publish definition deleted event
+        await PublishDefinitionDeletedEventAsync(definition, cancellationToken);
+
+        return StatusCodes.OK;
     }
 
     /// <summary>
@@ -428,85 +338,67 @@ public partial class AchievementService : IAchievementService
     {
         _logger.LogDebug("Getting achievement progress for {EntityType}:{EntityId}", body.EntityType, body.EntityId);
 
-        try
+        var progressStore = _stateStoreFactory.GetStore<EntityProgressData>(StateStoreDefinitions.AchievementProgress);
+        var progressKey = GetEntityProgressKey(body.GameServiceId, body.EntityType, body.EntityId);
+
+        var entityProgress = await progressStore.GetAsync(progressKey, cancellationToken) ?? new EntityProgressData
         {
-            var progressStore = _stateStoreFactory.GetStore<EntityProgressData>(StateStoreDefinitions.AchievementProgress);
-            var progressKey = GetEntityProgressKey(body.GameServiceId, body.EntityType, body.EntityId);
+            EntityId = body.EntityId,
+            EntityType = body.EntityType,
+            Achievements = new Dictionary<string, AchievementProgressData>(),
+            TotalPoints = 0
+        };
 
-            var entityProgress = await progressStore.GetAsync(progressKey, cancellationToken) ?? new EntityProgressData
+        var definitionStore = _stateStoreFactory.GetCacheableStore<AchievementDefinitionData>(StateStoreDefinitions.AchievementDefinition);
+        var progressList = new List<AchievementProgress>();
+        var unlockedCount = 0;
+
+        // If specific achievement requested, filter
+        if (!string.IsNullOrEmpty(body.AchievementId))
+        {
+            if (entityProgress.Achievements.TryGetValue(body.AchievementId, out var progress))
             {
-                EntityId = body.EntityId,
-                EntityType = body.EntityType,
-                Achievements = new Dictionary<string, AchievementProgressData>(),
-                TotalPoints = 0
-            };
-
-            var definitionStore = _stateStoreFactory.GetStore<AchievementDefinitionData>(StateStoreDefinitions.AchievementDefinition);
-            var progressList = new List<AchievementProgress>();
-            var unlockedCount = 0;
-
-            // If specific achievement requested, filter
-            if (!string.IsNullOrEmpty(body.AchievementId))
-            {
-                if (entityProgress.Achievements.TryGetValue(body.AchievementId, out var progress))
+                // Verify definition still exists (skip orphaned progress from deleted definitions)
+                var defKey = GetDefinitionKey(body.GameServiceId, body.AchievementId);
+                var definition = await definitionStore.GetAsync(defKey, cancellationToken);
+                if (definition != null)
                 {
-                    // Verify definition still exists (skip orphaned progress from deleted definitions)
-                    var defKey = GetDefinitionKey(body.GameServiceId, body.AchievementId);
-                    var definition = await definitionStore.GetAsync(defKey, cancellationToken);
-                    if (definition != null)
-                    {
-                        progressList.Add(MapToAchievementProgress(body.AchievementId, progress));
-                        if (progress.IsUnlocked)
-                        {
-                            unlockedCount++;
-                        }
-                    }
-                }
-            }
-            else
-            {
-                // Return all progress, filtering out orphaned entries from deleted definitions
-                foreach (var kvp in entityProgress.Achievements)
-                {
-                    var defKey = GetDefinitionKey(body.GameServiceId, kvp.Key);
-                    var definition = await definitionStore.GetAsync(defKey, cancellationToken);
-                    if (definition == null)
-                    {
-                        continue;
-                    }
-
-                    progressList.Add(MapToAchievementProgress(kvp.Key, kvp.Value));
-                    if (kvp.Value.IsUnlocked)
+                    progressList.Add(MapToAchievementProgress(body.AchievementId, progress));
+                    if (progress.IsUnlocked)
                     {
                         unlockedCount++;
                     }
                 }
             }
-
-            return (StatusCodes.OK, new AchievementProgressResponse
-            {
-                EntityId = body.EntityId,
-                EntityType = body.EntityType,
-                Progress = progressList,
-                TotalPoints = entityProgress.TotalPoints,
-                UnlockedCount = unlockedCount
-            });
         }
-        catch (Exception ex)
+        else
         {
-            _logger.LogError(ex, "Error getting achievement progress");
-            await _messageBus.TryPublishErrorAsync(
-                "achievement",
-                "GetAchievementProgress",
-                "unexpected_exception",
-                ex.Message,
-                dependency: null,
-                endpoint: "post:/achievement/progress/get",
-                details: null,
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
+            // Return all progress, filtering out orphaned entries from deleted definitions
+            foreach (var kvp in entityProgress.Achievements)
+            {
+                var defKey = GetDefinitionKey(body.GameServiceId, kvp.Key);
+                var definition = await definitionStore.GetAsync(defKey, cancellationToken);
+                if (definition == null)
+                {
+                    continue;
+                }
+
+                progressList.Add(MapToAchievementProgress(kvp.Key, kvp.Value));
+                if (kvp.Value.IsUnlocked)
+                {
+                    unlockedCount++;
+                }
+            }
         }
+
+        return (StatusCodes.OK, new AchievementProgressResponse
+        {
+            EntityId = body.EntityId,
+            EntityType = body.EntityType,
+            Progress = progressList,
+            TotalPoints = entityProgress.TotalPoints,
+            UnlockedCount = unlockedCount
+        });
     }
 
     /// <summary>
@@ -518,151 +410,133 @@ public partial class AchievementService : IAchievementService
         _logger.LogDebug("Updating progress for {AchievementId} for {EntityType}:{EntityId}",
             body.AchievementId, body.EntityType, body.EntityId);
 
-        try
+        // Get achievement definition
+        var definitionStore = _stateStoreFactory.GetCacheableStore<AchievementDefinitionData>(StateStoreDefinitions.AchievementDefinition);
+        var defKey = GetDefinitionKey(body.GameServiceId, body.AchievementId);
+        var definition = await definitionStore.GetAsync(defKey, cancellationToken);
+
+        if (definition == null)
         {
-            // Get achievement definition
-            var definitionStore = _stateStoreFactory.GetStore<AchievementDefinitionData>(StateStoreDefinitions.AchievementDefinition);
-            var defKey = GetDefinitionKey(body.GameServiceId, body.AchievementId);
-            var definition = await definitionStore.GetAsync(defKey, cancellationToken);
+            return (StatusCodes.NotFound, null);
+        }
 
-            if (definition == null)
+        // Validate entity type
+        if (definition.EntityTypes != null && !definition.EntityTypes.Contains(body.EntityType))
+        {
+            return (StatusCodes.BadRequest, null);
+        }
+
+        // Must be a progressive achievement
+        if (definition.AchievementType != AchievementType.Progressive || !definition.ProgressTarget.HasValue)
+        {
+            return (StatusCodes.BadRequest, null);
+        }
+
+        // Acquire lock on progress key (compound operation: modifies both progress and definition)
+        var progressStore = _stateStoreFactory.GetStore<EntityProgressData>(StateStoreDefinitions.AchievementProgress);
+        var progressKey = GetEntityProgressKey(body.GameServiceId, body.EntityType, body.EntityId);
+
+        await using var progressLock = await _lockProvider.LockAsync(
+            "achievement-progress", progressKey, Guid.NewGuid().ToString(), _configuration.LockExpirySeconds, cancellationToken);
+        if (!progressLock.Success)
+        {
+            _logger.LogWarning("Could not acquire progress lock for {ProgressKey}", progressKey);
+            return (StatusCodes.Conflict, null);
+        }
+
+        // Re-read under lock
+        var entityProgress = await progressStore.GetAsync(progressKey, cancellationToken) ?? new EntityProgressData
+        {
+            EntityId = body.EntityId,
+            EntityType = body.EntityType,
+            Achievements = new Dictionary<string, AchievementProgressData>(),
+            TotalPoints = 0
+        };
+
+        // Get or create achievement progress
+        if (!entityProgress.Achievements.TryGetValue(body.AchievementId, out var achievementProgress))
+        {
+            achievementProgress = new AchievementProgressData
             {
-                return (StatusCodes.NotFound, null);
-            }
-
-            // Validate entity type
-            if (definition.EntityTypes != null && !definition.EntityTypes.Contains(body.EntityType))
-            {
-                return (StatusCodes.BadRequest, null);
-            }
-
-            // Must be a progressive achievement
-            if (definition.AchievementType != AchievementType.Progressive || !definition.ProgressTarget.HasValue)
-            {
-                return (StatusCodes.BadRequest, null);
-            }
-
-            // Acquire lock on progress key (compound operation: modifies both progress and definition)
-            var progressStore = _stateStoreFactory.GetStore<EntityProgressData>(StateStoreDefinitions.AchievementProgress);
-            var progressKey = GetEntityProgressKey(body.GameServiceId, body.EntityType, body.EntityId);
-
-            await using var progressLock = await _lockProvider.LockAsync(
-                "achievement-progress", progressKey, Guid.NewGuid().ToString(), _configuration.LockExpirySeconds, cancellationToken);
-            if (!progressLock.Success)
-            {
-                _logger.LogWarning("Could not acquire progress lock for {ProgressKey}", progressKey);
-                return (StatusCodes.Conflict, null);
-            }
-
-            // Re-read under lock
-            var entityProgress = await progressStore.GetAsync(progressKey, cancellationToken) ?? new EntityProgressData
-            {
-                EntityId = body.EntityId,
-                EntityType = body.EntityType,
-                Achievements = new Dictionary<string, AchievementProgressData>(),
-                TotalPoints = 0
-            };
-
-            // Get or create achievement progress
-            if (!entityProgress.Achievements.TryGetValue(body.AchievementId, out var achievementProgress))
-            {
-                achievementProgress = new AchievementProgressData
-                {
-                    DisplayName = definition.DisplayName,
-                    CurrentProgress = 0,
-                    TargetProgress = definition.ProgressTarget.Value,
-                    IsUnlocked = false
-                };
-            }
-
-            // Already unlocked? No need to update
-            if (achievementProgress.IsUnlocked)
-            {
-                return (StatusCodes.OK, new UpdateAchievementProgressResponse
-                {
-                    AchievementId = body.AchievementId,
-                    PreviousProgress = achievementProgress.CurrentProgress,
-                    NewProgress = achievementProgress.CurrentProgress,
-                    TargetProgress = achievementProgress.TargetProgress,
-                    Unlocked = false,
-                    UnlockedAt = achievementProgress.UnlockedAt
-                });
-            }
-
-            var previousProgress = achievementProgress.CurrentProgress;
-            achievementProgress.CurrentProgress += body.Increment;
-
-            var unlocked = false;
-            DateTimeOffset? unlockedAt = null;
-
-            // Check if this unlocks the achievement
-            if (achievementProgress.CurrentProgress >= achievementProgress.TargetProgress)
-            {
-                achievementProgress.CurrentProgress = achievementProgress.TargetProgress;
-                achievementProgress.IsUnlocked = true;
-                achievementProgress.UnlockedAt = DateTimeOffset.UtcNow;
-                unlocked = true;
-                unlockedAt = achievementProgress.UnlockedAt;
-                entityProgress.TotalPoints += definition.Points;
-
-                // Increment earned count with retry on ETag conflict
-                await IncrementEarnedCountAsync(definitionStore, defKey, cancellationToken);
-            }
-
-            // Save progress (permanent by default; positive ProgressTtlSeconds enables expiry)
-            entityProgress.Achievements[body.AchievementId] = achievementProgress;
-            await progressStore.SaveAsync(progressKey, entityProgress,
-                _configuration.ProgressTtlSeconds > 0 ? new StateOptions { Ttl = _configuration.ProgressTtlSeconds } : null,
-                cancellationToken);
-
-            // Publish progress event
-            var progressEvent = new AchievementProgressUpdatedEvent
-            {
-                EventId = Guid.NewGuid(),
-                Timestamp = DateTimeOffset.UtcNow,
-                GameServiceId = body.GameServiceId,
-                AchievementId = body.AchievementId,
                 DisplayName = definition.DisplayName,
-                EntityId = body.EntityId,
-                EntityType = body.EntityType,
-                PreviousProgress = previousProgress,
-                NewProgress = achievementProgress.CurrentProgress,
-                TargetProgress = achievementProgress.TargetProgress,
-                PercentComplete = (double)achievementProgress.CurrentProgress / achievementProgress.TargetProgress * 100.0
+                CurrentProgress = 0,
+                TargetProgress = definition.ProgressTarget.Value,
+                IsUnlocked = false
             };
-            await _messageBus.TryPublishAsync("achievement.progress.updated", progressEvent, cancellationToken: cancellationToken);
+        }
 
-            // If unlocked, publish unlock event
-            if (unlocked)
-            {
-                await PublishUnlockEventAsync(body.GameServiceId, definition, body.EntityId, body.EntityType, entityProgress.TotalPoints, cancellationToken);
-            }
-
+        // Already unlocked? No need to update
+        if (achievementProgress.IsUnlocked)
+        {
             return (StatusCodes.OK, new UpdateAchievementProgressResponse
             {
                 AchievementId = body.AchievementId,
-                PreviousProgress = previousProgress,
+                PreviousProgress = achievementProgress.CurrentProgress,
                 NewProgress = achievementProgress.CurrentProgress,
                 TargetProgress = achievementProgress.TargetProgress,
-                Unlocked = unlocked,
-                UnlockedAt = unlockedAt
+                Unlocked = false,
+                UnlockedAt = achievementProgress.UnlockedAt
             });
         }
-        catch (Exception ex)
+
+        var previousProgress = achievementProgress.CurrentProgress;
+        achievementProgress.CurrentProgress += body.Increment;
+
+        var unlocked = false;
+        DateTimeOffset? unlockedAt = null;
+
+        // Check if this unlocks the achievement
+        if (achievementProgress.CurrentProgress >= achievementProgress.TargetProgress)
         {
-            _logger.LogError(ex, "Error updating achievement progress");
-            await _messageBus.TryPublishErrorAsync(
-                "achievement",
-                "UpdateAchievementProgress",
-                "unexpected_exception",
-                ex.Message,
-                dependency: null,
-                endpoint: "post:/achievement/progress/update",
-                details: null,
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
+            achievementProgress.CurrentProgress = achievementProgress.TargetProgress;
+            achievementProgress.IsUnlocked = true;
+            achievementProgress.UnlockedAt = DateTimeOffset.UtcNow;
+            unlocked = true;
+            unlockedAt = achievementProgress.UnlockedAt;
+            entityProgress.TotalPoints += definition.Points;
+
+            // Increment earned count with retry on ETag conflict
+            await IncrementEarnedCountAsync(definitionStore, defKey, cancellationToken);
         }
+
+        // Save progress (permanent by default; positive ProgressTtlSeconds enables expiry)
+        entityProgress.Achievements[body.AchievementId] = achievementProgress;
+        await progressStore.SaveAsync(progressKey, entityProgress,
+            _configuration.ProgressTtlSeconds > 0 ? new StateOptions { Ttl = _configuration.ProgressTtlSeconds } : null,
+            cancellationToken);
+
+        // Publish progress event
+        var progressEvent = new AchievementProgressUpdatedEvent
+        {
+            EventId = Guid.NewGuid(),
+            Timestamp = DateTimeOffset.UtcNow,
+            GameServiceId = body.GameServiceId,
+            AchievementId = body.AchievementId,
+            DisplayName = definition.DisplayName,
+            EntityId = body.EntityId,
+            EntityType = body.EntityType,
+            PreviousProgress = previousProgress,
+            NewProgress = achievementProgress.CurrentProgress,
+            TargetProgress = achievementProgress.TargetProgress,
+            PercentComplete = (double)achievementProgress.CurrentProgress / achievementProgress.TargetProgress * 100.0
+        };
+        await _messageBus.TryPublishAsync("achievement.progress.updated", progressEvent, cancellationToken: cancellationToken);
+
+        // If unlocked, publish unlock event
+        if (unlocked)
+        {
+            await PublishUnlockEventAsync(body.GameServiceId, definition, body.EntityId, body.EntityType, entityProgress.TotalPoints, cancellationToken);
+        }
+
+        return (StatusCodes.OK, new UpdateAchievementProgressResponse
+        {
+            AchievementId = body.AchievementId,
+            PreviousProgress = previousProgress,
+            NewProgress = achievementProgress.CurrentProgress,
+            TargetProgress = achievementProgress.TargetProgress,
+            Unlocked = unlocked,
+            UnlockedAt = unlockedAt
+        });
     }
 
     /// <summary>
@@ -674,134 +548,116 @@ public partial class AchievementService : IAchievementService
         _logger.LogDebug("Unlocking achievement {AchievementId} for {EntityType}:{EntityId}",
             body.AchievementId, body.EntityType, body.EntityId);
 
-        try
+        // Get achievement definition
+        var definitionStore = _stateStoreFactory.GetCacheableStore<AchievementDefinitionData>(StateStoreDefinitions.AchievementDefinition);
+        var defKey = GetDefinitionKey(body.GameServiceId, body.AchievementId);
+        var definition = await definitionStore.GetAsync(defKey, cancellationToken);
+
+        if (definition == null)
         {
-            // Get achievement definition
-            var definitionStore = _stateStoreFactory.GetStore<AchievementDefinitionData>(StateStoreDefinitions.AchievementDefinition);
-            var defKey = GetDefinitionKey(body.GameServiceId, body.AchievementId);
-            var definition = await definitionStore.GetAsync(defKey, cancellationToken);
+            return (StatusCodes.NotFound, null);
+        }
 
-            if (definition == null)
-            {
-                return (StatusCodes.NotFound, null);
-            }
+        // Validate entity type
+        if (definition.EntityTypes != null && !definition.EntityTypes.Contains(body.EntityType))
+        {
+            return (StatusCodes.BadRequest, null);
+        }
 
-            // Validate entity type
-            if (definition.EntityTypes != null && !definition.EntityTypes.Contains(body.EntityType))
+        // Check prerequisites
+        if (definition.Prerequisites != null && definition.Prerequisites.Count > 0)
+        {
+            var progressStore = _stateStoreFactory.GetStore<EntityProgressData>(StateStoreDefinitions.AchievementProgress);
+            var progressKey = GetEntityProgressKey(body.GameServiceId, body.EntityType, body.EntityId);
+            var entityProgress = await progressStore.GetAsync(progressKey, cancellationToken);
+
+            if (entityProgress == null)
             {
+                _logger.LogWarning("Prerequisites not met for {AchievementId}", body.AchievementId);
                 return (StatusCodes.BadRequest, null);
             }
 
-            // Check prerequisites
-            if (definition.Prerequisites != null && definition.Prerequisites.Count > 0)
+            foreach (var prereq in definition.Prerequisites)
             {
-                var progressStore = _stateStoreFactory.GetStore<EntityProgressData>(StateStoreDefinitions.AchievementProgress);
-                var progressKey = GetEntityProgressKey(body.GameServiceId, body.EntityType, body.EntityId);
-                var entityProgress = await progressStore.GetAsync(progressKey, cancellationToken);
-
-                if (entityProgress == null)
+                if (!entityProgress.Achievements.TryGetValue(prereq, out var prereqProgress) || !prereqProgress.IsUnlocked)
                 {
-                    _logger.LogWarning("Prerequisites not met for {AchievementId}", body.AchievementId);
+                    _logger.LogWarning("Prerequisite {Prerequisite} not unlocked for {AchievementId}", prereq, body.AchievementId);
                     return (StatusCodes.BadRequest, null);
                 }
-
-                foreach (var prereq in definition.Prerequisites)
-                {
-                    if (!entityProgress.Achievements.TryGetValue(prereq, out var prereqProgress) || !prereqProgress.IsUnlocked)
-                    {
-                        _logger.LogWarning("Prerequisite {Prerequisite} not unlocked for {AchievementId}", prereq, body.AchievementId);
-                        return (StatusCodes.BadRequest, null);
-                    }
-                }
             }
+        }
 
-            // Acquire lock on progress key (compound operation: modifies both progress and definition)
-            var store = _stateStoreFactory.GetStore<EntityProgressData>(StateStoreDefinitions.AchievementProgress);
-            var key = GetEntityProgressKey(body.GameServiceId, body.EntityType, body.EntityId);
+        // Acquire lock on progress key (compound operation: modifies both progress and definition)
+        var store = _stateStoreFactory.GetStore<EntityProgressData>(StateStoreDefinitions.AchievementProgress);
+        var key = GetEntityProgressKey(body.GameServiceId, body.EntityType, body.EntityId);
 
-            await using var progressLock = await _lockProvider.LockAsync(
-                "achievement-progress", key, Guid.NewGuid().ToString(), _configuration.LockExpirySeconds, cancellationToken);
-            if (!progressLock.Success)
-            {
-                _logger.LogWarning("Could not acquire progress lock for {ProgressKey}", key);
-                return (StatusCodes.Conflict, null);
-            }
+        await using var progressLock = await _lockProvider.LockAsync(
+            "achievement-progress", key, Guid.NewGuid().ToString(), _configuration.LockExpirySeconds, cancellationToken);
+        if (!progressLock.Success)
+        {
+            _logger.LogWarning("Could not acquire progress lock for {ProgressKey}", key);
+            return (StatusCodes.Conflict, null);
+        }
 
-            // Re-read under lock
-            var progress = await store.GetAsync(key, cancellationToken) ?? new EntityProgressData
-            {
-                EntityId = body.EntityId,
-                EntityType = body.EntityType,
-                Achievements = new Dictionary<string, AchievementProgressData>(),
-                TotalPoints = 0
-            };
+        // Re-read under lock
+        var progress = await store.GetAsync(key, cancellationToken) ?? new EntityProgressData
+        {
+            EntityId = body.EntityId,
+            EntityType = body.EntityType,
+            Achievements = new Dictionary<string, AchievementProgressData>(),
+            TotalPoints = 0
+        };
 
-            // Check if already unlocked
-            if (progress.Achievements.TryGetValue(body.AchievementId, out var existing) && existing.IsUnlocked)
-            {
-                return (StatusCodes.OK, new UnlockAchievementResponse
-                {
-                    AchievementId = body.AchievementId,
-                    Unlocked = false, // Already was unlocked
-                    UnlockedAt = existing.UnlockedAt ?? DateTimeOffset.UtcNow
-                });
-            }
-
-            var now = DateTimeOffset.UtcNow;
-            progress.Achievements[body.AchievementId] = new AchievementProgressData
-            {
-                DisplayName = definition.DisplayName,
-                CurrentProgress = definition.ProgressTarget ?? 1,
-                TargetProgress = definition.ProgressTarget ?? 1,
-                IsUnlocked = true,
-                UnlockedAt = now
-            };
-            progress.TotalPoints += definition.Points;
-
-            // Increment earned count with retry on ETag conflict
-            await IncrementEarnedCountAsync(definitionStore, defKey, cancellationToken);
-
-            await store.SaveAsync(key, progress,
-                _configuration.ProgressTtlSeconds > 0 ? new StateOptions { Ttl = _configuration.ProgressTtlSeconds } : null,
-                cancellationToken);
-
-            // Publish unlock event
-            await PublishUnlockEventAsync(body.GameServiceId, definition, body.EntityId, body.EntityType, progress.TotalPoints, cancellationToken);
-
-            // Platform sync
-            var platformSyncStatus = new Dictionary<string, SyncStatus>();
-            if (_configuration.AutoSyncOnUnlock && !body.SkipPlatformSync && definition.Platforms != null)
-            {
-                foreach (var platform in definition.Platforms.Where(p => p != Platform.Internal))
-                {
-                    var syncResult = await SyncAchievementToPlatformAsync(body.GameServiceId, body.AchievementId, definition, body.EntityId, platform, cancellationToken);
-                    platformSyncStatus[platform.ToString().ToLowerInvariant()] = syncResult;
-                }
-            }
-
+        // Check if already unlocked
+        if (progress.Achievements.TryGetValue(body.AchievementId, out var existing) && existing.IsUnlocked)
+        {
             return (StatusCodes.OK, new UnlockAchievementResponse
             {
                 AchievementId = body.AchievementId,
-                Unlocked = true,
-                UnlockedAt = now,
-                PlatformSyncStatus = platformSyncStatus.Count > 0 ? platformSyncStatus : null
+                Unlocked = false, // Already was unlocked
+                UnlockedAt = existing.UnlockedAt ?? DateTimeOffset.UtcNow
             });
         }
-        catch (Exception ex)
+
+        var now = DateTimeOffset.UtcNow;
+        progress.Achievements[body.AchievementId] = new AchievementProgressData
         {
-            _logger.LogError(ex, "Error unlocking achievement");
-            await _messageBus.TryPublishErrorAsync(
-                "achievement",
-                "UnlockAchievement",
-                "unexpected_exception",
-                ex.Message,
-                dependency: null,
-                endpoint: "post:/achievement/unlock",
-                details: null,
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
+            DisplayName = definition.DisplayName,
+            CurrentProgress = definition.ProgressTarget ?? 1,
+            TargetProgress = definition.ProgressTarget ?? 1,
+            IsUnlocked = true,
+            UnlockedAt = now
+        };
+        progress.TotalPoints += definition.Points;
+
+        // Increment earned count with retry on ETag conflict
+        await IncrementEarnedCountAsync(definitionStore, defKey, cancellationToken);
+
+        await store.SaveAsync(key, progress,
+            _configuration.ProgressTtlSeconds > 0 ? new StateOptions { Ttl = _configuration.ProgressTtlSeconds } : null,
+            cancellationToken);
+
+        // Publish unlock event
+        await PublishUnlockEventAsync(body.GameServiceId, definition, body.EntityId, body.EntityType, progress.TotalPoints, cancellationToken);
+
+        // Platform sync
+        var platformSyncStatus = new Dictionary<string, SyncStatus>();
+        if (_configuration.AutoSyncOnUnlock && !body.SkipPlatformSync && definition.Platforms != null)
+        {
+            foreach (var platform in definition.Platforms.Where(p => p != Platform.Internal))
+            {
+                var syncResult = await SyncAchievementToPlatformAsync(body.GameServiceId, body.AchievementId, definition, body.EntityId, platform, cancellationToken);
+                platformSyncStatus[platform.ToString().ToLowerInvariant()] = syncResult;
+            }
         }
+
+        return (StatusCodes.OK, new UnlockAchievementResponse
+        {
+            AchievementId = body.AchievementId,
+            Unlocked = true,
+            UnlockedAt = now,
+            PlatformSyncStatus = platformSyncStatus.Count > 0 ? platformSyncStatus : null
+        });
     }
 
     /// <summary>
@@ -812,78 +668,60 @@ public partial class AchievementService : IAchievementService
     {
         _logger.LogDebug("Listing unlocked achievements for {EntityType}:{EntityId}", body.EntityType, body.EntityId);
 
-        try
+        var progressStore = _stateStoreFactory.GetStore<EntityProgressData>(StateStoreDefinitions.AchievementProgress);
+        var progressKey = GetEntityProgressKey(body.GameServiceId, body.EntityType, body.EntityId);
+        var entityProgress = await progressStore.GetAsync(progressKey, cancellationToken);
+
+        if (entityProgress == null)
         {
-            var progressStore = _stateStoreFactory.GetStore<EntityProgressData>(StateStoreDefinitions.AchievementProgress);
-            var progressKey = GetEntityProgressKey(body.GameServiceId, body.EntityType, body.EntityId);
-            var entityProgress = await progressStore.GetAsync(progressKey, cancellationToken);
-
-            if (entityProgress == null)
-            {
-                return (StatusCodes.OK, new ListUnlockedAchievementsResponse
-                {
-                    EntityId = body.EntityId,
-                    EntityType = body.EntityType,
-                    Achievements = new List<UnlockedAchievement>(),
-                    TotalPoints = 0
-                });
-            }
-
-            var definitionStore = _stateStoreFactory.GetStore<AchievementDefinitionData>(StateStoreDefinitions.AchievementDefinition);
-            var unlockedAchievements = new List<UnlockedAchievement>();
-            var totalPoints = 0;
-
-            foreach (var kvp in entityProgress.Achievements.Where(a => a.Value.IsUnlocked))
-            {
-                var defKey = GetDefinitionKey(body.GameServiceId, kvp.Key);
-                var definition = await definitionStore.GetAsync(defKey, cancellationToken);
-
-                if (definition == null)
-                {
-                    continue;
-                }
-
-                // Filter by platform if requested
-                if (body.Platform.HasValue && definition.Platforms != null && !definition.Platforms.Contains(body.Platform.Value))
-                {
-                    continue;
-                }
-
-                totalPoints += definition.Points;
-                unlockedAchievements.Add(new UnlockedAchievement
-                {
-                    AchievementId = kvp.Key,
-                    DisplayName = definition.DisplayName,
-                    Description = definition.Description,
-                    Points = definition.Points,
-                    IconUrl = definition.IconUrl,
-                    UnlockedAt = kvp.Value.UnlockedAt ?? DateTimeOffset.UtcNow
-                });
-            }
-
             return (StatusCodes.OK, new ListUnlockedAchievementsResponse
             {
                 EntityId = body.EntityId,
                 EntityType = body.EntityType,
-                Achievements = unlockedAchievements,
-                TotalPoints = totalPoints
+                Achievements = new List<UnlockedAchievement>(),
+                TotalPoints = 0
             });
         }
-        catch (Exception ex)
+
+        var definitionStore = _stateStoreFactory.GetCacheableStore<AchievementDefinitionData>(StateStoreDefinitions.AchievementDefinition);
+        var unlockedAchievements = new List<UnlockedAchievement>();
+        var totalPoints = 0;
+
+        foreach (var kvp in entityProgress.Achievements.Where(a => a.Value.IsUnlocked))
         {
-            _logger.LogError(ex, "Error listing unlocked achievements");
-            await _messageBus.TryPublishErrorAsync(
-                "achievement",
-                "ListUnlockedAchievements",
-                "unexpected_exception",
-                ex.Message,
-                dependency: null,
-                endpoint: "post:/achievement/list-unlocked",
-                details: null,
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
+            var defKey = GetDefinitionKey(body.GameServiceId, kvp.Key);
+            var definition = await definitionStore.GetAsync(defKey, cancellationToken);
+
+            if (definition == null)
+            {
+                continue;
+            }
+
+            // Filter by platform if requested
+            if (body.Platform.HasValue && definition.Platforms != null && !definition.Platforms.Contains(body.Platform.Value))
+            {
+                continue;
+            }
+
+            totalPoints += definition.Points;
+            unlockedAchievements.Add(new UnlockedAchievement
+            {
+                AchievementId = kvp.Key,
+                DisplayName = definition.DisplayName,
+                Description = definition.Description,
+                Points = definition.Points,
+                IconUrl = definition.IconUrl,
+                UnlockedAt = kvp.Value.UnlockedAt ?? DateTimeOffset.UtcNow
+            });
         }
+
+        return (StatusCodes.OK, new ListUnlockedAchievementsResponse
+        {
+            EntityId = body.EntityId,
+            EntityType = body.EntityType,
+            Achievements = unlockedAchievements,
+            TotalPoints = totalPoints
+        });
     }
 
     /// <summary>
@@ -895,204 +733,186 @@ public partial class AchievementService : IAchievementService
         _logger.LogDebug("Syncing achievements to {Platform} for {EntityType}:{EntityId}",
             body.Platform, body.EntityType, body.EntityId);
 
-        try
+        if (body.EntityType != EntityType.Account)
         {
-            if (body.EntityType != EntityType.Account)
-            {
-                _logger.LogWarning("Platform sync requires account entity type, received {EntityType}", body.EntityType);
-                return (StatusCodes.BadRequest, null);
-            }
+            _logger.LogWarning("Platform sync requires account entity type, received {EntityType}", body.EntityType);
+            return (StatusCodes.BadRequest, null);
+        }
 
-            // Get sync provider
-            var syncProvider = _platformSyncs.FirstOrDefault(s => s.Platform == body.Platform);
-            if (syncProvider == null)
-            {
-                _logger.LogDebug("Platform {Platform} not supported for achievement sync", body.Platform);
-                return (StatusCodes.BadRequest, null);
-            }
+        // Get sync provider
+        var syncProvider = _platformSyncs.FirstOrDefault(s => s.Platform == body.Platform);
+        if (syncProvider == null)
+        {
+            _logger.LogDebug("Platform {Platform} not supported for achievement sync", body.Platform);
+            return (StatusCodes.BadRequest, null);
+        }
 
-            if (!syncProvider.IsConfigured)
-            {
-                _logger.LogWarning("Platform {Platform} is not configured for sync", body.Platform);
-                return (StatusCodes.BadRequest, null);
-            }
+        if (!syncProvider.IsConfigured)
+        {
+            _logger.LogWarning("Platform {Platform} is not configured for sync", body.Platform);
+            return (StatusCodes.BadRequest, null);
+        }
 
-            // Check if linked
-            var isLinked = await syncProvider.IsLinkedAsync(body.EntityId, cancellationToken);
-            if (!isLinked)
-            {
-                return (StatusCodes.OK, new SyncPlatformAchievementsResponse
-                {
-                    Platform = body.Platform,
-                    Synced = 0,
-                    Failed = 0,
-                    NotLinked = true
-                });
-            }
-
-            var externalId = await syncProvider.GetExternalIdAsync(body.EntityId, cancellationToken);
-            if (string.IsNullOrEmpty(externalId))
-            {
-                return (StatusCodes.OK, new SyncPlatformAchievementsResponse
-                {
-                    Platform = body.Platform,
-                    Synced = 0,
-                    Failed = 0,
-                    NotLinked = true
-                });
-            }
-
-            // Get entity progress
-            var progressStore = _stateStoreFactory.GetStore<EntityProgressData>(StateStoreDefinitions.AchievementProgress);
-            var progressKey = GetEntityProgressKey(body.GameServiceId, body.EntityType, body.EntityId);
-            var entityProgress = await progressStore.GetAsync(progressKey, cancellationToken);
-
-            if (entityProgress == null || entityProgress.Achievements.Count == 0)
-            {
-                return (StatusCodes.OK, new SyncPlatformAchievementsResponse
-                {
-                    Platform = body.Platform,
-                    Synced = 0,
-                    Failed = 0,
-                    NotLinked = false
-                });
-            }
-
-            var definitionStore = _stateStoreFactory.GetStore<AchievementDefinitionData>(StateStoreDefinitions.AchievementDefinition);
-            var synced = 0;
-            var failed = 0;
-            var errors = new List<string>();
-
-            foreach (var kvp in entityProgress.Achievements.Where(a => a.Value.IsUnlocked))
-            {
-                var defKey = GetDefinitionKey(body.GameServiceId, kvp.Key);
-                var definition = await definitionStore.GetAsync(defKey, cancellationToken);
-
-                if (definition == null)
-                {
-                    _logger.LogError(
-                        "Missing achievement definition for {AchievementId} during platform sync",
-                        kvp.Key);
-                    await _messageBus.TryPublishErrorAsync(
-                        "achievement",
-                        "SyncPlatformAchievements",
-                        "platform_sync_definition_missing",
-                        $"Missing achievement definition for {kvp.Key}",
-                        dependency: body.Platform.ToString().ToLowerInvariant(),
-                        endpoint: "post:/achievement/platform/sync",
-                        details: $"achievementId:{kvp.Key};entityId:{body.EntityId}",
-                        stack: null,
-                        cancellationToken: cancellationToken);
-                    failed++;
-                    errors.Add($"{kvp.Key}: definition missing");
-                    continue;
-                }
-
-                if (definition.Platforms == null || !definition.Platforms.Contains(body.Platform))
-                {
-                    continue;
-                }
-
-                var platformAchievementId = definition.PlatformIds?.GetValueOrDefault(body.Platform);
-                if (string.IsNullOrEmpty(platformAchievementId))
-                {
-                    _logger.LogError(
-                        "Missing platform achievement ID for {Platform} achievement {AchievementId}",
-                        body.Platform, kvp.Key);
-                    await _messageBus.TryPublishErrorAsync(
-                        "achievement",
-                        "SyncPlatformAchievements",
-                        "platform_sync_missing_platform_id",
-                        $"Missing platform achievement ID for {body.Platform} achievement {kvp.Key}",
-                        dependency: body.Platform.ToString().ToLowerInvariant(),
-                        endpoint: "post:/achievement/platform/sync",
-                        details: $"achievementId:{kvp.Key};entityId:{body.EntityId}",
-                        stack: null,
-                        cancellationToken: cancellationToken);
-                    failed++;
-                    errors.Add($"{kvp.Key}: missing platform mapping");
-                    continue;
-                }
-
-                var (result, exception) = await ExecutePlatformUnlockWithRetriesAsync(
-                    syncProvider,
-                    externalId,
-                    platformAchievementId,
-                    cancellationToken);
-
-                if (!result.Success)
-                {
-                    if (exception != null)
-                    {
-                        _logger.LogError(exception,
-                            "Platform sync failed for {Platform} achievement {AchievementId} after retries",
-                            body.Platform, kvp.Key);
-                    }
-                    else
-                    {
-                        _logger.LogError("Platform sync failed for {Platform} achievement {AchievementId}: {ErrorMessage}",
-                            body.Platform, kvp.Key, result.ErrorMessage);
-                    }
-
-                    await _messageBus.TryPublishErrorAsync(
-                        "achievement",
-                        "SyncPlatformAchievements",
-                        "platform_sync_failed",
-                        result.ErrorMessage ?? "Platform sync failed",
-                        dependency: body.Platform.ToString().ToLowerInvariant(),
-                        endpoint: "post:/achievement/platform/sync",
-                        details: $"achievementId:{kvp.Key};entityId:{body.EntityId}",
-                        stack: exception?.StackTrace,
-                        cancellationToken: cancellationToken);
-                }
-
-                await PublishPlatformSyncEventAsync(
-                    body.GameServiceId,
-                    kvp.Key,
-                    body.EntityId,
-                    body.Platform,
-                    platformAchievementId,
-                    result,
-                    cancellationToken);
-
-                if (result.Success)
-                {
-                    synced++;
-                }
-                else
-                {
-                    failed++;
-                    if (!string.IsNullOrEmpty(result.ErrorMessage))
-                    {
-                        errors.Add($"{kvp.Key}: {result.ErrorMessage}");
-                    }
-                }
-            }
-
+        // Check if linked
+        var isLinked = await syncProvider.IsLinkedAsync(body.EntityId, cancellationToken);
+        if (!isLinked)
+        {
             return (StatusCodes.OK, new SyncPlatformAchievementsResponse
             {
                 Platform = body.Platform,
-                Synced = synced,
-                Failed = failed,
-                NotLinked = false,
-                Errors = errors.Count > 0 ? errors : null
+                Synced = 0,
+                Failed = 0,
+                NotLinked = true
             });
         }
-        catch (Exception ex)
+
+        var externalId = await syncProvider.GetExternalIdAsync(body.EntityId, cancellationToken);
+        if (string.IsNullOrEmpty(externalId))
         {
-            _logger.LogError(ex, "Error syncing platform achievements");
-            await _messageBus.TryPublishErrorAsync(
-                "achievement",
-                "SyncPlatformAchievements",
-                "unexpected_exception",
-                ex.Message,
-                dependency: null,
-                endpoint: "post:/achievement/platform/sync",
-                details: null,
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
+            return (StatusCodes.OK, new SyncPlatformAchievementsResponse
+            {
+                Platform = body.Platform,
+                Synced = 0,
+                Failed = 0,
+                NotLinked = true
+            });
         }
+
+        // Get entity progress
+        var progressStore = _stateStoreFactory.GetStore<EntityProgressData>(StateStoreDefinitions.AchievementProgress);
+        var progressKey = GetEntityProgressKey(body.GameServiceId, body.EntityType, body.EntityId);
+        var entityProgress = await progressStore.GetAsync(progressKey, cancellationToken);
+
+        if (entityProgress == null || entityProgress.Achievements.Count == 0)
+        {
+            return (StatusCodes.OK, new SyncPlatformAchievementsResponse
+            {
+                Platform = body.Platform,
+                Synced = 0,
+                Failed = 0,
+                NotLinked = false
+            });
+        }
+
+        var definitionStore = _stateStoreFactory.GetCacheableStore<AchievementDefinitionData>(StateStoreDefinitions.AchievementDefinition);
+        var synced = 0;
+        var failed = 0;
+        var errors = new List<string>();
+
+        foreach (var kvp in entityProgress.Achievements.Where(a => a.Value.IsUnlocked))
+        {
+            var defKey = GetDefinitionKey(body.GameServiceId, kvp.Key);
+            var definition = await definitionStore.GetAsync(defKey, cancellationToken);
+
+            if (definition == null)
+            {
+                _logger.LogError(
+                    "Missing achievement definition for {AchievementId} during platform sync",
+                    kvp.Key);
+                await _messageBus.TryPublishErrorAsync(
+                    "achievement",
+                    "SyncPlatformAchievements",
+                    "platform_sync_definition_missing",
+                    $"Missing achievement definition for {kvp.Key}",
+                    dependency: body.Platform.ToString().ToLowerInvariant(),
+                    endpoint: "post:/achievement/platform/sync",
+                    details: $"achievementId:{kvp.Key};entityId:{body.EntityId}",
+                    stack: null,
+                    cancellationToken: cancellationToken);
+                failed++;
+                errors.Add($"{kvp.Key}: definition missing");
+                continue;
+            }
+
+            if (definition.Platforms == null || !definition.Platforms.Contains(body.Platform))
+            {
+                continue;
+            }
+
+            var platformAchievementId = definition.PlatformIds?.GetValueOrDefault(body.Platform);
+            if (string.IsNullOrEmpty(platformAchievementId))
+            {
+                _logger.LogError(
+                    "Missing platform achievement ID for {Platform} achievement {AchievementId}",
+                    body.Platform, kvp.Key);
+                await _messageBus.TryPublishErrorAsync(
+                    "achievement",
+                    "SyncPlatformAchievements",
+                    "platform_sync_missing_platform_id",
+                    $"Missing platform achievement ID for {body.Platform} achievement {kvp.Key}",
+                    dependency: body.Platform.ToString().ToLowerInvariant(),
+                    endpoint: "post:/achievement/platform/sync",
+                    details: $"achievementId:{kvp.Key};entityId:{body.EntityId}",
+                    stack: null,
+                    cancellationToken: cancellationToken);
+                failed++;
+                errors.Add($"{kvp.Key}: missing platform mapping");
+                continue;
+            }
+
+            var (result, exception) = await ExecutePlatformUnlockWithRetriesAsync(
+                syncProvider,
+                externalId,
+                platformAchievementId,
+                cancellationToken);
+
+            if (!result.Success)
+            {
+                if (exception != null)
+                {
+                    _logger.LogError(exception,
+                        "Platform sync failed for {Platform} achievement {AchievementId} after retries",
+                        body.Platform, kvp.Key);
+                }
+                else
+                {
+                    _logger.LogError("Platform sync failed for {Platform} achievement {AchievementId}: {ErrorMessage}",
+                        body.Platform, kvp.Key, result.ErrorMessage);
+                }
+
+                await _messageBus.TryPublishErrorAsync(
+                    "achievement",
+                    "SyncPlatformAchievements",
+                    "platform_sync_failed",
+                    result.ErrorMessage ?? "Platform sync failed",
+                    dependency: body.Platform.ToString().ToLowerInvariant(),
+                    endpoint: "post:/achievement/platform/sync",
+                    details: $"achievementId:{kvp.Key};entityId:{body.EntityId}",
+                    stack: exception?.StackTrace,
+                    cancellationToken: cancellationToken);
+            }
+
+            await PublishPlatformSyncEventAsync(
+                body.GameServiceId,
+                kvp.Key,
+                body.EntityId,
+                body.Platform,
+                platformAchievementId,
+                result,
+                cancellationToken);
+
+            if (result.Success)
+            {
+                synced++;
+            }
+            else
+            {
+                failed++;
+                if (!string.IsNullOrEmpty(result.ErrorMessage))
+                {
+                    errors.Add($"{kvp.Key}: {result.ErrorMessage}");
+                }
+            }
+        }
+
+        return (StatusCodes.OK, new SyncPlatformAchievementsResponse
+        {
+            Platform = body.Platform,
+            Synced = synced,
+            Failed = failed,
+            NotLinked = false,
+            Errors = errors.Count > 0 ? errors : null
+        });
     }
 
     /// <summary>
@@ -1103,68 +923,50 @@ public partial class AchievementService : IAchievementService
     {
         _logger.LogDebug("Getting platform sync status for {EntityType}:{EntityId}", body.EntityType, body.EntityId);
 
-        try
+        if (body.EntityType != EntityType.Account)
         {
-            if (body.EntityType != EntityType.Account)
+            _logger.LogWarning("Platform sync status requires account entity type, received {EntityType}", body.EntityType);
+            return (StatusCodes.BadRequest, null);
+        }
+
+        var platforms = new List<PlatformStatus>();
+
+        foreach (var syncProvider in _platformSyncs)
+        {
+            // Filter by specific platform if requested
+            if (body.Platform.HasValue && syncProvider.Platform != body.Platform.Value)
             {
-                _logger.LogWarning("Platform sync status requires account entity type, received {EntityType}", body.EntityType);
-                return (StatusCodes.BadRequest, null);
+                continue;
             }
 
-            var platforms = new List<PlatformStatus>();
-
-            foreach (var syncProvider in _platformSyncs)
+            // Skip unconfigured platforms
+            if (!syncProvider.IsConfigured)
             {
-                // Filter by specific platform if requested
-                if (body.Platform.HasValue && syncProvider.Platform != body.Platform.Value)
-                {
-                    continue;
-                }
-
-                // Skip unconfigured platforms
-                if (!syncProvider.IsConfigured)
-                {
-                    continue;
-                }
-
-                var isLinked = await syncProvider.IsLinkedAsync(body.EntityId, cancellationToken);
-                var externalId = isLinked ? await syncProvider.GetExternalIdAsync(body.EntityId, cancellationToken) : null;
-
-                platforms.Add(new PlatformStatus
-                {
-                    Platform = syncProvider.Platform,
-                    IsLinked = isLinked,
-                    ExternalId = externalId,
-                    SyncedCount = 0, // Would need to track this per-entity
-                    PendingCount = 0,
-                    FailedCount = 0,
-                    LastSyncAt = null,
-                    LastError = null
-                });
+                continue;
             }
 
-            return (StatusCodes.OK, new PlatformSyncStatusResponse
+            var isLinked = await syncProvider.IsLinkedAsync(body.EntityId, cancellationToken);
+            var externalId = isLinked ? await syncProvider.GetExternalIdAsync(body.EntityId, cancellationToken) : null;
+
+            platforms.Add(new PlatformStatus
             {
-                EntityId = body.EntityId,
-                EntityType = body.EntityType,
-                Platforms = platforms
+                Platform = syncProvider.Platform,
+                IsLinked = isLinked,
+                ExternalId = externalId,
+                SyncedCount = 0, // Would need to track this per-entity
+                PendingCount = 0,
+                FailedCount = 0,
+                LastSyncAt = null,
+                LastError = null
             });
         }
-        catch (Exception ex)
+
+        return (StatusCodes.OK, new PlatformSyncStatusResponse
         {
-            _logger.LogError(ex, "Error getting platform sync status");
-            await _messageBus.TryPublishErrorAsync(
-                "achievement",
-                "GetPlatformSyncStatus",
-                "unexpected_exception",
-                ex.Message,
-                dependency: null,
-                endpoint: "post:/achievement/platform/status",
-                details: null,
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
+            EntityId = body.EntityId,
+            EntityType = body.EntityType,
+            Platforms = platforms
+        });
     }
 
     #region Helper Methods
@@ -1641,70 +1443,5 @@ public partial class AchievementService : IAchievementService
 
     #region Permission Registration
 
-    /// <summary>
-    /// Registers this service's API permissions with the Permission service on startup.
-    /// Overrides the default IBannouService implementation to use generated permission data.
-    /// </summary>
-    /// <param name="appId">The application ID to register permissions under.</param>
-    public async Task RegisterServicePermissionsAsync(string appId)
-    {
-        _logger.LogInformation("Registering Achievement service permissions...");
-        await AchievementPermissionRegistration.RegisterViaEventAsync(_messageBus, appId, _logger);
-    }
-
     #endregion
 }
-
-#region Internal Data Models
-
-/// <summary>
-/// Internal storage model for achievement definition.
-/// </summary>
-internal class AchievementDefinitionData
-{
-    public Guid GameServiceId { get; set; }
-    public string AchievementId { get; set; } = string.Empty;
-    public string DisplayName { get; set; } = string.Empty;
-    public string Description { get; set; } = string.Empty;
-    public string? HiddenDescription { get; set; }
-    public AchievementType AchievementType { get; set; }
-    public List<EntityType>? EntityTypes { get; set; }
-    public int? ProgressTarget { get; set; }
-    public int Points { get; set; }
-    public string? IconUrl { get; set; }
-    public List<Platform>? Platforms { get; set; }
-    public Dictionary<Platform, string>? PlatformIds { get; set; }
-    public List<string>? Prerequisites { get; set; }
-    public bool IsActive { get; set; }
-    public long EarnedCount { get; set; }
-    public long TotalEligibleEntities { get; set; }
-    public double? RarityPercent { get; set; }
-    public DateTimeOffset? RarityCalculatedAt { get; set; }
-    public DateTimeOffset CreatedAt { get; set; }
-    public Dictionary<string, object>? Metadata { get; set; }
-}
-
-/// <summary>
-/// Internal storage model for entity progress across all achievements.
-/// </summary>
-internal class EntityProgressData
-{
-    public Guid EntityId { get; set; }
-    public EntityType EntityType { get; set; }
-    public Dictionary<string, AchievementProgressData> Achievements { get; set; } = new();
-    public int TotalPoints { get; set; }
-}
-
-/// <summary>
-/// Internal storage model for progress on a single achievement.
-/// </summary>
-internal class AchievementProgressData
-{
-    public string DisplayName { get; set; } = string.Empty;
-    public int CurrentProgress { get; set; }
-    public int TargetProgress { get; set; }
-    public bool IsUnlocked { get; set; }
-    public DateTimeOffset? UnlockedAt { get; set; }
-}
-
-#endregion

@@ -3,11 +3,12 @@
 > **Plugin**: lib-analytics
 > **Schema**: schemas/analytics-api.yaml
 > **Version**: 1.0.0
-> **State Stores**: analytics-summary (Redis), analytics-summary-data (MySQL), analytics-rating (Redis), analytics-history (Redis), analytics-history-data (MySQL)
+> **Layer**: GameFeatures
+> **State Stores**: analytics-summary (Redis), analytics-summary-data (MySQL), analytics-rating (Redis), analytics-history-data (MySQL)
 
 ## Overview
 
-The Analytics plugin is the central event aggregation point for all game-related statistics. It handles event ingestion (buffered via Redis sorted sets), entity summary computation, Glicko-2 skill rating calculations, and controller history tracking. It publishes score updates and milestone events that are consumed by the Achievement and Leaderboard services for downstream processing. It subscribes to game session lifecycle events and character/realm history events to automatically ingest analytics data, resolving game service context via cached realm/character lookups.
+The Analytics plugin (L4 GameFeatures) is the central event aggregation point for all game-related statistics. Handles event ingestion, entity summary computation, Glicko-2 skill rating calculations, and controller history tracking. Publishes score updates and milestone events consumed by Achievement and Leaderboard for downstream processing. Subscribes to game session lifecycle and character/realm history events for automatic ingestion. Unlike typical L4 services, Analytics only observes via event subscriptions -- it does not invoke L2/L4 service APIs and should not be called by L1/L2/L3 services.
 
 ## Dependencies (What This Plugin Relies On)
 
@@ -53,7 +54,7 @@ The Analytics plugin is the central event aggregation point for all game-related
 ### Published Events
 
 | Topic | Event Type | Trigger |
-|-------|-----------|---------
+|-------|-----------|---------|
 | `analytics.score.updated` | `AnalyticsScoreUpdatedEvent` | During buffer flush, for each event with non-zero value |
 | `analytics.rating.updated` | `AnalyticsRatingUpdatedEvent` | After all players' Glicko-2 ratings are saved (batch publish) |
 | `analytics.milestone.reached` | `AnalyticsMilestoneReachedEvent` | When a score crosses a milestone threshold |
@@ -65,9 +66,9 @@ The Analytics plugin is the central event aggregation point for all game-related
 | `game-session.action.performed` | `HandleGameActionPerformedAsync` | Resolves game service via session mapping, buffers action event |
 | `game-session.created` | `HandleGameSessionCreatedAsync` | Saves session-to-gameService mapping, buffers creation event |
 | `game-session.deleted` | `HandleGameSessionDeletedAsync` | Removes session mapping, buffers deletion event |
-| `character-history.participation.recorded` | `HandleCharacterParticipationRecordedAsync` | Resolves game service via character→realm→gameService chain, buffers event |
-| `character-history.backstory.created` | `HandleCharacterBackstoryCreatedAsync` | Resolves game service via character→realm→gameService chain, buffers event |
-| `character-history.backstory.updated` | `HandleCharacterBackstoryUpdatedAsync` | Resolves game service via character→realm→gameService chain, buffers event |
+| `character-history.participation.recorded` | `HandleCharacterParticipationRecordedAsync` | Resolves game service via character->realm->gameService chain, buffers event |
+| `character-history.backstory.created` | `HandleCharacterBackstoryCreatedAsync` | Resolves game service via character->realm->gameService chain, buffers event |
+| `character-history.backstory.updated` | `HandleCharacterBackstoryUpdatedAsync` | Resolves game service via character->realm->gameService chain, buffers event |
 | `realm-history.participation.recorded` | `HandleRealmParticipationRecordedAsync` | Resolves game service via realm lookup, buffers event |
 | `realm-history.lore.created` | `HandleRealmLoreCreatedAsync` | Resolves game service via realm lookup, buffers event |
 | `realm-history.lore.updated` | `HandleRealmLoreUpdatedAsync` | Resolves game service via realm lookup, buffers event |
@@ -113,7 +114,7 @@ All history event handlers follow the fail-fast pattern: if game service resolut
 | `IGameSessionClient` | Session ID to game type resolution (fallback) |
 | `IRealmClient` | Realm ID to game service ID resolution (for history events) |
 | `ICharacterClient` | Character ID to realm ID resolution (for history events) |
-| `IEventConsumer` | Registers handlers for 9 consumed event types |
+| `IEventConsumer` | Registers handlers for 11 consumed event types |
 
 ## API Endpoints (Implementation Notes)
 
@@ -138,47 +139,48 @@ Records are stored in the MySQL `analytics-history-data` store. Query uses MySQL
 ```
 Event Sources                    Analytics Service                    Consumers
 
-game-session.action.performed ──┐
-game-session.created ───────────┤    ┌─────────────────────┐
-game-session.deleted ───────────┼──► │  Event Buffer       │
-character-history.* ────────────┤    │  (Redis Sorted Set) │
-realm-history.* ────────────────┘    └────────┬────────────┘
-        │                                     │
-        ▼                       (size >= EventBufferSize OR
-  ┌──────────────┐               age >= FlushIntervalSeconds)
-  │ Resolution   │                            │
-  │ character→   │                  ┌─────────▼─────────┐
-  │ realm→       │                  │  Flush (locked)    │
-  │ gameService  │                  │  Group by entity   │
-  │ (cached)     │                  │  Update summaries  │
-  └──────────────┘                  └──┬────────────┬────┘
-                                       │            │
-                     ┌─────────────────▼──┐   ┌────▼─────────────┐
-                     │ analytics.score    │   │ analytics        │
-                     │ .updated           │   │ .milestone       │
-                     │                    │   │ .reached         │
-                     └──────┬─────────────┘   └──────┬───────────┘
-                            │                        │
-                    ┌───────┴───────┐       ┌────────┴───────┐
-                    │  Leaderboard  │       │  Achievement   │
-                    │  Service      │       │  Service       │
-                    └───────────────┘       └────────────────┘
+game-session.action.performed --+
+game-session.created -----------+    +---------------------+
+game-session.deleted -----------+---> |  Event Buffer       |
+character-history.* ------------+    |  (Redis Sorted Set) |
+realm-history.* ----------------+    +----------+----------+
+        |                                       |
+        v                       (size >= EventBufferSize OR
+  +--------------+               age >= FlushIntervalSeconds)
+  | Resolution   |                              |
+  | character->  |                    +---------v---------+
+  | realm->      |                    |  Flush (locked)    |
+  | gameService  |                    |  Group by entity   |
+  | (cached)     |                    |  Update summaries  |
+  +--------------+                    +--+------------+----+
+                                         |            |
+                       +-----------------v--+   +----v---------------+
+                       | analytics.score    |   | analytics          |
+                       | .updated           |   | .milestone         |
+                       |                    |   | .reached           |
+                       +------+-------------+   +------+-------------+
+                              |                        |
+                      +-------+-------+       +--------+-------+
+                      |  Leaderboard  |       |  Achievement   |
+                      |  Service      |       |  Service       |
+                      +---------------+       +----------------+
 
 Direct API
-                     ┌─────────────────────┐
-/rating/update ────► │  Lock (game+type)   │
-                     │  Snapshot ratings    │
-                     │  Glicko-2 Calc All  │
-                     │  Save All           │──► analytics.rating.updated
-                     └─────────────────────┘         │
-                                              ┌──────┴──────┐
-                                              │ Leaderboard │
-                                              └─────────────┘
+                       +---------------------+
+/rating/update ------> |  Lock (game+type)   |
+                       |  Snapshot ratings    |
+                       |  Glicko-2 Calc All  |
+                       |  Save All           |---> analytics.rating.updated
+                       +---------------------+         |
+                                                +------+------+
+                                                | Leaderboard |
+                                                +-------------+
 ```
 
 ## Stubs & Unimplemented Features
 
 ### Rating Period Decay
+<!-- AUDIT:NEEDS_DESIGN:2026-02-01:https://github.com/beyond-immersion/bannou-service/issues/249 -->
 
 The Glicko-2 algorithm includes a concept of "rating period decay" where a player's rating deviation increases over time when they don't play. The `CalculateGlicko2Update` handles the no-games case (deviation increases by volatility), but there is no scheduled task or event that triggers this decay for inactive players. Players who stop playing retain their last RD indefinitely.
 
@@ -197,9 +199,9 @@ Milestones are configurable via `MilestoneThresholds` as a global comma-separate
 
 ### Bugs (Fix Immediately)
 
-No bugs identified.
+1. ~~**Unused state store definition `analytics-history`**~~: **FIXED** (2026-02-01) - Removed the unused `analytics-history` Redis store definition from `schemas/state-stores.yaml`. The store was defined but never referenced in code. Updated regression tests accordingly.
 
-### Intentional Quirks
+### Intentional Quirks (Documented Behavior)
 
 1. **GetSkillRating returns default values instead of 404**: When no rating exists for an entity, the endpoint returns 200 with default rating values (1500/350/0.06) and `MatchesPlayed = 0`. New players start at the default rating.
 
@@ -207,6 +209,21 @@ No bugs identified.
 
 3. **History event resolution drops events on failure**: If the realm or character lookup fails when handling history events, the event is silently dropped (not retried). An error event is published for monitoring, but the analytics data is permanently lost. Incorrect data (wrong GameServiceId) is considered worse than missing data.
 
+4. **Cache invalidation is best-effort**: Handlers for `character.updated` and `realm.updated` events catch exceptions and log warnings but do not fail. Stale cache entries will eventually expire via TTL.
+
 ### Design Considerations (Requires Planning)
 
 1. **`string.Empty` default for internal POCO string fields** - `BufferedAnalyticsEvent.EventType`, `GameSessionMappingData.GameType`, and `SkillRatingData.RatingType` use `= string.Empty` defaults. While not a T25 violation (these are strings, not enums), empty strings could mask bugs. Consider using nullable strings with validation at ingestion boundaries.
+
+2. **No automatic controller history cleanup** - The `CleanupControllerHistory` endpoint exists but must be called manually (e.g., via scheduled cron job or orchestrator task). There is no background service that automatically purges expired records. For production deployments, consider adding a periodic cleanup task or documenting the requirement for external scheduling.
+
+## Work Tracking
+
+This section tracks active development work on items from the quirks/bugs lists above.
+
+### Recently Completed
+
+1. **Removed unused `analytics-history` state store** (2026-02-01)
+   - Removed from `schemas/state-stores.yaml`
+   - Regenerated `StateStoreDefinitions.cs` via `generate-state-stores.py`
+   - Updated regression test to verify `analytics-history-data` instead

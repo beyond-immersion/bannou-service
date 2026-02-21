@@ -1,5 +1,20 @@
 #!/bin/bash
 
+# ⛔⛔⛔ AGENT MODIFICATION PROHIBITED ⛔⛔⛔
+# This script is part of Bannou's code generation pipeline.
+# DO NOT MODIFY without EXPLICIT user instructions to change code generation.
+#
+# Changes to generation scripts silently break builds across ALL 48 services.
+# An agent once changed namespace strings across 4 scripts in a single commit,
+# breaking every service. If you believe a change is needed:
+#   1. STOP and explain what you think is wrong
+#   2. Show the EXACT diff you propose
+#   3. Wait for EXPLICIT approval before touching ANY generation script
+#
+# This applies to: namespace strings, output paths, exclusion logic,
+# NSwag parameters, post-processing steps, and file naming conventions.
+# ⛔⛔⛔ AGENT MODIFICATION PROHIBITED ⛔⛔⛔
+
 # Master service generation orchestrator using modular scripts
 # Usage: ./generate-all-services.sh [service-name] [components...]
 # If no service-name provided, processes all services
@@ -45,12 +60,42 @@ else
 fi
 echo ""
 
+# Generate variable provider definitions from schema
+echo -e "${BLUE}🔌 Generating variable provider definitions from schema...${NC}"
+if python3 "$SCRIPT_DIR/generate-variable-providers.py"; then
+    echo -e "${GREEN}✅ Variable provider definitions generated successfully${NC}"
+else
+    echo -e "${RED}❌ Failed to generate variable provider definitions${NC}"
+    exit 1
+fi
+echo ""
+
 # Generate lifecycle events from x-lifecycle definitions in schemas
 echo -e "${BLUE}🔄 Generating lifecycle events from x-lifecycle definitions...${NC}"
 if python3 "$SCRIPT_DIR/generate-lifecycle-events.py"; then
     echo -e "${GREEN}✅ Lifecycle events generated successfully${NC}"
 else
     echo -e "${RED}❌ Failed to generate lifecycle events${NC}"
+    exit 1
+fi
+echo ""
+
+# Generate resource event mappings from x-resource-mapping extensions
+echo -e "${BLUE}📍 Generating resource event mappings from x-resource-mapping...${NC}"
+if python3 "$SCRIPT_DIR/generate-resource-mappings.py"; then
+    echo -e "${GREEN}✅ Resource event mappings generated successfully${NC}"
+else
+    echo -e "${RED}❌ Failed to generate resource event mappings${NC}"
+    exit 1
+fi
+echo ""
+
+# Generate resource templates from x-archive-type extensions
+echo -e "${BLUE}📜 Generating resource templates from x-archive-type...${NC}"
+if python3 "$SCRIPT_DIR/generate-resource-templates.py"; then
+    echo -e "${GREEN}✅ Resource templates generated successfully${NC}"
+else
+    echo -e "${RED}❌ Failed to generate resource templates${NC}"
     exit 1
 fi
 echo ""
@@ -326,12 +371,52 @@ else
 fi
 echo ""
 
+# Generate storyline-theory SDK archive types (x-archive-type: true markers)
+echo -e "${BLUE}📦 Generating storyline-theory SDK archive types...${NC}"
+if ./generate-storyline-archives.sh; then
+    echo -e "${GREEN}✅ Storyline archive types generated successfully${NC}"
+else
+    echo -e "${RED}❌ Failed to generate storyline archive types${NC}"
+    exit 1
+fi
+echo ""
+
 # Generate IServiceNavigator and ServiceNavigator (aggregates all service clients)
 echo -e "${BLUE}🧭 Generating ServiceNavigator (service client aggregator)...${NC}"
 if python3 "$SCRIPT_DIR/generate-service-navigator.py"; then
     echo -e "${GREEN}✅ ServiceNavigator generated successfully${NC}"
 else
     echo -e "${RED}❌ Failed to generate ServiceNavigator${NC}"
+    exit 1
+fi
+echo ""
+
+# Generate resource reference tracking code (for x-references declarations)
+echo -e "${BLUE}🔗 Generating resource reference tracking code...${NC}"
+if python3 "$SCRIPT_DIR/generate-references.py"; then
+    echo -e "${GREEN}✅ Resource reference tracking generated successfully${NC}"
+else
+    echo -e "${RED}❌ Failed to generate resource reference tracking${NC}"
+    exit 1
+fi
+echo ""
+
+# Generate compression callback registration code (for x-compression-callback declarations)
+echo -e "${BLUE}🗜️ Generating compression callback registration code...${NC}"
+if python3 "$SCRIPT_DIR/generate-compression-callbacks.py"; then
+    echo -e "${GREEN}✅ Compression callbacks generated successfully${NC}"
+else
+    echo -e "${RED}❌ Failed to generate compression callbacks${NC}"
+    exit 1
+fi
+echo ""
+
+# Generate event template registration code (for x-event-template declarations)
+echo -e "${BLUE}📨 Generating event template registration code...${NC}"
+if python3 "$SCRIPT_DIR/generate-event-templates.py"; then
+    echo -e "${GREEN}✅ Event templates generated successfully${NC}"
+else
+    echo -e "${RED}❌ Failed to generate event templates${NC}"
     exit 1
 fi
 echo ""

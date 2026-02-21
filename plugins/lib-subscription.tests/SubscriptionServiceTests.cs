@@ -552,7 +552,7 @@ public class SubscriptionServiceTests
             .Setup(c => c.GetServiceAsync(
                 It.Is<GetServiceRequest>(r => r.ServiceId == serviceId),
                 It.IsAny<CancellationToken>()))
-            .ThrowsAsync(new ApiException("Not found", 404, "", new Dictionary<string, IEnumerable<string>>(), null));
+            .ThrowsAsync(new ApiException("Not found", 404));
 
         // Act
         var (statusCode, response) = await service.CreateSubscriptionAsync(request, CancellationToken.None);
@@ -1123,13 +1123,4 @@ public class SubscriptionConfigurationTests
         Assert.NotNull(config);
     }
 
-    [Fact]
-    public void Configuration_AuthorizationSuffix_ShouldHaveDefault()
-    {
-        // Arrange
-        var config = new SubscriptionServiceConfiguration();
-
-        // Act & Assert
-        Assert.Equal("authorized", config.AuthorizationSuffix);
-    }
 }

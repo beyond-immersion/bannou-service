@@ -1,0 +1,34 @@
+# Prometheus Configuration for Bannou Observability Stack
+# Scrapes metrics from OTEL Collector and Bannou /metrics endpoint
+
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+scrape_configs:
+  # Scrape OTEL Collector's Prometheus exporter
+  # This receives metrics forwarded from Bannou via OTLP
+  - job_name: 'otel-collector'
+    static_configs:
+      - targets: ['otel-collector:8889']
+    scrape_interval: 10s
+
+  # Scrape Bannou's native Prometheus endpoint directly
+  # This is a backup/alternative to OTLP for metrics
+  - job_name: 'bannou'
+    static_configs:
+      - targets: ['bannou:80']
+    metrics_path: '/metrics'
+    scrape_interval: 15s
+
+  # Scrape Tempo metrics
+  - job_name: 'tempo'
+    static_configs:
+      - targets: ['tempo:9095']
+    scrape_interval: 30s
+
+  # Prometheus self-monitoring
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+    scrape_interval: 30s

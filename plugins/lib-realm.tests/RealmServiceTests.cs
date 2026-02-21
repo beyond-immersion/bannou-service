@@ -1,8 +1,12 @@
 using BeyondImmersion.BannouService;
+using BeyondImmersion.BannouService.Character;
 using BeyondImmersion.BannouService.Events;
+using BeyondImmersion.BannouService.Location;
 using BeyondImmersion.BannouService.Messaging;
 using BeyondImmersion.BannouService.Realm;
+using BeyondImmersion.BannouService.Resource;
 using BeyondImmersion.BannouService.Services;
+using BeyondImmersion.BannouService.Species;
 using BeyondImmersion.BannouService.State;
 using BeyondImmersion.BannouService.Testing;
 using BeyondImmersion.BannouService.TestUtilities;
@@ -29,6 +33,10 @@ public class RealmServiceTests : ServiceTestBase<RealmServiceConfiguration>
     private readonly Mock<IStateStore<List<Guid>>> _mockListStore;
     private readonly Mock<ILogger<RealmService>> _mockLogger;
     private readonly Mock<IEventConsumer> _mockEventConsumer;
+    private readonly Mock<IResourceClient> _mockResourceClient;
+    private readonly Mock<ISpeciesClient> _mockSpeciesClient;
+    private readonly Mock<ILocationClient> _mockLocationClient;
+    private readonly Mock<ICharacterClient> _mockCharacterClient;
 
     private const string STATE_STORE = "realm-statestore";
     private const string PUBSUB_NAME = "bannou-pubsub";
@@ -45,6 +53,10 @@ public class RealmServiceTests : ServiceTestBase<RealmServiceConfiguration>
         _mockListStore = new Mock<IStateStore<List<Guid>>>();
         _mockLogger = new Mock<ILogger<RealmService>>();
         _mockEventConsumer = new Mock<IEventConsumer>();
+        _mockResourceClient = new Mock<IResourceClient>();
+        _mockSpeciesClient = new Mock<ISpeciesClient>();
+        _mockLocationClient = new Mock<ILocationClient>();
+        _mockCharacterClient = new Mock<ICharacterClient>();
 
         // Setup factory to return typed stores
         _mockStateStoreFactory
@@ -71,7 +83,11 @@ public class RealmServiceTests : ServiceTestBase<RealmServiceConfiguration>
             _mockMessageBus.Object,
             _mockLogger.Object,
             Configuration,
-            _mockEventConsumer.Object);
+            _mockEventConsumer.Object,
+            _mockResourceClient.Object,
+            _mockSpeciesClient.Object,
+            _mockLocationClient.Object,
+            _mockCharacterClient.Object);
     }
 
     /// <summary>
@@ -162,30 +178,6 @@ public class RealmServiceTests : ServiceTestBase<RealmServiceConfiguration>
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
         Assert.Null(response);
-    }
-
-    [Fact]
-    public async Task GetRealmAsync_WhenStoreFails_ShouldReturnInternalServerError()
-    {
-        // Arrange
-        var service = CreateService();
-        var realmId = Guid.NewGuid();
-        var request = new GetRealmRequest { RealmId = realmId };
-
-        _mockRealmStore
-            .Setup(s => s.GetAsync($"{REALM_KEY_PREFIX}{realmId}", It.IsAny<CancellationToken>()))
-            .ThrowsAsync(new Exception("State store connection failed"));
-
-        // Act
-        var (status, response) = await service.GetRealmAsync(request);
-
-        // Assert
-        Assert.Equal(StatusCodes.InternalServerError, status);
-        Assert.Null(response);
-        _mockMessageBus.Verify(m => m.TryPublishErrorAsync(
-            "realm", "GetRealm", "unexpected_exception", It.IsAny<string>(),
-            It.IsAny<string?>(), It.IsAny<string?>(), It.IsAny<ServiceErrorEventSeverity>(),
-            It.IsAny<object?>(), It.IsAny<string?>(), It.IsAny<Guid?>(), default), Times.Once);
     }
 
     #endregion
@@ -340,6 +332,161 @@ public class RealmServiceTests : ServiceTestBase<RealmServiceConfiguration>
         Assert.NotNull(response);
         Assert.True(response.Exists);
         Assert.False(response.IsActive); // Deprecated realms are not active
+    }
+
+    #endregion
+
+    #region RealmsExistBatch Tests
+
+    [Fact]
+    public async Task RealmsExistBatchAsync_WhenEmpty_ShouldReturnSuccessWithAllFlags()
+    {
+        // Arrange
+        var service = CreateService();
+        var request = new RealmsExistBatchRequest { RealmIds = new List<Guid>() };
+
+        // Act
+        var (status, response) = await service.RealmsExistBatchAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Empty(response.Results);
+        Assert.True(response.AllExist);
+        Assert.True(response.AllActive);
+        Assert.Empty(response.InvalidRealmIds);
+        Assert.Empty(response.DeprecatedRealmIds);
+    }
+
+    [Fact]
+    public async Task RealmsExistBatchAsync_WhenAllExistAndActive_ShouldReturnAllFlagsTrue()
+    {
+        // Arrange
+        var service = CreateService();
+        var realmId1 = Guid.NewGuid();
+        var realmId2 = Guid.NewGuid();
+        var request = new RealmsExistBatchRequest { RealmIds = new List<Guid> { realmId1, realmId2 } };
+
+        var model1 = CreateTestRealmModel(realmId1, "REALM1", isActive: true, isDeprecated: false);
+        var model2 = CreateTestRealmModel(realmId2, "REALM2", isActive: true, isDeprecated: false);
+
+        var bulkResult = new Dictionary<string, RealmModel?>
+        {
+            [$"{REALM_KEY_PREFIX}{realmId1}"] = model1,
+            [$"{REALM_KEY_PREFIX}{realmId2}"] = model2
+        };
+
+        _mockRealmStore
+            .Setup(s => s.GetBulkAsync(It.IsAny<IEnumerable<string>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(bulkResult);
+
+        // Act
+        var (status, response) = await service.RealmsExistBatchAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Equal(2, response.Results.Count);
+        Assert.True(response.AllExist);
+        Assert.True(response.AllActive);
+        Assert.Empty(response.InvalidRealmIds);
+        Assert.Empty(response.DeprecatedRealmIds);
+
+        // Verify order matches request
+        var resultsList = response.Results.ToList();
+        Assert.True(resultsList[0].Exists);
+        Assert.True(resultsList[0].IsActive);
+        Assert.True(resultsList[1].Exists);
+        Assert.True(resultsList[1].IsActive);
+    }
+
+    [Fact]
+    public async Task RealmsExistBatchAsync_WhenSomeNotFound_ShouldReturnInvalidIds()
+    {
+        // Arrange
+        var service = CreateService();
+        var realmId1 = Guid.NewGuid();
+        var realmId2 = Guid.NewGuid(); // This one won't exist
+        var request = new RealmsExistBatchRequest { RealmIds = new List<Guid> { realmId1, realmId2 } };
+
+        var model1 = CreateTestRealmModel(realmId1, "REALM1", isActive: true, isDeprecated: false);
+
+        // Only return model1, model2 is not in results (simulating missing realm)
+        var bulkResult = new Dictionary<string, RealmModel?>
+        {
+            [$"{REALM_KEY_PREFIX}{realmId1}"] = model1,
+            [$"{REALM_KEY_PREFIX}{realmId2}"] = null
+        };
+
+        _mockRealmStore
+            .Setup(s => s.GetBulkAsync(It.IsAny<IEnumerable<string>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(bulkResult);
+
+        // Act
+        var (status, response) = await service.RealmsExistBatchAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Equal(2, response.Results.Count);
+        Assert.False(response.AllExist);
+        Assert.False(response.AllActive);
+        Assert.Single(response.InvalidRealmIds);
+        Assert.Contains(realmId2, response.InvalidRealmIds);
+        Assert.Empty(response.DeprecatedRealmIds);
+
+        // First realm exists and is active
+        var resultsList = response.Results.ToList();
+        Assert.True(resultsList[0].Exists);
+        Assert.True(resultsList[0].IsActive);
+
+        // Second realm doesn't exist
+        Assert.False(resultsList[1].Exists);
+        Assert.False(resultsList[1].IsActive);
+    }
+
+    [Fact]
+    public async Task RealmsExistBatchAsync_WhenSomeDeprecated_ShouldReturnDeprecatedIds()
+    {
+        // Arrange
+        var service = CreateService();
+        var realmId1 = Guid.NewGuid();
+        var realmId2 = Guid.NewGuid(); // This one is deprecated
+        var request = new RealmsExistBatchRequest { RealmIds = new List<Guid> { realmId1, realmId2 } };
+
+        var model1 = CreateTestRealmModel(realmId1, "REALM1", isActive: true, isDeprecated: false);
+        var model2 = CreateTestRealmModel(realmId2, "REALM2", isActive: true, isDeprecated: true);
+
+        var bulkResult = new Dictionary<string, RealmModel?>
+        {
+            [$"{REALM_KEY_PREFIX}{realmId1}"] = model1,
+            [$"{REALM_KEY_PREFIX}{realmId2}"] = model2
+        };
+
+        _mockRealmStore
+            .Setup(s => s.GetBulkAsync(It.IsAny<IEnumerable<string>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(bulkResult);
+
+        // Act
+        var (status, response) = await service.RealmsExistBatchAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Equal(2, response.Results.Count);
+        Assert.True(response.AllExist); // Both exist
+        Assert.False(response.AllActive); // One is deprecated
+        Assert.Empty(response.InvalidRealmIds);
+        Assert.Single(response.DeprecatedRealmIds);
+        Assert.Contains(realmId2, response.DeprecatedRealmIds);
+
+        // First realm is active
+        var resultsList = response.Results.ToList();
+        Assert.True(resultsList[0].IsActive);
+
+        // Second realm exists but is not active (deprecated)
+        Assert.True(resultsList[1].Exists);
+        Assert.False(resultsList[1].IsActive);
     }
 
     #endregion

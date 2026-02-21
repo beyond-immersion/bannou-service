@@ -3,6 +3,7 @@
 // Extension methods for working with IntentEmission TargetPosition data.
 // =============================================================================
 
+using BeyondImmersion.Bannou.BehaviorCompiler.Archetypes;
 using BeyondImmersion.BannouService.Behavior;
 using System.Numerics;
 

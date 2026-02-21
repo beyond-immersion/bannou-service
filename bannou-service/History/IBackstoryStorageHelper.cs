@@ -149,6 +149,16 @@ public record BackstoryStorageConfiguration<TBackstory, TElement>
     /// Sets the updated timestamp on a backstory container.
     /// </summary>
     public required Action<TBackstory, long> SetUpdatedAtUnix { get; init; }
+
+    /// <summary>
+    /// Provider for distributed locking during write operations.
+    /// </summary>
+    public required IDistributedLockProvider LockProvider { get; init; }
+
+    /// <summary>
+    /// Timeout in seconds for distributed lock acquisition.
+    /// </summary>
+    public required int LockTimeoutSeconds { get; init; }
 }
 
 /// <summary>
@@ -161,6 +171,7 @@ public record BackstoryOperationResult<TBackstory>(TBackstory Backstory, bool Is
 
 /// <summary>
 /// Interface for managing backstory/lore element storage with merge/replace semantics.
+/// Write operations acquire a distributed lock on the entity ID per IMPLEMENTATION TENETS.
 /// </summary>
 /// <typeparam name="TBackstory">Type of the backstory container.</typeparam>
 /// <typeparam name="TElement">Type of elements in the backstory.</typeparam>
@@ -180,13 +191,14 @@ public interface IBackstoryStorageHelper<TBackstory, TElement>
 
     /// <summary>
     /// Sets backstory elements with merge or replace semantics.
+    /// Acquires a distributed lock on the entity ID before modifying data.
     /// </summary>
     /// <param name="entityId">The entity identifier.</param>
     /// <param name="elements">Elements to set.</param>
     /// <param name="replaceExisting">If true, replaces all elements. If false, merges by type+key.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
-    /// <returns>Result containing the backstory and whether it was newly created.</returns>
-    Task<BackstoryOperationResult<TBackstory>> SetAsync(
+    /// <returns>Lockable result containing the backstory operation result.</returns>
+    Task<LockableResult<BackstoryOperationResult<TBackstory>>> SetAsync(
         string entityId,
         IReadOnlyList<TElement> elements,
         bool replaceExisting,
@@ -194,23 +206,25 @@ public interface IBackstoryStorageHelper<TBackstory, TElement>
 
     /// <summary>
     /// Adds or updates a single element.
+    /// Acquires a distributed lock on the entity ID before modifying data.
     /// </summary>
     /// <param name="entityId">The entity identifier.</param>
     /// <param name="element">Element to add or update.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
-    /// <returns>Result containing the backstory and whether it was newly created.</returns>
-    Task<BackstoryOperationResult<TBackstory>> AddElementAsync(
+    /// <returns>Lockable result containing the backstory operation result.</returns>
+    Task<LockableResult<BackstoryOperationResult<TBackstory>>> AddElementAsync(
         string entityId,
         TElement element,
         CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Deletes a backstory.
+    /// Acquires a distributed lock on the entity ID before deleting.
     /// </summary>
     /// <param name="entityId">The entity identifier.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
-    /// <returns>True if backstory existed and was deleted.</returns>
-    Task<bool> DeleteAsync(
+    /// <returns>Lockable result containing whether backstory existed and was deleted.</returns>
+    Task<LockableResult<bool>> DeleteAsync(
         string entityId,
         CancellationToken cancellationToken = default);
 

@@ -31,6 +31,88 @@ namespace BeyondImmersion.BannouService.Connect;
 using System = global::System;
 
 /// <summary>
+/// Request to proxy a meta endpoint call with permission validation
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class GetEndpointMetaRequest
+{
+
+    /// <summary>
+    /// Full meta endpoint path including meta type suffix (e.g., "/account/get/meta/info" or "/character/create/meta/request-schema"). Connect parses the service name, base endpoint, and meta type from this path.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("path")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string Path { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Meta endpoint response mirroring the internal MetaResponse structure
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class GetEndpointMetaResponse
+{
+
+    /// <summary>
+    /// Type of metadata returned (endpoint-info, request-schema, response-schema, full-schema)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("metaType")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string MetaType { get; set; } = default!;
+
+    /// <summary>
+    /// Service name that owns this endpoint (e.g., "Account")
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("serviceName")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string ServiceName { get; set; } = default!;
+
+    /// <summary>
+    /// HTTP method for the endpoint (e.g., "POST")
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("method")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string Method { get; set; } = default!;
+
+    /// <summary>
+    /// Endpoint path (e.g., "/account/get")
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("path")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string Path { get; set; } = default!;
+
+    /// <summary>
+    /// Metadata payload whose structure varies by metaType (endpoint-info returns summary/tags/operationId, request-schema and response-schema return JSON Schema objects, full-schema returns all three combined)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("data")]
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
+    public object Data { get; set; } = new object();
+
+    /// <summary>
+    /// When this response was generated (UTC)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("generatedAt")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset GeneratedAt { get; set; } = default!;
+
+    /// <summary>
+    /// Schema version (assembly version) for cache invalidation
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("schemaVersion")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string SchemaVersion { get; set; } = default!;
+
+}
+
+/// <summary>
 /// Request to get all active WebSocket sessions for an account
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
@@ -419,6 +501,13 @@ public partial class ConnectRequest
 /// Response codes used in the binary protocol for success/error indication.
 /// <br/>Provides fine-grained error reporting for different failure scenarios.
 /// <br/>
+/// <br/>**Request error codes (10-19):**
+/// <br/>- 10 (RequestError): Generic malformed request
+/// <br/>- 11 (RequestTooLarge): Payload exceeds maximum size
+/// <br/>- 12 (TooManyRequests): Rate limit exceeded
+/// <br/>- 13 (InvalidRequestChannel): Invalid channel number
+/// <br/>- 14 (TextProtocolNotSupported): Text WebSocket frames are not supported; use binary protocol
+/// <br/>
 /// <br/>**Broadcast error codes (40-49):**
 /// <br/>- 40 (BroadcastNotAllowed): Broadcast attempted in External mode where it is forbidden
 /// <br/>
@@ -442,6 +531,8 @@ public enum ResponseCodes
     TooManyRequests = 12,
 
     InvalidRequestChannel = 13,
+
+    TextProtocolNotSupported = 14,
 
     Unauthorized = 20,
 
@@ -866,52 +957,27 @@ public partial class ClientRPCResponseEvent
 }
 
 /// <summary>
-/// Event to trigger permission recompilation for all sessions.
-/// <br/>Published when services register new APIs or permission rules change.
-/// <br/>
+/// How Connect manages companion chat rooms for WebSocket sessions
 /// </summary>
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class PermissionRecompileEvent
+public enum CompanionRoomMode
 {
 
-    /// <summary>
-    /// Unique identifier for this recompilation event
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("eventId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public string EventId { get; set; } = default!;
+    [System.Runtime.Serialization.EnumMember(Value = @"Disabled")]
+    Disabled = 0,
 
-    /// <summary>
-    /// When the recompilation was triggered
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("timestamp")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.DateTimeOffset Timestamp { get; set; } = default!;
+    [System.Runtime.Serialization.EnumMember(Value = @"AutoJoinLazy")]
+    AutoJoinLazy = 1,
 
-    /// <summary>
-    /// Reason for triggering permission recompilation
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("reason")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public PermissionRecompileEventReason Reason { get; set; } = default!;
+    [System.Runtime.Serialization.EnumMember(Value = @"AutoJoin")]
+    AutoJoin = 2,
 
-    /// <summary>
-    /// Service ID that triggered the recompilation (if applicable)
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("serviceId")]
-    public string? ServiceId { get; set; } = default!;
-
-    /// <summary>
-    /// Additional context for the recompilation
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("metadata")]
-    public object? Metadata { get; set; } = default!;
+    [System.Runtime.Serialization.EnumMember(Value = @"Manual")]
+    Manual = 3,
 
 }
+#pragma warning restore CS1591
 
 #pragma warning disable CS1591 // Enum members cannot have XML documentation
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
@@ -999,26 +1065,6 @@ public enum InternalProxyRequestMethod
 
     [System.Runtime.Serialization.EnumMember(Value = @"PATCH")]
     PATCH = 4,
-
-}
-#pragma warning restore CS1591
-
-#pragma warning disable CS1591 // Enum members cannot have XML documentation
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum PermissionRecompileEventReason
-{
-
-    [System.Runtime.Serialization.EnumMember(Value = @"service_registered")]
-    ServiceRegistered = 0,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"permission_rules_changed")]
-    PermissionRulesChanged = 1,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"role_definitions_updated")]
-    RoleDefinitionsUpdated = 2,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"manual_trigger")]
-    ManualTrigger = 3,
 
 }
 #pragma warning restore CS1591

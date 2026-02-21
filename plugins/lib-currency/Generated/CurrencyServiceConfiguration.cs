@@ -12,7 +12,7 @@
 //
 //     IMPLEMENTATION TENETS - Configuration-First:
 //     - Access configuration via dependency injection, never Environment.GetEnvironmentVariable.
-//     - ALL properties below MUST be referenced in CurrencyService.cs (no dead config).
+//     - ALL properties below MUST be referenced somewhere in the plugin (no dead config).
 //     - Any hardcoded tunable (limit, timeout, threshold, capacity) in service code means
 //       a configuration property is MISSING - add it to the configuration schema.
 //     - If a property is unused, remove it from the configuration schema.
@@ -32,22 +32,6 @@ using BeyondImmersion.BannouService.Configuration;
 
 namespace BeyondImmersion.BannouService.Currency;
 
-
-#pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
-/// <summary>
-/// Default precision for currencies that do not specify
-/// </summary>
-public enum DefaultPrecision
-{
-    Integer,
-    Decimal2,
-    Decimal4,
-    Decimal8,
-    DecimalFull,
-    BigInteger,
-}
-#pragma warning restore CS1591
-
 /// <summary>
 /// Configuration class for Currency service.
 /// Properties are automatically bound from environment variables.
@@ -56,7 +40,7 @@ public enum DefaultPrecision
 /// <para>
 /// <b>IMPLEMENTATION TENETS - Configuration-First:</b> Access configuration via dependency injection.
 /// Never use <c>Environment.GetEnvironmentVariable()</c> directly in service code.
-/// ALL properties in this class MUST be referenced in the service implementation.
+/// ALL properties in this class MUST be referenced somewhere in the plugin.
 /// If a property is unused, remove it from the configuration schema.
 /// </para>
 /// <para>
@@ -79,7 +63,7 @@ public class CurrencyServiceConfiguration : IServiceConfiguration
     /// Default precision for currencies that do not specify
     /// Environment variable: CURRENCY_DEFAULT_PRECISION
     /// </summary>
-    public DefaultPrecision DefaultPrecision { get; set; } = DefaultPrecision.Decimal2;
+    public CurrencyPrecision DefaultPrecision { get; set; } = CurrencyPrecision.Decimal2;
 
     /// <summary>
     /// How autogain is calculated (lazy = on-demand at query time, task = background processing)

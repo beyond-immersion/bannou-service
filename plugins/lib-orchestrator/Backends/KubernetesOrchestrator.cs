@@ -691,6 +691,42 @@ public class KubernetesOrchestrator : IContainerOrchestrator
         }
     }
 
+    /// <inheritdoc />
+    public Task<PruneResult> PruneNetworksAsync(CancellationToken cancellationToken = default)
+    {
+        // Kubernetes network policies and services are managed differently than Docker
+        _logger.LogDebug("Network pruning not applicable to Kubernetes - networks are managed by CNI");
+        return Task.FromResult(new PruneResult
+        {
+            Success = true,
+            Message = "Network pruning not applicable to Kubernetes (CNI-managed)"
+        });
+    }
+
+    /// <inheritdoc />
+    public Task<PruneResult> PruneVolumesAsync(CancellationToken cancellationToken = default)
+    {
+        // Kubernetes PersistentVolumeClaims require explicit deletion
+        _logger.LogWarning("Volume pruning in Kubernetes requires explicit PVC management - not supported via orchestrator");
+        return Task.FromResult(new PruneResult
+        {
+            Success = false,
+            Message = "Volume pruning not supported in Kubernetes mode - manage PVCs directly"
+        });
+    }
+
+    /// <inheritdoc />
+    public Task<PruneResult> PruneImagesAsync(CancellationToken cancellationToken = default)
+    {
+        // Image pruning in Kubernetes happens at the node level via kubelet garbage collection
+        _logger.LogDebug("Image pruning in Kubernetes is handled by kubelet garbage collection");
+        return Task.FromResult(new PruneResult
+        {
+            Success = true,
+            Message = "Image pruning handled automatically by kubelet garbage collection"
+        });
+    }
+
     public void Dispose()
     {
         _client.Dispose();

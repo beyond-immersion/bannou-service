@@ -24,7 +24,14 @@ public enum StateBackend
     /// In-memory backend for testing/minimal infrastructure.
     /// Data is NOT persisted across restarts.
     /// </summary>
-    Memory
+    Memory,
+
+    /// <summary>
+    /// SQLite backend for local/self-hosted deployments.
+    /// Provides SQL query support (IQueryableStateStore, IJsonQueryableStateStore)
+    /// without requiring external MySQL infrastructure. Data IS persisted to file.
+    /// </summary>
+    Sqlite
 }
 
 /// <summary>
@@ -113,255 +120,36 @@ public interface IStateStore<TValue>
         IEnumerable<string> keys,
         CancellationToken cancellationToken = default);
 
-    // ==================== Set Operations ====================
-    // Sets are collections of unique items stored under a single key.
-    // Supported by Redis (native sets) and InMemory backends.
-    // MySQL throws NotSupportedException - use key-value with list serialization instead.
-
     /// <summary>
-    /// Add an item to a set. Creates the set if it doesn't exist.
+    /// Bulk save multiple key-value pairs.
     /// </summary>
-    /// <typeparam name="TItem">Type of item to add.</typeparam>
-    /// <param name="key">The set key.</param>
-    /// <param name="item">The item to add.</param>
-    /// <param name="options">Optional state options (TTL applies to entire set).</param>
+    /// <param name="items">Key-value pairs to save.</param>
+    /// <param name="options">Optional state options (TTL, consistency).</param>
     /// <param name="cancellationToken">Cancellation token.</param>
-    /// <returns>True if item was added, false if already existed.</returns>
-    /// <exception cref="NotSupportedException">Thrown by MySQL backend.</exception>
-    Task<bool> AddToSetAsync<TItem>(
-        string key,
-        TItem item,
+    /// <returns>Dictionary of key to ETag for successful saves.</returns>
+    Task<IReadOnlyDictionary<string, string>> SaveBulkAsync(
+        IEnumerable<KeyValuePair<string, TValue>> items,
         StateOptions? options = null,
         CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Add multiple items to a set. Creates the set if it doesn't exist.
+    /// Check existence of multiple keys.
     /// </summary>
-    /// <typeparam name="TItem">Type of items to add.</typeparam>
-    /// <param name="key">The set key.</param>
-    /// <param name="items">The items to add.</param>
-    /// <param name="options">Optional state options (TTL applies to entire set).</param>
+    /// <param name="keys">Keys to check.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
-    /// <returns>Number of items actually added (excludes duplicates).</returns>
-    /// <exception cref="NotSupportedException">Thrown by MySQL backend.</exception>
-    Task<long> AddToSetAsync<TItem>(
-        string key,
-        IEnumerable<TItem> items,
-        StateOptions? options = null,
+    /// <returns>Set of keys that exist.</returns>
+    Task<IReadOnlySet<string>> ExistsBulkAsync(
+        IEnumerable<string> keys,
         CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Remove an item from a set.
+    /// Delete multiple keys.
     /// </summary>
-    /// <typeparam name="TItem">Type of item to remove.</typeparam>
-    /// <param name="key">The set key.</param>
-    /// <param name="item">The item to remove.</param>
+    /// <param name="keys">Keys to delete.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
-    /// <returns>True if item was removed, false if not found.</returns>
-    /// <exception cref="NotSupportedException">Thrown by MySQL backend.</exception>
-    Task<bool> RemoveFromSetAsync<TItem>(
-        string key,
-        TItem item,
-        CancellationToken cancellationToken = default);
-
-    /// <summary>
-    /// Get all items in a set.
-    /// </summary>
-    /// <typeparam name="TItem">Type of items in the set.</typeparam>
-    /// <param name="key">The set key.</param>
-    /// <param name="cancellationToken">Cancellation token.</param>
-    /// <returns>All items in the set, or empty list if set doesn't exist.</returns>
-    /// <exception cref="NotSupportedException">Thrown by MySQL backend.</exception>
-    Task<IReadOnlyList<TItem>> GetSetAsync<TItem>(
-        string key,
-        CancellationToken cancellationToken = default);
-
-    /// <summary>
-    /// Check if an item exists in a set.
-    /// </summary>
-    /// <typeparam name="TItem">Type of item to check.</typeparam>
-    /// <param name="key">The set key.</param>
-    /// <param name="item">The item to check for.</param>
-    /// <param name="cancellationToken">Cancellation token.</param>
-    /// <returns>True if item exists in set.</returns>
-    /// <exception cref="NotSupportedException">Thrown by MySQL backend.</exception>
-    Task<bool> SetContainsAsync<TItem>(
-        string key,
-        TItem item,
-        CancellationToken cancellationToken = default);
-
-    /// <summary>
-    /// Get the number of items in a set.
-    /// </summary>
-    /// <param name="key">The set key.</param>
-    /// <param name="cancellationToken">Cancellation token.</param>
-    /// <returns>Number of items in the set, or 0 if set doesn't exist.</returns>
-    /// <exception cref="NotSupportedException">Thrown by MySQL backend.</exception>
-    Task<long> SetCountAsync(
-        string key,
-        CancellationToken cancellationToken = default);
-
-    /// <summary>
-    /// Delete an entire set.
-    /// </summary>
-    /// <param name="key">The set key.</param>
-    /// <param name="cancellationToken">Cancellation token.</param>
-    /// <returns>True if set existed and was deleted.</returns>
-    /// <exception cref="NotSupportedException">Thrown by MySQL backend.</exception>
-    Task<bool> DeleteSetAsync(
-        string key,
-        CancellationToken cancellationToken = default);
-
-    /// <summary>
-    /// Refresh/extend the TTL on a set without modifying its contents.
-    /// Useful for keeping a set alive while it's still in use.
-    /// </summary>
-    /// <param name="key">The set key.</param>
-    /// <param name="ttlSeconds">New TTL in seconds.</param>
-    /// <param name="cancellationToken">Cancellation token.</param>
-    /// <returns>True if set exists and TTL was updated.</returns>
-    /// <exception cref="NotSupportedException">Thrown by MySQL backend.</exception>
-    Task<bool> RefreshSetTtlAsync(
-        string key,
-        int ttlSeconds,
-        CancellationToken cancellationToken = default);
-
-    // ==================== Sorted Set Operations ====================
-    // Sorted sets store members with scores, enabling ranked queries (leaderboards).
-    // Supported by Redis only (native sorted sets with O(log N) operations).
-    // MySQL and InMemory backends throw NotSupportedException.
-
-    /// <summary>
-    /// Add a member to a sorted set with the given score.
-    /// Creates the sorted set if it doesn't exist.
-    /// If member already exists, its score is updated.
-    /// </summary>
-    /// <param name="key">The sorted set key.</param>
-    /// <param name="member">The member to add (typically entity_type:entity_id).</param>
-    /// <param name="score">The score for ranking.</param>
-    /// <param name="options">Optional state options (TTL applies to entire sorted set).</param>
-    /// <param name="cancellationToken">Cancellation token.</param>
-    /// <returns>True if member was newly added, false if score was updated.</returns>
-    /// <exception cref="NotSupportedException">Thrown by MySQL and InMemory backends.</exception>
-    Task<bool> SortedSetAddAsync(
-        string key,
-        string member,
-        double score,
-        StateOptions? options = null,
-        CancellationToken cancellationToken = default);
-
-    /// <summary>
-    /// Add multiple members to a sorted set with their scores.
-    /// Creates the sorted set if it doesn't exist.
-    /// Existing members have their scores updated.
-    /// </summary>
-    /// <param name="key">The sorted set key.</param>
-    /// <param name="entries">Members and their scores.</param>
-    /// <param name="options">Optional state options (TTL applies to entire sorted set).</param>
-    /// <param name="cancellationToken">Cancellation token.</param>
-    /// <returns>Number of members newly added (not including score updates).</returns>
-    /// <exception cref="NotSupportedException">Thrown by MySQL and InMemory backends.</exception>
-    Task<long> SortedSetAddBatchAsync(
-        string key,
-        IEnumerable<(string member, double score)> entries,
-        StateOptions? options = null,
-        CancellationToken cancellationToken = default);
-
-    /// <summary>
-    /// Remove a member from a sorted set.
-    /// </summary>
-    /// <param name="key">The sorted set key.</param>
-    /// <param name="member">The member to remove.</param>
-    /// <param name="cancellationToken">Cancellation token.</param>
-    /// <returns>True if member was removed, false if not found.</returns>
-    /// <exception cref="NotSupportedException">Thrown by MySQL and InMemory backends.</exception>
-    Task<bool> SortedSetRemoveAsync(
-        string key,
-        string member,
-        CancellationToken cancellationToken = default);
-
-    /// <summary>
-    /// Get the score of a member in a sorted set.
-    /// </summary>
-    /// <param name="key">The sorted set key.</param>
-    /// <param name="member">The member to get score for.</param>
-    /// <param name="cancellationToken">Cancellation token.</param>
-    /// <returns>The member's score, or null if member not found.</returns>
-    /// <exception cref="NotSupportedException">Thrown by MySQL and InMemory backends.</exception>
-    Task<double?> SortedSetScoreAsync(
-        string key,
-        string member,
-        CancellationToken cancellationToken = default);
-
-    /// <summary>
-    /// Get the rank (position) of a member in a sorted set.
-    /// Rank is 0-based (first place = 0).
-    /// </summary>
-    /// <param name="key">The sorted set key.</param>
-    /// <param name="member">The member to get rank for.</param>
-    /// <param name="descending">If true, rank by highest score first (default for leaderboards).</param>
-    /// <param name="cancellationToken">Cancellation token.</param>
-    /// <returns>The member's 0-based rank, or null if member not found.</returns>
-    /// <exception cref="NotSupportedException">Thrown by MySQL and InMemory backends.</exception>
-    Task<long?> SortedSetRankAsync(
-        string key,
-        string member,
-        bool descending = true,
-        CancellationToken cancellationToken = default);
-
-    /// <summary>
-    /// Get members by rank range (e.g., top 10, ranks 50-60).
-    /// </summary>
-    /// <param name="key">The sorted set key.</param>
-    /// <param name="start">Start rank (0-based, inclusive).</param>
-    /// <param name="stop">Stop rank (0-based, inclusive). Use -1 for end.</param>
-    /// <param name="descending">If true, rank by highest score first (default for leaderboards).</param>
-    /// <param name="cancellationToken">Cancellation token.</param>
-    /// <returns>List of members with their scores, ordered by rank.</returns>
-    /// <exception cref="NotSupportedException">Thrown by MySQL and InMemory backends.</exception>
-    Task<IReadOnlyList<(string member, double score)>> SortedSetRangeByRankAsync(
-        string key,
-        long start,
-        long stop,
-        bool descending = true,
-        CancellationToken cancellationToken = default);
-
-    /// <summary>
-    /// Get the number of members in a sorted set.
-    /// </summary>
-    /// <param name="key">The sorted set key.</param>
-    /// <param name="cancellationToken">Cancellation token.</param>
-    /// <returns>Number of members, or 0 if sorted set doesn't exist.</returns>
-    /// <exception cref="NotSupportedException">Thrown by MySQL and InMemory backends.</exception>
-    Task<long> SortedSetCountAsync(
-        string key,
-        CancellationToken cancellationToken = default);
-
-    /// <summary>
-    /// Increment a member's score in a sorted set.
-    /// Creates the member with the increment as score if it doesn't exist.
-    /// </summary>
-    /// <param name="key">The sorted set key.</param>
-    /// <param name="member">The member whose score to increment.</param>
-    /// <param name="increment">Amount to add to score (can be negative).</param>
-    /// <param name="cancellationToken">Cancellation token.</param>
-    /// <returns>The new score after incrementing.</returns>
-    /// <exception cref="NotSupportedException">Thrown by MySQL and InMemory backends.</exception>
-    Task<double> SortedSetIncrementAsync(
-        string key,
-        string member,
-        double increment,
-        CancellationToken cancellationToken = default);
-
-    /// <summary>
-    /// Delete an entire sorted set.
-    /// </summary>
-    /// <param name="key">The sorted set key.</param>
-    /// <param name="cancellationToken">Cancellation token.</param>
-    /// <returns>True if sorted set existed and was deleted.</returns>
-    /// <exception cref="NotSupportedException">Thrown by MySQL and InMemory backends.</exception>
-    Task<bool> SortedSetDeleteAsync(
-        string key,
+    /// <returns>Count of keys actually deleted.</returns>
+    Task<int> DeleteBulkAsync(
+        IEnumerable<string> keys,
         CancellationToken cancellationToken = default);
 }
 
@@ -494,6 +282,29 @@ public interface IStateStoreFactory
         where TValue : class;
 
     /// <summary>
+    /// Get cacheable store with Set and Sorted Set operations (Redis or InMemory only).
+    /// Use this when you need set membership or leaderboard operations.
+    /// </summary>
+    /// <typeparam name="TValue">Value type to store.</typeparam>
+    /// <param name="storeName">Name of the configured store.</param>
+    /// <returns>Cacheable state store instance.</returns>
+    /// <exception cref="InvalidOperationException">Thrown if store is not configured or uses MySQL backend.</exception>
+    ICacheableStateStore<TValue> GetCacheableStore<TValue>(string storeName)
+        where TValue : class;
+
+    /// <summary>
+    /// Async version of GetCacheableStore - ensures initialization completes without blocking.
+    /// Preferred over GetCacheableStore() in async contexts.
+    /// </summary>
+    /// <typeparam name="TValue">Value type to store.</typeparam>
+    /// <param name="storeName">Name of the configured store.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Cacheable state store instance.</returns>
+    /// <exception cref="InvalidOperationException">Thrown if store is not configured or uses MySQL backend.</exception>
+    Task<ICacheableStateStore<TValue>> GetCacheableStoreAsync<TValue>(string storeName, CancellationToken cancellationToken = default)
+        where TValue : class;
+
+    /// <summary>
     /// Check if store supports full-text search.
     /// </summary>
     /// <param name="storeName">Name of the store to check.</param>
@@ -536,6 +347,38 @@ public interface IStateStoreFactory
     /// <param name="backend">Backend type to filter by.</param>
     /// <returns>Collection of store names using that backend.</returns>
     IEnumerable<string> GetStoreNames(StateBackend backend);
+
+    /// <summary>
+    /// Get low-level Redis operations for escape hatch scenarios.
+    /// Returns null when running in InMemory mode.
+    /// </summary>
+    /// <remarks>
+    /// Use this for operations not covered by IStateStore:
+    /// - Lua scripts for atomic operations
+    /// - Atomic counters (INCR/DECR)
+    /// - Hash operations (HGET/HSET/HINCRBY)
+    /// - TTL manipulation (EXPIRE/TTL/PERSIST)
+    ///
+    /// Keys passed to IRedisOperations are NOT prefixed - they are raw Redis keys.
+    /// This enables cross-store atomic operations in Lua scripts.
+    /// </remarks>
+    /// <returns>Redis operations interface, or null if not using Redis backend.</returns>
+    IRedisOperations? GetRedisOperations();
+
+    /// <summary>
+    /// Get the count of keys in a store.
+    /// </summary>
+    /// <remarks>
+    /// Performance characteristics by backend:
+    /// - MySQL: Efficient COUNT(*) query on indexed StoreName column
+    /// - InMemory: O(1) dictionary count
+    /// - Redis: Returns null (SCAN is O(N) on total database keys, too slow for large databases)
+    /// </remarks>
+    /// <param name="storeName">Name of the store to count.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Key count, or null if count is not efficiently available (Redis).</returns>
+    /// <exception cref="InvalidOperationException">Thrown if store is not configured.</exception>
+    Task<long?> GetKeyCountAsync(string storeName, CancellationToken cancellationToken = default);
 }
 
 /// <summary>

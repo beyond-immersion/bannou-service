@@ -5,44 +5,114 @@ info:
   description: |
     Events published by the Save-Load service.
 
-    **Schema Rules**: AI agents MUST review docs/reference/SCHEMA-RULES.md before
-    modifying this schema.
+    **SCHEMA MODIFICATION GATE**: STOP. Before modifying this schema, you MUST:
+    1. Read docs/reference/SCHEMA-RULES.md
+    2. State which section applies to your change
+    3. Only then proceed with edits
+    Edits without stating the applicable rule are FORBIDDEN.
 
-  x-lifecycle:
-    SaveSlot:
-      model:
-        slotId: { type: string, format: uuid, primary: true, required: true }
-        gameId: { type: string, required: true }
-        ownerId: { type: string, format: uuid, required: true }
-        ownerType: { $ref: 'save-load-api.yaml#/components/schemas/OwnerType', required: true }
-        slotName: { type: string, required: true }
-        category: { $ref: 'save-load-api.yaml#/components/schemas/SaveCategory', required: true }
-      sensitive: []
-      # Generates: SaveSlotCreatedEvent, SaveSlotUpdatedEvent, SaveSlotDeletedEvent
+  x-event-subscriptions: []  # Save-Load service doesn't subscribe to external events
+  x-event-publications:
+    # SaveSlot lifecycle events (auto-generated from x-lifecycle)
+    - topic: save-slot.created
+      event: SaveSlotCreatedEvent
+      description: Published when a new save slot is created
+    - topic: save-slot.updated
+      event: SaveSlotUpdatedEvent
+      description: Published when a save slot is updated
+    - topic: save-slot.deleted
+      event: SaveSlotDeletedEvent
+      description: Published when a save slot is deleted
+    # Custom save events
+    - topic: save.created
+      event: SaveCreatedEvent
+      description: Published when a new save version is created
+    - topic: save.loaded
+      event: SaveLoadedEvent
+      description: Published when a save is loaded
+    - topic: save.migrated
+      event: SaveMigratedEvent
+      description: Published when a save is migrated to a new schema version
+    - topic: save.version-pinned
+      event: VersionPinnedEvent
+      description: Published when a version is pinned as checkpoint
+    - topic: save.version-unpinned
+      event: VersionUnpinnedEvent
+      description: Published when a version is unpinned
+    - topic: save.version-deleted
+      event: VersionDeletedEvent
+      description: Published when a version is deleted
+    - topic: save.cleanup-completed
+      event: CleanupCompletedEvent
+      description: Published when automatic cleanup completes
+    # Async upload events
+    - topic: save.queued
+      event: SaveQueuedEvent
+      description: Published when a save is queued for async upload
+    - topic: save.upload-completed
+      event: SaveUploadCompletedEvent
+      description: Published when async upload to MinIO completes
+    - topic: save.upload-failed
+      event: SaveUploadFailedEvent
+      description: Published when async upload fails
+    - topic: save.circuit-breaker-changed
+      event: CircuitBreakerStateChangedEvent
+      description: Published when storage circuit breaker changes state
+
+paths: {}  # Events don't have HTTP paths
+
+# Lifecycle events auto-generated from this definition
+# Output: schemas/Generated/save-load-lifecycle-events.yaml
+x-lifecycle:
+  SaveSlot:
+    model:
+      slotId: { type: string, format: uuid, primary: true, required: true, description: "Unique slot identifier" }
+      gameId: { type: string, required: true, description: "Game identifier for namespace isolation" }
+      ownerId: { type: string, format: uuid, required: true, description: "ID of the owning entity" }
+      ownerType: { $ref: 'save-load-api.yaml#/components/schemas/OwnerType', required: true, description: "Type of entity that owns this save slot" }
+      slotName: { type: string, required: true, description: "Slot name" }
+      category: { $ref: 'save-load-api.yaml#/components/schemas/SaveCategory', required: true, description: "Save category determining retention and cleanup behavior" }
+      maxVersions: { type: integer, required: true, description: "Maximum versions to retain" }
+      retentionDays: { type: integer, nullable: true, description: "Days to retain versions (null = indefinite)" }
+      compressionType: { $ref: 'save-load-api.yaml#/components/schemas/CompressionType', required: true, description: "Compression algorithm used for save data" }
+      versionCount: { type: integer, required: true, description: "Current number of versions in slot" }
+      latestVersion: { type: integer, nullable: true, description: "Latest version number (null if empty)" }
+      totalSizeBytes: { type: integer, format: int64, required: true, description: "Total storage used by all versions" }
+      createdAt: { type: string, format: date-time, required: true, description: "Slot creation timestamp" }
+      updatedAt: { type: string, format: date-time, required: true, description: "Last modification timestamp" }
+    sensitive: []
 
 components:
   schemas:
     # Custom events beyond lifecycle (SaveSlot lifecycle events auto-generated)
 
     SaveCreatedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
+      additionalProperties: false
       description: Published when a new save version is created
-      required: [eventId, timestamp, slotId, versionNumber, ownerId, ownerType, sizeBytes]
+      required:
+        - eventName
+        - eventId
+        - timestamp
+        - slotId
+        - versionNumber
+        - ownerId
+        - ownerType
+        - sizeBytes
       properties:
-        eventId:
+        eventName:
           type: string
-          format: uuid
-          description: Unique event identifier
-        timestamp:
-          type: string
-          format: date-time
-          description: Event timestamp
+          default: "save.created"
+          description: Event type identifier
         slotId:
           type: string
           format: uuid
           description: Slot identifier
         slotName:
           type: string
+          nullable: true
           description: Slot name
         versionNumber:
           type: integer
@@ -67,6 +137,7 @@ components:
           description: Schema version if specified
         pinned:
           type: boolean
+          default: false
           description: Whether version is pinned
         checkpointName:
           type: string
@@ -74,24 +145,31 @@ components:
           description: Checkpoint name if pinned
 
     SaveLoadedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
+      additionalProperties: false
       description: Published when a save is loaded
-      required: [eventId, timestamp, slotId, versionNumber, ownerId, ownerType]
+      required:
+        - eventName
+        - eventId
+        - timestamp
+        - slotId
+        - versionNumber
+        - ownerId
+        - ownerType
       properties:
-        eventId:
+        eventName:
           type: string
-          format: uuid
-          description: Unique event identifier
-        timestamp:
-          type: string
-          format: date-time
-          description: Event timestamp
+          default: "save.loaded"
+          description: Event type identifier
         slotId:
           type: string
           format: uuid
           description: Slot identifier
         slotName:
           type: string
+          nullable: true
           description: Slot name
         versionNumber:
           type: integer
@@ -105,30 +183,38 @@ components:
           description: Owner entity type
 
     SaveMigratedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
+      additionalProperties: false
       description: Published when a save is migrated to a new schema version
-      required: [eventId, timestamp, slotId, fromSchemaVersion, toSchemaVersion]
+      required:
+        - eventName
+        - eventId
+        - timestamp
+        - slotId
+        - fromSchemaVersion
+        - toSchemaVersion
       properties:
-        eventId:
+        eventName:
           type: string
-          format: uuid
-          description: Unique event identifier
-        timestamp:
-          type: string
-          format: date-time
-          description: Event timestamp
+          default: "save.migrated"
+          description: Event type identifier
         slotId:
           type: string
           format: uuid
           description: Slot identifier
         slotName:
           type: string
+          nullable: true
           description: Slot name
         originalVersionNumber:
           type: integer
+          nullable: true
           description: Original version that was migrated
         newVersionNumber:
           type: integer
+          nullable: true
           description: New version with migrated data
         fromSchemaVersion:
           type: string
@@ -139,30 +225,36 @@ components:
         ownerId:
           type: string
           format: uuid
+          nullable: true
           description: Owner entity ID
         ownerType:
           $ref: 'save-load-api.yaml#/components/schemas/OwnerType'
           description: Owner entity type
 
     VersionPinnedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
+      additionalProperties: false
       description: Published when a version is pinned as checkpoint
-      required: [eventId, timestamp, slotId, versionNumber]
+      required:
+        - eventName
+        - eventId
+        - timestamp
+        - slotId
+        - versionNumber
       properties:
-        eventId:
+        eventName:
           type: string
-          format: uuid
-          description: Unique event identifier
-        timestamp:
-          type: string
-          format: date-time
-          description: Event timestamp
+          default: "save.version-pinned"
+          description: Event type identifier
         slotId:
           type: string
           format: uuid
           description: Slot identifier
         slotName:
           type: string
+          nullable: true
           description: Slot name
         versionNumber:
           type: integer
@@ -174,30 +266,36 @@ components:
         ownerId:
           type: string
           format: uuid
+          nullable: true
           description: Owner entity ID
         ownerType:
           $ref: 'save-load-api.yaml#/components/schemas/OwnerType'
           description: Owner entity type
 
     VersionUnpinnedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
+      additionalProperties: false
       description: Published when a version is unpinned
-      required: [eventId, timestamp, slotId, versionNumber]
+      required:
+        - eventName
+        - eventId
+        - timestamp
+        - slotId
+        - versionNumber
       properties:
-        eventId:
+        eventName:
           type: string
-          format: uuid
-          description: Unique event identifier
-        timestamp:
-          type: string
-          format: date-time
-          description: Event timestamp
+          default: "save.version-unpinned"
+          description: Event type identifier
         slotId:
           type: string
           format: uuid
           description: Slot identifier
         slotName:
           type: string
+          nullable: true
           description: Slot name
         versionNumber:
           type: integer
@@ -209,30 +307,37 @@ components:
         ownerId:
           type: string
           format: uuid
+          nullable: true
           description: Owner entity ID
         ownerType:
           $ref: 'save-load-api.yaml#/components/schemas/OwnerType'
           description: Owner entity type
 
     VersionDeletedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
+      additionalProperties: false
       description: Published when a version is deleted
-      required: [eventId, timestamp, slotId, versionNumber, bytesFreed]
+      required:
+        - eventName
+        - eventId
+        - timestamp
+        - slotId
+        - versionNumber
+        - bytesFreed
       properties:
-        eventId:
+        eventName:
           type: string
-          format: uuid
-          description: Unique event identifier
-        timestamp:
-          type: string
-          format: date-time
-          description: Event timestamp
+          default: "save.version-deleted"
+          description: Event type identifier
         slotId:
           type: string
           format: uuid
           description: Slot identifier
         slotName:
           type: string
+          nullable: true
           description: Slot name
         versionNumber:
           type: integer
@@ -244,29 +349,35 @@ components:
         ownerId:
           type: string
           format: uuid
+          nullable: true
           description: Owner entity ID
         ownerType:
           $ref: 'save-load-api.yaml#/components/schemas/OwnerType'
           description: Owner entity type
 
     CleanupCompletedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
+      additionalProperties: false
       description: Published when automatic cleanup completes
-      required: [eventId, timestamp, versionsDeleted, bytesFreed]
+      required:
+        - eventName
+        - eventId
+        - timestamp
+        - versionsDeleted
+        - bytesFreed
       properties:
-        eventId:
+        eventName:
           type: string
-          format: uuid
-          description: Unique event identifier
-        timestamp:
-          type: string
-          format: date-time
-          description: Event timestamp
+          default: "save.cleanup-completed"
+          description: Event type identifier
         versionsDeleted:
           type: integer
           description: Number of versions cleaned up
         slotsDeleted:
           type: integer
+          nullable: true
           description: Number of empty slots removed
         bytesFreed:
           type: integer
@@ -274,6 +385,7 @@ components:
           description: Storage freed in bytes
         durationMs:
           type: integer
+          nullable: true
           description: Cleanup duration in milliseconds
 
     # ═══════════════════════════════════════════════════════════════════════════
@@ -281,26 +393,33 @@ components:
     # ═══════════════════════════════════════════════════════════════════════════
 
     SaveQueuedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
+      additionalProperties: false
       description: |
         Published when a save is queued for async upload.
         The save data is in Redis and immediately loadable, but not yet in MinIO.
-      required: [eventId, timestamp, slotId, versionNumber, ownerId, ownerType]
+      required:
+        - eventName
+        - eventId
+        - timestamp
+        - slotId
+        - versionNumber
+        - ownerId
+        - ownerType
       properties:
-        eventId:
+        eventName:
           type: string
-          format: uuid
-          description: Unique event identifier
-        timestamp:
-          type: string
-          format: date-time
-          description: Event timestamp
+          default: "save.queued"
+          description: Event type identifier
         slotId:
           type: string
           format: uuid
           description: Save slot identifier
         slotName:
           type: string
+          nullable: true
           description: Human-readable slot name
         versionNumber:
           type: integer
@@ -315,30 +434,38 @@ components:
         sizeBytes:
           type: integer
           format: int64
+          nullable: true
           description: Size of the queued save data in bytes
         queueDepth:
           type: integer
+          nullable: true
           description: Current number of pending uploads in queue
 
     SaveUploadCompletedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
+      additionalProperties: false
       description: Published when async upload to MinIO completes successfully
-      required: [eventId, timestamp, slotId, versionNumber, assetId]
+      required:
+        - eventName
+        - eventId
+        - timestamp
+        - slotId
+        - versionNumber
+        - assetId
       properties:
-        eventId:
+        eventName:
           type: string
-          format: uuid
-          description: Unique event identifier
-        timestamp:
-          type: string
-          format: date-time
-          description: Event timestamp
+          default: "save.upload-completed"
+          description: Event type identifier
         slotId:
           type: string
           format: uuid
           description: Save slot identifier
         slotName:
           type: string
+          nullable: true
           description: Human-readable slot name
         versionNumber:
           type: integer
@@ -349,32 +476,41 @@ components:
           description: Asset ID in MinIO
         uploadDurationMs:
           type: integer
+          nullable: true
           description: Time from queue to upload completion
         queueWaitMs:
           type: integer
+          nullable: true
           description: Time spent waiting in queue
 
     SaveUploadFailedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
+      additionalProperties: false
       description: |
         Published when async upload fails after all retry attempts.
         The save data may still be in Redis hot cache but will expire.
-      required: [eventId, timestamp, slotId, versionNumber, errorMessage, retryCount]
+      required:
+        - eventName
+        - eventId
+        - timestamp
+        - slotId
+        - versionNumber
+        - errorMessage
+        - retryCount
       properties:
-        eventId:
+        eventName:
           type: string
-          format: uuid
-          description: Unique event identifier
-        timestamp:
-          type: string
-          format: date-time
-          description: Event timestamp
+          default: "save.upload-failed"
+          description: Event type identifier
         slotId:
           type: string
           format: uuid
           description: Save slot identifier
         slotName:
           type: string
+          nullable: true
           description: Human-readable slot name
         versionNumber:
           type: integer
@@ -382,6 +518,7 @@ components:
         ownerId:
           type: string
           format: uuid
+          nullable: true
           description: Owner entity ID
         ownerType:
           $ref: 'save-load-api.yaml#/components/schemas/OwnerType'
@@ -394,21 +531,26 @@ components:
           description: Number of retry attempts made
         willRetry:
           type: boolean
+          default: false
           description: Whether more retries will be attempted
 
     CircuitBreakerStateChangedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
+      additionalProperties: false
       description: Published when storage circuit breaker changes state
-      required: [eventId, timestamp, previousState, newState]
+      required:
+        - eventName
+        - eventId
+        - timestamp
+        - previousState
+        - newState
       properties:
-        eventId:
+        eventName:
           type: string
-          format: uuid
-          description: Unique event identifier
-        timestamp:
-          type: string
-          format: date-time
-          description: Event timestamp
+          default: "save.circuit-breaker-changed"
+          description: Event type identifier
         previousState:
           type: string
           enum: [CLOSED, OPEN, HALF_OPEN]
@@ -419,10 +561,13 @@ components:
           description: New circuit breaker state after the transition
         failureCount:
           type: integer
+          nullable: true
           description: Consecutive failures (when opening)
         successCount:
           type: integer
+          nullable: true
           description: Successful probes (when closing from half-open)
         pendingUploads:
           type: integer
+          nullable: true
           description: Current queue depth when state changed

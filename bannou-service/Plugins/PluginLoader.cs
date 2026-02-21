@@ -1,6 +1,7 @@
 using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Configuration;
 using BeyondImmersion.BannouService.Controllers;
+using BeyondImmersion.BannouService.Providers;
 using BeyondImmersion.BannouService.ServiceClients;
 using BeyondImmersion.BannouService.Services;
 using Microsoft.AspNetCore.Builder;
@@ -38,9 +39,10 @@ public class PluginLoader
     /// </summary>
     private static readonly Dictionary<string, int> InfrastructureLoadOrder = new(StringComparer.OrdinalIgnoreCase)
     {
-        { "state", 0 },      // First: state management foundation
-        { "messaging", 1 },  // Second: messaging depends on state being available
-        { "mesh", 2 }        // Third: mesh may depend on messaging for events
+        { "telemetry", -1 }, // First: telemetry provides ITelemetryProvider for instrumentation
+        { "state", 0 },      // Second: state management foundation
+        { "messaging", 1 },  // Third: messaging depends on state being available
+        { "mesh", 2 }        // Fourth: mesh may depend on messaging for events
     };
 
     // All discovered plugins (enabled and disabled)
@@ -163,31 +165,38 @@ public class PluginLoader
             return null; // Indicate fatal failure
         }
 
-        // STAGE 3: Sort enabled plugins so infrastructure loads FIRST in specific order
-        // Order: state → messaging → mesh → all other services alphabetically
-        // This ensures dependencies are available before dependent plugins load
+        // STAGE 3: Sort enabled plugins by service hierarchy layer per SERVICE-HIERARCHY.md
+        // Order: L0 (Infrastructure) → L1 (AppFoundation) → L2 (GameFoundation) →
+        //        L3 (AppFeatures) → L4 (GameFeatures) → L5 (Extensions)
+        // Within L0, use InfrastructureLoadOrder for internal ordering (telemetry → state → messaging → mesh)
+        // Within other layers, sort alphabetically
         var sortedPlugins = _enabledPlugins
-            .OrderBy(p =>
-            {
-                // Infrastructure plugins get priority order (0, 1, 2)
-                if (InfrastructureLoadOrder.TryGetValue(p.PluginName, out var order))
-                    return order;
-                // Non-infrastructure plugins get high value to sort after infrastructure
-                return 100;
-            })
-            .ThenBy(p => p.PluginName) // Alphabetical within non-infrastructure
+            .OrderBy(p => GetServiceLayer(p))           // Primary: service hierarchy layer
+            .ThenBy(p => GetInfrastructureSubOrder(p))  // Secondary: L0 internal order
+            .ThenBy(p => p.PluginName)                  // Tertiary: alphabetical within layer
             .ToList();
         _enabledPlugins.Clear();
         _enabledPlugins.AddRange(sortedPlugins);
 
         _logger.LogInformation(
-            "Infrastructure plugins validated. Loading order: [{LoadOrder}]",
-            string.Join(" -> ", _enabledPlugins.Select(p => p.PluginName)));
+            "Plugins sorted by service hierarchy. Loading order: [{LoadOrder}]",
+            string.Join(" -> ", _enabledPlugins.Select(p => $"{p.PluginName}(L{(int)GetServiceLayer(p) / 100})")));
 
         // STAGE 4: Discover types for DI registration from ALL assemblies
         DiscoverTypesForRegistration();
 
-        // STAGE 5: Build valid environment variable prefixes for orchestrator forwarding
+        // STAGE 5: Validate service hierarchy compliance
+        // This catches services that depend on higher-layer services (violates SERVICE-HIERARCHY.md)
+        if (!ValidateServiceHierarchies())
+        {
+            _logger.LogCritical(
+                "STARTUP FAILURE: Service hierarchy violations detected. " +
+                "Services cannot depend on higher-layer services per SERVICE-HIERARCHY.md. " +
+                "Fix the violations listed above before proceeding.");
+            return null; // Indicate fatal failure
+        }
+
+        // STAGE 6: Build valid environment variable prefixes for orchestrator forwarding
         PopulateValidEnvironmentPrefixes();
 
         var discoveredSummary = string.Join(", ", _allPlugins.Select(p => $"{p.DisplayName} v{p.Version}"));
@@ -749,6 +758,313 @@ public class PluginLoader
         return bannouServiceAttr?.Name;
     }
 
+    /// <summary>
+    /// Get the ServiceLayer for a plugin based on its BannouServiceAttribute.
+    /// Infrastructure plugins (state, messaging, mesh, telemetry) always return Infrastructure.
+    /// Other plugins return the layer specified in their [BannouService] attribute,
+    /// defaulting to GameFeatures if not specified.
+    /// </summary>
+    private ServiceLayer GetServiceLayer(IBannouPlugin plugin)
+    {
+        // Infrastructure plugins are always L0 regardless of attribute
+        if (InfrastructureLoadOrder.ContainsKey(plugin.PluginName))
+            return ServiceLayer.Infrastructure;
+
+        // Look up the service's declared layer from BannouServiceAttribute
+        var assembly = _loadedAssemblies.GetValueOrDefault(plugin.PluginName);
+        if (assembly == null)
+            return ServiceLayer.GameFeatures; // Default to highest non-extension layer
+
+        // Find the service type with [BannouService] attribute matching this plugin
+        var serviceType = assembly.GetTypes()
+            .FirstOrDefault(t =>
+            {
+                var attr = t.GetCustomAttribute<BannouServiceAttribute>();
+                return attr != null && attr.Name.Equals(plugin.PluginName, StringComparison.OrdinalIgnoreCase);
+            });
+
+        var bannouServiceAttr = serviceType?.GetCustomAttribute<BannouServiceAttribute>();
+        return bannouServiceAttr?.Layer ?? ServiceLayer.GameFeatures;
+    }
+
+    /// <summary>
+    /// Get the sub-ordering for infrastructure plugins (L0).
+    /// Returns the InfrastructureLoadOrder value for L0 plugins, or int.MaxValue for others.
+    /// This ensures correct internal ordering: telemetry → state → messaging → mesh.
+    /// </summary>
+    private int GetInfrastructureSubOrder(IBannouPlugin plugin)
+    {
+        if (InfrastructureLoadOrder.TryGetValue(plugin.PluginName, out var order))
+            return order;
+        return int.MaxValue; // Non-infrastructure plugins sort after all L0 plugins
+    }
+
+    /// <summary>
+    /// Validates that all enabled services follow the service hierarchy rules per SERVICE-HIERARCHY.md.
+    /// Services may only depend on services in lower layers (lower ServiceLayer enum values).
+    /// </summary>
+    /// <returns>True if all services are compliant; false if violations are found.</returns>
+    public bool ValidateServiceHierarchies()
+    {
+        _logger.LogDebug("Validating service hierarchy compliance for {Count} enabled plugins", _enabledPlugins.Count);
+
+        var allViolations = new List<(string ServiceName, string Message)>();
+
+        foreach (var plugin in _enabledPlugins)
+        {
+            var assembly = _loadedAssemblies.GetValueOrDefault(plugin.PluginName);
+            if (assembly == null)
+                continue;
+
+            // Find the service type with [BannouService] attribute
+            var serviceType = assembly.GetTypes()
+                .FirstOrDefault(t =>
+                {
+                    var attr = t.GetCustomAttribute<BannouServiceAttribute>();
+                    return attr != null && attr.Name.Equals(plugin.PluginName, StringComparison.OrdinalIgnoreCase);
+                });
+
+            if (serviceType == null)
+                continue;
+
+            var violations = GetServiceHierarchyViolations(serviceType);
+            allViolations.AddRange(violations);
+        }
+
+        if (allViolations.Count > 0)
+        {
+            _logger.LogError(
+                "SERVICE HIERARCHY VIOLATIONS DETECTED! The following services depend on higher-layer services:");
+
+            foreach (var (serviceName, message) in allViolations)
+            {
+                _logger.LogError("  {ServiceName}: {Message}", serviceName, message);
+            }
+
+            _logger.LogError(
+                "See SERVICE-HIERARCHY.md for dependency rules. Fix these violations before proceeding.");
+
+            return false;
+        }
+
+        _logger.LogDebug("Service hierarchy validation passed for all {Count} enabled plugins", _enabledPlugins.Count);
+        return true;
+    }
+
+    /// <summary>
+    /// Gets hierarchy violations for a single service type.
+    /// </summary>
+    private List<(string ServiceName, string Message)> GetServiceHierarchyViolations(Type serviceType)
+    {
+        var violations = new List<(string ServiceName, string Message)>();
+
+        var bannouServiceAttr = serviceType.GetCustomAttribute<BannouServiceAttribute>();
+        if (bannouServiceAttr == null)
+            return violations;
+
+        var serviceLayer = bannouServiceAttr.Layer;
+        var serviceName = bannouServiceAttr.Name;
+
+        // Get constructor parameters
+        var constructors = serviceType.GetConstructors(BindingFlags.Public | BindingFlags.Instance);
+        if (constructors.Length == 0)
+            return violations;
+
+        var ctor = constructors[0];
+        var parameters = ctor.GetParameters();
+
+        foreach (var param in parameters)
+        {
+            var paramType = param.ParameterType;
+
+            // Check if this is a service client interface (I*Client)
+            if (!paramType.IsInterface || !paramType.Name.StartsWith('I') || !paramType.Name.EndsWith("Client"))
+                continue;
+
+            // Extract service name from client type (IAccountClient → account)
+            var clientServiceName = ExtractServiceNameFromClientType(paramType.Name);
+            if (clientServiceName == null)
+                continue;
+
+            // Get the client's service layer from our registry or attribute
+            // (only validate known service clients — skip non-service interfaces like IMeshInvocationClient)
+            var clientLayer = GetClientServiceLayerIfKnown(clientServiceName);
+            if (clientLayer == null)
+                continue;
+
+            // Check for violation based on hierarchy rules
+            if (IsHierarchyViolation(serviceLayer, clientLayer.Value))
+            {
+                violations.Add((serviceName,
+                    $"Depends on {clientServiceName} ({clientLayer.Value}, L{(int)clientLayer.Value / 100}) " +
+                    $"which is higher than {serviceLayer} (L{(int)serviceLayer / 100})"));
+            }
+        }
+
+        return violations;
+    }
+
+    /// <summary>
+    /// Extracts service name from client interface name (IAccountClient → account).
+    /// </summary>
+    private static string? ExtractServiceNameFromClientType(string clientTypeName)
+    {
+        if (!clientTypeName.StartsWith('I') || !clientTypeName.EndsWith("Client"))
+            return null;
+
+        var servicePascal = clientTypeName[1..^6]; // Remove 'I' and 'Client'
+
+        // Convert PascalCase to kebab-case (GameSession → game-session)
+        return System.Text.RegularExpressions.Regex.Replace(servicePascal, "(?<!^)([A-Z])", "-$1").ToLowerInvariant();
+    }
+
+    /// <summary>
+    /// Lazily-built cache mapping service names to their layers, discovered via reflection
+    /// from [BannouService] attributes on all loaded plugin assemblies. Returns null for
+    /// unknown service names so that non-service interfaces (e.g., IMeshInvocationClient)
+    /// are skipped during hierarchy validation.
+    /// </summary>
+    private Dictionary<string, ServiceLayer>? _serviceLayerCache;
+
+    /// <summary>
+    /// Gets the service layer for a client's service name, returning null if the service
+    /// is not registered. Discovers layers via reflection from [BannouService] attributes —
+    /// no hardcoded registry.
+    /// </summary>
+    private ServiceLayer? GetClientServiceLayerIfKnown(string serviceName)
+    {
+        _serviceLayerCache ??= BuildServiceLayerCache();
+
+        if (_serviceLayerCache.TryGetValue(serviceName, out var layer))
+            return layer;
+
+        return null;
+    }
+
+    /// <summary>
+    /// Scans all loaded plugin assemblies for types with [BannouService] attributes
+    /// and builds a service name → layer mapping.
+    /// </summary>
+    private Dictionary<string, ServiceLayer> BuildServiceLayerCache()
+    {
+        var cache = new Dictionary<string, ServiceLayer>(StringComparer.OrdinalIgnoreCase);
+
+        foreach (var (_, assembly) in _loadedAssemblies)
+        {
+            try
+            {
+                foreach (var type in assembly.GetTypes())
+                {
+                    var attr = type.GetCustomAttribute<BannouServiceAttribute>();
+                    if (attr == null)
+                        continue;
+
+                    // First registration wins (same behavior as test-utilities validator)
+                    cache.TryAdd(attr.Name, attr.Layer);
+                }
+            }
+            catch (ReflectionTypeLoadException)
+            {
+                // Assembly has types that can't be loaded — skip it
+            }
+        }
+
+        return cache;
+    }
+
+    /// <summary>
+    /// Checks if depending on clientLayer from serviceLayer violates the hierarchy.
+    /// </summary>
+    private static bool IsHierarchyViolation(ServiceLayer serviceLayer, ServiceLayer clientLayer)
+    {
+        // Extensions (L5) can depend on anything
+        if (serviceLayer == ServiceLayer.Extensions)
+            return false;
+
+        // AppFeatures (L3) CANNOT depend on GameFoundation (L2) or GameFeatures (L4)
+        // They're separate branches in the hierarchy
+        if (serviceLayer == ServiceLayer.AppFeatures)
+        {
+            return clientLayer == ServiceLayer.GameFoundation ||
+                    clientLayer == ServiceLayer.GameFeatures ||
+                    clientLayer == ServiceLayer.Extensions;
+        }
+
+        // For other layers, simply check if client is in a higher layer
+        return clientLayer > serviceLayer;
+    }
+
+
+    /// <summary>
+    /// Validates that all registered IVariableProviderFactory implementations have ProviderNames
+    /// that are defined in VariableProviderDefinitions (generated from schemas/variable-providers.yaml).
+    /// Also checks for duplicate provider name registrations.
+    /// </summary>
+    /// <param name="serviceProvider">The built DI service provider.</param>
+    /// <returns>True if all providers are valid; false if violations are found.</returns>
+    public bool ValidateVariableProviders(IServiceProvider serviceProvider)
+    {
+        using var scope = serviceProvider.CreateScope();
+        var factories = scope.ServiceProvider.GetServices<IVariableProviderFactory>().ToList();
+
+        if (factories.Count == 0)
+        {
+            _logger.LogDebug("No variable provider factories registered, skipping validation");
+            return true;
+        }
+
+        _logger.LogDebug("Validating {Count} variable provider factory registrations", factories.Count);
+
+        var violations = new List<string>();
+        var seenNames = new Dictionary<string, string>(StringComparer.Ordinal);
+
+        foreach (var factory in factories)
+        {
+            var providerName = factory.ProviderName;
+            var factoryType = factory.GetType().Name;
+
+            // Check that the provider name is defined in the schema-generated definitions
+            if (!VariableProviderDefinitions.Metadata.ContainsKey(providerName))
+            {
+                violations.Add(
+                    $"{factoryType}: ProviderName \"{providerName}\" is not defined in " +
+                    "schemas/variable-providers.yaml. Add it to the schema and regenerate.");
+            }
+
+            // Check for duplicate provider names
+            if (seenNames.TryGetValue(providerName, out var existingFactory))
+            {
+                violations.Add(
+                    $"{factoryType}: Duplicate ProviderName \"{providerName}\" " +
+                    $"(already registered by {existingFactory}). " +
+                    "Each provider namespace must be unique.");
+            }
+            else
+            {
+                seenNames[providerName] = factoryType;
+            }
+        }
+
+        if (violations.Count > 0)
+        {
+            _logger.LogError(
+                "VARIABLE PROVIDER VIOLATIONS DETECTED! The following provider registrations are invalid:");
+
+            foreach (var violation in violations)
+            {
+                _logger.LogError("  {Violation}", violation);
+            }
+
+            _logger.LogError(
+                "Fix provider registrations or update schemas/variable-providers.yaml before proceeding.");
+
+            return false;
+        }
+
+        _logger.LogDebug(
+            "Variable provider validation passed for {Count} factories", factories.Count);
+        return true;
+    }
 
     /// <summary>
     /// Get a centrally resolved service for a plugin.
@@ -965,43 +1281,29 @@ public class PluginLoader
 
     /// <summary>
     /// Registers service permissions for all enabled plugins with the Permission service.
-    /// This should be called AFTER mesh connectivity is confirmed to ensure events are delivered.
+    /// Uses DI-based IPermissionRegistry for direct push-based registration.
     /// </summary>
     /// <param name="appId">The effective app ID for this service instance</param>
+    /// <param name="registry">The permission registry resolved from DI (null if Permission service is disabled)</param>
     /// <returns>True if all permissions were registered successfully</returns>
-    public async Task<bool> RegisterServicePermissionsAsync(string appId)
+    public async Task<bool> RegisterServicePermissionsAsync(string appId, IPermissionRegistry? registry)
     {
         _logger.LogInformation("Registering service permissions for {ServiceCount} services: {ServiceNames}",
             _resolvedServices.Count, string.Join(", ", _resolvedServices.Keys));
+
+        if (registry == null)
+        {
+            _logger.LogWarning("IPermissionRegistry not available - skipping permission registration");
+            return true;
+        }
 
         foreach (var (pluginName, service) in _resolvedServices)
         {
             try
             {
-                _logger.LogInformation("Registering permissions for service: {PluginName} (type: {ServiceType})",
-                    pluginName, service.GetType().Name);
-                const int maxAttempts = 3;
-                var attempt = 0;
-                while (true)
-                {
-                    attempt++;
-                    try
-                    {
-                        await service.RegisterServicePermissionsAsync(appId);
-                        _logger.LogInformation("Permissions registered successfully for service: {PluginName} (attempt {Attempt})", pluginName, attempt);
-                        break;
-                    }
-                    catch (HttpRequestException httpEx) when (attempt < maxAttempts)
-                    {
-                        _logger.LogWarning(httpEx, "Permission registration retry {Attempt}/{Max} for {PluginName}", attempt, maxAttempts, pluginName);
-                        await Task.Delay(TimeSpan.FromMilliseconds(500));
-                    }
-                    catch (TimeoutException timeoutEx) when (attempt < maxAttempts)
-                    {
-                        _logger.LogWarning(timeoutEx, "Permission registration retry {Attempt}/{Max} for {PluginName}", attempt, maxAttempts, pluginName);
-                        await Task.Delay(TimeSpan.FromMilliseconds(500));
-                    }
-                }
+                _logger.LogDebug("Registering permissions for service: {PluginName}", pluginName);
+                await service.RegisterServicePermissionsAsync(appId, registry);
+                _logger.LogDebug("Permissions registered for service: {PluginName}", pluginName);
             }
             catch (Exception ex)
             {

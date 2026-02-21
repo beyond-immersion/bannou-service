@@ -3,13 +3,14 @@
 > **Plugin**: lib-mapping
 > **Schema**: schemas/mapping-api.yaml
 > **Version**: 1.0.0
+> **Layer**: GameFeatures
 > **State Stores**: mapping-statestore (Redis)
 
 ---
 
 ## Overview
 
-Spatial data management service for Arcadia game worlds. Handles authority-based channel ownership for exclusive write access, high-throughput ingest via dynamic RabbitMQ subscriptions, 3D spatial indexing with configurable cell sizes, affordance queries with multi-factor scoring, design-time authoring workflows (checkout/commit/release), and map definition templates. Uses a deterministic channel ID scheme (SHA-256 of region+kind) to ensure one authority per region/kind combination. Features per-kind TTL policies (durable for terrain/navigation/ownership, ephemeral for combat/visual effects), large payload offloading to lib-asset, event aggregation buffering to coalesce rapid object changes, configurable non-authority handling modes (reject_silent, reject_and_alert, accept_and_alert), and three takeover policies for authority succession (preserve_and_diff, require_consume, reset). Does NOT perform client-facing rendering or physics -- it is purely a spatial data store that game servers and NPC brains publish to and query from.
+Spatial data management service (L4 GameFeatures) for Arcadia game worlds. Provides authority-based channel ownership for exclusive write access to spatial regions, high-throughput ingest via dynamic RabbitMQ subscriptions, 3D spatial indexing with affordance queries, and design-time authoring workflows (checkout/commit/release). Purely a spatial data store -- does not perform rendering or physics. Game servers and NPC brains publish spatial data to and query from it.
 
 ---
 
@@ -37,19 +38,19 @@ Spatial data management service for Arcadia game worlds. Handles authority-based
 
 **Stores**: 1 state store (mapping-statestore, Redis, prefix: `mapping`)
 
-| Key Pattern | Data Type | Purpose |
-|-------------|-----------|---------|
-| `map:channel:{channelId}` | `ChannelRecord` | Channel configuration (region, kind, non-authority handling, takeover mode, alert config) |
-| `map:authority:{channelId}` | `AuthorityRecord` | Current authority grant (token, app-id, expiry, RequiresConsumeBeforePublish flag) |
-| `map:object:{regionId}:{objectId}` | `MapObject` | Individual map objects with position/bounds/data/version (TTL per kind) |
-| `map:index:{regionId}:{kind}:{cellX}_{cellY}_{cellZ}` | `List<Guid>` | Spatial cell index - object IDs within a 3D grid cell |
-| `map:type-index:{regionId}:{objectType}` | `List<Guid>` | Type index - object IDs grouped by publisher-defined type |
-| `map:region-index:{regionId}:{kind}` | `List<Guid>` | Region index - all object IDs in a region+kind (for full-region queries) |
-| `map:checkout:{regionId}:{kind}` | `CheckoutRecord` | Authoring checkout lock (editor ID, authority token, expiry) |
-| `map:version:{channelId}` | `LongWrapper` | Monotonic version counter per channel |
-| `map:affordance-cache:{regionId}:{type}:{boundsHash}` | `CachedAffordanceResult` | Cached affordance query results with timestamp |
-| `map:definition:{definitionId}` | `DefinitionRecord` | Map definition templates (name, layers, default bounds, metadata) |
-| `map:definition-index` | `DefinitionIndexEntry` | Index of all definition IDs for listing |
+| Key Pattern | Data Type | Purpose | TTL |
+|-------------|-----------|---------|-----|
+| `map:channel:{channelId}` | `ChannelRecord` | Channel configuration (region, kind, non-authority handling, takeover mode, alert config) | None |
+| `map:authority:{channelId}` | `AuthorityRecord` | Current authority grant (token, app-id, expiry, RequiresConsumeBeforePublish flag) | None |
+| `map:object:{regionId}:{objectId}` | `MapObject` | Individual map objects with position/bounds/data/version | Per-kind |
+| `map:index:{regionId}:{kind}:{cellX}_{cellY}_{cellZ}` | `List<Guid>` | Spatial cell index - object IDs within a 3D grid cell | None |
+| `map:type-index:{regionId}:{objectType}` | `List<Guid>` | Type index - object IDs grouped by publisher-defined type | None |
+| `map:region-index:{regionId}:{kind}` | `List<Guid>` | Region index - all object IDs in a region+kind (for full-region queries) | None |
+| `map:checkout:{regionId}:{kind}` | `CheckoutRecord` | Authoring checkout lock (editor ID, authority token, expiry) | None |
+| `map:version:{channelId}` | `LongWrapper` | Monotonic version counter per channel | None |
+| `map:affordance-cache:{regionId}:{type}:{boundsHash}` | `CachedAffordanceResult` | Cached affordance query results with timestamp | None (app-level) |
+| `map:definition:{definitionId}` | `DefinitionRecord` | Map definition templates (name, layers, default bounds, metadata) | None |
+| `map:definition-index` | `DefinitionIndexEntry` | Index of all definition IDs for listing | None |
 
 ---
 
@@ -91,6 +92,7 @@ Spatial data management service for Arcadia game worlds. Handles authority-based
 | `MaxCheckoutDurationSeconds` | `MAPPING_MAX_CHECKOUT_DURATION_SECONDS` | `1800` | Maximum authoring lock duration (30 min) |
 | `DefaultLayerCacheTtlSeconds` | `MAPPING_DEFAULT_LAYER_CACHE_TTL_SECONDS` | `3600` | Default TTL for ephemeral layer data (1 hour) |
 | `EventAggregationWindowMs` | `MAPPING_EVENT_AGGREGATION_WINDOW_MS` | `100` | Buffering window for MapObjectsChangedEvent (0 = disabled) |
+| `MaxBufferFlushRetries` | `MAPPING_MAX_BUFFER_FLUSH_RETRIES` | `3` | Maximum retry attempts for flushing spatial change buffers before discarding |
 | `TtlTerrain` | `MAPPING_TTL_TERRAIN` | `-1` | Terrain TTL (-1 = durable, no expiry) |
 | `TtlStaticGeometry` | `MAPPING_TTL_STATIC_GEOMETRY` | `-1` | Static geometry TTL (durable) |
 | `TtlNavigation` | `MAPPING_TTL_NAVIGATION` | `-1` | Navigation TTL (durable) |
@@ -353,12 +355,15 @@ Authoring Workflow
 ## Stubs & Unimplemented Features
 
 1. **Event aggregation for MapUpdatedEvent**: Only `MapObjectsChangedEvent` uses the aggregation buffer. `MapUpdatedEvent` (from PublishMapUpdate) publishes immediately on every call. The code comment notes "payload-level coalescing is complex."
+<!-- AUDIT:NEEDS_DESIGN:2026-01-31:https://github.com/beyond-immersion/bannou-service/issues/199 -->
 
-2. **Spatial index garbage collection on channel reset**: `ClearChannelDataAsync` deletes objects and the region index but notes "Spatial and type indexes are per-object and will be orphaned. They'll be cleaned up on next access or could be garbage collected." No GC is implemented.
+2. ~~**Spatial index garbage collection on channel reset**~~: **FIXED** (2026-01-31) - `ClearChannelDataAsync` now properly cleans up all spatial and type indexes before deleting objects. For each object, it fetches the object data to get Position/Bounds/ObjectType and calls the existing cleanup methods (`RemoveFromSpatialIndexAsync`, `RemoveFromSpatialIndexForBoundsAsync`, `RemoveFromTypeIndexAsync`). This adds one extra Redis GET per object but ensures no orphaned index entries remain.
 
 3. **MapSnapshotEvent not published**: The events schema defines `MapSnapshotEvent` and its topic `map.{regionId}.{kind}.snapshot`, but `RequestSnapshot` only returns data to the caller -- it does not broadcast a snapshot event.
+<!-- AUDIT:NEEDS_DESIGN:2026-01-31:https://github.com/beyond-immersion/bannou-service/issues/208 -->
 
 4. **MapSnapshotRequestedEvent not consumed**: The schema defines `MapSnapshotRequestedEvent` for consumer-initiated snapshot requests, but the service does not subscribe to it.
+<!-- AUDIT:NEEDS_DESIGN:2026-02-01:https://github.com/beyond-immersion/bannou-service/issues/240 -->
 
 5. **Large payload support for PublishMapUpdate**: The publish endpoint rejects payloads exceeding `InlinePayloadMaxBytes` (returns 400). The code comment notes "MVP: reject large payloads; full impl would use lib-asset." Only RequestSnapshot handles large-to-asset offloading.
 
@@ -388,7 +393,7 @@ Authoring Workflow
 
 1. **Version counter race condition**: `IncrementVersionAsync` performs a non-atomic read-increment-write on the version counter. Two concurrent publishes could read the same version and both write version+1, producing duplicate version numbers. This is mitigated by the authority model (single writer per channel) but could occur during `accept_and_alert` mode where unauthorized publishes are processed concurrently with authorized ones.
 
-2. **Orphaned spatial/type indexes on channel reset**: When `ClearChannelDataAsync` runs (reset takeover mode), it deletes objects and the region index but leaves spatial and type indexes pointing to deleted objects. Subsequent queries will attempt to load deleted objects (returning null, filtered out) but the index entries persist indefinitely.
+2. ~~**Orphaned spatial/type indexes on channel reset**~~: **FIXED** (2026-01-31) - `ClearChannelDataAsync` now properly cleans up all spatial and type indexes before deleting objects, preventing orphaned index entries.
 
 3. **Index operations are not atomic**: The spatial, type, and region index operations perform read-modify-write on Redis lists without atomicity. Two concurrent requests adding objects to the same index cell could both read the same list, both add their object, and save—the second save overwrites the first, losing an object. This is mitigated by the authority model (single writer per channel) but could occur during `accept_and_alert` mode.
 
@@ -396,7 +401,7 @@ Authoring Workflow
 
 1. **Authority token contains expiry but expiry is NOT checked from token**: The token embeds channelId and expiresAt, but `ValidateAuthorityAsync` only uses the token's channelId for basic validation. Actual expiry is checked against `AuthorityRecord.ExpiresAt` which is updated by heartbeats. This is intentional -- heartbeats extend authority without re-issuing tokens.
 
-2. **Event aggregation buffer is fire-and-forget**: The timer callback uses `Task.Run` to flush changes and cannot propagate exceptions. If the flush fails (e.g., message bus unavailable), the changes are silently lost. The buffer is removed from the dictionary after flush regardless of success.
+2. ~~**Event aggregation buffer is fire-and-forget**~~: **FIXED** (2026-02-08) - The buffer now retries with exponential backoff (100ms base, up to `MaxBufferFlushRetries` attempts) before discarding changes. Failures are logged at Error level and published via `TryPublishErrorAsync`. Buffer is only removed/disposed after success or max retries exhausted. See [#310](https://github.com/beyond-immersion/bannou-service/issues/310).
 
 3. **Update-as-upsert semantics**: `ObjectAction.Updated` for a non-existent object is treated as a create (upsert). This prevents data loss when object creation events are missed but means "update only if exists" semantics cannot be expressed.
 
@@ -408,7 +413,7 @@ Authoring Workflow
 
 7. **Unknown affordance types search all map kinds**: The `Custom` type and the fallback case both return ALL `MapKind` values. An unknown affordance type triggers the most expensive possible query, searching every kind.
 
-8. **Fire-and-forget authority expiry event**: Authority expired event uses `_ = _messageBus.TryPublishAsync(...)` fire-and-forget pattern. Exceptions are silently lost.
+8. **Authority expiry event uses discard pattern**: Authority expired event uses `_ = _messageBus.TryPublishAsync(...)` which discards the returned Task. This is intentional: the event is for **monitoring only** (non-critical), and the calling code path doesn't need to await it. Note that `TryPublishAsync` still buffers and retries internally if RabbitMQ is unavailable - the event WILL be delivered eventually (see MESSAGING.md Quirk #1). The discard means the caller doesn't check the return value, but since this is a monitoring event, that's acceptable.
 
 ### Design Considerations
 
@@ -427,3 +432,23 @@ Authoring Workflow
 7. **ExtractFeatures returns null for single-feature results**: The method always adds `objectType` to the features dictionary, then returns `null` if `features.Count <= 1`. When no relevant data properties are found, the result is always null.
 
 8. **Hardcoded affordance scoring magic numbers**: AffordanceScorer contains ~15 hardcoded scoring weights (base score 0.5, cover weight 0.3, elevation divisor 100.0, size modifiers 0.8-1.2, etc.). Should be configuration properties for game-specific tuning.
+
+9. **Location service correlation** ([#274](https://github.com/beyond-immersion/bannou-service/issues/274)): Mapping channels have no relationship to Location service entities. The `regionId` on channels is unvalidated and purely spatial. Adding an optional `locationId` field to channels would enable semantic queries bridging the hierarchical (Location) and spatial (Mapping) worlds — e.g., "What affordances exist at CITY_FROSTHOLD?" via a new `/mapping/query/by-location` endpoint. This would support Event Brain location awareness for faction territory, crowd density, and named-place context without requiring validation overhead (locationId would be informational, not enforced). Temporary combat zones and ad-hoc regions would continue to use regionId without locationId.
+
+---
+
+## Work Tracking
+
+### Active Items
+
+*No active audit items.*
+
+### Pending Investigation
+
+*No pending investigation items.*
+
+### Completed
+
+- **2026-02-08**: Fixed event aggregation buffer fire-and-forget ([#310](https://github.com/beyond-immersion/bannou-service/issues/310)). Buffer now retries flush with exponential backoff (configurable via `MaxBufferFlushRetries`, default 3). Only disposes after success or max retries exhausted. Failures reported via `TryPublishErrorAsync`.
+
+- **2026-01-31**: Fixed spatial index garbage collection on channel reset. `ClearChannelDataAsync` now properly cleans up all spatial and type indexes before deleting objects by fetching each object's Position/Bounds/ObjectType and calling the existing cleanup methods.

@@ -6,13 +6,13 @@ using BeyondImmersion.BannouService.Connect.Helpers;
 using BeyondImmersion.BannouService.Connect.Protocol;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Messaging;
+using BeyondImmersion.BannouService.Providers;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.TestUtilities;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Moq;
-using System.Net.Http.Headers;
 using System.Net.WebSockets;
 using System.Reflection;
 using System.Text;
@@ -36,10 +36,10 @@ public class ConnectServiceTests
     private readonly Mock<IServiceScopeFactory> _mockServiceScopeFactory;
     private readonly Mock<IMessageBus> _mockMessageBus;
     private readonly Mock<IMessageSubscriber> _mockMessageSubscriber;
-    private readonly Mock<IHttpClientFactory> _mockHttpClientFactory;
     private readonly Mock<IEventConsumer> _mockEventConsumer;
     private readonly Mock<ISessionManager> _mockSessionManager;
     private readonly Mock<ICapabilityManifestBuilder> _mockManifestBuilder;
+    private readonly Mock<IEntitySessionRegistry> _mockEntitySessionRegistry;
     private readonly string _testServerSalt = "test-server-salt-2025";
 
     public ConnectServiceTests()
@@ -59,10 +59,10 @@ public class ConnectServiceTests
         _mockServiceScopeFactory = new Mock<IServiceScopeFactory>();
         _mockMessageBus = new Mock<IMessageBus>();
         _mockMessageSubscriber = new Mock<IMessageSubscriber>();
-        _mockHttpClientFactory = new Mock<IHttpClientFactory>();
         _mockEventConsumer = new Mock<IEventConsumer>();
         _mockSessionManager = new Mock<ISessionManager>();
         _mockManifestBuilder = new Mock<ICapabilityManifestBuilder>();
+        _mockEntitySessionRegistry = new Mock<IEntitySessionRegistry>();
     }
 
     #region Basic Constructor Tests
@@ -94,7 +94,7 @@ public class ConnectServiceTests
 
         // Act & Assert
         Assert.Throws<InvalidOperationException>(() =>
-            new ConnectService(_mockAuthClient.Object, _mockMeshClient.Object, _mockMessageBus.Object, _mockMessageSubscriber.Object, _mockHttpClientFactory.Object, _mockAppMappingResolver.Object, _mockServiceScopeFactory.Object, configWithoutSalt, _mockLogger.Object, _mockLoggerFactory.Object, _mockEventConsumer.Object, _mockSessionManager.Object, _mockManifestBuilder.Object));
+            new ConnectService(_mockAuthClient.Object, _mockMeshClient.Object, _mockMessageBus.Object, _mockMessageSubscriber.Object, _mockAppMappingResolver.Object, _mockServiceScopeFactory.Object, configWithoutSalt, _mockLogger.Object, _mockLoggerFactory.Object, _mockEventConsumer.Object, _mockSessionManager.Object, _mockManifestBuilder.Object, _mockEntitySessionRegistry.Object));
     }
 
     #endregion
@@ -113,7 +113,7 @@ public class ConnectServiceTests
         var testPayload = Encoding.UTF8.GetBytes("Test cross-platform payload");
 
         var message = new BinaryMessage(
-            MessageFlags.Binary | MessageFlags.HighPriority,
+            MessageFlags.Binary | MessageFlags.Reserved0x08,
             1234, // channel
             5678, // sequence
             testGuid,
@@ -438,7 +438,7 @@ public class ConnectServiceTests
     public async Task ProcessAuthEventAsync_WithLoginEvent_ShouldRefreshCapabilities()
     {
         // Arrange
-        var service = CreateConnectService();
+        using var service = CreateConnectService();
         var sessionId = Guid.NewGuid();
         var eventData = new AuthEvent
         {
@@ -461,43 +461,10 @@ public class ConnectServiceTests
     }
 
     [Fact]
-    public async Task ProcessServiceRegistrationAsync_WithValidEvent_ShouldPublishRecompileEvent()
-    {
-        // Arrange
-        var service = CreateConnectService();
-        var serviceId = Guid.NewGuid();
-        var eventData = new ServiceRegistrationEvent
-        {
-            ServiceId = serviceId,
-            ServiceName = "new-service-123",
-            Timestamp = DateTimeOffset.UtcNow
-        };
-
-        // Act
-        var result = await service.ProcessServiceRegistrationAsync(eventData);
-
-        // Assert
-        Assert.NotNull(result);
-        var resultJson = BannouJson.Serialize(result);
-        var resultDict = BannouJson.Deserialize<Dictionary<string, object>>(resultJson);
-        Assert.NotNull(resultDict);
-        Assert.Equal("processed", resultDict["status"].ToString());
-        Assert.Equal(serviceId.ToString(), resultDict["serviceId"].ToString());
-
-        // Verify that PublishAsync was called for permission recompilation via IMessageBus
-        _mockMessageBus.Verify(x => x.TryPublishAsync(
-            "bannou.permission-recompile",
-            It.IsAny<PermissionRecompileEvent>(),
-            It.IsAny<PublishOptions?>(),
-            It.IsAny<Guid?>(),
-            It.IsAny<CancellationToken>()), Times.Once);
-    }
-
-    [Fact]
     public async Task ProcessClientMessageEventAsync_WhenClientNotConnected_ReturnsError()
     {
         // Arrange
-        var service = CreateConnectService();
+        using var service = CreateConnectService();
         var eventData = new ClientMessageEvent
         {
             ClientId = "client-789",
@@ -526,7 +493,7 @@ public class ConnectServiceTests
     public async Task ProcessClientRPCEventAsync_WhenClientNotConnected_ReturnsError()
     {
         // Arrange
-        var service = CreateConnectService();
+        using var service = CreateConnectService();
         var eventData = new ClientRPCEvent
         {
             ClientId = "client-rpc-999",
@@ -566,7 +533,6 @@ public class ConnectServiceTests
             _mockMeshClient.Object,
             _mockMessageBus.Object,
             _mockMessageSubscriber.Object,
-            _mockHttpClientFactory.Object,
             _mockAppMappingResolver.Object,
             _mockServiceScopeFactory.Object,
             _configuration,
@@ -574,7 +540,8 @@ public class ConnectServiceTests
             _mockLoggerFactory.Object,
             _mockEventConsumer.Object,
             _mockSessionManager.Object,
-            _mockManifestBuilder.Object
+            _mockManifestBuilder.Object,
+            _mockEntitySessionRegistry.Object
         );
     }
 
@@ -653,14 +620,13 @@ public class ConnectServiceTests
                 _mockMeshClient.Object,
                 _mockMessageBus.Object,
                 _mockMessageSubscriber.Object,
-                _mockHttpClientFactory.Object,
                 _mockAppMappingResolver.Object,
                 _mockServiceScopeFactory.Object,
                 config,
                 _mockLogger.Object,
                 _mockLoggerFactory.Object,
                 _mockEventConsumer.Object,
-                _mockSessionManager.Object, _mockManifestBuilder.Object));
+                _mockSessionManager.Object, _mockManifestBuilder.Object, _mockEntitySessionRegistry.Object));
 
         Assert.Contains("CONNECT_INTERNAL_SERVICE_TOKEN", exception.Message);
     }
@@ -687,14 +653,13 @@ public class ConnectServiceTests
                 _mockMeshClient.Object,
                 _mockMessageBus.Object,
                 _mockMessageSubscriber.Object,
-                _mockHttpClientFactory.Object,
                 _mockAppMappingResolver.Object,
                 _mockServiceScopeFactory.Object,
                 config,
                 _mockLogger.Object,
                 _mockLoggerFactory.Object,
                 _mockEventConsumer.Object,
-                _mockSessionManager.Object, _mockManifestBuilder.Object));
+                _mockSessionManager.Object, _mockManifestBuilder.Object, _mockEntitySessionRegistry.Object));
 
         Assert.Null(exception);
     }
@@ -721,14 +686,13 @@ public class ConnectServiceTests
                 _mockMeshClient.Object,
                 _mockMessageBus.Object,
                 _mockMessageSubscriber.Object,
-                _mockHttpClientFactory.Object,
                 _mockAppMappingResolver.Object,
                 _mockServiceScopeFactory.Object,
                 config,
                 _mockLogger.Object,
                 _mockLoggerFactory.Object,
                 _mockEventConsumer.Object,
-                _mockSessionManager.Object, _mockManifestBuilder.Object));
+                _mockSessionManager.Object, _mockManifestBuilder.Object, _mockEntitySessionRegistry.Object));
 
         Assert.Null(exception);
     }
@@ -754,14 +718,13 @@ public class ConnectServiceTests
                 _mockMeshClient.Object,
                 _mockMessageBus.Object,
                 _mockMessageSubscriber.Object,
-                _mockHttpClientFactory.Object,
                 _mockAppMappingResolver.Object,
                 _mockServiceScopeFactory.Object,
                 config,
                 _mockLogger.Object,
                 _mockLoggerFactory.Object,
                 _mockEventConsumer.Object,
-                _mockSessionManager.Object, _mockManifestBuilder.Object));
+                _mockSessionManager.Object, _mockManifestBuilder.Object, _mockEntitySessionRegistry.Object));
 
         Assert.Null(exception);
     }
@@ -787,14 +750,13 @@ public class ConnectServiceTests
                 _mockMeshClient.Object,
                 _mockMessageBus.Object,
                 _mockMessageSubscriber.Object,
-                _mockHttpClientFactory.Object,
                 _mockAppMappingResolver.Object,
                 _mockServiceScopeFactory.Object,
                 config,
                 _mockLogger.Object,
                 _mockLoggerFactory.Object,
                 _mockEventConsumer.Object,
-                _mockSessionManager.Object, _mockManifestBuilder.Object));
+                _mockSessionManager.Object, _mockManifestBuilder.Object, _mockEntitySessionRegistry.Object));
 
         Assert.Null(exception);
     }

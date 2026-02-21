@@ -12,7 +12,7 @@
 //
 //     IMPLEMENTATION TENETS - Configuration-First:
 //     - Access configuration via dependency injection, never Environment.GetEnvironmentVariable.
-//     - ALL properties below MUST be referenced in ConnectService.cs (no dead config).
+//     - ALL properties below MUST be referenced somewhere in the plugin (no dead config).
 //     - Any hardcoded tunable (limit, timeout, threshold, capacity) in service code means
 //       a configuration property is MISSING - add it to the configuration schema.
 //     - If a property is unused, remove it from the configuration schema.
@@ -65,7 +65,7 @@ public enum InternalAuthMode
 /// <para>
 /// <b>IMPLEMENTATION TENETS - Configuration-First:</b> Access configuration via dependency injection.
 /// Never use <c>Environment.GetEnvironmentVariable()</c> directly in service code.
-/// ALL properties in this class MUST be referenced in the service implementation.
+/// ALL properties in this class MUST be referenced somewhere in the plugin.
 /// If a property is unused, remove it from the configuration schema.
 /// </para>
 /// <para>
@@ -89,12 +89,6 @@ public class ConnectServiceConfiguration : IServiceConfiguration
     /// Environment variable: CONNECT_HEARTBEAT_INTERVAL_SECONDS
     /// </summary>
     public int HeartbeatIntervalSeconds { get; set; } = 30;
-
-    /// <summary>
-    /// Maximum number of queued messages per connection
-    /// Environment variable: CONNECT_MESSAGE_QUEUE_SIZE
-    /// </summary>
-    public int MessageQueueSize { get; set; } = 1000;
 
     /// <summary>
     /// Size of message buffers in bytes
@@ -163,12 +157,6 @@ public class ConnectServiceConfiguration : IServiceConfiguration
     public int ReconnectionWindowSeconds { get; set; } = 300;
 
     /// <summary>
-    /// Timeout in seconds for HTTP client requests to backend services
-    /// Environment variable: CONNECT_HTTP_CLIENT_TIMEOUT_SECONDS
-    /// </summary>
-    public int HttpClientTimeoutSeconds { get; set; } = 120;
-
-    /// <summary>
     /// Interval in seconds between pending RPC cleanup runs
     /// Environment variable: CONNECT_RPC_CLEANUP_INTERVAL_SECONDS
     /// </summary>
@@ -209,5 +197,31 @@ public class ConnectServiceConfiguration : IServiceConfiguration
     /// Environment variable: CONNECT_RECONNECTION_WINDOW_EXTENSION_MINUTES
     /// </summary>
     public int ReconnectionWindowExtensionMinutes { get; set; } = 1;
+
+    /// <summary>
+    /// How Connect manages companion chat rooms (Disabled, AutoJoinLazy, AutoJoin, Manual)
+    /// Environment variable: CONNECT_COMPANION_ROOM_MODE
+    /// </summary>
+    public CompanionRoomMode CompanionRoomMode { get; set; } = CompanionRoomMode.Disabled;
+
+    /// <summary>
+    /// Enable Brotli compression for outbound WebSocket payloads above the size threshold
+    /// Environment variable: CONNECT_COMPRESSION_ENABLED
+    /// </summary>
+    public bool CompressionEnabled { get; set; } = false;
+
+    /// <summary>
+    /// Minimum payload size in bytes before compression is applied (payloads below this are sent uncompressed)
+    /// Environment variable: CONNECT_COMPRESSION_THRESHOLD_BYTES
+    /// </summary>
+    [ConfigRange(Minimum = 64, Maximum = 1048576)]
+    public int CompressionThresholdBytes { get; set; } = 1024;
+
+    /// <summary>
+    /// Brotli compression quality level (0=no compression, 1=fastest, 11=best ratio). Quality 1 recommended for real-time traffic.
+    /// Environment variable: CONNECT_COMPRESSION_QUALITY
+    /// </summary>
+    [ConfigRange(Minimum = 0, Maximum = 11)]
+    public int CompressionQuality { get; set; } = 1;
 
 }

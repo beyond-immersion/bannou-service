@@ -13,9 +13,14 @@ info:
 
     See docs/BANNOU_DESIGN.md for architectural rationale.
 
-    **Schema Rules**: AI agents MUST review docs/reference/SCHEMA-RULES.md before modifying this schema. Optional reference types require `nullable: true`.
+    **SCHEMA MODIFICATION GATE**: STOP. Before modifying this schema, you MUST:
+    1. Read docs/reference/SCHEMA-RULES.md
+    2. State which section applies to your change
+    3. Only then proceed with edits
+    Edits without stating the applicable rule are FORBIDDEN.
   version: 4.0.0
   # NOTE: Event subscriptions and publications are in auth-events.yaml
+x-service-layer: AppFoundation
 servers:
 - url: http://localhost:5012
   description: Bannou service endpoint
@@ -38,11 +43,11 @@ paths:
               $ref: '#/components/schemas/LoginRequest'
       responses:
         '200':
-          description: Login successful
+          description: Login successful or MFA challenge issued
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/AuthResponse'
+                $ref: '#/components/schemas/LoginResponse'
         '401':
           description: Invalid credentials
         '429':
@@ -319,6 +324,35 @@ paths:
         '404':
           description: Session not found
 
+  /auth/revocation-list:
+    post:
+      summary: Get current token revocation list
+      description: |
+        Returns the current list of revoked tokens and accounts for edge provider synchronization
+        and administrative monitoring. Includes token-level revocations (by JTI) and account-level
+        revocations (all tokens issued before a timestamp).
+      operationId: getRevocationList
+      tags:
+      - Token Management
+      x-permissions:
+      - role: admin
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetRevocationListRequest'
+      responses:
+        '200':
+          description: Revocation list retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RevocationListResponse'
+        '403':
+          description: Insufficient permissions
+
   /auth/password/reset:
     post:
       summary: Request password reset
@@ -378,6 +412,163 @@ paths:
               schema:
                 $ref: '#/components/schemas/ProvidersResponse'
 
+  /auth/mfa/setup:
+    post:
+      summary: Initialize MFA setup
+      description: |
+        Generates a TOTP secret and 10 recovery codes. Returns an otpauth:// URI for QR
+        code scanning and the recovery codes in plain text (shown only once). The setup is
+        not active until confirmed via /auth/mfa/enable with a valid TOTP code.
+      operationId: setupMfa
+      tags:
+      - MFA
+      x-permissions:
+      - role: user
+        states: {}
+      parameters:
+      - name: jwt
+        in: header
+        required: true
+        schema:
+          type: string
+        description: JWT access token
+        x-from-authorization: bearer
+      responses:
+        '200':
+          description: MFA setup initiated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MfaSetupResponse'
+        '409':
+          description: MFA already enabled for this account
+
+  /auth/mfa/enable:
+    post:
+      summary: Confirm MFA setup with TOTP code
+      description: |
+        Verifies a TOTP code against the pending setup secret to prove the authenticator
+        app is correctly configured. On success, persists MFA settings to the account and
+        MFA is active for all subsequent password logins.
+      operationId: enableMfa
+      tags:
+      - MFA
+      x-permissions:
+      - role: user
+        states: {}
+      parameters:
+      - name: jwt
+        in: header
+        required: true
+        schema:
+          type: string
+        description: JWT access token
+        x-from-authorization: bearer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MfaEnableRequest'
+      responses:
+        '200':
+          description: MFA enabled successfully
+        '400':
+          description: Invalid TOTP code or expired setup token
+        '409':
+          description: MFA already enabled
+
+  /auth/mfa/disable:
+    post:
+      summary: Disable MFA for current account
+      description: |
+        Disables MFA for the authenticated account. Requires a valid TOTP code or
+        recovery code to prevent unauthorized disable. Clears the TOTP secret and
+        recovery codes from the account.
+      operationId: disableMfa
+      tags:
+      - MFA
+      x-permissions:
+      - role: user
+        states: {}
+      parameters:
+      - name: jwt
+        in: header
+        required: true
+        schema:
+          type: string
+        description: JWT access token
+        x-from-authorization: bearer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MfaDisableRequest'
+      responses:
+        '200':
+          description: MFA disabled successfully
+        '400':
+          description: Invalid TOTP code or recovery code
+        '404':
+          description: MFA not enabled for this account
+
+  /auth/mfa/admin-disable:
+    post:
+      summary: Admin override to disable MFA
+      description: |
+        Allows administrators to disable MFA for any account without TOTP verification.
+        For account recovery when a user has lost their authenticator and all recovery codes.
+      operationId: adminDisableMfa
+      tags:
+      - MFA
+      x-permissions:
+      - role: admin
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdminDisableMfaRequest'
+      responses:
+        '200':
+          description: MFA disabled by admin
+        '404':
+          description: Account not found or MFA not enabled
+
+  /auth/mfa/verify:
+    post:
+      summary: Verify MFA code during login
+      description: |
+        Completes the MFA challenge issued during login by verifying a TOTP code or
+        recovery code. On success, returns full authentication tokens (same as a
+        non-MFA login would). The challenge token is single-use and has a configurable
+        TTL (default 5 minutes).
+      operationId: verifyMfa
+      tags:
+      - MFA
+      x-permissions:
+      - role: anonymous
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MfaVerifyRequest'
+      responses:
+        '200':
+          description: MFA verified, tokens issued
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '400':
+          description: Invalid TOTP code or recovery code
+        '401':
+          description: Challenge token not found, expired, or already used
+
 components:
   securitySchemes:
     BearerAuth:
@@ -390,6 +581,11 @@ components:
       type: string
       enum: [google, discord, twitch, steam]
       description: Authentication provider type
+
+    EmailProvider:
+      type: string
+      enum: [none, sendgrid, smtp, ses]
+      description: Email delivery provider type (none=console logging, sendgrid=SendGrid API, smtp=SMTP via MailKit, ses=AWS SES v2)
 
     InitOAuthResponse:
       type: object
@@ -427,6 +623,7 @@ components:
         email:
           type: string
           format: email
+          maxLength: 254
           description: Email address for authentication
         password:
           type: string
@@ -528,14 +725,8 @@ components:
           type: array
           items:
             type: string
-          # NRT: Optional array MUST be nullable (Rule 2)
           nullable: true
           description: List of roles assigned to the authenticated user
-        requiresTwoFactor:
-          type: boolean
-          default: false
-          description: Whether the user needs to complete two-factor authentication
-
     OAuthCallbackRequest:
       description: Request containing OAuth provider callback data to complete authentication
       type: object
@@ -567,6 +758,8 @@ components:
       properties:
         ticket:
           type: string
+          pattern: '^[0-9A-Fa-f]+$'
+          minLength: 16
           description: |
             Hex-encoded Steam Session Ticket from ISteamUser::GetAuthTicketForWebApi().
             Client converts ticket bytes to hex string: BitConverter.ToString(ticketData).Replace("-", "")
@@ -594,7 +787,7 @@ components:
       required:
       - valid
       - accountId
-      - sessionId
+      - sessionKey
       properties:
         valid:
           type: boolean
@@ -603,22 +796,20 @@ components:
           type: string
           format: uuid
           description: Unique identifier for the account associated with the token
-        sessionId:
+        sessionKey:
           type: string
           format: uuid
-          description: Session identifier for WebSocket connections and service routing
+          description: Internal session key used by Connect service for WebSocket connection tracking and service routing
         roles:
           type: array
           items:
             type: string
-          # NRT: Optional array MUST be nullable (Rule 2)
           nullable: true
           description: List of roles assigned to the authenticated user
         authorizations:
           type: array
           items:
             type: string
-          # NRT: Optional array MUST be nullable (Rule 2)
           nullable: true
           description: |
             Authorization strings from active subscriptions.
@@ -677,7 +868,6 @@ components:
           description: Timestamp of the last activity in this session
         ipAddress:
           type: string
-          # NRT: Optional string MUST be nullable (Rule 2)
           nullable: true
           description: IP address from which the session was initiated
         location:
@@ -693,12 +883,10 @@ components:
         deviceType:
           type: string
           enum: [desktop, mobile, tablet, console]
-          # NRT: Optional string/enum MUST be nullable (Rule 2)
           nullable: true
           description: Category of the device
         platform:
           type: string
-          # NRT: Optional string MUST be nullable (Rule 2)
           nullable: true
           description: Operating system or platform name
         browser:
@@ -720,6 +908,7 @@ components:
         email:
           type: string
           format: email
+          maxLength: 254
           description: Email address associated with the account to reset
 
     PasswordResetConfirmRequest:
@@ -738,6 +927,143 @@ components:
           format: password
           minLength: 8
           description: New password to set for the account
+
+    LoginResponse:
+      type: object
+      description: Response from email/password login. May contain full tokens (no MFA) or a challenge token (MFA required).
+      additionalProperties: false
+      required:
+      - accountId
+      - requiresMfa
+      properties:
+        accountId:
+          type: string
+          format: uuid
+          description: Account ID (always present regardless of MFA status)
+        requiresMfa:
+          type: boolean
+          description: If true, client must complete MFA via /auth/mfa/verify before receiving tokens
+        mfaChallengeToken:
+          type: string
+          nullable: true
+          description: Short-lived challenge token for /auth/mfa/verify (only present when requiresMfa is true)
+        accessToken:
+          type: string
+          nullable: true
+          description: JWT access token (only present when requiresMfa is false)
+        refreshToken:
+          type: string
+          nullable: true
+          description: Refresh token (only present when requiresMfa is false)
+        expiresIn:
+          type: integer
+          nullable: true
+          description: Seconds until access token expires (only present when requiresMfa is false)
+        connectUrl:
+          type: string
+          format: uri
+          nullable: true
+          description: WebSocket connect URL (only present when requiresMfa is false)
+        roles:
+          type: array
+          items:
+            type: string
+          nullable: true
+          description: Account roles (only present when requiresMfa is false)
+
+    MfaSetupResponse:
+      type: object
+      description: MFA setup data containing TOTP URI for QR code and recovery codes
+      additionalProperties: false
+      required:
+      - setupToken
+      - totpUri
+      - recoveryCodes
+      properties:
+        setupToken:
+          type: string
+          description: Token to pass to /auth/mfa/enable to confirm setup
+        totpUri:
+          type: string
+          description: otpauth:// URI for authenticator app QR code scanning
+        recoveryCodes:
+          type: array
+          items:
+            type: string
+          description: 10 single-use recovery codes (shown only once, user must save them)
+
+    MfaEnableRequest:
+      type: object
+      description: Request to confirm MFA setup with a valid TOTP code proving authenticator is configured
+      additionalProperties: false
+      required:
+      - setupToken
+      - totpCode
+      properties:
+        setupToken:
+          type: string
+          description: Setup token from /auth/mfa/setup response
+        totpCode:
+          type: string
+          minLength: 6
+          maxLength: 6
+          pattern: '^\d{6}$'
+          description: 6-digit TOTP code from authenticator app
+
+    MfaDisableRequest:
+      type: object
+      description: Request to disable MFA. Exactly one of totpCode or recoveryCode must be provided.
+      additionalProperties: false
+      properties:
+        totpCode:
+          type: string
+          nullable: true
+          minLength: 6
+          maxLength: 6
+          pattern: '^\d{6}$'
+          description: Current 6-digit TOTP code from authenticator app
+        recoveryCode:
+          type: string
+          nullable: true
+          description: Single-use recovery code (format xxxx-xxxx)
+
+    AdminDisableMfaRequest:
+      type: object
+      description: Admin request to forcefully disable MFA for a user account
+      additionalProperties: false
+      required:
+      - accountId
+      properties:
+        accountId:
+          type: string
+          format: uuid
+          description: Account ID to disable MFA for
+        reason:
+          type: string
+          nullable: true
+          description: Administrative reason for disabling MFA (stored in audit event)
+
+    MfaVerifyRequest:
+      type: object
+      description: Request to verify MFA during login. Exactly one of totpCode or recoveryCode must be provided.
+      additionalProperties: false
+      required:
+      - challengeToken
+      properties:
+        challengeToken:
+          type: string
+          description: Challenge token from LoginResponse when requiresMfa was true
+        totpCode:
+          type: string
+          nullable: true
+          minLength: 6
+          maxLength: 6
+          pattern: '^\d{6}$'
+          description: 6-digit TOTP code from authenticator app
+        recoveryCode:
+          type: string
+          nullable: true
+          description: Single-use recovery code (format xxxx-xxxx)
 
     ProvidersResponse:
       type: object
@@ -776,10 +1102,113 @@ components:
         authUrl:
           type: string
           format: uri
-          # NRT: Optional string MUST be nullable (Rule 2)
           nullable: true
           example: "https://discord.com/oauth2/authorize"
           description: URL to initiate OAuth authentication (null for ticket-based auth like Steam)
+
+    # Edge Revocation Models
+    GetRevocationListRequest:
+      type: object
+      description: Request to get current revocation list for edge provider synchronization or admin monitoring
+      additionalProperties: false
+      properties:
+        includeTokens:
+          type: boolean
+          default: true
+          description: Include token-level revocations (by JTI)
+        includeAccounts:
+          type: boolean
+          default: true
+          description: Include account-level revocations (all tokens before timestamp)
+        limit:
+          type: integer
+          minimum: 1
+          maximum: 1000
+          default: 100
+          description: Maximum entries to return per category
+
+    RevocationListResponse:
+      type: object
+      description: Current revocation list with token and account level entries
+      additionalProperties: false
+      required:
+      - revokedTokens
+      - revokedAccounts
+      - failedPushCount
+      properties:
+        revokedTokens:
+          type: array
+          items:
+            $ref: '#/components/schemas/RevokedTokenEntry'
+          description: Token-level revocations (individual JTIs)
+        revokedAccounts:
+          type: array
+          items:
+            $ref: '#/components/schemas/RevokedAccountEntry'
+          description: Account-level revocations (all tokens before timestamp)
+        failedPushCount:
+          type: integer
+          description: Number of pending failed pushes awaiting retry
+        totalTokenCount:
+          type: integer
+          nullable: true
+          description: Total revoked tokens in store (may be null if count unavailable)
+
+    RevokedTokenEntry:
+      type: object
+      description: A single revoked token entry with expiration tracking
+      additionalProperties: false
+      required:
+      - jti
+      - accountId
+      - revokedAt
+      - expiresAt
+      - reason
+      properties:
+        jti:
+          type: string
+          description: JWT unique identifier (jti claim)
+        accountId:
+          type: string
+          format: uuid
+          description: Account that owned the token
+        revokedAt:
+          type: string
+          format: date-time
+          description: When the token was revoked
+        expiresAt:
+          type: string
+          format: date-time
+          description: When the revocation entry expires (matches original JWT expiry)
+        reason:
+          type: string
+          description: Revocation reason for audit trail
+
+    RevokedAccountEntry:
+      type: object
+      description: Account-level revocation entry that invalidates all tokens issued before a timestamp
+      additionalProperties: false
+      required:
+      - accountId
+      - issuedBefore
+      - revokedAt
+      - reason
+      properties:
+        accountId:
+          type: string
+          format: uuid
+          description: Account ID whose tokens are revoked
+        issuedBefore:
+          type: string
+          format: date-time
+          description: Reject tokens issued before this timestamp
+        revokedAt:
+          type: string
+          format: date-time
+          description: When the revocation was created
+        reason:
+          type: string
+          description: Revocation reason for audit trail
 
     # NOTE: Event models (SessionInvalidatedEvent, SessionUpdatedEvent) are defined in auth-events.yaml
     # and generated separately. They are NOT part of the HTTP API.

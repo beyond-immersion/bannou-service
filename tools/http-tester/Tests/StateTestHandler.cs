@@ -46,6 +46,26 @@ public class StateTestHandler : BaseHttpTestHandler
         new ServiceTest(TestQueryStateRedisWithoutSearch, "QueryStateRedisNoSearch", "State", "Test querying state from Redis without search returns 400"),
         new ServiceTest(TestQueryStateWithPagination, "QueryStatePagination", "State", "Test querying state with pagination"),
         new ServiceTest(TestQueryStateWithConditions, "QueryStateConditions", "State", "Test querying state with QueryCondition filters"),
+
+        // Bulk Save Tests
+        new ServiceTest(TestBulkSaveState, "BulkSaveState", "State", "Test bulk saving multiple key-value pairs"),
+        new ServiceTest(TestBulkSaveStateWithTTL, "BulkSaveStateTTL", "State", "Test bulk saving with TTL option on Redis"),
+
+        // Bulk Delete Tests
+        new ServiceTest(TestBulkDeleteState, "BulkDeleteState", "State", "Test bulk deleting multiple keys"),
+        new ServiceTest(TestBulkDeleteStateMixed, "BulkDeleteMixed", "State", "Test bulk delete with mixed existing/non-existing keys"),
+
+        // Bulk Exists Tests
+        new ServiceTest(TestBulkExistsState, "BulkExistsState", "State", "Test checking existence of multiple keys"),
+
+        // MySQL Query Operator Tests
+        new ServiceTest(TestQueryContainsOperator, "QueryContains", "State", "Test MySQL query with contains operator"),
+        new ServiceTest(TestQueryStartsWithOperator, "QueryStartsWith", "State", "Test MySQL query with startsWith operator"),
+        new ServiceTest(TestQueryInOperator, "QueryIn", "State", "Test MySQL query with in operator"),
+        new ServiceTest(TestQueryComparisonOperators, "QueryComparison", "State", "Test MySQL query with greaterThan/lessThan operators"),
+
+        // Error Response Tests
+        new ServiceTest(TestSaveStateConflict, "SaveStateConflict", "State", "Test 409 Conflict response for ETag mismatch"),
     ];
 
     private static async Task<TestResult> TestListStores(ITestClient client, string[] args) =>
@@ -630,4 +650,588 @@ public class StateTestHandler : BaseHttpTestHandler
             // The key validation is that the endpoint accepts conditions without errors
             return TestResult.Successful($"QueryState with conditions returned {queryResponse.Results?.Count ?? 0} results, total: {queryResponse.TotalCount}");
         }, "Query with conditions");
+
+    // ============================================================================
+    // Bulk Save Tests
+    // ============================================================================
+
+    private static async Task<TestResult> TestBulkSaveState(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
+        {
+            var stateClient = GetServiceClient<IStateClient>();
+
+            var testPrefix = $"http-test-bulk-save-{Guid.NewGuid()}";
+            var testItems = new List<BulkSaveItem>
+            {
+                new BulkSaveItem { Key = $"{testPrefix}-1", Value = new { name = "Item 1", index = 1 } },
+                new BulkSaveItem { Key = $"{testPrefix}-2", Value = new { name = "Item 2", index = 2 } },
+                new BulkSaveItem { Key = $"{testPrefix}-3", Value = new { name = "Item 3", index = 3 } }
+            };
+
+            var request = new BulkSaveStateRequest
+            {
+                StoreName = MYSQL_STORE,
+                Items = testItems
+            };
+
+            var response = await stateClient.BulkSaveStateAsync(request);
+
+            if (response == null)
+                return TestResult.Failed("BulkSaveState returned null");
+
+            if (response.Results == null || response.Results.Count != 3)
+            {
+                // Clean up before returning
+                foreach (var item in testItems)
+                {
+                    await stateClient.DeleteStateAsync(new DeleteStateRequest { StoreName = MYSQL_STORE, Key = item.Key });
+                }
+                return TestResult.Failed($"BulkSaveState returned {response.Results?.Count ?? 0} results, expected 3");
+            }
+
+            // Verify all results have ETags
+            var allHaveEtags = response.Results.All(r => !string.IsNullOrEmpty(r.Etag));
+            if (!allHaveEtags)
+            {
+                foreach (var item in testItems)
+                {
+                    await stateClient.DeleteStateAsync(new DeleteStateRequest { StoreName = MYSQL_STORE, Key = item.Key });
+                }
+                return TestResult.Failed("BulkSaveState did not return ETags for all items");
+            }
+
+            // Verify items were actually saved by getting them
+            var getResponse = await stateClient.BulkGetStateAsync(new BulkGetStateRequest
+            {
+                StoreName = MYSQL_STORE,
+                Keys = testItems.Select(i => i.Key).ToList()
+            });
+
+            var foundCount = getResponse?.Items?.Count(i => i.Found) ?? 0;
+
+            // Clean up
+            foreach (var item in testItems)
+            {
+                await stateClient.DeleteStateAsync(new DeleteStateRequest { StoreName = MYSQL_STORE, Key = item.Key });
+            }
+
+            if (foundCount != 3)
+                return TestResult.Failed($"BulkSaveState claimed success but only {foundCount}/3 items found on get");
+
+            return TestResult.Successful($"BulkSaveState saved {response.Results.Count} items with ETags");
+        }, "Bulk save state");
+
+    private static async Task<TestResult> TestBulkSaveStateWithTTL(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
+        {
+            var stateClient = GetServiceClient<IStateClient>();
+
+            var testPrefix = $"http-test-bulk-save-ttl-{Guid.NewGuid()}";
+            var testItems = new List<BulkSaveItem>
+            {
+                new BulkSaveItem { Key = $"{testPrefix}-1", Value = new { name = "TTL Item 1" } },
+                new BulkSaveItem { Key = $"{testPrefix}-2", Value = new { name = "TTL Item 2" } }
+            };
+
+            var request = new BulkSaveStateRequest
+            {
+                StoreName = REDIS_STORE,
+                Items = testItems,
+                Options = new StateOptions { Ttl = 300 } // 5 minutes TTL
+            };
+
+            var response = await stateClient.BulkSaveStateAsync(request);
+
+            if (response == null)
+                return TestResult.Failed("BulkSaveState with TTL returned null");
+
+            if (response.Results == null || response.Results.Count != 2)
+            {
+                foreach (var item in testItems)
+                {
+                    await stateClient.DeleteStateAsync(new DeleteStateRequest { StoreName = REDIS_STORE, Key = item.Key });
+                }
+                return TestResult.Failed($"BulkSaveState with TTL returned {response.Results?.Count ?? 0} results, expected 2");
+            }
+
+            // Clean up
+            foreach (var item in testItems)
+            {
+                await stateClient.DeleteStateAsync(new DeleteStateRequest { StoreName = REDIS_STORE, Key = item.Key });
+            }
+
+            return TestResult.Successful($"BulkSaveState with TTL saved {response.Results.Count} items to Redis");
+        }, "Bulk save state with TTL");
+
+    // ============================================================================
+    // Bulk Delete Tests
+    // ============================================================================
+
+    private static async Task<TestResult> TestBulkDeleteState(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
+        {
+            var stateClient = GetServiceClient<IStateClient>();
+
+            var testPrefix = $"http-test-bulk-del-{Guid.NewGuid()}";
+            var testKeys = new[] { $"{testPrefix}-1", $"{testPrefix}-2", $"{testPrefix}-3" };
+
+            // Pre-save items
+            foreach (var key in testKeys)
+            {
+                await stateClient.SaveStateAsync(new SaveStateRequest
+                {
+                    StoreName = MYSQL_STORE,
+                    Key = key,
+                    Value = new { name = key },
+                    Options = new StateOptions()
+                });
+            }
+
+            // Bulk delete
+            var deleteRequest = new BulkDeleteStateRequest
+            {
+                StoreName = MYSQL_STORE,
+                Keys = testKeys
+            };
+
+            var response = await stateClient.BulkDeleteStateAsync(deleteRequest);
+
+            if (response == null)
+                return TestResult.Failed("BulkDeleteState returned null");
+
+            if (response.DeletedCount != 3)
+                return TestResult.Failed($"BulkDeleteState returned deletedCount={response.DeletedCount}, expected 3");
+
+            // Verify items are actually gone
+            var getResponse = await stateClient.BulkGetStateAsync(new BulkGetStateRequest
+            {
+                StoreName = MYSQL_STORE,
+                Keys = testKeys
+            });
+
+            var stillExist = getResponse?.Items?.Count(i => i.Found) ?? 0;
+            if (stillExist > 0)
+                return TestResult.Failed($"BulkDeleteState claimed success but {stillExist} items still exist");
+
+            return TestResult.Successful($"BulkDeleteState deleted {response.DeletedCount} items");
+        }, "Bulk delete state");
+
+    private static async Task<TestResult> TestBulkDeleteStateMixed(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
+        {
+            var stateClient = GetServiceClient<IStateClient>();
+
+            var testPrefix = $"http-test-bulk-del-mix-{Guid.NewGuid()}";
+            var existingKeys = new[] { $"{testPrefix}-1", $"{testPrefix}-2" };
+            var nonExistingKey = $"{testPrefix}-nonexistent";
+            var allKeys = existingKeys.Append(nonExistingKey).ToList();
+
+            // Pre-save only 2 items
+            foreach (var key in existingKeys)
+            {
+                await stateClient.SaveStateAsync(new SaveStateRequest
+                {
+                    StoreName = MYSQL_STORE,
+                    Key = key,
+                    Value = new { name = key },
+                    Options = new StateOptions()
+                });
+            }
+
+            // Bulk delete 3 keys (2 exist, 1 doesn't)
+            var deleteRequest = new BulkDeleteStateRequest
+            {
+                StoreName = MYSQL_STORE,
+                Keys = allKeys
+            };
+
+            var response = await stateClient.BulkDeleteStateAsync(deleteRequest);
+
+            if (response == null)
+                return TestResult.Failed("BulkDeleteState (mixed) returned null");
+
+            // Should only count the 2 that actually existed
+            if (response.DeletedCount != 2)
+                return TestResult.Failed($"BulkDeleteState (mixed) returned deletedCount={response.DeletedCount}, expected 2");
+
+            return TestResult.Successful($"BulkDeleteState (mixed) correctly deleted {response.DeletedCount} of 3 requested keys");
+        }, "Bulk delete mixed keys");
+
+    // ============================================================================
+    // Bulk Exists Tests
+    // ============================================================================
+
+    private static async Task<TestResult> TestBulkExistsState(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
+        {
+            var stateClient = GetServiceClient<IStateClient>();
+
+            var testPrefix = $"http-test-bulk-exists-{Guid.NewGuid()}";
+            var existingKeys = new[] { $"{testPrefix}-1", $"{testPrefix}-2" };
+            var nonExistingKey = $"{testPrefix}-nonexistent";
+            var allKeys = existingKeys.Append(nonExistingKey).ToList();
+
+            // Pre-save 2 items
+            foreach (var key in existingKeys)
+            {
+                await stateClient.SaveStateAsync(new SaveStateRequest
+                {
+                    StoreName = MYSQL_STORE,
+                    Key = key,
+                    Value = new { name = key },
+                    Options = new StateOptions()
+                });
+            }
+
+            // Check existence of 3 keys
+            var existsRequest = new BulkExistsStateRequest
+            {
+                StoreName = MYSQL_STORE,
+                Keys = allKeys
+            };
+
+            var response = await stateClient.BulkExistsStateAsync(existsRequest);
+
+            // Clean up
+            foreach (var key in existingKeys)
+            {
+                await stateClient.DeleteStateAsync(new DeleteStateRequest { StoreName = MYSQL_STORE, Key = key });
+            }
+
+            if (response == null)
+                return TestResult.Failed("BulkExistsState returned null");
+
+            if (response.ExistingKeys == null)
+                return TestResult.Failed("BulkExistsState returned null existingKeys");
+
+            // Should contain only the 2 that exist
+            if (response.ExistingKeys.Count != 2)
+                return TestResult.Failed($"BulkExistsState returned {response.ExistingKeys.Count} existing keys, expected 2");
+
+            // Verify the correct keys are reported as existing
+            var hasKey1 = response.ExistingKeys.Contains(existingKeys[0]);
+            var hasKey2 = response.ExistingKeys.Contains(existingKeys[1]);
+            var hasNonExisting = response.ExistingKeys.Contains(nonExistingKey);
+
+            if (!hasKey1 || !hasKey2)
+                return TestResult.Failed("BulkExistsState missing expected existing keys");
+
+            if (hasNonExisting)
+                return TestResult.Failed("BulkExistsState incorrectly included non-existing key");
+
+            return TestResult.Successful($"BulkExistsState correctly identified {response.ExistingKeys.Count} existing keys");
+        }, "Bulk exists state");
+
+    // ============================================================================
+    // MySQL Query Operator Tests
+    // ============================================================================
+
+    private static async Task<TestResult> TestQueryContainsOperator(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
+        {
+            var stateClient = GetServiceClient<IStateClient>();
+
+            var testPrefix = $"query-contains-{Guid.NewGuid()}";
+            var testData = new[]
+            {
+                new { key = $"{testPrefix}-1", description = "This contains special text here" },
+                new { key = $"{testPrefix}-2", description = "Another item with special in it" },
+                new { key = $"{testPrefix}-3", description = "No match in this one" },
+            };
+
+            foreach (var item in testData)
+            {
+                await stateClient.SaveStateAsync(new SaveStateRequest
+                {
+                    StoreName = MYSQL_STORE,
+                    Key = item.key,
+                    Value = new { description = item.description },
+                    Options = new StateOptions()
+                });
+            }
+
+            // Query with contains operator
+            var queryRequest = new QueryStateRequest
+            {
+                StoreName = MYSQL_STORE,
+                Conditions = new List<QueryCondition>
+                {
+                    new QueryCondition
+                    {
+                        Path = "$.description",
+                        Operator = QueryOperator.Contains,
+                        Value = "special"
+                    }
+                },
+                Page = 0,
+                PageSize = 10
+            };
+
+            var response = await stateClient.QueryStateAsync(queryRequest);
+
+            // Clean up
+            foreach (var item in testData)
+            {
+                await stateClient.DeleteStateAsync(new DeleteStateRequest { StoreName = MYSQL_STORE, Key = item.key });
+            }
+
+            if (response == null)
+                return TestResult.Failed("QueryState with contains operator returned null");
+
+            // The query executed without error - contains operator is working
+            return TestResult.Successful($"QueryState with contains operator returned {response.Results?.Count ?? 0} results");
+        }, "Query with contains operator");
+
+    private static async Task<TestResult> TestQueryStartsWithOperator(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
+        {
+            var stateClient = GetServiceClient<IStateClient>();
+
+            var testPrefix = $"query-starts-{Guid.NewGuid()}";
+            var testData = new[]
+            {
+                new { key = $"{testPrefix}-1", code = "PREFIX_001" },
+                new { key = $"{testPrefix}-2", code = "PREFIX_002" },
+                new { key = $"{testPrefix}-3", code = "OTHER_003" },
+            };
+
+            foreach (var item in testData)
+            {
+                await stateClient.SaveStateAsync(new SaveStateRequest
+                {
+                    StoreName = MYSQL_STORE,
+                    Key = item.key,
+                    Value = new { code = item.code },
+                    Options = new StateOptions()
+                });
+            }
+
+            // Query with startsWith operator
+            var queryRequest = new QueryStateRequest
+            {
+                StoreName = MYSQL_STORE,
+                Conditions = new List<QueryCondition>
+                {
+                    new QueryCondition
+                    {
+                        Path = "$.code",
+                        Operator = QueryOperator.StartsWith,
+                        Value = "PREFIX"
+                    }
+                },
+                Page = 0,
+                PageSize = 10
+            };
+
+            var response = await stateClient.QueryStateAsync(queryRequest);
+
+            // Clean up
+            foreach (var item in testData)
+            {
+                await stateClient.DeleteStateAsync(new DeleteStateRequest { StoreName = MYSQL_STORE, Key = item.key });
+            }
+
+            if (response == null)
+                return TestResult.Failed("QueryState with startsWith operator returned null");
+
+            return TestResult.Successful($"QueryState with startsWith operator returned {response.Results?.Count ?? 0} results");
+        }, "Query with startsWith operator");
+
+    private static async Task<TestResult> TestQueryInOperator(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
+        {
+            var stateClient = GetServiceClient<IStateClient>();
+
+            var testPrefix = $"query-in-{Guid.NewGuid()}";
+            var testData = new[]
+            {
+                new { key = $"{testPrefix}-1", status = "active" },
+                new { key = $"{testPrefix}-2", status = "pending" },
+                new { key = $"{testPrefix}-3", status = "inactive" },
+                new { key = $"{testPrefix}-4", status = "active" },
+            };
+
+            foreach (var item in testData)
+            {
+                await stateClient.SaveStateAsync(new SaveStateRequest
+                {
+                    StoreName = MYSQL_STORE,
+                    Key = item.key,
+                    Value = new { status = item.status },
+                    Options = new StateOptions()
+                });
+            }
+
+            // Query with 'in' operator - status IN ["active", "pending"]
+            var queryRequest = new QueryStateRequest
+            {
+                StoreName = MYSQL_STORE,
+                Conditions = new List<QueryCondition>
+                {
+                    new QueryCondition
+                    {
+                        Path = "$.status",
+                        Operator = QueryOperator.In,
+                        Value = new[] { "active", "pending" }
+                    }
+                },
+                Page = 0,
+                PageSize = 10
+            };
+
+            var response = await stateClient.QueryStateAsync(queryRequest);
+
+            // Clean up
+            foreach (var item in testData)
+            {
+                await stateClient.DeleteStateAsync(new DeleteStateRequest { StoreName = MYSQL_STORE, Key = item.key });
+            }
+
+            if (response == null)
+                return TestResult.Failed("QueryState with 'in' operator returned null");
+
+            return TestResult.Successful($"QueryState with 'in' operator returned {response.Results?.Count ?? 0} results");
+        }, "Query with 'in' operator");
+
+    private static async Task<TestResult> TestQueryComparisonOperators(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
+        {
+            var stateClient = GetServiceClient<IStateClient>();
+
+            var testPrefix = $"query-compare-{Guid.NewGuid()}";
+            var testData = new[]
+            {
+                new { key = $"{testPrefix}-1", score = 10 },
+                new { key = $"{testPrefix}-2", score = 50 },
+                new { key = $"{testPrefix}-3", score = 90 },
+            };
+
+            foreach (var item in testData)
+            {
+                await stateClient.SaveStateAsync(new SaveStateRequest
+                {
+                    StoreName = MYSQL_STORE,
+                    Key = item.key,
+                    Value = new { score = item.score },
+                    Options = new StateOptions()
+                });
+            }
+
+            // Query with greaterThan operator (score > 30)
+            var gtRequest = new QueryStateRequest
+            {
+                StoreName = MYSQL_STORE,
+                Conditions = new List<QueryCondition>
+                {
+                    new QueryCondition
+                    {
+                        Path = "$.score",
+                        Operator = QueryOperator.GreaterThan,
+                        Value = 30
+                    }
+                },
+                Page = 0,
+                PageSize = 10
+            };
+
+            var gtResponse = await stateClient.QueryStateAsync(gtRequest);
+
+            // Query with lessThan operator (score < 60)
+            var ltRequest = new QueryStateRequest
+            {
+                StoreName = MYSQL_STORE,
+                Conditions = new List<QueryCondition>
+                {
+                    new QueryCondition
+                    {
+                        Path = "$.score",
+                        Operator = QueryOperator.LessThan,
+                        Value = 60
+                    }
+                },
+                Page = 0,
+                PageSize = 10
+            };
+
+            var ltResponse = await stateClient.QueryStateAsync(ltRequest);
+
+            // Clean up
+            foreach (var item in testData)
+            {
+                await stateClient.DeleteStateAsync(new DeleteStateRequest { StoreName = MYSQL_STORE, Key = item.key });
+            }
+
+            if (gtResponse == null || ltResponse == null)
+                return TestResult.Failed("QueryState with comparison operators returned null");
+
+            var gtCount = gtResponse.Results?.Count ?? 0;
+            var ltCount = ltResponse.Results?.Count ?? 0;
+
+            return TestResult.Successful($"QueryState comparison operators: greaterThan(30)={gtCount} results, lessThan(60)={ltCount} results");
+        }, "Query with comparison operators");
+
+    // ============================================================================
+    // Error Response Tests
+    // ============================================================================
+
+    private static async Task<TestResult> TestSaveStateConflict(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
+        {
+            var stateClient = GetServiceClient<IStateClient>();
+
+            var testKey = $"http-test-conflict-{Guid.NewGuid()}";
+
+            // Save initial value
+            var initialSave = await stateClient.SaveStateAsync(new SaveStateRequest
+            {
+                StoreName = MYSQL_STORE,
+                Key = testKey,
+                Value = new { version = 1 },
+                Options = new StateOptions()
+            });
+
+            if (initialSave == null || string.IsNullOrEmpty(initialSave.Etag))
+            {
+                return TestResult.Failed("Initial save failed - no ETag returned");
+            }
+
+            var originalEtag = initialSave.Etag;
+
+            // Update to get a new ETag
+            var updateSave = await stateClient.SaveStateAsync(new SaveStateRequest
+            {
+                StoreName = MYSQL_STORE,
+                Key = testKey,
+                Value = new { version = 2 },
+                Options = new StateOptions { Etag = originalEtag }
+            });
+
+            if (updateSave == null || string.IsNullOrEmpty(updateSave.Etag))
+            {
+                await stateClient.DeleteStateAsync(new DeleteStateRequest { StoreName = MYSQL_STORE, Key = testKey });
+                return TestResult.Failed("Update save failed - no ETag returned");
+            }
+
+            // Now try to save with the OLD (stale) ETag - should get 409 Conflict
+            try
+            {
+                await stateClient.SaveStateAsync(new SaveStateRequest
+                {
+                    StoreName = MYSQL_STORE,
+                    Key = testKey,
+                    Value = new { version = 3 },
+                    Options = new StateOptions { Etag = originalEtag } // Stale ETag
+                });
+
+                // If we get here, the save unexpectedly succeeded
+                await stateClient.DeleteStateAsync(new DeleteStateRequest { StoreName = MYSQL_STORE, Key = testKey });
+                return TestResult.Failed("Save with stale ETag should have returned 409 Conflict but succeeded");
+            }
+            catch (ApiException ex) when (ex.StatusCode == 409)
+            {
+                // Expected - clean up and return success
+                await stateClient.DeleteStateAsync(new DeleteStateRequest { StoreName = MYSQL_STORE, Key = testKey });
+                return TestResult.Successful("SaveState correctly returned 409 Conflict for stale ETag");
+            }
+        }, "Save state conflict");
 }

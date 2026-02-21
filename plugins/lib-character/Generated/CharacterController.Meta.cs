@@ -1123,10 +1123,12 @@ public partial class CharacterController
                     },
                     "description": "Sibling relationships (including half-siblings)"
                 },
-                "spouse": {
-                    "$ref": "#/$defs/FamilyMember",
-                    "nullable": true,
-                    "description": "Current spouse (if any)"
+                "spouses": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/FamilyMember"
+                    },
+                    "description": "Spousal relationships (spouse, husband, wife)"
                 },
                 "pastLives": {
                     "type": "array",
@@ -1986,6 +1988,340 @@ public partial class CharacterController
             _GetCharactersByRealm_Info,
             _GetCharactersByRealm_RequestSchema,
             _GetCharactersByRealm_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for TransferCharacterToRealm
+
+    private static readonly string _TransferCharacterToRealm_RequestSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/TransferCharacterToRealmRequest",
+    "$defs": {
+        "TransferCharacterToRealmRequest": {
+            "description": "Request payload for transferring a character to a different realm",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "characterId",
+                "targetRealmId"
+            ],
+            "properties": {
+                "characterId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "ID of the character to transfer"
+                },
+                "targetRealmId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "ID of the realm to transfer the character to"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _TransferCharacterToRealm_ResponseSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/CharacterResponse",
+    "$defs": {
+        "CharacterResponse": {
+            "description": "Complete character data returned from character operations",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "characterId",
+                "name",
+                "realmId",
+                "speciesId",
+                "birthDate",
+                "status",
+                "createdAt"
+            ],
+            "properties": {
+                "characterId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Unique identifier for the character"
+                },
+                "name": {
+                    "type": "string",
+                    "description": "Display name of the character"
+                },
+                "realmId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Realm ID (partition key)"
+                },
+                "speciesId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Species ID (foreign key to Species service)"
+                },
+                "birthDate": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "In-game birth timestamp"
+                },
+                "deathDate": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "In-game death timestamp"
+                },
+                "status": {
+                    "$ref": "#/$defs/CharacterStatus",
+                    "description": "Current lifecycle status of the character"
+                },
+                "createdAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "Real-world creation timestamp"
+                },
+                "updatedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "Real-world last update timestamp"
+                }
+            }
+        },
+        "CharacterStatus": {
+            "type": "string",
+            "description": "Character lifecycle status",
+            "enum": [
+                "alive",
+                "dead",
+                "dormant"
+            ]
+        }
+    }
+}
+""";
+
+    private static readonly string _TransferCharacterToRealm_Info = """
+{
+    "summary": "Transfer character to a different realm",
+    "description": "Moves a character from their current realm to a new target realm.\nUpdates all indexes, validates the target realm exists and is active,\nand publishes realm transition events.\n",
+    "tags": [
+        "Character Management"
+    ],
+    "deprecated": false,
+    "operationId": "transferCharacterToRealm"
+}
+""";
+
+    /// <summary>Returns endpoint information for TransferCharacterToRealm</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/character/transfer-realm/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> TransferCharacterToRealm_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Character",
+            "POST",
+            "/character/transfer-realm",
+            _TransferCharacterToRealm_Info));
+
+    /// <summary>Returns request schema for TransferCharacterToRealm</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/character/transfer-realm/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> TransferCharacterToRealm_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Character",
+            "POST",
+            "/character/transfer-realm",
+            "request-schema",
+            _TransferCharacterToRealm_RequestSchema));
+
+    /// <summary>Returns response schema for TransferCharacterToRealm</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/character/transfer-realm/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> TransferCharacterToRealm_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Character",
+            "POST",
+            "/character/transfer-realm",
+            "response-schema",
+            _TransferCharacterToRealm_ResponseSchema));
+
+    /// <summary>Returns full schema for TransferCharacterToRealm</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/character/transfer-realm/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> TransferCharacterToRealm_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Character",
+            "POST",
+            "/character/transfer-realm",
+            _TransferCharacterToRealm_Info,
+            _TransferCharacterToRealm_RequestSchema,
+            _TransferCharacterToRealm_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for GetCompressData
+
+    private static readonly string _GetCompressData_RequestSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/GetCompressDataRequest",
+    "$defs": {
+        "GetCompressDataRequest": {
+            "description": "Request to get character data for compression",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "characterId"
+            ],
+            "properties": {
+                "characterId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "ID of the character to get compress data for"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _GetCompressData_ResponseSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/CharacterBaseArchive",
+    "$defs": {
+        "CharacterBaseArchive": {
+            "type": "object",
+            "x-archive-type": true,
+            "description": "Core character data for archive storage and storyline SDK consumption.\nInherits base archive properties from ResourceArchiveBase.\nThe characterId field equals resourceId for convenience.\n\nNote: This is distinct from CharacterArchive which contains text summaries\nfor cleanup. CharacterBaseArchive contains structured data for SDK consumption.\n",
+            "allOf": [
+                {
+                    "type": "object"
+                }
+            ],
+            "additionalProperties": false,
+            "required": [
+                "characterId",
+                "name",
+                "realmId",
+                "speciesId",
+                "birthDate",
+                "deathDate",
+                "status"
+            ],
+            "properties": {
+                "characterId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Unique identifier for the character (equals resourceId)"
+                },
+                "name": {
+                    "type": "string",
+                    "description": "Display name of the character"
+                },
+                "realmId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Realm ID (partition key)"
+                },
+                "speciesId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Species ID (foreign key to Species service)"
+                },
+                "birthDate": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "In-game birth timestamp"
+                },
+                "deathDate": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "In-game death timestamp (required for compression)"
+                },
+                "status": {
+                    "$ref": "#/$defs/CharacterStatus",
+                    "description": "Current lifecycle status (must be dead for compression)"
+                },
+                "familySummary": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Text summary of family relationships.\nExample: \"Father of 3, married to Elena, orphaned at young age\"\n"
+                },
+                "createdAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "Real-world creation timestamp"
+                },
+                "updatedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "Real-world last update timestamp"
+                }
+            }
+        },
+        "CharacterStatus": {
+            "type": "string",
+            "description": "Character lifecycle status",
+            "enum": [
+                "alive",
+                "dead",
+                "dormant"
+            ]
+        }
+    }
+}
+""";
+
+    private static readonly string _GetCompressData_Info = """
+{
+    "summary": "Get character base data for compression",
+    "description": "Called by Resource service during compression.\nReturns core character data (name, dates, family summary).\nReturns BadRequest if character is alive - only dead characters can be compressed.\n",
+    "tags": [
+        "Character Compression"
+    ],
+    "deprecated": false,
+    "operationId": "getCompressData"
+}
+""";
+
+    /// <summary>Returns endpoint information for GetCompressData</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/character/get-compress-data/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetCompressData_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Character",
+            "POST",
+            "/character/get-compress-data",
+            _GetCompressData_Info));
+
+    /// <summary>Returns request schema for GetCompressData</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/character/get-compress-data/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetCompressData_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Character",
+            "POST",
+            "/character/get-compress-data",
+            "request-schema",
+            _GetCompressData_RequestSchema));
+
+    /// <summary>Returns response schema for GetCompressData</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/character/get-compress-data/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetCompressData_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Character",
+            "POST",
+            "/character/get-compress-data",
+            "response-schema",
+            _GetCompressData_ResponseSchema));
+
+    /// <summary>Returns full schema for GetCompressData</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/character/get-compress-data/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetCompressData_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Character",
+            "POST",
+            "/character/get-compress-data",
+            _GetCompressData_Info,
+            _GetCompressData_RequestSchema,
+            _GetCompressData_ResponseSchema));
 
     #endregion
 }

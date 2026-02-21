@@ -12,7 +12,7 @@
 //
 //     IMPLEMENTATION TENETS - Configuration-First:
 //     - Access configuration via dependency injection, never Environment.GetEnvironmentVariable.
-//     - ALL properties below MUST be referenced in AccountService.cs (no dead config).
+//     - ALL properties below MUST be referenced somewhere in the plugin (no dead config).
 //     - Any hardcoded tunable (limit, timeout, threshold, capacity) in service code means
 //       a configuration property is MISSING - add it to the configuration schema.
 //     - If a property is unused, remove it from the configuration schema.
@@ -40,7 +40,7 @@ namespace BeyondImmersion.BannouService.Account;
 /// <para>
 /// <b>IMPLEMENTATION TENETS - Configuration-First:</b> Access configuration via dependency injection.
 /// Never use <c>Environment.GetEnvironmentVariable()</c> directly in service code.
-/// ALL properties in this class MUST be referenced in the service implementation.
+/// ALL properties in this class MUST be referenced somewhere in the plugin.
 /// If a property is unused, remove it from the configuration schema.
 /// </para>
 /// <para>
@@ -82,6 +82,27 @@ public class AccountServiceConfiguration : IServiceConfiguration
     /// Environment variable: ACCOUNT_LIST_BATCH_SIZE
     /// </summary>
     public int ListBatchSize { get; set; } = 100;
+
+    /// <summary>
+    /// Lock expiry in seconds for account creation email uniqueness check
+    /// Environment variable: ACCOUNT_CREATE_LOCK_EXPIRY_SECONDS
+    /// </summary>
+    [ConfigRange(Minimum = 1, Maximum = 60)]
+    public int CreateLockExpirySeconds { get; set; } = 10;
+
+    /// <summary>
+    /// Lock expiry in seconds for email uniqueness check during email change
+    /// Environment variable: ACCOUNT_EMAIL_CHANGE_LOCK_EXPIRY_SECONDS
+    /// </summary>
+    [ConfigRange(Minimum = 1, Maximum = 60)]
+    public int EmailChangeLockExpirySeconds { get; set; } = 10;
+
+    /// <summary>
+    /// Maximum number of accounts to scan when filtering by provider (admin-only endpoint)
+    /// Environment variable: ACCOUNT_PROVIDER_FILTER_MAX_SCAN_SIZE
+    /// </summary>
+    [ConfigRange(Minimum = 100, Maximum = 100000)]
+    public int ProviderFilterMaxScanSize { get; set; } = 10000;
 
     /// <summary>
     /// When true, automatically manages the anonymous role. If removing roles would leave zero roles, anonymous is added automatically. If adding a non-anonymous role, anonymous is removed if present. This ensures accounts always have at least one role for permission resolution.

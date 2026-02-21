@@ -4,24 +4,266 @@ info:
   description: |
     Service-to-service pub/sub events for the Voice service.
     These events enable asynchronous communication between Voice service
-    and other services (e.g., GameSession, Orchestrator) via RabbitMQ.
+    and other services via RabbitMQ. Voice publishes room lifecycle events
+    and broadcast consent events. Voice does not consume external events.
 
-    NOTE: Voice service is currently stub-only. Event schemas are planned
-    for future WebRTC/voice integration but are not yet implemented.
-    See docs/CLEANED_EVENTS.md for the planned event inventory.
-
-    **Schema Rules**: AI agents MUST review docs/reference/SCHEMA-RULES.md before
-    modifying this schema. Optional reference types require `nullable: true`.
-  version: 1.0.0
+    **SCHEMA MODIFICATION GATE**: STOP. Before modifying this schema, you MUST:
+    1. Read docs/reference/SCHEMA-RULES.md
+    2. State which section applies to your change
+    3. Only then proceed with edits
+    Edits without stating the applicable rule are FORBIDDEN.
+  version: 2.0.0
   contact:
     name: Bannou Development Team
-  # No events implemented yet - voice service is stub-only
   x-event-subscriptions: []
-  x-event-publications: []
+  x-event-publications:
+    - topic: voice.room.created
+      event: VoiceRoomCreatedEvent
+      description: Published when a voice room is created
+    - topic: voice.room.deleted
+      event: VoiceRoomDeletedEvent
+      description: Published when a voice room is deleted
+    - topic: voice.room.tier-upgraded
+      event: VoiceRoomTierUpgradedEvent
+      description: Published when a room upgrades from P2P to scaled tier
+    - topic: voice.participant.joined
+      event: VoiceParticipantJoinedEvent
+      description: Published when a participant joins a room
+    - topic: voice.participant.left
+      event: VoiceParticipantLeftEvent
+      description: Published when a participant leaves a room
+    - topic: voice.room.broadcast.approved
+      event: VoiceRoomBroadcastApprovedEvent
+      description: All participants consented to broadcasting
+    - topic: voice.room.broadcast.declined
+      event: VoiceRoomBroadcastDeclinedEvent
+      description: A participant declined broadcast consent
+    - topic: voice.room.broadcast.stopped
+      event: VoiceRoomBroadcastStoppedEvent
+      description: Broadcasting stopped (consent revoked, room closed, or manual stop)
 
 servers: []
 
 paths: {}
 
 components:
-  schemas: {}
+  schemas:
+    # ============================================
+    # Room Lifecycle Events
+    # ============================================
+
+    VoiceRoomCreatedEvent:
+      type: object
+      additionalProperties: false
+      description: Published when a voice room is created
+      required: [eventId, timestamp, roomId, sessionId, tier, maxParticipants]
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique event identifier
+        timestamp:
+          type: string
+          format: date-time
+          description: When the event occurred
+        roomId:
+          type: string
+          format: uuid
+          description: Voice room ID
+        sessionId:
+          type: string
+          format: uuid
+          description: Connect/Auth session ID of the room creator
+        tier:
+          $ref: 'voice-api.yaml#/components/schemas/VoiceTier'
+          description: Initial voice tier for the room
+        maxParticipants:
+          type: integer
+          description: Maximum participants configured for the room
+
+    VoiceRoomDeletedEvent:
+      type: object
+      additionalProperties: false
+      description: Published when a voice room is deleted
+      required: [eventId, timestamp, roomId, reason]
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique event identifier
+        timestamp:
+          type: string
+          format: date-time
+          description: When the event occurred
+        roomId:
+          type: string
+          format: uuid
+          description: Voice room ID
+        reason:
+          $ref: 'voice-api.yaml#/components/schemas/VoiceRoomDeletedReason'
+          description: Reason the room was deleted
+
+    VoiceRoomTierUpgradedEvent:
+      type: object
+      additionalProperties: false
+      description: Published when a room upgrades from P2P to scaled tier
+      required: [eventId, timestamp, roomId, previousTier, newTier]
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique event identifier
+        timestamp:
+          type: string
+          format: date-time
+          description: When the event occurred
+        roomId:
+          type: string
+          format: uuid
+          description: Voice room ID
+        previousTier:
+          $ref: 'voice-api.yaml#/components/schemas/VoiceTier'
+          description: Tier before upgrade
+        newTier:
+          $ref: 'voice-api.yaml#/components/schemas/VoiceTier'
+          description: Tier after upgrade
+        rtpAudioEndpoint:
+          type: string
+          nullable: true
+          description: RTP mixed audio endpoint (for lib-stream to connect to)
+
+    # ============================================
+    # Participant Events
+    # ============================================
+
+    VoiceParticipantJoinedEvent:
+      type: object
+      additionalProperties: false
+      description: Published when a participant joins a room
+      required: [eventId, timestamp, roomId, participantSessionId, currentCount]
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique event identifier
+        timestamp:
+          type: string
+          format: date-time
+          description: When the event occurred
+        roomId:
+          type: string
+          format: uuid
+          description: Voice room ID
+        participantSessionId:
+          type: string
+          format: uuid
+          description: WebSocket session ID of the participant who joined
+        currentCount:
+          type: integer
+          description: Total participants after join
+
+    VoiceParticipantLeftEvent:
+      type: object
+      additionalProperties: false
+      description: Published when a participant leaves a room
+      required: [eventId, timestamp, roomId, participantSessionId, remainingCount]
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique event identifier
+        timestamp:
+          type: string
+          format: date-time
+          description: When the event occurred
+        roomId:
+          type: string
+          format: uuid
+          description: Voice room ID
+        participantSessionId:
+          type: string
+          format: uuid
+          description: WebSocket session ID of the participant who left
+        remainingCount:
+          type: integer
+          description: Participants remaining after departure
+
+    # ============================================
+    # Broadcast Consent Events
+    # ============================================
+
+    VoiceRoomBroadcastApprovedEvent:
+      type: object
+      additionalProperties: false
+      description: >
+        All participants consented to broadcasting. lib-stream subscribes
+        to this to start RTMP output from the room's audio source.
+      required: [eventId, timestamp, roomId]
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique event identifier
+        timestamp:
+          type: string
+          format: date-time
+          description: When the event occurred
+        roomId:
+          type: string
+          format: uuid
+          description: Voice room ID
+        requestedBySessionId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Session ID of the participant who initiated the broadcast request (null if server-derived)
+        rtpAudioEndpoint:
+          type: string
+          nullable: true
+          description: RTP endpoint for mixed audio (for lib-stream to connect RTMP output)
+
+    VoiceRoomBroadcastDeclinedEvent:
+      type: object
+      additionalProperties: false
+      description: A participant declined broadcast consent
+      required: [eventId, timestamp, roomId]
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique event identifier
+        timestamp:
+          type: string
+          format: date-time
+          description: When the event occurred
+        roomId:
+          type: string
+          format: uuid
+          description: Voice room ID
+        declinedBySessionId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Session ID of the participant who declined (null if auto-declined by consent timeout)
+
+    VoiceRoomBroadcastStoppedEvent:
+      type: object
+      additionalProperties: false
+      description: Broadcasting stopped
+      required: [eventId, timestamp, roomId, reason]
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique event identifier
+        timestamp:
+          type: string
+          format: date-time
+          description: When the event occurred
+        roomId:
+          type: string
+          format: uuid
+          description: Voice room ID
+        reason:
+          $ref: 'voice-api.yaml#/components/schemas/VoiceBroadcastStoppedReason'
+          description: Reason broadcasting was stopped

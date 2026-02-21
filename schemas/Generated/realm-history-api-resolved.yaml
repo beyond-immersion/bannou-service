@@ -1,0 +1,1018 @@
+openapi: 3.0.0
+info:
+  title: Bannou Realm History Service API
+  description: |
+    Historical event participation and lore management for realms.
+
+    **Machine-Readable**: All data is structured for behavior system consumption,
+    not player-facing narrative. Lore elements are key-value pairs that
+    influence NPC decision-making based on realm context.
+
+    **Fully Optional**: Games not using realm history incur zero overhead.
+    This service is completely independent from other services.
+
+    **POST-Only API Pattern**: This API uses POST for all operations to support zero-copy
+    WebSocket routing. Path parameters are passed in request bodies instead of URLs.
+    See docs/BANNOU_DESIGN.md for architectural rationale.
+
+    **Historical Events**: Realms can participate in world events.
+    Participation is tracked with roles (ORIGIN, AGGRESSOR, DEFENDER, etc.) and
+    impact levels that affect behavior system weighting.
+
+    **Lore Elements**: Structured key-value elements that define realm background:
+    - ORIGIN_MYTH: Founding stories and legends
+    - CULTURAL_PRACTICE: Traditions and customs
+    - POLITICAL_SYSTEM: Governance structure
+    - ECONOMIC_BASE: Primary resources and trade
+    - RELIGIOUS_TRADITION: Dominant beliefs and practices
+    - GEOGRAPHIC_FEATURE: Notable landmarks and terrain
+    - FAMOUS_FIGURE: Historical heroes and villains
+    - TECHNOLOGICAL_LEVEL: Development stage
+
+    **SCHEMA MODIFICATION GATE**: STOP. Before modifying this schema, you MUST:
+    1. Read docs/reference/SCHEMA-RULES.md
+    2. State which section applies to your change
+    3. Only then proceed with edits
+    Edits without stating the applicable rule are FORBIDDEN.
+  version: 1.0.0
+  # Resource reference tracking (see SCHEMA-RULES.md "x-references")
+  x-references:
+  - target: realm
+    sourceType: realm-history
+    field: realmId
+    onDelete: cascade
+    cleanup:
+      endpoint: /realm-history/delete-all
+      payloadTemplate: '{"realmId": "{{resourceId}}"}'
+  # Compression callback for resource archival (see SCHEMA-RULES.md "x-compression-callback")
+  x-compression-callback:
+    resourceType: realm
+    sourceType: realm-history
+    compressEndpoint: /realm-history/get-compress-data
+    compressPayloadTemplate: '{"realmId": "{{resourceId}}"}'
+    priority: 0
+    templateNamespace: lore
+    description: Realm historical events and lore elements
+    decompressEndpoint: /realm-history/restore-from-archive
+    decompressPayloadTemplate: '{"realmId": "{{resourceId}}", "data": "{{data}}"}'
+servers:
+- url: http://localhost:5012
+  description: Bannou service endpoint (internal only)
+
+paths:
+  /realm-history/record-participation:
+    post:
+      summary: Record realm participation in a historical event
+      operationId: recordRealmParticipation
+      tags:
+      - Historical Events
+      description: |
+        Records that a realm participated in a historical event. Events are
+        identified by eventId (typically managed by a game-specific event system).
+        The impact level affects how strongly this event influences behavior.
+      x-permissions: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RecordRealmParticipationRequest'
+      responses:
+        '200':
+          description: Participation recorded successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RealmHistoricalParticipation'
+        '400':
+          description: Invalid participation data
+        '409':
+          description: Participation already recorded for this realm and event
+
+  /realm-history/get-participation:
+    post:
+      summary: Get all historical events a realm participated in
+      operationId: getRealmParticipation
+      tags:
+      - Historical Events
+      description: |
+        Retrieves all historical event participation records for a realm.
+        Supports filtering by event category and minimum impact.
+      x-permissions:
+      - role: user
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetRealmParticipationRequest'
+      responses:
+        '200':
+          description: Participation records retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RealmParticipationListResponse'
+
+  /realm-history/get-event-participants:
+    post:
+      summary: Get all realms that participated in a historical event
+      operationId: getRealmEventParticipants
+      tags:
+      - Historical Events
+      description: |
+        Retrieves all realms that participated in a specific historical event.
+        Useful for generating event summaries or finding related realms.
+      x-permissions:
+      - role: user
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetRealmEventParticipantsRequest'
+      responses:
+        '200':
+          description: Participants retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RealmParticipationListResponse'
+
+  /realm-history/delete-participation:
+    post:
+      summary: Delete a participation record
+      operationId: deleteRealmParticipation
+      tags:
+      - Historical Events
+      description: |
+        Removes a specific participation record. Used during realm deletion
+        or to correct erroneous records.
+      x-permissions:
+      - role: admin
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeleteRealmParticipationRequest'
+      responses:
+        '200':
+          description: Participation deleted successfully
+        '404':
+          description: Participation record not found
+
+  /realm-history/get-lore:
+    post:
+      summary: Get machine-readable lore elements for behavior system
+      operationId: getRealmLore
+      tags:
+      - Lore
+      description: |
+        Retrieves structured lore elements for a realm. These elements
+        are machine-readable key-value pairs used by the behavior system for
+        decision-making, not narrative text for players.
+      x-permissions:
+      - role: user
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetRealmLoreRequest'
+      responses:
+        '200':
+          description: Lore retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RealmLoreResponse'
+        '404':
+          description: No lore defined for this realm
+
+  /realm-history/set-lore:
+    post:
+      summary: Set lore elements for a realm
+      operationId: setRealmLore
+      tags:
+      - Lore
+      description: |
+        Creates or updates lore elements for a realm. Can either replace
+        all existing elements or merge with them based on the replaceExisting flag.
+      x-permissions:
+      - role: admin
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SetRealmLoreRequest'
+      responses:
+        '200':
+          description: Lore saved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RealmLoreResponse'
+        '400':
+          description: Invalid lore data
+
+  /realm-history/add-lore-element:
+    post:
+      summary: Add a single lore element
+      operationId: addRealmLoreElement
+      tags:
+      - Lore
+      description: |
+        Adds a single lore element to a realm's existing lore.
+        If an element with the same type and key exists, it will be updated.
+      x-permissions:
+      - role: admin
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AddRealmLoreElementRequest'
+      responses:
+        '200':
+          description: Element added successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RealmLoreResponse'
+        '400':
+          description: Invalid element data
+
+  /realm-history/delete-lore:
+    post:
+      summary: Delete all lore for a realm
+      operationId: deleteRealmLore
+      tags:
+      - Lore
+      description: |
+        Removes all lore elements for a realm. Used during realm
+        deletion.
+      x-permissions:
+      - role: admin
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeleteRealmLoreRequest'
+      responses:
+        '200':
+          description: Lore deleted successfully
+        '404':
+          description: No lore found for this realm
+
+  /realm-history/delete-all:
+    post:
+      summary: Delete all history data for a realm
+      operationId: deleteAllRealmHistory
+      tags:
+      - History Management
+      description: |
+        Removes all history data (participation records and lore) for a
+        realm. Used during realm deletion.
+      x-permissions:
+      - role: admin
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeleteAllRealmHistoryRequest'
+      responses:
+        '200':
+          description: All history deleted successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeleteAllRealmHistoryResponse'
+
+  /realm-history/summarize:
+    post:
+      summary: Generate text summaries for realm archival
+      operationId: summarizeRealmHistory
+      tags:
+      - History Management
+      description: |
+        Generates text summaries of a realm's lore and historical
+        participation.
+      x-permissions: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SummarizeRealmHistoryRequest'
+      responses:
+        '200':
+          description: Summaries generated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RealmHistorySummaryResponse'
+
+  # ===========================================================================
+  # Compression Endpoints (Resource Service Integration)
+  # ===========================================================================
+
+  /realm-history/get-compress-data:
+    post:
+      summary: Get realm history data for compression
+      operationId: getCompressData
+      tags:
+      - Compression
+      description: |
+        Returns complete realm history data (lore elements, event participations)
+        for archive storage. Called during realm archival process by the
+        Resource service compression system.
+      x-permissions: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetCompressDataRequest'
+      responses:
+        '200':
+          description: Compressed data returned
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RealmHistoryArchive'
+        '404':
+          description: No history data for realm
+
+  /realm-history/restore-from-archive:
+    post:
+      summary: Restore realm history from archive
+      operationId: restoreFromArchive
+      tags:
+      - Compression
+      description: |
+        Restores realm history data from a compressed archive.
+        Used when expanding archived realm data. Called by Resource
+        service during decompression.
+      x-permissions: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RestoreFromArchiveRequest'
+      responses:
+        '200':
+          description: Data restored
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RestoreFromArchiveResponse'
+        '400':
+          description: Invalid archive data
+
+components:
+  schemas:
+    # Enums
+    RealmEventCategory:
+      type: string
+      description: Categories of historical events that realms can participate in
+      enum:
+      - FOUNDING
+      - WAR
+      - TREATY
+      - CATACLYSM
+      - DISCOVERY
+      - MIGRATION
+      - CULTURAL_SHIFT
+      - ECONOMIC_CHANGE
+      - POLITICAL_UPHEAVAL
+
+    RealmEventRole:
+      type: string
+      description: How the realm participated in the historical event
+      enum:
+      - ORIGIN
+      - AGGRESSOR
+      - DEFENDER
+      - MEDIATOR
+      - AFFECTED
+      - BENEFICIARY
+      - INSTIGATOR
+      - NEUTRAL_PARTY
+
+    RealmLoreElementType:
+      type: string
+      description: |
+        Types of lore elements. Each type represents a different aspect
+        of the realm's background that influences behavior.
+      enum:
+      - ORIGIN_MYTH
+      - CULTURAL_PRACTICE
+      - POLITICAL_SYSTEM
+      - ECONOMIC_BASE
+      - RELIGIOUS_TRADITION
+      - GEOGRAPHIC_FEATURE
+      - FAMOUS_FIGURE
+      - TECHNOLOGICAL_LEVEL
+
+    # Core Models
+    RealmHistoricalParticipation:
+      type: object
+      description: Record of a realm's participation in a historical event
+      additionalProperties: false
+      required:
+      - participationId
+      - realmId
+      - eventId
+      - eventName
+      - eventCategory
+      - role
+      - eventDate
+      - createdAt
+      properties:
+        participationId:
+          type: string
+          format: uuid
+          description: Unique ID for this participation record
+        realmId:
+          type: string
+          format: uuid
+          description: ID of the realm that participated
+        eventId:
+          type: string
+          format: uuid
+          description: ID of the historical event
+        eventName:
+          type: string
+          description: Name of the event (for display and summarization)
+        eventCategory:
+          $ref: '#/components/schemas/RealmEventCategory'
+          description: Category of the historical event
+        role:
+          $ref: '#/components/schemas/RealmEventRole'
+          description: How the realm participated
+        eventDate:
+          type: string
+          format: date-time
+          description: In-game date when the event occurred
+        impact:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 1.0
+          default: 0.5
+          description: |
+            How significant this event was for the realm (0.0 to 1.0).
+            Affects behavior system weighting.
+        metadata:
+          type: object
+          additionalProperties: true
+          nullable: true
+          description: >-
+            Client-provided event-specific details.
+            No Bannou plugin reads specific keys from this field by convention.
+        createdAt:
+          type: string
+          format: date-time
+          description: When this record was created
+
+    RealmLoreElement:
+      type: object
+      description: A machine-readable lore element for behavior system consumption
+      additionalProperties: false
+      required:
+      - elementType
+      - key
+      - value
+      properties:
+        elementType:
+          $ref: '#/components/schemas/RealmLoreElementType'
+          description: Category of this lore element
+        key:
+          type: string
+          minLength: 1
+          maxLength: 100
+          description: |
+            Machine-readable key (e.g., "founding_year", "primary_export", "capital_city").
+            Used by behavior system to query specific aspects.
+        value:
+          type: string
+          minLength: 1
+          maxLength: 500
+          description: |
+            Machine-readable value (e.g., "year_of_the_dragon", "iron_ore", "stormgate").
+            Referenced in behavior rules.
+        strength:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 1.0
+          default: 0.5
+          description: |
+            How strongly this element affects behavior (0.0 to 1.0).
+            Higher strength = greater influence on decisions.
+        relatedEntityId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Optional related entity (location, organization, character)
+        relatedEntityType:
+          type: string
+          nullable: true
+          description: Type of the related entity (if any)
+
+    RealmLoreResponse:
+      type: object
+      description: Complete lore data for a realm
+      additionalProperties: false
+      required:
+      - realmId
+      - elements
+      properties:
+        realmId:
+          type: string
+          format: uuid
+          description: ID of the realm this lore belongs to
+        elements:
+          type: array
+          items:
+            $ref: '#/components/schemas/RealmLoreElement'
+          description: All lore elements for this realm
+        createdAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When this lore was first created
+        updatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When this lore was last modified
+
+    # Request Models
+    RecordRealmParticipationRequest:
+      type: object
+      description: Request payload for recording event participation
+      additionalProperties: false
+      required:
+      - realmId
+      - eventId
+      - eventName
+      - eventCategory
+      - role
+      - eventDate
+      properties:
+        realmId:
+          type: string
+          format: uuid
+          description: ID of the realm that participated
+        eventId:
+          type: string
+          format: uuid
+          description: ID of the historical event
+        eventName:
+          type: string
+          minLength: 1
+          maxLength: 200
+          description: Name of the event
+        eventCategory:
+          $ref: '#/components/schemas/RealmEventCategory'
+          description: Category of the event
+        role:
+          $ref: '#/components/schemas/RealmEventRole'
+          description: How the realm participated
+        eventDate:
+          type: string
+          format: date-time
+          description: In-game date when the event occurred
+        impact:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 1.0
+          default: 0.5
+          description: How significant this event was for the realm
+        metadata:
+          type: object
+          additionalProperties: true
+          nullable: true
+          description: >-
+            Client-provided event-specific details.
+            No Bannou plugin reads specific keys from this field by convention.
+
+    GetRealmParticipationRequest:
+      type: object
+      description: Request payload for getting a realm's event participation
+      additionalProperties: false
+      required:
+      - realmId
+      properties:
+        realmId:
+          type: string
+          format: uuid
+          description: ID of the realm to get participation for
+        eventCategory:
+          $ref: '#/components/schemas/RealmEventCategory'
+          nullable: true
+          description: Filter by event category
+        minimumImpact:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 1.0
+          nullable: true
+          description: Filter by minimum impact
+        page:
+          type: integer
+          minimum: 1
+          default: 1
+          description: Page number for pagination (1-based)
+        pageSize:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 20
+          description: Number of results per page
+
+    GetRealmEventParticipantsRequest:
+      type: object
+      description: Request payload for getting participants of an event
+      additionalProperties: false
+      required:
+      - eventId
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: ID of the historical event
+        role:
+          $ref: '#/components/schemas/RealmEventRole'
+          nullable: true
+          description: Filter by participation role
+        page:
+          type: integer
+          minimum: 1
+          default: 1
+          description: Page number for pagination (1-based)
+        pageSize:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 20
+          description: Number of results per page
+
+    DeleteRealmParticipationRequest:
+      type: object
+      description: Request payload for deleting a participation record
+      additionalProperties: false
+      required:
+      - participationId
+      properties:
+        participationId:
+          type: string
+          format: uuid
+          description: ID of the participation record to delete
+
+    GetRealmLoreRequest:
+      type: object
+      description: Request payload for getting a realm's lore
+      additionalProperties: false
+      required:
+      - realmId
+      properties:
+        realmId:
+          type: string
+          format: uuid
+          description: ID of the realm to get lore for
+        elementTypes:
+          type: array
+          items:
+            $ref: '#/components/schemas/RealmLoreElementType'
+          nullable: true
+          description: Filter by element types (null for all)
+        minimumStrength:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 1.0
+          nullable: true
+          description: Filter by minimum strength
+
+    SetRealmLoreRequest:
+      type: object
+      description: Request payload for setting a realm's lore
+      additionalProperties: false
+      required:
+      - realmId
+      - elements
+      properties:
+        realmId:
+          type: string
+          format: uuid
+          description: ID of the realm to set lore for
+        elements:
+          type: array
+          items:
+            $ref: '#/components/schemas/RealmLoreElement'
+          minItems: 1
+          description: Lore elements to set
+        replaceExisting:
+          type: boolean
+          default: false
+          description: |
+            If true, replace all existing elements.
+            If false, merge with existing (update matching type+key pairs).
+
+    AddRealmLoreElementRequest:
+      type: object
+      description: Request payload for adding a single lore element
+      additionalProperties: false
+      required:
+      - realmId
+      - element
+      properties:
+        realmId:
+          type: string
+          format: uuid
+          description: ID of the realm to add element to
+        element:
+          $ref: '#/components/schemas/RealmLoreElement'
+          description: The lore element to add
+
+    DeleteRealmLoreRequest:
+      type: object
+      description: Request payload for deleting a realm's lore
+      additionalProperties: false
+      required:
+      - realmId
+      properties:
+        realmId:
+          type: string
+          format: uuid
+          description: ID of the realm to delete lore for
+
+    DeleteAllRealmHistoryRequest:
+      type: object
+      description: Request payload for deleting all history data for a realm
+      additionalProperties: false
+      required:
+      - realmId
+      properties:
+        realmId:
+          type: string
+          format: uuid
+          description: ID of the realm to delete history for
+
+    SummarizeRealmHistoryRequest:
+      type: object
+      description: Request payload for generating history summaries
+      additionalProperties: false
+      required:
+      - realmId
+      properties:
+        realmId:
+          type: string
+          format: uuid
+          description: ID of the realm to summarize history for
+        maxLorePoints:
+          type: integer
+          minimum: 1
+          maximum: 20
+          default: 5
+          description: Maximum number of key lore points to include
+        maxHistoricalEvents:
+          type: integer
+          minimum: 1
+          maximum: 20
+          default: 10
+          description: Maximum number of major historical events to include
+
+    # Response Models
+    RealmParticipationListResponse:
+      type: object
+      description: Paginated list of participation records
+      additionalProperties: false
+      required:
+      - participations
+      - totalCount
+      - page
+      - pageSize
+      properties:
+        participations:
+          type: array
+          items:
+            $ref: '#/components/schemas/RealmHistoricalParticipation'
+          description: List of participation records
+        totalCount:
+          type: integer
+          description: Total number of matching records
+        page:
+          type: integer
+          description: Current page number (1-based)
+        pageSize:
+          type: integer
+          description: Number of results per page
+        hasNextPage:
+          type: boolean
+          description: Whether there are more results after this page
+        hasPreviousPage:
+          type: boolean
+          description: Whether there are results before this page
+
+    DeleteAllRealmHistoryResponse:
+      type: object
+      description: Result of deleting all history data
+      additionalProperties: false
+      required:
+      - realmId
+      - participationsDeleted
+      - loreDeleted
+      properties:
+        realmId:
+          type: string
+          format: uuid
+          description: ID of the realm whose history was deleted
+        participationsDeleted:
+          type: integer
+          description: Number of participation records deleted
+        loreDeleted:
+          type: boolean
+          description: Whether lore was deleted
+
+    RealmHistorySummaryResponse:
+      type: object
+      description: Generated text summaries for realm archival
+      additionalProperties: false
+      required:
+      - realmId
+      - keyLorePoints
+      - majorHistoricalEvents
+      properties:
+        realmId:
+          type: string
+          format: uuid
+          description: ID of the realm summarized
+        keyLorePoints:
+          type: array
+          items:
+            type: string
+          description: |
+            Key lore elements as text summaries.
+            e.g., ["Founded during Year of the Dragon", "Primary export: Iron ore"]
+        majorHistoricalEvents:
+          type: array
+          items:
+            type: string
+          description: |
+            Major historical events as text summaries.
+            e.g., ["Defended against the Northern Invasion", "Treaty of Stormgate established peace"]
+
+    # ==========================================================================
+    # Compression Models (Resource Service Integration)
+    # ==========================================================================
+
+    GetCompressDataRequest:
+      type: object
+      description: Request to get realm history data for compression
+      additionalProperties: false
+      required:
+      - realmId
+      properties:
+        realmId:
+          type: string
+          format: uuid
+          description: ID of the realm to get compress data for
+
+    RealmHistoryArchive:
+      type: object
+      x-archive-type: true
+      description: |
+        Compressed realm lore and history for archive storage and storyline SDK consumption.
+        Inherits base archive properties from ResourceArchiveBase.
+        The realmId field equals resourceId for convenience.
+      allOf:
+      - $ref: '#/components/schemas/ResourceArchiveBase'
+      additionalProperties: false
+      required:
+      - realmId
+      - hasLore
+      - hasParticipations
+      properties:
+        realmId:
+          type: string
+          format: uuid
+          description: Realm this data belongs to (equals resourceId)
+        hasLore:
+          type: boolean
+          description: Whether lore elements exist
+        loreElements:
+          type: array
+          items:
+            $ref: '#/components/schemas/RealmLoreResponse'
+          description: Lore elements (empty if hasLore=false)
+        hasParticipations:
+          type: boolean
+          description: Whether event participations exist
+        participations:
+          type: array
+          items:
+            $ref: '#/components/schemas/RealmHistoricalParticipation'
+          description: Event participations (empty if hasParticipations=false)
+        summaries:
+          $ref: '#/components/schemas/RealmHistorySummaryResponse'
+          nullable: true
+          description: Text summaries for reference
+
+    RestoreFromArchiveRequest:
+      type: object
+      description: Request to restore realm history data from archive
+      additionalProperties: false
+      required:
+      - realmId
+      - data
+      properties:
+        realmId:
+          type: string
+          format: uuid
+          description: ID of the realm to restore data for
+        data:
+          type: string
+          description: Base64-encoded gzipped RealmHistoryArchive JSON
+
+    RestoreFromArchiveResponse:
+      type: object
+      description: Result of restoration from archive
+      additionalProperties: false
+      required:
+      - realmId
+      - loreRestored
+      - participationsRestored
+      - success
+      properties:
+        realmId:
+          type: string
+          format: uuid
+          description: Realm data was restored for
+        loreRestored:
+          type: integer
+          description: Number of lore elements restored
+        participationsRestored:
+          type: integer
+          description: Number of participation records restored
+        success:
+          type: boolean
+          description: Whether restoration completed successfully
+        errorMessage:
+          type: string
+          nullable: true
+          description: Error details if restoration failed
+    ResourceArchiveBase:
+      type: object
+      description: |
+        Base schema for all resource archives that can be stored in
+        the resource service's archive bundles and consumed by the
+        storyline SDK's ArchiveExtractor.
+
+        Archives implementing this base schema are marked with
+        x-archive-type: true and are automatically collected by
+        the archive generation script for SDK model generation.
+      required:
+      - resourceId
+      - resourceType
+      - archivedAt
+      - schemaVersion
+      properties:
+        resourceId:
+          type: string
+          format: uuid
+          description: Unique identifier of the archived resource
+        resourceType:
+          type: string
+          description: Type identifier (e.g., "character", "character-personality", "realm-history")
+        archivedAt:
+          type: string
+          format: date-time
+          description: When this archive was created
+        schemaVersion:
+          type: integer
+          minimum: 1
+          description: Schema version for forward compatibility migration
+        nestedArchives:
+          type: array
+          description: Child archives from dependent resources (populated by lib-resource compression)
+          items:
+            $ref: '#/components/schemas/ResourceArchiveBase'
+x-inlined-types:
+- ResourceArchiveBase

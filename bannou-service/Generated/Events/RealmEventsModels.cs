@@ -30,6 +30,78 @@ namespace BeyondImmersion.BannouService.Events;
 
 using System = global::System;
 
+/// <summary>
+/// Published when a deprecated realm is merged into another realm
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class RealmMergedEvent : BaseServiceEvent
+{
+
+    /// <summary>
+    /// ID of the source realm that was merged
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("sourceRealmId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid SourceRealmId { get; set; } = default!;
+
+    /// <summary>
+    /// Code of the source realm
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("sourceRealmCode")]
+    public string? SourceRealmCode { get; set; } = default!;
+
+    /// <summary>
+    /// ID of the target realm that received entities
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("targetRealmId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid TargetRealmId { get; set; } = default!;
+
+    /// <summary>
+    /// Code of the target realm
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("targetRealmCode")]
+    public string? TargetRealmCode { get; set; } = default!;
+
+    /// <summary>
+    /// Number of species successfully migrated to the target realm
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("speciesMigrated")]
+    public int SpeciesMigrated { get; set; } = default!;
+
+    /// <summary>
+    /// Number of species that failed to migrate
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("speciesFailed")]
+    public int SpeciesFailed { get; set; } = default!;
+
+    /// <summary>
+    /// Number of locations successfully transferred to the target realm
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("locationsMigrated")]
+    public int LocationsMigrated { get; set; } = default!;
+
+    /// <summary>
+    /// Number of locations that failed to transfer
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("locationsFailed")]
+    public int LocationsFailed { get; set; } = default!;
+
+    /// <summary>
+    /// Number of characters successfully transferred to the target realm
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("charactersMigrated")]
+    public int CharactersMigrated { get; set; } = default!;
+
+    /// <summary>
+    /// Number of characters that failed to transfer
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("charactersFailed")]
+    public int CharactersFailed { get; set; } = default!;
+
+}
 
 
 

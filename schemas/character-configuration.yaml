@@ -5,8 +5,11 @@ info:
     Configuration schema for Character service.
     Properties are bound to environment variables with BANNOU_ prefix.
 
-    **Schema Rules**: AI agents MUST review docs/reference/SCHEMA-RULES.md before
-    modifying this schema. Optional reference types require `nullable: true`.
+    **SCHEMA MODIFICATION GATE**: STOP. Before modifying this schema, you MUST:
+    1. Read docs/reference/SCHEMA-RULES.md
+    2. State which section applies to your change
+    3. Only then proceed with edits
+    Edits without stating the applicable rule are FORBIDDEN.
   version: 1.0.0
 paths: {}
 x-service-configuration:
@@ -22,42 +25,20 @@ x-service-configuration:
       description: Default page size when not specified
       env: CHARACTER_DEFAULT_PAGE_SIZE
       default: 20
-
-    # Character Lifecycle
-    CharacterRetentionDays:
-      type: integer
-      description: Number of days to retain deleted characters before permanent removal
-      env: CHARACTER_RETENTION_DAYS
-      default: 90
     # Concurrency Configuration
     RealmIndexUpdateMaxRetries:
       type: integer
       description: Maximum retry attempts when updating realm character index (optimistic concurrency)
       env: CHARACTER_REALM_INDEX_UPDATE_MAX_RETRIES
       default: 3
+    LockTimeoutSeconds:
+      type: integer
+      description: Timeout in seconds for acquiring distributed locks during character updates and compression
+      env: CHARACTER_LOCK_TIMEOUT_SECONDS
+      default: 30
     # Cleanup Configuration
     CleanupGracePeriodDays:
       type: integer
       description: Grace period in days before cleanup of dead character references (default 30 days)
       env: CHARACTER_CLEANUP_GRACE_PERIOD_DAYS
       default: 30
-
-    # Compression Configuration
-    CompressionMaxBackstoryPoints:
-      type: integer
-      description: Maximum number of backstory points to include in character compression summary
-      env: CHARACTER_COMPRESSION_MAX_BACKSTORY_POINTS
-      default: 5
-    CompressionMaxLifeEvents:
-      type: integer
-      description: Maximum number of major life events to include in character compression summary
-      env: CHARACTER_COMPRESSION_MAX_LIFE_EVENTS
-      default: 10
-
-    # Personality Summary Configuration
-    PersonalityTraitThreshold:
-      type: number
-      format: double
-      description: Threshold for personality trait classification (values above this are positive, below negative are opposite)
-      env: CHARACTER_PERSONALITY_TRAIT_THRESHOLD
-      default: 0.3

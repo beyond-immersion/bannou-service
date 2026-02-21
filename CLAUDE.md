@@ -1,5 +1,28 @@
 # Bannou Service Development Instructions
 
+## ⚠️ GitHub Issues Reference
+
+**When "Issues" or "GH Issues" is mentioned, this ALWAYS refers to the bannou-service repository issues.** Use the GH CLI to check issues:
+```bash
+gh issue list                  # List open issues
+gh issue view <number>         # View specific issue
+```
+This is NOT a reference to claude-code's issues or any other repository.
+
+---
+
+## ⛔ FOLLOW INSTRUCTIONS AS GIVEN ⛔
+
+**You are REQUIRED to follow the instructions you are given, exactly as stated.** Do not substitute your own judgment for what was explicitly requested. Do not assume you already know the answer to something the user told you to go find out. Do not skip steps because you think you know what the result will be.
+
+**If you are told to read all files in a directory, LIST THE DIRECTORY FIRST and read every file.** Do not assume you know what files exist based on references you've seen elsewhere. "All" means all -- not "the ones I'm aware of."
+
+**If you believe an instruction is unnecessary, wrong, or should be modified**: Say so explicitly BEFORE deviating. You do not have permission to silently decide that an instruction doesn't need to be followed. Either follow the instruction or explain why you aren't. There is no third option.
+
+**Why this rule exists:** Claude has repeatedly ignored clear, direct instructions by substituting assumptions for actual work. This causes wasted time, missed context, and broken trust. Following instructions is not optional.
+
+---
+
 ## ⛔ TENETS ARE LAW ⛔
 
 **ALWAYS REFER TO AND FOLLOW THE TENETS WITHOUT EXCEPTION. ANY SITUATION WHICH CALLS INTO QUESTION ONE OF THE TENETS MUST BE EXPLICITLY PRESENTED TO THE USER, CONTEXT PROVIDED, AND THEN APPROVED TO CONTINUE.**
@@ -28,13 +51,77 @@ These commands can destroy work in progress, hide changes, or cause data loss. C
 
 ---
 
+## ⛔ CODE GENERATION SCRIPTS ARE FROZEN ⛔
+
+**The `scripts/` directory contains the code generation pipeline. These scripts are NEVER to be modified by an agent without EXPLICIT user instructions to change code generation behavior.**
+
+**What this covers**: ALL files in `scripts/` — shell scripts (`generate-*.sh`, `common.sh`), Python scripts (`generate-*.py`, `resolve-*.py`, `extract-*.py`, `embed-*.py`), and NSwag templates (`templates/nswag/`).
+
+**Why this rule exists**: An agent once changed namespace strings across 4 generation scripts in a single commit, silently breaking all 48 services. The agent believed `.Common` was the correct namespace for common types when it was actually `.BannouService` — a mistake that cascaded into 22 compile errors and hours of debugging. Generation scripts are the foundation of the entire codebase; a wrong namespace, output path, or exclusion rule breaks everything downstream.
+
+**Rules**:
+1. **NEVER modify generation scripts** unless the user explicitly says "change the code generation to..."
+2. **NEVER "fix" what you think is wrong** in generation scripts — present your concern and wait
+3. **NEVER change**: namespace strings, output paths, exclusion lists, NSwag parameters, post-processing logic, or file naming conventions
+4. **If generation output looks wrong**: the bug is almost certainly in a SCHEMA file, not in the generation scripts. Fix the schema first.
+5. **If you must propose a script change**: show the EXACT diff, explain WHY, and wait for explicit approval
+
+**The generation pipeline is correct until proven otherwise. Schemas are the source of truth; scripts are the transformation layer.**
+
+---
+
+## ⛔ NO CONVENTION-BASED CROSS-SERVICE DATA SHARING ⛔
+
+**Services MUST NEVER store domain-specific data in another service's `metadata`, `additionalProperties`, `customStats`, `data`, `properties`, or any other freeform/untyped JSON field — and then read it back by convention (knowing key names and expected types without schema enforcement).**
+
+**What this means**: If Service A needs data about Service B's entities, Service A stores that data in **its own state stores** with **its own schema-defined models**, accessed through **its own API endpoints**. Service A may query Service B for entity existence or hierarchy (via typed generated clients), but Service A NEVER stuffs its domain data into Service B's untyped JSON bags.
+
+**The anti-patterns (ALL FORBIDDEN)**:
+1. Storing game-specific fields (biomeCode, altitude, speciesCode, isSystemType) in another service's `metadata` object and reading them by convention
+2. Storing structured data (affix slots, behavioral clauses, asset requirements) in another service's `additionalProperties: true` field and parsing by key name
+3. Using `customStats`, `annotations`, or any untyped field as a cross-service communication channel
+4. Documenting "convention" as the interface contract between two services — if it's not in a schema, it doesn't exist
+5. Saying "this is a convention, not a schema change" as justification — **that IS the problem**
+
+**Why this is forbidden**:
+- Zero type safety: no compile-time, generation-time, or validation-time checking
+- Invisible coupling: no schema, import graph, or dependency analysis can detect it
+- Silent failure: misspelled keys, wrong types, or missing data produce wrong behavior with no error
+- Lifecycle orphaning: the storage owner can't validate, migrate, or clean up data it doesn't know about
+- Untestable: neither service's unit tests cover the convention
+- Tenet 1 violation: if it's not in a schema, it's not schema-first
+
+**The correct pattern**: If Environment (L4) needs biome data for Location (L2) entities, Environment maintains its own `LocationClimateBinding` records in its own state stores, managed through its own API. Environment queries Location for hierarchy and existence. Environment owns its own domain data. Always.
+
+**When reviewing deep dives or implementation plans**: If you see a service reading specific named keys from another service's freeform metadata field, **STOP and flag it as a violation**. Do not proceed. Do not rationalize it as "well-documented convention." Present it to the user.
+
+**If you encounter `additionalProperties: true` in a schema**: Treat it with extreme suspicion. Ask: is any other service expected to read specific keys from this field? If yes, those keys must become typed schema properties — either on the owning service (if the data is that service's domain) or on the consuming service (in its own state store, if the data is the consumer's domain).
+
+**Known existing violations** (tracked for remediation, not precedent): GitHub Issue #308 tracks the systemic `additionalProperties: true` problem. Existing violations in affix metadata, contract CustomTerms, and others are tracked for migration to typed schemas. **These are technical debt to fix, not patterns to follow.**
+
+---
+
 ## Core Architecture Reference
+
+@docs/BANNOU-DESIGN.md
+
+**Key Points**: All generated files are in `plugins/lib-{service}/Generated/`. Manual files are: `{Service}Service.cs` (business logic), `{Service}ServiceModels.cs` (internal data models), and `{Service}ServiceEvents.cs` (event handlers). Request/response models are generated into `bannou-service/Generated/Models/` — use `make print-models PLUGIN="service"` to inspect them instead of reading generated files directly.
+
+@docs/reference/SERVICE-HIERARCHY.md
+
+@docs/GENERATED-INFRASTRUCTURE-SERVICE-DETAILS.md
+
+@docs/GENERATED-APP-FOUNDATION-SERVICE-DETAILS.md
+
+@docs/GENERATED-APP-FEATURES-SERVICE-DETAILS.md
+
+@docs/GENERATED-GAME-FOUNDATION-SERVICE-DETAILS.md
+
+@docs/GENERATED-GAME-FEATURES-SERVICE-DETAILS.md
 
 @docs/reference/TENETS.md
 
-@docs/BANNOU_DESIGN.md
-
-@docs/GENERATED-SERVICE-DETAILS.md
+@docs/reference/ORCHESTRATION-PATTERNS.md
 
 ---
 
@@ -60,11 +147,21 @@ These commands can destroy work in progress, hide changes, or cause data loss. C
 
 ## ⚠️ Additional Reference Documentation
 
-**The TENETS and BANNOU_DESIGN documents are automatically included above.** For specific tasks, also reference:
+**The TENETS and BANNOU-DESIGN documents are automatically included above.** For specific tasks, also reference:
 
-- **Plugin Development**: `docs/guides/PLUGIN_DEVELOPMENT.md` - How to add and extend services
+- **Plugin Development**: `docs/guides/PLUGIN-DEVELOPMENT.md` - How to add and extend services
 - **WebSocket Protocol**: `docs/WEBSOCKET-PROTOCOL.md` - Protocol details
-- **Deployment**: `docs/guides/DEPLOYMENT.md` - Deployment patterns
+- **Deployment**: `docs/operations/DEPLOYMENT.md` - Deployment patterns
+
+**"Big Brain Mode"**: When the user says **"Big Brain Mode"**, you MUST read both vision documents in full before proceeding:
+- `docs/reference/VISION.md` - The "what and why" of Bannou and Arcadia at the highest level: the five north stars, the content flywheel thesis, system interdependencies, and non-negotiable design principles.
+- `docs/reference/PLAYER-VISION.md` - How players actually experience Arcadia: progressive agency (guardian spirit model), generational play, genre gradients, and the alpha-to-release deployment strategy.
+
+These documents provide the high-level architectural north-star context for the entire project. Read them when planning cross-cutting features, evaluating whether work aligns with project goals, designing player-facing features, or needing context on how services serve the bigger picture.
+
+**Other Planning References**:
+
+- **Plan Example**: `docs/reference/PLAN-EXAMPLE.md` - A preserved real implementation plan (Seed service) showing the expected structure, detail level, and patterns for planning a new Bannou service. Read this when creating implementation plans for new services or major features to match the established planning format.
 
 **Auto-Generated References** (regenerate with `make generate-docs`):
 
@@ -75,6 +172,8 @@ These commands can destroy work in progress, hide changes, or cause data loss. C
 
 ## Critical Development Rules
 
+- **NEVER repeat commands**: If a command succeeds, DO NOT run it again to "verify" or "see more output". If you need both the head and tail of command output, redirect to a file first (`command > /tmp/output.txt 2>&1`) then read the file. Repeating builds, tests, or any command wastes time and resources. Trust the output you already received.
+- **Scoped builds ONLY**: When you have only modified files in a single plugin, NEVER run a broad `dotnet build` (full solution). Build ONLY the specific plugin project: `dotnet build plugins/lib-{service}/lib-{service}.csproj --no-restore`. Full solution builds (`dotnet build` with no project path) are ONLY acceptable when changes span multiple projects or shared code (bannou-service/, schemas/, etc.). This saves significant build time and avoids unnecessary recompilation of 50+ unrelated projects.
 - **Research first**: Always research the correct library API before implementing
 - **Mandatory**: Never use null-forgiving operators (`!`) or cast null to non-nullable types anywhere in Bannou code as they cause segmentation faults and hide null reference exceptions.
 - **Prohibited**: `variable!`, `property!`, `method()!`, `null!`, `default!`, `(Type)null`
@@ -139,15 +238,15 @@ These commands can destroy work in progress, hide changes, or cause data loss. C
 - **Why this matters**: Integration tests take 5-10 minutes, rebuild containers, and are disruptive. Running them without being asked wastes significant time.
 
 ### ⚠️ MANDATORY REFERENCE - TESTING.md for ALL Testing Tasks
-**CRITICAL**: For ANY task involving tests, testing architecture, or test placement, you MUST ALWAYS reference the testing documentation (`docs/guides/TESTING.md`) FIRST and IN FULL before proceeding with any work.
+**CRITICAL**: For ANY task involving tests, testing architecture, or test placement, you MUST ALWAYS reference the testing documentation (`docs/operations/TESTING.md`) FIRST and IN FULL before proceeding with any work.
 
 **MANDATORY TESTING WORKFLOW**:
-1. Read `docs/guides/TESTING.md` completely to understand plugin isolation boundaries
+1. Read `docs/operations/TESTING.md` completely to understand plugin isolation boundaries
 2. Use the decision guide to determine correct test placement
 3. Follow architectural constraints (unit-tests cannot reference plugins, lib-testing cannot reference other plugins, etc.)
 4. ALWAYS respond with "I have referred to the service testing document" to confirm you read it
 
-**⚠️ MANDATORY REFERENCE TRIGGERS** - You MUST reference `docs/guides/TESTING.md` for:
+**⚠️ MANDATORY REFERENCE TRIGGERS** - You MUST reference `docs/operations/TESTING.md` for:
 - ANY task involving writing, modifying, or debugging tests
 - Questions about where to place tests (unit tests vs infrastructure tests vs integration tests)
 - Testing configuration classes, service functionality, or cross-service communication
@@ -206,9 +305,8 @@ Reference the Makefile in the repository root for all available commands and est
 
 **Required Workflow**:
 1. **Schema First**: Edit OpenAPI YAML in `/schemas/` directory
-2. **Generate**: Run `scripts/generate-all-services.sh` to create controllers/models/clients
+2. **Generate**: Run the appropriate generation script (see Essential Commands below)
 3. **Implement**: Write business logic ONLY in service implementation classes (e.g., `SomeService.cs`)
-4. **Format**: Run `make format` to fix line endings and C# syntax
 
 **Architecture Rules**:
 - **Services Return Tuples**: `(StatusCodes, ResponseModel?)` using custom enum
@@ -245,54 +343,73 @@ Reference the Makefile in the repository root for all available commands and est
 - Am I bypassing schema-first workflow? → Use proper generation pipeline
 - **On violations**: STOP and ask for direction
 
-### Service Architecture
-```
-plugins/lib-{service}/                # Single consolidated service plugin
-├── Generated/                        # NSwag auto-generated files
-│   ├── {Service}Controller.cs        # Abstract controller base
-│   ├── I{Service}Service.cs          # Service interface (generated from controller)
-│   ├── {Service}Client.cs            # Service client for inter-service calls
-│   └── {Service}ServiceConfiguration.cs  # Generated configuration class
-├── {Service}Service.cs               # Business logic implementation (ONLY manual file)
-└── lib-{service}.csproj              # Generated project file
-```
-
-**Key Points**: All generated files are in `plugins/lib-{service}/Generated/`. Only the service implementation (business logic) is manual.
-
 ## Development Workflow
 
 ### Essential Commands
 ```bash
-# Service Development
-scripts/generate-all-services.sh     # Generate controllers/models/clients from schemas
-make format                    # Fix line endings + C# formatting
+# Building
 make build                     # Build all services
-make all                       # Complete dev cycle (clean, generate, build, all tests)
+dotnet build                   # Alternative: direct dotnet build
 
-# Testing
-make test                      # Run unit tests (dotnet test)
-make test-infrastructure       # Infrastructure validation (Docker health)
-make test-http                 # Service-to-service HTTP testing
-make test-edge                 # WebSocket protocol testing
+# Code Generation - USE THE MOST GRANULAR COMMAND POSSIBLE
+# ⚠️ Some scripts must be run FROM the scripts/ directory (they use relative paths).
+# Scripts marked with † below auto-cd and can be run from anywhere.
+
+# If you only changed ONE schema type, use the specific script:
+cd scripts && ./generate-config.sh <service>   # Configuration only (changed *-configuration.yaml)
+scripts/generate-service-events.sh <service>   # † Events only (changed *-events.yaml)
+cd scripts && ./generate-models.sh <service>   # Models only (changed *-api.yaml models)
+scripts/generate-client-events.sh <service>    # † Client events only (changed *-client-events.yaml)
+cd scripts && python3 generate-lifecycle-events.py  # Lifecycle events only (changed x-lifecycle in *-events.yaml)
+
+# If you changed multiple schema types for ONE service:
+cd scripts && ./generate-service.sh <service>  # All generated code for one service
+
+# ONLY use full regeneration when necessary (e.g., changed common schemas):
+scripts/generate-all-services.sh               # † Regenerate ALL services (slow - avoid if possible)
+
+# Unit Testing - SCOPED TESTS ONLY (same rule as scoped builds)
+# NEVER run `make test` (full suite) when only specific plugins were changed.
+# Test ONLY the affected test project:
+dotnet test plugins/lib-{service}.tests/lib-{service}.tests.csproj --no-restore
+
+# Model Shape Inspection (for understanding service models without loading full schemas)
+# Prints compact model shapes (~6x smaller than schemas or generated C# code).
+# Use this INSTEAD of reading *Models.cs or *-api.yaml when you need to understand
+# all models for a service. Format: * = required, ? = nullable, = val = default.
+make print-models PLUGIN="character"     # Print all model shapes for a service
 
 # Assembly Inspection (for understanding external APIs)
 make inspect-type TYPE="IChannel" PKG="RabbitMQ.Client"
 make inspect-method METHOD="IChannel.BasicPublishAsync" PKG="RabbitMQ.Client"
+make inspect-constructor TYPE="ConnectionFactory" PKG="RabbitMQ.Client"
 make inspect-search PATTERN="*Connection*" PKG="RabbitMQ.Client"
 make inspect-list PKG="RabbitMQ.Client"
 ```
+
+**⚠️ Generation Script Selection Guide**:
+- Changed `schemas/foo-configuration.yaml` → run `cd scripts && ./generate-config.sh foo`
+- Changed `schemas/foo-events.yaml` → run `scripts/generate-service-events.sh foo`
+- Changed `schemas/foo-api.yaml` (models only) → run `cd scripts && ./generate-models.sh foo`
+- Changed `schemas/foo-client-events.yaml` → run `scripts/generate-client-events.sh foo`
+- Changed `x-lifecycle` in `schemas/foo-events.yaml` → run `cd scripts && python3 generate-lifecycle-events.py`
+- Changed multiple schema files for `foo` → run `cd scripts && ./generate-service.sh foo`
+- Changed `schemas/common-*.yaml` or multiple services → run `scripts/generate-all-services.sh`
 
 ### Code Quality Requirements
 - **XML Documentation**: All public classes/methods must have `<summary>` tags
 - **EditorConfig**: LF line endings enforced across all file types
 - **Generated Code**: Never edit files in `*/Generated/` directories
-- **Formatting**: Always run `make format` before changes
 
 ### Testing Strategy
-**Three-tier validation** ensures comprehensive coverage:
-1. **Infrastructure** (Tier 1): Basic service availability via Docker Compose
-2. **Service Logic** (Tier 2): HTTP API testing with generated clients  
-3. **Client Experience** (Tier 3): WebSocket binary protocol validation
+**Claude's testing responsibilities**: WRITE all tests, but only RUN unit tests.
+
+**Three-tier architecture** (for reference - Claude does NOT run tiers 2-3):
+1. **Unit Tests**: Claude writes and runs these (`dotnet test plugins/lib-{service}.tests/...` — scoped to affected projects only)
+2. **HTTP Integration Tests**: Claude writes these but does NOT run them (user runs `make test-http`)
+3. **WebSocket Edge Tests**: Claude writes these but does NOT run them (user runs `make test-edge`)
+
+**Why Claude only runs unit tests**: Integration tests require Docker containers, take 5-10+ minutes, and are disruptive. The user will run them when needed. A successful `dotnet build` is sufficient verification for most code changes.
 
 ### **MANDATORY**: Reference Detailed Procedures
 **When testing fails or debugging complex issues**, you MUST reference the detailed development procedures documentation in the knowledge base for troubleshooting guides, Docker Compose configurations, and step-by-step debugging procedures.
@@ -368,12 +485,12 @@ await _messageBus.PublishAsync("event.topic", eventModel);
 
 ### Common Issues
 - **Generated file errors**: Fix underlying schema, never edit generated files directly
-- **Line ending issues**: Run `make format` after code generation
+- **Line ending issues**: User runs `make format` (Claude does not run this)
 - **Service registration**: Verify `[BannouService]` and `[ServiceConfiguration]` attributes
 - **Build failures**: Check schema syntax in `/schemas/` directory
 - **Enum duplicate errors**: Use consolidated enum definitions in schema `components/schemas` with `$ref` references
 - **Parameter type mismatches**: Ensure interface generation properly handles `$ref` parameters (Provider not string)
-- **Script not found errors**: All generation scripts moved to `scripts/` directory - use `scripts/generate-all-services.sh`
+- **Script not found errors**: All generation scripts moved to `scripts/` directory - use the appropriate granular script
 
 ### Debugging Tools
 - **Swagger UI**: Available at `/swagger` in development
@@ -385,18 +502,17 @@ await _messageBus.PublishAsync("event.topic", eventModel);
 ### Commit Policy (MANDATORY)
 - **Never commit** unless explicitly instructed by user
 - **Always run `git diff` against last commit** before committing to review all changes
-- **Always format** code with `make format` before committing
-- **Run tests** locally before committing (use `make all`)
 - Present changes for user review and get explicit approval first
+- The user handles formatting and integration testing before commits
 
-### Pre-Commit Checklist
+### Pre-Commit Checklist (User Responsibility)
+The user will run these commands when preparing commits - Claude should NOT run them:
 ```bash
-# Required before every commit:
-make format                    # Fix formatting and line endings
-make all                       # Run full test suite (or individual: make test && make test-http && make test-edge)
-git diff HEAD~1               # Review ALL changes since last commit
-# Only commit after user explicitly requests it
+make format                    # User runs: Fix formatting and line endings
+make all                       # User runs: Full test suite
 ```
+
+**Claude's pre-commit responsibility**: Run `git diff HEAD~1` to review changes before committing.
 
 ### Standard Commit Format
 

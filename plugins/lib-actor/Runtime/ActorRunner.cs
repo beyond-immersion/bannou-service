@@ -1,16 +1,21 @@
-using BeyondImmersion.BannouService.Abml.Documents;
+using BeyondImmersion.Bannou.BehaviorCompiler.Documents;
+using BeyondImmersion.Bannou.BehaviorCompiler.Goap;
+using BeyondImmersion.Bannou.BehaviorExpressions.Expressions;
+using BeyondImmersion.Bannou.BehaviorExpressions.Runtime;
 using BeyondImmersion.BannouService.Abml.Execution;
-using BeyondImmersion.BannouService.Abml.Expressions;
-using BeyondImmersion.BannouService.Abml.Runtime;
-using BeyondImmersion.BannouService.Actor.Caching;
 using BeyondImmersion.BannouService.Actor.Handlers;
+using BeyondImmersion.BannouService.Actor.Providers;
+using BeyondImmersion.BannouService.Behavior;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Messaging;
+using BeyondImmersion.BannouService.Providers;
 using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.Logging;
 using System.Diagnostics;
 using System.Text.Json;
 using System.Threading.Channels;
+using GoapAction = BeyondImmersion.Bannou.BehaviorCompiler.Goap.GoapAction;
+using GoapGoal = BeyondImmersion.Bannou.BehaviorCompiler.Goap.GoapGoal;
 
 namespace BeyondImmersion.BannouService.Actor.Runtime;
 
@@ -29,13 +34,17 @@ public sealed class ActorRunner : IActorRunner
     private readonly Channel<PerceptionData> _perceptionQueue;
     private readonly ActorState _state;
     private readonly IStateStore<ActorStateSnapshot> _stateStore;
-    private readonly IBehaviorDocumentCache _behaviorCache;
-    private readonly IPersonalityCache _personalityCache;
-    private readonly IEncounterCache _encounterCache;
+    private readonly IBehaviorDocumentLoader _behaviorLoader;
+    private readonly IEnumerable<IVariableProviderFactory> _providerFactories;
     private readonly IDocumentExecutor _executor;
     private readonly IExpressionEvaluator _expressionEvaluator;
+    private readonly ICognitionBuilder _cognitionBuilder;
 
     private AbmlDocument? _behavior;
+    private ICognitionPipeline? _cognitionPipeline;
+    private CognitionOverrides? _instanceCognitionOverrides;
+    private IReadOnlyList<GoapGoal>? _goapGoals;
+    private IReadOnlyList<GoapAction>? _goapActions;
     private ActorStatus _status = ActorStatus.Pending;
     private CancellationTokenSource? _loopCts;
     private Task? _loopTask;
@@ -45,6 +54,7 @@ public sealed class ActorRunner : IActorRunner
     private DateTimeOffset _lastStateSave;
     private bool _disposed;
     private readonly object _statusLock = new();
+    private readonly object _bindLock = new();
 
     // NPC Brain integration: subscription to character perception events and source tracking
     private IAsyncDisposable? _perceptionSubscription;
@@ -62,6 +72,7 @@ public sealed class ActorRunner : IActorRunner
     private const string ENCOUNTER_STARTED_TOPIC = "actor.encounter.started";
     private const string ENCOUNTER_ENDED_TOPIC = "actor.encounter.ended";
     private const string ENCOUNTER_PHASE_CHANGED_TOPIC = "actor.encounter.phase-changed";
+    private const string CHARACTER_BOUND_TOPIC = "actor.instance.character-bound";
 
     /// <inheritdoc/>
     public string ActorId { get; }
@@ -73,7 +84,15 @@ public sealed class ActorRunner : IActorRunner
     public string Category => _template.Category;
 
     /// <inheritdoc/>
-    public Guid? CharacterId { get; }
+    public Guid? CharacterId { get; private set; }
+
+    /// <inheritdoc/>
+    public Guid RealmId { get; }
+
+    /// <inheritdoc/>
+    public Guid? LocationId => _currentLocationId;
+
+    private Guid? _currentLocationId;
 
     /// <inheritdoc/>
     public ActorStatus Status
@@ -107,7 +126,14 @@ public sealed class ActorRunner : IActorRunner
     public int PerceptionQueueDepth => _perceptionQueue.Reader.Count;
 
     /// <inheritdoc/>
-    public Guid? CurrentEncounterId => _encounter?.EncounterId;
+    public Guid? CurrentEncounterId
+    {
+        get
+        {
+            var encounter = _encounter;
+            return encounter?.EncounterId;
+        }
+    }
 
     /// <summary>
     /// Creates a new actor runner instance.
@@ -115,47 +141,51 @@ public sealed class ActorRunner : IActorRunner
     /// <param name="actorId">The unique identifier for this actor.</param>
     /// <param name="template">The template this actor was spawned from.</param>
     /// <param name="characterId">Optional character ID for NPC brain actors.</param>
+    /// <param name="realmId">The realm this actor operates in.</param>
     /// <param name="config">Service configuration.</param>
     /// <param name="messageBus">Message bus for publishing events.</param>
     /// <param name="messageSubscriber">Message subscriber for dynamic subscriptions.</param>
     /// <param name="meshClient">Mesh client for routing state updates to game servers.</param>
     /// <param name="stateStore">State store for actor persistence.</param>
-    /// <param name="behaviorCache">Behavior document cache.</param>
-    /// <param name="personalityCache">Personality cache for character traits.</param>
+    /// <param name="behaviorLoader">Behavior document loader.</param>
+    /// <param name="providerFactories">Variable provider factories for ABML expressions (discovered via DI).</param>
     /// <param name="executor">Document executor for behavior execution.</param>
     /// <param name="expressionEvaluator">Expression evaluator for options evaluation.</param>
+    /// <param name="cognitionBuilder">Cognition pipeline builder for template-driven cognition.</param>
     /// <param name="logger">Logger instance.</param>
     /// <param name="initialState">Initial state snapshot, or null for fresh actor.</param>
     public ActorRunner(
         string actorId,
         ActorTemplateData template,
         Guid? characterId,
+        Guid realmId,
         ActorServiceConfiguration config,
         IMessageBus messageBus,
         IMessageSubscriber messageSubscriber,
         IMeshInvocationClient meshClient,
         IStateStore<ActorStateSnapshot> stateStore,
-        IBehaviorDocumentCache behaviorCache,
-        IPersonalityCache personalityCache,
-        IEncounterCache encounterCache,
+        IBehaviorDocumentLoader behaviorLoader,
+        IEnumerable<IVariableProviderFactory> providerFactories,
         IDocumentExecutor executor,
         IExpressionEvaluator expressionEvaluator,
+        ICognitionBuilder cognitionBuilder,
         ILogger<ActorRunner> logger,
         object? initialState)
     {
         ActorId = actorId;
         _template = template;
         CharacterId = characterId;
+        RealmId = realmId;
         _config = config;
         _messageBus = messageBus;
         _messageSubscriber = messageSubscriber;
         _meshClient = meshClient;
         _stateStore = stateStore;
-        _behaviorCache = behaviorCache;
-        _personalityCache = personalityCache;
-        _encounterCache = encounterCache;
+        _behaviorLoader = behaviorLoader;
+        _providerFactories = providerFactories;
         _executor = executor;
         _expressionEvaluator = expressionEvaluator;
+        _cognitionBuilder = cognitionBuilder;
         _logger = logger;
 
         // Create bounded perception queue with DropOldest behavior
@@ -221,6 +251,21 @@ public sealed class ActorRunner : IActorRunner
             CharacterId = CharacterId,
             Category = Category
         }, cancellationToken: cancellationToken);
+
+        // If spawned with a characterId already set, emit bound event so consumers
+        // always see a character-bound event regardless of spawn-bound vs hot-swap
+        if (CharacterId.HasValue)
+        {
+            await _messageBus.TryPublishAsync(CHARACTER_BOUND_TOPIC, new ActorCharacterBoundEvent
+            {
+                EventId = Guid.NewGuid(),
+                Timestamp = DateTimeOffset.UtcNow,
+                ActorId = ActorId,
+                CharacterId = CharacterId.Value,
+                RealmId = RealmId,
+                PreviousCharacterId = null
+            }, cancellationToken: cancellationToken);
+        }
     }
 
     /// <inheritdoc/>
@@ -281,6 +326,47 @@ public sealed class ActorRunner : IActorRunner
     }
 
     /// <inheritdoc/>
+    public async Task BindCharacterAsync(Guid characterId, CancellationToken cancellationToken = default)
+    {
+        if (_disposed)
+            throw new ObjectDisposedException(nameof(ActorRunner));
+
+        if (Status != ActorStatus.Running)
+            throw new InvalidOperationException($"Cannot bind character to actor {ActorId}: actor is {Status}, expected Running");
+
+        // Lock around check-then-set to prevent concurrent bind calls from both passing the guard.
+        // Lock scope is kept minimal (no awaits inside) per IMPLEMENTATION TENETS.
+        Guid? previousCharacterId;
+        lock (_bindLock)
+        {
+            if (CharacterId.HasValue)
+                throw new InvalidOperationException($"Cannot bind character to actor {ActorId}: already bound to character {CharacterId.Value}");
+
+            previousCharacterId = CharacterId;
+            CharacterId = characterId;
+        }
+
+        _logger.LogInformation("Actor {ActorId} binding to character {CharacterId} in realm {RealmId}",
+            ActorId, characterId, RealmId);
+
+        // Setup perception subscription for the newly bound character
+        await SetupPerceptionSubscriptionAsync(cancellationToken);
+
+        // Publish character bound event
+        await _messageBus.TryPublishAsync(CHARACTER_BOUND_TOPIC, new ActorCharacterBoundEvent
+        {
+            EventId = Guid.NewGuid(),
+            Timestamp = DateTimeOffset.UtcNow,
+            ActorId = ActorId,
+            CharacterId = characterId,
+            RealmId = RealmId,
+            PreviousCharacterId = previousCharacterId
+        }, cancellationToken: cancellationToken);
+
+        _logger.LogInformation("Actor {ActorId} bound to character {CharacterId}", ActorId, characterId);
+    }
+
+    /// <inheritdoc/>
     public bool InjectPerception(PerceptionData perception)
     {
 
@@ -294,12 +380,17 @@ public sealed class ActorRunner : IActorRunner
     /// <inheritdoc/>
     public ActorStateSnapshot GetStateSnapshot()
     {
+        // Capture encounter reference to prevent TOCTOU race with EndEncounter
+        var encounter = _encounter;
+
         return new ActorStateSnapshot
         {
             ActorId = ActorId,
             TemplateId = TemplateId,
             Category = Category,
             CharacterId = CharacterId,
+            RealmId = RealmId,
+            LocationId = LocationId,
             Status = Status,
             StartedAt = StartedAt,
             LastHeartbeat = LastHeartbeat,
@@ -309,7 +400,8 @@ public sealed class ActorRunner : IActorRunner
             Goals = _state.GetGoals(),
             Memories = _state.GetAllMemories(),
             WorkingMemory = _state.GetAllWorkingMemory(),
-            Encounter = _encounter
+            CognitionOverrides = _instanceCognitionOverrides,
+            Encounter = encounter
         };
     }
 
@@ -319,11 +411,12 @@ public sealed class ActorRunner : IActorRunner
         if (_disposed)
             return false;
 
-        // Cannot start a new encounter if one is already active
-        if (_encounter != null)
+        // Capture to local to prevent TOCTOU race
+        var existingEncounter = _encounter;
+        if (existingEncounter != null)
         {
             _logger.LogWarning("Actor {ActorId} attempted to start encounter {EncounterId} but encounter {ActiveEncounterId} is already active",
-                ActorId, encounterId, _encounter.EncounterId);
+                ActorId, encounterId, existingEncounter.EncounterId);
             return false;
         }
 
@@ -357,14 +450,16 @@ public sealed class ActorRunner : IActorRunner
     /// <inheritdoc/>
     public bool SetEncounterPhase(string phase)
     {
-        if (_disposed || _encounter == null)
+        // Capture to local to prevent TOCTOU race with EndEncounter
+        var encounter = _encounter;
+        if (_disposed || encounter == null)
             return false;
 
-        var oldPhase = _encounter.Phase;
-        _encounter.Phase = phase;
+        var oldPhase = encounter.Phase;
+        encounter.Phase = phase;
 
         _logger.LogDebug("Actor {ActorId} encounter {EncounterId} phase changed: {OldPhase} -> {NewPhase}",
-            ActorId, _encounter.EncounterId, oldPhase, phase);
+            ActorId, encounter.EncounterId, oldPhase, phase);
 
         // Publish phase changed event (fire-and-forget: sync interface method)
         _ = _messageBus.TryPublishAsync(ENCOUNTER_PHASE_CHANGED_TOPIC, new ActorEncounterPhaseChangedEvent
@@ -372,7 +467,7 @@ public sealed class ActorRunner : IActorRunner
             EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,
             ActorId = ActorId,
-            EncounterId = _encounter.EncounterId,
+            EncounterId = encounter.EncounterId,
             PreviousPhase = oldPhase,
             NewPhase = phase
         });
@@ -383,12 +478,14 @@ public sealed class ActorRunner : IActorRunner
     /// <inheritdoc/>
     public bool EndEncounter()
     {
-        if (_disposed || _encounter == null)
+        // Capture to local to prevent TOCTOU race with behavior loop reads
+        var encounter = _encounter;
+        if (_disposed || encounter == null)
             return false;
 
-        var encounterId = _encounter.EncounterId;
-        var finalPhase = _encounter.Phase;
-        var duration = DateTimeOffset.UtcNow - _encounter.StartedAt;
+        var encounterId = encounter.EncounterId;
+        var finalPhase = encounter.Phase;
+        var duration = DateTimeOffset.UtcNow - encounter.StartedAt;
         _encounter = null;
 
         _logger.LogInformation("Actor {ActorId} ended encounter {EncounterId} (duration: {Duration})",
@@ -406,6 +503,16 @@ public sealed class ActorRunner : IActorRunner
         });
 
         return true;
+    }
+
+    /// <inheritdoc/>
+    public void InvalidateCachedBehavior()
+    {
+        _behavior = null;
+        _goapGoals = null;
+        _goapActions = null;
+        _cognitionPipeline = null;
+        _logger.LogInformation("Actor {ActorId} cached behavior invalidated, will reload on next tick", ActorId);
     }
 
     /// <inheritdoc/>
@@ -464,11 +571,22 @@ public sealed class ActorRunner : IActorRunner
 
             try
             {
-                // 1. Process perceptions (drain queue into working memory)
-                await ProcessPerceptionsAsync(ct);
+                // Phase 1: Cognition pipeline (if available)
+                // Capture to local once to prevent TOCTOU race with InvalidateCachedBehavior
+                CognitionResult? cognitionResult = null;
+                var pipeline = _cognitionPipeline;
+                if (pipeline != null)
+                {
+                    cognitionResult = await ExecuteCognitionPhaseAsync(pipeline, ct);
+                }
+                else
+                {
+                    // No pipeline — process perceptions directly into working memory
+                    await ProcessPerceptionsAsync(ct);
+                }
 
-                // 2. Execute behavior tick
-                await ExecuteBehaviorTickAsync(ct);
+                // Phase 2: Behavior execution (always)
+                await ExecuteBehaviorTickAsync(cognitionResult, ct);
 
                 // 3. Publish state update if changed
                 await PublishStateUpdateIfNeededAsync(ct);
@@ -535,6 +653,120 @@ public sealed class ActorRunner : IActorRunner
     }
 
     /// <summary>
+    /// Executes the cognition pipeline phase: drains perceptions, processes through pipeline,
+    /// and applies results to actor state.
+    /// </summary>
+    /// <param name="pipeline">The cognition pipeline captured from the field by the caller
+    /// to avoid TOCTOU races with InvalidateCachedBehavior.</param>
+    /// <param name="ct">Cancellation token.</param>
+    private async Task<CognitionResult?> ExecuteCognitionPhaseAsync(
+        ICognitionPipeline pipeline, CancellationToken ct)
+    {
+        // 1. Drain perception queue into a list for batch processing
+        var perceptions = new List<object>();
+        while (_perceptionQueue.Reader.TryRead(out var perception))
+        {
+            // Track location from perception events
+            TrackLocationFromPerception(perception);
+
+            // Apply attention filter (based on urgency)
+            if (perception.Urgency < (float)_config.PerceptionFilterThreshold)
+                continue;
+
+            perceptions.Add(perception);
+        }
+
+        if (perceptions.Count == 0)
+        {
+            return null;
+        }
+
+        // Wrap processing in try/catch to prevent perception loss on exceptions.
+        // Perceptions have been destructively read from the channel — if processing fails,
+        // fall back to storing them directly in working memory.
+        try
+        {
+            // 2. Build CognitionContext from actor state
+            var context = new CognitionContext
+            {
+                EntityId = CharacterId,
+                Data = new Dictionary<string, object>
+                {
+                    ["actorId"] = ActorId,
+                    ["category"] = Category,
+                    ["feelings"] = _state.GetAllFeelings(),
+                    ["goals"] = _state.GetGoals(),
+                    ["memories"] = _state.GetAllMemories(),
+                    ["workingMemory"] = _state.GetAllWorkingMemory()
+                }
+            };
+
+            // 3. Process perceptions through the cognition pipeline
+            var result = await pipeline.ProcessBatchAsync(perceptions, context, ct);
+
+            if (!result.Success)
+            {
+                _logger.LogWarning("Actor {ActorId} cognition pipeline failed: {Error}", ActorId, result.Error);
+                StorePerceptionsDirectly(perceptions);
+                return null;
+            }
+
+            // 4. Apply cognition results to actor state
+            // Store filtered perceptions in working memory
+            foreach (var p in result.ProcessedPerceptions.OfType<PerceptionData>())
+            {
+                var key = $"perception:{p.PerceptionType}:{p.SourceId}";
+                _state.SetWorkingMemory(key, p);
+
+                // High significance perceptions become memories
+                if (p.Urgency >= (float)_config.PerceptionMemoryThreshold)
+                {
+                    _state.AddMemory(
+                        $"recent:{p.PerceptionType}",
+                        p,
+                        DateTimeOffset.UtcNow.AddMinutes(_config.ShortTermMemoryMinutes));
+                }
+            }
+
+            if (perceptions.Count > 0)
+            {
+                _logger.LogDebug(
+                    "Actor {ActorId} cognition processed {Total} perceptions, {Filtered} passed pipeline",
+                    ActorId, perceptions.Count, result.ProcessedPerceptions.Count);
+            }
+
+            return result;
+        }
+        catch (OperationCanceledException)
+        {
+            // Cancellation — store perceptions so they're not lost, then re-throw
+            StorePerceptionsDirectly(perceptions);
+            throw;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex,
+                "Actor {ActorId} cognition phase failed, storing {Count} perceptions directly",
+                ActorId, perceptions.Count);
+            StorePerceptionsDirectly(perceptions);
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// Stores perceptions directly into working memory as a fallback when the cognition
+    /// pipeline is unavailable or fails.
+    /// </summary>
+    private void StorePerceptionsDirectly(List<object> perceptions)
+    {
+        foreach (var p in perceptions.OfType<PerceptionData>())
+        {
+            var key = $"perception:{p.PerceptionType}:{p.SourceId}";
+            _state.SetWorkingMemory(key, p);
+        }
+    }
+
+    /// <summary>
     /// Processes all queued perceptions into working memory.
     /// </summary>
     private async Task ProcessPerceptionsAsync(CancellationToken ct)
@@ -543,6 +775,9 @@ public sealed class ActorRunner : IActorRunner
 
         while (_perceptionQueue.Reader.TryRead(out var perception))
         {
+            // Track location from perception events
+            TrackLocationFromPerception(perception);
+
             // Apply attention filter (based on urgency)
             if (perception.Urgency < (float)_config.PerceptionFilterThreshold)
             {
@@ -578,9 +813,23 @@ public sealed class ActorRunner : IActorRunner
     }
 
     /// <summary>
+    /// Tracks the actor's current location from perception events that carry locationId.
+    /// Called for every dequeued perception (even filtered ones) to keep location up-to-date.
+    /// </summary>
+    private void TrackLocationFromPerception(PerceptionData perception)
+    {
+        if (perception.LocationId.HasValue)
+        {
+            _currentLocationId = perception.LocationId.Value;
+        }
+    }
+
+    /// <summary>
     /// Executes one tick of behavior using the loaded ABML document.
     /// </summary>
-    private async Task ExecuteBehaviorTickAsync(CancellationToken ct)
+    /// <param name="cognitionResult">Result from cognition phase, or null if no pipeline.</param>
+    /// <param name="ct">Cancellation token.</param>
+    private async Task ExecuteBehaviorTickAsync(CognitionResult? cognitionResult, CancellationToken ct)
     {
         // 1. Lazy-load behavior document on first tick
         if (_behavior == null)
@@ -593,7 +842,7 @@ public sealed class ActorRunner : IActorRunner
 
             try
             {
-                _behavior = await _behaviorCache.GetOrLoadAsync(_template.BehaviorRef, ct);
+                _behavior = await _behaviorLoader.GetDocumentAsync(_template.BehaviorRef, ct);
                 _logger.LogInformation("Actor {ActorId} loaded behavior from {BehaviorRef}",
                     ActorId, _template.BehaviorRef);
             }
@@ -610,13 +859,44 @@ public sealed class ActorRunner : IActorRunner
                     stack: ex.StackTrace);
                 return;
             }
+
+            // Verify behavior was loaded (loader might return null without throwing)
+            if (_behavior == null)
+            {
+                _logger.LogWarning("Actor {ActorId} behavior loader returned null for {BehaviorRef}",
+                    ActorId, _template.BehaviorRef);
+                return;
+            }
+
+            // Extract and cache GOAP metadata from behavior document (one-time on load)
+            if (GoapMetadataConverter.HasGoapContent(_behavior))
+            {
+                (_goapGoals, _goapActions) = GoapMetadataConverter.ExtractAll(_behavior);
+                _logger.LogInformation(
+                    "Actor {ActorId} extracted GOAP metadata: {GoalCount} goals, {ActionCount} actions",
+                    ActorId, _goapGoals.Count, _goapActions.Count);
+            }
+
+            // Build cognition pipeline using three-tier resolution (per IMPLEMENTATION TENETS):
+            // 1. Actor template config (primary)
+            // 2. ABML metadata (override)
+            // 3. Category default mapping (fallback)
+            BuildCognitionPipeline();
         }
 
         // 2. Create scope with current actor state
         var scope = await CreateExecutionScopeAsync(ct);
 
-        // 3. Execute behavior (prefer process_tick flow if available, otherwise main)
-        var startFlow = _behavior.Flows.ContainsKey("process_tick") ? "process_tick" : "main";
+        // Inject cognition results into scope for behavior access
+        if (cognitionResult != null)
+        {
+            scope.SetValue("_cognition_replan", cognitionResult.RequiresReplan);
+            scope.SetValue("_cognition_replan_urgency", (double)cognitionResult.ReplanUrgency);
+            scope.SetValue("_cognition_affected_goals", cognitionResult.AffectedGoals);
+        }
+
+        // 3. Resolve start flow: on_tick (primary) → main (fallback)
+        var startFlow = _behavior.Flows.ContainsKey("on_tick") ? "on_tick" : "main";
         var result = await _executor.ExecuteAsync(_behavior, startFlow, scope, ct);
 
         if (!result.IsSuccess)
@@ -718,20 +998,42 @@ public sealed class ActorRunner : IActorRunner
         mergedConfig["goap_plan_timeout_ms"] = _config.GoapPlanTimeoutMs;
         scope.SetValue("config", mergedConfig);
 
+        // GOAP planning data (if behavior has GOAP content)
+        if (_goapGoals != null && _goapActions != null)
+        {
+            scope.SetValue("goap_goals", _goapGoals);
+            scope.SetValue("goap_actions", _goapActions);
+
+            // Build world state from actor's current state (feelings as numeric properties)
+            var worldState = BuildWorldStateFromActorState(goals);
+            scope.SetValue("world_state", worldState);
+
+            // Determine current goal from actor's primary goal (lookup in extracted goals)
+            var primaryGoalName = goals.PrimaryGoal;
+            if (!string.IsNullOrEmpty(primaryGoalName))
+            {
+                var currentGoal = _goapGoals.FirstOrDefault(g =>
+                    g.Name.Equals(primaryGoalName, StringComparison.OrdinalIgnoreCase));
+                scope.SetValue("current_goal", currentGoal);
+            }
+        }
+
         // Current perceptions (collected from queue this tick)
         scope.SetValue("perceptions", CollectCurrentPerceptions());
 
         // Encounter state for Event Brain actors
-        if (_encounter != null)
+        // Capture to local to prevent TOCTOU race with EndEncounter on API thread
+        var encounter = _encounter;
+        if (encounter != null)
         {
             scope.SetValue("encounter", new Dictionary<string, object?>
             {
-                ["id"] = _encounter.EncounterId,
-                ["type"] = _encounter.EncounterType,
-                ["participants"] = _encounter.Participants.Select(p => p.ToString()).ToList(),
-                ["phase"] = _encounter.Phase,
-                ["started_at"] = _encounter.StartedAt.ToString("o"),
-                ["data"] = _encounter.Data
+                ["id"] = encounter.EncounterId,
+                ["type"] = encounter.EncounterType,
+                ["participants"] = encounter.Participants.Select(p => p.ToString()).ToList(),
+                ["phase"] = encounter.Phase,
+                ["started_at"] = encounter.StartedAt.ToString("o"),
+                ["data"] = encounter.Data
             });
         }
         else
@@ -740,29 +1042,23 @@ public sealed class ActorRunner : IActorRunner
             scope.SetValue("encounter", null);
         }
 
-        // Load personality, combat preferences, backstory, and encounters for character-based actors
-        if (CharacterId.HasValue)
+        // Load variable providers via registered factories (dependency inversion pattern).
+        // Higher-layer services (L3/L4) register their provider factories with DI,
+        // Actor (L2) discovers and uses them without knowing about specific game features.
+        foreach (var factory in _providerFactories)
         {
-            var personality = await _personalityCache.GetOrLoadAsync(CharacterId.Value, ct);
-            scope.RegisterProvider(new PersonalityProvider(personality));
-
-            var combatPrefs = await _personalityCache.GetCombatPreferencesOrLoadAsync(CharacterId.Value, ct);
-            scope.RegisterProvider(new CombatPreferencesProvider(combatPrefs));
-
-            var backstory = await _personalityCache.GetBackstoryOrLoadAsync(CharacterId.Value, ct);
-            scope.RegisterProvider(new BackstoryProvider(backstory));
-
-            // Load encounter data for the character
-            var encounters = await _encounterCache.GetEncountersOrLoadAsync(CharacterId.Value, ct);
-            scope.RegisterProvider(new EncountersProvider(encounters));
-        }
-        else
-        {
-            // Register empty providers for non-character actors to avoid null reference issues
-            scope.RegisterProvider(new PersonalityProvider(null));
-            scope.RegisterProvider(new CombatPreferencesProvider(null));
-            scope.RegisterProvider(new BackstoryProvider(null));
-            scope.RegisterProvider(new EncountersProvider(null));
+            try
+            {
+                var provider = await factory.CreateAsync(CharacterId, RealmId, _currentLocationId, ct);
+                scope.RegisterProvider(provider);
+                _logger.LogDebug("Actor {ActorId} registered provider {ProviderName}", ActorId, factory.ProviderName);
+            }
+            catch (Exception ex)
+            {
+                // Log but don't fail - actor can continue without optional providers
+                _logger.LogWarning(ex, "Actor {ActorId} failed to create provider {ProviderName}",
+                    ActorId, factory.ProviderName);
+            }
         }
 
         return scope;
@@ -792,6 +1088,64 @@ public sealed class ActorRunner : IActorRunner
         }
 
         return perceptions;
+    }
+
+    /// <summary>
+    /// Builds a GOAP WorldState from the actor's current state.
+    /// Populates numeric properties from feelings and goal parameters.
+    /// ABML behaviors can augment this via set: before calling trigger_goap_replan.
+    /// </summary>
+    /// <param name="goals">Current actor goals.</param>
+    /// <returns>WorldState populated from actor state.</returns>
+    private WorldState BuildWorldStateFromActorState(GoalStateData goals)
+    {
+        var worldState = new WorldState();
+
+        // Add all feelings as numeric properties (e.g., hunger: 0.7, fear: 0.3)
+        foreach (var (name, value) in _state.GetAllFeelings())
+        {
+            worldState = worldState.SetNumeric(name, (float)value);
+        }
+
+        // Add goal parameters as additional properties
+        // These may include context like location, target_id, etc.
+        if (goals.GoalParameters != null)
+        {
+            foreach (var (key, value) in goals.GoalParameters)
+            {
+                if (value == null) continue;
+
+                worldState = value switch
+                {
+                    float f => worldState.SetNumeric(key, f),
+                    double d => worldState.SetNumeric(key, (float)d),
+                    int i => worldState.SetNumeric(key, i),
+                    bool b => worldState.SetBoolean(key, b),
+                    string s => worldState.SetString(key, s),
+                    _ => worldState.SetValue(key, value)
+                };
+            }
+        }
+
+        // Add relevant working memory flags (booleans for state flags)
+        var workingMemory = _state.GetAllWorkingMemory();
+        foreach (var (key, value) in workingMemory)
+        {
+            // Skip perception entries (they're handled separately)
+            if (key.StartsWith("perception:", StringComparison.Ordinal)) continue;
+
+            // Add state flags (e.g., in_combat, has_weapon, etc.)
+            if (value is bool b)
+            {
+                worldState = worldState.SetBoolean(key, b);
+            }
+            else if (value is string s)
+            {
+                worldState = worldState.SetString(key, s);
+            }
+        }
+
+        return worldState;
     }
 
     /// <summary>
@@ -1057,10 +1411,93 @@ public sealed class ActorRunner : IActorRunner
             }
         }
 
+        // Restore per-instance cognition overrides
+        if (snapshot.CognitionOverrides != null)
+        {
+            _instanceCognitionOverrides = snapshot.CognitionOverrides;
+        }
+
         // Clear pending changes since we just loaded saved state
         _state.ClearPendingChanges();
 
         _logger.LogDebug("Actor {ActorId} restored state from snapshot", ActorId);
+    }
+
+    /// <summary>
+    /// Builds the cognition pipeline using three-tier template resolution.
+    /// Resolution order: actor template config → ABML metadata → category default.
+    /// </summary>
+    private void BuildCognitionPipeline()
+    {
+        // Tier 1: Actor template configuration (primary source)
+        var templateId = _template.CognitionTemplateId;
+
+        // Tier 2: ABML metadata override
+        if (string.IsNullOrEmpty(templateId))
+        {
+            templateId = _behavior?.Metadata?.CognitionTemplate;
+        }
+
+        // Tier 3: Category default mapping (fallback)
+        if (string.IsNullOrEmpty(templateId))
+        {
+            templateId = CognitionDefaults.GetDefaultTemplateId(Category);
+        }
+
+        // No template resolved — actor runs ABML-only (legitimate for simple actors)
+        if (string.IsNullOrEmpty(templateId))
+        {
+            _logger.LogDebug("Actor {ActorId} has no cognition template, running ABML-only", ActorId);
+            return;
+        }
+
+        // Merge overrides: template (Layer 1) + instance (Layer 2)
+        var mergedOverrides = MergeCognitionOverrides(
+            _template.CognitionOverrides,
+            _instanceCognitionOverrides);
+
+        // Build the pipeline
+        _cognitionPipeline = _cognitionBuilder.Build(templateId, mergedOverrides);
+
+        if (_cognitionPipeline == null)
+        {
+            // Template ID was specified but not found — this is a configuration error, not degradation
+            _logger.LogError(
+                "Actor {ActorId} cognition template {TemplateId} not found, failing startup",
+                ActorId, templateId);
+            Status = ActorStatus.Error;
+            throw new InvalidOperationException(
+                $"Cognition template '{templateId}' not found for actor '{ActorId}'. " +
+                "A specified template must be resolvable — check template registry.");
+        }
+
+        _logger.LogInformation(
+            "Actor {ActorId} built cognition pipeline from template {TemplateId} ({StageCount} stages)",
+            ActorId, templateId, _cognitionPipeline.Stages.Count);
+    }
+
+    /// <summary>
+    /// Merges cognition overrides from multiple layers.
+    /// Layer 1 (template) and Layer 2 (instance) are combined into a single override set.
+    /// </summary>
+    private static CognitionOverrides? MergeCognitionOverrides(
+        CognitionOverrides? templateOverrides,
+        CognitionOverrides? instanceOverrides)
+    {
+        if (templateOverrides == null && instanceOverrides == null)
+            return null;
+
+        if (templateOverrides == null)
+            return instanceOverrides;
+
+        if (instanceOverrides == null)
+            return templateOverrides;
+
+        // Combine both override lists — instance overrides applied after template overrides
+        var merged = new List<ICognitionOverride>(templateOverrides.Overrides);
+        merged.AddRange(instanceOverrides.Overrides);
+
+        return new CognitionOverrides { Overrides = merged };
     }
 
     /// <summary>
@@ -1071,6 +1508,22 @@ public sealed class ActorRunner : IActorRunner
     {
         if (!CharacterId.HasValue)
             return;
+
+        // Defensively dispose existing subscription before creating a new one.
+        // Prevents leaked subscriptions if this method is called multiple times
+        // (e.g., concurrent bind calls that bypassed the guard before Fix #5's lock).
+        if (_perceptionSubscription != null)
+        {
+            try
+            {
+                await _perceptionSubscription.DisposeAsync();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Actor {ActorId} error disposing existing perception subscription before rebind", ActorId);
+            }
+            _perceptionSubscription = null;
+        }
 
         var topic = $"character.{CharacterId.Value}.perceptions";
         _logger.LogInformation("Actor {ActorId} subscribing to {Topic}", ActorId, topic);

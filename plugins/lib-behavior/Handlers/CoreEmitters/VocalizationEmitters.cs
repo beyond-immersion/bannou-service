@@ -3,6 +3,7 @@
 // Intent emitters for speech and sound actions.
 // =============================================================================
 
+using BeyondImmersion.Bannou.BehaviorCompiler.Archetypes;
 using BeyondImmersion.BannouService.Behavior;
 
 namespace BeyondImmersion.BannouService.Behavior.Handlers.CoreEmitters;

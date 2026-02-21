@@ -16,35 +16,49 @@ using BeyondImmersion.BannouService.Character;
 using BeyondImmersion.BannouService.CharacterEncounter;
 using BeyondImmersion.BannouService.CharacterHistory;
 using BeyondImmersion.BannouService.CharacterPersonality;
+using BeyondImmersion.BannouService.Chat;
+using BeyondImmersion.BannouService.Collection;
 using BeyondImmersion.BannouService.Connect;
 using BeyondImmersion.BannouService.Contract;
 using BeyondImmersion.BannouService.Currency;
+using BeyondImmersion.BannouService.Divine;
 using BeyondImmersion.BannouService.Documentation;
 using BeyondImmersion.BannouService.Escrow;
+using BeyondImmersion.BannouService.Faction;
 using BeyondImmersion.BannouService.GameService;
 using BeyondImmersion.BannouService.GameSession;
+using BeyondImmersion.BannouService.Gardener;
 using BeyondImmersion.BannouService.Inventory;
 using BeyondImmersion.BannouService.Item;
 using BeyondImmersion.BannouService.Leaderboard;
+using BeyondImmersion.BannouService.License;
 using BeyondImmersion.BannouService.Location;
 using BeyondImmersion.BannouService.Mapping;
 using BeyondImmersion.BannouService.Matchmaking;
 using BeyondImmersion.BannouService.Mesh;
 using BeyondImmersion.BannouService.Messaging;
 using BeyondImmersion.BannouService.Music;
+using BeyondImmersion.BannouService.Obligation;
 using BeyondImmersion.BannouService.Orchestrator;
 using BeyondImmersion.BannouService.Permission;
+using BeyondImmersion.BannouService.Puppetmaster;
+using BeyondImmersion.BannouService.Quest;
 using BeyondImmersion.BannouService.Realm;
 using BeyondImmersion.BannouService.RealmHistory;
 using BeyondImmersion.BannouService.Relationship;
-using BeyondImmersion.BannouService.RelationshipType;
+using BeyondImmersion.BannouService.Resource;
 using BeyondImmersion.BannouService.SaveLoad;
 using BeyondImmersion.BannouService.Scene;
+using BeyondImmersion.BannouService.Seed;
 using BeyondImmersion.BannouService.Species;
 using BeyondImmersion.BannouService.State;
+using BeyondImmersion.BannouService.Status;
+using BeyondImmersion.BannouService.Storyline;
 using BeyondImmersion.BannouService.Subscription;
+using BeyondImmersion.BannouService.Telemetry;
 using BeyondImmersion.BannouService.Voice;
 using BeyondImmersion.BannouService.Website;
+using BeyondImmersion.BannouService.Worldstate;
 
 namespace BeyondImmersion.BannouService.ServiceClients;
 
@@ -109,6 +123,16 @@ public partial interface IServiceNavigator
     ICharacterPersonalityClient CharacterPersonality { get; }
 
     /// <summary>
+    /// Gets the Chat service client.
+    /// </summary>
+    IChatClient Chat { get; }
+
+    /// <summary>
+    /// Gets the Collection service client.
+    /// </summary>
+    ICollectionClient Collection { get; }
+
+    /// <summary>
     /// Gets the Connect service client.
     /// </summary>
     IConnectClient Connect { get; }
@@ -124,6 +148,11 @@ public partial interface IServiceNavigator
     ICurrencyClient Currency { get; }
 
     /// <summary>
+    /// Gets the Divine service client.
+    /// </summary>
+    IDivineClient Divine { get; }
+
+    /// <summary>
     /// Gets the Documentation service client.
     /// </summary>
     IDocumentationClient Documentation { get; }
@@ -134,6 +163,11 @@ public partial interface IServiceNavigator
     IEscrowClient Escrow { get; }
 
     /// <summary>
+    /// Gets the Faction service client.
+    /// </summary>
+    IFactionClient Faction { get; }
+
+    /// <summary>
     /// Gets the GameService service client.
     /// </summary>
     IGameServiceClient GameService { get; }
@@ -142,6 +176,11 @@ public partial interface IServiceNavigator
     /// Gets the GameSession service client.
     /// </summary>
     IGameSessionClient GameSession { get; }
+
+    /// <summary>
+    /// Gets the Gardener service client.
+    /// </summary>
+    IGardenerClient Gardener { get; }
 
     /// <summary>
     /// Gets the Inventory service client.
@@ -157,6 +196,11 @@ public partial interface IServiceNavigator
     /// Gets the Leaderboard service client.
     /// </summary>
     ILeaderboardClient Leaderboard { get; }
+
+    /// <summary>
+    /// Gets the License service client.
+    /// </summary>
+    ILicenseClient License { get; }
 
     /// <summary>
     /// Gets the Location service client.
@@ -189,6 +233,11 @@ public partial interface IServiceNavigator
     IMusicClient Music { get; }
 
     /// <summary>
+    /// Gets the Obligation service client.
+    /// </summary>
+    IObligationClient Obligation { get; }
+
+    /// <summary>
     /// Gets the Orchestrator service client.
     /// </summary>
     IOrchestratorClient Orchestrator { get; }
@@ -197,6 +246,16 @@ public partial interface IServiceNavigator
     /// Gets the Permission service client.
     /// </summary>
     IPermissionClient Permission { get; }
+
+    /// <summary>
+    /// Gets the Puppetmaster service client.
+    /// </summary>
+    IPuppetmasterClient Puppetmaster { get; }
+
+    /// <summary>
+    /// Gets the Quest service client.
+    /// </summary>
+    IQuestClient Quest { get; }
 
     /// <summary>
     /// Gets the Realm service client.
@@ -214,9 +273,9 @@ public partial interface IServiceNavigator
     IRelationshipClient Relationship { get; }
 
     /// <summary>
-    /// Gets the RelationshipType service client.
+    /// Gets the Resource service client.
     /// </summary>
-    IRelationshipTypeClient RelationshipType { get; }
+    IResourceClient Resource { get; }
 
     /// <summary>
     /// Gets the SaveLoad service client.
@@ -229,6 +288,11 @@ public partial interface IServiceNavigator
     ISceneClient Scene { get; }
 
     /// <summary>
+    /// Gets the Seed service client.
+    /// </summary>
+    ISeedClient Seed { get; }
+
+    /// <summary>
     /// Gets the Species service client.
     /// </summary>
     ISpeciesClient Species { get; }
@@ -239,9 +303,24 @@ public partial interface IServiceNavigator
     IStateClient State { get; }
 
     /// <summary>
+    /// Gets the Status service client.
+    /// </summary>
+    IStatusClient Status { get; }
+
+    /// <summary>
+    /// Gets the Storyline service client.
+    /// </summary>
+    IStorylineClient Storyline { get; }
+
+    /// <summary>
     /// Gets the Subscription service client.
     /// </summary>
     ISubscriptionClient Subscription { get; }
+
+    /// <summary>
+    /// Gets the Telemetry service client.
+    /// </summary>
+    ITelemetryClient Telemetry { get; }
 
     /// <summary>
     /// Gets the Voice service client.
@@ -252,5 +331,10 @@ public partial interface IServiceNavigator
     /// Gets the Website service client.
     /// </summary>
     IWebsiteClient Website { get; }
+
+    /// <summary>
+    /// Gets the Worldstate service client.
+    /// </summary>
+    IWorldstateClient Worldstate { get; }
 
 }

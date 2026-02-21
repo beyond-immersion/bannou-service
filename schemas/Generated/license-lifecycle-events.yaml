@@ -1,0 +1,271 @@
+openapi: 3.0.3
+info:
+  title: License Service Events Lifecycle Events
+  description: "Auto-generated lifecycle event schemas for license service.\nDO NOT EDIT - This file is completely overwritten
+    by generate-lifecycle-events.py.\nSource of truth: license-events.yaml x-lifecycle section."
+  version: 1.0.0
+paths: {}
+components:
+  schemas:
+    LicenseBoardTemplateCreatedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+      type: object
+      additionalProperties: false
+      description: Published to license-board-template.created when a licenseboardtemplate is created
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - boardTemplateId
+      - gameServiceId
+      - name
+      - gridWidth
+      - gridHeight
+      - boardContractTemplateId
+      - adjacencyMode
+      - isActive
+      - createdAt
+      properties:
+        eventName:
+          type: string
+          default: license-board-template.created
+          description: 'Event type identifier: license-board-template.created'
+        boardTemplateId: &id001
+          type: string
+          format: uuid
+          description: "Unique board template identifier"
+        gameServiceId: &id002
+          type: string
+          format: uuid
+          description: "Game service this template belongs to"
+        name: &id003
+          type: string
+          description: "Display name for the board template"
+        gridWidth: &id004
+          type: integer
+          description: "Width of the board grid (columns)"
+        gridHeight: &id005
+          type: integer
+          description: "Height of the board grid (rows)"
+        boardContractTemplateId: &id006
+          type: string
+          format: uuid
+          description: "Contract template that controls unlock behavior"
+        adjacencyMode: &id007
+          $ref: ../license-api.yaml#/components/schemas/AdjacencyMode
+          description: "Grid traversal mode for this template"
+        isActive: &id008
+          type: boolean
+          description: "Whether the template is active"
+        createdAt: &id009
+          type: string
+          format: date-time
+          description: "When the template was created"
+        updatedAt: &id010
+          type: string
+          format: date-time
+          nullable: true
+          description: "When the template was last updated"
+    LicenseBoardTemplateUpdatedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+      type: object
+      additionalProperties: false
+      description: Published to license-board-template.updated when a licenseboardtemplate is updated
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - boardTemplateId
+      - gameServiceId
+      - name
+      - gridWidth
+      - gridHeight
+      - boardContractTemplateId
+      - adjacencyMode
+      - isActive
+      - createdAt
+      - changedFields
+      properties:
+        eventName:
+          type: string
+          default: license-board-template.updated
+          description: 'Event type identifier: license-board-template.updated'
+        boardTemplateId: *id001
+        gameServiceId: *id002
+        name: *id003
+        gridWidth: *id004
+        gridHeight: *id005
+        boardContractTemplateId: *id006
+        adjacencyMode: *id007
+        isActive: *id008
+        createdAt: *id009
+        updatedAt: *id010
+        changedFields:
+          type: array
+          items:
+            type: string
+          description: List of field names that were modified
+    LicenseBoardTemplateDeletedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+      type: object
+      additionalProperties: false
+      description: Published to license-board-template.deleted when a licenseboardtemplate is deleted
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - boardTemplateId
+      - gameServiceId
+      - name
+      - gridWidth
+      - gridHeight
+      - boardContractTemplateId
+      - adjacencyMode
+      - isActive
+      - createdAt
+      properties:
+        eventName:
+          type: string
+          default: license-board-template.deleted
+          description: 'Event type identifier: license-board-template.deleted'
+        boardTemplateId: *id001
+        gameServiceId: *id002
+        name: *id003
+        gridWidth: *id004
+        gridHeight: *id005
+        boardContractTemplateId: *id006
+        adjacencyMode: *id007
+        isActive: *id008
+        createdAt: *id009
+        updatedAt: *id010
+        deletedReason:
+          type: string
+          nullable: true
+          description: Optional reason for deletion (e.g., "Merged into {targetId}")
+    LicenseBoardCreatedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+      type: object
+      additionalProperties: false
+      description: Published to license-board.created when a licenseboard is created
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - boardId
+      - ownerType
+      - ownerId
+      - boardTemplateId
+      - gameServiceId
+      - containerId
+      - createdAt
+      properties:
+        eventName:
+          type: string
+          default: license-board.created
+          description: 'Event type identifier: license-board.created'
+        boardId: &id011
+          type: string
+          format: uuid
+          description: "Unique board instance identifier"
+        ownerType: &id012
+          type: string
+          description: "Type of entity that owns this board"
+        ownerId: &id013
+          type: string
+          format: uuid
+          description: "Entity that owns this board"
+        realmId: &id014
+          type: string
+          format: uuid
+          nullable: true
+          description: "Realm context for this board"
+        boardTemplateId: &id015
+          type: string
+          format: uuid
+          description: "Board template this instance was created from"
+        gameServiceId: &id016
+          type: string
+          format: uuid
+          description: "Game service this board belongs to"
+        containerId: &id017
+          type: string
+          format: uuid
+          description: "Inventory container holding unlocked license items"
+        createdAt: &id018
+          type: string
+          format: date-time
+          description: "When this board instance was created"
+    LicenseBoardUpdatedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+      type: object
+      additionalProperties: false
+      description: Published to license-board.updated when a licenseboard is updated
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - boardId
+      - ownerType
+      - ownerId
+      - boardTemplateId
+      - gameServiceId
+      - containerId
+      - createdAt
+      - changedFields
+      properties:
+        eventName:
+          type: string
+          default: license-board.updated
+          description: 'Event type identifier: license-board.updated'
+        boardId: *id011
+        ownerType: *id012
+        ownerId: *id013
+        realmId: *id014
+        boardTemplateId: *id015
+        gameServiceId: *id016
+        containerId: *id017
+        createdAt: *id018
+        changedFields:
+          type: array
+          items:
+            type: string
+          description: List of field names that were modified
+    LicenseBoardDeletedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+      type: object
+      additionalProperties: false
+      description: Published to license-board.deleted when a licenseboard is deleted
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - boardId
+      - ownerType
+      - ownerId
+      - boardTemplateId
+      - gameServiceId
+      - containerId
+      - createdAt
+      properties:
+        eventName:
+          type: string
+          default: license-board.deleted
+          description: 'Event type identifier: license-board.deleted'
+        boardId: *id011
+        ownerType: *id012
+        ownerId: *id013
+        realmId: *id014
+        boardTemplateId: *id015
+        gameServiceId: *id016
+        containerId: *id017
+        createdAt: *id018
+        deletedReason:
+          type: string
+          nullable: true
+          description: Optional reason for deletion (e.g., "Merged into {targetId}")

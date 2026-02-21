@@ -3,7 +3,7 @@
 // State management for individual execution channels.
 // ═══════════════════════════════════════════════════════════════════════════
 
-using BeyondImmersion.BannouService.Abml.Expressions;
+using BeyondImmersion.Bannou.BehaviorExpressions.Expressions;
 using System.Collections.Concurrent;
 
 namespace BeyondImmersion.BannouService.Abml.Execution.Channel;

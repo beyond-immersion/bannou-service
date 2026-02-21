@@ -1,0 +1,523 @@
+openapi: 3.0.3
+info:
+  title: Chat Service Events
+  description: |
+    Event subscription and publication declarations for Chat service.
+    Lifecycle events (Created, Updated, Deleted) are auto-generated from x-lifecycle.
+    Custom events cover participant management, message delivery, and room state changes.
+
+    **Event Categories**:
+    - Room lifecycle: created, updated, deleted (auto-generated)
+    - Room type lifecycle: created, updated, deleted (auto-generated)
+    - Participant: joined, left, kicked, banned, muted, unmuted
+    - Message: sent (metadata only, no text content for privacy), deleted
+    - Room state: locked (contract-triggered), archived
+
+    **Consumed Events**:
+    - contract.fulfilled: Governing contract completed all milestones
+    - contract.breach.detected: Governing contract breach recorded
+    - contract.terminated: Governing contract terminated early
+    - contract.expired: Governing contract reached natural expiration
+
+    **Topic Naming**: Uses dot-separated format (chat.participant.joined).
+
+    **SCHEMA MODIFICATION GATE**: STOP. Before modifying this schema, you MUST:
+    1. Read docs/reference/SCHEMA-RULES.md
+    2. State which section applies to your change
+    3. Only then proceed with edits
+    Edits without stating the applicable rule are FORBIDDEN.
+  version: 1.0.0
+  x-event-subscriptions:
+    - topic: contract.fulfilled
+      event: ContractFulfilledEvent
+      handler: HandleContractFulfilled
+    - topic: contract.breach.detected
+      event: ContractBreachDetectedEvent
+      handler: HandleContractBreachDetected
+    - topic: contract.terminated
+      event: ContractTerminatedEvent
+      handler: HandleContractTerminated
+    - topic: contract.expired
+      event: ContractExpiredEvent
+      handler: HandleContractExpired
+  x-event-publications:
+    # Chat room lifecycle events (auto-generated from x-lifecycle)
+    - topic: chat-room.created
+      event: ChatRoomCreatedEvent
+      description: Published when a new chat room is created
+    - topic: chat-room.updated
+      event: ChatRoomUpdatedEvent
+      description: Published when a chat room is updated
+    - topic: chat-room.deleted
+      event: ChatRoomDeletedEvent
+      description: Published when a chat room is deleted
+
+    # Chat room type lifecycle events (auto-generated from x-lifecycle)
+    - topic: chat-room-type.created
+      event: ChatRoomTypeCreatedEvent
+      description: Published when a new room type is registered
+    - topic: chat-room-type.updated
+      event: ChatRoomTypeUpdatedEvent
+      description: Published when a room type is updated
+    - topic: chat-room-type.deleted
+      event: ChatRoomTypeDeletedEvent
+      description: Published when a room type is deleted
+
+    # Participant events
+    - topic: chat.participant.joined
+      event: ChatParticipantJoinedEvent
+      description: Published when a participant joins a chat room
+    - topic: chat.participant.left
+      event: ChatParticipantLeftEvent
+      description: Published when a participant leaves a chat room
+    - topic: chat.participant.kicked
+      event: ChatParticipantKickedEvent
+      description: Published when a participant is kicked from a chat room
+    - topic: chat.participant.banned
+      event: ChatParticipantBannedEvent
+      description: Published when a participant is banned from a chat room
+    - topic: chat.participant.muted
+      event: ChatParticipantMutedEvent
+      description: Published when a participant is muted in a chat room
+    - topic: chat.participant.unmuted
+      event: ChatParticipantUnmutedEvent
+      description: Published when a participant is unmuted in a chat room
+
+    # Message events
+    - topic: chat.message.sent
+      event: ChatMessageSentEvent
+      description: Published when a message is sent (metadata only, no text content for privacy)
+    - topic: chat.message.deleted
+      event: ChatMessageDeletedEvent
+      description: Published when a message is deleted from a chat room
+
+    # Room state events
+    - topic: chat.room.locked
+      event: ChatRoomLockedEvent
+      description: Published when a chat room is locked (contract-triggered or manual)
+    - topic: chat.room.archived
+      event: ChatRoomArchivedEvent
+      description: Published when a chat room is archived via Resource
+
+# Lifecycle events auto-generated from this definition
+# Output: schemas/Generated/chat-lifecycle-events.yaml
+x-lifecycle:
+  ChatRoom:
+    model:
+      roomId: { type: string, format: uuid, primary: true, required: true, description: "Unique identifier for the chat room" }
+      roomTypeCode: { type: string, required: true, description: "Room type code that determines message format and validation rules" }
+      sessionId: { type: string, format: uuid, nullable: true, description: "Connect session ID if this is a companion room" }
+      contractId: { type: string, format: uuid, nullable: true, description: "Governing contract instance ID if contract-bound" }
+      displayName: { type: string, nullable: true, description: "Human-readable room display name" }
+      status: { $ref: 'chat-api.yaml#/components/schemas/ChatRoomStatus', required: true, description: "Current room lifecycle status" }
+      participantCount: { type: integer, required: true, description: "Current number of participants in the room" }
+      maxParticipants: { type: integer, required: true, description: "Maximum allowed participants in the room" }
+      isArchived: { type: boolean, required: true, description: "Whether the room has been archived via Resource" }
+      createdAt: { type: string, format: date-time, required: true, description: "When the room was created" }
+    sensitive: [metadata]
+  ChatRoomType:
+    model:
+      code: { type: string, primary: true, required: true, description: "Unique room type code within game service scope" }
+      displayName: { type: string, required: true, description: "Human-readable room type name" }
+      gameServiceId: { type: string, format: uuid, nullable: true, description: "Game service scope (null for global built-in types)" }
+      messageFormat: { $ref: 'chat-api.yaml#/components/schemas/MessageFormat', required: true, description: "Message format this room type accepts" }
+      persistenceMode: { $ref: 'chat-api.yaml#/components/schemas/PersistenceMode', required: true, description: "Whether messages are ephemeral (Redis) or persistent (MySQL)" }
+      allowAnonymousSenders: { type: boolean, required: true, description: "Whether messages can be sent without sender identity" }
+      status: { $ref: 'chat-api.yaml#/components/schemas/RoomTypeStatus', required: true, description: "Current lifecycle status of the room type" }
+      createdAt: { type: string, format: date-time, required: true, description: "When the room type was registered" }
+    sensitive: [validatorConfig, metadata]
+
+paths: {}  # Events don't have HTTP paths
+
+# Note: ChatRoomCreatedEvent, ChatRoomUpdatedEvent, ChatRoomDeletedEvent,
+# ChatRoomTypeCreatedEvent, ChatRoomTypeUpdatedEvent, ChatRoomTypeDeletedEvent
+# are auto-generated from x-lifecycle. See: schemas/Generated/chat-lifecycle-events.yaml
+
+components:
+  schemas:
+    # =========================================================================
+    # Participant Events
+    # =========================================================================
+
+    ChatParticipantJoinedEvent:
+      type: object
+      additionalProperties: false
+      description: Published when a participant joins a chat room
+      required:
+        - eventId
+        - timestamp
+        - roomId
+        - roomTypeCode
+        - participantSessionId
+        - role
+        - currentCount
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique identifier for this event
+        timestamp:
+          type: string
+          format: date-time
+          description: When the participant joined
+        roomId:
+          type: string
+          format: uuid
+          description: Room the participant joined
+        roomTypeCode:
+          type: string
+          description: Room type code for consumer filtering
+        participantSessionId:
+          type: string
+          format: uuid
+          description: Connect session ID of the joining participant
+        senderType:
+          type: string
+          nullable: true
+          description: Opaque sender type identifier (e.g., "account", "npc", "system")
+        senderId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Opaque sender entity ID
+        displayName:
+          type: string
+          nullable: true
+          description: Display name of the joining participant
+        role:
+          $ref: 'chat-api.yaml#/components/schemas/ChatParticipantRole'
+          description: Role assigned to the participant
+        currentCount:
+          type: integer
+          description: Total participant count after this join
+
+    ChatParticipantLeftEvent:
+      type: object
+      additionalProperties: false
+      description: Published when a participant leaves a chat room
+      required:
+        - eventId
+        - timestamp
+        - roomId
+        - participantSessionId
+        - remainingCount
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique identifier for this event
+        timestamp:
+          type: string
+          format: date-time
+          description: When the participant left
+        roomId:
+          type: string
+          format: uuid
+          description: Room the participant left
+        participantSessionId:
+          type: string
+          format: uuid
+          description: Connect session ID of the departing participant
+        remainingCount:
+          type: integer
+          description: Remaining participant count after this departure
+
+    ChatParticipantKickedEvent:
+      type: object
+      additionalProperties: false
+      description: Published when a participant is kicked from a chat room
+      required:
+        - eventId
+        - timestamp
+        - roomId
+        - targetSessionId
+        - kickedBySessionId
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique identifier for this event
+        timestamp:
+          type: string
+          format: date-time
+          description: When the kick occurred
+        roomId:
+          type: string
+          format: uuid
+          description: Room the participant was kicked from
+        targetSessionId:
+          type: string
+          format: uuid
+          description: Connect session ID of the kicked participant
+        kickedBySessionId:
+          type: string
+          format: uuid
+          description: Connect session ID of the moderator who performed the kick
+        reason:
+          type: string
+          nullable: true
+          description: Optional reason provided for the kick
+
+    ChatParticipantBannedEvent:
+      type: object
+      additionalProperties: false
+      description: Published when a participant is banned from a chat room
+      required:
+        - eventId
+        - timestamp
+        - roomId
+        - targetSessionId
+        - bannedBySessionId
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique identifier for this event
+        timestamp:
+          type: string
+          format: date-time
+          description: When the ban was applied
+        roomId:
+          type: string
+          format: uuid
+          description: Room the participant was banned from
+        targetSessionId:
+          type: string
+          format: uuid
+          description: Connect session ID of the banned participant
+        bannedBySessionId:
+          type: string
+          format: uuid
+          description: Connect session ID of the moderator who applied the ban
+        reason:
+          type: string
+          nullable: true
+          description: Optional reason provided for the ban
+        durationMinutes:
+          type: integer
+          nullable: true
+          description: Ban duration in minutes (null for permanent ban)
+
+    ChatParticipantMutedEvent:
+      type: object
+      additionalProperties: false
+      description: Published when a participant is muted in a chat room
+      required:
+        - eventId
+        - timestamp
+        - roomId
+        - targetSessionId
+        - mutedBySessionId
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique identifier for this event
+        timestamp:
+          type: string
+          format: date-time
+          description: When the mute was applied
+        roomId:
+          type: string
+          format: uuid
+          description: Room where the participant was muted
+        targetSessionId:
+          type: string
+          format: uuid
+          description: Connect session ID of the muted participant
+        mutedBySessionId:
+          type: string
+          format: uuid
+          description: Connect session ID of the moderator who applied the mute
+        durationMinutes:
+          type: integer
+          nullable: true
+          description: Mute duration in minutes (null for permanent mute)
+
+    ChatParticipantUnmutedEvent:
+      type: object
+      additionalProperties: false
+      description: Published when a participant is unmuted in a chat room
+      required:
+        - eventId
+        - timestamp
+        - roomId
+        - targetSessionId
+        - unmutedBySessionId
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique identifier for this event
+        timestamp:
+          type: string
+          format: date-time
+          description: When the unmute occurred
+        roomId:
+          type: string
+          format: uuid
+          description: Room where the participant was unmuted
+        targetSessionId:
+          type: string
+          format: uuid
+          description: Connect session ID of the unmuted participant
+        unmutedBySessionId:
+          type: string
+          format: uuid
+          description: Connect session ID of the moderator who removed the mute
+
+    # =========================================================================
+    # Message Events
+    # =========================================================================
+
+    ChatMessageSentEvent:
+      type: object
+      additionalProperties: false
+      description: >
+        Published when a message is sent. Contains metadata only for privacy.
+        Text and custom content are NOT included. Sentiment rooms include
+        sentimentCategory and sentimentIntensity. Emoji rooms include emojiCode.
+      required:
+        - eventId
+        - timestamp
+        - roomId
+        - roomTypeCode
+        - messageId
+        - messageFormat
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique identifier for this event
+        timestamp:
+          type: string
+          format: date-time
+          description: When the message was sent
+        roomId:
+          type: string
+          format: uuid
+          description: Room the message was sent to
+        roomTypeCode:
+          type: string
+          description: Room type code for consumer filtering
+        messageId:
+          type: string
+          format: uuid
+          description: Unique identifier for the message
+        senderType:
+          type: string
+          nullable: true
+          description: Opaque sender type identifier
+        senderId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Opaque sender entity ID
+        messageFormat:
+          $ref: 'chat-api.yaml#/components/schemas/MessageFormat'
+          description: Message format type (determines which optional fields are populated)
+        sentimentCategory:
+          allOf:
+            - $ref: 'common-api.yaml#/components/schemas/SentimentCategory'
+          nullable: true
+          description: Sentiment category (populated only for Sentiment format messages)
+        sentimentIntensity:
+          type: number
+          format: float
+          nullable: true
+          minimum: 0.0
+          maximum: 1.0
+          description: Sentiment intensity from 0.0 to 1.0 (populated only for Sentiment format messages)
+        emojiCode:
+          type: string
+          nullable: true
+          description: Emoji code string (populated only for Emoji format messages)
+
+    ChatMessageDeletedEvent:
+      type: object
+      additionalProperties: false
+      description: Published when a message is deleted from a chat room
+      required:
+        - eventId
+        - timestamp
+        - roomId
+        - messageId
+        - deletedBySessionId
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique identifier for this event
+        timestamp:
+          type: string
+          format: date-time
+          description: When the message was deleted
+        roomId:
+          type: string
+          format: uuid
+          description: Room the message was deleted from
+        messageId:
+          type: string
+          format: uuid
+          description: Unique identifier of the deleted message
+        deletedBySessionId:
+          type: string
+          format: uuid
+          description: Connect session ID of the user who deleted the message
+
+    # =========================================================================
+    # Room State Events
+    # =========================================================================
+
+    ChatRoomLockedEvent:
+      type: object
+      additionalProperties: false
+      description: Published when a chat room is locked (contract-triggered or manual)
+      required:
+        - eventId
+        - timestamp
+        - roomId
+        - reason
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique identifier for this event
+        timestamp:
+          type: string
+          format: date-time
+          description: When the room was locked
+        roomId:
+          type: string
+          format: uuid
+          description: Room that was locked
+        reason:
+          $ref: 'chat-api.yaml#/components/schemas/ChatRoomLockReason'
+          description: Reason the room was locked
+
+    ChatRoomArchivedEvent:
+      type: object
+      additionalProperties: false
+      description: Published when a chat room is archived via Resource service
+      required:
+        - eventId
+        - timestamp
+        - roomId
+        - archiveId
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique identifier for this event
+        timestamp:
+          type: string
+          format: date-time
+          description: When the room was archived
+        roomId:
+          type: string
+          format: uuid
+          description: Room that was archived
+        archiveId:
+          type: string
+          format: uuid
+          description: Archive identifier from the Resource service

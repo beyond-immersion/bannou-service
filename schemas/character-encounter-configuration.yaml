@@ -5,17 +5,15 @@ info:
     Configuration schema for Character Encounter service.
     Properties are bound to environment variables with BANNOU_ prefix.
 
-    **Schema Rules**: AI agents MUST review docs/reference/SCHEMA-RULES.md before
-    modifying this schema. Optional reference types require `nullable: true`.
+    **SCHEMA MODIFICATION GATE**: STOP. Before modifying this schema, you MUST:
+    1. Read docs/reference/SCHEMA-RULES.md
+    2. State which section applies to your change
+    3. Only then proceed with edits
+    Edits without stating the applicable rule are FORBIDDEN.
   version: 1.0.0
 paths: {}
 x-service-configuration:
   properties:
-    ServerSalt:
-      type: string
-      description: Server salt for GUID generation. Must be shared across all instances for encounter GUIDs to work correctly. Change in production.
-      env: CHARACTER_ENCOUNTER_SERVER_SALT
-      default: "bannou-dev-encounter-salt-change-in-production"
     MemoryDecayEnabled:
       type: boolean
       description: Enable time-based memory decay for encounter perspectives
@@ -27,6 +25,20 @@ x-service-configuration:
       description: Memory decay mode - 'lazy' applies decay on access, 'scheduled' uses background processing
       env: CHARACTER_ENCOUNTER_MEMORY_DECAY_MODE
       default: lazy
+    ScheduledDecayCheckIntervalMinutes:
+      type: integer
+      description: Interval between scheduled decay checks in minutes (only used when MemoryDecayMode is 'scheduled')
+      env: CHARACTER_ENCOUNTER_SCHEDULED_DECAY_CHECK_INTERVAL_MINUTES
+      default: 60
+      minimum: 1
+      maximum: 1440
+    ScheduledDecayStartupDelaySeconds:
+      type: integer
+      description: Startup delay before first scheduled decay check in seconds (allows other services to initialize)
+      env: CHARACTER_ENCOUNTER_SCHEDULED_DECAY_STARTUP_DELAY_SECONDS
+      default: 30
+      minimum: 0
+      maximum: 300
     MemoryDecayIntervalHours:
       type: integer
       description: Hours between decay checks (used for calculating decay amount)
@@ -102,3 +114,31 @@ x-service-configuration:
       description: Automatically seed built-in encounter types on service startup
       env: CHARACTER_ENCOUNTER_SEED_BUILTIN_TYPES_ON_STARTUP
       default: true
+    EncounterCacheTtlMinutes:
+      type: integer
+      description: TTL in minutes for the in-memory encounter data cache used by Actor behavior execution
+      env: CHARACTER_ENCOUNTER_CACHE_TTL_MINUTES
+      default: 5
+      minimum: 1
+      maximum: 60
+    EncounterCacheMaxResultsPerQuery:
+      type: integer
+      description: Maximum encounter results loaded per cache query for Actor behavior execution
+      env: CHARACTER_ENCOUNTER_CACHE_MAX_RESULTS_PER_QUERY
+      default: 50
+      minimum: 10
+      maximum: 500
+    MaxParticipantsPerEncounter:
+      type: integer
+      description: Maximum participants allowed per encounter (caps O(N^2) pair index creation)
+      env: CHARACTER_ENCOUNTER_MAX_PARTICIPANTS_PER_ENCOUNTER
+      default: 20
+      minimum: 2
+      maximum: 100
+    DuplicateTimestampToleranceMinutes:
+      type: integer
+      description: Time window in minutes for duplicate encounter detection. Encounters with the same participants, type, and timestamp within this window are considered duplicates.
+      env: CHARACTER_ENCOUNTER_DUPLICATE_TIMESTAMP_TOLERANCE_MINUTES
+      default: 5
+      minimum: 0
+      maximum: 60

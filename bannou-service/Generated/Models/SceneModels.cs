@@ -297,11 +297,7 @@ public partial class Affordance
     public AffordanceType Type { get; set; } = default!;
 
     /// <summary>
-    /// Type-specific parameters. Examples:
-    /// <br/>- sittable: { height: 0.5, facing: [0,0,1] }
-    /// <br/>- door: { openAngle: 90, locked: false }
-    /// <br/>- container: { capacity: 10, itemTypes: ["weapon", "consumable"] }
-    /// <br/>
+    /// Game-specific affordance parameters interpreted by game engines and AI systems. No Bannou plugin reads specific keys from this field by convention.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("parameters")]
     public object? Parameters { get; set; } = default!;
@@ -725,9 +721,7 @@ public partial class SceneNode
     public System.Collections.Generic.ICollection<string> Tags { get; set; } = default!;
 
     /// <summary>
-    /// Consumer-specific data stored without interpretation.
-    /// <br/>Use namespaced keys (e.g., render.castShadows, game.interactionType).
-    /// <br/>
+    /// Client-only node annotations for game engines and editors. No Bannou plugin reads specific keys from this field by convention.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("annotations")]
     public object? Annotations { get; set; } = default!;
@@ -882,9 +876,7 @@ public partial class Scene
     public System.Collections.Generic.ICollection<string> Tags { get; set; } = default!;
 
     /// <summary>
-    /// Scene-level metadata. Not interpreted by Scene service.
-    /// <br/>Examples: author, thumbnail, editor preferences, generator config.
-    /// <br/>
+    /// Client-only scene metadata (author, thumbnail, editor preferences). No Bannou plugin reads specific keys from this field by convention.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("metadata")]
     public object? Metadata { get; set; } = default!;
@@ -1633,7 +1625,7 @@ public partial class ValidationError
     public System.Guid? NodeId { get; set; } = default!;
 
     /// <summary>
-    /// Additional context for the error
+    /// Client-only validation error context. No Bannou plugin reads specific keys from this field by convention.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("context")]
     public object? Context { get; set; } = default!;
@@ -1698,7 +1690,7 @@ public partial class InstantiateSceneRequest
     public Transform WorldTransform { get; set; } = new Transform();
 
     /// <summary>
-    /// Caller-provided metadata passed to event
+    /// Caller-provided metadata passed through to instantiation events. No Bannou plugin reads specific keys from this field by convention.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("metadata")]
     public object? Metadata { get; set; } = default!;
@@ -1788,7 +1780,7 @@ public partial class DestroyInstanceRequest
     public System.Guid? SceneAssetId { get; set; } = default!;
 
     /// <summary>
-    /// Caller-provided metadata
+    /// Caller-provided metadata passed through to destruction events. No Bannou plugin reads specific keys from this field by convention.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("metadata")]
     public object? Metadata { get; set; } = default!;

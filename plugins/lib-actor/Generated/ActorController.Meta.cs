@@ -43,7 +43,7 @@ public partial class ActorController
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Default configuration passed to behavior execution"
+                    "description": "Game-specific configuration passed to ABML behavior execution scope. No Bannou plugin reads specific keys from this field by convention. Different ABML behaviors define their own expected configuration structure."
                 },
                 "autoSpawn": {
                     "description": "Auto-spawn configuration for instantiate-on-access",
@@ -64,6 +64,17 @@ public partial class ActorController
                     "type": "integer",
                     "default": 100,
                     "description": "Maximum actors of this category per pool node"
+                },
+                "cognitionTemplateId": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Cognition template ID for this actor type. Primary source for cognition\npipeline resolution. When null, falls back to ABML metadata, then category default.\nExamples: \"humanoid-cognition-base\", \"creature-cognition-base\", \"object-cognition-base\"\n"
+                },
+                "cognitionOverrides": {
+                    "type": "object",
+                    "additionalProperties": true,
+                    "nullable": true,
+                    "description": "Static template-level cognition overrides (polymorphic JSON). Deserialized internally to CognitionOverrides type with discriminated subtypes. Applied as the first layer in the three-layer override composition (template, instance, ABML metadata). Structure defined by ICognitionOverride interface hierarchy in bannou-service/Behavior/."
                 }
             }
         },
@@ -92,6 +103,12 @@ public partial class ActorController
                     "minimum": 1,
                     "nullable": true,
                     "description": "1-based regex capture group index for extracting CharacterId from actor ID.\nExample: With idPattern \"npc-brain-([a-f0-9-]+)\" and characterIdCaptureGroup: 1,\nactor ID \"npc-brain-abc-123-def\" extracts \"abc-123-def\" as CharacterId (parsed as GUID).\n"
+                },
+                "defaultRealmId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Default realm ID for auto-spawned actors when no CharacterId is available to resolve a realm.\ nRequired when characterIdCaptureGroup is not configured and auto-spawn is enabled.\n"
                 }
             }
         }
@@ -136,7 +153,7 @@ public partial class ActorController
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Default configuration passed to behavior execution"
+                    "description": "Game-specific configuration passed to ABML behavior execution scope. No Bannou plugin reads specific keys from this field by convention."
                 },
                 "autoSpawn": {
                     "description": "Auto-spawn configuration for instantiate-on-access",
@@ -154,6 +171,17 @@ public partial class ActorController
                 "maxInstancesPerNode": {
                     "type": "integer",
                     "description": "Maximum actors of this category per pool node"
+                },
+                "cognitionTemplateId": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Cognition template ID for this actor type. Primary source for cognition\ npipeline resolution. When null, falls back to ABML metadata, then category default.\n"
+                },
+                "cognitionOverrides": {
+                    "type": "object",
+                    "additionalProperties": true,
+                    "nullable": true,
+                    "description": "Static template-level cognition overrides (polymorphic JSON). Deserialized internally to CognitionOverrides type with discriminated subtypes."
                 },
                 "createdAt": {
                     "type": "string",
@@ -192,6 +220,12 @@ public partial class ActorController
                     "minimum": 1,
                     "nullable": true,
                     "description": "1-based regex capture group index for extracting CharacterId from actor ID.\nExample: With idPattern \"npc-brain-([a-f0-9-]+)\" and characterIdCaptureGroup: 1,\nactor ID \"npc-brain-abc-123-def\" extracts \"abc-123-def\" as CharacterId (parsed as GUID).\n"
+                },
+                "defaultRealmId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Default realm ID for auto-spawned actors when no CharacterId is available to resolve a realm.\ nRequired when characterIdCaptureGroup is not configured and auto-spawn is enabled.\n"
                 }
             }
         }
@@ -317,7 +351,7 @@ public partial class ActorController
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Default configuration passed to behavior execution"
+                    "description": "Game-specific configuration passed to ABML behavior execution scope. No Bannou plugin reads specific keys from this field by convention."
                 },
                 "autoSpawn": {
                     "description": "Auto-spawn configuration for instantiate-on-access",
@@ -335,6 +369,17 @@ public partial class ActorController
                 "maxInstancesPerNode": {
                     "type": "integer",
                     "description": "Maximum actors of this category per pool node"
+                },
+                "cognitionTemplateId": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Cognition template ID for this actor type. Primary source for cognition\ npipeline resolution. When null, falls back to ABML metadata, then category default.\n"
+                },
+                "cognitionOverrides": {
+                    "type": "object",
+                    "additionalProperties": true,
+                    "nullable": true,
+                    "description": "Static template-level cognition overrides (polymorphic JSON). Deserialized internally to CognitionOverrides type with discriminated subtypes."
                 },
                 "createdAt": {
                     "type": "string",
@@ -373,6 +418,12 @@ public partial class ActorController
                     "minimum": 1,
                     "nullable": true,
                     "description": "1-based regex capture group index for extracting CharacterId from actor ID.\nExample: With idPattern \"npc-brain-([a-f0-9-]+)\" and characterIdCaptureGroup: 1,\nactor ID \"npc-brain-abc-123-def\" extracts \"abc-123-def\" as CharacterId (parsed as GUID).\n"
+                },
+                "defaultRealmId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Default realm ID for auto-spawned actors when no CharacterId is available to resolve a realm.\ nRequired when characterIdCaptureGroup is not configured and auto-spawn is enabled.\n"
                 }
             }
         }
@@ -519,7 +570,7 @@ public partial class ActorController
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Default configuration passed to behavior execution"
+                    "description": "Game-specific configuration passed to ABML behavior execution scope. No Bannou plugin reads specific keys from this field by convention."
                 },
                 "autoSpawn": {
                     "description": "Auto-spawn configuration for instantiate-on-access",
@@ -537,6 +588,17 @@ public partial class ActorController
                 "maxInstancesPerNode": {
                     "type": "integer",
                     "description": "Maximum actors of this category per pool node"
+                },
+                "cognitionTemplateId": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Cognition template ID for this actor type. Primary source for cognition\npipeline resolution. When null, falls back to ABML metadata, then category default.\n"
+                },
+                "cognitionOverrides": {
+                    "type": "object",
+                    "additionalProperties": true,
+                    "nullable": true,
+                    "description": "Static template-level cognition overrides (polymorphic JSON). Deserialized internally to CognitionOverrides type with discriminated subtypes."
                 },
                 "createdAt": {
                     "type": "string",
@@ -575,6 +637,12 @@ public partial class ActorController
                     "minimum": 1,
                     "nullable": true,
                     "description": "1-based regex capture group index for extracting CharacterId from actor ID.\nExample: With idPattern \"npc-brain-([a-f0-9-]+)\" and characterIdCaptureGroup: 1,\nactor ID \"npc-brain-abc-123-def\" extracts \"abc-123-def\" as CharacterId (parsed as GUID).\n"
+                },
+                "defaultRealmId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Default realm ID for auto-spawned actors when no CharacterId is available to resolve a realm.\nRequired when characterIdCaptureGroup is not configured and auto-spawn is enabled.\n"
                 }
             }
         }
@@ -663,7 +731,7 @@ public partial class ActorController
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Updated configuration settings"
+                    "description": "Updated game-specific configuration for ABML behavior execution scope. No Bannou plugin reads specific keys from this field by convention."
                 },
                 "autoSpawn": {
                     "description": "Updated auto-spawn configuration",
@@ -679,6 +747,17 @@ public partial class ActorController
                     "type": "integer",
                     "nullable": true,
                     "description": "Updated auto-save interval in seconds"
+                },
+                "cognitionTemplateId": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Updated cognition template ID. Set to override the cognition pipeline\ nfor actors created from this template.\n"
+                },
+                "cognitionOverrides": {
+                    "type": "object",
+                    "additionalProperties": true,
+                    "nullable": true,
+                    "description": "Updated cognition overrides (polymorphic JSON). Deserialized internally to CognitionOverrides type with discriminated subtypes."
                 }
             }
         },
@@ -707,6 +786,12 @@ public partial class ActorController
                     "minimum": 1,
                     "nullable": true,
                     "description": "1-based regex capture group index for extracting CharacterId from actor ID.\nExample: With idPattern \"npc-brain-([a-f0-9-]+)\" and characterIdCaptureGroup: 1,\nactor ID \"npc-brain-abc-123-def\" extracts \"abc-123-def\" as CharacterId (parsed as GUID).\n"
+                },
+                "defaultRealmId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Default realm ID for auto-spawned actors when no CharacterId is available to resolve a realm.\nRequired when characterIdCaptureGroup is not configured and auto-spawn is enabled.\n"
                 }
             }
         }
@@ -751,7 +836,7 @@ public partial class ActorController
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Default configuration passed to behavior execution"
+                    "description": "Game-specific configuration passed to ABML behavior execution scope. No Bannou plugin reads specific keys from this field by convention."
                 },
                 "autoSpawn": {
                     "description": "Auto-spawn configuration for instantiate-on-access",
@@ -769,6 +854,17 @@ public partial class ActorController
                 "maxInstancesPerNode": {
                     "type": "integer",
                     "description": "Maximum actors of this category per pool node"
+                },
+                "cognitionTemplateId": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Cognition template ID for this actor type. Primary source for cognition\ npipeline resolution. When null, falls back to ABML metadata, then category default.\n"
+                },
+                "cognitionOverrides": {
+                    "type": "object",
+                    "additionalProperties": true,
+                    "nullable": true,
+                    "description": "Static template-level cognition overrides (polymorphic JSON). Deserialized internally to CognitionOverrides type with discriminated subtypes."
                 },
                 "createdAt": {
                     "type": "string",
@@ -807,6 +903,12 @@ public partial class ActorController
                     "minimum": 1,
                     "nullable": true,
                     "description": "1-based regex capture group index for extracting CharacterId from actor ID.\nExample: With idPattern \"npc-brain-([a-f0-9-]+)\" and characterIdCaptureGroup: 1,\nactor ID \"npc-brain-abc-123-def\" extracts \"abc-123-def\" as CharacterId (parsed as GUID).\n"
+                },
+                "defaultRealmId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Default realm ID for auto-spawned actors when no CharacterId is available to resolve a realm.\ nRequired when characterIdCaptureGroup is not configured and auto-spawn is enabled.\n"
                 }
             }
         }
@@ -1006,19 +1108,25 @@ public partial class ActorController
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Override template defaults"
+                    "description": "Game-specific configuration overrides merged with template defaults. No Bannou plugin reads specific keys from this field by convention."
                 },
                 "initialState": {
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Initial state passed to behavior"
+                    "description": "Initial actor state snapshot. Deserialized internally to ActorStateSnapshot. No Bannou plugin reads specific keys from this field by convention."
                 },
                 "characterId": {
                     "type": "string",
                     "format": "uuid",
                     "nullable": true,
                     "description": "Optional character ID for NPC brain actors"
+                },
+                "realmId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Realm the actor operates in. Optional on request -- when not provided and characterId is set, the service looks up the character's realm automatically. Required for non-character actors that operate in a specific realm."
                 }
             }
         }
@@ -1076,6 +1184,12 @@ public partial class ActorController
                     "format": "uuid",
                     "nullable": true,
                     "description": "Associated character ID (for NPC brains)"
+                },
+                "realmId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Realm the actor operates in (resolved at spawn time)"
                 },
                 "startedAt": {
                     "type": "string",
@@ -1239,6 +1353,12 @@ public partial class ActorController
                     "format": "uuid",
                     "nullable": true,
                     "description": "Associated character ID (for NPC brains)"
+                },
+                "realmId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Realm the actor operates in (resolved at spawn time)"
                 },
                 "startedAt": {
                     "type": "string",
@@ -1450,6 +1570,294 @@ public partial class ActorController
 
     #endregion
 
+    #region Meta Endpoints for BindActorCharacter
+
+    private static readonly string _BindActorCharacter_RequestSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/BindActorCharacterRequest",
+    "$defs": {
+        "BindActorCharacterRequest": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Request to bind an unbound actor to a character. After binding, the actor subscribes to the character's perception stream and variable providers begin loading character-specific data. The actor's behavior document continues executing \u2014 it should already handle both unbound and bound modes gracefully.",
+            "required": [
+                "actorId",
+                "characterId"
+            ],
+            "properties": {
+                "actorId": {
+                    "type": "string",
+                    "description": "ID of the actor to bind"
+                },
+                "characterId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "ID of the character to bind to"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _BindActorCharacter_ResponseSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/ActorInstanceResponse",
+    "$defs": {
+        "ActorInstanceResponse": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Response containing actor instance details",
+            "required": [
+                "actorId",
+                "templateId",
+                "category",
+                "status",
+                "startedAt",
+                "loopIterations"
+            ],
+            "properties": {
+                "actorId": {
+                    "type": "string",
+                    "description": "Unique actor identifier"
+                },
+                "templateId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Template this actor was instantiated from"
+                },
+                "category": {
+                    "type": "string",
+                    "description": "Actor category from template"
+                },
+                "nodeId": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Pool node running this actor (null in bannou mode)"
+                },
+                "nodeAppId": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Pool node's app-id for direct messaging"
+                },
+                "status": {
+                    "description": "Current actor lifecycle state",
+                    "$ref": "#/$defs/ActorStatus"
+                },
+                "characterId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Associated character ID (for NPC brains)"
+                },
+                "realmId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Realm the actor operates in (resolved at spawn time)"
+                },
+                "startedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "When the actor started running"
+                },
+                "lastHeartbeat": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "Last heartbeat timestamp from the actor"
+                },
+                "loopIterations": {
+                    "type": "integer",
+                    "format": "int64",
+                    "description": "Number of behavior loop iterations executed"
+                }
+            }
+        },
+        "ActorStatus": {
+            "type": "string",
+            "enum": [
+                "pending",
+                "starting",
+                "running",
+                "paused",
+                "stopping",
+                "stopped",
+                "error"
+            ],
+            "description": "Current actor lifecycle state"
+        }
+    }
+}
+""";
+
+    private static readonly string _BindActorCharacter_Info = """
+{
+    "summary": "Bind an unbound actor to a character",
+    "description": "Transitions an unbound (event-mode) actor to a bound (character-mode) actor.\nAfter binding, the actor receives character perception events and variable\nproviders begin loading character-specific data on subsequent ticks.\nFails if the actor is already bound to a character.\n",
+    "tags": [],
+    "deprecated": false,
+    "operationId": "BindActorCharacter"
+}
+""";
+
+    /// <summary>Returns endpoint information for BindActorCharacter</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/actor/bind-character/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> BindActorCharacter_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Actor",
+            "POST",
+            "/actor/bind-character",
+            _BindActorCharacter_Info));
+
+    /// <summary>Returns request schema for BindActorCharacter</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/actor/bind-character/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> BindActorCharacter_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Actor",
+            "POST",
+            "/actor/bind-character",
+            "request-schema",
+            _BindActorCharacter_RequestSchema));
+
+    /// <summary>Returns response schema for BindActorCharacter</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/actor/bind-character/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> BindActorCharacter_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Actor",
+            "POST",
+            "/actor/bind-character",
+            "response-schema",
+            _BindActorCharacter_ResponseSchema));
+
+    /// <summary>Returns full schema for BindActorCharacter</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/actor/bind-character/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> BindActorCharacter_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Actor",
+            "POST",
+            "/actor/bind-character",
+            _BindActorCharacter_Info,
+            _BindActorCharacter_RequestSchema,
+            _BindActorCharacter_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for CleanupByCharacter
+
+    private static readonly string _CleanupByCharacter_RequestSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/CleanupByCharacterRequest",
+    "$defs": {
+        "CleanupByCharacterRequest": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Request to cleanup actors referencing a deleted character",
+            "required": [
+                "characterId"
+            ],
+            "properties": {
+                "characterId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "ID of the character that was deleted"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _CleanupByCharacter_ResponseSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/CleanupByCharacterResponse",
+    "$defs": {
+        "CleanupByCharacterResponse": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Response from character cleanup operation",
+            "required": [
+                "actorsCleanedUp",
+                "success"
+            ],
+            "properties": {
+                "actorsCleanedUp": {
+                    "type": "integer",
+                    "description": "Number of actors that were stopped and cleaned up"
+                },
+                "actorIds": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "description": "IDs of actors that were cleaned up"
+                },
+                "success": {
+                    "type": "boolean",
+                    "description": "Whether cleanup completed successfully"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _CleanupByCharacter_Info = """
+{
+    "summary": "Cleanup actors referencing a deleted character",
+    "description": "Called by lib-resource cleanup coordination when a character is deleted.\nStops and removes all actors that reference the specified characterId.\nThis endpoint is designed for internal service-to-service calls during\ncascading resource cleanup.\n",
+    "tags": [],
+    "deprecated": false,
+    "operationId": "CleanupByCharacter"
+}
+""";
+
+    /// <summary>Returns endpoint information for CleanupByCharacter</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/actor/cleanup-by-character/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> CleanupByCharacter_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Actor",
+            "POST",
+            "/actor/cleanup-by-character",
+            _CleanupByCharacter_Info));
+
+    /// <summary>Returns request schema for CleanupByCharacter</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/actor/cleanup-by-character/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> CleanupByCharacter_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Actor",
+            "POST",
+            "/actor/cleanup-by-character",
+            "request-schema",
+            _CleanupByCharacter_RequestSchema));
+
+    /// <summary>Returns response schema for CleanupByCharacter</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/actor/cleanup-by-character/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> CleanupByCharacter_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Actor",
+            "POST",
+            "/actor/cleanup-by-character",
+            "response-schema",
+            _CleanupByCharacter_ResponseSchema));
+
+    /// <summary>Returns full schema for CleanupByCharacter</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/actor/cleanup-by-character/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> CleanupByCharacter_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Actor",
+            "POST",
+            "/actor/cleanup-by-character",
+            _CleanupByCharacter_Info,
+            _CleanupByCharacter_RequestSchema,
+            _CleanupByCharacter_ResponseSchema));
+
+    #endregion
+
     #region Meta Endpoints for ListActors
 
     private static readonly string _ListActors_RequestSchema = """
@@ -1583,6 +1991,12 @@ public partial class ActorController
                     "format": "uuid",
                     "nullable": true,
                     "description": "Associated character ID (for NPC brains)"
+                },
+                "realmId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Realm the actor operates in (resolved at spawn time)"
                 },
                 "startedAt": {
                     "type": "string",
@@ -1727,7 +2141,7 @@ public partial class ActorController
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Perception-specific data. For perceptionType=\"spatial\", this can contain\ ngame-specific spatial context in any format the game server defines.\n"
+                    "description": "Game-specific perception payload passed to ABML behavior execution scope. No Bannou plugin reads specific keys from this field by convention. Different perception types carry different data structures defined by the game."
                 },
                 "urgency": {
                     "type": "number",
@@ -1737,6 +2151,12 @@ public partial class ActorController
                     "default": 0.5,
                     "description": "How urgent this perception is (0-1)"
                 },
+                "locationId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Current location ID of the entity sending this perception. Used by ActorRunner to track the actor's current location for location-aware variable providers. Updated on each perception event that carries this field."
+                },
                 "spatialContext": {
                     "allOf": [
                         {
@@ -1744,7 +2164,7 @@ public partial class ActorController
                         }
                     ],
                     "nullable": true,
-                    "description": "Optional typed spatial context from game server's local spatial state.\nProvides structured information about terrain, nearby objects, hazards, etc.\nAlternative to using perceptionType=\"spatial\" with schema-less data.\n"
+                    "description": "Optional typed spatial context from game server's local spatial state.\nProvides structured information about terrain, nearby objects, hazards, etc.\ nAlternative to using perceptionType=\"spatial\" with schema-less data.\n"
                 }
             }
         },
@@ -1766,7 +2186,7 @@ public partial class ActorController
         "SpatialContext": {
             "type": "object",
             "additionalProperties": true,
-            "description": "Spatial context derived from game server's authoritative spatial state.\nIncluded in perception events to give NPC actors awareness of their environment\nwithout requiring direct map subscriptions.\n\nNote: additionalProperties=true allows game-specific extensions.\n",
+            "description": "Spatial context derived from game server's authoritative spatial state. Included in perception events to give NPC actors awareness of their environment. Core properties are schema-defined; additionalProperties allows game-specific spatial extensions. No Bannou plugin reads specific extension keys by convention.",
             "properties": {
                 "terrainType": {
                     "type": "string",
@@ -1819,7 +2239,7 @@ public partial class ActorController
         "NearbyObject": {
             "type": "object",
             "additionalProperties": true,
-            "description": "Information about a nearby object perceived by the character",
+            "description": "Information about a nearby object perceived by the character. Core properties are schema-defined; additionalProperties allows game-specific object data. No Bannou plugin reads specific extension keys by convention.",
             "properties": {
                 "objectId": {
                     "type": "string",
@@ -1880,7 +2300,7 @@ public partial class ActorController
         "HazardInfo": {
             "type": "object",
             "additionalProperties": true,
-            "description": "Information about a hazard in range",
+            "description": "Information about a hazard in range. Core properties are schema-defined; additionalProperties allows game-specific hazard data. No Bannou plugin reads specific extension keys by convention.",
             "properties": {
                 "hazardType": {
                     "type": "string",
@@ -2055,7 +2475,7 @@ public partial class ActorController
         "OptionsQueryContext": {
             "type": "object",
             "additionalProperties": true,
-            "description": "Context provided with a fresh query. Injected as a perception to the actor\nto trigger context-sensitive option recomputation.\n",
+            "description": "Context provided with a fresh query. Injected as a perception to the actor to trigger context-sensitive option recomputation. Core properties are schema-defined; use customContext for game-specific extensions. No Bannou plugin reads specific extension keys by convention.",
             "properties": {
                 "combatState": {
                     "type": "string",
@@ -2098,7 +2518,7 @@ public partial class ActorController
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Actor-specific context data"
+                    "description": "Game-specific context data passed through to ABML behavior scope. No Bannou plugin reads specific keys from this field by convention."
                 }
             }
         }
@@ -2168,7 +2588,7 @@ public partial class ActorController
         "ActorOption": {
             "type": "object",
             "additionalProperties": true,
-            "description": "A single option available to the actor. The standardized fields enable\nEvent Brain to reason about options; additional fields allow actor-specific data.\n",
+            "description": "A single option available to the actor. Core properties (actionId, preference, risk, available, etc.) are schema-defined and used by Actor internally. additionalProperties allows game-specific option extensions. No Bannou plugin reads specific extension keys by convention.",
             "required": [
                 "actionId",
                 "preference",
@@ -2184,7 +2604,7 @@ public partial class ActorController
                     "format": "float",
                     "minimum": 0,
                     "maximum": 1,
-                    "description": "How much the actor prefers this option (0-1), based on personality,\ncombat preferences, current state, etc. Higher = more preferred.\n"
+                    "description": "How much the actor prefers this option (0-1), based on personality,\ ncombat preferences, current state, etc. Higher = more preferred.\n"
                 },
                 "risk": {
                     "type": "number",
@@ -2355,7 +2775,7 @@ public partial class ActorController
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Optional initial data for the encounter"
+                    "description": "Game-specific encounter initialization data passed to ABML behavior scope. No Bannou plugin reads specific keys from this field by convention."
                 }
             }
         }
@@ -2741,7 +3161,7 @@ public partial class ActorController
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Custom encounter-specific data"
+                    "description": "Game-specific encounter state data passed to ABML behavior scope. No Bannou plugin reads specific keys from this field by convention."
                 }
             }
         }

@@ -1,8 +1,6 @@
 using BeyondImmersion.BannouService.Auth;
 using BeyondImmersion.BannouService.Events;
 using Microsoft.Extensions.Logging;
-using System.Collections.ObjectModel;
-using System.Text.Json;
 
 namespace BeyondImmersion.BannouService.Permission;
 
@@ -19,16 +17,6 @@ public partial class PermissionService
     /// <param name="eventConsumer">The event consumer for registering handlers.</param>
     protected void RegisterEventConsumers(IEventConsumer eventConsumer)
     {
-        // Service registration - services publish their API permissions on startup
-        eventConsumer.RegisterHandler<IPermissionService, ServiceRegistrationEvent>(
-            "permission.service-registered",
-            async (svc, evt) => await ((PermissionService)svc).HandleServiceRegistrationAsync(evt));
-
-        // Session state changes from services (e.g., game-session state transitions)
-        eventConsumer.RegisterHandler<IPermissionService, SessionStateChangeEvent>(
-            "permission.session-state-changed",
-            async (svc, evt) => await ((PermissionService)svc).HandleSessionStateChangeAsync(evt));
-
         // Session updates from Auth service (role/authorization changes)
         eventConsumer.RegisterHandler<IPermissionService, SessionUpdatedEvent>(
             "session.updated",
@@ -44,161 +32,6 @@ public partial class PermissionService
             "session.disconnected",
             async (svc, evt) => await ((PermissionService)svc).HandleSessionDisconnectedEventAsync(evt));
     }
-
-    #region Service Registration Handler
-
-    /// <summary>
-    /// Handles service registration events from other services.
-    /// Builds permission matrix from endpoint data and registers with the permission system.
-    /// This is CRITICAL for the permission system to function - without this handler,
-    /// no services will have their permissions registered.
-    /// </summary>
-    /// <param name="evt">The service registration event containing endpoints and permissions.</param>
-    public async Task HandleServiceRegistrationAsync(ServiceRegistrationEvent evt)
-    {
-        try
-        {
-            _logger.LogDebug("Processing service registration for {ServiceName} version {Version} with {EndpointCount} endpoints",
-                evt.ServiceName, evt.Version, evt.Endpoints?.Count ?? 0);
-
-            if (evt.Endpoints == null || evt.Endpoints.Count == 0)
-            {
-                _logger.LogWarning("Service {ServiceName} has no endpoints to register", evt.ServiceName);
-                return;
-            }
-
-            // Build State -> Role -> Methods mapping from endpoint permissions
-            var permissionMatrix = new Dictionary<string, StatePermissions>();
-
-            foreach (var endpoint in evt.Endpoints)
-            {
-                // Path is now the method signature (no HTTP method prefix)
-                var methodSignature = endpoint.Path;
-
-                // Process each permission requirement for this endpoint
-                foreach (var permission in endpoint.Permissions ?? new List<PermissionRequirement>())
-                {
-                    var role = permission.Role ?? "user";
-                    var requiredStates = permission.RequiredStates ?? new Dictionary<string, string>();
-
-                    // Extract all required states for this permission
-                    var stateKeys = new List<string>();
-                    foreach (var stateEntry in requiredStates)
-                    {
-                        var stateServiceId = stateEntry.Key;
-                        var requiredState = stateEntry.Value;
-
-                        // Create state key: either just the state name, or service:state if from another service
-                        var stateKey = stateServiceId == evt.ServiceName ? requiredState : $"{stateServiceId}:{requiredState}";
-                        if (!string.IsNullOrEmpty(stateKey))
-                        {
-                            stateKeys.Add(stateKey);
-                        }
-                    }
-
-                    // If no specific states required, use "default" state key
-                    // This matches the generated BuildPermissionMatrix() behavior which uses "default"
-                    // when permission.RequiredStates.Count == 0
-                    if (stateKeys.Count == 0)
-                    {
-                        stateKeys.Add("default");
-                    }
-
-                    // Add method to each required state/role combination
-                    foreach (var stateKey in stateKeys)
-                    {
-                        if (!permissionMatrix.ContainsKey(stateKey))
-                        {
-                            permissionMatrix[stateKey] = new StatePermissions();
-                        }
-
-                        if (!permissionMatrix[stateKey].ContainsKey(role))
-                        {
-                            permissionMatrix[stateKey][role] = new Collection<string>();
-                        }
-
-                        // Add the method if not already present
-                        if (!permissionMatrix[stateKey][role].Contains(methodSignature))
-                        {
-                            permissionMatrix[stateKey][role].Add(methodSignature);
-                        }
-                    }
-                }
-            }
-
-            // Create the ServicePermissionMatrix
-            var servicePermissionMatrix = new ServicePermissionMatrix
-            {
-                ServiceId = evt.ServiceName,
-                Version = evt.Version,
-                Permissions = permissionMatrix
-            };
-
-            _logger.LogDebug("Built permission matrix for {ServiceName}: {StateCount} states, {MethodCount} total methods",
-                evt.ServiceName, permissionMatrix.Count,
-                permissionMatrix.Values.SelectMany(sp => sp.Values).SelectMany(methods => methods).Count());
-
-            // Register the permissions
-            var result = await RegisterServicePermissionsAsync(servicePermissionMatrix);
-
-            if (result.Item1 == StatusCodes.OK)
-            {
-                _logger.LogDebug("Successfully registered permissions for service {ServiceName}", evt.ServiceName);
-            }
-            else
-            {
-                _logger.LogError("Failed to register permissions for service {ServiceName}: {StatusCode}",
-                    evt.ServiceName, result.Item1);
-                await PublishErrorEventAsync("HandleServiceRegistration", "registration_failed", $"Failed to register permissions: {result.Item1}", details: new { evt.ServiceName, StatusCode = result.Item1 });
-            }
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error handling service registration event for {ServiceName}", evt.ServiceName);
-            await PublishErrorEventAsync("HandleServiceRegistration", ex.GetType().Name, ex.Message, details: new { evt.ServiceName });
-        }
-    }
-
-    #endregion
-
-    #region Session State Change Handler
-
-    /// <summary>
-    /// Handles session state change events from other services.
-    /// Triggers permission recompilation when a session's state changes.
-    /// </summary>
-    /// <param name="evt">The session state change event.</param>
-    public async Task HandleSessionStateChangeAsync(SessionStateChangeEvent evt)
-    {
-        try
-        {
-            _logger.LogDebug("Received session state change event for {SessionId}: {ServiceId} → {NewState}",
-                evt.SessionId, evt.ServiceId, evt.NewState);
-
-            if (evt.SessionId == Guid.Empty || string.IsNullOrEmpty(evt.ServiceId) || string.IsNullOrEmpty(evt.NewState))
-            {
-                _logger.LogWarning("Invalid session state change event - missing required fields");
-                return;
-            }
-
-            var stateUpdate = new SessionStateUpdate
-            {
-                SessionId = evt.SessionId,
-                ServiceId = evt.ServiceId,
-                NewState = evt.NewState,
-                PreviousState = evt.PreviousState
-            };
-
-            await UpdateSessionStateAsync(stateUpdate);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error handling session state change event for {SessionId}", evt.SessionId);
-            await PublishErrorEventAsync("HandleSessionStateChange", ex.GetType().Name, ex.Message, details: new { evt.SessionId, evt.ServiceId });
-        }
-    }
-
-    #endregion
 
     #region Session Updated Handler (from Auth service)
 
@@ -294,7 +127,7 @@ public partial class PermissionService
     {
         if (roles == null || !roles.Any())
         {
-            return "user"; // Default role
+            return "anonymous"; // No roles = unauthenticated (consistent with DetermineHighestPriorityRole)
         }
 
         // Check for highest priority roles first
@@ -313,8 +146,8 @@ public partial class PermissionService
             return "user";
         }
 
-        // If no recognized role, return the first one or default to user
-        return roles.FirstOrDefault() ?? "user";
+        // If no recognized role, return the first one or default to anonymous
+        return roles.FirstOrDefault() ?? "anonymous";
     }
 
     #endregion

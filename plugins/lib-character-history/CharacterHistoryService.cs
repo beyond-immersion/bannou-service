@@ -1,8 +1,11 @@
+using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.History;
+using BeyondImmersion.BannouService.Resource;
 using BeyondImmersion.BannouService.Services;
+using BeyondImmersion.BannouService.State;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
@@ -20,8 +23,11 @@ public partial class CharacterHistoryService : ICharacterHistoryService
 {
     private readonly IMessageBus _messageBus;
     private readonly ILogger<CharacterHistoryService> _logger;
+    private readonly IStateStoreFactory _stateStoreFactory;
+    private readonly CharacterHistoryServiceConfiguration _configuration;
     private readonly IDualIndexHelper<ParticipationData> _participationHelper;
     private readonly IBackstoryStorageHelper<BackstoryData, BackstoryElementData> _backstoryHelper;
+    private readonly IResourceClient _resourceClient;
 
     private const string PARTICIPATION_KEY_PREFIX = "participation-";
     private const string PARTICIPATION_BY_EVENT_KEY_PREFIX = "participation-event-";
@@ -43,14 +49,16 @@ public partial class CharacterHistoryService : ICharacterHistoryService
         IMessageBus messageBus,
         IStateStoreFactory stateStoreFactory,
         ILogger<CharacterHistoryService> logger,
+        IEventConsumer eventConsumer,
         CharacterHistoryServiceConfiguration configuration,
-        IEventConsumer eventConsumer)
+        IDistributedLockProvider lockProvider,
+        IResourceClient resourceClient)
     {
         _messageBus = messageBus;
         _logger = logger;
-
-        // Note: stateStoreFactory and configuration are used only during construction
-        // stateStoreFactory is passed to helpers; configuration is currently unused but kept for future use
+        _stateStoreFactory = stateStoreFactory;
+        _configuration = configuration;
+        _resourceClient = resourceClient;
 
         // Initialize participation helper using shared dual-index infrastructure
         _participationHelper = new DualIndexHelper<ParticipationData>(
@@ -58,7 +66,9 @@ public partial class CharacterHistoryService : ICharacterHistoryService
             StateStoreDefinitions.CharacterHistory,
             PARTICIPATION_KEY_PREFIX,
             PARTICIPATION_INDEX_KEY_PREFIX,
-            PARTICIPATION_BY_EVENT_KEY_PREFIX);
+            PARTICIPATION_BY_EVENT_KEY_PREFIX,
+            lockProvider,
+            configuration.IndexLockTimeoutSeconds);
 
         // Initialize backstory helper using shared backstory storage infrastructure
         _backstoryHelper = new BackstoryStorageHelper<BackstoryData, BackstoryElementData>(
@@ -93,7 +103,9 @@ public partial class CharacterHistoryService : ICharacterHistoryService
                 GetCreatedAtUnix = b => b.CreatedAtUnix,
                 SetCreatedAtUnix = (b, ts) => b.CreatedAtUnix = ts,
                 GetUpdatedAtUnix = b => b.UpdatedAtUnix,
-                SetUpdatedAtUnix = (b, ts) => b.UpdatedAtUnix = ts
+                SetUpdatedAtUnix = (b, ts) => b.UpdatedAtUnix = ts,
+                LockProvider = lockProvider,
+                LockTimeoutSeconds = configuration.IndexLockTimeoutSeconds
             });
 
         ((IBannouService)this).RegisterEventConsumers(eventConsumer);
@@ -105,110 +117,108 @@ public partial class CharacterHistoryService : ICharacterHistoryService
 
     /// <summary>
     /// Records a character's participation in a historical event.
+    /// Returns Conflict if the character already has a participation record for this event.
     /// </summary>
     public async Task<(StatusCodes, HistoricalParticipation?)> RecordParticipationAsync(RecordParticipationRequest body, CancellationToken cancellationToken)
     {
         _logger.LogInformation("Recording participation for character {CharacterId} in event {EventId}",
             body.CharacterId, body.EventId);
 
-        try
+        // Check for existing participation - schema documents 409 Conflict for duplicates
+        var existingRecords = await _participationHelper.GetRecordsByPrimaryKeyAsync(
+            body.CharacterId.ToString(),
+            cancellationToken);
+
+        var duplicateExists = existingRecords.Any(r => r.EventId == body.EventId);
+        if (duplicateExists)
         {
-            var participationId = Guid.NewGuid();
-            var now = DateTimeOffset.UtcNow;
-
-            var participationData = new ParticipationData
-            {
-                ParticipationId = participationId,
-                CharacterId = body.CharacterId,
-                EventId = body.EventId,
-                EventName = body.EventName,
-                EventCategory = body.EventCategory,
-                Role = body.Role,
-                EventDateUnix = body.EventDate.ToUnixTimeSeconds(),
-                Significance = body.Significance,
-                Metadata = body.Metadata,
-                CreatedAtUnix = now.ToUnixTimeSeconds()
-            };
-
-            // Use helper to store record and update both indices
-            await _participationHelper.AddRecordAsync(
-                participationData,
-                participationId.ToString(),
-                body.CharacterId.ToString(),
-                body.EventId.ToString(),
-                cancellationToken);
-
-            // Publish typed event per FOUNDATION TENETS
-            await _messageBus.TryPublishAsync(PARTICIPATION_RECORDED_TOPIC, new CharacterParticipationRecordedEvent
-            {
-                EventId = Guid.NewGuid(),
-                Timestamp = now,
-                CharacterId = body.CharacterId,
-                HistoricalEventId = body.EventId,
-                ParticipationId = participationId,
-                Role = body.Role
-            }, cancellationToken: cancellationToken);
-
-            _logger.LogInformation("Recorded participation {ParticipationId} for character {CharacterId}",
-                participationId, body.CharacterId);
-
-            return (StatusCodes.OK, MapToHistoricalParticipation(participationData));
+            _logger.LogWarning("Character {CharacterId} already has participation record for event {EventId}",
+                body.CharacterId, body.EventId);
+            return (StatusCodes.Conflict, null);
         }
-        catch (Exception ex)
+
+        var participationId = Guid.NewGuid();
+        var now = DateTimeOffset.UtcNow;
+
+        var participationData = new ParticipationData
         {
-            _logger.LogError(ex, "Error recording participation for character {CharacterId}", body.CharacterId);
-            await _messageBus.TryPublishErrorAsync(
-                "character-history",
-                "RecordParticipation",
-                "unexpected_exception",
-                ex.Message,
-                dependency: "state",
-                endpoint: "post:/character-history/record-participation",
-                details: new { body.CharacterId, body.EventId },
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
+            ParticipationId = participationId,
+            CharacterId = body.CharacterId,
+            EventId = body.EventId,
+            EventName = body.EventName,
+            EventCategory = body.EventCategory,
+            Role = body.Role,
+            EventDateUnix = body.EventDate.ToUnixTimeSeconds(),
+            Significance = body.Significance,
+            Metadata = body.Metadata,
+            CreatedAtUnix = now.ToUnixTimeSeconds()
+        };
+
+        // Use helper to store record and update both indices
+        // Acquires distributed lock on primary key per IMPLEMENTATION TENETS
+        var addResult = await _participationHelper.AddRecordAsync(
+            participationData,
+            participationId.ToString(),
+            body.CharacterId.ToString(),
+            body.EventId.ToString(),
+            cancellationToken);
+
+        if (!addResult.LockAcquired)
+        {
+            _logger.LogWarning("Failed to acquire lock for character {CharacterId} participation recording", body.CharacterId);
+            return (StatusCodes.Conflict, null);
         }
+
+        // Publish typed event per FOUNDATION TENETS
+        await _messageBus.TryPublishAsync(PARTICIPATION_RECORDED_TOPIC, new CharacterParticipationRecordedEvent
+        {
+            EventId = Guid.NewGuid(),
+            Timestamp = now,
+            CharacterId = body.CharacterId,
+            HistoricalEventId = body.EventId,
+            ParticipationId = participationId,
+            Role = body.Role
+        }, cancellationToken: cancellationToken);
+
+        // Register character reference with lib-resource for cleanup coordination
+        await RegisterCharacterReferenceAsync(participationId.ToString(), body.CharacterId, cancellationToken);
+
+        _logger.LogInformation("Recorded participation {ParticipationId} for character {CharacterId}",
+            participationId, body.CharacterId);
+
+        return (StatusCodes.OK, MapToHistoricalParticipation(participationData));
     }
 
     /// <summary>
     /// Gets a character's historical event participation records.
+    /// Uses server-side MySQL JSON queries for efficient pagination per IMPLEMENTATION TENETS.
     /// </summary>
     public async Task<(StatusCodes, ParticipationListResponse?)> GetParticipationAsync(GetParticipationRequest body, CancellationToken cancellationToken)
     {
         _logger.LogInformation("Getting participation for character {CharacterId}", body.CharacterId);
 
-        try
         {
-            // Use helper to get all records for this character
-            var allRecords = await _participationHelper.GetRecordsByPrimaryKeyAsync(
-                body.CharacterId.ToString(),
-                cancellationToken);
+            var jsonStore = _stateStoreFactory.GetJsonQueryableStore<ParticipationData>(
+                StateStoreDefinitions.CharacterHistory);
 
-            if (allRecords.Count == 0)
-            {
-                return (StatusCodes.OK, new ParticipationListResponse
-                {
-                    Participations = new List<HistoricalParticipation>(),
-                    TotalCount = 0,
-                    Page = body.Page,
-                    PageSize = body.PageSize,
-                    HasNextPage = false,
-                    HasPreviousPage = false
-                });
-            }
+            var conditions = BuildParticipationQueryConditions(
+                "$.CharacterId", body.CharacterId,
+                eventCategory: body.EventCategory,
+                minimumSignificance: body.MinimumSignificance,
+                role: null);
 
-            // Map and filter
-            var allParticipations = allRecords
-                .Select(MapToHistoricalParticipation)
-                .Where(p =>
-                    (!body.EventCategory.HasValue || p.EventCategory == body.EventCategory.Value) &&
-                    (!body.MinimumSignificance.HasValue || p.Significance >= body.MinimumSignificance.Value))
-                .OrderByDescending(p => p.EventDate)
+            var sortSpec = new JsonSortSpec { Path = "$.EventDateUnix", Descending = true };
+            var (skip, take) = PaginationHelper.CalculatePagination(body.Page, body.PageSize);
+
+            var result = await jsonStore.JsonQueryPagedAsync(
+                conditions, skip, take, sortSpec, cancellationToken);
+
+            var participations = result.Items
+                .Select(item => MapToHistoricalParticipation(item.Value))
                 .ToList();
 
-            // Use pagination helper
-            var paginatedResult = PaginationHelper.Paginate(allParticipations, body.Page, body.PageSize);
+            var paginatedResult = PaginationHelper.CreateResult(
+                participations, (int)result.TotalCount, body.Page, body.PageSize);
 
             return (StatusCodes.OK, new ParticipationListResponse
             {
@@ -219,60 +229,39 @@ public partial class CharacterHistoryService : ICharacterHistoryService
                 HasNextPage = paginatedResult.HasNextPage,
                 HasPreviousPage = paginatedResult.HasPreviousPage
             });
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error getting participation for character {CharacterId}", body.CharacterId);
-            await _messageBus.TryPublishErrorAsync(
-                "character-history",
-                "GetParticipation",
-                "unexpected_exception",
-                ex.Message,
-                dependency: "state",
-                endpoint: "post:/character-history/get-participation",
-                details: new { body.CharacterId },
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
         }
     }
 
     /// <summary>
     /// Gets all participants of a historical event.
+    /// Uses server-side MySQL JSON queries for efficient pagination per IMPLEMENTATION TENETS.
     /// </summary>
     public async Task<(StatusCodes, ParticipationListResponse?)> GetEventParticipantsAsync(GetEventParticipantsRequest body, CancellationToken cancellationToken)
     {
         _logger.LogInformation("Getting participants for event {EventId}", body.EventId);
 
-        try
         {
-            // Use helper to get all records for this event (via secondary index)
-            var allRecords = await _participationHelper.GetRecordsBySecondaryKeyAsync(
-                body.EventId.ToString(),
-                cancellationToken);
+            var jsonStore = _stateStoreFactory.GetJsonQueryableStore<ParticipationData>(
+                StateStoreDefinitions.CharacterHistory);
 
-            if (allRecords.Count == 0)
-            {
-                return (StatusCodes.OK, new ParticipationListResponse
-                {
-                    Participations = new List<HistoricalParticipation>(),
-                    TotalCount = 0,
-                    Page = body.Page,
-                    PageSize = body.PageSize,
-                    HasNextPage = false,
-                    HasPreviousPage = false
-                });
-            }
+            var conditions = BuildParticipationQueryConditions(
+                "$.EventId", body.EventId,
+                eventCategory: null,
+                minimumSignificance: null,
+                role: body.Role);
 
-            // Map and filter by role if specified
-            var allParticipations = allRecords
-                .Select(MapToHistoricalParticipation)
-                .Where(p => !body.Role.HasValue || p.Role == body.Role.Value)
-                .OrderByDescending(p => p.Significance)
+            var sortSpec = new JsonSortSpec { Path = "$.Significance", Descending = true };
+            var (skip, take) = PaginationHelper.CalculatePagination(body.Page, body.PageSize);
+
+            var result = await jsonStore.JsonQueryPagedAsync(
+                conditions, skip, take, sortSpec, cancellationToken);
+
+            var participations = result.Items
+                .Select(item => MapToHistoricalParticipation(item.Value))
                 .ToList();
 
-            // Use pagination helper
-            var paginatedResult = PaginationHelper.Paginate(allParticipations, body.Page, body.PageSize);
+            var paginatedResult = PaginationHelper.CreateResult(
+                participations, (int)result.TotalCount, body.Page, body.PageSize);
 
             return (StatusCodes.OK, new ParticipationListResponse
             {
@@ -283,21 +272,6 @@ public partial class CharacterHistoryService : ICharacterHistoryService
                 HasNextPage = paginatedResult.HasNextPage,
                 HasPreviousPage = paginatedResult.HasPreviousPage
             });
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error getting participants for event {EventId}", body.EventId);
-            await _messageBus.TryPublishErrorAsync(
-                "character-history",
-                "GetEventParticipants",
-                "unexpected_exception",
-                ex.Message,
-                dependency: "state",
-                endpoint: "post:/character-history/get-event-participants",
-                details: new { body.EventId },
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
         }
     }
 
@@ -308,51 +282,43 @@ public partial class CharacterHistoryService : ICharacterHistoryService
     {
         _logger.LogInformation("Deleting participation {ParticipationId}", body.ParticipationId);
 
-        try
+        // First get the record to know the keys for index cleanup
+        var data = await _participationHelper.GetRecordAsync(body.ParticipationId.ToString(), cancellationToken);
+
+        if (data == null)
         {
-            // First get the record to know the keys for index cleanup
-            var data = await _participationHelper.GetRecordAsync(body.ParticipationId.ToString(), cancellationToken);
-
-            if (data == null)
-            {
-                return StatusCodes.NotFound;
-            }
-
-            // Use helper to remove record and update both indices
-            await _participationHelper.RemoveRecordAsync(
-                body.ParticipationId.ToString(),
-                data.CharacterId.ToString(),
-                data.EventId.ToString(),
-                cancellationToken);
-
-            // Publish typed event per FOUNDATION TENETS
-            await _messageBus.TryPublishAsync(PARTICIPATION_DELETED_TOPIC, new CharacterParticipationDeletedEvent
-            {
-                EventId = Guid.NewGuid(),
-                Timestamp = DateTimeOffset.UtcNow,
-                ParticipationId = body.ParticipationId,
-                CharacterId = data.CharacterId,
-                HistoricalEventId = data.EventId
-            }, cancellationToken: cancellationToken);
-
-            _logger.LogInformation("Deleted participation {ParticipationId}", body.ParticipationId);
-            return StatusCodes.OK;
+            return StatusCodes.NotFound;
         }
-        catch (Exception ex)
+
+        // Unregister character reference before deletion
+        await UnregisterCharacterReferenceAsync(body.ParticipationId.ToString(), data.CharacterId, cancellationToken);
+
+        // Use helper to remove record and update both indices
+        // Acquires distributed lock on primary key per IMPLEMENTATION TENETS
+        var removeResult = await _participationHelper.RemoveRecordAsync(
+            body.ParticipationId.ToString(),
+            data.CharacterId.ToString(),
+            data.EventId.ToString(),
+            cancellationToken);
+
+        if (!removeResult.LockAcquired)
         {
-            _logger.LogError(ex, "Error deleting participation {ParticipationId}", body.ParticipationId);
-            await _messageBus.TryPublishErrorAsync(
-                "character-history",
-                "DeleteParticipation",
-                "unexpected_exception",
-                ex.Message,
-                dependency: "state",
-                endpoint: "post:/character-history/delete-participation",
-                details: new { body.ParticipationId },
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return StatusCodes.InternalServerError;
+            _logger.LogWarning("Failed to acquire lock for participation {ParticipationId} deletion", body.ParticipationId);
+            return StatusCodes.Conflict;
         }
+
+        // Publish typed event per FOUNDATION TENETS
+        await _messageBus.TryPublishAsync(PARTICIPATION_DELETED_TOPIC, new CharacterParticipationDeletedEvent
+        {
+            EventId = Guid.NewGuid(),
+            Timestamp = DateTimeOffset.UtcNow,
+            ParticipationId = body.ParticipationId,
+            CharacterId = data.CharacterId,
+            HistoricalEventId = data.EventId
+        }, cancellationToken: cancellationToken);
+
+        _logger.LogInformation("Deleted participation {ParticipationId}", body.ParticipationId);
+        return StatusCodes.OK;
     }
 
     // ============================================================================
@@ -366,7 +332,6 @@ public partial class CharacterHistoryService : ICharacterHistoryService
     {
         _logger.LogInformation("Getting backstory for character {CharacterId}", body.CharacterId);
 
-        try
         {
             var data = await _backstoryHelper.GetAsync(body.CharacterId.ToString(), cancellationToken);
 
@@ -400,21 +365,6 @@ public partial class CharacterHistoryService : ICharacterHistoryService
 
             return (StatusCodes.OK, response);
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error getting backstory for character {CharacterId}", body.CharacterId);
-            await _messageBus.TryPublishErrorAsync(
-                "character-history",
-                "GetBackstory",
-                "unexpected_exception",
-                ex.Message,
-                dependency: "state",
-                endpoint: "post:/character-history/get-backstory",
-                details: new { body.CharacterId },
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <summary>
@@ -425,68 +375,108 @@ public partial class CharacterHistoryService : ICharacterHistoryService
         _logger.LogInformation("Setting backstory for character {CharacterId}, replaceExisting={ReplaceExisting}",
             body.CharacterId, body.ReplaceExisting);
 
-        try
+        var elementDataList = body.Elements.Select(MapToBackstoryElementData).ToList();
+        var maxElements = _configuration.MaxBackstoryElements;
+
+        if (body.ReplaceExisting)
         {
-            var elementDataList = body.Elements.Select(MapToBackstoryElementData).ToList();
-
-            var result = await _backstoryHelper.SetAsync(
-                body.CharacterId.ToString(),
-                elementDataList,
-                body.ReplaceExisting,
-                cancellationToken);
-
-            var response = new BackstoryResponse
+            // Replace mode: the final count equals the input count
+            if (elementDataList.Count > maxElements)
             {
-                CharacterId = body.CharacterId,
-                Elements = result.Backstory.Elements.Select(MapToBackstoryElement).ToList(),
-                CreatedAt = TimestampHelper.FromUnixSeconds(result.Backstory.CreatedAtUnix),
-                UpdatedAt = TimestampHelper.FromUnixSeconds(result.Backstory.UpdatedAtUnix)
-            };
-
-            // Publish typed event per FOUNDATION TENETS
-            var now = DateTimeOffset.UtcNow;
-            if (result.IsNew)
+                _logger.LogWarning(
+                    "SetBackstory rejected for character {CharacterId}: {Count} elements exceeds limit of {Limit}",
+                    body.CharacterId, elementDataList.Count, maxElements);
+                return (StatusCodes.BadRequest, null);
+            }
+        }
+        else
+        {
+            // Merge mode: calculate post-merge count (existing + truly new elements)
+            var existing = await _backstoryHelper.GetAsync(body.CharacterId.ToString(), cancellationToken);
+            if (existing != null)
             {
-                await _messageBus.TryPublishAsync(BACKSTORY_CREATED_TOPIC, new CharacterBackstoryCreatedEvent
+                var existingElements = existing.Elements;
+                var newElementCount = elementDataList.Count(newEl =>
+                    !existingElements.Any(e =>
+                        e.ElementType == newEl.ElementType && e.Key == newEl.Key));
+                var postMergeCount = existingElements.Count + newElementCount;
+
+                if (postMergeCount > maxElements)
                 {
-                    EventId = Guid.NewGuid(),
-                    Timestamp = now,
-                    CharacterId = body.CharacterId,
-                    ElementCount = result.Backstory.Elements.Count
-                }, cancellationToken: cancellationToken);
+                    _logger.LogWarning(
+                        "SetBackstory merge rejected for character {CharacterId}: post-merge count {PostMerge} exceeds limit of {Limit} (existing={Existing}, new={New})",
+                        body.CharacterId, postMergeCount, maxElements, existingElements.Count, newElementCount);
+                    return (StatusCodes.BadRequest, null);
+                }
             }
             else
             {
-                await _messageBus.TryPublishAsync(BACKSTORY_UPDATED_TOPIC, new CharacterBackstoryUpdatedEvent
+                // No existing backstory: the final count equals the input count
+                if (elementDataList.Count > maxElements)
                 {
-                    EventId = Guid.NewGuid(),
-                    Timestamp = now,
-                    CharacterId = body.CharacterId,
-                    ElementCount = result.Backstory.Elements.Count,
-                    ReplaceExisting = body.ReplaceExisting
-                }, cancellationToken: cancellationToken);
+                    _logger.LogWarning(
+                        "SetBackstory rejected for character {CharacterId}: {Count} elements exceeds limit of {Limit}",
+                        body.CharacterId, elementDataList.Count, maxElements);
+                    return (StatusCodes.BadRequest, null);
+                }
             }
-
-            _logger.LogInformation("Backstory {Action} for character {CharacterId}, {Count} elements",
-                result.IsNew ? "created" : "updated", body.CharacterId, result.Backstory.Elements.Count);
-
-            return (StatusCodes.OK, response);
         }
-        catch (Exception ex)
+
+        // Acquires distributed lock on entity ID per IMPLEMENTATION TENETS
+        var lockResult = await _backstoryHelper.SetAsync(
+            body.CharacterId.ToString(),
+            elementDataList,
+            body.ReplaceExisting,
+            cancellationToken);
+
+        if (!lockResult.LockAcquired)
         {
-            _logger.LogError(ex, "Error setting backstory for character {CharacterId}", body.CharacterId);
-            await _messageBus.TryPublishErrorAsync(
-                "character-history",
-                "SetBackstory",
-                "unexpected_exception",
-                ex.Message,
-                dependency: "state",
-                endpoint: "post:/character-history/set-backstory",
-                details: new { body.CharacterId },
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
+            _logger.LogWarning("Failed to acquire lock for character {CharacterId} backstory set", body.CharacterId);
+            return (StatusCodes.Conflict, null);
         }
+
+        var result = lockResult.Value
+            ?? throw new InvalidOperationException("Lock acquired but backstory set result is null");
+
+        var response = new BackstoryResponse
+        {
+            CharacterId = body.CharacterId,
+            Elements = result.Backstory.Elements.Select(MapToBackstoryElement).ToList(),
+            CreatedAt = TimestampHelper.FromUnixSeconds(result.Backstory.CreatedAtUnix),
+            UpdatedAt = TimestampHelper.FromUnixSeconds(result.Backstory.UpdatedAtUnix)
+        };
+
+        // Publish typed event per FOUNDATION TENETS
+        var now = DateTimeOffset.UtcNow;
+        if (result.IsNew)
+        {
+            await _messageBus.TryPublishAsync(BACKSTORY_CREATED_TOPIC, new CharacterBackstoryCreatedEvent
+            {
+                EventId = Guid.NewGuid(),
+                Timestamp = now,
+                CharacterId = body.CharacterId,
+                ElementCount = result.Backstory.Elements.Count
+            }, cancellationToken: cancellationToken);
+
+            // Register character reference with lib-resource for cleanup coordination (only on new backstory)
+            await RegisterCharacterReferenceAsync($"backstory-{body.CharacterId}", body.CharacterId, cancellationToken);
+        }
+        else
+        {
+            await _messageBus.TryPublishAsync(BACKSTORY_UPDATED_TOPIC, new CharacterBackstoryUpdatedEvent
+            {
+                EventId = Guid.NewGuid(),
+                Timestamp = now,
+                CharacterId = body.CharacterId,
+                ElementCount = result.Backstory.Elements.Count,
+                ReplaceExisting = body.ReplaceExisting
+            }, cancellationToken: cancellationToken);
+        }
+
+        _logger.LogInformation("Backstory {Action} for character {CharacterId}, {Count} elements",
+            result.IsNew ? "created" : "updated", body.CharacterId, result.Backstory.Elements.Count);
+
+        return (StatusCodes.OK, response);
     }
 
     /// <summary>
@@ -497,67 +487,78 @@ public partial class CharacterHistoryService : ICharacterHistoryService
         _logger.LogInformation("Adding backstory element for character {CharacterId}, type {ElementType}",
             body.CharacterId, body.Element.ElementType);
 
-        try
+        var elementData = MapToBackstoryElementData(body.Element);
+
+        // Validate element count limit (only for truly new elements, not updates)
+        var existing = await _backstoryHelper.GetAsync(body.CharacterId.ToString(), cancellationToken);
+        if (existing != null)
         {
-            var elementData = MapToBackstoryElementData(body.Element);
+            var isUpdate = existing.Elements.Any(e =>
+                e.ElementType == elementData.ElementType && e.Key == elementData.Key);
 
-            var result = await _backstoryHelper.AddElementAsync(
-                body.CharacterId.ToString(),
-                elementData,
-                cancellationToken);
-
-            var response = new BackstoryResponse
+            if (!isUpdate && existing.Elements.Count >= _configuration.MaxBackstoryElements)
             {
+                _logger.LogWarning(
+                    "AddBackstoryElement rejected for character {CharacterId}: {Count} elements already at limit of {Limit}",
+                    body.CharacterId, existing.Elements.Count, _configuration.MaxBackstoryElements);
+                return (StatusCodes.BadRequest, null);
+            }
+        }
+
+        // Acquires distributed lock on entity ID per IMPLEMENTATION TENETS
+        var lockResult = await _backstoryHelper.AddElementAsync(
+            body.CharacterId.ToString(),
+            elementData,
+            cancellationToken);
+
+        if (!lockResult.LockAcquired)
+        {
+            _logger.LogWarning("Failed to acquire lock for character {CharacterId} backstory element add", body.CharacterId);
+            return (StatusCodes.Conflict, null);
+        }
+
+        var result = lockResult.Value
+            ?? throw new InvalidOperationException("Lock acquired but backstory add element result is null");
+
+        var response = new BackstoryResponse
+        {
+            CharacterId = body.CharacterId,
+            Elements = result.Backstory.Elements.Select(MapToBackstoryElement).ToList(),
+            CreatedAt = TimestampHelper.FromUnixSeconds(result.Backstory.CreatedAtUnix),
+            UpdatedAt = TimestampHelper.FromUnixSeconds(result.Backstory.UpdatedAtUnix)
+        };
+
+        // Publish typed event per FOUNDATION TENETS
+        var now = DateTimeOffset.UtcNow;
+        if (result.IsNew)
+        {
+            await _messageBus.TryPublishAsync(BACKSTORY_CREATED_TOPIC, new CharacterBackstoryCreatedEvent
+            {
+                EventId = Guid.NewGuid(),
+                Timestamp = now,
                 CharacterId = body.CharacterId,
-                Elements = result.Backstory.Elements.Select(MapToBackstoryElement).ToList(),
-                CreatedAt = TimestampHelper.FromUnixSeconds(result.Backstory.CreatedAtUnix),
-                UpdatedAt = TimestampHelper.FromUnixSeconds(result.Backstory.UpdatedAtUnix)
-            };
+                ElementCount = result.Backstory.Elements.Count
+            }, cancellationToken: cancellationToken);
 
-            // Publish typed event per FOUNDATION TENETS
-            var now = DateTimeOffset.UtcNow;
-            if (result.IsNew)
-            {
-                await _messageBus.TryPublishAsync(BACKSTORY_CREATED_TOPIC, new CharacterBackstoryCreatedEvent
-                {
-                    EventId = Guid.NewGuid(),
-                    Timestamp = now,
-                    CharacterId = body.CharacterId,
-                    ElementCount = result.Backstory.Elements.Count
-                }, cancellationToken: cancellationToken);
-            }
-            else
-            {
-                await _messageBus.TryPublishAsync(BACKSTORY_UPDATED_TOPIC, new CharacterBackstoryUpdatedEvent
-                {
-                    EventId = Guid.NewGuid(),
-                    Timestamp = now,
-                    CharacterId = body.CharacterId,
-                    ElementCount = result.Backstory.Elements.Count,
-                    ReplaceExisting = false
-                }, cancellationToken: cancellationToken);
-            }
-
-            _logger.LogInformation("Backstory element added for character {CharacterId}, now {Count} elements",
-                body.CharacterId, result.Backstory.Elements.Count);
-
-            return (StatusCodes.OK, response);
+            // Register character reference with lib-resource for cleanup coordination (only on new backstory)
+            await RegisterCharacterReferenceAsync($"backstory-{body.CharacterId}", body.CharacterId, cancellationToken);
         }
-        catch (Exception ex)
+        else
         {
-            _logger.LogError(ex, "Error adding backstory element for character {CharacterId}", body.CharacterId);
-            await _messageBus.TryPublishErrorAsync(
-                "character-history",
-                "AddBackstoryElement",
-                "unexpected_exception",
-                ex.Message,
-                dependency: "state",
-                endpoint: "post:/character-history/add-backstory-element",
-                details: new { body.CharacterId, body.Element.ElementType },
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
+            await _messageBus.TryPublishAsync(BACKSTORY_UPDATED_TOPIC, new CharacterBackstoryUpdatedEvent
+            {
+                EventId = Guid.NewGuid(),
+                Timestamp = now,
+                CharacterId = body.CharacterId,
+                ElementCount = result.Backstory.Elements.Count,
+                ReplaceExisting = false
+            }, cancellationToken: cancellationToken);
         }
+
+        _logger.LogInformation("Backstory element added for character {CharacterId}, now {Count} elements",
+            body.CharacterId, result.Backstory.Elements.Count);
+
+        return (StatusCodes.OK, response);
     }
 
     /// <summary>
@@ -567,14 +568,23 @@ public partial class CharacterHistoryService : ICharacterHistoryService
     {
         _logger.LogInformation("Deleting backstory for character {CharacterId}", body.CharacterId);
 
-        try
         {
-            var deleted = await _backstoryHelper.DeleteAsync(body.CharacterId.ToString(), cancellationToken);
+            // Acquires distributed lock on entity ID per IMPLEMENTATION TENETS
+            var lockResult = await _backstoryHelper.DeleteAsync(body.CharacterId.ToString(), cancellationToken);
 
-            if (!deleted)
+            if (!lockResult.LockAcquired)
+            {
+                _logger.LogWarning("Failed to acquire lock for character {CharacterId} backstory deletion", body.CharacterId);
+                return StatusCodes.Conflict;
+            }
+
+            if (!lockResult.Value)
             {
                 return StatusCodes.NotFound;
             }
+
+            // Unregister character reference for backstory
+            await UnregisterCharacterReferenceAsync($"backstory-{body.CharacterId}", body.CharacterId, cancellationToken);
 
             // Publish typed event per FOUNDATION TENETS
             await _messageBus.TryPublishAsync(BACKSTORY_DELETED_TOPIC, new CharacterBackstoryDeletedEvent
@@ -586,21 +596,6 @@ public partial class CharacterHistoryService : ICharacterHistoryService
 
             _logger.LogInformation("Backstory deleted for character {CharacterId}", body.CharacterId);
             return StatusCodes.OK;
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error deleting backstory for character {CharacterId}", body.CharacterId);
-            await _messageBus.TryPublishErrorAsync(
-                "character-history",
-                "DeleteBackstory",
-                "unexpected_exception",
-                ex.Message,
-                dependency: "state",
-                endpoint: "post:/character-history/delete-backstory",
-                details: new { body.CharacterId },
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return StatusCodes.InternalServerError;
         }
     }
 
@@ -616,16 +611,51 @@ public partial class CharacterHistoryService : ICharacterHistoryService
     {
         _logger.LogInformation("Deleting all history for character {CharacterId}", body.CharacterId);
 
-        try
         {
+            // Get all participations first to unregister their character references
+            var participationRecords = await _participationHelper.GetRecordsByPrimaryKeyAsync(
+                body.CharacterId.ToString(),
+                cancellationToken);
+
+            // Unregister all character references for participations
+            foreach (var record in participationRecords)
+            {
+                await UnregisterCharacterReferenceAsync(record.ParticipationId.ToString(), body.CharacterId, cancellationToken);
+            }
+
             // Use helper to delete all participations and update event indices
-            var participationsDeleted = await _participationHelper.RemoveAllByPrimaryKeyAsync(
+            // Acquires distributed lock on primary key per IMPLEMENTATION TENETS
+            var participationLockResult = await _participationHelper.RemoveAllByPrimaryKeyAsync(
                 body.CharacterId.ToString(),
                 record => record.EventId.ToString(),
                 cancellationToken);
 
+            if (!participationLockResult.LockAcquired)
+            {
+                _logger.LogWarning("Failed to acquire lock for character {CharacterId} participation bulk deletion", body.CharacterId);
+                return (StatusCodes.Conflict, null);
+            }
+
+            var participationsDeleted = participationLockResult.Value;
+
+            // Check if backstory exists to unregister its reference
+            var existingBackstory = await _backstoryHelper.GetAsync(body.CharacterId.ToString(), cancellationToken);
+            if (existingBackstory != null)
+            {
+                await UnregisterCharacterReferenceAsync($"backstory-{body.CharacterId}", body.CharacterId, cancellationToken);
+            }
+
             // Use helper to delete backstory
-            var backstoryDeleted = await _backstoryHelper.DeleteAsync(body.CharacterId.ToString(), cancellationToken);
+            // Acquires distributed lock on entity ID per IMPLEMENTATION TENETS
+            var backstoryLockResult = await _backstoryHelper.DeleteAsync(body.CharacterId.ToString(), cancellationToken);
+
+            if (!backstoryLockResult.LockAcquired)
+            {
+                _logger.LogWarning("Failed to acquire lock for character {CharacterId} backstory deletion during history purge", body.CharacterId);
+                return (StatusCodes.Conflict, null);
+            }
+
+            var backstoryDeleted = backstoryLockResult.Value;
 
             // Publish typed event per FOUNDATION TENETS
             await _messageBus.TryPublishAsync(HISTORY_DELETED_TOPIC, new CharacterHistoryDeletedEvent
@@ -647,21 +677,6 @@ public partial class CharacterHistoryService : ICharacterHistoryService
                 BackstoryDeleted = backstoryDeleted
             });
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error deleting all history for character {CharacterId}", body.CharacterId);
-            await _messageBus.TryPublishErrorAsync(
-                "character-history",
-                "DeleteAllHistory",
-                "unexpected_exception",
-                ex.Message,
-                dependency: "state",
-                endpoint: "post:/character-history/delete-all",
-                details: new { body.CharacterId },
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <summary>
@@ -671,7 +686,6 @@ public partial class CharacterHistoryService : ICharacterHistoryService
     {
         _logger.LogInformation("Summarizing history for character {CharacterId}", body.CharacterId);
 
-        try
         {
             var keyBackstoryPoints = new List<string>();
             var majorLifeEvents = new List<string>();
@@ -730,21 +744,73 @@ public partial class CharacterHistoryService : ICharacterHistoryService
 
             return (StatusCodes.OK, response);
         }
-        catch (Exception ex)
+    }
+
+    // ============================================================================
+    // Query Helpers
+    // ============================================================================
+
+    /// <summary>
+    /// Builds MySQL JSON query conditions for participation listing.
+    /// Uses server-side filtering to avoid loading all records into memory.
+    /// </summary>
+    private static List<QueryCondition> BuildParticipationQueryConditions(
+        string entityIdPath,
+        Guid entityId,
+        EventCategory? eventCategory,
+        float? minimumSignificance,
+        ParticipationRole? role)
+    {
+        var conditions = new List<QueryCondition>
         {
-            _logger.LogError(ex, "Error summarizing history for character {CharacterId}", body.CharacterId);
-            await _messageBus.TryPublishErrorAsync(
-                "character-history",
-                "SummarizeHistory",
-                "unexpected_exception",
-                ex.Message,
-                dependency: "state",
-                endpoint: "post:/character-history/summarize",
-                details: new { body.CharacterId },
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
+            // Type discriminator: only ParticipationData records have ParticipationId
+            // Prevents confusion with other data types stored in the same state store
+            new QueryCondition
+            {
+                Path = "$.ParticipationId",
+                Operator = QueryOperator.Exists,
+                Value = true
+            },
+            // Primary entity filter (character or event)
+            new QueryCondition
+            {
+                Path = entityIdPath,
+                Operator = QueryOperator.Equals,
+                Value = entityId.ToString()
+            }
+        };
+
+        if (eventCategory.HasValue)
+        {
+            conditions.Add(new QueryCondition
+            {
+                Path = "$.EventCategory",
+                Operator = QueryOperator.Equals,
+                Value = eventCategory.Value.ToString()
+            });
         }
+
+        if (minimumSignificance.HasValue)
+        {
+            conditions.Add(new QueryCondition
+            {
+                Path = "$.Significance",
+                Operator = QueryOperator.GreaterThanOrEqual,
+                Value = minimumSignificance.Value
+            });
+        }
+
+        if (role.HasValue)
+        {
+            conditions.Add(new QueryCondition
+            {
+                Path = "$.Role",
+                Operator = QueryOperator.Equals,
+                Value = role.Value.ToString()
+            });
+        }
+
+        return conditions;
     }
 
     // ============================================================================
@@ -836,75 +902,222 @@ public partial class CharacterHistoryService : ICharacterHistoryService
     }
 
     // ============================================================================
-    // Permission Registration
+    // Compression Methods
     // ============================================================================
 
     /// <summary>
-    /// Registers this service's API permissions with the Permission service on startup.
+    /// Gets history data for compression during character archival.
+    /// Called by Resource service during character compression via compression callback.
     /// </summary>
-    public async Task RegisterServicePermissionsAsync(string appId)
+    public async Task<(StatusCodes, CharacterHistoryArchive?)> GetCompressDataAsync(
+        GetCompressDataRequest body,
+        CancellationToken cancellationToken)
     {
-        _logger.LogInformation("Registering CharacterHistory service permissions...");
+        _logger.LogDebug("Getting compress data for character {CharacterId}", body.CharacterId);
+
+        {
+            // Get all participations for this character
+            var participationRecords = await _participationHelper.GetRecordsByPrimaryKeyAsync(
+                body.CharacterId.ToString(),
+                cancellationToken);
+
+            var participations = participationRecords
+                .Select(MapToHistoricalParticipation)
+                .OrderByDescending(p => p.EventDate)
+                .ToList();
+
+            // Get backstory data
+            var backstoryData = await _backstoryHelper.GetAsync(body.CharacterId.ToString(), cancellationToken);
+
+            // Return 404 only if BOTH are missing
+            if (participations.Count == 0 && backstoryData == null)
+            {
+                _logger.LogDebug("No history data found for character {CharacterId}", body.CharacterId);
+                return (StatusCodes.NotFound, null);
+            }
+
+            BackstoryResponse? backstoryResponse = null;
+            if (backstoryData != null)
+            {
+                backstoryResponse = new BackstoryResponse
+                {
+                    CharacterId = body.CharacterId,
+                    Elements = backstoryData.Elements.Select(MapToBackstoryElement).ToList(),
+                    CreatedAt = TimestampHelper.FromUnixSeconds(backstoryData.CreatedAtUnix),
+                    UpdatedAt = backstoryData.UpdatedAtUnix != backstoryData.CreatedAtUnix
+                        ? TimestampHelper.FromUnixSeconds(backstoryData.UpdatedAtUnix)
+                        : null
+                };
+            }
+
+            // Generate summaries for reference
+            var (_, summaries) = await SummarizeHistoryAsync(
+                new SummarizeHistoryRequest
+                {
+                    CharacterId = body.CharacterId,
+                    MaxBackstoryPoints = 10,
+                    MaxLifeEvents = 10
+                },
+                cancellationToken);
+
+            var response = new CharacterHistoryArchive
+            {
+                // ResourceArchiveBase fields
+                ResourceId = body.CharacterId,
+                ResourceType = "character-history",
+                ArchivedAt = DateTimeOffset.UtcNow,
+                SchemaVersion = 1,
+                // Service-specific fields
+                CharacterId = body.CharacterId,
+                HasParticipations = participations.Count > 0,
+                Participations = participations,
+                HasBackstory = backstoryData != null,
+                Backstory = backstoryResponse,
+                Summaries = summaries
+            };
+
+            _logger.LogInformation(
+                "Compress data retrieved for character {CharacterId}: participations={ParticipationCount}, hasBackstory={HasBackstory}",
+                body.CharacterId, participations.Count, response.HasBackstory);
+
+            return (StatusCodes.OK, response);
+        }
+    }
+
+    /// <summary>
+    /// Restores history data from a compressed archive.
+    /// Called by Resource service during character decompression via decompression callback.
+    /// </summary>
+    public async Task<(StatusCodes, RestoreFromArchiveResponse?)> RestoreFromArchiveAsync(
+        RestoreFromArchiveRequest body,
+        CancellationToken cancellationToken)
+    {
+        _logger.LogInformation("Restoring history data from archive for character {CharacterId}", body.CharacterId);
+
+        var participationsRestored = 0;
+        var backstoryRestored = false;
+
+        // Decompress the archive data
+        CharacterHistoryArchive archiveData;
         try
         {
-            await CharacterHistoryPermissionRegistration.RegisterViaEventAsync(_messageBus, appId, _logger);
-            _logger.LogInformation("CharacterHistory service permissions registered");
+            var compressedBytes = Convert.FromBase64String(body.Data);
+            var jsonData = DecompressJsonData(compressedBytes);
+            archiveData = BannouJson.Deserialize<CharacterHistoryArchive>(jsonData)
+                ?? throw new InvalidOperationException("Deserialized archive data is null");
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to register CharacterHistory service permissions");
-            await _messageBus.TryPublishErrorAsync(
-                "character-history",
-                "RegisterServicePermissions",
-                ex.GetType().Name,
-                ex.Message,
-                dependency: "permission");
-            throw;
+            _logger.LogWarning(ex, "Failed to decompress archive data for character {CharacterId}", body.CharacterId);
+            return (StatusCodes.BadRequest, new RestoreFromArchiveResponse
+            {
+                CharacterId = body.CharacterId,
+                ParticipationsRestored = 0,
+                BackstoryRestored = false,
+                Success = false,
+                ErrorMessage = $"Invalid archive data: {ex.Message}"
+            });
         }
+
+        // Restore participations if present in archive
+        if (archiveData.HasParticipations && archiveData.Participations.Count > 0)
+        {
+            foreach (var participation in archiveData.Participations)
+            {
+                var participationData = new ParticipationData
+                {
+                    ParticipationId = participation.ParticipationId,
+                    CharacterId = body.CharacterId,
+                    EventId = participation.EventId,
+                    EventName = participation.EventName,
+                    EventCategory = participation.EventCategory,
+                    Role = participation.Role,
+                    EventDateUnix = participation.EventDate.ToUnixTimeSeconds(),
+                    Significance = participation.Significance,
+                    Metadata = participation.Metadata,
+                    CreatedAtUnix = participation.CreatedAt.ToUnixTimeSeconds()
+                };
+
+                // Acquires distributed lock on primary key per IMPLEMENTATION TENETS
+                var addResult = await _participationHelper.AddRecordAsync(
+                    participationData,
+                    participationData.ParticipationId.ToString(),
+                    body.CharacterId.ToString(),
+                    participationData.EventId.ToString(),
+                    cancellationToken);
+
+                if (!addResult.LockAcquired)
+                {
+                    _logger.LogWarning("Failed to acquire lock during archive restoration for character {CharacterId}", body.CharacterId);
+                    return (StatusCodes.Conflict, null);
+                }
+
+                // Register character reference for restored participation
+                await RegisterCharacterReferenceAsync(participationData.ParticipationId.ToString(), body.CharacterId, cancellationToken);
+
+                participationsRestored++;
+            }
+
+            _logger.LogInformation("{Count} participations restored for character {CharacterId}",
+                participationsRestored, body.CharacterId);
+        }
+
+        // Restore backstory if present in archive
+        if (archiveData.HasBackstory && archiveData.Backstory != null)
+        {
+            var elementDataList = archiveData.Backstory.Elements
+                .Select(MapToBackstoryElementData)
+                .ToList();
+
+            // Acquires distributed lock on entity ID per IMPLEMENTATION TENETS
+            var setResult = await _backstoryHelper.SetAsync(
+                body.CharacterId.ToString(),
+                elementDataList,
+                replaceExisting: true,
+                cancellationToken);
+
+            if (!setResult.LockAcquired)
+            {
+                _logger.LogWarning("Failed to acquire lock during backstory restoration for character {CharacterId}", body.CharacterId);
+                return (StatusCodes.Conflict, null);
+            }
+
+            // Register character reference for restored backstory
+            await RegisterCharacterReferenceAsync($"backstory-{body.CharacterId}", body.CharacterId, cancellationToken);
+
+            backstoryRestored = true;
+            _logger.LogInformation("Backstory restored for character {CharacterId} with {Count} elements",
+                body.CharacterId, elementDataList.Count);
+        }
+
+        _logger.LogInformation(
+            "Archive restoration completed for character {CharacterId}: participations={ParticipationsRestored}, backstory={BackstoryRestored}",
+            body.CharacterId, participationsRestored, backstoryRestored);
+
+        return (StatusCodes.OK, new RestoreFromArchiveResponse
+        {
+            CharacterId = body.CharacterId,
+            ParticipationsRestored = participationsRestored,
+            BackstoryRestored = backstoryRestored,
+            Success = true
+        });
     }
-}
 
-// ============================================================================
-// Internal Data Models
-// ============================================================================
+    /// <summary>
+    /// Decompresses gzipped JSON data.
+    /// </summary>
+    private static string DecompressJsonData(byte[] compressedData)
+    {
+        using var input = new System.IO.MemoryStream(compressedData);
+        using var gzip = new System.IO.Compression.GZipStream(
+            input, System.IO.Compression.CompressionMode.Decompress);
+        using var output = new System.IO.MemoryStream();
+        gzip.CopyTo(output);
+        return System.Text.Encoding.UTF8.GetString(output.ToArray());
+    }
 
-/// <summary>
-/// Internal storage model for participation data.
-/// </summary>
-internal class ParticipationData
-{
-    public Guid ParticipationId { get; set; }
-    public Guid CharacterId { get; set; }
-    public Guid EventId { get; set; }
-    public string EventName { get; set; } = string.Empty;
-    public EventCategory EventCategory { get; set; }
-    public ParticipationRole Role { get; set; }
-    public long EventDateUnix { get; set; }
-    public float Significance { get; set; }
-    public object? Metadata { get; set; }
-    public long CreatedAtUnix { get; set; }
-}
+    // ============================================================================
+    // Permission Registration
+    // ============================================================================
 
-/// <summary>
-/// Internal storage model for backstory data.
-/// </summary>
-internal class BackstoryData
-{
-    public Guid CharacterId { get; set; }
-    public List<BackstoryElementData> Elements { get; set; } = new();
-    public long CreatedAtUnix { get; set; }
-    public long UpdatedAtUnix { get; set; }
-}
-
-/// <summary>
-/// Internal storage model for a backstory element.
-/// </summary>
-internal class BackstoryElementData
-{
-    public BackstoryElementType ElementType { get; set; }
-    public string Key { get; set; } = string.Empty;
-    public string Value { get; set; } = string.Empty;
-    public float Strength { get; set; }
-    public Guid? RelatedEntityId { get; set; }
-    public string? RelatedEntityType { get; set; }
 }

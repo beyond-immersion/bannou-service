@@ -1,0 +1,18 @@
+# Test fixture for watch action with on_change callback
+version: "2.0"
+metadata:
+  id: test_watch_callback
+
+flows:
+  main:
+    actions:
+      - watch:
+          resource_type: character
+          resource_id: ${target.id}
+          sources:
+            - character-personality
+          on_change: handle_target_changed
+
+  handle_target_changed:
+    actions:
+      - log: { message: "Target changed!" }

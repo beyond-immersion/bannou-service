@@ -1,6 +1,5 @@
 using System.Text.Json;
 using BeyondImmersion.BannouService.Relationship;
-using BeyondImmersion.BannouService.RelationshipType;
 using BeyondImmersion.BannouService.ServiceClients;
 using BeyondImmersion.BannouService.Testing;
 
@@ -43,9 +42,9 @@ public class RelationshipTestHandler : BaseHttpTestHandler
             var relationshipClient = GetServiceClient<IRelationshipClient>();
 
             // Create a relationship type first (we need a valid type ID)
-            var relationshipTypeClient = GetServiceClient<IRelationshipTypeClient>();
+            var relationshipTypeClient = GetServiceClient<IRelationshipClient>();
             var typeResponse = await relationshipTypeClient.CreateRelationshipTypeAsync(
-                new RelationshipType.CreateRelationshipTypeRequest
+                new CreateRelationshipTypeRequest
                 {
                     Code = $"REL_TEST_{DateTime.Now.Ticks}",
                     Name = "Test Relationship Type",
@@ -86,9 +85,9 @@ public class RelationshipTestHandler : BaseHttpTestHandler
             var relationshipClient = GetServiceClient<IRelationshipClient>();
 
             // Create a relationship type first
-            var relationshipTypeClient = GetServiceClient<IRelationshipTypeClient>();
+            var relationshipTypeClient = GetServiceClient<IRelationshipClient>();
             var typeResponse = await relationshipTypeClient.CreateRelationshipTypeAsync(
-                new RelationshipType.CreateRelationshipTypeRequest
+                new CreateRelationshipTypeRequest
                 {
                     Code = $"GET_REL_TYPE_{DateTime.Now.Ticks}",
                     Name = "Get Test Type"
@@ -125,9 +124,9 @@ public class RelationshipTestHandler : BaseHttpTestHandler
             var relationshipClient = GetServiceClient<IRelationshipClient>();
 
             // Create a relationship type first
-            var relationshipTypeClient = GetServiceClient<IRelationshipTypeClient>();
+            var relationshipTypeClient = GetServiceClient<IRelationshipClient>();
             var typeResponse = await relationshipTypeClient.CreateRelationshipTypeAsync(
-                new RelationshipType.CreateRelationshipTypeRequest
+                new CreateRelationshipTypeRequest
                 {
                     Code = $"UPDATE_REL_TYPE_{DateTime.Now.Ticks}",
                     Name = "Update Test Type"
@@ -181,9 +180,9 @@ public class RelationshipTestHandler : BaseHttpTestHandler
             var relationshipClient = GetServiceClient<IRelationshipClient>();
 
             // Create a relationship type first
-            var relationshipTypeClient = GetServiceClient<IRelationshipTypeClient>();
+            var relationshipTypeClient = GetServiceClient<IRelationshipClient>();
             var typeResponse = await relationshipTypeClient.CreateRelationshipTypeAsync(
-                new RelationshipType.CreateRelationshipTypeRequest
+                new CreateRelationshipTypeRequest
                 {
                     Code = $"END_REL_TYPE_{DateTime.Now.Ticks}",
                     Name = "End Test Type"
@@ -225,9 +224,9 @@ public class RelationshipTestHandler : BaseHttpTestHandler
             var relationshipClient = GetServiceClient<IRelationshipClient>();
 
             // Create a relationship type
-            var relationshipTypeClient = GetServiceClient<IRelationshipTypeClient>();
+            var relationshipTypeClient = GetServiceClient<IRelationshipClient>();
             var typeResponse = await relationshipTypeClient.CreateRelationshipTypeAsync(
-                new RelationshipType.CreateRelationshipTypeRequest
+                new CreateRelationshipTypeRequest
                 {
                     Code = $"LIST_ENTITY_TYPE_{DateTime.Now.Ticks}",
                     Name = "List By Entity Type"
@@ -267,15 +266,15 @@ public class RelationshipTestHandler : BaseHttpTestHandler
             var relationshipClient = GetServiceClient<IRelationshipClient>();
 
             // Create relationship types
-            var relationshipTypeClient = GetServiceClient<IRelationshipTypeClient>();
+            var relationshipTypeClient = GetServiceClient<IRelationshipClient>();
             var type1 = await relationshipTypeClient.CreateRelationshipTypeAsync(
-                new RelationshipType.CreateRelationshipTypeRequest
+                new CreateRelationshipTypeRequest
                 {
                     Code = $"BETWEEN_TYPE1_{DateTime.Now.Ticks}",
                     Name = "Between Type 1"
                 });
             var type2 = await relationshipTypeClient.CreateRelationshipTypeAsync(
-                new RelationshipType.CreateRelationshipTypeRequest
+                new CreateRelationshipTypeRequest
                 {
                     Code = $"BETWEEN_TYPE2_{DateTime.Now.Ticks}",
                     Name = "Between Type 2"
@@ -326,9 +325,9 @@ public class RelationshipTestHandler : BaseHttpTestHandler
             var relationshipClient = GetServiceClient<IRelationshipClient>();
 
             // Create a relationship type
-            var relationshipTypeClient = GetServiceClient<IRelationshipTypeClient>();
+            var relationshipTypeClient = GetServiceClient<IRelationshipClient>();
             var typeResponse = await relationshipTypeClient.CreateRelationshipTypeAsync(
-                new RelationshipType.CreateRelationshipTypeRequest
+                new CreateRelationshipTypeRequest
                 {
                     Code = $"LIST_TYPE_{DateTime.Now.Ticks}",
                     Name = "List By Type"
@@ -380,9 +379,9 @@ public class RelationshipTestHandler : BaseHttpTestHandler
             var relationshipClient = GetServiceClient<IRelationshipClient>();
 
             // Create a relationship type
-            var relationshipTypeClient = GetServiceClient<IRelationshipTypeClient>();
+            var relationshipTypeClient = GetServiceClient<IRelationshipClient>();
             var typeResponse = await relationshipTypeClient.CreateRelationshipTypeAsync(
-                new RelationshipType.CreateRelationshipTypeRequest
+                new CreateRelationshipTypeRequest
                 {
                     Code = $"DUP_COMPOSITE_TYPE_{DateTime.Now.Ticks}",
                     Name = "Duplicate Composite Type"
@@ -431,9 +430,9 @@ public class RelationshipTestHandler : BaseHttpTestHandler
 
             // Step 1: Create a relationship type
             Console.WriteLine("  Step 1: Creating relationship type...");
-            var relationshipTypeClient = GetServiceClient<IRelationshipTypeClient>();
+            var relationshipTypeClient = GetServiceClient<IRelationshipClient>();
             var typeResponse = await relationshipTypeClient.CreateRelationshipTypeAsync(
-                new RelationshipType.CreateRelationshipTypeRequest
+                new CreateRelationshipTypeRequest
                 {
                     Code = $"LIFECYCLE_TYPE_{testId}",
                     Name = "Lifecycle Test Type",

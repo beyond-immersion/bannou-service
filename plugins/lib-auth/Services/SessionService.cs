@@ -14,6 +14,7 @@ public class SessionService : ISessionService
     private readonly IStateStoreFactory _stateStoreFactory;
     private readonly IMessageBus _messageBus;
     private readonly AuthServiceConfiguration _configuration;
+    private readonly IEdgeRevocationService _edgeRevocationService;
     private readonly ILogger<SessionService> _logger;
     private const string SESSION_INVALIDATED_TOPIC = "session.invalidated";
     private const string SESSION_UPDATED_TOPIC = "session.updated";
@@ -23,17 +24,25 @@ public class SessionService : ISessionService
     private const string UNKNOWN_BROWSER = "Unknown";
 
     /// <summary>
+    /// Buffer in seconds added to session index TTL so the index outlives its sessions
+    /// for cleanup purposes. This is an engineering constant, not a tunable parameter.
+    /// </summary>
+    private const int SessionIndexTtlBufferSeconds = 300;
+
+    /// <summary>
     /// Initializes a new instance of SessionService.
     /// </summary>
     public SessionService(
         IStateStoreFactory stateStoreFactory,
         IMessageBus messageBus,
         AuthServiceConfiguration configuration,
+        IEdgeRevocationService edgeRevocationService,
         ILogger<SessionService> logger)
     {
         _stateStoreFactory = stateStoreFactory;
         _messageBus = messageBus;
         _configuration = configuration;
+        _edgeRevocationService = edgeRevocationService;
         _logger = logger;
     }
 
@@ -144,7 +153,7 @@ public class SessionService : ISessionService
             {
                 existingSessions.Add(sessionKey);
 
-                var ttlSeconds = (_configuration.JwtExpirationMinutes * 60) + 300; // +5 minutes buffer
+                var ttlSeconds = (_configuration.JwtExpirationMinutes * 60) + SessionIndexTtlBufferSeconds;
                 await listStore.SaveAsync(
                     indexKey,
                     existingSessions,
@@ -183,7 +192,7 @@ public class SessionService : ISessionService
 
                 if (existingSessions.Count > 0)
                 {
-                    var ttlSeconds = (_configuration.JwtExpirationMinutes * 60) + 300;
+                    var ttlSeconds = (_configuration.JwtExpirationMinutes * 60) + SessionIndexTtlBufferSeconds;
                     await listStore.SaveAsync(
                         indexKey,
                         existingSessions,
@@ -339,7 +348,7 @@ public class SessionService : ISessionService
     }
 
     /// <inheritdoc/>
-    public async Task InvalidateAllSessionsForAccountAsync(Guid accountId, SessionInvalidatedEventReason reason = SessionInvalidatedEventReason.Account_deleted, CancellationToken cancellationToken = default)
+    public async Task InvalidateAllSessionsForAccountAsync(Guid accountId, SessionInvalidatedEventReason reason = SessionInvalidatedEventReason.AccountDeleted, CancellationToken cancellationToken = default)
     {
         try
         {
@@ -353,10 +362,25 @@ public class SessionService : ISessionService
 
             _logger.LogDebug("Invalidating {SessionCount} sessions for account {AccountId}", sessionKeys.Count, accountId);
 
+            // Collect JTIs from sessions before deleting for edge revocation
+            var sessionsToRevoke = new List<(string jti, TimeSpan ttl)>();
+
             foreach (var sessionKey in sessionKeys)
             {
                 try
                 {
+                    // Get session data to extract JTI before deletion
+                    var sessionData = await GetSessionAsync(sessionKey, cancellationToken);
+                    if (sessionData?.Jti != null)
+                    {
+                        // Calculate remaining TTL for edge revocation
+                        var remainingTtl = sessionData.ExpiresAt - DateTimeOffset.UtcNow;
+                        if (remainingTtl > TimeSpan.Zero)
+                        {
+                            sessionsToRevoke.Add((sessionData.Jti, remainingTtl));
+                        }
+                    }
+
                     await DeleteSessionAsync(sessionKey, cancellationToken);
                 }
                 catch (Exception ex)
@@ -366,6 +390,26 @@ public class SessionService : ISessionService
             }
 
             await DeleteAccountSessionsIndexAsync(accountId, cancellationToken);
+
+            // Push revocations to edge providers (defense-in-depth)
+            if (_edgeRevocationService.IsEnabled && sessionsToRevoke.Count > 0)
+            {
+                _logger.LogDebug("Pushing {Count} token revocations to edge providers for account {AccountId}",
+                    sessionsToRevoke.Count, accountId);
+
+                foreach (var (jti, ttl) in sessionsToRevoke)
+                {
+                    try
+                    {
+                        await _edgeRevocationService.RevokeTokenAsync(jti, accountId, ttl, reason.ToString(), cancellationToken);
+                    }
+                    catch (Exception ex)
+                    {
+                        // Edge revocation failures should not block session invalidation
+                        _logger.LogWarning(ex, "Failed to push edge revocation for JTI {Jti}", jti);
+                    }
+                }
+            }
 
             _logger.LogInformation("Invalidated {SessionCount} sessions for account {AccountId}", sessionKeys.Count, accountId);
 
@@ -395,7 +439,7 @@ public class SessionService : ISessionService
             var sessionIdGuids = sessionIds
                 .Select(s => Guid.TryParse(s, out var g) ? g : (Guid?)null)
                 .Where(g => g.HasValue)
-                .Select(g => g!.Value)
+                .Select(g => g.GetValueOrDefault())
                 .ToList();
 
             var eventModel = new SessionInvalidatedEvent

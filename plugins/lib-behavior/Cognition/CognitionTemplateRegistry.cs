@@ -283,6 +283,14 @@ public sealed class CognitionTemplateRegistry : ICognitionTemplateRegistry
                         }
                     ]
                 },
+                // Stage slot for morality/obligation cost evaluation.
+                // Inert until an EvaluateConsequencesHandler is registered;
+                // CognitionBuilder skips stages with no matching handlers.
+                new CognitionStageDefinition
+                {
+                    Name = CognitionStages.EvaluateConsequences,
+                    Handlers = []
+                },
                 new CognitionStageDefinition
                 {
                     Name = CognitionStages.Intention,

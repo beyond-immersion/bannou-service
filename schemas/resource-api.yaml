@@ -1,0 +1,1829 @@
+openapi: 3.0.0
+info:
+  title: Resource Lifecycle API
+  version: 1.0.0
+  description: |
+    Resource reference tracking and lifecycle management.
+
+    Enables foundational services (L2) to safely delete resources by tracking
+    references from higher-layer consumers (L3/L4) without violating the
+    service hierarchy. Higher-layer services publish reference events when
+    they create/delete references to foundational resources. This service
+    maintains the reference counts and coordinates cleanup callbacks.
+
+    **Key Design Principle**: Foundational services (L2) define what resources
+    exist. This service (L1) tracks who references them. Consumers (L3/L4)
+    register their references via events and define cleanup callbacks.
+
+    **POST-Only API Pattern**: This API uses POST for all operations to support
+    zero-copy WebSocket routing. Path parameters are passed in request bodies.
+
+    **SCHEMA MODIFICATION GATE**: STOP. Before modifying this schema, you MUST:
+    1. Read docs/reference/SCHEMA-RULES.md
+    2. State which section applies to your change
+    3. Only then proceed with edits
+    Edits without stating the applicable rule are FORBIDDEN.
+x-service-layer: AppFoundation
+
+servers:
+- url: http://localhost:5012
+  description: Bannou service endpoint (internal only)
+
+paths:
+  # ===========================================================================
+  # Reference Management (4 endpoints)
+  # ===========================================================================
+
+  /resource/register:
+    post:
+      operationId: registerReference
+      tags:
+      - Reference Management
+      summary: Register a reference to a resource
+      description: |
+        Records that sourceType:sourceId references resourceType:resourceId.
+        Typically called via event handlers, not directly.
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterReferenceRequest'
+      responses:
+        '200':
+          description: Reference registered
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RegisterReferenceResponse'
+
+  /resource/unregister:
+    post:
+      operationId: unregisterReference
+      tags:
+      - Reference Management
+      summary: Remove a reference to a resource
+      description: |
+        Records that sourceType:sourceId no longer references resourceType:resourceId.
+        Typically called via event handlers, not directly.
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UnregisterReferenceRequest'
+      responses:
+        '200':
+          description: Reference unregistered
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UnregisterReferenceResponse'
+
+  /resource/check:
+    post:
+      operationId: checkReferences
+      tags:
+      - Reference Management
+      summary: Check reference count and cleanup eligibility
+      description: |
+        Returns the current reference count for a resource and whether it is
+        eligible for cleanup (refcount=0 and grace period passed).
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CheckReferencesRequest'
+      responses:
+        '200':
+          description: Reference status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CheckReferencesResponse'
+
+  /resource/list:
+    post:
+      operationId: listReferences
+      tags:
+      - Reference Management
+      summary: List all references to a resource
+      description: |
+        Returns all entities currently referencing a resource.
+        Useful for debugging and understanding reference chains.
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ListReferencesRequest'
+      responses:
+        '200':
+          description: List of references
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListReferencesResponse'
+
+  # ===========================================================================
+  # Cleanup Management (4 endpoints)
+  # ===========================================================================
+
+  /resource/cleanup/define:
+    post:
+      operationId: defineCleanupCallback
+      tags:
+      - Cleanup Management
+      summary: Define cleanup callbacks for a resource type
+      description: |
+        Services call this at startup to register their cleanup endpoints.
+        When a resource is deleted, these callbacks are invoked to clean up
+        dependent entities.
+      x-permissions:
+      - role: admin
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DefineCleanupRequest'
+      responses:
+        '200':
+          description: Cleanup callback defined
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DefineCleanupResponse'
+
+  /resource/cleanup/execute:
+    post:
+      operationId: executeCleanup
+      tags:
+      - Cleanup Management
+      summary: Execute cleanup for a resource
+      description: |
+        Validates refcount=0, grace period passed, acquires distributed lock,
+        re-validates under lock, then executes all cleanup callbacks.
+        Returns Conflict if refcount changed during execution.
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExecuteCleanupRequest'
+      responses:
+        '200':
+          description: Cleanup executed or rejected
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExecuteCleanupResponse'
+
+  /resource/cleanup/list:
+    post:
+      operationId: listCleanupCallbacks
+      tags:
+      - Cleanup Management
+      summary: List registered cleanup callbacks
+      description: |
+        Returns all cleanup callbacks registered for a resource type.
+        Useful for debugging and admin inspection of cleanup chains.
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ListCleanupCallbacksRequest'
+      responses:
+        '200':
+          description: List of registered callbacks
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListCleanupCallbacksResponse'
+
+  /resource/cleanup/remove:
+    post:
+      operationId: removeCleanupCallback
+      tags:
+      - Cleanup Management
+      summary: Remove a cleanup callback registration
+      description: |
+        Removes a cleanup callback that was previously registered via
+        /resource/cleanup/define. Use when a consumer service is decommissioned
+        or a callback becomes orphaned. Idempotent - returns success even if
+        callback was not registered.
+      x-permissions:
+      - role: admin
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RemoveCleanupCallbackRequest'
+      responses:
+        '200':
+          description: Callback removed or was not registered
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RemoveCleanupCallbackResponse'
+
+  # ===========================================================================
+  # Compression Management (5 endpoints)
+  # ===========================================================================
+
+  /resource/compress/define:
+    post:
+      operationId: defineCompressCallback
+      tags:
+      - Compression Management
+      summary: Register compression callback for a resource type
+      description: |
+        Services call this at startup (OnRunningAsync) to register compression endpoints.
+        When a resource is compressed, these callbacks gather data for the archive bundle.
+
+        Mirrors the cleanup callback pattern - services register their data export
+        endpoints, and compression orchestrates calling all registered callbacks to
+        build a complete archive.
+      x-permissions:
+      - role: admin
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DefineCompressCallbackRequest'
+      responses:
+        '200':
+          description: Callback registered
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DefineCompressCallbackResponse'
+
+  /resource/compress/execute:
+    post:
+      operationId: executeCompress
+      tags:
+      - Compression Management
+      summary: Compress a resource and all dependents
+      description: |
+        Gathers data from all registered compression callbacks, bundles into
+        a unified archive, and stores in MySQL. Optionally deletes source data
+        after successful archival via existing cleanup callbacks.
+
+        Flow:
+        1. Get all compression callbacks for resourceType, sorted by priority
+        2. If dryRun, return preview without executing
+        3. Acquire distributed lock
+        4. Execute each callback to gather data
+        5. Bundle responses into archive (gzipped JSON per entry)
+        6. Store archive in MySQL
+        7. If deleteSourceData, invoke cleanup callbacks
+        8. Publish resource.compressed event
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExecuteCompressRequest'
+      responses:
+        '200':
+          description: Compression result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExecuteCompressResponse'
+
+  /resource/decompress/execute:
+    post:
+      operationId: executeDecompress
+      tags:
+      - Compression Management
+      summary: Restore data from archive
+      description: |
+        Retrieves the archive bundle and invokes decompression callbacks
+        for each service to restore their data.
+
+        Callbacks are invoked in priority order (same as compression).
+        Each callback receives the resource ID and its archived data blob.
+      x-permissions:
+      - role: admin
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExecuteDecompressRequest'
+      responses:
+        '200':
+          description: Decompression result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExecuteDecompressResponse'
+
+  /resource/compress/list:
+    post:
+      operationId: listCompressCallbacks
+      tags:
+      - Compression Management
+      summary: List registered compression callbacks
+      description: |
+        Returns all compression callbacks registered for a resource type.
+        Useful for debugging and admin inspection of compression chains.
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ListCompressCallbacksRequest'
+      responses:
+        '200':
+          description: Callback list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListCompressCallbacksResponse'
+
+  /resource/archive/get:
+    post:
+      operationId: getArchive
+      tags:
+      - Compression Management
+      summary: Retrieve compressed archive
+      description: |
+        Retrieves a compressed archive by resource type and ID.
+        Returns the latest version unless a specific archiveId is provided.
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetArchiveRequest'
+      responses:
+        '200':
+          description: Archive data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetArchiveResponse'
+
+  # ===========================================================================
+  # Snapshot Management (Live Entity Snapshots) - 2 endpoints
+  # ===========================================================================
+
+  /resource/snapshot/execute:
+    post:
+      operationId: executeSnapshot
+      tags:
+      - Snapshot Management
+      summary: Create ephemeral snapshot of a living resource
+      description: |
+        Creates a non-destructive snapshot of a resource using the same compression
+        callbacks, but stores the result in Redis with a configurable TTL instead
+        of permanent MySQL storage.
+
+        **Use Case**: The Storyline Composer needs compressed data from living
+        entities (not just dead/archived ones) to seed emergent narratives.
+        This endpoint provides that capability without affecting the source data.
+
+        **Key Differences from compress/execute**:
+        1. Stores in Redis (ephemeral) not MySQL (permanent)
+        2. Never deletes source data
+        3. Publishes `resource.snapshot.created` event (not `resource.compressed`)
+        4. Snapshot expires after TTL (default 1 hour, max 24 hours)
+
+        **Intended Consumers**:
+        - Actor behaviors (via ABML service_call)
+        - Regional Watchers for storyline composition
+        - Analytics for living entity state capture
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExecuteSnapshotRequest'
+      responses:
+        '200':
+          description: Snapshot result with snapshot ID and data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExecuteSnapshotResponse'
+
+  /resource/snapshot/get:
+    post:
+      operationId: getSnapshot
+      tags:
+      - Snapshot Management
+      summary: Retrieve an ephemeral snapshot
+      description: |
+        Retrieves a previously created snapshot by its ID.
+        Returns 404 if the snapshot has expired or doesn't exist.
+
+        Snapshots are stored with TTL - if the TTL has elapsed, the snapshot
+        is automatically deleted by Redis.
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetSnapshotRequest'
+      responses:
+        '200':
+          description: Snapshot data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetSnapshotResponse'
+
+  # ===========================================================================
+  # Seeded Resource Management (2 endpoints)
+  # ===========================================================================
+
+  /resource/seeded/list:
+    post:
+      operationId: listSeededResources
+      tags:
+      - Seeded Resources
+      summary: List available seeded resources
+      description: |
+        Returns identifiers of all seeded resources available from registered providers.
+        Filter by resourceType to get resources of a specific category.
+
+        Seeded resources are read-only factory defaults provided by plugins via
+        ISeededResourceProvider implementations registered in DI.
+      x-permissions: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ListSeededResourcesRequest'
+      responses:
+        '200':
+          description: List of seeded resource identifiers
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListSeededResourcesResponse'
+
+  /resource/seeded/get:
+    post:
+      operationId: getSeededResource
+      tags:
+      - Seeded Resources
+      summary: Get a seeded resource by type and identifier
+      description: |
+        Retrieves the content and metadata of a seeded resource.
+        Returns found=false if the resource type or identifier is not found.
+
+        Content is returned as base64-encoded bytes with contentType indicating
+        the MIME type for proper parsing.
+      x-permissions: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetSeededResourceRequest'
+      responses:
+        '200':
+          description: Seeded resource content and metadata
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetSeededResourceResponse'
+
+components:
+  schemas:
+    # =========================================================================
+    # Enums (Only for lib-resource's OWN closed sets)
+    # NOTE: resourceType and sourceType are intentionally STRINGS, not enums.
+    # lib-resource (L1) must not enumerate L2+ services or entity types.
+    # See SCHEMA-RULES.md "When NOT to Create Enums"
+    # =========================================================================
+
+    OnDeleteAction:
+      type: string
+      enum: [CASCADE, RESTRICT, DETACH]
+      description: |
+        Action to take when the referenced resource is deleted.
+        CASCADE: Delete dependent entities when resource is deleted
+        RESTRICT: Block resource deletion if references exist
+        DETACH: Set reference to null when resource is deleted
+
+    CleanupPolicy:
+      type: string
+      enum: [BEST_EFFORT, ALL_REQUIRED]
+      description: |
+        Policy for cleanup callback execution.
+        BEST_EFFORT: Proceed with deletion even if some callbacks fail
+        ALL_REQUIRED: Abort deletion if any callback fails
+
+    CompressionPolicy:
+      type: string
+      enum: [BEST_EFFORT, ALL_REQUIRED]
+      description: |
+        Policy for compression callback execution.
+        BEST_EFFORT: Create archive even if some callbacks fail (partial archive)
+        ALL_REQUIRED: Abort compression if any callback fails
+
+    # =========================================================================
+    # Reference Management Models
+    # =========================================================================
+
+    RegisterReferenceRequest:
+      type: object
+      additionalProperties: false
+      description: Request to register a reference to a resource
+      required:
+      - resourceType
+      - resourceId
+      - sourceType
+      - sourceId
+      properties:
+        resourceType:
+          type: string
+          description: Type of resource being referenced (opaque identifier, e.g., "character", "realm")
+        resourceId:
+          type: string
+          format: uuid
+          description: ID of the resource being referenced
+        sourceType:
+          type: string
+          description: Type of entity holding the reference (opaque identifier, e.g., "actor", "scene")
+        sourceId:
+          type: string
+          description: ID of the entity holding the reference (opaque string, supports non-Guid IDs)
+
+    RegisterReferenceResponse:
+      type: object
+      additionalProperties: false
+      description: Response after registering a reference
+      required:
+      - resourceType
+      - resourceId
+      - newRefCount
+      - alreadyRegistered
+      properties:
+        resourceType:
+          type: string
+          description: Type of resource referenced
+        resourceId:
+          type: string
+          format: uuid
+          description: ID of the resource referenced
+        newRefCount:
+          type: integer
+          description: Reference count after registration
+        alreadyRegistered:
+          type: boolean
+          description: True if this exact reference was already registered
+
+    UnregisterReferenceRequest:
+      type: object
+      additionalProperties: false
+      description: Request to unregister a reference to a resource
+      required:
+      - resourceType
+      - resourceId
+      - sourceType
+      - sourceId
+      properties:
+        resourceType:
+          type: string
+          description: Type of resource being dereferenced (opaque identifier)
+        resourceId:
+          type: string
+          format: uuid
+          description: ID of the resource being dereferenced
+        sourceType:
+          type: string
+          description: Type of entity releasing the reference (opaque identifier)
+        sourceId:
+          type: string
+          description: ID of the entity releasing the reference (opaque string, supports non-Guid IDs)
+
+    UnregisterReferenceResponse:
+      type: object
+      additionalProperties: false
+      description: Response after unregistering a reference
+      required:
+      - resourceType
+      - resourceId
+      - newRefCount
+      - wasRegistered
+      properties:
+        resourceType:
+          type: string
+          description: Type of resource dereferenced
+        resourceId:
+          type: string
+          format: uuid
+          description: ID of the resource dereferenced
+        newRefCount:
+          type: integer
+          description: Reference count after unregistration
+        wasRegistered:
+          type: boolean
+          description: True if this reference existed before unregistration
+        gracePeriodStartedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When grace period started (null if refCount > 0)
+
+    CheckReferencesRequest:
+      type: object
+      additionalProperties: false
+      description: Request to check reference status for a resource
+      required:
+      - resourceType
+      - resourceId
+      properties:
+        resourceType:
+          type: string
+          description: Type of resource to check (opaque identifier)
+        resourceId:
+          type: string
+          format: uuid
+          description: ID of the resource to check
+
+    CheckReferencesResponse:
+      type: object
+      additionalProperties: false
+      description: Response containing reference status for a resource
+      required:
+      - resourceType
+      - resourceId
+      - refCount
+      - isCleanupEligible
+      properties:
+        resourceType:
+          type: string
+          description: Type of resource checked
+        resourceId:
+          type: string
+          format: uuid
+          description: ID of the resource checked
+        refCount:
+          type: integer
+          description: Current reference count
+        sources:
+          type: array
+          items:
+            $ref: '#/components/schemas/ResourceReference'
+          nullable: true
+          description: List of entities referencing this resource (optional, for diagnostics)
+        isCleanupEligible:
+          type: boolean
+          description: True if refCount=0 and grace period has passed
+        gracePeriodEndsAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When grace period ends (null if refCount > 0 or already passed)
+        lastZeroTimestamp:
+          type: string
+          format: date-time
+          nullable: true
+          description: When refCount last became zero
+
+    ResourceReference:
+      type: object
+      additionalProperties: false
+      description: A reference from a source entity to a resource
+      required:
+      - sourceType
+      - sourceId
+      - registeredAt
+      properties:
+        sourceType:
+          type: string
+          description: Type of entity holding the reference (opaque identifier)
+        sourceId:
+          type: string
+          description: ID of the entity holding the reference (opaque string, supports non-Guid IDs)
+        registeredAt:
+          type: string
+          format: date-time
+          description: When this reference was registered
+
+    ListReferencesRequest:
+      type: object
+      additionalProperties: false
+      description: Request to list all references to a resource
+      required:
+      - resourceType
+      - resourceId
+      properties:
+        resourceType:
+          type: string
+          description: Type of resource to list references for (opaque identifier)
+        resourceId:
+          type: string
+          format: uuid
+          description: ID of the resource to list references for
+        filterSourceType:
+          type: string
+          nullable: true
+          description: Optional filter by source type (opaque identifier)
+        limit:
+          type: integer
+          default: 100
+          description: Maximum references to return
+
+    ListReferencesResponse:
+      type: object
+      additionalProperties: false
+      description: Response containing list of references to a resource
+      required:
+      - resourceType
+      - resourceId
+      - references
+      - totalCount
+      properties:
+        resourceType:
+          type: string
+          description: Type of resource listed
+        resourceId:
+          type: string
+          format: uuid
+          description: ID of the resource listed
+        references:
+          type: array
+          items:
+            $ref: '#/components/schemas/ResourceReference'
+          description: List of references
+        totalCount:
+          type: integer
+          description: Total reference count (may exceed returned list if limit applied)
+
+    # =========================================================================
+    # Cleanup Management Models
+    # =========================================================================
+
+    DefineCleanupRequest:
+      type: object
+      additionalProperties: false
+      description: Request to define a cleanup callback for a resource type
+      required:
+      - resourceType
+      - sourceType
+      - callbackEndpoint
+      - payloadTemplate
+      properties:
+        resourceType:
+          type: string
+          description: Type of resource this cleanup handles (opaque identifier)
+        sourceType:
+          type: string
+          description: Type of entity that will be cleaned up (opaque identifier)
+        onDeleteAction:
+          $ref: '#/components/schemas/OnDeleteAction'
+          nullable: true
+          description: Action to take when resource is deleted (defaults to CASCADE if not specified)
+        serviceName:
+          type: string
+          nullable: true
+          description: Target service name for callback invocation via lib-mesh (defaults to sourceType if not specified)
+        callbackEndpoint:
+          type: string
+          description: Endpoint path (e.g., /actor/cleanup-by-character)
+        payloadTemplate:
+          type: string
+          description: JSON template with {{resourceId}} placeholder
+        description:
+          type: string
+          nullable: true
+          description: Human-readable description of cleanup action
+
+    DefineCleanupResponse:
+      type: object
+      additionalProperties: false
+      description: Response after defining a cleanup callback
+      required:
+      - resourceType
+      - sourceType
+      - registered
+      properties:
+        resourceType:
+          type: string
+          description: Resource type for callback (opaque identifier)
+        sourceType:
+          type: string
+          description: Source type for callback (opaque identifier)
+        registered:
+          type: boolean
+          description: True if callback was registered (or updated)
+        previouslyDefined:
+          type: boolean
+          description: True if this callback was already defined (updated)
+
+    ExecuteCleanupRequest:
+      type: object
+      additionalProperties: false
+      description: Request to execute cleanup for a resource
+      required:
+      - resourceType
+      - resourceId
+      properties:
+        resourceType:
+          type: string
+          description: Type of resource to clean up (opaque identifier)
+        resourceId:
+          type: string
+          format: uuid
+          description: ID of the resource to clean up
+        gracePeriodSeconds:
+          type: integer
+          nullable: true
+          description: Override grace period in seconds (uses default if not specified, 0 to skip)
+        cleanupPolicy:
+          $ref: '#/components/schemas/CleanupPolicy'
+          nullable: true
+          description: Override cleanup policy (uses resource default if not specified)
+        dryRun:
+          type: boolean
+          nullable: true
+          description: |
+            If true, returns what callbacks WOULD execute without actually
+            executing them. Useful for pre-deletion validation and debugging.
+            Defaults to false.
+
+    ExecuteCleanupResponse:
+      type: object
+      additionalProperties: false
+      description: Response after attempting to execute cleanup
+      required:
+      - resourceType
+      - resourceId
+      - success
+      - dryRun
+      - callbackResults
+      properties:
+        resourceType:
+          type: string
+          description: Type of resource cleaned up
+        resourceId:
+          type: string
+          format: uuid
+          description: ID of the resource cleaned up
+        success:
+          type: boolean
+          description: True if cleanup completed (per cleanup policy)
+        abortReason:
+          type: string
+          nullable: true
+          description: Why cleanup was aborted (refcount changed, callback failed with ALL_REQUIRED, etc.)
+        callbackResults:
+          type: array
+          items:
+            $ref: '#/components/schemas/CleanupCallbackResult'
+          description: Results of each cleanup callback
+        cleanupDurationMs:
+          type: integer
+          description: Total cleanup execution time in milliseconds
+        dryRun:
+          type: boolean
+          description: True if this was a preview (no callbacks were actually executed)
+
+    CleanupCallbackResult:
+      type: object
+      additionalProperties: false
+      description: Result of executing a single cleanup callback
+      required:
+      - sourceType
+      - serviceName
+      - endpoint
+      - success
+      properties:
+        sourceType:
+          type: string
+          description: Source type that was cleaned up (opaque identifier)
+        serviceName:
+          type: string
+          description: Service that was called
+        endpoint:
+          type: string
+          description: Endpoint that was called
+        success:
+          type: boolean
+          description: Whether callback succeeded
+        statusCode:
+          type: integer
+          nullable: true
+          description: HTTP status code from callback
+        errorMessage:
+          type: string
+          nullable: true
+          description: Error message if callback failed
+        durationMs:
+          type: integer
+          description: Callback execution time in milliseconds
+
+    # =========================================================================
+    # Cleanup List/Remove Models
+    # =========================================================================
+
+    ListCleanupCallbacksRequest:
+      type: object
+      additionalProperties: false
+      description: Request to list registered cleanup callbacks
+      properties:
+        resourceType:
+          type: string
+          nullable: true
+          description: Filter by resource type (list all if not specified)
+        sourceType:
+          type: string
+          nullable: true
+          description: Filter by source type (requires resourceType)
+
+    ListCleanupCallbacksResponse:
+      type: object
+      additionalProperties: false
+      description: List of registered cleanup callbacks
+      required:
+      - callbacks
+      - totalCount
+      properties:
+        callbacks:
+          type: array
+          items:
+            $ref: '#/components/schemas/CleanupCallbackSummary'
+          description: Registered callbacks matching filter
+        totalCount:
+          type: integer
+          description: Total number of callbacks returned
+
+    CleanupCallbackSummary:
+      type: object
+      additionalProperties: false
+      description: Summary of a registered cleanup callback
+      required:
+      - resourceType
+      - sourceType
+      - onDeleteAction
+      - serviceName
+      - callbackEndpoint
+      - registeredAt
+      properties:
+        resourceType:
+          type: string
+          description: Type of resource this callback handles
+        sourceType:
+          type: string
+          description: Type of entity that will be cleaned up
+        onDeleteAction:
+          $ref: '#/components/schemas/OnDeleteAction'
+          description: Action taken when resource is deleted
+        serviceName:
+          type: string
+          description: Target service for callback invocation
+        callbackEndpoint:
+          type: string
+          description: Endpoint path called during cleanup
+        registeredAt:
+          type: string
+          format: date-time
+          description: When this callback was registered
+        description:
+          type: string
+          nullable: true
+          description: Human-readable description
+
+    RemoveCleanupCallbackRequest:
+      type: object
+      additionalProperties: false
+      description: Request to remove a cleanup callback
+      required:
+      - resourceType
+      - sourceType
+      properties:
+        resourceType:
+          type: string
+          description: Type of resource the callback handles
+        sourceType:
+          type: string
+          description: Type of entity the callback cleans up
+
+    RemoveCleanupCallbackResponse:
+      type: object
+      additionalProperties: false
+      description: Response after removing a cleanup callback
+      required:
+      - resourceType
+      - sourceType
+      - wasRegistered
+      properties:
+        resourceType:
+          type: string
+          description: Resource type of removed callback
+        sourceType:
+          type: string
+          description: Source type of removed callback
+        wasRegistered:
+          type: boolean
+          description: True if callback existed before removal
+        removedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When callback was removed (null if wasn't registered)
+
+    # =========================================================================
+    # Compression Management Models
+    # =========================================================================
+
+    DefineCompressCallbackRequest:
+      type: object
+      additionalProperties: false
+      description: Request to register a compression callback
+      required:
+      - resourceType
+      - sourceType
+      - compressEndpoint
+      - compressPayloadTemplate
+      properties:
+        resourceType:
+          type: string
+          description: Type of resource this compression handles (opaque identifier)
+        sourceType:
+          type: string
+          description: Type of data being compressed (opaque identifier, e.g., "character-personality")
+        serviceName:
+          type: string
+          nullable: true
+          description: Target service name (defaults to sourceType if not specified)
+        compressEndpoint:
+          type: string
+          description: Endpoint returning compressed data (e.g., /character-personality/get-compress-data)
+        compressPayloadTemplate:
+          type: string
+          description: JSON template with {{resourceId}} placeholder
+        decompressEndpoint:
+          type: string
+          nullable: true
+          description: Endpoint for restoring data (e.g., /character-personality/restore-from-archive)
+        decompressPayloadTemplate:
+          type: string
+          nullable: true
+          description: JSON template with {{resourceId}} and {{data}} placeholders
+        priority:
+          type: integer
+          default: 100
+          description: Execution order (lower = earlier). Use for dependency ordering.
+        description:
+          type: string
+          nullable: true
+          description: Human-readable description of what data this compresses
+
+    DefineCompressCallbackResponse:
+      type: object
+      additionalProperties: false
+      description: Response after registering compression callback
+      required:
+      - resourceType
+      - sourceType
+      - registered
+      properties:
+        resourceType:
+          type: string
+          description: Resource type for callback
+        sourceType:
+          type: string
+          description: Source type for callback
+        registered:
+          type: boolean
+          description: True if callback was registered
+        previouslyDefined:
+          type: boolean
+          description: True if callback was already defined (updated)
+
+    ExecuteCompressRequest:
+      type: object
+      additionalProperties: false
+      description: Request to compress a resource
+      required:
+      - resourceType
+      - resourceId
+      properties:
+        resourceType:
+          type: string
+          description: Type of resource to compress
+        resourceId:
+          type: string
+          format: uuid
+          description: ID of the resource to compress
+        deleteSourceData:
+          type: boolean
+          default: false
+          description: If true, invoke cleanup callbacks after successful archival
+        compressionPolicy:
+          $ref: '#/components/schemas/CompressionPolicy'
+          nullable: true
+          description: Override policy (uses default from config if not specified)
+        dryRun:
+          type: boolean
+          default: false
+          description: If true, return what would be compressed without executing
+
+    ExecuteCompressResponse:
+      type: object
+      additionalProperties: false
+      description: Compression execution result
+      required:
+      - resourceType
+      - resourceId
+      - success
+      - dryRun
+      - callbackResults
+      - compressionDurationMs
+      properties:
+        resourceType:
+          type: string
+          description: Type of resource compressed
+        resourceId:
+          type: string
+          format: uuid
+          description: ID of the resource compressed
+        success:
+          type: boolean
+          description: True if compression completed successfully
+        archiveId:
+          type: string
+          format: uuid
+          nullable: true
+          description: ID of created archive (null if failed or dryRun)
+        abortReason:
+          type: string
+          nullable: true
+          description: Why compression was aborted
+        callbackResults:
+          type: array
+          items:
+            $ref: '#/components/schemas/CompressCallbackResult'
+          description: Results of each compression callback
+        sourceDataDeleted:
+          type: boolean
+          description: Whether cleanup callbacks were executed after archival
+        dryRun:
+          type: boolean
+          description: True if this was a preview (no callbacks actually executed)
+        compressionDurationMs:
+          type: integer
+          description: Total compression execution time in milliseconds
+
+    CompressCallbackResult:
+      type: object
+      additionalProperties: false
+      description: Result of a single compression callback
+      required:
+      - sourceType
+      - serviceName
+      - endpoint
+      - success
+      - durationMs
+      properties:
+        sourceType:
+          type: string
+          description: Source type that provided data
+        serviceName:
+          type: string
+          description: Service that was called
+        endpoint:
+          type: string
+          description: Endpoint that was called
+        success:
+          type: boolean
+          description: Whether callback succeeded
+        statusCode:
+          type: integer
+          nullable: true
+          description: HTTP status code from callback
+        errorMessage:
+          type: string
+          nullable: true
+          description: Error message if callback failed
+        dataSize:
+          type: integer
+          nullable: true
+          description: Size of compressed data in bytes
+        durationMs:
+          type: integer
+          description: Callback execution time in milliseconds
+
+    ExecuteDecompressRequest:
+      type: object
+      additionalProperties: false
+      description: Request to decompress and restore a resource
+      required:
+      - resourceType
+      - resourceId
+      properties:
+        resourceType:
+          type: string
+          description: Type of resource to decompress
+        resourceId:
+          type: string
+          format: uuid
+          description: ID of the resource to decompress
+        archiveId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Specific archive version (latest if not specified)
+
+    ExecuteDecompressResponse:
+      type: object
+      additionalProperties: false
+      description: Decompression execution result
+      required:
+      - resourceType
+      - resourceId
+      - success
+      - callbackResults
+      - decompressionDurationMs
+      properties:
+        resourceType:
+          type: string
+          description: Type of resource decompressed
+        resourceId:
+          type: string
+          format: uuid
+          description: ID of the resource decompressed
+        success:
+          type: boolean
+          description: True if decompression completed successfully
+        archiveId:
+          type: string
+          format: uuid
+          nullable: true
+          description: ID of archive that was restored
+        abortReason:
+          type: string
+          nullable: true
+          description: Why decompression was aborted
+        callbackResults:
+          type: array
+          items:
+            $ref: '#/components/schemas/DecompressCallbackResult'
+          description: Results of each decompression callback
+        decompressionDurationMs:
+          type: integer
+          description: Total decompression execution time in milliseconds
+
+    DecompressCallbackResult:
+      type: object
+      additionalProperties: false
+      description: Result of a single decompression callback
+      required:
+      - sourceType
+      - serviceName
+      - endpoint
+      - success
+      - durationMs
+      properties:
+        sourceType:
+          type: string
+          description: Source type that was restored
+        serviceName:
+          type: string
+          description: Service that was called
+        endpoint:
+          type: string
+          description: Endpoint that was called
+        success:
+          type: boolean
+          description: Whether callback succeeded
+        statusCode:
+          type: integer
+          nullable: true
+          description: HTTP status code from callback
+        errorMessage:
+          type: string
+          nullable: true
+          description: Error message if callback failed
+        durationMs:
+          type: integer
+          description: Callback execution time in milliseconds
+
+    ListCompressCallbacksRequest:
+      type: object
+      additionalProperties: false
+      description: Request to list registered compression callbacks
+      properties:
+        resourceType:
+          type: string
+          nullable: true
+          description: Filter by resource type (list all if not specified)
+        sourceType:
+          type: string
+          nullable: true
+          description: Filter by source type (requires resourceType)
+
+    ListCompressCallbacksResponse:
+      type: object
+      additionalProperties: false
+      description: List of registered compression callbacks
+      required:
+      - callbacks
+      - totalCount
+      properties:
+        callbacks:
+          type: array
+          items:
+            $ref: '#/components/schemas/CompressCallbackSummary'
+          description: Registered callbacks matching filter
+        totalCount:
+          type: integer
+          description: Total number of callbacks returned
+
+    CompressCallbackSummary:
+      type: object
+      additionalProperties: false
+      description: Summary of a registered compression callback
+      required:
+      - resourceType
+      - sourceType
+      - serviceName
+      - compressEndpoint
+      - priority
+      - registeredAt
+      properties:
+        resourceType:
+          type: string
+          description: Type of resource this callback handles
+        sourceType:
+          type: string
+          description: Type of data being compressed
+        serviceName:
+          type: string
+          description: Target service for callback invocation
+        compressEndpoint:
+          type: string
+          description: Endpoint called during compression
+        decompressEndpoint:
+          type: string
+          nullable: true
+          description: Endpoint called during decompression
+        priority:
+          type: integer
+          description: Execution order (lower = earlier)
+        registeredAt:
+          type: string
+          format: date-time
+          description: When this callback was registered
+        description:
+          type: string
+          nullable: true
+          description: Human-readable description
+
+    GetArchiveRequest:
+      type: object
+      additionalProperties: false
+      description: Request to retrieve a compressed archive
+      required:
+      - resourceType
+      - resourceId
+      properties:
+        resourceType:
+          type: string
+          description: Type of resource
+        resourceId:
+          type: string
+          format: uuid
+          description: ID of the resource
+        archiveId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Specific version (latest if not specified)
+
+    GetArchiveResponse:
+      type: object
+      additionalProperties: false
+      description: Response containing archive data
+      required:
+      - resourceType
+      - resourceId
+      - found
+      properties:
+        resourceType:
+          type: string
+          description: Type of resource
+        resourceId:
+          type: string
+          format: uuid
+          description: ID of the resource
+        found:
+          type: boolean
+          description: True if archive exists
+        archive:
+          $ref: '#/components/schemas/ResourceArchive'
+          nullable: true
+          description: The archive data (null if not found)
+
+    ResourceArchive:
+      type: object
+      additionalProperties: false
+      description: Bundled compressed archive
+      required:
+      - archiveId
+      - resourceType
+      - resourceId
+      - version
+      - entries
+      - createdAt
+      - sourceDataDeleted
+      properties:
+        archiveId:
+          type: string
+          format: uuid
+          description: Unique identifier for this archive
+        resourceType:
+          type: string
+          description: Type of resource archived
+        resourceId:
+          type: string
+          format: uuid
+          description: ID of the resource archived
+        version:
+          type: integer
+          description: Archive version (increments on re-compression)
+        entries:
+          type: array
+          items:
+            $ref: '#/components/schemas/ArchiveBundleEntry'
+          description: Data entries from each compression callback
+        createdAt:
+          type: string
+          format: date-time
+          description: When this archive was created
+        sourceDataDeleted:
+          type: boolean
+          description: Whether original source data was deleted after archival
+
+    ArchiveBundleEntry:
+      type: object
+      additionalProperties: false
+      description: Single entry in the archive bundle
+      required:
+      - sourceType
+      - serviceName
+      - data
+      - compressedAt
+      properties:
+        sourceType:
+          type: string
+          description: Type of data (e.g., "character-personality")
+        serviceName:
+          type: string
+          description: Service that provided the data
+        data:
+          type: string
+          description: Base64-encoded gzipped JSON from the service callback
+        compressedAt:
+          type: string
+          format: date-time
+          description: When this entry was compressed
+        dataChecksum:
+          type: string
+          nullable: true
+          description: SHA256 hash for integrity verification
+        originalSizeBytes:
+          type: integer
+          nullable: true
+          description: Size before compression
+
+    # =========================================================================
+    # Snapshot Management Models (Live Entity Snapshots)
+    # =========================================================================
+
+    ExecuteSnapshotRequest:
+      type: object
+      additionalProperties: false
+      description: Request to create an ephemeral snapshot of a living resource
+      required:
+      - resourceType
+      - resourceId
+      properties:
+        resourceType:
+          type: string
+          description: |
+            Type of resource to snapshot (opaque identifier).
+            Must match compression callback registrations.
+        resourceId:
+          type: string
+          format: uuid
+          description: ID of the resource to snapshot
+        snapshotType:
+          type: string
+          description: |
+            Optional label for the snapshot purpose (e.g., "storyline_seed", "analytics").
+            Stored in metadata for filtering/debugging.
+        ttlSeconds:
+          type: integer
+          nullable: true
+          description: |
+            Time-to-live in seconds for the snapshot.
+            If not specified, uses the configured default (RESOURCE_SNAPSHOT_DEFAULT_TTL_SECONDS).
+            Value is clamped to configured min/max range.
+            Snapshot is automatically deleted by Redis after TTL expires.
+        compressionPolicy:
+          $ref: '#/components/schemas/CompressionPolicy'
+          nullable: true
+          description: |
+            Policy for callback execution.
+            If not specified, uses the configured default (RESOURCE_DEFAULT_COMPRESSION_POLICY).
+        dryRun:
+          type: boolean
+          default: false
+          description: If true, return what would be captured without storing
+        filterSourceTypes:
+          type: array
+          items:
+            type: string
+          nullable: true
+          description: |
+            Optional list of source types to include in the snapshot.
+            Only compression callbacks matching these source types will be executed.
+            If omitted or empty, all registered compression callbacks are executed.
+            Example: ["character-personality", "character-history"]
+
+    ExecuteSnapshotResponse:
+      type: object
+      additionalProperties: false
+      description: Result of snapshot execution
+      required:
+      - resourceType
+      - resourceId
+      - success
+      - dryRun
+      - snapshotDurationMs
+      properties:
+        resourceType:
+          type: string
+          description: Type of resource snapshotted
+        resourceId:
+          type: string
+          format: uuid
+          description: ID of the resource snapshotted
+        success:
+          type: boolean
+          description: True if snapshot completed successfully
+        dryRun:
+          type: boolean
+          description: True if this was a dry run
+        snapshotId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Unique ID for this snapshot (null on failure or dry run)
+        expiresAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When this snapshot will expire (null on failure or dry run)
+        abortReason:
+          type: string
+          nullable: true
+          description: Why snapshot was aborted
+        callbackResults:
+          type: array
+          items:
+            $ref: '#/components/schemas/CompressCallbackResult'
+          description: Results of each compression callback
+        snapshotDurationMs:
+          type: integer
+          description: Total snapshot execution time in milliseconds
+
+    GetSnapshotRequest:
+      type: object
+      additionalProperties: false
+      description: Request to retrieve a snapshot
+      required:
+      - snapshotId
+      properties:
+        snapshotId:
+          type: string
+          format: uuid
+          description: ID of the snapshot to retrieve
+        filterSourceTypes:
+          type: array
+          items:
+            type: string
+          nullable: true
+          description: |
+            Optional filter for which entries to return from the snapshot.
+            Only entries with matching source types are returned.
+            If omitted or empty, all entries are returned.
+
+    GetSnapshotResponse:
+      type: object
+      additionalProperties: false
+      description: Response containing snapshot data
+      required:
+      - snapshotId
+      - found
+      properties:
+        snapshotId:
+          type: string
+          format: uuid
+          description: ID of the snapshot
+        found:
+          type: boolean
+          description: True if snapshot exists (hasn't expired)
+        snapshot:
+          $ref: '#/components/schemas/ResourceSnapshot'
+          nullable: true
+          description: The snapshot data (null if not found/expired)
+
+    ResourceSnapshot:
+      type: object
+      additionalProperties: false
+      description: Ephemeral snapshot of a living resource
+      required:
+      - snapshotId
+      - resourceType
+      - resourceId
+      - snapshotType
+      - entries
+      - createdAt
+      - expiresAt
+      properties:
+        snapshotId:
+          type: string
+          format: uuid
+          description: Unique identifier for this snapshot
+        resourceType:
+          type: string
+          description: Type of resource snapshotted
+        resourceId:
+          type: string
+          format: uuid
+          description: ID of the resource snapshotted
+        snapshotType:
+          type: string
+          description: Label for snapshot purpose (e.g., "storyline_seed")
+        entries:
+          type: array
+          items:
+            $ref: '#/components/schemas/ArchiveBundleEntry'
+          description: Data entries from each compression callback (same format as archives)
+        createdAt:
+          type: string
+          format: date-time
+          description: When this snapshot was created
+        expiresAt:
+          type: string
+          format: date-time
+          description: When this snapshot will expire
+
+    # =========================================================================
+    # Seeded Resource Management Models
+    # =========================================================================
+
+    ListSeededResourcesRequest:
+      type: object
+      additionalProperties: false
+      description: Request to list available seeded resources
+      properties:
+        resourceType:
+          type: string
+          nullable: true
+          description: Filter by resource type (list all types if not specified)
+
+    ListSeededResourcesResponse:
+      type: object
+      additionalProperties: false
+      description: List of available seeded resources
+      required:
+      - resources
+      - totalCount
+      properties:
+        resources:
+          type: array
+          items:
+            $ref: '#/components/schemas/SeededResourceSummary'
+          description: Available seeded resources
+        totalCount:
+          type: integer
+          description: Total number of resources returned
+
+    SeededResourceSummary:
+      type: object
+      additionalProperties: false
+      description: Summary of an available seeded resource
+      required:
+      - resourceType
+      - identifier
+      - contentType
+      properties:
+        resourceType:
+          type: string
+          description: Resource type category (e.g., "behavior", "species-definition")
+        identifier:
+          type: string
+          description: Unique identifier within the resource type
+        contentType:
+          type: string
+          description: MIME type of the content (e.g., "application/yaml")
+        sizeBytes:
+          type: integer
+          nullable: true
+          description: Content size in bytes (null in list responses for efficiency; use getSeededResource for size)
+
+    GetSeededResourceRequest:
+      type: object
+      additionalProperties: false
+      description: Request to get a seeded resource
+      required:
+      - resourceType
+      - identifier
+      properties:
+        resourceType:
+          type: string
+          description: Resource type category
+        identifier:
+          type: string
+          description: Resource identifier
+
+    GetSeededResourceResponse:
+      type: object
+      additionalProperties: false
+      description: Response containing seeded resource content
+      required:
+      - resourceType
+      - identifier
+      - found
+      properties:
+        resourceType:
+          type: string
+          description: Resource type requested
+        identifier:
+          type: string
+          description: Resource identifier requested
+        found:
+          type: boolean
+          description: True if resource was found
+        resource:
+          $ref: '#/components/schemas/SeededResourceDetail'
+          nullable: true
+          description: The resource data (null if not found)
+
+    SeededResourceDetail:
+      type: object
+      additionalProperties: false
+      description: Full seeded resource with content
+      required:
+      - resourceType
+      - identifier
+      - contentType
+      - content
+      properties:
+        resourceType:
+          type: string
+          description: Resource type category
+        identifier:
+          type: string
+          description: Unique identifier
+        contentType:
+          type: string
+          description: MIME type of the content
+        content:
+          type: string
+          description: Base64-encoded resource content
+        metadata:
+          type: object
+          additionalProperties:
+            type: string
+          nullable: true
+          description: Optional key-value metadata

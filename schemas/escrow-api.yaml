@@ -20,8 +20,11 @@ info:
     **POST-Only API Pattern**: This API uses POST for all operations to support
     zero-copy WebSocket routing. Path parameters are passed in request bodies.
 
-    **Schema Rules**: AI agents MUST review docs/reference/SCHEMA-RULES.md before
-    modifying this schema. Optional reference types require `nullable: true`.
+    **SCHEMA MODIFICATION GATE**: STOP. Before modifying this schema, you MUST:
+    1. Read docs/reference/SCHEMA-RULES.md
+    2. State which section applies to your change
+    3. Only then proceed with edits
+    Edits without stating the applicable rule are FORBIDDEN.
 
 servers:
 - url: http://localhost:5012
@@ -61,11 +64,6 @@ paths:
                 $ref: '#/components/schemas/CreateEscrowResponse'
         '400':
           description: Invalid request
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-
   /escrow/get:
     post:
       operationId: getEscrow
@@ -91,11 +89,6 @@ paths:
                 $ref: '#/components/schemas/GetEscrowResponse'
         '404':
           description: Escrow not found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-
   /escrow/list:
     post:
       operationId: listEscrows
@@ -147,11 +140,6 @@ paths:
                 $ref: '#/components/schemas/GetMyTokenResponse'
         '404':
           description: Escrow or party not found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-
   # ===========================================================================
   # Deposits (3 endpoints)
   # ===========================================================================
@@ -186,11 +174,6 @@ paths:
                 $ref: '#/components/schemas/DepositResponse'
         '400':
           description: Deposit failed
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-
   /escrow/deposit/validate:
     post:
       operationId: validateDeposit
@@ -268,11 +251,6 @@ paths:
                 $ref: '#/components/schemas/ConsentResponse'
         '400':
           description: Consent failed
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-
   /escrow/consent/status:
     post:
       operationId: getConsentStatus
@@ -329,11 +307,6 @@ paths:
                 $ref: '#/components/schemas/ReleaseResponse'
         '400':
           description: Release failed
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-
   /escrow/refund:
     post:
       operationId: refund
@@ -359,11 +332,6 @@ paths:
                 $ref: '#/components/schemas/RefundResponse'
         '400':
           description: Refund failed
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-
   /escrow/cancel:
     post:
       operationId: cancel
@@ -389,11 +357,6 @@ paths:
                 $ref: '#/components/schemas/CancelResponse'
         '400':
           description: Cancel failed
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-
   /escrow/dispute:
     post:
       operationId: dispute
@@ -419,11 +382,64 @@ paths:
                 $ref: '#/components/schemas/DisputeResponse'
         '400':
           description: Dispute failed
+  /escrow/confirm-release:
+    post:
+      operationId: confirmRelease
+      tags:
+      - Completion
+      summary: Confirm receipt of released assets
+      description: |
+        Called by parties to confirm they received their released assets.
+        Required when ReleaseMode is party_required or service_and_party.
+      x-permissions:
+      - role: user
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ConfirmReleaseRequest'
+      responses:
+        '200':
+          description: Confirmation recorded
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
-
+                $ref: '#/components/schemas/ConfirmReleaseResponse'
+        '400':
+          description: Confirmation failed
+        '404':
+          description: Escrow not found
+  /escrow/confirm-refund:
+    post:
+      operationId: confirmRefund
+      tags:
+      - Completion
+      summary: Confirm receipt of refunded assets
+      description: |
+        Called by parties to confirm they received their refunded deposits.
+        Required when RefundMode is party_required.
+      x-permissions:
+      - role: user
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ConfirmRefundRequest'
+      responses:
+        '200':
+          description: Confirmation recorded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConfirmRefundResponse'
+        '400':
+          description: Confirmation failed
+        '404':
+          description: Escrow not found
   # ===========================================================================
   # Arbiter (1 endpoint)
   # ===========================================================================
@@ -453,11 +469,6 @@ paths:
                 $ref: '#/components/schemas/ResolveResponse'
         '400':
           description: Resolution failed
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-
   # ===========================================================================
   # Condition (1 endpoint)
   # ===========================================================================
@@ -489,11 +500,6 @@ paths:
                 $ref: '#/components/schemas/VerifyConditionResponse'
         '400':
           description: Verification failed
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-
   # ===========================================================================
   # Validation (2 endpoints)
   # ===========================================================================
@@ -547,11 +553,6 @@ paths:
                 $ref: '#/components/schemas/ReaffirmResponse'
         '400':
           description: Reaffirmation failed
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-
   # ===========================================================================
   # Handlers (3 endpoints)
   # ===========================================================================
@@ -581,11 +582,6 @@ paths:
                 $ref: '#/components/schemas/RegisterHandlerResponse'
         '400':
           description: Registration failed
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-
   /escrow/handler/list:
     post:
       operationId: listHandlers
@@ -635,11 +631,6 @@ paths:
                 $ref: '#/components/schemas/DeregisterHandlerResponse'
         '400':
           description: Deregistration failed
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-
 components:
   schemas:
     # ==========================================================================
@@ -804,6 +795,45 @@ components:
       - deposit
       - release
 
+    ReleaseMode:
+      type: string
+      description: |
+        Controls how release confirmation is handled:
+        - immediate: Finalizing → Released (skip Releasing state entirely).
+          ⚠️ WARNING: Use only for trusted/low-value scenarios (NPC vendors, system rewards).
+          Assets are marked as released BEFORE downstream services confirm transfers.
+          If downstream services fail, manual intervention may be required.
+        - service_only: Wait for downstream services (currency, inventory) to confirm transfers complete.
+        - party_required: Wait for all parties to call /confirm-release.
+        - service_and_party: Wait for both service completion AND party confirmation.
+      enum:
+      - immediate
+      - service_only
+      - party_required
+      - service_and_party
+
+    RefundMode:
+      type: string
+      description: |
+        Controls how refund confirmation is handled. Same semantics as ReleaseMode.
+        Refunds typically use 'immediate' since parties get their own assets back.
+      enum:
+      - immediate
+      - service_only
+      - party_required
+
+    ConfirmationTimeoutBehavior:
+      type: string
+      description: |
+        What happens when confirmation timeout expires:
+        - auto_confirm: If service events received, auto-confirm parties (default).
+        - dispute: Transition to Disputed state, require arbiter intervention.
+        - refund: Treat as failed, transition to Refunding.
+      enum:
+      - auto_confirm
+      - dispute
+      - refund
+
     # ==========================================================================
     # Core Models
     # ==========================================================================
@@ -940,7 +970,9 @@ components:
           type: object
           nullable: true
           additionalProperties: true
-          description: Game/application specific metadata
+          description: >-
+            Client-provided application-specific metadata.
+            No Bannou plugin reads specific keys from this field by convention.
         resolution:
           $ref: '#/components/schemas/EscrowResolution'
           description: How the escrow was resolved
@@ -949,6 +981,17 @@ components:
           type: string
           nullable: true
           description: Notes about the resolution
+        releaseMode:
+          $ref: '#/components/schemas/ReleaseMode'
+          description: How release confirmation is handled for this escrow.
+        refundMode:
+          $ref: '#/components/schemas/RefundMode'
+          description: How refund confirmation is handled for this escrow.
+        confirmationDeadline:
+          type: string
+          format: date-time
+          nullable: true
+          description: Deadline for party confirmations when in Releasing/Refunding state.
 
     EscrowParty:
       type: object
@@ -1102,7 +1145,9 @@ components:
           type: object
           nullable: true
           additionalProperties: true
-          description: Handler-specific data
+          description: >-
+            Custom asset handler-specific data.
+            No Bannou plugin reads specific keys from this field by convention.
         # Source tracking
         sourceOwnerId:
           type: string
@@ -1316,7 +1361,9 @@ components:
           type: object
           nullable: true
           additionalProperties: true
-          description: Additional failure details
+          description: >-
+            Validation failure diagnostic details.
+            No Bannou plugin reads specific keys from this field by convention.
 
     AssetHandlerInfo:
       type: object
@@ -1429,7 +1476,21 @@ components:
           type: object
           nullable: true
           additionalProperties: true
-          description: Application metadata
+          description: >-
+            Client-provided application-specific metadata.
+            No Bannou plugin reads specific keys from this field by convention.
+        releaseMode:
+          allOf:
+            - $ref: '#/components/schemas/ReleaseMode'
+          nullable: true
+          description: |
+            How release confirmation is handled. Defaults to service_only if not specified.
+            Only applies to unbound escrows; contract-bound escrows follow contract fulfillment.
+        refundMode:
+          allOf:
+            - $ref: '#/components/schemas/RefundMode'
+          nullable: true
+          description: How refund confirmation is handled. Defaults to immediate if not specified.
         idempotencyKey:
           type: string
           description: Idempotency key for this operation
@@ -1574,7 +1635,9 @@ components:
           type: object
           nullable: true
           additionalProperties: true
-          description: Custom asset data
+          description: >-
+            Custom asset handler-specific data.
+            No Bannou plugin reads specific keys from this field by convention.
 
     ReleaseAllocationInput:
       type: object
@@ -2309,6 +2372,100 @@ components:
           $ref: '#/components/schemas/EscrowAgreement'
           description: Disputed escrow agreement
 
+    ConfirmReleaseRequest:
+      type: object
+      description: Request to confirm receipt of released assets
+      additionalProperties: false
+      required:
+      - escrowId
+      - partyId
+      - releaseToken
+      properties:
+        escrowId:
+          type: string
+          format: uuid
+          description: The escrow being confirmed.
+        partyId:
+          type: string
+          format: uuid
+          description: The party confirming receipt.
+        releaseToken:
+          type: string
+          description: The party's release token (received via confirmation shortcut).
+        notes:
+          type: string
+          nullable: true
+          description: Optional confirmation notes.
+
+    ConfirmReleaseResponse:
+      type: object
+      description: Response from confirming release receipt
+      additionalProperties: false
+      required:
+      - escrowId
+      - confirmed
+      - allPartiesConfirmed
+      properties:
+        escrowId:
+          type: string
+          format: uuid
+          description: The escrow ID.
+        confirmed:
+          type: boolean
+          description: Whether this party's confirmation was recorded.
+        allPartiesConfirmed:
+          type: boolean
+          description: Whether all parties have now confirmed (triggers Released transition).
+        status:
+          $ref: '#/components/schemas/EscrowStatus'
+          description: Current escrow status after confirmation.
+          nullable: true
+
+    ConfirmRefundRequest:
+      type: object
+      description: Request to confirm receipt of refunded assets
+      additionalProperties: false
+      required:
+      - escrowId
+      - partyId
+      properties:
+        escrowId:
+          type: string
+          format: uuid
+          description: The escrow being confirmed.
+        partyId:
+          type: string
+          format: uuid
+          description: The party confirming receipt of refund.
+        notes:
+          type: string
+          nullable: true
+          description: Optional confirmation notes.
+
+    ConfirmRefundResponse:
+      type: object
+      description: Response from confirming refund receipt
+      additionalProperties: false
+      required:
+      - escrowId
+      - confirmed
+      - allPartiesConfirmed
+      properties:
+        escrowId:
+          type: string
+          format: uuid
+          description: The escrow ID.
+        confirmed:
+          type: boolean
+          description: Whether this party's confirmation was recorded.
+        allPartiesConfirmed:
+          type: boolean
+          description: Whether all parties have now confirmed (triggers Refunded transition).
+        status:
+          $ref: '#/components/schemas/EscrowStatus'
+          description: Current escrow status after confirmation.
+          nullable: true
+
     # ==========================================================================
     # Request/Response Models - Arbiter
     # ==========================================================================
@@ -2443,7 +2600,9 @@ components:
           type: object
           nullable: true
           additionalProperties: true
-          description: Proof/evidence data
+          description: >-
+            Caller-provided proof/evidence data for condition verification.
+            No Bannou plugin reads specific keys from this field by convention.
         idempotencyKey:
           type: string
           description: Idempotency key
@@ -2620,26 +2779,4 @@ components:
           type: boolean
           description: Whether deregistration succeeded
 
-    # ==========================================================================
-    # Error Response
-    # ==========================================================================
-
-    ErrorResponse:
-      type: object
-      description: Standard error response format
-      required:
-      - error
-      - message
-      properties:
-        error:
-          type: string
-          description: Error code
-        message:
-          type: string
-          description: Human-readable error message
-        details:
-          type: object
-          nullable: true
-          additionalProperties: true
-          description: Additional error details
 

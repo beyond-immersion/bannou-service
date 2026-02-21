@@ -3,8 +3,8 @@
 // Unit tests for handler mapping layer.
 // =============================================================================
 
+using BeyondImmersion.Bannou.BehaviorCompiler.Archetypes;
 using BeyondImmersion.BannouService.Behavior;
-using BeyondImmersion.BannouService.Behavior.Archetypes;
 using BeyondImmersion.BannouService.Behavior.Handlers;
 using BeyondImmersion.BannouService.Behavior.Handlers.CoreEmitters;
 using Xunit;

@@ -28,6 +28,8 @@ public class AccountTestHandler : BaseHttpTestHandler
         new ServiceTest(TestGetAuthMethods, "GetAuthMethods", "Account", "Test get authentication methods for account"),
         new ServiceTest(TestAddAuthMethod, "AddAuthMethod", "Account", "Test add authentication method to account"),
         new ServiceTest(TestRemoveAuthMethod, "RemoveAuthMethod", "Account", "Test remove authentication method from account"),
+        new ServiceTest(TestOAuthProviderFlow, "OAuthProviderFlow", "Account", "Test full OAuth provider flow with multiple providers and verification"),
+        new ServiceTest(TestCannotOrphanAccount, "CannotOrphanAccount", "Account", "Test that removing last auth method from passwordless account is rejected"),
 
         // Profile and password management
         new ServiceTest(TestUpdateProfile, "UpdateProfile", "Account", "Test update account profile"),
@@ -248,7 +250,14 @@ public class AccountTestHandler : BaseHttpTestHandler
             };
 
             var response = await accountClient.AddAuthMethodAsync(addAuthRequest);
-            return TestResult.Successful($"AddAuthMethod completed: MethodId={response.MethodId}, Provider={response.Provider}");
+
+            // Verify the auth method appears in GetAccount response (events should contain same data)
+            var accountAfterAdd = await accountClient.GetAccountAsync(new GetAccountRequest { AccountId = createResponse.AccountId });
+            var hasAuthMethod = accountAfterAdd.AuthMethods?.Any(m => m.Provider == AuthProvider.Discord) ?? false;
+            if (!hasAuthMethod)
+                return TestResult.Failed("Auth method not found in GetAccount response after adding");
+
+            return TestResult.Successful($"AddAuthMethod completed: MethodId={response.MethodId}, Provider={response.Provider}, verified in GetAccount");
         }, "Add auth method");
 
     private static async Task<TestResult> TestRemoveAuthMethod(ITestClient client, string[] args) =>
@@ -281,6 +290,215 @@ public class AccountTestHandler : BaseHttpTestHandler
                 [200, 404],
                 "RemoveAuthMethod for test method ID");
         }, "Remove auth method");
+
+    private static async Task<TestResult> TestOAuthProviderFlow(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
+        {
+            var accountClient = GetServiceClient<IAccountClient>();
+            var testUsername = GenerateTestId("oauthtest");
+
+            // Step 1: Create account
+            var createRequest = new CreateAccountRequest
+            {
+                DisplayName = testUsername,
+                Email = GenerateTestEmail(testUsername),
+                Roles = new List<string>()
+            };
+
+            var createResponse = await accountClient.CreateAccountAsync(createRequest);
+            if (createResponse.AccountId == Guid.Empty)
+                return TestResult.Failed("Failed to create test account for OAuth flow test");
+
+            var accountId = createResponse.AccountId;
+
+            // Step 2: Verify account starts with no auth methods
+            var initialAccount = await accountClient.GetAccountAsync(new GetAccountRequest { AccountId = accountId });
+            var initialAuthMethodCount = initialAccount.AuthMethods?.Count ?? 0;
+            if (initialAuthMethodCount != 0)
+                return TestResult.Failed($"New account should have 0 auth methods, found {initialAuthMethodCount}");
+
+            // Step 3: Add Discord auth method
+            var discordMethod = await accountClient.AddAuthMethodAsync(new AddAuthMethodRequest
+            {
+                AccountId = accountId,
+                Provider = OAuthProvider.Discord,
+                ExternalId = GenerateTestId("discord_ext"),
+                DisplayName = "Test Discord User"
+            });
+
+            if (discordMethod.Provider != OAuthProvider.Discord)
+                return TestResult.Failed($"Discord auth method returned wrong provider: {discordMethod.Provider}");
+
+            // Step 4: Add Google auth method
+            var googleMethod = await accountClient.AddAuthMethodAsync(new AddAuthMethodRequest
+            {
+                AccountId = accountId,
+                Provider = OAuthProvider.Google,
+                ExternalId = GenerateTestId("google_ext"),
+                DisplayName = "Test Google User"
+            });
+
+            if (googleMethod.Provider != OAuthProvider.Google)
+                return TestResult.Failed($"Google auth method returned wrong provider: {googleMethod.Provider}");
+
+            // Step 5: Add Steam auth method
+            var steamMethod = await accountClient.AddAuthMethodAsync(new AddAuthMethodRequest
+            {
+                AccountId = accountId,
+                Provider = OAuthProvider.Steam,
+                ExternalId = GenerateTestId("steam_ext"),
+                DisplayName = "Test Steam User"
+            });
+
+            if (steamMethod.Provider != OAuthProvider.Steam)
+                return TestResult.Failed($"Steam auth method returned wrong provider: {steamMethod.Provider}");
+
+            // Step 6: Verify GetAccount returns all auth methods
+            var accountWithMethods = await accountClient.GetAccountAsync(new GetAccountRequest { AccountId = accountId });
+            var authMethods = accountWithMethods.AuthMethods;
+
+            if (authMethods == null || authMethods.Count != 3)
+                return TestResult.Failed($"Expected 3 auth methods in GetAccount response, found {authMethods?.Count ?? 0}");
+
+            // Step 7: Verify all providers are present with correct types
+            var hasDiscord = authMethods.Any(m => m.Provider == AuthProvider.Discord);
+            var hasGoogle = authMethods.Any(m => m.Provider == AuthProvider.Google);
+            var hasSteam = authMethods.Any(m => m.Provider == AuthProvider.Steam);
+
+            if (!hasDiscord)
+                return TestResult.Failed("Discord auth method not found in GetAccount response");
+            if (!hasGoogle)
+                return TestResult.Failed("Google auth method not found in GetAccount response");
+            if (!hasSteam)
+                return TestResult.Failed("Steam auth method not found in GetAccount response");
+
+            // Step 8: Verify GetAuthMethods endpoint returns same data
+            var authMethodsResponse = await accountClient.GetAuthMethodsAsync(new GetAuthMethodsRequest { AccountId = accountId });
+            if (authMethodsResponse.AuthMethods.Count != 3)
+                return TestResult.Failed($"GetAuthMethods returned {authMethodsResponse.AuthMethods.Count} methods, expected 3");
+
+            // Step 9: Verify GetAccountByProvider works for each provider
+            var discordLookup = await accountClient.GetAccountByProviderAsync(new GetAccountByProviderRequest
+            {
+                Provider = OAuthProvider.Discord,
+                ExternalId = discordMethod.ExternalId ?? throw new InvalidOperationException("Discord ExternalId was null")
+            });
+            if (discordLookup.AccountId != accountId)
+                return TestResult.Failed("GetAccountByProvider(Discord) returned wrong account");
+
+            var googleLookup = await accountClient.GetAccountByProviderAsync(new GetAccountByProviderRequest
+            {
+                Provider = OAuthProvider.Google,
+                ExternalId = googleMethod.ExternalId ?? throw new InvalidOperationException("Google ExternalId was null")
+            });
+            if (googleLookup.AccountId != accountId)
+                return TestResult.Failed("GetAccountByProvider(Google) returned wrong account");
+
+            // Step 10: Remove one auth method and verify
+            await accountClient.RemoveAuthMethodAsync(new RemoveAuthMethodRequest
+            {
+                AccountId = accountId,
+                MethodId = discordMethod.MethodId
+            });
+
+            var afterRemoval = await accountClient.GetAccountAsync(new GetAccountRequest { AccountId = accountId });
+            if (afterRemoval.AuthMethods?.Count != 2)
+                return TestResult.Failed($"Expected 2 auth methods after removal, found {afterRemoval.AuthMethods?.Count ?? 0}");
+
+            var stillHasDiscord = afterRemoval.AuthMethods?.Any(m => m.Provider == AuthProvider.Discord) ?? false;
+            if (stillHasDiscord)
+                return TestResult.Failed("Discord auth method still present after removal");
+
+            // Cleanup
+            await accountClient.DeleteAccountAsync(new DeleteAccountRequest { AccountId = accountId });
+
+            return TestResult.Successful("OAuth provider flow verified: add 3 providers, verify in GetAccount/GetAuthMethods/GetAccountByProvider, remove 1, verify removal");
+        }, "OAuth provider flow");
+
+    private static async Task<TestResult> TestCannotOrphanAccount(ITestClient client, string[] args) =>
+        await ExecuteTestAsync(async () =>
+        {
+            var accountClient = GetServiceClient<IAccountClient>();
+            var testUsername = GenerateTestId("orphantest");
+
+            // Step 1: Create account WITHOUT password (simulating OAuth-only account)
+            var createRequest = new CreateAccountRequest
+            {
+                DisplayName = testUsername,
+                Email = null, // No email - OAuth-only pattern
+                PasswordHash = null, // No password - OAuth-only pattern
+                Roles = new List<string>()
+            };
+
+            var createResponse = await accountClient.CreateAccountAsync(createRequest);
+            if (createResponse.AccountId == Guid.Empty)
+                return TestResult.Failed("Failed to create passwordless test account");
+
+            var accountId = createResponse.AccountId;
+
+            // Step 2: Add a single OAuth auth method
+            var authMethod = await accountClient.AddAuthMethodAsync(new AddAuthMethodRequest
+            {
+                AccountId = accountId,
+                Provider = OAuthProvider.Discord,
+                ExternalId = GenerateTestId("discord_orphan"),
+                DisplayName = "Test Discord User"
+            });
+
+            // Verify auth method was added
+            var accountAfterAdd = await accountClient.GetAccountAsync(new GetAccountRequest { AccountId = accountId });
+            if (accountAfterAdd.AuthMethods?.Count != 1)
+                return TestResult.Failed($"Expected 1 auth method after adding, found {accountAfterAdd.AuthMethods?.Count ?? 0}");
+
+            // Step 3: Attempt to remove the ONLY auth method - should be rejected
+            var removeResult = await ExecuteExpectingAnyStatusAsync(
+                async () =>
+                {
+                    await accountClient.RemoveAuthMethodAsync(new RemoveAuthMethodRequest
+                    {
+                        AccountId = accountId,
+                        MethodId = authMethod.MethodId
+                    });
+                },
+                [400], // Expecting BadRequest - cannot orphan account
+                "Removing last auth method from passwordless account");
+
+            if (!removeResult.Success)
+            {
+                // Cleanup before failing
+                await accountClient.DeleteAccountAsync(new DeleteAccountRequest { AccountId = accountId });
+                return TestResult.Failed($"Expected 400 BadRequest when removing last auth method, got different result: {removeResult.Message}");
+            }
+
+            // Step 4: Verify auth method is still there
+            var accountAfterReject = await accountClient.GetAccountAsync(new GetAccountRequest { AccountId = accountId });
+            if (accountAfterReject.AuthMethods?.Count != 1)
+                return TestResult.Failed($"Auth method should still exist after rejected removal, found {accountAfterReject.AuthMethods?.Count ?? 0}");
+
+            // Step 5: Add password to account, then removal should succeed
+            await accountClient.UpdatePasswordHashAsync(new UpdatePasswordRequest
+            {
+                AccountId = accountId,
+                PasswordHash = BCrypt.Net.BCrypt.HashPassword("TestPassword123!")
+            });
+
+            // Now removing the auth method should work (account has password fallback)
+            await accountClient.RemoveAuthMethodAsync(new RemoveAuthMethodRequest
+            {
+                AccountId = accountId,
+                MethodId = authMethod.MethodId
+            });
+
+            // Verify removal succeeded
+            var accountAfterRemove = await accountClient.GetAccountAsync(new GetAccountRequest { AccountId = accountId });
+            if (accountAfterRemove.AuthMethods?.Count != 0)
+                return TestResult.Failed($"Expected 0 auth methods after removal with password, found {accountAfterRemove.AuthMethods?.Count ?? 0}");
+
+            // Cleanup
+            await accountClient.DeleteAccountAsync(new DeleteAccountRequest { AccountId = accountId });
+
+            return TestResult.Successful("Orphan protection verified: cannot remove last OAuth method from passwordless account, but can remove after adding password");
+        }, "Cannot orphan account");
 
     private static async Task<TestResult> TestUpdateProfile(ITestClient client, string[] args) =>
         await ExecuteTestAsync(async () =>
@@ -474,7 +692,7 @@ public class AccountTestHandler : BaseHttpTestHandler
                 Page = 1,
                 PageSize = 100
             });
-            var matchingEmails = emailFilterResponse.Accounts?.Count(a => a.Email.Contains(testPrefix)) ?? 0;
+            var matchingEmails = emailFilterResponse.Accounts?.Count(a => a.Email?.Contains(testPrefix) == true) ?? 0;
             if (matchingEmails < 2)
                 return TestResult.Failed($"Email filter should match at least 2 test accounts with example.com, got {matchingEmails}");
 
@@ -509,7 +727,7 @@ public class AccountTestHandler : BaseHttpTestHandler
                 PageSize = 100
             });
             var combinedMatches = combinedFilterResponse.Accounts?.Count(a =>
-                a.Email.Contains(testPrefix) && a.DisplayName?.Contains("alice") == true) ?? 0;
+                a.Email?.Contains(testPrefix) == true && a.DisplayName?.Contains("alice") == true) ?? 0;
             if (combinedMatches < 1)
                 return TestResult.Failed($"Combined filter should match at least 1 account, got {combinedMatches}");
 

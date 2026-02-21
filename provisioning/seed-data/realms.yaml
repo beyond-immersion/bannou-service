@@ -1,0 +1,71 @@
+# Default Realms for Game Worlds
+# Use the /realm/seed endpoint to load this data
+#
+# SPECIAL ENTRIES:
+# - VOID: Merge target for deleted realms (like /dev/null)
+#
+# NOTE: Realms require a gameServiceId. Update the UUIDs below to match
+# your deployment's game service configuration from /game-service/list.
+#
+# PLACEHOLDER GAME SERVICE ID:
+# Replace 00000000-0000-0000-0000-000000000000 with actual game service IDs.
+
+realms:
+  # =============================================================================
+  # SPECIAL SYSTEM ENTRIES (Must be seeded first)
+  # =============================================================================
+  - code: VOID
+    name: Void
+    gameServiceId: "00000000-0000-0000-0000-000000000000"  # UPDATE: Replace with actual game service ID
+    description: |
+      Special system realm used as a sink for entities whose realm should be removed.
+      Entities reassigned to VOID are effectively marked as "realm removed".
+      Cannot be used for new characters or locations. Functions like /dev/null.
+    category: SYSTEM
+    isActive: false
+    metadata:
+      isSystemType: true
+      allowNewEntities: false
+      description: "Merge target for deleted realms"
+
+  # =============================================================================
+  # EXAMPLE REALMS (Customize for your deployment)
+  # =============================================================================
+  - code: REALM_1
+    name: Realm One
+    gameServiceId: "00000000-0000-0000-0000-000000000000"  # UPDATE: Replace with actual game service ID
+    description: |
+      Primary fantasy realm with high magic and medieval technology.
+      Features diverse species including Elves, Dwarves, and Humans.
+    category: MAIN
+    isActive: true
+    metadata:
+      techLevel: "medieval"
+      magicLevel: "high"
+      themeStyle: "fantasy"
+
+  - code: REALM_2
+    name: Realm Two
+    gameServiceId: "00000000-0000-0000-0000-000000000000"  # UPDATE: Replace with actual game service ID
+    description: |
+      Cyberpunk realm with advanced technology and neural interfaces.
+      Augmented humans navigate corporate megacities.
+    category: MAIN
+    isActive: true
+    metadata:
+      techLevel: "futuristic"
+      magicLevel: "none"
+      themeStyle: "cyberpunk"
+
+  - code: REALM_3
+    name: Realm Three
+    gameServiceId: "00000000-0000-0000-0000-000000000000"  # UPDATE: Replace with actual game service ID
+    description: |
+      Post-apocalyptic survival realm. Remnants of civilization
+      struggle against mutants and harsh environments.
+    category: MAIN
+    isActive: true
+    metadata:
+      techLevel: "degraded"
+      magicLevel: "low"
+      themeStyle: "post-apocalyptic"

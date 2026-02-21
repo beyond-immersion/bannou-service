@@ -1019,7 +1019,8 @@ public partial class CharacterEncounterController
                         "format": "uuid"
                     },
                     "minItems": 2,
-                    "description": "Character IDs involved (minimum 2)"
+                    "maxItems": 100,
+                    "description": "Character IDs involved (minimum 2, server enforces MaxParticipantsPerEncounter config limit)"
                 },
                 "perspectives": {
                     "type": "array",
@@ -1033,7 +1034,7 @@ public partial class CharacterEncounterController
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Additional encounter data"
+                    "description": "Client-provided encounter-specific data. No Bannou plugin reads specific keys from this field by convention."
                 }
             }
         },
@@ -1069,6 +1070,14 @@ public partial class CharacterEncounterController
                         }
                     ],
                     "description": "Character's emotional response to the encounter"
+                },
+                "impactIntensity": {
+                    "type": "number",
+                    "format": "float",
+                    "minimum": 0.0,
+                    "maximum": 1.0,
+                    "nullable": true,
+                    "description": "Intensity of emotional impact (0.0-1.0). Defaults based on emotionalImpact if not provided."
                 },
                 "sentimentShift": {
                     "type": "number",
@@ -1211,7 +1220,7 @@ public partial class CharacterEncounterController
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Additional encounter-specific data"
+                    "description": "Client-provided encounter-specific data. No Bannou plugin reads specific keys from this field by convention."
                 },
                 "createdAt": {
                     "type": "string",
@@ -1266,6 +1275,13 @@ public partial class CharacterEncounterController
                         }
                     ],
                     "description": "Primary emotional response to the encounter"
+                },
+                "impactIntensity": {
+                    "type": "number",
+                    "format": "float",
+                    "minimum": 0.0,
+                    "maximum": 1.0,
+                    "description": "Intensity of emotional impact (0.0-1.0). Used for kernel extraction threshold (>0.7 indicates high-impact encounter)."
                 },
                 "sentimentShift": {
                     "type": "number",
@@ -1598,7 +1614,7 @@ public partial class CharacterEncounterController
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Additional encounter-specific data"
+                    "description": "Client-provided encounter-specific data. No Bannou plugin reads specific keys from this field by convention."
                 },
                 "createdAt": {
                     "type": "string",
@@ -1653,6 +1669,13 @@ public partial class CharacterEncounterController
                         }
                     ],
                     "description": "Primary emotional response to the encounter"
+                },
+                "impactIntensity": {
+                    "type": "number",
+                    "format": "float",
+                    "minimum": 0.0,
+                    "maximum": 1.0,
+                    "description": "Intensity of emotional impact (0.0-1.0). Used for kernel extraction threshold (>0.7 indicates high-impact encounter)."
                 },
                 "sentimentShift": {
                     "type": "number",
@@ -1963,7 +1986,7 @@ public partial class CharacterEncounterController
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Additional encounter-specific data"
+                    "description": "Client-provided encounter-specific data. No Bannou plugin reads specific keys from this field by convention."
                 },
                 "createdAt": {
                     "type": "string",
@@ -2018,6 +2041,13 @@ public partial class CharacterEncounterController
                         }
                     ],
                     "description": "Primary emotional response to the encounter"
+                },
+                "impactIntensity": {
+                    "type": "number",
+                    "format": "float",
+                    "minimum": 0.0,
+                    "maximum": 1.0,
+                    "description": "Intensity of emotional impact (0.0-1.0). Used for kernel extraction threshold (>0.7 indicates high-impact encounter)."
                 },
                 "sentimentShift": {
                     "type": "number",
@@ -2320,7 +2350,7 @@ public partial class CharacterEncounterController
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Additional encounter-specific data"
+                    "description": "Client-provided encounter-specific data. No Bannou plugin reads specific keys from this field by convention."
                 },
                 "createdAt": {
                     "type": "string",
@@ -2375,6 +2405,13 @@ public partial class CharacterEncounterController
                         }
                     ],
                     "description": "Primary emotional response to the encounter"
+                },
+                "impactIntensity": {
+                    "type": "number",
+                    "format": "float",
+                    "minimum": 0.0,
+                    "maximum": 1.0,
+                    "description": "Intensity of emotional impact (0.0-1.0). Used for kernel extraction threshold (>0.7 indicates high-impact encounter)."
                 },
                 "sentimentShift": {
                     "type": "number",
@@ -3023,6 +3060,13 @@ public partial class CharacterEncounterController
                     ],
                     "description": "Primary emotional response to the encounter"
                 },
+                "impactIntensity": {
+                    "type": "number",
+                    "format": "float",
+                    "minimum": 0.0,
+                    "maximum": 1.0,
+                    "description": "Intensity of emotional impact (0.0-1.0). Used for kernel extraction threshold (>0.7 indicates high-impact encounter)."
+                },
                 "sentimentShift": {
                     "type": "number",
                     "format": "float",
@@ -3168,6 +3212,14 @@ public partial class CharacterEncounterController
                     "nullable": true,
                     "description": "New emotional impact"
                 },
+                "impactIntensity": {
+                    "type": "number",
+                    "format": "float",
+                    "minimum": 0.0,
+                    "maximum": 1.0,
+                    "nullable": true,
+                    "description": "New impact intensity (0.0-1.0)"
+                },
                 "sentimentShift": {
                     "type": "number",
                     "format": "float",
@@ -3262,6 +3314,13 @@ public partial class CharacterEncounterController
                         }
                     ],
                     "description": "Primary emotional response to the encounter"
+                },
+                "impactIntensity": {
+                    "type": "number",
+                    "format": "float",
+                    "minimum": 0.0,
+                    "maximum": 1.0,
+                    "description": "Intensity of emotional impact (0.0-1.0). Used for kernel extraction threshold (>0.7 indicates high-impact encounter)."
                 },
                 "sentimentShift": {
                     "type": "number",
@@ -3475,6 +3534,13 @@ public partial class CharacterEncounterController
                         }
                     ],
                     "description": "Primary emotional response to the encounter"
+                },
+                "impactIntensity": {
+                    "type": "number",
+                    "format": "float",
+                    "minimum": 0.0,
+                    "maximum": 1.0,
+                    "description": "Intensity of emotional impact (0.0-1.0). Used for kernel extraction threshold (>0.7 indicates high-impact encounter)."
                 },
                 "sentimentShift": {
                     "type": "number",
@@ -3926,6 +3992,482 @@ public partial class CharacterEncounterController
             _DecayMemories_Info,
             _DecayMemories_RequestSchema,
             _DecayMemories_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for GetCompressData
+
+    private static readonly string _GetCompressData_RequestSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/GetCompressDataRequest",
+    "$defs": {
+        "GetCompressDataRequest": {
+            "type": "object",
+            "description": "Request to get encounter data for compression",
+            "additionalProperties": false,
+            "required": [
+                "characterId"
+            ],
+            "properties": {
+                "characterId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "ID of the character to get compress data for"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _GetCompressData_ResponseSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/CharacterEncounterArchive",
+    "$defs": {
+        "CharacterEncounterArchive": {
+            "type": "object",
+            "x-archive-type": true,
+            "description": "Complete encounter data for archive storage and storyline SDK consumption.\ nInherits base archive properties from ResourceArchiveBase.\nThe characterId field equals resourceId for convenience.\n",
+            "allOf": [
+                {
+                    "type": "object"
+                }
+            ],
+            "additionalProperties": false,
+            "required": [
+                "characterId",
+                "hasEncounters",
+                "encounterCount"
+            ],
+            "properties": {
+                "characterId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Character this data belongs to (equals resourceId)"
+                },
+                "hasEncounters": {
+                    "type": "boolean",
+                    "description": "Whether encounters exist for this character"
+                },
+                "encounterCount": {
+                    "type": "integer",
+                    "description": "Number of encounters archived"
+                },
+                "encounters": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/EncounterResponse"
+                    },
+                    "description": "Encounters with perspectives (empty if hasEncounters=false)"
+                },
+                "aggregateSentiment": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "number",
+                        "format": "float"
+                    },
+                    "description": "Map of target characterId to aggregate sentiment.\ nPreserves sentiment relationships for historical reference.\n",
+                    "nullable": true
+                }
+            }
+        },
+        "EncounterResponse": {
+            "type": "object",
+            "description": "Response containing an encounter with perspectives",
+            "additionalProperties": false,
+            "required": [
+                "encounter",
+                "perspectives"
+            ],
+            "properties": {
+                "encounter": {
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/EncounterModel"
+                        }
+                    ],
+                    "description": "The shared encounter record"
+                },
+                "perspectives": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/EncounterPerspectiveModel"
+                    },
+                    "description": "All perspectives on this encounter"
+                }
+            }
+        },
+        "EncounterModel": {
+            "type": "object",
+            "description": "Core encounter record representing a memorable interaction",
+            "additionalProperties": false,
+            "required": [
+                "encounterId",
+                "timestamp",
+                "realmId",
+                "encounterTypeCode",
+                "outcome",
+                "participantIds",
+                "createdAt"
+            ],
+            "properties": {
+                "encounterId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Unique identifier for this encounter"
+                },
+                "timestamp": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "In-game time when the encounter occurred"
+                },
+                "realmId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Realm where the encounter took place"
+                },
+                "locationId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Specific location within the realm (optional)"
+                },
+                "encounterTypeCode": {
+                    "type": "string",
+                    "description": "Type code for this encounter (e.g., COMBAT, TRADE)"
+                },
+                "context": {
+                    "type": "string",
+                    "maxLength": 500,
+                    "nullable": true,
+                    "description": "What triggered or contextualized the encounter"
+                },
+                "outcome": {
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/EncounterOutcome"
+                        }
+                    ],
+                    "description": "Outcome of the encounter (POSITIVE, NEGATIVE, NEUTRAL, MEMORABLE, TRANSFORMATIVE)"
+                },
+                "participantIds": {
+                    "type": "array",
+                    "items": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "minItems": 2,
+                    "description": "All character IDs involved in the encounter"
+                },
+                "metadata": {
+                    "type": "object",
+                    "additionalProperties": true,
+                    "nullable": true,
+                    "description": "Client-provided encounter-specific data. No Bannou plugin reads specific keys from this field by convention."
+                },
+                "createdAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "System timestamp when record was created"
+                }
+            }
+        },
+        "EncounterOutcome": {
+            "type": "string",
+            "description": "Overall outcome of an encounter",
+            "enum": [
+                "POSITIVE",
+                "NEGATIVE",
+                "NEUTRAL",
+                "MEMORABLE",
+                "TRANSFORMATIVE"
+            ]
+        },
+        "EncounterPerspectiveModel": {
+            "type": "object",
+            "description": "A character's individual perspective on an encounter",
+            "additionalProperties": false,
+            "required": [
+                "perspectiveId",
+                "encounterId",
+                "characterId",
+                "emotionalImpact",
+                "memoryStrength",
+                "createdAt"
+            ],
+            "properties": {
+                "perspectiveId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Unique identifier for this perspective"
+                },
+                "encounterId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Reference to the shared encounter record"
+                },
+                "characterId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Character holding this perspective"
+                },
+                "emotionalImpact": {
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/EmotionalImpact"
+                        }
+                    ],
+                    "description": "Primary emotional response to the encounter"
+                },
+                "impactIntensity": {
+                    "type": "number",
+                    "format": "float",
+                    "minimum": 0.0,
+                    "maximum": 1.0,
+                    "description": "Intensity of emotional impact (0.0-1.0). Used for kernel extraction threshold (>0.7 indicates high-impact encounter)."
+                },
+                "sentimentShift": {
+                    "type": "number",
+                    "format": "float",
+                    "minimum": -1.0,
+                    "maximum": 1.0,
+                    "nullable": true,
+                    "description": "Opinion change toward other participants (-1.0 to +1.0)"
+                },
+                "memoryStrength": {
+                    "type": "number",
+                    "format": "float",
+                    "minimum": 0.0,
+                    "maximum": 1.0,
+                    "description": "How strongly remembered (0.0-1.0, decays over time)"
+                },
+                "rememberedAs": {
+                    "type": "string",
+                    "maxLength": 200,
+                    "nullable": true,
+                    "description": "Short description from this character's POV"
+                },
+                "lastDecayedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "When memory decay was last applied"
+                },
+                "createdAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "System timestamp when record was created"
+                },
+                "updatedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "Last modification timestamp"
+                }
+            }
+        },
+        "EmotionalImpact": {
+            "type": "string",
+            "description": "How the encounter emotionally affected the character",
+            "enum": [
+                "GRATITUDE",
+                "ANGER",
+                "FEAR",
+                "RESPECT",
+                "CONTEMPT",
+                "AFFECTION",
+                "RIVALRY",
+                "INDIFFERENCE",
+                "GUILT",
+                "PRIDE"
+            ]
+        }
+    }
+}
+""";
+
+    private static readonly string _GetCompressData_Info = """
+{
+    "summary": "Get encounter data for compression",
+    "description": "Called by Resource service during character compression.\nReturns encounters and perspectives involving this character for archival.\n",
+    "tags": [
+        "Compression"
+    ],
+    "deprecated": false,
+    "operationId": "getCompressData"
+}
+""";
+
+    /// <summary>Returns endpoint information for GetCompressData</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/character-encounter/get-compress-data/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetCompressData_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "CharacterEncounter",
+            "POST",
+            "/character-encounter/get-compress-data",
+            _GetCompressData_Info));
+
+    /// <summary>Returns request schema for GetCompressData</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/character-encounter/get-compress-data/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetCompressData_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "CharacterEncounter",
+            "POST",
+            "/character-encounter/get-compress-data",
+            "request-schema",
+            _GetCompressData_RequestSchema));
+
+    /// <summary>Returns response schema for GetCompressData</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/character-encounter/get-compress-data/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetCompressData_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "CharacterEncounter",
+            "POST",
+            "/character-encounter/get-compress-data",
+            "response-schema",
+            _GetCompressData_ResponseSchema));
+
+    /// <summary>Returns full schema for GetCompressData</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/character-encounter/get-compress-data/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetCompressData_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "CharacterEncounter",
+            "POST",
+            "/character-encounter/get-compress-data",
+            _GetCompressData_Info,
+            _GetCompressData_RequestSchema,
+            _GetCompressData_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for RestoreFromArchive
+
+    private static readonly string _RestoreFromArchive_RequestSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/RestoreFromArchiveRequest",
+    "$defs": {
+        "RestoreFromArchiveRequest": {
+            "type": "object",
+            "description": "Request to restore encounter data from archive",
+            "additionalProperties": false,
+            "required": [
+                "characterId",
+                "data"
+            ],
+            "properties": {
+                "characterId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "ID of the character to restore data for"
+                },
+                "data": {
+                    "type": "string",
+                    "description": "Base64-encoded gzipped CharacterEncounterArchive JSON"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _RestoreFromArchive_ResponseSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/RestoreFromArchiveResponse",
+    "$defs": {
+        "RestoreFromArchiveResponse": {
+            "type": "object",
+            "description": "Result of restoration from archive",
+            "additionalProperties": false,
+            "required": [
+                "characterId",
+                "encountersRestored",
+                "perspectivesRestored",
+                "success"
+            ],
+            "properties": {
+                "characterId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Character data was restored for"
+                },
+                "encountersRestored": {
+                    "type": "integer",
+                    "description": "Number of encounters restored"
+                },
+                "perspectivesRestored": {
+                    "type": "integer",
+                    "description": "Number of perspectives restored"
+                },
+                "success": {
+                    "type": "boolean",
+                    "description": "Whether restoration completed successfully"
+                },
+                "errorMessage": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Error details if restoration failed"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _RestoreFromArchive_Info = """
+{
+    "summary": "Restore encounter data from archive",
+    "description": "Called by Resource service during character decompression.\nRestores encounters and perspectives from archive data.\n",
+    "tags": [
+        "Compression"
+    ],
+    "deprecated": false,
+    "operationId": "restoreFromArchive"
+}
+""";
+
+    /// <summary>Returns endpoint information for RestoreFromArchive</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/character-encounter/restore-from-archive/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> RestoreFromArchive_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "CharacterEncounter",
+            "POST",
+            "/character-encounter/restore-from-archive",
+            _RestoreFromArchive_Info));
+
+    /// <summary>Returns request schema for RestoreFromArchive</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/character-encounter/restore-from-archive/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> RestoreFromArchive_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "CharacterEncounter",
+            "POST",
+            "/character-encounter/restore-from-archive",
+            "request-schema",
+            _RestoreFromArchive_RequestSchema));
+
+    /// <summary>Returns response schema for RestoreFromArchive</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/character-encounter/restore-from-archive/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> RestoreFromArchive_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "CharacterEncounter",
+            "POST",
+            "/character-encounter/restore-from-archive",
+            "response-schema",
+            _RestoreFromArchive_ResponseSchema));
+
+    /// <summary>Returns full schema for RestoreFromArchive</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/character-encounter/restore-from-archive/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> RestoreFromArchive_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "CharacterEncounter",
+            "POST",
+            "/character-encounter/restore-from-archive",
+            _RestoreFromArchive_Info,
+            _RestoreFromArchive_RequestSchema,
+            _RestoreFromArchive_ResponseSchema));
 
     #endregion
 }

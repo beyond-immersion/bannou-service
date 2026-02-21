@@ -3,8 +3,9 @@
 // Tests for compiling expressions to stack-based bytecode.
 // =============================================================================
 
-using BeyondImmersion.Bannou.Behavior.Compiler;
-using BeyondImmersion.Bannou.Behavior.Compiler.Expressions;
+using BeyondImmersion.Bannou.BehaviorCompiler.Compiler;
+using BeyondImmersion.Bannou.BehaviorCompiler.Compiler.Expressions;
+using BeyondImmersion.Bannou.BehaviorCompiler.Runtime;
 using BeyondImmersion.BannouService.Behavior.Runtime;
 using Xunit;
 

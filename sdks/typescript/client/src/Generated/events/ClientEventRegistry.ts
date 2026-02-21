@@ -80,6 +80,78 @@ export const eventRegistry = new Map<string, EventMetadata>([
     { eventName: 'asset.upload.complete', typeName: 'AssetUploadCompleteEvent', service: 'asset' },
   ],
   [
+    'chat.message_deleted',
+    {
+      eventName: 'chat.message_deleted',
+      typeName: 'ChatMessageDeletedClientEvent',
+      service: 'chat',
+    },
+  ],
+  [
+    'chat.message_pinned',
+    { eventName: 'chat.message_pinned', typeName: 'ChatMessagePinnedEvent', service: 'chat' },
+  ],
+  [
+    'chat.message_received',
+    { eventName: 'chat.message_received', typeName: 'ChatMessageReceivedEvent', service: 'chat' },
+  ],
+  [
+    'chat.participant_banned',
+    {
+      eventName: 'chat.participant_banned',
+      typeName: 'ChatParticipantBannedClientEvent',
+      service: 'chat',
+    },
+  ],
+  [
+    'chat.participant_joined',
+    {
+      eventName: 'chat.participant_joined',
+      typeName: 'ChatParticipantJoinedClientEvent',
+      service: 'chat',
+    },
+  ],
+  [
+    'chat.participant_kicked',
+    {
+      eventName: 'chat.participant_kicked',
+      typeName: 'ChatParticipantKickedClientEvent',
+      service: 'chat',
+    },
+  ],
+  [
+    'chat.participant_left',
+    {
+      eventName: 'chat.participant_left',
+      typeName: 'ChatParticipantLeftClientEvent',
+      service: 'chat',
+    },
+  ],
+  [
+    'chat.participant_muted',
+    {
+      eventName: 'chat.participant_muted',
+      typeName: 'ChatParticipantMutedClientEvent',
+      service: 'chat',
+    },
+  ],
+  [
+    'chat.participant_unmuted',
+    {
+      eventName: 'chat.participant_unmuted',
+      typeName: 'ChatParticipantUnmutedClientEvent',
+      service: 'chat',
+    },
+  ],
+  [
+    'chat.room_deleted',
+    { eventName: 'chat.room_deleted', typeName: 'ChatRoomDeletedClientEvent', service: 'chat' },
+  ],
+  [
+    'chat.room_locked',
+    { eventName: 'chat.room_locked', typeName: 'ChatRoomLockedClientEvent', service: 'chat' },
+  ],
+  [
     'connect.capability_manifest',
     {
       eventName: 'connect.capability_manifest',
@@ -107,7 +179,7 @@ export const eventRegistry = new Map<string, EventMetadata>([
     'game_session.chat_received',
     {
       eventName: 'game_session.chat_received',
-      typeName: 'ChatMessageReceivedEvent',
+      typeName: 'SessionChatReceivedEvent',
       service: 'game-session',
     },
   ],
@@ -201,6 +273,22 @@ export const eventRegistry = new Map<string, EventMetadata>([
     { eventName: 'system.notification', typeName: 'SystemNotificationEvent', service: 'common' },
   ],
   [
+    'voice.broadcast_consent_request',
+    {
+      eventName: 'voice.broadcast_consent_request',
+      typeName: 'VoiceBroadcastConsentRequestEvent',
+      service: 'voice',
+    },
+  ],
+  [
+    'voice.broadcast_consent_update',
+    {
+      eventName: 'voice.broadcast_consent_update',
+      typeName: 'VoiceBroadcastConsentUpdateEvent',
+      service: 'voice',
+    },
+  ],
+  [
     'voice.peer_joined',
     { eventName: 'voice.peer_joined', typeName: 'VoicePeerJoinedEvent', service: 'voice' },
   ],
@@ -223,6 +311,14 @@ export const eventRegistry = new Map<string, EventMetadata>([
   [
     'voice.tier_upgrade',
     { eventName: 'voice.tier_upgrade', typeName: 'VoiceTierUpgradeEvent', service: 'voice' },
+  ],
+  [
+    'worldstate.time_sync',
+    {
+      eventName: 'worldstate.time_sync',
+      typeName: 'WorldstateTimeSyncEvent',
+      service: 'worldstate',
+    },
   ],
 ]);
 

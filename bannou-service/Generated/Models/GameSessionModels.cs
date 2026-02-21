@@ -144,7 +144,7 @@ public partial class CreateGameSessionRequest
     public System.Guid OwnerId { get; set; } = default!;
 
     /// <summary>
-    /// Game-specific configuration settings (null to use defaults)
+    /// Game-specific configuration settings. No Bannou plugin reads specific keys from this field by convention.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("gameSettings")]
     public object? GameSettings { get; set; } = default!;
@@ -257,7 +257,7 @@ public partial class GameSessionResponse
     public System.DateTimeOffset CreatedAt { get; set; } = default!;
 
     /// <summary>
-    /// Game-specific configuration settings
+    /// Game-specific configuration settings. No Bannou plugin reads specific keys from this field by convention.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("gameSettings")]
     public object? GameSettings { get; set; } = default!;
@@ -337,7 +337,7 @@ public partial class JoinGameSessionRequest
     public string? Password { get; set; } = default!;
 
     /// <summary>
-    /// Game-specific character data (null if no character data)
+    /// Game-specific character data. No Bannou plugin reads specific keys from this field by convention.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("characterData")]
     public object? CharacterData { get; set; } = default!;
@@ -375,7 +375,7 @@ public partial class JoinGameSessionResponse
     public PlayerRole PlayerRole { get; set; } = default!;
 
     /// <summary>
-    /// Initial game state data
+    /// Game-specific initial state data. No Bannou plugin reads specific keys from this field by convention.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("gameData")]
     public object GameData { get; set; } = default!;
@@ -441,7 +441,7 @@ public partial class GamePlayer
     public System.DateTimeOffset JoinedAt { get; set; } = default!;
 
     /// <summary>
-    /// Game-specific character data for this player (null if none provided)
+    /// Game-specific character data for this player. No Bannou plugin reads specific keys from this field by convention.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("characterData")]
     public object? CharacterData { get; set; } = default!;
@@ -582,7 +582,7 @@ public partial class GameActionRequest
     public GameActionType ActionType { get; set; } = default!;
 
     /// <summary>
-    /// Action-specific data
+    /// Game-specific action data. No Bannou plugin reads specific keys from this field by convention.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("actionData")]
     public object? ActionData { get; set; } = default!;
@@ -611,13 +611,13 @@ public partial class GameActionResponse
     public System.Guid ActionId { get; set; } = default!;
 
     /// <summary>
-    /// Action result data
+    /// Game-specific action result data. No Bannou plugin reads specific keys from this field by convention.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("result")]
     public object? Result { get; set; } = default!;
 
     /// <summary>
-    /// Updated game state (if applicable)
+    /// Updated game state (if applicable). No Bannou plugin reads specific keys from this field by convention.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("newGameState")]
     public object? NewGameState { get; set; } = default!;
@@ -870,7 +870,7 @@ public partial class JoinGameSessionByIdRequest
     public string? ReservationToken { get; set; } = default!;
 
     /// <summary>
-    /// Game-specific character data (null if no character data)
+    /// Game-specific character data. No Bannou plugin reads specific keys from this field by convention.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("characterData")]
     public object? CharacterData { get; set; } = default!;
@@ -953,12 +953,10 @@ public partial class LeaveGameSessionByIdRequest
 {
 
     /// <summary>
-    /// WebSocket session ID of the client leaving.
+    /// WebSocket session ID of the client leaving. Null for server-side cleanup operations (e.g., scenario lifecycle worker) where no real WebSocket session exists.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("webSocketSessionId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid WebSocketSessionId { get; set; } = default!;
+    public System.Guid? WebSocketSessionId { get; set; } = default!;
 
     /// <summary>
     /// Account ID of the player leaving.
@@ -979,26 +977,6 @@ public partial class LeaveGameSessionByIdRequest
 }
 
 /// <summary>
-/// Voice communication tier:
-/// <br/>- p2p: Direct peer-to-peer connections (up to 6 participants)
-/// <br/>- scaled: RTP server-mediated communication (unlimited participants)
-/// <br/>
-/// </summary>
-#pragma warning disable CS1591 // Enum members cannot have XML documentation
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum VoiceTier
-{
-
-    [System.Runtime.Serialization.EnumMember(Value = @"p2p")]
-    P2p = 0,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"scaled")]
-    Scaled = 1,
-
-}
-#pragma warning restore CS1591
-
-/// <summary>
 /// Audio codec for voice communication
 /// </summary>
 #pragma warning disable CS1591 // Enum members cannot have XML documentation
@@ -1014,6 +992,26 @@ public enum VoiceCodec
 
     [System.Runtime.Serialization.EnumMember(Value = @"g722")]
     G722 = 2,
+
+}
+#pragma warning restore CS1591
+
+/// <summary>
+/// Voice communication tier:
+/// <br/>- p2p: Direct peer-to-peer connections (up to 6 participants)
+/// <br/>- scaled: RTP server-mediated communication (unlimited participants)
+/// <br/>
+/// </summary>
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public enum VoiceTier
+{
+
+    [System.Runtime.Serialization.EnumMember(Value = @"p2p")]
+    P2p = 0,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"scaled")]
+    Scaled = 1,
 
 }
 #pragma warning restore CS1591

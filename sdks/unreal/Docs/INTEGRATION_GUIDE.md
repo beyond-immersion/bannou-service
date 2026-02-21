@@ -374,4 +374,4 @@ python3 scripts/generate-unreal-sdk.py
 
 - [PROTOCOL_REFERENCE.md](PROTOCOL_REFERENCE.md) - Detailed binary protocol specification
 - [EXAMPLES.md](EXAMPLES.md) - Complete code examples
-- [Bannou Architecture](../../../docs/BANNOU_DESIGN.md) - System design overview
+- [Bannou Architecture](../../../docs/BANNOU-DESIGN.md) - System design overview

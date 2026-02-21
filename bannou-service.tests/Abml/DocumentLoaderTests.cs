@@ -3,9 +3,9 @@
 // Tests for document import resolution and loading.
 // =============================================================================
 
-using BeyondImmersion.BannouService.Abml.Documents;
+using BeyondImmersion.Bannou.BehaviorCompiler.Documents;
+using BeyondImmersion.Bannou.BehaviorCompiler.Parser;
 using BeyondImmersion.BannouService.Abml.Execution;
-using BeyondImmersion.BannouService.Abml.Parser;
 using Xunit;
 
 namespace BeyondImmersion.BannouService.Tests.Abml;

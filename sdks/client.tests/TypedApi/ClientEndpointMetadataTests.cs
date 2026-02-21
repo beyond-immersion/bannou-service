@@ -67,7 +67,7 @@ public class ClientEndpointMetadataTests
         var responseType = ClientEndpointMetadata.GetResponseType("POST", "/auth/login");
 
         Assert.NotNull(responseType);
-        Assert.Equal(typeof(AuthResponse), responseType);
+        Assert.Equal(typeof(LoginResponse), responseType);
     }
 
     [Fact]
@@ -187,8 +187,8 @@ public class ClientEndpointMetadataTests
         // We expect hundreds of endpoints across all services
         var count = ClientEndpointMetadata.Count;
 
-        Assert.True(count > 500, $"Expected > 500 endpoints, got {count}");
-        Assert.True(count < 600, $"Expected < 600 endpoints, got {count}");
+        Assert.True(count > 800, $"Expected > 800 endpoints, got {count}");
+        Assert.True(count < 900, $"Expected < 900 endpoints, got {count}");
     }
 
     // =========================================================================
