@@ -132,19 +132,22 @@ public class ActorRunnerCognitionTests
         return (runner, cognitionBuilderMock, executorMock);
     }
 
-    private static async Task WaitForIterationsAsync(ActorRunner runner, int targetIterations, TimeSpan timeout)
+    private static Task WaitForIterationsAsync(ActorRunner runner, int targetIterations, TimeSpan timeout)
     {
-        var started = DateTime.UtcNow;
-        while (runner.LoopIterations < targetIterations)
+        // Uses SpinWait instead of async polling to avoid starving the background loop's
+        // Task.Yield() continuation on xUnit's SynchronizationContext (see FailedTemplate test)
+        var reached = SpinWait.SpinUntil(
+            () => runner.LoopIterations >= targetIterations,
+            timeout);
+
+        if (!reached)
         {
-            if (DateTime.UtcNow - started > timeout)
-            {
-                throw new TimeoutException(
-                    $"Timed out waiting for {targetIterations} iterations after {timeout.TotalSeconds}s. " +
-                    $"Current iterations: {runner.LoopIterations}");
-            }
-            await Task.Delay(10);
+            throw new TimeoutException(
+                $"Timed out waiting for {targetIterations} iterations after {timeout.TotalSeconds}s. " +
+                $"Current iterations: {runner.LoopIterations}");
         }
+
+        return Task.CompletedTask;
     }
 
     #region Template Resolution Order
@@ -489,12 +492,13 @@ public class ActorRunnerCognitionTests
         using var runnerCts = new CancellationTokenSource(TimeSpan.FromSeconds(30));
         await runner.StartAsync(runnerCts.Token);
 
-        // Wait for the runner to transition to Error state
-        var started = DateTime.UtcNow;
-        while (runner.Status != ActorStatus.Error && DateTime.UtcNow - started < TimeSpan.FromSeconds(10))
-        {
-            await Task.Delay(10);
-        }
+        // Wait for the runner to transition to Error state.
+        // Uses SpinWait instead of await Task.Delay polling: the background loop's
+        // Task.Yield() continuation (in ProcessPerceptionsAsync) is posted to xUnit's
+        // SynchronizationContext. An async polling loop (await Task.Delay) also posts
+        // continuations to the same SC, starving the background task on slow CI machines.
+        // SpinWait.SpinUntil uses Thread.Sleep/Yield at the OS level, avoiding the SC entirely.
+        SpinWait.SpinUntil(() => runner.Status == ActorStatus.Error, TimeSpan.FromSeconds(10));
 
         // Assert: runner entered error state because template was specified but unresolvable
         // Check BEFORE StopAsync, which unconditionally sets Status = Stopped
