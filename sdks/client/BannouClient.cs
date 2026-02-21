@@ -900,7 +900,8 @@ public partial class BannouClient : IBannouClient
 
     private async Task ReceiveLoopAsync(CancellationToken cancellationToken)
     {
-        var buffer = new byte[65536]; // Larger buffer for capability manifests
+        var buffer = new byte[65536];
+        using var messageBuffer = new MemoryStream();
 
         try
         {
@@ -913,18 +914,32 @@ public partial class BannouClient : IBannouClient
                     break;
                 }
 
-                // Check for minimum message size - response headers are 16 bytes, request headers are 31 bytes
-                // Use ResponseHeaderSize as minimum since that's the smallest valid message
-                if (result.MessageType == WebSocketMessageType.Binary && result.Count >= BinaryMessage.ResponseHeaderSize)
+                if (result.MessageType == WebSocketMessageType.Binary)
                 {
-                    try
+                    messageBuffer.Write(buffer, 0, result.Count);
+
+                    // Continue accumulating frames until the complete message is received
+                    if (!result.EndOfMessage)
                     {
-                        var message = BinaryMessage.Parse(buffer, result.Count);
-                        HandleReceivedMessage(message);
+                        continue;
                     }
-                    catch
+
+                    var messageBytes = messageBuffer.ToArray();
+                    messageBuffer.SetLength(0);
+
+                    // Check for minimum message size - response headers are 16 bytes, request headers are 31 bytes
+                    // Use ResponseHeaderSize as minimum since that's the smallest valid message
+                    if (messageBytes.Length >= BinaryMessage.ResponseHeaderSize)
                     {
-                        // Ignore malformed messages
+                        try
+                        {
+                            var message = BinaryMessage.Parse(messageBytes, messageBytes.Length);
+                            HandleReceivedMessage(message);
+                        }
+                        catch
+                        {
+                            // Ignore malformed messages
+                        }
                     }
                 }
             }
