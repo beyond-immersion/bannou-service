@@ -19,17 +19,28 @@ public class WebSocketConnectionManager
     private readonly int _inactiveConnectionTimeoutMinutes;
     private readonly ILogger? _logger;
 
+    // Outbound payload compression settings
+    private readonly bool _compressionEnabled;
+    private readonly int _compressionThresholdBytes;
+    private readonly int _compressionQuality;
+
     public WebSocketConnectionManager(
         int connectionShutdownTimeoutSeconds = 5,
         int connectionCleanupIntervalSeconds = 30,
         int inactiveConnectionTimeoutMinutes = 30,
-        ILogger? logger = null)
+        ILogger? logger = null,
+        bool compressionEnabled = false,
+        int compressionThresholdBytes = 1024,
+        int compressionQuality = 1)
     {
         _connections = new ConcurrentDictionary<string, WebSocketConnection>();
         _peerGuidToSessionId = new ConcurrentDictionary<Guid, string>();
         _connectionShutdownTimeoutSeconds = connectionShutdownTimeoutSeconds;
         _inactiveConnectionTimeoutMinutes = inactiveConnectionTimeoutMinutes;
         _logger = logger;
+        _compressionEnabled = compressionEnabled;
+        _compressionThresholdBytes = compressionThresholdBytes;
+        _compressionQuality = compressionQuality;
 
         // Start cleanup timer
         _cleanupTimer = new Timer(CleanupExpiredConnections, null,
@@ -196,6 +207,7 @@ public class WebSocketConnectionManager
 
     /// <summary>
     /// Sends a message to a specific session.
+    /// Applies Brotli compression when enabled and the payload exceeds the configured threshold.
     /// </summary>
     public virtual async Task<bool> SendMessageAsync(string sessionId, BinaryMessage message, CancellationToken cancellationToken = default)
     {
@@ -207,7 +219,7 @@ public class WebSocketConnectionManager
 
         try
         {
-            var messageBytes = message.ToByteArray();
+            var messageBytes = SerializeMessage(message);
             await connection.WebSocket.SendAsync(
                 new ArraySegment<byte>(messageBytes),
                 WebSocketMessageType.Binary,
@@ -224,6 +236,50 @@ public class WebSocketConnectionManager
             RemoveConnection(sessionId);
             return false;
         }
+    }
+
+    /// <summary>
+    /// Serializes a BinaryMessage to bytes, applying Brotli compression to the payload
+    /// when compression is enabled and the payload exceeds the configured threshold.
+    /// </summary>
+    private byte[] SerializeMessage(BinaryMessage message)
+    {
+        if (!_compressionEnabled || message.Payload.IsEmpty ||
+            message.Payload.Length < _compressionThresholdBytes)
+        {
+            return message.ToByteArray();
+        }
+
+        if (!PayloadCompressor.TryCompress(
+                message.Payload.Span,
+                _compressionThresholdBytes,
+                _compressionQuality,
+                out var compressedData,
+                out var compressedLength))
+        {
+            return message.ToByteArray();
+        }
+
+        _logger?.LogDebug(
+            "Compressed payload {OriginalSize} -> {CompressedSize} bytes ({Ratio:P0})",
+            message.Payload.Length, compressedLength,
+            (double)compressedLength / message.Payload.Length);
+
+        // Reconstruct message with compressed payload and Compressed flag
+        var compressedPayload = compressedData.AsMemory(0, compressedLength);
+        var compressedMessage = message.IsResponse
+            ? new BinaryMessage(
+                message.Flags | MessageFlags.Compressed,
+                message.Channel, message.SequenceNumber,
+                message.MessageId, message.ResponseCode,
+                compressedPayload)
+            : new BinaryMessage(
+                message.Flags | MessageFlags.Compressed,
+                message.Channel, message.SequenceNumber,
+                message.ServiceGuid, message.MessageId,
+                compressedPayload);
+
+        return compressedMessage.ToByteArray();
     }
 
     /// <summary>

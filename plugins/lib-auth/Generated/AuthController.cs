@@ -22,6 +22,21 @@
 
 #nullable enable
 
+#pragma warning disable 108 // Disable "CS0108 '{derivedDto}.ToJson()' hides inherited member '{dtoBase}.ToJson()'. Use the new keyword if hiding was intended."
+#pragma warning disable 114 // Disable "CS0114 '{derivedDto}.RaisePropertyChanged(String)' hides inherited member 'dtoBase.RaisePropertyChanged(String)'. To make the current member override that implementation, add the override keyword. Otherwise add the new keyword."
+#pragma warning disable 472 // Disable "CS0472 The result of the expression is always 'false' since a value of type 'Int32' is never equal to 'null' of type 'Int32?'
+#pragma warning disable 612 // Disable "CS0612 '...' is obsolete"
+#pragma warning disable 649 // Disable "CS0649 Field is never assigned to, and will always have its default value null"
+#pragma warning disable 1573 // Disable "CS1573 Parameter '...' has no matching param tag in the XML comment for ...
+#pragma warning disable 1591 // Disable "CS1591 Missing XML comment for publicly visible type or member ..."
+#pragma warning disable 8073 // Disable "CS8073 The result of the expression is always 'false' since a value of type 'T' is never equal to 'null' of type 'T?'"
+#pragma warning disable 3016 // Disable "CS3016 Arrays as attribute arguments is not CLS-compliant"
+#pragma warning disable 8600 // Disable "CS8600 Converting null literal or possible null value to non-nullable type"
+#pragma warning disable 8602 // Disable "CS8602 Dereference of a possibly null reference"
+#pragma warning disable 8603 // Disable "CS8603 Possible null reference return"
+#pragma warning disable 8604 // Disable "CS8604 Possible null reference argument for parameter"
+#pragma warning disable 8625 // Disable "CS8625 Cannot convert null literal to non-nullable reference type"
+#pragma warning disable 8765 // Disable "CS8765 Nullability of type of parameter doesn't match overridden member (possibly because of nullability attributes)."
 
 namespace BeyondImmersion.BannouService.Auth;
 
@@ -281,10 +296,12 @@ public interface IAuthController : BeyondImmersion.BannouService.Controllers.IBa
 public partial class AuthController : Microsoft.AspNetCore.Mvc.ControllerBase
 {
     private IAuthService _implementation;
+    private BeyondImmersion.BannouService.Services.ITelemetryProvider _telemetryProvider;
 
-    public AuthController(IAuthService implementation)
+    public AuthController(IAuthService implementation, BeyondImmersion.BannouService.Services.ITelemetryProvider telemetryProvider)
     {
         _implementation = implementation;
+        _telemetryProvider = telemetryProvider;
     }
 
     /// <summary>
@@ -334,6 +351,11 @@ public partial class AuthController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.auth",
+                "AuthController.Login",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "auth/login");
 
             var (statusCode, result) = await _implementation.LoginAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -342,6 +364,7 @@ public partial class AuthController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<AuthController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:auth/login");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -357,6 +380,7 @@ public partial class AuthController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:auth/login",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -372,6 +396,11 @@ public partial class AuthController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.auth",
+                "AuthController.Register",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "auth/register");
 
             var (statusCode, result) = await _implementation.RegisterAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -380,6 +409,7 @@ public partial class AuthController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<AuthController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:auth/register");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -395,6 +425,7 @@ public partial class AuthController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:auth/register",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -420,6 +451,11 @@ public partial class AuthController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.auth",
+                "AuthController.CompleteOAuth",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "auth/oauth/{provider}/callback");
 
             var (statusCode, result) = await _implementation.CompleteOAuthAsync(provider, body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -428,6 +464,7 @@ public partial class AuthController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<AuthController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:auth/oauth/{provider}/callback");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -443,6 +480,7 @@ public partial class AuthController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:auth/oauth/{provider}/callback",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -463,6 +501,11 @@ public partial class AuthController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.auth",
+                "AuthController.VerifySteamAuth",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "auth/steam/verify");
 
             var (statusCode, result) = await _implementation.VerifySteamAuthAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -471,6 +514,7 @@ public partial class AuthController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<AuthController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:auth/steam/verify");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -486,6 +530,7 @@ public partial class AuthController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:auth/steam/verify",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -506,6 +551,11 @@ public partial class AuthController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.auth",
+                "AuthController.RefreshToken",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "auth/refresh");
 
             var (statusCode, result) = await _implementation.RefreshTokenAsync(jwt, body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -514,6 +564,7 @@ public partial class AuthController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<AuthController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:auth/refresh");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -529,6 +580,7 @@ public partial class AuthController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:auth/refresh",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -549,6 +601,11 @@ public partial class AuthController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.auth",
+                "AuthController.ValidateToken",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "auth/validate");
 
             var (statusCode, result) = await _implementation.ValidateTokenAsync(jwt, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -557,6 +614,7 @@ public partial class AuthController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<AuthController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:auth/validate");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -572,6 +630,7 @@ public partial class AuthController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:auth/validate",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -592,6 +651,11 @@ public partial class AuthController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.auth",
+                "AuthController.Logout",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "auth/logout");
 
             var statusCode = await _implementation.LogoutAsync(jwt, body, cancellationToken);
             return ConvertToActionResult(statusCode);
@@ -600,6 +664,7 @@ public partial class AuthController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<AuthController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:auth/logout");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -615,6 +680,7 @@ public partial class AuthController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:auth/logout",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -635,6 +701,11 @@ public partial class AuthController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.auth",
+                "AuthController.GetSessions",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "auth/sessions/list");
 
             var (statusCode, result) = await _implementation.GetSessionsAsync(jwt, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -643,6 +714,7 @@ public partial class AuthController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<AuthController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:auth/sessions/list");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -658,6 +730,7 @@ public partial class AuthController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:auth/sessions/list",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -678,6 +751,11 @@ public partial class AuthController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.auth",
+                "AuthController.TerminateSession",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "auth/sessions/terminate");
 
             var statusCode = await _implementation.TerminateSessionAsync(jwt, body, cancellationToken);
             return ConvertToActionResult(statusCode);
@@ -686,6 +764,7 @@ public partial class AuthController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<AuthController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:auth/sessions/terminate");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -701,6 +780,7 @@ public partial class AuthController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:auth/sessions/terminate",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -721,6 +801,11 @@ public partial class AuthController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.auth",
+                "AuthController.GetRevocationList",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "auth/revocation-list");
 
             var (statusCode, result) = await _implementation.GetRevocationListAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -729,6 +814,7 @@ public partial class AuthController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<AuthController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:auth/revocation-list");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -744,6 +830,7 @@ public partial class AuthController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:auth/revocation-list",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -759,6 +846,11 @@ public partial class AuthController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.auth",
+                "AuthController.RequestPasswordReset",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "auth/password/reset");
 
             var statusCode = await _implementation.RequestPasswordResetAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode);
@@ -767,6 +859,7 @@ public partial class AuthController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<AuthController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:auth/password/reset");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -782,6 +875,7 @@ public partial class AuthController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:auth/password/reset",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -797,6 +891,11 @@ public partial class AuthController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.auth",
+                "AuthController.ConfirmPasswordReset",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "auth/password/confirm");
 
             var statusCode = await _implementation.ConfirmPasswordResetAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode);
@@ -805,6 +904,7 @@ public partial class AuthController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<AuthController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:auth/password/confirm");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -820,6 +920,7 @@ public partial class AuthController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:auth/password/confirm",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -840,6 +941,11 @@ public partial class AuthController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.auth",
+                "AuthController.ListProviders",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "auth/providers");
 
             var (statusCode, result) = await _implementation.ListProvidersAsync(cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -848,6 +954,7 @@ public partial class AuthController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<AuthController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:auth/providers");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -863,6 +970,7 @@ public partial class AuthController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:auth/providers",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -888,6 +996,11 @@ public partial class AuthController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.auth",
+                "AuthController.SetupMfa",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "auth/mfa/setup");
 
             var (statusCode, result) = await _implementation.SetupMfaAsync(jwt, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -896,6 +1009,7 @@ public partial class AuthController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<AuthController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:auth/mfa/setup");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -911,6 +1025,7 @@ public partial class AuthController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:auth/mfa/setup",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -936,6 +1051,11 @@ public partial class AuthController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.auth",
+                "AuthController.EnableMfa",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "auth/mfa/enable");
 
             var statusCode = await _implementation.EnableMfaAsync(jwt, body, cancellationToken);
             return ConvertToActionResult(statusCode);
@@ -944,6 +1064,7 @@ public partial class AuthController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<AuthController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:auth/mfa/enable");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -959,6 +1080,7 @@ public partial class AuthController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:auth/mfa/enable",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -984,6 +1106,11 @@ public partial class AuthController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.auth",
+                "AuthController.DisableMfa",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "auth/mfa/disable");
 
             var statusCode = await _implementation.DisableMfaAsync(jwt, body, cancellationToken);
             return ConvertToActionResult(statusCode);
@@ -992,6 +1119,7 @@ public partial class AuthController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<AuthController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:auth/mfa/disable");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -1007,6 +1135,7 @@ public partial class AuthController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:auth/mfa/disable",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -1026,6 +1155,11 @@ public partial class AuthController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.auth",
+                "AuthController.AdminDisableMfa",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "auth/mfa/admin-disable");
 
             var statusCode = await _implementation.AdminDisableMfaAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode);
@@ -1034,6 +1168,7 @@ public partial class AuthController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<AuthController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:auth/mfa/admin-disable");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -1049,6 +1184,7 @@ public partial class AuthController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:auth/mfa/admin-disable",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -1070,6 +1206,11 @@ public partial class AuthController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.auth",
+                "AuthController.VerifyMfa",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "auth/mfa/verify");
 
             var (statusCode, result) = await _implementation.VerifyMfaAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1078,6 +1219,7 @@ public partial class AuthController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<AuthController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:auth/mfa/verify");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -1093,6 +1235,7 @@ public partial class AuthController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:auth/mfa/verify",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }

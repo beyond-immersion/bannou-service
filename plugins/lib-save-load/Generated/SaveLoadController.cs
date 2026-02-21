@@ -22,6 +22,21 @@
 
 #nullable enable
 
+#pragma warning disable 108 // Disable "CS0108 '{derivedDto}.ToJson()' hides inherited member '{dtoBase}.ToJson()'. Use the new keyword if hiding was intended."
+#pragma warning disable 114 // Disable "CS0114 '{derivedDto}.RaisePropertyChanged(String)' hides inherited member 'dtoBase.RaisePropertyChanged(String)'. To make the current member override that implementation, add the override keyword. Otherwise add the new keyword."
+#pragma warning disable 472 // Disable "CS0472 The result of the expression is always 'false' since a value of type 'Int32' is never equal to 'null' of type 'Int32?'
+#pragma warning disable 612 // Disable "CS0612 '...' is obsolete"
+#pragma warning disable 649 // Disable "CS0649 Field is never assigned to, and will always have its default value null"
+#pragma warning disable 1573 // Disable "CS1573 Parameter '...' has no matching param tag in the XML comment for ...
+#pragma warning disable 1591 // Disable "CS1591 Missing XML comment for publicly visible type or member ..."
+#pragma warning disable 8073 // Disable "CS8073 The result of the expression is always 'false' since a value of type 'T' is never equal to 'null' of type 'T?'"
+#pragma warning disable 3016 // Disable "CS3016 Arrays as attribute arguments is not CLS-compliant"
+#pragma warning disable 8600 // Disable "CS8600 Converting null literal or possible null value to non-nullable type"
+#pragma warning disable 8602 // Disable "CS8602 Dereference of a possibly null reference"
+#pragma warning disable 8603 // Disable "CS8603 Possible null reference return"
+#pragma warning disable 8604 // Disable "CS8604 Possible null reference argument for parameter"
+#pragma warning disable 8625 // Disable "CS8625 Cannot convert null literal to non-nullable reference type"
+#pragma warning disable 8765 // Disable "CS8765 Nullability of type of parameter doesn't match overridden member (possibly because of nullability attributes)."
 
 namespace BeyondImmersion.BannouService.SaveLoad;
 
@@ -383,10 +398,12 @@ public interface ISaveLoadController : BeyondImmersion.BannouService.Controllers
 public partial class SaveLoadController : Microsoft.AspNetCore.Mvc.ControllerBase
 {
     private ISaveLoadService _implementation;
+    private BeyondImmersion.BannouService.Services.ITelemetryProvider _telemetryProvider;
 
-    public SaveLoadController(ISaveLoadService implementation)
+    public SaveLoadController(ISaveLoadService implementation, BeyondImmersion.BannouService.Services.ITelemetryProvider telemetryProvider)
     {
         _implementation = implementation;
+        _telemetryProvider = telemetryProvider;
     }
 
     /// <summary>
@@ -441,6 +458,11 @@ public partial class SaveLoadController : Microsoft.AspNetCore.Mvc.ControllerBas
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.save-load",
+                "SaveLoadController.CreateSlot",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "save-load/slot/create");
 
             var (statusCode, result) = await _implementation.CreateSlotAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -449,6 +471,7 @@ public partial class SaveLoadController : Microsoft.AspNetCore.Mvc.ControllerBas
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<SaveLoadController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:save-load/slot/create");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -464,6 +487,7 @@ public partial class SaveLoadController : Microsoft.AspNetCore.Mvc.ControllerBas
                 endpoint: "post:save-load/slot/create",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -482,6 +506,11 @@ public partial class SaveLoadController : Microsoft.AspNetCore.Mvc.ControllerBas
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.save-load",
+                "SaveLoadController.GetSlot",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "save-load/slot/get");
 
             var (statusCode, result) = await _implementation.GetSlotAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -490,6 +519,7 @@ public partial class SaveLoadController : Microsoft.AspNetCore.Mvc.ControllerBas
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<SaveLoadController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:save-load/slot/get");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -505,6 +535,7 @@ public partial class SaveLoadController : Microsoft.AspNetCore.Mvc.ControllerBas
                 endpoint: "post:save-load/slot/get",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -523,6 +554,11 @@ public partial class SaveLoadController : Microsoft.AspNetCore.Mvc.ControllerBas
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.save-load",
+                "SaveLoadController.ListSlots",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "save-load/slot/list");
 
             var (statusCode, result) = await _implementation.ListSlotsAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -531,6 +567,7 @@ public partial class SaveLoadController : Microsoft.AspNetCore.Mvc.ControllerBas
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<SaveLoadController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:save-load/slot/list");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -546,6 +583,7 @@ public partial class SaveLoadController : Microsoft.AspNetCore.Mvc.ControllerBas
                 endpoint: "post:save-load/slot/list",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -565,6 +603,11 @@ public partial class SaveLoadController : Microsoft.AspNetCore.Mvc.ControllerBas
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.save-load",
+                "SaveLoadController.DeleteSlot",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "save-load/slot/delete");
 
             var (statusCode, result) = await _implementation.DeleteSlotAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -573,6 +616,7 @@ public partial class SaveLoadController : Microsoft.AspNetCore.Mvc.ControllerBas
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<SaveLoadController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:save-load/slot/delete");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -588,6 +632,7 @@ public partial class SaveLoadController : Microsoft.AspNetCore.Mvc.ControllerBas
                 endpoint: "post:save-load/slot/delete",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -607,6 +652,11 @@ public partial class SaveLoadController : Microsoft.AspNetCore.Mvc.ControllerBas
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.save-load",
+                "SaveLoadController.RenameSlot",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "save-load/slot/rename");
 
             var (statusCode, result) = await _implementation.RenameSlotAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -615,6 +665,7 @@ public partial class SaveLoadController : Microsoft.AspNetCore.Mvc.ControllerBas
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<SaveLoadController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:save-load/slot/rename");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -630,6 +681,7 @@ public partial class SaveLoadController : Microsoft.AspNetCore.Mvc.ControllerBas
                 endpoint: "post:save-load/slot/rename",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -649,6 +701,11 @@ public partial class SaveLoadController : Microsoft.AspNetCore.Mvc.ControllerBas
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.save-load",
+                "SaveLoadController.BulkDeleteSlots",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "save-load/slot/bulk-delete");
 
             var (statusCode, result) = await _implementation.BulkDeleteSlotsAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -657,6 +714,7 @@ public partial class SaveLoadController : Microsoft.AspNetCore.Mvc.ControllerBas
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<SaveLoadController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:save-load/slot/bulk-delete");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -672,6 +730,7 @@ public partial class SaveLoadController : Microsoft.AspNetCore.Mvc.ControllerBas
                 endpoint: "post:save-load/slot/bulk-delete",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -694,6 +753,11 @@ public partial class SaveLoadController : Microsoft.AspNetCore.Mvc.ControllerBas
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.save-load",
+                "SaveLoadController.Save",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "save-load/save");
 
             var (statusCode, result) = await _implementation.SaveAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -702,6 +766,7 @@ public partial class SaveLoadController : Microsoft.AspNetCore.Mvc.ControllerBas
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<SaveLoadController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:save-load/save");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -717,6 +782,7 @@ public partial class SaveLoadController : Microsoft.AspNetCore.Mvc.ControllerBas
                 endpoint: "post:save-load/save",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -736,6 +802,11 @@ public partial class SaveLoadController : Microsoft.AspNetCore.Mvc.ControllerBas
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.save-load",
+                "SaveLoadController.Load",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "save-load/load");
 
             var (statusCode, result) = await _implementation.LoadAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -744,6 +815,7 @@ public partial class SaveLoadController : Microsoft.AspNetCore.Mvc.ControllerBas
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<SaveLoadController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:save-load/load");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -759,6 +831,7 @@ public partial class SaveLoadController : Microsoft.AspNetCore.Mvc.ControllerBas
                 endpoint: "post:save-load/load",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -784,6 +857,11 @@ public partial class SaveLoadController : Microsoft.AspNetCore.Mvc.ControllerBas
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.save-load",
+                "SaveLoadController.SaveDelta",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "save-load/save-delta");
 
             var (statusCode, result) = await _implementation.SaveDeltaAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -792,6 +870,7 @@ public partial class SaveLoadController : Microsoft.AspNetCore.Mvc.ControllerBas
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<SaveLoadController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:save-load/save-delta");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -807,6 +886,7 @@ public partial class SaveLoadController : Microsoft.AspNetCore.Mvc.ControllerBas
                 endpoint: "post:save-load/save-delta",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -829,6 +909,11 @@ public partial class SaveLoadController : Microsoft.AspNetCore.Mvc.ControllerBas
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.save-load",
+                "SaveLoadController.LoadWithDeltas",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "save-load/load-with-deltas");
 
             var (statusCode, result) = await _implementation.LoadWithDeltasAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -837,6 +922,7 @@ public partial class SaveLoadController : Microsoft.AspNetCore.Mvc.ControllerBas
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<SaveLoadController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:save-load/load-with-deltas");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -852,6 +938,7 @@ public partial class SaveLoadController : Microsoft.AspNetCore.Mvc.ControllerBas
                 endpoint: "post:save-load/load-with-deltas",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -871,6 +958,11 @@ public partial class SaveLoadController : Microsoft.AspNetCore.Mvc.ControllerBas
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.save-load",
+                "SaveLoadController.CollapseDeltas",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "save-load/collapse-deltas");
 
             var (statusCode, result) = await _implementation.CollapseDeltasAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -879,6 +971,7 @@ public partial class SaveLoadController : Microsoft.AspNetCore.Mvc.ControllerBas
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<SaveLoadController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:save-load/collapse-deltas");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -894,6 +987,7 @@ public partial class SaveLoadController : Microsoft.AspNetCore.Mvc.ControllerBas
                 endpoint: "post:save-load/collapse-deltas",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -912,6 +1006,11 @@ public partial class SaveLoadController : Microsoft.AspNetCore.Mvc.ControllerBas
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.save-load",
+                "SaveLoadController.ListVersions",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "save-load/version/list");
 
             var (statusCode, result) = await _implementation.ListVersionsAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -920,6 +1019,7 @@ public partial class SaveLoadController : Microsoft.AspNetCore.Mvc.ControllerBas
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<SaveLoadController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:save-load/version/list");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -935,6 +1035,7 @@ public partial class SaveLoadController : Microsoft.AspNetCore.Mvc.ControllerBas
                 endpoint: "post:save-load/version/list",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -954,6 +1055,11 @@ public partial class SaveLoadController : Microsoft.AspNetCore.Mvc.ControllerBas
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.save-load",
+                "SaveLoadController.PinVersion",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "save-load/version/pin");
 
             var (statusCode, result) = await _implementation.PinVersionAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -962,6 +1068,7 @@ public partial class SaveLoadController : Microsoft.AspNetCore.Mvc.ControllerBas
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<SaveLoadController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:save-load/version/pin");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -977,6 +1084,7 @@ public partial class SaveLoadController : Microsoft.AspNetCore.Mvc.ControllerBas
                 endpoint: "post:save-load/version/pin",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -995,6 +1103,11 @@ public partial class SaveLoadController : Microsoft.AspNetCore.Mvc.ControllerBas
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.save-load",
+                "SaveLoadController.UnpinVersion",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "save-load/version/unpin");
 
             var (statusCode, result) = await _implementation.UnpinVersionAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1003,6 +1116,7 @@ public partial class SaveLoadController : Microsoft.AspNetCore.Mvc.ControllerBas
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<SaveLoadController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:save-load/version/unpin");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -1018,6 +1132,7 @@ public partial class SaveLoadController : Microsoft.AspNetCore.Mvc.ControllerBas
                 endpoint: "post:save-load/version/unpin",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -1037,6 +1152,11 @@ public partial class SaveLoadController : Microsoft.AspNetCore.Mvc.ControllerBas
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.save-load",
+                "SaveLoadController.DeleteVersion",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "save-load/version/delete");
 
             var (statusCode, result) = await _implementation.DeleteVersionAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1045,6 +1165,7 @@ public partial class SaveLoadController : Microsoft.AspNetCore.Mvc.ControllerBas
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<SaveLoadController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:save-load/version/delete");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -1060,6 +1181,7 @@ public partial class SaveLoadController : Microsoft.AspNetCore.Mvc.ControllerBas
                 endpoint: "post:save-load/version/delete",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -1079,6 +1201,11 @@ public partial class SaveLoadController : Microsoft.AspNetCore.Mvc.ControllerBas
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.save-load",
+                "SaveLoadController.QuerySaves",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "save-load/query");
 
             var (statusCode, result) = await _implementation.QuerySavesAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1087,6 +1214,7 @@ public partial class SaveLoadController : Microsoft.AspNetCore.Mvc.ControllerBas
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<SaveLoadController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:save-load/query");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -1102,6 +1230,7 @@ public partial class SaveLoadController : Microsoft.AspNetCore.Mvc.ControllerBas
                 endpoint: "post:save-load/query",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -1121,6 +1250,11 @@ public partial class SaveLoadController : Microsoft.AspNetCore.Mvc.ControllerBas
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.save-load",
+                "SaveLoadController.CopySave",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "save-load/copy");
 
             var (statusCode, result) = await _implementation.CopySaveAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1129,6 +1263,7 @@ public partial class SaveLoadController : Microsoft.AspNetCore.Mvc.ControllerBas
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<SaveLoadController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:save-load/copy");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -1144,6 +1279,7 @@ public partial class SaveLoadController : Microsoft.AspNetCore.Mvc.ControllerBas
                 endpoint: "post:save-load/copy",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -1163,6 +1299,11 @@ public partial class SaveLoadController : Microsoft.AspNetCore.Mvc.ControllerBas
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.save-load",
+                "SaveLoadController.ExportSaves",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "save-load/export");
 
             var (statusCode, result) = await _implementation.ExportSavesAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1171,6 +1312,7 @@ public partial class SaveLoadController : Microsoft.AspNetCore.Mvc.ControllerBas
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<SaveLoadController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:save-load/export");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -1186,6 +1328,7 @@ public partial class SaveLoadController : Microsoft.AspNetCore.Mvc.ControllerBas
                 endpoint: "post:save-load/export",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -1205,6 +1348,11 @@ public partial class SaveLoadController : Microsoft.AspNetCore.Mvc.ControllerBas
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.save-load",
+                "SaveLoadController.ImportSaves",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "save-load/import");
 
             var (statusCode, result) = await _implementation.ImportSavesAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1213,6 +1361,7 @@ public partial class SaveLoadController : Microsoft.AspNetCore.Mvc.ControllerBas
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<SaveLoadController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:save-load/import");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -1228,6 +1377,7 @@ public partial class SaveLoadController : Microsoft.AspNetCore.Mvc.ControllerBas
                 endpoint: "post:save-load/import",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -1247,6 +1397,11 @@ public partial class SaveLoadController : Microsoft.AspNetCore.Mvc.ControllerBas
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.save-load",
+                "SaveLoadController.VerifyIntegrity",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "save-load/verify");
 
             var (statusCode, result) = await _implementation.VerifyIntegrityAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1255,6 +1410,7 @@ public partial class SaveLoadController : Microsoft.AspNetCore.Mvc.ControllerBas
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<SaveLoadController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:save-load/verify");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -1270,6 +1426,7 @@ public partial class SaveLoadController : Microsoft.AspNetCore.Mvc.ControllerBas
                 endpoint: "post:save-load/verify",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -1289,6 +1446,11 @@ public partial class SaveLoadController : Microsoft.AspNetCore.Mvc.ControllerBas
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.save-load",
+                "SaveLoadController.PromoteVersion",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "save-load/version/promote");
 
             var (statusCode, result) = await _implementation.PromoteVersionAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1297,6 +1459,7 @@ public partial class SaveLoadController : Microsoft.AspNetCore.Mvc.ControllerBas
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<SaveLoadController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:save-load/version/promote");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -1312,6 +1475,7 @@ public partial class SaveLoadController : Microsoft.AspNetCore.Mvc.ControllerBas
                 endpoint: "post:save-load/version/promote",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -1331,6 +1495,11 @@ public partial class SaveLoadController : Microsoft.AspNetCore.Mvc.ControllerBas
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.save-load",
+                "SaveLoadController.MigrateSave",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "save-load/migrate");
 
             var (statusCode, result) = await _implementation.MigrateSaveAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1339,6 +1508,7 @@ public partial class SaveLoadController : Microsoft.AspNetCore.Mvc.ControllerBas
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<SaveLoadController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:save-load/migrate");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -1354,6 +1524,7 @@ public partial class SaveLoadController : Microsoft.AspNetCore.Mvc.ControllerBas
                 endpoint: "post:save-load/migrate",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -1373,6 +1544,11 @@ public partial class SaveLoadController : Microsoft.AspNetCore.Mvc.ControllerBas
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.save-load",
+                "SaveLoadController.RegisterSchema",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "save-load/schema/register");
 
             var (statusCode, result) = await _implementation.RegisterSchemaAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1381,6 +1557,7 @@ public partial class SaveLoadController : Microsoft.AspNetCore.Mvc.ControllerBas
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<SaveLoadController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:save-load/schema/register");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -1396,6 +1573,7 @@ public partial class SaveLoadController : Microsoft.AspNetCore.Mvc.ControllerBas
                 endpoint: "post:save-load/schema/register",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -1414,6 +1592,11 @@ public partial class SaveLoadController : Microsoft.AspNetCore.Mvc.ControllerBas
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.save-load",
+                "SaveLoadController.ListSchemas",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "save-load/schema/list");
 
             var (statusCode, result) = await _implementation.ListSchemasAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1422,6 +1605,7 @@ public partial class SaveLoadController : Microsoft.AspNetCore.Mvc.ControllerBas
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<SaveLoadController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:save-load/schema/list");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -1437,6 +1621,7 @@ public partial class SaveLoadController : Microsoft.AspNetCore.Mvc.ControllerBas
                 endpoint: "post:save-load/schema/list",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -1456,6 +1641,11 @@ public partial class SaveLoadController : Microsoft.AspNetCore.Mvc.ControllerBas
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.save-load",
+                "SaveLoadController.AdminCleanup",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "save-load/admin/cleanup");
 
             var (statusCode, result) = await _implementation.AdminCleanupAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1464,6 +1654,7 @@ public partial class SaveLoadController : Microsoft.AspNetCore.Mvc.ControllerBas
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<SaveLoadController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:save-load/admin/cleanup");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -1479,6 +1670,7 @@ public partial class SaveLoadController : Microsoft.AspNetCore.Mvc.ControllerBas
                 endpoint: "post:save-load/admin/cleanup",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -1497,6 +1689,11 @@ public partial class SaveLoadController : Microsoft.AspNetCore.Mvc.ControllerBas
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.save-load",
+                "SaveLoadController.AdminStats",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "save-load/admin/stats");
 
             var (statusCode, result) = await _implementation.AdminStatsAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1505,6 +1702,7 @@ public partial class SaveLoadController : Microsoft.AspNetCore.Mvc.ControllerBas
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<SaveLoadController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:save-load/admin/stats");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -1520,6 +1718,7 @@ public partial class SaveLoadController : Microsoft.AspNetCore.Mvc.ControllerBas
                 endpoint: "post:save-load/admin/stats",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }

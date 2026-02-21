@@ -22,6 +22,21 @@
 
 #nullable enable
 
+#pragma warning disable 108 // Disable "CS0108 '{derivedDto}.ToJson()' hides inherited member '{dtoBase}.ToJson()'. Use the new keyword if hiding was intended."
+#pragma warning disable 114 // Disable "CS0114 '{derivedDto}.RaisePropertyChanged(String)' hides inherited member 'dtoBase.RaisePropertyChanged(String)'. To make the current member override that implementation, add the override keyword. Otherwise add the new keyword."
+#pragma warning disable 472 // Disable "CS0472 The result of the expression is always 'false' since a value of type 'Int32' is never equal to 'null' of type 'Int32?'
+#pragma warning disable 612 // Disable "CS0612 '...' is obsolete"
+#pragma warning disable 649 // Disable "CS0649 Field is never assigned to, and will always have its default value null"
+#pragma warning disable 1573 // Disable "CS1573 Parameter '...' has no matching param tag in the XML comment for ...
+#pragma warning disable 1591 // Disable "CS1591 Missing XML comment for publicly visible type or member ..."
+#pragma warning disable 8073 // Disable "CS8073 The result of the expression is always 'false' since a value of type 'T' is never equal to 'null' of type 'T?'"
+#pragma warning disable 3016 // Disable "CS3016 Arrays as attribute arguments is not CLS-compliant"
+#pragma warning disable 8600 // Disable "CS8600 Converting null literal or possible null value to non-nullable type"
+#pragma warning disable 8602 // Disable "CS8602 Dereference of a possibly null reference"
+#pragma warning disable 8603 // Disable "CS8603 Possible null reference return"
+#pragma warning disable 8604 // Disable "CS8604 Possible null reference argument for parameter"
+#pragma warning disable 8625 // Disable "CS8625 Cannot convert null literal to non-nullable reference type"
+#pragma warning disable 8765 // Disable "CS8765 Nullability of type of parameter doesn't match overridden member (possibly because of nullability attributes)."
 
 namespace BeyondImmersion.BannouService.Achievement;
 
@@ -176,10 +191,12 @@ public interface IAchievementController : BeyondImmersion.BannouService.Controll
 public partial class AchievementController : Microsoft.AspNetCore.Mvc.ControllerBase
 {
     private IAchievementService _implementation;
+    private BeyondImmersion.BannouService.Services.ITelemetryProvider _telemetryProvider;
 
-    public AchievementController(IAchievementService implementation)
+    public AchievementController(IAchievementService implementation, BeyondImmersion.BannouService.Services.ITelemetryProvider telemetryProvider)
     {
         _implementation = implementation;
+        _telemetryProvider = telemetryProvider;
     }
 
     /// <summary>
@@ -233,6 +250,11 @@ public partial class AchievementController : Microsoft.AspNetCore.Mvc.Controller
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.achievement",
+                "AchievementController.CreateAchievementDefinition",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "achievement/definition/create");
 
             var (statusCode, result) = await _implementation.CreateAchievementDefinitionAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -241,6 +263,7 @@ public partial class AchievementController : Microsoft.AspNetCore.Mvc.Controller
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<AchievementController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:achievement/definition/create");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -256,6 +279,7 @@ public partial class AchievementController : Microsoft.AspNetCore.Mvc.Controller
                 endpoint: "post:achievement/definition/create",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -274,6 +298,11 @@ public partial class AchievementController : Microsoft.AspNetCore.Mvc.Controller
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.achievement",
+                "AchievementController.GetAchievementDefinition",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "achievement/definition/get");
 
             var (statusCode, result) = await _implementation.GetAchievementDefinitionAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -282,6 +311,7 @@ public partial class AchievementController : Microsoft.AspNetCore.Mvc.Controller
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<AchievementController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:achievement/definition/get");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -297,6 +327,7 @@ public partial class AchievementController : Microsoft.AspNetCore.Mvc.Controller
                 endpoint: "post:achievement/definition/get",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -315,6 +346,11 @@ public partial class AchievementController : Microsoft.AspNetCore.Mvc.Controller
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.achievement",
+                "AchievementController.ListAchievementDefinitions",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "achievement/definition/list");
 
             var (statusCode, result) = await _implementation.ListAchievementDefinitionsAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -323,6 +359,7 @@ public partial class AchievementController : Microsoft.AspNetCore.Mvc.Controller
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<AchievementController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:achievement/definition/list");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -338,6 +375,7 @@ public partial class AchievementController : Microsoft.AspNetCore.Mvc.Controller
                 endpoint: "post:achievement/definition/list",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -357,6 +395,11 @@ public partial class AchievementController : Microsoft.AspNetCore.Mvc.Controller
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.achievement",
+                "AchievementController.UpdateAchievementDefinition",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "achievement/definition/update");
 
             var (statusCode, result) = await _implementation.UpdateAchievementDefinitionAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -365,6 +408,7 @@ public partial class AchievementController : Microsoft.AspNetCore.Mvc.Controller
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<AchievementController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:achievement/definition/update");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -380,6 +424,7 @@ public partial class AchievementController : Microsoft.AspNetCore.Mvc.Controller
                 endpoint: "post:achievement/definition/update",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -399,6 +444,11 @@ public partial class AchievementController : Microsoft.AspNetCore.Mvc.Controller
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.achievement",
+                "AchievementController.DeleteAchievementDefinition",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "achievement/definition/delete");
 
             var statusCode = await _implementation.DeleteAchievementDefinitionAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode);
@@ -407,6 +457,7 @@ public partial class AchievementController : Microsoft.AspNetCore.Mvc.Controller
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<AchievementController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:achievement/definition/delete");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -422,6 +473,7 @@ public partial class AchievementController : Microsoft.AspNetCore.Mvc.Controller
                 endpoint: "post:achievement/definition/delete",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -440,6 +492,11 @@ public partial class AchievementController : Microsoft.AspNetCore.Mvc.Controller
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.achievement",
+                "AchievementController.GetAchievementProgress",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "achievement/progress/get");
 
             var (statusCode, result) = await _implementation.GetAchievementProgressAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -448,6 +505,7 @@ public partial class AchievementController : Microsoft.AspNetCore.Mvc.Controller
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<AchievementController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:achievement/progress/get");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -463,6 +521,7 @@ public partial class AchievementController : Microsoft.AspNetCore.Mvc.Controller
                 endpoint: "post:achievement/progress/get",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -482,6 +541,11 @@ public partial class AchievementController : Microsoft.AspNetCore.Mvc.Controller
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.achievement",
+                "AchievementController.UpdateAchievementProgress",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "achievement/progress/update");
 
             var (statusCode, result) = await _implementation.UpdateAchievementProgressAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -490,6 +554,7 @@ public partial class AchievementController : Microsoft.AspNetCore.Mvc.Controller
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<AchievementController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:achievement/progress/update");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -505,6 +570,7 @@ public partial class AchievementController : Microsoft.AspNetCore.Mvc.Controller
                 endpoint: "post:achievement/progress/update",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -524,6 +590,11 @@ public partial class AchievementController : Microsoft.AspNetCore.Mvc.Controller
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.achievement",
+                "AchievementController.UnlockAchievement",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "achievement/unlock");
 
             var (statusCode, result) = await _implementation.UnlockAchievementAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -532,6 +603,7 @@ public partial class AchievementController : Microsoft.AspNetCore.Mvc.Controller
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<AchievementController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:achievement/unlock");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -547,6 +619,7 @@ public partial class AchievementController : Microsoft.AspNetCore.Mvc.Controller
                 endpoint: "post:achievement/unlock",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -565,6 +638,11 @@ public partial class AchievementController : Microsoft.AspNetCore.Mvc.Controller
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.achievement",
+                "AchievementController.ListUnlockedAchievements",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "achievement/list-unlocked");
 
             var (statusCode, result) = await _implementation.ListUnlockedAchievementsAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -573,6 +651,7 @@ public partial class AchievementController : Microsoft.AspNetCore.Mvc.Controller
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<AchievementController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:achievement/list-unlocked");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -588,6 +667,7 @@ public partial class AchievementController : Microsoft.AspNetCore.Mvc.Controller
                 endpoint: "post:achievement/list-unlocked",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -607,6 +687,11 @@ public partial class AchievementController : Microsoft.AspNetCore.Mvc.Controller
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.achievement",
+                "AchievementController.SyncPlatformAchievements",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "achievement/platform/sync");
 
             var (statusCode, result) = await _implementation.SyncPlatformAchievementsAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -615,6 +700,7 @@ public partial class AchievementController : Microsoft.AspNetCore.Mvc.Controller
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<AchievementController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:achievement/platform/sync");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -630,6 +716,7 @@ public partial class AchievementController : Microsoft.AspNetCore.Mvc.Controller
                 endpoint: "post:achievement/platform/sync",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -648,6 +735,11 @@ public partial class AchievementController : Microsoft.AspNetCore.Mvc.Controller
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.achievement",
+                "AchievementController.GetPlatformSyncStatus",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "achievement/platform/status");
 
             var (statusCode, result) = await _implementation.GetPlatformSyncStatusAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -656,6 +748,7 @@ public partial class AchievementController : Microsoft.AspNetCore.Mvc.Controller
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<AchievementController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:achievement/platform/status");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -671,6 +764,7 @@ public partial class AchievementController : Microsoft.AspNetCore.Mvc.Controller
                 endpoint: "post:achievement/platform/status",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }

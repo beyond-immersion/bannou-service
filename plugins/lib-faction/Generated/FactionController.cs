@@ -22,6 +22,21 @@
 
 #nullable enable
 
+#pragma warning disable 108 // Disable "CS0108 '{derivedDto}.ToJson()' hides inherited member '{dtoBase}.ToJson()'. Use the new keyword if hiding was intended."
+#pragma warning disable 114 // Disable "CS0114 '{derivedDto}.RaisePropertyChanged(String)' hides inherited member 'dtoBase.RaisePropertyChanged(String)'. To make the current member override that implementation, add the override keyword. Otherwise add the new keyword."
+#pragma warning disable 472 // Disable "CS0472 The result of the expression is always 'false' since a value of type 'Int32' is never equal to 'null' of type 'Int32?'
+#pragma warning disable 612 // Disable "CS0612 '...' is obsolete"
+#pragma warning disable 649 // Disable "CS0649 Field is never assigned to, and will always have its default value null"
+#pragma warning disable 1573 // Disable "CS1573 Parameter '...' has no matching param tag in the XML comment for ...
+#pragma warning disable 1591 // Disable "CS1591 Missing XML comment for publicly visible type or member ..."
+#pragma warning disable 8073 // Disable "CS8073 The result of the expression is always 'false' since a value of type 'T' is never equal to 'null' of type 'T?'"
+#pragma warning disable 3016 // Disable "CS3016 Arrays as attribute arguments is not CLS-compliant"
+#pragma warning disable 8600 // Disable "CS8600 Converting null literal or possible null value to non-nullable type"
+#pragma warning disable 8602 // Disable "CS8602 Dereference of a possibly null reference"
+#pragma warning disable 8603 // Disable "CS8603 Possible null reference return"
+#pragma warning disable 8604 // Disable "CS8604 Possible null reference argument for parameter"
+#pragma warning disable 8625 // Disable "CS8625 Cannot convert null literal to non-nullable reference type"
+#pragma warning disable 8765 // Disable "CS8765 Nullability of type of parameter doesn't match overridden member (possibly because of nullability attributes)."
 
 namespace BeyondImmersion.BannouService.Faction;
 
@@ -505,10 +520,12 @@ public interface IFactionController : BeyondImmersion.BannouService.Controllers.
 public partial class FactionController : Microsoft.AspNetCore.Mvc.ControllerBase
 {
     private IFactionService _implementation;
+    private BeyondImmersion.BannouService.Services.ITelemetryProvider _telemetryProvider;
 
-    public FactionController(IFactionService implementation)
+    public FactionController(IFactionService implementation, BeyondImmersion.BannouService.Services.ITelemetryProvider telemetryProvider)
     {
         _implementation = implementation;
+        _telemetryProvider = telemetryProvider;
     }
 
     /// <summary>
@@ -569,6 +586,11 @@ public partial class FactionController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.faction",
+                "FactionController.CreateFaction",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "faction/create");
 
             var (statusCode, result) = await _implementation.CreateFactionAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -577,6 +599,7 @@ public partial class FactionController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<FactionController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:faction/create");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -592,6 +615,7 @@ public partial class FactionController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:faction/create",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -611,6 +635,11 @@ public partial class FactionController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.faction",
+                "FactionController.GetFaction",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "faction/get");
 
             var (statusCode, result) = await _implementation.GetFactionAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -619,6 +648,7 @@ public partial class FactionController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<FactionController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:faction/get");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -634,6 +664,7 @@ public partial class FactionController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:faction/get",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -653,6 +684,11 @@ public partial class FactionController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.faction",
+                "FactionController.GetFactionByCode",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "faction/get-by-code");
 
             var (statusCode, result) = await _implementation.GetFactionByCodeAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -661,6 +697,7 @@ public partial class FactionController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<FactionController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:faction/get-by-code");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -676,6 +713,7 @@ public partial class FactionController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:faction/get-by-code",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -695,6 +733,11 @@ public partial class FactionController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.faction",
+                "FactionController.ListFactions",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "faction/list");
 
             var (statusCode, result) = await _implementation.ListFactionsAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -703,6 +746,7 @@ public partial class FactionController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<FactionController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:faction/list");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -718,6 +762,7 @@ public partial class FactionController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:faction/list",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -738,6 +783,11 @@ public partial class FactionController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.faction",
+                "FactionController.UpdateFaction",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "faction/update");
 
             var (statusCode, result) = await _implementation.UpdateFactionAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -746,6 +796,7 @@ public partial class FactionController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<FactionController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:faction/update");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -761,6 +812,7 @@ public partial class FactionController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:faction/update",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -781,6 +833,11 @@ public partial class FactionController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.faction",
+                "FactionController.DeprecateFaction",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "faction/deprecate");
 
             var (statusCode, result) = await _implementation.DeprecateFactionAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -789,6 +846,7 @@ public partial class FactionController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<FactionController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:faction/deprecate");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -804,6 +862,7 @@ public partial class FactionController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:faction/deprecate",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -822,6 +881,11 @@ public partial class FactionController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.faction",
+                "FactionController.UndeprecateFaction",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "faction/undeprecate");
 
             var (statusCode, result) = await _implementation.UndeprecateFactionAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -830,6 +894,7 @@ public partial class FactionController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<FactionController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:faction/undeprecate");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -845,6 +910,7 @@ public partial class FactionController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:faction/undeprecate",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -866,6 +932,11 @@ public partial class FactionController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.faction",
+                "FactionController.DeleteFaction",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "faction/delete");
 
             var statusCode = await _implementation.DeleteFactionAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode);
@@ -874,6 +945,7 @@ public partial class FactionController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<FactionController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:faction/delete");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -889,6 +961,7 @@ public partial class FactionController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:faction/delete",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -912,6 +985,11 @@ public partial class FactionController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.faction",
+                "FactionController.SeedFactions",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "faction/seed");
 
             var (statusCode, result) = await _implementation.SeedFactionsAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -920,6 +998,7 @@ public partial class FactionController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<FactionController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:faction/seed");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -935,6 +1014,7 @@ public partial class FactionController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:faction/seed",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -959,6 +1039,11 @@ public partial class FactionController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.faction",
+                "FactionController.DesignateRealmBaseline",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "faction/designate-realm-baseline");
 
             var (statusCode, result) = await _implementation.DesignateRealmBaselineAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -967,6 +1052,7 @@ public partial class FactionController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<FactionController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:faction/designate-realm-baseline");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -982,6 +1068,7 @@ public partial class FactionController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:faction/designate-realm-baseline",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -1001,6 +1088,11 @@ public partial class FactionController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.faction",
+                "FactionController.GetRealmBaseline",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "faction/get-realm-baseline");
 
             var (statusCode, result) = await _implementation.GetRealmBaselineAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1009,6 +1101,7 @@ public partial class FactionController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<FactionController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:faction/get-realm-baseline");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -1024,6 +1117,7 @@ public partial class FactionController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:faction/get-realm-baseline",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -1049,6 +1143,11 @@ public partial class FactionController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.faction",
+                "FactionController.AddMember",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "faction/member/add");
 
             var (statusCode, result) = await _implementation.AddMemberAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1057,6 +1156,7 @@ public partial class FactionController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<FactionController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:faction/member/add");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -1072,6 +1172,7 @@ public partial class FactionController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:faction/member/add",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -1091,6 +1192,11 @@ public partial class FactionController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.faction",
+                "FactionController.RemoveMember",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "faction/member/remove");
 
             var statusCode = await _implementation.RemoveMemberAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode);
@@ -1099,6 +1205,7 @@ public partial class FactionController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<FactionController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:faction/member/remove");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -1114,6 +1221,7 @@ public partial class FactionController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:faction/member/remove",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -1133,6 +1241,11 @@ public partial class FactionController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.faction",
+                "FactionController.ListMembers",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "faction/member/list");
 
             var (statusCode, result) = await _implementation.ListMembersAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1141,6 +1254,7 @@ public partial class FactionController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<FactionController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:faction/member/list");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -1156,6 +1270,7 @@ public partial class FactionController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:faction/member/list",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -1176,6 +1291,11 @@ public partial class FactionController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.faction",
+                "FactionController.ListMembershipsByCharacter",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "faction/member/list-by-character");
 
             var (statusCode, result) = await _implementation.ListMembershipsByCharacterAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1184,6 +1304,7 @@ public partial class FactionController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<FactionController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:faction/member/list-by-character");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -1199,6 +1320,7 @@ public partial class FactionController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:faction/member/list-by-character",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -1218,6 +1340,11 @@ public partial class FactionController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.faction",
+                "FactionController.UpdateMemberRole",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "faction/member/update-role");
 
             var (statusCode, result) = await _implementation.UpdateMemberRoleAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1226,6 +1353,7 @@ public partial class FactionController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<FactionController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:faction/member/update-role");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -1241,6 +1369,7 @@ public partial class FactionController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:faction/member/update-role",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -1260,6 +1389,11 @@ public partial class FactionController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.faction",
+                "FactionController.CheckMembership",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "faction/member/check");
 
             var (statusCode, result) = await _implementation.CheckMembershipAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1268,6 +1402,7 @@ public partial class FactionController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<FactionController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:faction/member/check");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -1283,6 +1418,7 @@ public partial class FactionController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:faction/member/check",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -1306,6 +1442,11 @@ public partial class FactionController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.faction",
+                "FactionController.ClaimTerritory",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "faction/territory/claim");
 
             var (statusCode, result) = await _implementation.ClaimTerritoryAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1314,6 +1455,7 @@ public partial class FactionController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<FactionController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:faction/territory/claim");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -1329,6 +1471,7 @@ public partial class FactionController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:faction/territory/claim",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -1348,6 +1491,11 @@ public partial class FactionController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.faction",
+                "FactionController.ReleaseTerritory",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "faction/territory/release");
 
             var statusCode = await _implementation.ReleaseTerritoryAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode);
@@ -1356,6 +1504,7 @@ public partial class FactionController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<FactionController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:faction/territory/release");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -1371,6 +1520,7 @@ public partial class FactionController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:faction/territory/release",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -1390,6 +1540,11 @@ public partial class FactionController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.faction",
+                "FactionController.ListTerritoryClaims",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "faction/territory/list");
 
             var (statusCode, result) = await _implementation.ListTerritoryClaimsAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1398,6 +1553,7 @@ public partial class FactionController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<FactionController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:faction/territory/list");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -1413,6 +1569,7 @@ public partial class FactionController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:faction/territory/list",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -1435,6 +1592,11 @@ public partial class FactionController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.faction",
+                "FactionController.GetControllingFaction",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "faction/territory/get-controlling");
 
             var (statusCode, result) = await _implementation.GetControllingFactionAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1443,6 +1605,7 @@ public partial class FactionController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<FactionController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:faction/territory/get-controlling");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -1458,6 +1621,7 @@ public partial class FactionController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:faction/territory/get-controlling",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -1490,6 +1654,11 @@ public partial class FactionController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.faction",
+                "FactionController.DefineNorm",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "faction/norm/define");
 
             var (statusCode, result) = await _implementation.DefineNormAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1498,6 +1667,7 @@ public partial class FactionController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<FactionController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:faction/norm/define");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -1513,6 +1683,7 @@ public partial class FactionController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:faction/norm/define",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -1533,6 +1704,11 @@ public partial class FactionController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.faction",
+                "FactionController.UpdateNorm",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "faction/norm/update");
 
             var (statusCode, result) = await _implementation.UpdateNormAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1541,6 +1717,7 @@ public partial class FactionController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<FactionController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:faction/norm/update");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -1556,6 +1733,7 @@ public partial class FactionController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:faction/norm/update",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -1574,6 +1752,11 @@ public partial class FactionController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.faction",
+                "FactionController.DeleteNorm",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "faction/norm/delete");
 
             var statusCode = await _implementation.DeleteNormAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode);
@@ -1582,6 +1765,7 @@ public partial class FactionController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<FactionController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:faction/norm/delete");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -1597,6 +1781,7 @@ public partial class FactionController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:faction/norm/delete",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -1616,6 +1801,11 @@ public partial class FactionController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.faction",
+                "FactionController.ListNorms",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "faction/norm/list");
 
             var (statusCode, result) = await _implementation.ListNormsAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1624,6 +1814,7 @@ public partial class FactionController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<FactionController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:faction/norm/list");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -1639,6 +1830,7 @@ public partial class FactionController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:faction/norm/list",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -1671,6 +1863,11 @@ public partial class FactionController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.faction",
+                "FactionController.QueryApplicableNorms",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "faction/norm/query-applicable");
 
             var (statusCode, result) = await _implementation.QueryApplicableNormsAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1679,6 +1876,7 @@ public partial class FactionController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<FactionController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:faction/norm/query-applicable");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -1694,6 +1892,7 @@ public partial class FactionController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:faction/norm/query-applicable",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -1714,6 +1913,11 @@ public partial class FactionController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.faction",
+                "FactionController.CleanupByCharacter",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "faction/cleanup-by-character");
 
             var (statusCode, result) = await _implementation.CleanupByCharacterAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1722,6 +1926,7 @@ public partial class FactionController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<FactionController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:faction/cleanup-by-character");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -1737,6 +1942,7 @@ public partial class FactionController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:faction/cleanup-by-character",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -1757,6 +1963,11 @@ public partial class FactionController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.faction",
+                "FactionController.CleanupByRealm",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "faction/cleanup-by-realm");
 
             var (statusCode, result) = await _implementation.CleanupByRealmAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1765,6 +1976,7 @@ public partial class FactionController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<FactionController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:faction/cleanup-by-realm");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -1780,6 +1992,7 @@ public partial class FactionController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:faction/cleanup-by-realm",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -1800,6 +2013,11 @@ public partial class FactionController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.faction",
+                "FactionController.CleanupByLocation",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "faction/cleanup-by-location");
 
             var (statusCode, result) = await _implementation.CleanupByLocationAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1808,6 +2026,7 @@ public partial class FactionController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<FactionController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:faction/cleanup-by-location");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -1823,6 +2042,7 @@ public partial class FactionController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:faction/cleanup-by-location",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -1843,6 +2063,11 @@ public partial class FactionController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.faction",
+                "FactionController.GetCompressData",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "faction/get-compress-data");
 
             var (statusCode, result) = await _implementation.GetCompressDataAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1851,6 +2076,7 @@ public partial class FactionController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<FactionController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:faction/get-compress-data");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -1866,6 +2092,7 @@ public partial class FactionController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:faction/get-compress-data",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -1886,6 +2113,11 @@ public partial class FactionController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.faction",
+                "FactionController.RestoreFromArchive",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "faction/restore-from-archive");
 
             var (statusCode, result) = await _implementation.RestoreFromArchiveAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1894,6 +2126,7 @@ public partial class FactionController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<FactionController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:faction/restore-from-archive");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -1909,6 +2142,7 @@ public partial class FactionController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:faction/restore-from-archive",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }

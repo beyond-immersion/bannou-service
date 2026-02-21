@@ -22,6 +22,21 @@
 
 #nullable enable
 
+#pragma warning disable 108 // Disable "CS0108 '{derivedDto}.ToJson()' hides inherited member '{dtoBase}.ToJson()'. Use the new keyword if hiding was intended."
+#pragma warning disable 114 // Disable "CS0114 '{derivedDto}.RaisePropertyChanged(String)' hides inherited member 'dtoBase.RaisePropertyChanged(String)'. To make the current member override that implementation, add the override keyword. Otherwise add the new keyword."
+#pragma warning disable 472 // Disable "CS0472 The result of the expression is always 'false' since a value of type 'Int32' is never equal to 'null' of type 'Int32?'
+#pragma warning disable 612 // Disable "CS0612 '...' is obsolete"
+#pragma warning disable 649 // Disable "CS0649 Field is never assigned to, and will always have its default value null"
+#pragma warning disable 1573 // Disable "CS1573 Parameter '...' has no matching param tag in the XML comment for ...
+#pragma warning disable 1591 // Disable "CS1591 Missing XML comment for publicly visible type or member ..."
+#pragma warning disable 8073 // Disable "CS8073 The result of the expression is always 'false' since a value of type 'T' is never equal to 'null' of type 'T?'"
+#pragma warning disable 3016 // Disable "CS3016 Arrays as attribute arguments is not CLS-compliant"
+#pragma warning disable 8600 // Disable "CS8600 Converting null literal or possible null value to non-nullable type"
+#pragma warning disable 8602 // Disable "CS8602 Dereference of a possibly null reference"
+#pragma warning disable 8603 // Disable "CS8603 Possible null reference return"
+#pragma warning disable 8604 // Disable "CS8604 Possible null reference argument for parameter"
+#pragma warning disable 8625 // Disable "CS8625 Cannot convert null literal to non-nullable reference type"
+#pragma warning disable 8765 // Disable "CS8765 Nullability of type of parameter doesn't match overridden member (possibly because of nullability attributes)."
 
 namespace BeyondImmersion.BannouService.Mapping;
 
@@ -285,10 +300,12 @@ public interface IMappingController : BeyondImmersion.BannouService.Controllers.
 public partial class MappingController : Microsoft.AspNetCore.Mvc.ControllerBase
 {
     private IMappingService _implementation;
+    private BeyondImmersion.BannouService.Services.ITelemetryProvider _telemetryProvider;
 
-    public MappingController(IMappingService implementation)
+    public MappingController(IMappingService implementation, BeyondImmersion.BannouService.Services.ITelemetryProvider telemetryProvider)
     {
         _implementation = implementation;
+        _telemetryProvider = telemetryProvider;
     }
 
     /// <summary>
@@ -343,6 +360,11 @@ public partial class MappingController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.mapping",
+                "MappingController.CreateChannel",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "mapping/create-channel");
 
             var (statusCode, result) = await _implementation.CreateChannelAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -351,6 +373,7 @@ public partial class MappingController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<MappingController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:mapping/create-channel");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -366,6 +389,7 @@ public partial class MappingController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:mapping/create-channel",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -385,6 +409,11 @@ public partial class MappingController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.mapping",
+                "MappingController.ReleaseAuthority",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "mapping/release-authority");
 
             var (statusCode, result) = await _implementation.ReleaseAuthorityAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -393,6 +422,7 @@ public partial class MappingController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<MappingController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:mapping/release-authority");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -408,6 +438,7 @@ public partial class MappingController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:mapping/release-authority",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -427,6 +458,11 @@ public partial class MappingController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.mapping",
+                "MappingController.AuthorityHeartbeat",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "mapping/authority-heartbeat");
 
             var (statusCode, result) = await _implementation.AuthorityHeartbeatAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -435,6 +471,7 @@ public partial class MappingController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<MappingController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:mapping/authority-heartbeat");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -450,6 +487,7 @@ public partial class MappingController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:mapping/authority-heartbeat",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -470,6 +508,11 @@ public partial class MappingController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.mapping",
+                "MappingController.PublishMapUpdate",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "mapping/publish");
 
             var (statusCode, result) = await _implementation.PublishMapUpdateAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -478,6 +521,7 @@ public partial class MappingController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<MappingController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:mapping/publish");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -493,6 +537,7 @@ public partial class MappingController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:mapping/publish",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -513,6 +558,11 @@ public partial class MappingController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.mapping",
+                "MappingController.PublishObjectChanges",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "mapping/publish-objects");
 
             var (statusCode, result) = await _implementation.PublishObjectChangesAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -521,6 +571,7 @@ public partial class MappingController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<MappingController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:mapping/publish-objects");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -536,6 +587,7 @@ public partial class MappingController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:mapping/publish-objects",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -556,6 +608,11 @@ public partial class MappingController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.mapping",
+                "MappingController.RequestSnapshot",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "mapping/request-snapshot");
 
             var (statusCode, result) = await _implementation.RequestSnapshotAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -564,6 +621,7 @@ public partial class MappingController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<MappingController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:mapping/request-snapshot");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -579,6 +637,7 @@ public partial class MappingController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:mapping/request-snapshot",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -599,6 +658,11 @@ public partial class MappingController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.mapping",
+                "MappingController.QueryPoint",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "mapping/query/point");
 
             var (statusCode, result) = await _implementation.QueryPointAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -607,6 +671,7 @@ public partial class MappingController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<MappingController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:mapping/query/point");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -622,6 +687,7 @@ public partial class MappingController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:mapping/query/point",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -642,6 +708,11 @@ public partial class MappingController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.mapping",
+                "MappingController.QueryBounds",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "mapping/query/bounds");
 
             var (statusCode, result) = await _implementation.QueryBoundsAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -650,6 +721,7 @@ public partial class MappingController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<MappingController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:mapping/query/bounds");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -665,6 +737,7 @@ public partial class MappingController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:mapping/query/bounds",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -684,6 +757,11 @@ public partial class MappingController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.mapping",
+                "MappingController.QueryObjectsByType",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "mapping/query/objects-by-type");
 
             var (statusCode, result) = await _implementation.QueryObjectsByTypeAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -692,6 +770,7 @@ public partial class MappingController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<MappingController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:mapping/query/objects-by-type");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -707,6 +786,7 @@ public partial class MappingController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:mapping/query/objects-by-type",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -734,6 +814,11 @@ public partial class MappingController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.mapping",
+                "MappingController.QueryAffordance",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "mapping/query/affordance");
 
             var (statusCode, result) = await _implementation.QueryAffordanceAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -742,6 +827,7 @@ public partial class MappingController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<MappingController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:mapping/query/affordance");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -757,6 +843,7 @@ public partial class MappingController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:mapping/query/affordance",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -777,6 +864,11 @@ public partial class MappingController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.mapping",
+                "MappingController.CheckoutForAuthoring",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "mapping/authoring/checkout");
 
             var (statusCode, result) = await _implementation.CheckoutForAuthoringAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -785,6 +877,7 @@ public partial class MappingController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<MappingController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:mapping/authoring/checkout");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -800,6 +893,7 @@ public partial class MappingController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:mapping/authoring/checkout",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -819,6 +913,11 @@ public partial class MappingController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.mapping",
+                "MappingController.CommitAuthoring",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "mapping/authoring/commit");
 
             var (statusCode, result) = await _implementation.CommitAuthoringAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -827,6 +926,7 @@ public partial class MappingController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<MappingController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:mapping/authoring/commit");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -842,6 +942,7 @@ public partial class MappingController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:mapping/authoring/commit",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -861,6 +962,11 @@ public partial class MappingController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.mapping",
+                "MappingController.ReleaseAuthoring",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "mapping/authoring/release");
 
             var (statusCode, result) = await _implementation.ReleaseAuthoringAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -869,6 +975,7 @@ public partial class MappingController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<MappingController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:mapping/authoring/release");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -884,6 +991,7 @@ public partial class MappingController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:mapping/authoring/release",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -904,6 +1012,11 @@ public partial class MappingController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.mapping",
+                "MappingController.CreateDefinition",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "mapping/definition/create");
 
             var (statusCode, result) = await _implementation.CreateDefinitionAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -912,6 +1025,7 @@ public partial class MappingController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<MappingController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:mapping/definition/create");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -927,6 +1041,7 @@ public partial class MappingController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:mapping/definition/create",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -945,6 +1060,11 @@ public partial class MappingController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.mapping",
+                "MappingController.GetDefinition",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "mapping/definition/get");
 
             var (statusCode, result) = await _implementation.GetDefinitionAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -953,6 +1073,7 @@ public partial class MappingController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<MappingController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:mapping/definition/get");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -968,6 +1089,7 @@ public partial class MappingController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:mapping/definition/get",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -986,6 +1108,11 @@ public partial class MappingController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.mapping",
+                "MappingController.ListDefinitions",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "mapping/definition/list");
 
             var (statusCode, result) = await _implementation.ListDefinitionsAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -994,6 +1121,7 @@ public partial class MappingController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<MappingController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:mapping/definition/list");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -1009,6 +1137,7 @@ public partial class MappingController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:mapping/definition/list",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -1028,6 +1157,11 @@ public partial class MappingController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.mapping",
+                "MappingController.UpdateDefinition",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "mapping/definition/update");
 
             var (statusCode, result) = await _implementation.UpdateDefinitionAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1036,6 +1170,7 @@ public partial class MappingController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<MappingController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:mapping/definition/update");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -1051,6 +1186,7 @@ public partial class MappingController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:mapping/definition/update",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -1069,6 +1205,11 @@ public partial class MappingController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.mapping",
+                "MappingController.DeleteDefinition",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "mapping/definition/delete");
 
             var (statusCode, result) = await _implementation.DeleteDefinitionAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1077,6 +1218,7 @@ public partial class MappingController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<MappingController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:mapping/definition/delete");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -1092,6 +1234,7 @@ public partial class MappingController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:mapping/definition/delete",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }

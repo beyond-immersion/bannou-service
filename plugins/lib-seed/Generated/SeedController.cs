@@ -22,6 +22,21 @@
 
 #nullable enable
 
+#pragma warning disable 108 // Disable "CS0108 '{derivedDto}.ToJson()' hides inherited member '{dtoBase}.ToJson()'. Use the new keyword if hiding was intended."
+#pragma warning disable 114 // Disable "CS0114 '{derivedDto}.RaisePropertyChanged(String)' hides inherited member 'dtoBase.RaisePropertyChanged(String)'. To make the current member override that implementation, add the override keyword. Otherwise add the new keyword."
+#pragma warning disable 472 // Disable "CS0472 The result of the expression is always 'false' since a value of type 'Int32' is never equal to 'null' of type 'Int32?'
+#pragma warning disable 612 // Disable "CS0612 '...' is obsolete"
+#pragma warning disable 649 // Disable "CS0649 Field is never assigned to, and will always have its default value null"
+#pragma warning disable 1573 // Disable "CS1573 Parameter '...' has no matching param tag in the XML comment for ...
+#pragma warning disable 1591 // Disable "CS1591 Missing XML comment for publicly visible type or member ..."
+#pragma warning disable 8073 // Disable "CS8073 The result of the expression is always 'false' since a value of type 'T' is never equal to 'null' of type 'T?'"
+#pragma warning disable 3016 // Disable "CS3016 Arrays as attribute arguments is not CLS-compliant"
+#pragma warning disable 8600 // Disable "CS8600 Converting null literal or possible null value to non-nullable type"
+#pragma warning disable 8602 // Disable "CS8602 Dereference of a possibly null reference"
+#pragma warning disable 8603 // Disable "CS8603 Possible null reference return"
+#pragma warning disable 8604 // Disable "CS8604 Possible null reference argument for parameter"
+#pragma warning disable 8625 // Disable "CS8625 Cannot convert null literal to non-nullable reference type"
+#pragma warning disable 8765 // Disable "CS8765 Nullability of type of parameter doesn't match overridden member (possibly because of nullability attributes)."
 
 namespace BeyondImmersion.BannouService.Seed;
 
@@ -326,10 +341,12 @@ public interface ISeedController : BeyondImmersion.BannouService.Controllers.IBa
 public partial class SeedController : Microsoft.AspNetCore.Mvc.ControllerBase
 {
     private ISeedService _implementation;
+    private BeyondImmersion.BannouService.Services.ITelemetryProvider _telemetryProvider;
 
-    public SeedController(ISeedService implementation)
+    public SeedController(ISeedService implementation, BeyondImmersion.BannouService.Services.ITelemetryProvider telemetryProvider)
     {
         _implementation = implementation;
+        _telemetryProvider = telemetryProvider;
     }
 
     /// <summary>
@@ -382,6 +399,11 @@ public partial class SeedController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.seed",
+                "SeedController.CreateSeed",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "seed/create");
 
             var (statusCode, result) = await _implementation.CreateSeedAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -390,6 +412,7 @@ public partial class SeedController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<SeedController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:seed/create");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -405,6 +428,7 @@ public partial class SeedController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:seed/create",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -423,6 +447,11 @@ public partial class SeedController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.seed",
+                "SeedController.GetSeed",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "seed/get");
 
             var (statusCode, result) = await _implementation.GetSeedAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -431,6 +460,7 @@ public partial class SeedController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<SeedController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:seed/get");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -446,6 +476,7 @@ public partial class SeedController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:seed/get",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -464,6 +495,11 @@ public partial class SeedController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.seed",
+                "SeedController.GetSeedsByOwner",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "seed/get-by-owner");
 
             var (statusCode, result) = await _implementation.GetSeedsByOwnerAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -472,6 +508,7 @@ public partial class SeedController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<SeedController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:seed/get-by-owner");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -487,6 +524,7 @@ public partial class SeedController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:seed/get-by-owner",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -505,6 +543,11 @@ public partial class SeedController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.seed",
+                "SeedController.ListSeeds",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "seed/list");
 
             var (statusCode, result) = await _implementation.ListSeedsAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -513,6 +556,7 @@ public partial class SeedController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<SeedController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:seed/list");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -528,6 +572,7 @@ public partial class SeedController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:seed/list",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -546,6 +591,11 @@ public partial class SeedController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.seed",
+                "SeedController.UpdateSeed",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "seed/update");
 
             var (statusCode, result) = await _implementation.UpdateSeedAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -554,6 +604,7 @@ public partial class SeedController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<SeedController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:seed/update");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -569,6 +620,7 @@ public partial class SeedController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:seed/update",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -587,6 +639,11 @@ public partial class SeedController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.seed",
+                "SeedController.ActivateSeed",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "seed/activate");
 
             var (statusCode, result) = await _implementation.ActivateSeedAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -595,6 +652,7 @@ public partial class SeedController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<SeedController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:seed/activate");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -610,6 +668,7 @@ public partial class SeedController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:seed/activate",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -628,6 +687,11 @@ public partial class SeedController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.seed",
+                "SeedController.ArchiveSeed",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "seed/archive");
 
             var (statusCode, result) = await _implementation.ArchiveSeedAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -636,6 +700,7 @@ public partial class SeedController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<SeedController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:seed/archive");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -651,6 +716,7 @@ public partial class SeedController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:seed/archive",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -669,6 +735,11 @@ public partial class SeedController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.seed",
+                "SeedController.GetGrowth",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "seed/growth/get");
 
             var (statusCode, result) = await _implementation.GetGrowthAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -677,6 +748,7 @@ public partial class SeedController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<SeedController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:seed/growth/get");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -692,6 +764,7 @@ public partial class SeedController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:seed/growth/get",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -710,6 +783,11 @@ public partial class SeedController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.seed",
+                "SeedController.RecordGrowth",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "seed/growth/record");
 
             var (statusCode, result) = await _implementation.RecordGrowthAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -718,6 +796,7 @@ public partial class SeedController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<SeedController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:seed/growth/record");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -733,6 +812,7 @@ public partial class SeedController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:seed/growth/record",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -751,6 +831,11 @@ public partial class SeedController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.seed",
+                "SeedController.RecordGrowthBatch",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "seed/growth/record-batch");
 
             var (statusCode, result) = await _implementation.RecordGrowthBatchAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -759,6 +844,7 @@ public partial class SeedController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<SeedController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:seed/growth/record-batch");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -774,6 +860,7 @@ public partial class SeedController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:seed/growth/record-batch",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -792,6 +879,11 @@ public partial class SeedController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.seed",
+                "SeedController.GetGrowthPhase",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "seed/growth/get-phase");
 
             var (statusCode, result) = await _implementation.GetGrowthPhaseAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -800,6 +892,7 @@ public partial class SeedController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<SeedController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:seed/growth/get-phase");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -815,6 +908,7 @@ public partial class SeedController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:seed/growth/get-phase",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -833,6 +927,11 @@ public partial class SeedController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.seed",
+                "SeedController.GetCapabilityManifest",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "seed/capability/get-manifest");
 
             var (statusCode, result) = await _implementation.GetCapabilityManifestAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -841,6 +940,7 @@ public partial class SeedController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<SeedController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:seed/capability/get-manifest");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -856,6 +956,7 @@ public partial class SeedController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:seed/capability/get-manifest",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -874,6 +975,11 @@ public partial class SeedController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.seed",
+                "SeedController.RegisterSeedType",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "seed/type/register");
 
             var (statusCode, result) = await _implementation.RegisterSeedTypeAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -882,6 +988,7 @@ public partial class SeedController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<SeedController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:seed/type/register");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -897,6 +1004,7 @@ public partial class SeedController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:seed/type/register",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -915,6 +1023,11 @@ public partial class SeedController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.seed",
+                "SeedController.GetSeedType",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "seed/type/get");
 
             var (statusCode, result) = await _implementation.GetSeedTypeAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -923,6 +1036,7 @@ public partial class SeedController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<SeedController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:seed/type/get");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -938,6 +1052,7 @@ public partial class SeedController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:seed/type/get",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -956,6 +1071,11 @@ public partial class SeedController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.seed",
+                "SeedController.ListSeedTypes",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "seed/type/list");
 
             var (statusCode, result) = await _implementation.ListSeedTypesAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -964,6 +1084,7 @@ public partial class SeedController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<SeedController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:seed/type/list");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -979,6 +1100,7 @@ public partial class SeedController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:seed/type/list",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -997,6 +1119,11 @@ public partial class SeedController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.seed",
+                "SeedController.UpdateSeedType",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "seed/type/update");
 
             var (statusCode, result) = await _implementation.UpdateSeedTypeAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1005,6 +1132,7 @@ public partial class SeedController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<SeedController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:seed/type/update");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -1020,6 +1148,7 @@ public partial class SeedController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:seed/type/update",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -1038,6 +1167,11 @@ public partial class SeedController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.seed",
+                "SeedController.DeprecateSeedType",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "seed/type/deprecate");
 
             var (statusCode, result) = await _implementation.DeprecateSeedTypeAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1046,6 +1180,7 @@ public partial class SeedController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<SeedController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:seed/type/deprecate");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -1061,6 +1196,7 @@ public partial class SeedController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:seed/type/deprecate",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -1079,6 +1215,11 @@ public partial class SeedController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.seed",
+                "SeedController.UndeprecateSeedType",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "seed/type/undeprecate");
 
             var (statusCode, result) = await _implementation.UndeprecateSeedTypeAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1087,6 +1228,7 @@ public partial class SeedController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<SeedController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:seed/type/undeprecate");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -1102,6 +1244,7 @@ public partial class SeedController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:seed/type/undeprecate",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -1120,6 +1263,11 @@ public partial class SeedController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.seed",
+                "SeedController.DeleteSeedType",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "seed/type/delete");
 
             var statusCode = await _implementation.DeleteSeedTypeAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode);
@@ -1128,6 +1276,7 @@ public partial class SeedController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<SeedController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:seed/type/delete");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -1143,6 +1292,7 @@ public partial class SeedController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:seed/type/delete",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -1161,6 +1311,11 @@ public partial class SeedController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.seed",
+                "SeedController.InitiateBond",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "seed/bond/initiate");
 
             var (statusCode, result) = await _implementation.InitiateBondAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1169,6 +1324,7 @@ public partial class SeedController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<SeedController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:seed/bond/initiate");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -1184,6 +1340,7 @@ public partial class SeedController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:seed/bond/initiate",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -1202,6 +1359,11 @@ public partial class SeedController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.seed",
+                "SeedController.ConfirmBond",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "seed/bond/confirm");
 
             var (statusCode, result) = await _implementation.ConfirmBondAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1210,6 +1372,7 @@ public partial class SeedController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<SeedController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:seed/bond/confirm");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -1225,6 +1388,7 @@ public partial class SeedController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:seed/bond/confirm",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -1243,6 +1407,11 @@ public partial class SeedController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.seed",
+                "SeedController.GetBond",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "seed/bond/get");
 
             var (statusCode, result) = await _implementation.GetBondAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1251,6 +1420,7 @@ public partial class SeedController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<SeedController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:seed/bond/get");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -1266,6 +1436,7 @@ public partial class SeedController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:seed/bond/get",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -1284,6 +1455,11 @@ public partial class SeedController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.seed",
+                "SeedController.GetBondForSeed",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "seed/bond/get-for-seed");
 
             var (statusCode, result) = await _implementation.GetBondForSeedAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1292,6 +1468,7 @@ public partial class SeedController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<SeedController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:seed/bond/get-for-seed");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -1307,6 +1484,7 @@ public partial class SeedController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:seed/bond/get-for-seed",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -1325,6 +1503,11 @@ public partial class SeedController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.seed",
+                "SeedController.GetBondPartners",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "seed/bond/get-partners");
 
             var (statusCode, result) = await _implementation.GetBondPartnersAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1333,6 +1516,7 @@ public partial class SeedController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<SeedController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:seed/bond/get-partners");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -1348,6 +1532,7 @@ public partial class SeedController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:seed/bond/get-partners",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }

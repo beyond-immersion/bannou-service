@@ -103,6 +103,12 @@ public partial class ActorController
                     "minimum": 1,
                     "nullable": true,
                     "description": "1-based regex capture group index for extracting CharacterId from actor ID.\nExample: With idPattern \"npc-brain-([a-f0-9-]+)\" and characterIdCaptureGroup: 1,\nactor ID \"npc-brain-abc-123-def\" extracts \"abc-123-def\" as CharacterId (parsed as GUID).\n"
+                },
+                "defaultRealmId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Default realm ID for auto-spawned actors when no CharacterId is available to resolve a realm.\ nRequired when characterIdCaptureGroup is not configured and auto-spawn is enabled.\n"
                 }
             }
         }
@@ -214,6 +220,12 @@ public partial class ActorController
                     "minimum": 1,
                     "nullable": true,
                     "description": "1-based regex capture group index for extracting CharacterId from actor ID.\nExample: With idPattern \"npc-brain-([a-f0-9-]+)\" and characterIdCaptureGroup: 1,\nactor ID \"npc-brain-abc-123-def\" extracts \"abc-123-def\" as CharacterId (parsed as GUID).\n"
+                },
+                "defaultRealmId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Default realm ID for auto-spawned actors when no CharacterId is available to resolve a realm.\ nRequired when characterIdCaptureGroup is not configured and auto-spawn is enabled.\n"
                 }
             }
         }
@@ -406,6 +418,12 @@ public partial class ActorController
                     "minimum": 1,
                     "nullable": true,
                     "description": "1-based regex capture group index for extracting CharacterId from actor ID.\nExample: With idPattern \"npc-brain-([a-f0-9-]+)\" and characterIdCaptureGroup: 1,\nactor ID \"npc-brain-abc-123-def\" extracts \"abc-123-def\" as CharacterId (parsed as GUID).\n"
+                },
+                "defaultRealmId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Default realm ID for auto-spawned actors when no CharacterId is available to resolve a realm.\ nRequired when characterIdCaptureGroup is not configured and auto-spawn is enabled.\n"
                 }
             }
         }
@@ -619,6 +637,12 @@ public partial class ActorController
                     "minimum": 1,
                     "nullable": true,
                     "description": "1-based regex capture group index for extracting CharacterId from actor ID.\nExample: With idPattern \"npc-brain-([a-f0-9-]+)\" and characterIdCaptureGroup: 1,\nactor ID \"npc-brain-abc-123-def\" extracts \"abc-123-def\" as CharacterId (parsed as GUID).\n"
+                },
+                "defaultRealmId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Default realm ID for auto-spawned actors when no CharacterId is available to resolve a realm.\nRequired when characterIdCaptureGroup is not configured and auto-spawn is enabled.\n"
                 }
             }
         }
@@ -762,6 +786,12 @@ public partial class ActorController
                     "minimum": 1,
                     "nullable": true,
                     "description": "1-based regex capture group index for extracting CharacterId from actor ID.\nExample: With idPattern \"npc-brain-([a-f0-9-]+)\" and characterIdCaptureGroup: 1,\nactor ID \"npc-brain-abc-123-def\" extracts \"abc-123-def\" as CharacterId (parsed as GUID).\n"
+                },
+                "defaultRealmId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Default realm ID for auto-spawned actors when no CharacterId is available to resolve a realm.\nRequired when characterIdCaptureGroup is not configured and auto-spawn is enabled.\n"
                 }
             }
         }
@@ -873,6 +903,12 @@ public partial class ActorController
                     "minimum": 1,
                     "nullable": true,
                     "description": "1-based regex capture group index for extracting CharacterId from actor ID.\nExample: With idPattern \"npc-brain-([a-f0-9-]+)\" and characterIdCaptureGroup: 1,\nactor ID \"npc-brain-abc-123-def\" extracts \"abc-123-def\" as CharacterId (parsed as GUID).\n"
+                },
+                "defaultRealmId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Default realm ID for auto-spawned actors when no CharacterId is available to resolve a realm.\ nRequired when characterIdCaptureGroup is not configured and auto-spawn is enabled.\n"
                 }
             }
         }

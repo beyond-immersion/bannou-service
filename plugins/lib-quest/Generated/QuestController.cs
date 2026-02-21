@@ -22,6 +22,21 @@
 
 #nullable enable
 
+#pragma warning disable 108 // Disable "CS0108 '{derivedDto}.ToJson()' hides inherited member '{dtoBase}.ToJson()'. Use the new keyword if hiding was intended."
+#pragma warning disable 114 // Disable "CS0114 '{derivedDto}.RaisePropertyChanged(String)' hides inherited member 'dtoBase.RaisePropertyChanged(String)'. To make the current member override that implementation, add the override keyword. Otherwise add the new keyword."
+#pragma warning disable 472 // Disable "CS0472 The result of the expression is always 'false' since a value of type 'Int32' is never equal to 'null' of type 'Int32?'
+#pragma warning disable 612 // Disable "CS0612 '...' is obsolete"
+#pragma warning disable 649 // Disable "CS0649 Field is never assigned to, and will always have its default value null"
+#pragma warning disable 1573 // Disable "CS1573 Parameter '...' has no matching param tag in the XML comment for ...
+#pragma warning disable 1591 // Disable "CS1591 Missing XML comment for publicly visible type or member ..."
+#pragma warning disable 8073 // Disable "CS8073 The result of the expression is always 'false' since a value of type 'T' is never equal to 'null' of type 'T?'"
+#pragma warning disable 3016 // Disable "CS3016 Arrays as attribute arguments is not CLS-compliant"
+#pragma warning disable 8600 // Disable "CS8600 Converting null literal or possible null value to non-nullable type"
+#pragma warning disable 8602 // Disable "CS8602 Dereference of a possibly null reference"
+#pragma warning disable 8603 // Disable "CS8603 Possible null reference return"
+#pragma warning disable 8604 // Disable "CS8604 Possible null reference argument for parameter"
+#pragma warning disable 8625 // Disable "CS8625 Cannot convert null literal to non-nullable reference type"
+#pragma warning disable 8765 // Disable "CS8765 Nullability of type of parameter doesn't match overridden member (possibly because of nullability attributes)."
 
 namespace BeyondImmersion.BannouService.Quest;
 
@@ -243,10 +258,12 @@ public interface IQuestController : BeyondImmersion.BannouService.Controllers.IB
 public partial class QuestController : Microsoft.AspNetCore.Mvc.ControllerBase
 {
     private IQuestService _implementation;
+    private BeyondImmersion.BannouService.Services.ITelemetryProvider _telemetryProvider;
 
-    public QuestController(IQuestService implementation)
+    public QuestController(IQuestService implementation, BeyondImmersion.BannouService.Services.ITelemetryProvider telemetryProvider)
     {
         _implementation = implementation;
+        _telemetryProvider = telemetryProvider;
     }
 
     /// <summary>
@@ -299,6 +316,11 @@ public partial class QuestController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.quest",
+                "QuestController.CreateQuestDefinition",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "quest/definition/create");
 
             var (statusCode, result) = await _implementation.CreateQuestDefinitionAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -307,6 +329,7 @@ public partial class QuestController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<QuestController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:quest/definition/create");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -322,6 +345,7 @@ public partial class QuestController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:quest/definition/create",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -340,6 +364,11 @@ public partial class QuestController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.quest",
+                "QuestController.GetQuestDefinition",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "quest/definition/get");
 
             var (statusCode, result) = await _implementation.GetQuestDefinitionAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -348,6 +377,7 @@ public partial class QuestController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<QuestController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:quest/definition/get");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -363,6 +393,7 @@ public partial class QuestController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:quest/definition/get",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -381,6 +412,11 @@ public partial class QuestController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.quest",
+                "QuestController.ListQuestDefinitions",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "quest/definition/list");
 
             var (statusCode, result) = await _implementation.ListQuestDefinitionsAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -389,6 +425,7 @@ public partial class QuestController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<QuestController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:quest/definition/list");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -404,6 +441,7 @@ public partial class QuestController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:quest/definition/list",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -422,6 +460,11 @@ public partial class QuestController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.quest",
+                "QuestController.UpdateQuestDefinition",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "quest/definition/update");
 
             var (statusCode, result) = await _implementation.UpdateQuestDefinitionAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -430,6 +473,7 @@ public partial class QuestController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<QuestController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:quest/definition/update");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -445,6 +489,7 @@ public partial class QuestController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:quest/definition/update",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -463,6 +508,11 @@ public partial class QuestController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.quest",
+                "QuestController.DeprecateQuestDefinition",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "quest/definition/deprecate");
 
             var (statusCode, result) = await _implementation.DeprecateQuestDefinitionAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -471,6 +521,7 @@ public partial class QuestController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<QuestController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:quest/definition/deprecate");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -486,6 +537,7 @@ public partial class QuestController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:quest/definition/deprecate",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -504,6 +556,11 @@ public partial class QuestController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.quest",
+                "QuestController.AcceptQuest",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "quest/accept");
 
             var (statusCode, result) = await _implementation.AcceptQuestAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -512,6 +569,7 @@ public partial class QuestController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<QuestController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:quest/accept");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -527,6 +585,7 @@ public partial class QuestController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:quest/accept",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -545,6 +604,11 @@ public partial class QuestController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.quest",
+                "QuestController.AbandonQuest",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "quest/abandon");
 
             var (statusCode, result) = await _implementation.AbandonQuestAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -553,6 +617,7 @@ public partial class QuestController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<QuestController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:quest/abandon");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -568,6 +633,7 @@ public partial class QuestController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:quest/abandon",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -586,6 +652,11 @@ public partial class QuestController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.quest",
+                "QuestController.GetQuest",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "quest/get");
 
             var (statusCode, result) = await _implementation.GetQuestAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -594,6 +665,7 @@ public partial class QuestController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<QuestController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:quest/get");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -609,6 +681,7 @@ public partial class QuestController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:quest/get",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -627,6 +700,11 @@ public partial class QuestController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.quest",
+                "QuestController.ListQuests",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "quest/list");
 
             var (statusCode, result) = await _implementation.ListQuestsAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -635,6 +713,7 @@ public partial class QuestController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<QuestController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:quest/list");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -650,6 +729,7 @@ public partial class QuestController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:quest/list",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -668,6 +748,11 @@ public partial class QuestController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.quest",
+                "QuestController.ListAvailableQuests",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "quest/list-available");
 
             var (statusCode, result) = await _implementation.ListAvailableQuestsAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -676,6 +761,7 @@ public partial class QuestController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<QuestController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:quest/list-available");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -691,6 +777,7 @@ public partial class QuestController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:quest/list-available",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -709,6 +796,11 @@ public partial class QuestController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.quest",
+                "QuestController.GetQuestLog",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "quest/log");
 
             var (statusCode, result) = await _implementation.GetQuestLogAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -717,6 +809,7 @@ public partial class QuestController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<QuestController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:quest/log");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -732,6 +825,7 @@ public partial class QuestController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:quest/log",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -750,6 +844,11 @@ public partial class QuestController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.quest",
+                "QuestController.ReportObjectiveProgress",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "quest/objective/progress");
 
             var (statusCode, result) = await _implementation.ReportObjectiveProgressAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -758,6 +857,7 @@ public partial class QuestController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<QuestController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:quest/objective/progress");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -773,6 +873,7 @@ public partial class QuestController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:quest/objective/progress",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -791,6 +892,11 @@ public partial class QuestController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.quest",
+                "QuestController.ForceCompleteObjective",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "quest/objective/complete");
 
             var (statusCode, result) = await _implementation.ForceCompleteObjectiveAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -799,6 +905,7 @@ public partial class QuestController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<QuestController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:quest/objective/complete");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -814,6 +921,7 @@ public partial class QuestController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:quest/objective/complete",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -832,6 +940,11 @@ public partial class QuestController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.quest",
+                "QuestController.GetObjectiveProgress",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "quest/objective/get");
 
             var (statusCode, result) = await _implementation.GetObjectiveProgressAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -840,6 +953,7 @@ public partial class QuestController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<QuestController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:quest/objective/get");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -855,6 +969,7 @@ public partial class QuestController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:quest/objective/get",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -873,6 +988,11 @@ public partial class QuestController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.quest",
+                "QuestController.HandleMilestoneCompleted",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "quest/internal/milestone-completed");
 
             var statusCode = await _implementation.HandleMilestoneCompletedAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode);
@@ -881,6 +1001,7 @@ public partial class QuestController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<QuestController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:quest/internal/milestone-completed");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -896,6 +1017,7 @@ public partial class QuestController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:quest/internal/milestone-completed",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -914,6 +1036,11 @@ public partial class QuestController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.quest",
+                "QuestController.HandleQuestCompleted",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "quest/internal/quest-completed");
 
             var statusCode = await _implementation.HandleQuestCompletedAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode);
@@ -922,6 +1049,7 @@ public partial class QuestController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<QuestController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:quest/internal/quest-completed");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -937,6 +1065,7 @@ public partial class QuestController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:quest/internal/quest-completed",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -956,6 +1085,11 @@ public partial class QuestController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.quest",
+                "QuestController.GetCompressData",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "quest/get-compress-data");
 
             var (statusCode, result) = await _implementation.GetCompressDataAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -964,6 +1098,7 @@ public partial class QuestController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<QuestController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:quest/get-compress-data");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -979,6 +1114,7 @@ public partial class QuestController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:quest/get-compress-data",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }

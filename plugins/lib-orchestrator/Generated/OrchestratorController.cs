@@ -22,6 +22,21 @@
 
 #nullable enable
 
+#pragma warning disable 108 // Disable "CS0108 '{derivedDto}.ToJson()' hides inherited member '{dtoBase}.ToJson()'. Use the new keyword if hiding was intended."
+#pragma warning disable 114 // Disable "CS0114 '{derivedDto}.RaisePropertyChanged(String)' hides inherited member 'dtoBase.RaisePropertyChanged(String)'. To make the current member override that implementation, add the override keyword. Otherwise add the new keyword."
+#pragma warning disable 472 // Disable "CS0472 The result of the expression is always 'false' since a value of type 'Int32' is never equal to 'null' of type 'Int32?'
+#pragma warning disable 612 // Disable "CS0612 '...' is obsolete"
+#pragma warning disable 649 // Disable "CS0649 Field is never assigned to, and will always have its default value null"
+#pragma warning disable 1573 // Disable "CS1573 Parameter '...' has no matching param tag in the XML comment for ...
+#pragma warning disable 1591 // Disable "CS1591 Missing XML comment for publicly visible type or member ..."
+#pragma warning disable 8073 // Disable "CS8073 The result of the expression is always 'false' since a value of type 'T' is never equal to 'null' of type 'T?'"
+#pragma warning disable 3016 // Disable "CS3016 Arrays as attribute arguments is not CLS-compliant"
+#pragma warning disable 8600 // Disable "CS8600 Converting null literal or possible null value to non-nullable type"
+#pragma warning disable 8602 // Disable "CS8602 Dereference of a possibly null reference"
+#pragma warning disable 8603 // Disable "CS8603 Possible null reference return"
+#pragma warning disable 8604 // Disable "CS8604 Possible null reference argument for parameter"
+#pragma warning disable 8625 // Disable "CS8625 Cannot convert null literal to non-nullable reference type"
+#pragma warning disable 8765 // Disable "CS8765 Nullability of type of parameter doesn't match overridden member (possibly because of nullability attributes)."
 
 namespace BeyondImmersion.BannouService.Orchestrator;
 
@@ -421,10 +436,12 @@ public interface IOrchestratorController : BeyondImmersion.BannouService.Control
 public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.ControllerBase
 {
     private IOrchestratorService _implementation;
+    private BeyondImmersion.BannouService.Services.ITelemetryProvider _telemetryProvider;
 
-    public OrchestratorController(IOrchestratorService implementation)
+    public OrchestratorController(IOrchestratorService implementation, BeyondImmersion.BannouService.Services.ITelemetryProvider telemetryProvider)
     {
         _implementation = implementation;
+        _telemetryProvider = telemetryProvider;
     }
 
     /// <summary>
@@ -480,6 +497,11 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.orchestrator",
+                "OrchestratorController.GetInfrastructureHealth",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "orchestrator/health/infrastructure");
 
             var (statusCode, result) = await _implementation.GetInfrastructureHealthAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -488,6 +510,7 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<OrchestratorController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:orchestrator/health/infrastructure");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -503,6 +526,7 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
                 endpoint: "post:orchestrator/health/infrastructure",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -522,6 +546,11 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.orchestrator",
+                "OrchestratorController.GetServicesHealth",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "orchestrator/health/services");
 
             var (statusCode, result) = await _implementation.GetServicesHealthAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -530,6 +559,7 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<OrchestratorController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:orchestrator/health/services");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -545,6 +575,7 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
                 endpoint: "post:orchestrator/health/services",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -566,6 +597,11 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.orchestrator",
+                "OrchestratorController.RestartService",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "orchestrator/services/restart");
 
             var (statusCode, result) = await _implementation.RestartServiceAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -574,6 +610,7 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<OrchestratorController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:orchestrator/services/restart");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -589,6 +626,7 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
                 endpoint: "post:orchestrator/services/restart",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -613,6 +651,11 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.orchestrator",
+                "OrchestratorController.ShouldRestartService",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "orchestrator/services/should-restart");
 
             var (statusCode, result) = await _implementation.ShouldRestartServiceAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -621,6 +664,7 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<OrchestratorController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:orchestrator/services/should-restart");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -636,6 +680,7 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
                 endpoint: "post:orchestrator/services/should-restart",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -667,6 +712,11 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.orchestrator",
+                "OrchestratorController.GetBackends",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "orchestrator/backends/list");
 
             var (statusCode, result) = await _implementation.GetBackendsAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -675,6 +725,7 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<OrchestratorController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:orchestrator/backends/list");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -690,6 +741,7 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
                 endpoint: "post:orchestrator/backends/list",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -717,6 +769,11 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.orchestrator",
+                "OrchestratorController.GetPresets",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "orchestrator/presets/list");
 
             var (statusCode, result) = await _implementation.GetPresetsAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -725,6 +782,7 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<OrchestratorController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:orchestrator/presets/list");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -740,6 +798,7 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
                 endpoint: "post:orchestrator/presets/list",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -774,6 +833,11 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.orchestrator",
+                "OrchestratorController.Deploy",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "orchestrator/deploy");
 
             var (statusCode, result) = await _implementation.DeployAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -782,6 +846,7 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<OrchestratorController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:orchestrator/deploy");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -797,6 +862,7 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
                 endpoint: "post:orchestrator/deploy",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -824,6 +890,11 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.orchestrator",
+                "OrchestratorController.GetServiceRouting",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "orchestrator/service-routing");
 
             var (statusCode, result) = await _implementation.GetServiceRoutingAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -832,6 +903,7 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<OrchestratorController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:orchestrator/service-routing");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -847,6 +919,7 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
                 endpoint: "post:orchestrator/service-routing",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -870,6 +943,11 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.orchestrator",
+                "OrchestratorController.GetStatus",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "orchestrator/status");
 
             var (statusCode, result) = await _implementation.GetStatusAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -878,6 +956,7 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<OrchestratorController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:orchestrator/status");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -893,6 +972,7 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
                 endpoint: "post:orchestrator/status",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -917,6 +997,11 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.orchestrator",
+                "OrchestratorController.Teardown",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "orchestrator/teardown");
 
             var (statusCode, result) = await _implementation.TeardownAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -925,6 +1010,7 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<OrchestratorController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:orchestrator/teardown");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -940,6 +1026,7 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
                 endpoint: "post:orchestrator/teardown",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -968,6 +1055,11 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.orchestrator",
+                "OrchestratorController.Clean",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "orchestrator/clean");
 
             var (statusCode, result) = await _implementation.CleanAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -976,6 +1068,7 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<OrchestratorController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:orchestrator/clean");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -991,6 +1084,7 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
                 endpoint: "post:orchestrator/clean",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -1010,6 +1104,11 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.orchestrator",
+                "OrchestratorController.GetLogs",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "orchestrator/logs");
 
             var (statusCode, result) = await _implementation.GetLogsAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1018,6 +1117,7 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<OrchestratorController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:orchestrator/logs");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -1033,6 +1133,7 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
                 endpoint: "post:orchestrator/logs",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -1058,6 +1159,11 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.orchestrator",
+                "OrchestratorController.UpdateTopology",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "orchestrator/topology");
 
             var (statusCode, result) = await _implementation.UpdateTopologyAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1066,6 +1172,7 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<OrchestratorController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:orchestrator/topology");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -1081,6 +1188,7 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
                 endpoint: "post:orchestrator/topology",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -1112,6 +1220,11 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.orchestrator",
+                "OrchestratorController.RequestContainerRestart",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "orchestrator/containers/request-restart");
 
             var (statusCode, result) = await _implementation.RequestContainerRestartAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1120,6 +1233,7 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<OrchestratorController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:orchestrator/containers/request-restart");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -1135,6 +1249,7 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
                 endpoint: "post:orchestrator/containers/request-restart",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -1154,6 +1269,11 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.orchestrator",
+                "OrchestratorController.GetContainerStatus",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "orchestrator/containers/status");
 
             var (statusCode, result) = await _implementation.GetContainerStatusAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1162,6 +1282,7 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<OrchestratorController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:orchestrator/containers/status");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -1177,6 +1298,7 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
                 endpoint: "post:orchestrator/containers/status",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -1200,6 +1322,11 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.orchestrator",
+                "OrchestratorController.RollbackConfiguration",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "orchestrator/config/rollback");
 
             var (statusCode, result) = await _implementation.RollbackConfigurationAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1208,6 +1335,7 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<OrchestratorController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:orchestrator/config/rollback");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -1223,6 +1351,7 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
                 endpoint: "post:orchestrator/config/rollback",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -1242,6 +1371,11 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.orchestrator",
+                "OrchestratorController.GetConfigVersion",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "orchestrator/config/version");
 
             var (statusCode, result) = await _implementation.GetConfigVersionAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1250,6 +1384,7 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<OrchestratorController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:orchestrator/config/version");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -1265,6 +1400,7 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
                 endpoint: "post:orchestrator/config/version",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -1285,6 +1421,11 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.orchestrator",
+                "OrchestratorController.AcquireProcessor",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "orchestrator/processing-pool/acquire");
 
             var (statusCode, result) = await _implementation.AcquireProcessorAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1293,6 +1434,7 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<OrchestratorController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:orchestrator/processing-pool/acquire");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -1308,6 +1450,7 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
                 endpoint: "post:orchestrator/processing-pool/acquire",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -1327,6 +1470,11 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.orchestrator",
+                "OrchestratorController.ReleaseProcessor",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "orchestrator/processing-pool/release");
 
             var (statusCode, result) = await _implementation.ReleaseProcessorAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1335,6 +1483,7 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<OrchestratorController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:orchestrator/processing-pool/release");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -1350,6 +1499,7 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
                 endpoint: "post:orchestrator/processing-pool/release",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -1372,6 +1522,11 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.orchestrator",
+                "OrchestratorController.GetPoolStatus",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "orchestrator/processing-pool/status");
 
             var (statusCode, result) = await _implementation.GetPoolStatusAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1380,6 +1535,7 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<OrchestratorController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:orchestrator/processing-pool/status");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -1395,6 +1551,7 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
                 endpoint: "post:orchestrator/processing-pool/status",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -1415,6 +1572,11 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.orchestrator",
+                "OrchestratorController.ScalePool",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "orchestrator/processing-pool/scale");
 
             var (statusCode, result) = await _implementation.ScalePoolAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1423,6 +1585,7 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<OrchestratorController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:orchestrator/processing-pool/scale");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -1438,6 +1601,7 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
                 endpoint: "post:orchestrator/processing-pool/scale",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -1457,6 +1621,11 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.orchestrator",
+                "OrchestratorController.CleanupPool",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "orchestrator/processing-pool/cleanup");
 
             var (statusCode, result) = await _implementation.CleanupPoolAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1465,6 +1634,7 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<OrchestratorController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:orchestrator/processing-pool/cleanup");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -1480,6 +1650,7 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
                 endpoint: "post:orchestrator/processing-pool/cleanup",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }

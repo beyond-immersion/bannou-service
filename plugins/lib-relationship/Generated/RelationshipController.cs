@@ -22,6 +22,21 @@
 
 #nullable enable
 
+#pragma warning disable 108 // Disable "CS0108 '{derivedDto}.ToJson()' hides inherited member '{dtoBase}.ToJson()'. Use the new keyword if hiding was intended."
+#pragma warning disable 114 // Disable "CS0114 '{derivedDto}.RaisePropertyChanged(String)' hides inherited member 'dtoBase.RaisePropertyChanged(String)'. To make the current member override that implementation, add the override keyword. Otherwise add the new keyword."
+#pragma warning disable 472 // Disable "CS0472 The result of the expression is always 'false' since a value of type 'Int32' is never equal to 'null' of type 'Int32?'
+#pragma warning disable 612 // Disable "CS0612 '...' is obsolete"
+#pragma warning disable 649 // Disable "CS0649 Field is never assigned to, and will always have its default value null"
+#pragma warning disable 1573 // Disable "CS1573 Parameter '...' has no matching param tag in the XML comment for ...
+#pragma warning disable 1591 // Disable "CS1591 Missing XML comment for publicly visible type or member ..."
+#pragma warning disable 8073 // Disable "CS8073 The result of the expression is always 'false' since a value of type 'T' is never equal to 'null' of type 'T?'"
+#pragma warning disable 3016 // Disable "CS3016 Arrays as attribute arguments is not CLS-compliant"
+#pragma warning disable 8600 // Disable "CS8600 Converting null literal or possible null value to non-nullable type"
+#pragma warning disable 8602 // Disable "CS8602 Dereference of a possibly null reference"
+#pragma warning disable 8603 // Disable "CS8603 Possible null reference return"
+#pragma warning disable 8604 // Disable "CS8604 Possible null reference argument for parameter"
+#pragma warning disable 8625 // Disable "CS8625 Cannot convert null literal to non-nullable reference type"
+#pragma warning disable 8765 // Disable "CS8765 Nullability of type of parameter doesn't match overridden member (possibly because of nullability attributes)."
 
 namespace BeyondImmersion.BannouService.Relationship;
 
@@ -314,10 +329,12 @@ public interface IRelationshipController : BeyondImmersion.BannouService.Control
 public partial class RelationshipController : Microsoft.AspNetCore.Mvc.ControllerBase
 {
     private IRelationshipService _implementation;
+    private BeyondImmersion.BannouService.Services.ITelemetryProvider _telemetryProvider;
 
-    public RelationshipController(IRelationshipService implementation)
+    public RelationshipController(IRelationshipService implementation, BeyondImmersion.BannouService.Services.ITelemetryProvider telemetryProvider)
     {
         _implementation = implementation;
+        _telemetryProvider = telemetryProvider;
     }
 
     /// <summary>
@@ -372,6 +389,11 @@ public partial class RelationshipController : Microsoft.AspNetCore.Mvc.Controlle
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.relationship",
+                "RelationshipController.CreateRelationship",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "relationship/create");
 
             var (statusCode, result) = await _implementation.CreateRelationshipAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -380,6 +402,7 @@ public partial class RelationshipController : Microsoft.AspNetCore.Mvc.Controlle
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<RelationshipController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:relationship/create");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -395,6 +418,7 @@ public partial class RelationshipController : Microsoft.AspNetCore.Mvc.Controlle
                 endpoint: "post:relationship/create",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -410,6 +434,11 @@ public partial class RelationshipController : Microsoft.AspNetCore.Mvc.Controlle
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.relationship",
+                "RelationshipController.GetRelationship",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "relationship/get");
 
             var (statusCode, result) = await _implementation.GetRelationshipAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -418,6 +447,7 @@ public partial class RelationshipController : Microsoft.AspNetCore.Mvc.Controlle
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<RelationshipController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:relationship/get");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -433,6 +463,7 @@ public partial class RelationshipController : Microsoft.AspNetCore.Mvc.Controlle
                 endpoint: "post:relationship/get",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -453,6 +484,11 @@ public partial class RelationshipController : Microsoft.AspNetCore.Mvc.Controlle
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.relationship",
+                "RelationshipController.ListRelationshipsByEntity",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "relationship/list-by-entity");
 
             var (statusCode, result) = await _implementation.ListRelationshipsByEntityAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -461,6 +497,7 @@ public partial class RelationshipController : Microsoft.AspNetCore.Mvc.Controlle
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<RelationshipController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:relationship/list-by-entity");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -476,6 +513,7 @@ public partial class RelationshipController : Microsoft.AspNetCore.Mvc.Controlle
                 endpoint: "post:relationship/list-by-entity",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -495,6 +533,11 @@ public partial class RelationshipController : Microsoft.AspNetCore.Mvc.Controlle
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.relationship",
+                "RelationshipController.GetRelationshipsBetween",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "relationship/get-between");
 
             var (statusCode, result) = await _implementation.GetRelationshipsBetweenAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -503,6 +546,7 @@ public partial class RelationshipController : Microsoft.AspNetCore.Mvc.Controlle
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<RelationshipController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:relationship/get-between");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -518,6 +562,7 @@ public partial class RelationshipController : Microsoft.AspNetCore.Mvc.Controlle
                 endpoint: "post:relationship/get-between",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -537,6 +582,11 @@ public partial class RelationshipController : Microsoft.AspNetCore.Mvc.Controlle
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.relationship",
+                "RelationshipController.ListRelationshipsByType",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "relationship/list-by-type");
 
             var (statusCode, result) = await _implementation.ListRelationshipsByTypeAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -545,6 +595,7 @@ public partial class RelationshipController : Microsoft.AspNetCore.Mvc.Controlle
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<RelationshipController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:relationship/list-by-type");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -560,6 +611,7 @@ public partial class RelationshipController : Microsoft.AspNetCore.Mvc.Controlle
                 endpoint: "post:relationship/list-by-type",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -578,6 +630,11 @@ public partial class RelationshipController : Microsoft.AspNetCore.Mvc.Controlle
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.relationship",
+                "RelationshipController.UpdateRelationship",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "relationship/update");
 
             var (statusCode, result) = await _implementation.UpdateRelationshipAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -586,6 +643,7 @@ public partial class RelationshipController : Microsoft.AspNetCore.Mvc.Controlle
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<RelationshipController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:relationship/update");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -601,6 +659,7 @@ public partial class RelationshipController : Microsoft.AspNetCore.Mvc.Controlle
                 endpoint: "post:relationship/update",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -622,6 +681,11 @@ public partial class RelationshipController : Microsoft.AspNetCore.Mvc.Controlle
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.relationship",
+                "RelationshipController.EndRelationship",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "relationship/end");
 
             var statusCode = await _implementation.EndRelationshipAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode);
@@ -630,6 +694,7 @@ public partial class RelationshipController : Microsoft.AspNetCore.Mvc.Controlle
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<RelationshipController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:relationship/end");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -645,6 +710,7 @@ public partial class RelationshipController : Microsoft.AspNetCore.Mvc.Controlle
                 endpoint: "post:relationship/end",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -667,6 +733,11 @@ public partial class RelationshipController : Microsoft.AspNetCore.Mvc.Controlle
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.relationship",
+                "RelationshipController.CleanupByEntity",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "relationship/cleanup-by-entity");
 
             var (statusCode, result) = await _implementation.CleanupByEntityAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -675,6 +746,7 @@ public partial class RelationshipController : Microsoft.AspNetCore.Mvc.Controlle
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<RelationshipController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:relationship/cleanup-by-entity");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -690,6 +762,7 @@ public partial class RelationshipController : Microsoft.AspNetCore.Mvc.Controlle
                 endpoint: "post:relationship/cleanup-by-entity",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -705,6 +778,11 @@ public partial class RelationshipController : Microsoft.AspNetCore.Mvc.Controlle
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.relationship-type",
+                "RelationshipController.GetRelationshipType",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "relationship-type/get");
 
             var (statusCode, result) = await _implementation.GetRelationshipTypeAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -713,6 +791,7 @@ public partial class RelationshipController : Microsoft.AspNetCore.Mvc.Controlle
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<RelationshipController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:relationship-type/get");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -728,6 +807,7 @@ public partial class RelationshipController : Microsoft.AspNetCore.Mvc.Controlle
                 endpoint: "post:relationship-type/get",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -746,6 +826,11 @@ public partial class RelationshipController : Microsoft.AspNetCore.Mvc.Controlle
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.relationship-type",
+                "RelationshipController.GetRelationshipTypeByCode",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "relationship-type/get-by-code");
 
             var (statusCode, result) = await _implementation.GetRelationshipTypeByCodeAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -754,6 +839,7 @@ public partial class RelationshipController : Microsoft.AspNetCore.Mvc.Controlle
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<RelationshipController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:relationship-type/get-by-code");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -769,6 +855,7 @@ public partial class RelationshipController : Microsoft.AspNetCore.Mvc.Controlle
                 endpoint: "post:relationship-type/get-by-code",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -787,6 +874,11 @@ public partial class RelationshipController : Microsoft.AspNetCore.Mvc.Controlle
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.relationship-type",
+                "RelationshipController.ListRelationshipTypes",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "relationship-type/list");
 
             var (statusCode, result) = await _implementation.ListRelationshipTypesAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -795,6 +887,7 @@ public partial class RelationshipController : Microsoft.AspNetCore.Mvc.Controlle
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<RelationshipController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:relationship-type/list");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -810,6 +903,7 @@ public partial class RelationshipController : Microsoft.AspNetCore.Mvc.Controlle
                 endpoint: "post:relationship-type/list",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -828,6 +922,11 @@ public partial class RelationshipController : Microsoft.AspNetCore.Mvc.Controlle
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.relationship-type",
+                "RelationshipController.GetChildRelationshipTypes",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "relationship-type/get-children");
 
             var (statusCode, result) = await _implementation.GetChildRelationshipTypesAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -836,6 +935,7 @@ public partial class RelationshipController : Microsoft.AspNetCore.Mvc.Controlle
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<RelationshipController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:relationship-type/get-children");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -851,6 +951,7 @@ public partial class RelationshipController : Microsoft.AspNetCore.Mvc.Controlle
                 endpoint: "post:relationship-type/get-children",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -871,6 +972,11 @@ public partial class RelationshipController : Microsoft.AspNetCore.Mvc.Controlle
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.relationship-type",
+                "RelationshipController.MatchesHierarchy",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "relationship-type/matches-hierarchy");
 
             var (statusCode, result) = await _implementation.MatchesHierarchyAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -879,6 +985,7 @@ public partial class RelationshipController : Microsoft.AspNetCore.Mvc.Controlle
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<RelationshipController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:relationship-type/matches-hierarchy");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -894,6 +1001,7 @@ public partial class RelationshipController : Microsoft.AspNetCore.Mvc.Controlle
                 endpoint: "post:relationship-type/matches-hierarchy",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -913,6 +1021,11 @@ public partial class RelationshipController : Microsoft.AspNetCore.Mvc.Controlle
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.relationship-type",
+                "RelationshipController.GetAncestors",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "relationship-type/get-ancestors");
 
             var (statusCode, result) = await _implementation.GetAncestorsAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -921,6 +1034,7 @@ public partial class RelationshipController : Microsoft.AspNetCore.Mvc.Controlle
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<RelationshipController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:relationship-type/get-ancestors");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -936,6 +1050,7 @@ public partial class RelationshipController : Microsoft.AspNetCore.Mvc.Controlle
                 endpoint: "post:relationship-type/get-ancestors",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -951,6 +1066,11 @@ public partial class RelationshipController : Microsoft.AspNetCore.Mvc.Controlle
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.relationship-type",
+                "RelationshipController.CreateRelationshipType",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "relationship-type/create");
 
             var (statusCode, result) = await _implementation.CreateRelationshipTypeAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -959,6 +1079,7 @@ public partial class RelationshipController : Microsoft.AspNetCore.Mvc.Controlle
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<RelationshipController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:relationship-type/create");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -974,6 +1095,7 @@ public partial class RelationshipController : Microsoft.AspNetCore.Mvc.Controlle
                 endpoint: "post:relationship-type/create",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -989,6 +1111,11 @@ public partial class RelationshipController : Microsoft.AspNetCore.Mvc.Controlle
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.relationship-type",
+                "RelationshipController.UpdateRelationshipType",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "relationship-type/update");
 
             var (statusCode, result) = await _implementation.UpdateRelationshipTypeAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -997,6 +1124,7 @@ public partial class RelationshipController : Microsoft.AspNetCore.Mvc.Controlle
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<RelationshipController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:relationship-type/update");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -1012,6 +1140,7 @@ public partial class RelationshipController : Microsoft.AspNetCore.Mvc.Controlle
                 endpoint: "post:relationship-type/update",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -1032,6 +1161,11 @@ public partial class RelationshipController : Microsoft.AspNetCore.Mvc.Controlle
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.relationship-type",
+                "RelationshipController.DeleteRelationshipType",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "relationship-type/delete");
 
             var statusCode = await _implementation.DeleteRelationshipTypeAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode);
@@ -1040,6 +1174,7 @@ public partial class RelationshipController : Microsoft.AspNetCore.Mvc.Controlle
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<RelationshipController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:relationship-type/delete");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -1055,6 +1190,7 @@ public partial class RelationshipController : Microsoft.AspNetCore.Mvc.Controlle
                 endpoint: "post:relationship-type/delete",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -1078,6 +1214,11 @@ public partial class RelationshipController : Microsoft.AspNetCore.Mvc.Controlle
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.relationship-type",
+                "RelationshipController.DeprecateRelationshipType",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "relationship-type/deprecate");
 
             var (statusCode, result) = await _implementation.DeprecateRelationshipTypeAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1086,6 +1227,7 @@ public partial class RelationshipController : Microsoft.AspNetCore.Mvc.Controlle
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<RelationshipController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:relationship-type/deprecate");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -1101,6 +1243,7 @@ public partial class RelationshipController : Microsoft.AspNetCore.Mvc.Controlle
                 endpoint: "post:relationship-type/deprecate",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -1120,6 +1263,11 @@ public partial class RelationshipController : Microsoft.AspNetCore.Mvc.Controlle
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.relationship-type",
+                "RelationshipController.UndeprecateRelationshipType",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "relationship-type/undeprecate");
 
             var (statusCode, result) = await _implementation.UndeprecateRelationshipTypeAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1128,6 +1276,7 @@ public partial class RelationshipController : Microsoft.AspNetCore.Mvc.Controlle
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<RelationshipController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:relationship-type/undeprecate");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -1143,6 +1292,7 @@ public partial class RelationshipController : Microsoft.AspNetCore.Mvc.Controlle
                 endpoint: "post:relationship-type/undeprecate",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -1171,6 +1321,11 @@ public partial class RelationshipController : Microsoft.AspNetCore.Mvc.Controlle
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.relationship-type",
+                "RelationshipController.MergeRelationshipType",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "relationship-type/merge");
 
             var (statusCode, result) = await _implementation.MergeRelationshipTypeAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1179,6 +1334,7 @@ public partial class RelationshipController : Microsoft.AspNetCore.Mvc.Controlle
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<RelationshipController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:relationship-type/merge");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -1194,6 +1350,7 @@ public partial class RelationshipController : Microsoft.AspNetCore.Mvc.Controlle
                 endpoint: "post:relationship-type/merge",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -1214,6 +1371,11 @@ public partial class RelationshipController : Microsoft.AspNetCore.Mvc.Controlle
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.relationship-type",
+                "RelationshipController.SeedRelationshipTypes",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "relationship-type/seed");
 
             var (statusCode, result) = await _implementation.SeedRelationshipTypesAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1222,6 +1384,7 @@ public partial class RelationshipController : Microsoft.AspNetCore.Mvc.Controlle
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<RelationshipController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:relationship-type/seed");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -1237,6 +1400,7 @@ public partial class RelationshipController : Microsoft.AspNetCore.Mvc.Controlle
                 endpoint: "post:relationship-type/seed",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }

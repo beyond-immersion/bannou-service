@@ -22,6 +22,21 @@
 
 #nullable enable
 
+#pragma warning disable 108 // Disable "CS0108 '{derivedDto}.ToJson()' hides inherited member '{dtoBase}.ToJson()'. Use the new keyword if hiding was intended."
+#pragma warning disable 114 // Disable "CS0114 '{derivedDto}.RaisePropertyChanged(String)' hides inherited member 'dtoBase.RaisePropertyChanged(String)'. To make the current member override that implementation, add the override keyword. Otherwise add the new keyword."
+#pragma warning disable 472 // Disable "CS0472 The result of the expression is always 'false' since a value of type 'Int32' is never equal to 'null' of type 'Int32?'
+#pragma warning disable 612 // Disable "CS0612 '...' is obsolete"
+#pragma warning disable 649 // Disable "CS0649 Field is never assigned to, and will always have its default value null"
+#pragma warning disable 1573 // Disable "CS1573 Parameter '...' has no matching param tag in the XML comment for ...
+#pragma warning disable 1591 // Disable "CS1591 Missing XML comment for publicly visible type or member ..."
+#pragma warning disable 8073 // Disable "CS8073 The result of the expression is always 'false' since a value of type 'T' is never equal to 'null' of type 'T?'"
+#pragma warning disable 3016 // Disable "CS3016 Arrays as attribute arguments is not CLS-compliant"
+#pragma warning disable 8600 // Disable "CS8600 Converting null literal or possible null value to non-nullable type"
+#pragma warning disable 8602 // Disable "CS8602 Dereference of a possibly null reference"
+#pragma warning disable 8603 // Disable "CS8603 Possible null reference return"
+#pragma warning disable 8604 // Disable "CS8604 Possible null reference argument for parameter"
+#pragma warning disable 8625 // Disable "CS8625 Cannot convert null literal to non-nullable reference type"
+#pragma warning disable 8765 // Disable "CS8765 Nullability of type of parameter doesn't match overridden member (possibly because of nullability attributes)."
 
 namespace BeyondImmersion.BannouService.Asset;
 
@@ -345,10 +360,12 @@ public interface IAssetController : BeyondImmersion.BannouService.Controllers.IB
 public partial class AssetController : Microsoft.AspNetCore.Mvc.ControllerBase
 {
     private IAssetService _implementation;
+    private BeyondImmersion.BannouService.Services.ITelemetryProvider _telemetryProvider;
 
-    public AssetController(IAssetService implementation)
+    public AssetController(IAssetService implementation, BeyondImmersion.BannouService.Services.ITelemetryProvider telemetryProvider)
     {
         _implementation = implementation;
+        _telemetryProvider = telemetryProvider;
     }
 
     /// <summary>
@@ -402,6 +419,11 @@ public partial class AssetController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.assets",
+                "AssetController.RequestUpload",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "assets/upload/request");
 
             var (statusCode, result) = await _implementation.RequestUploadAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -410,6 +432,7 @@ public partial class AssetController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<AssetController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:assets/upload/request");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -425,6 +448,7 @@ public partial class AssetController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:assets/upload/request",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -445,6 +469,11 @@ public partial class AssetController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.assets",
+                "AssetController.CompleteUpload",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "assets/upload/complete");
 
             var (statusCode, result) = await _implementation.CompleteUploadAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -453,6 +482,7 @@ public partial class AssetController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<AssetController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:assets/upload/complete");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -468,6 +498,7 @@ public partial class AssetController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:assets/upload/complete",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -487,6 +518,11 @@ public partial class AssetController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.assets",
+                "AssetController.GetAsset",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "assets/get");
 
             var (statusCode, result) = await _implementation.GetAssetAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -495,6 +531,7 @@ public partial class AssetController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<AssetController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:assets/get");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -510,6 +547,7 @@ public partial class AssetController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:assets/get",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -529,6 +567,11 @@ public partial class AssetController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.assets",
+                "AssetController.DeleteAsset",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "assets/delete");
 
             var (statusCode, result) = await _implementation.DeleteAssetAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -537,6 +580,7 @@ public partial class AssetController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<AssetController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:assets/delete");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -552,6 +596,7 @@ public partial class AssetController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:assets/delete",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -571,6 +616,11 @@ public partial class AssetController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.assets",
+                "AssetController.ListAssetVersions",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "assets/list-versions");
 
             var (statusCode, result) = await _implementation.ListAssetVersionsAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -579,6 +629,7 @@ public partial class AssetController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<AssetController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:assets/list-versions");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -594,6 +645,7 @@ public partial class AssetController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:assets/list-versions",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -613,6 +665,11 @@ public partial class AssetController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.assets",
+                "AssetController.SearchAssets",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "assets/search");
 
             var (statusCode, result) = await _implementation.SearchAssetsAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -621,6 +678,7 @@ public partial class AssetController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<AssetController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:assets/search");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -636,6 +694,7 @@ public partial class AssetController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:assets/search",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -656,6 +715,11 @@ public partial class AssetController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.bundles",
+                "AssetController.CreateBundle",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "bundles/create");
 
             var (statusCode, result) = await _implementation.CreateBundleAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -664,6 +728,7 @@ public partial class AssetController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<AssetController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:bundles/create");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -679,6 +744,7 @@ public partial class AssetController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:bundles/create",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -698,6 +764,11 @@ public partial class AssetController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.bundles",
+                "AssetController.GetBundle",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "bundles/get");
 
             var (statusCode, result) = await _implementation.GetBundleAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -706,6 +777,7 @@ public partial class AssetController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<AssetController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:bundles/get");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -721,6 +793,7 @@ public partial class AssetController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:bundles/get",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -740,6 +813,11 @@ public partial class AssetController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.bundles",
+                "AssetController.RequestBundleUpload",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "bundles/upload/request");
 
             var (statusCode, result) = await _implementation.RequestBundleUploadAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -748,6 +826,7 @@ public partial class AssetController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<AssetController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:bundles/upload/request");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -763,6 +842,7 @@ public partial class AssetController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:bundles/upload/request",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -787,6 +867,11 @@ public partial class AssetController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.bundles",
+                "AssetController.CreateMetabundle",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "bundles/metabundle/create");
 
             var (statusCode, result) = await _implementation.CreateMetabundleAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -795,6 +880,7 @@ public partial class AssetController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<AssetController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:bundles/metabundle/create");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -810,6 +896,7 @@ public partial class AssetController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:bundles/metabundle/create",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -832,6 +919,11 @@ public partial class AssetController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.bundles",
+                "AssetController.GetJobStatus",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "bundles/job/status");
 
             var (statusCode, result) = await _implementation.GetJobStatusAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -840,6 +932,7 @@ public partial class AssetController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<AssetController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:bundles/job/status");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -855,6 +948,7 @@ public partial class AssetController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:bundles/job/status",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -877,6 +971,11 @@ public partial class AssetController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.bundles",
+                "AssetController.CancelJob",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "bundles/job/cancel");
 
             var (statusCode, result) = await _implementation.CancelJobAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -885,6 +984,7 @@ public partial class AssetController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<AssetController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:bundles/job/cancel");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -900,6 +1000,7 @@ public partial class AssetController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:bundles/job/cancel",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -927,6 +1028,11 @@ public partial class AssetController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.bundles",
+                "AssetController.ResolveBundles",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "bundles/resolve");
 
             var (statusCode, result) = await _implementation.ResolveBundlesAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -935,6 +1041,7 @@ public partial class AssetController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<AssetController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:bundles/resolve");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -950,6 +1057,7 @@ public partial class AssetController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:bundles/resolve",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -970,6 +1078,11 @@ public partial class AssetController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.bundles",
+                "AssetController.QueryBundlesByAsset",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "bundles/query/by-asset");
 
             var (statusCode, result) = await _implementation.QueryBundlesByAssetAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -978,6 +1091,7 @@ public partial class AssetController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<AssetController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:bundles/query/by-asset");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -993,6 +1107,7 @@ public partial class AssetController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:bundles/query/by-asset",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -1015,6 +1130,11 @@ public partial class AssetController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.bundles",
+                "AssetController.UpdateBundle",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "bundles/update");
 
             var (statusCode, result) = await _implementation.UpdateBundleAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1023,6 +1143,7 @@ public partial class AssetController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<AssetController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:bundles/update");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -1038,6 +1159,7 @@ public partial class AssetController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:bundles/update",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -1062,6 +1184,11 @@ public partial class AssetController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.bundles",
+                "AssetController.DeleteBundle",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "bundles/delete");
 
             var (statusCode, result) = await _implementation.DeleteBundleAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1070,6 +1197,7 @@ public partial class AssetController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<AssetController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:bundles/delete");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -1085,6 +1213,7 @@ public partial class AssetController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:bundles/delete",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -1106,6 +1235,11 @@ public partial class AssetController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.bundles",
+                "AssetController.RestoreBundle",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "bundles/restore");
 
             var (statusCode, result) = await _implementation.RestoreBundleAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1114,6 +1248,7 @@ public partial class AssetController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<AssetController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:bundles/restore");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -1129,6 +1264,7 @@ public partial class AssetController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:bundles/restore",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -1155,6 +1291,11 @@ public partial class AssetController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.bundles",
+                "AssetController.QueryBundles",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "bundles/query");
 
             var (statusCode, result) = await _implementation.QueryBundlesAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1163,6 +1304,7 @@ public partial class AssetController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<AssetController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:bundles/query");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -1178,6 +1320,7 @@ public partial class AssetController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:bundles/query",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -1204,6 +1347,11 @@ public partial class AssetController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.bundles",
+                "AssetController.ListBundleVersions",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "bundles/list-versions");
 
             var (statusCode, result) = await _implementation.ListBundleVersionsAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1212,6 +1360,7 @@ public partial class AssetController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<AssetController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:bundles/list-versions");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -1227,6 +1376,7 @@ public partial class AssetController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:bundles/list-versions",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -1247,6 +1397,11 @@ public partial class AssetController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.assets",
+                "AssetController.BulkGetAssets",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "assets/bulk-get");
 
             var (statusCode, result) = await _implementation.BulkGetAssetsAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1255,6 +1410,7 @@ public partial class AssetController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<AssetController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:assets/bulk-get");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -1270,6 +1426,7 @@ public partial class AssetController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:assets/bulk-get",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }

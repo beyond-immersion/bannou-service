@@ -109,7 +109,10 @@ public partial class ConnectService : IConnectService, IDisposable
             configuration.ConnectionShutdownTimeoutSeconds,
             configuration.ConnectionCleanupIntervalSeconds,
             configuration.InactiveConnectionTimeoutMinutes,
-            _logger);
+            _logger,
+            configuration.CompressionEnabled,
+            configuration.CompressionThresholdBytes,
+            configuration.CompressionQuality);
 
         // Server salt from configuration - REQUIRED (fail-fast for production safety)
         // All service instances must share the same salt for session shortcuts to work correctly
@@ -2407,7 +2410,6 @@ public partial class ConnectService : IConnectService, IDisposable
     /// This tells the client what APIs they can access and provides their client-salted GUIDs.
     /// </summary>
     private async Task SendCapabilityManifestAsync(
-        WebSocket webSocket,
         string sessionId,
         ConnectionState connectionState,
         CancellationToken cancellationToken)
@@ -2471,17 +2473,12 @@ public partial class ConnectService : IConnectService, IDisposable
                 payload: manifestBytes
             );
 
-            var messageBytes = capabilityMessage.ToByteArray();
-
             _logger.LogInformation(
                 "Sending capability manifest to session {SessionId} with {ApiCount} available APIs (including shortcuts)",
                 sessionId, availableApis.Count);
 
-            await webSocket.SendAsync(
-                new ArraySegment<byte>(messageBytes),
-                WebSocketMessageType.Binary,
-                endOfMessage: true,
-                cancellationToken);
+            // Route through connection manager for compression support
+            await _connectionManager.SendMessageAsync(sessionId, capabilityMessage, cancellationToken);
 
             _logger.LogDebug("Capability manifest sent successfully to session {SessionId}", sessionId);
         }
@@ -2864,7 +2861,7 @@ public partial class ConnectService : IConnectService, IDisposable
                 shortcutData.Name, routeGuid, sessionId);
 
             // Send updated capability manifest with shortcuts to client
-            await SendCapabilityManifestWithShortcutsAsync(connection.WebSocket, sessionId, connectionState, CancellationToken.None);
+            await SendCapabilityManifestWithShortcutsAsync(sessionId, connectionState, CancellationToken.None);
         }
         catch (Exception ex)
         {
@@ -2937,7 +2934,7 @@ public partial class ConnectService : IConnectService, IDisposable
             // Send updated capability manifest if shortcuts were removed
             if (removedCount > 0)
             {
-                await SendCapabilityManifestWithShortcutsAsync(connection.WebSocket, sessionId, connectionState, CancellationToken.None);
+                await SendCapabilityManifestWithShortcutsAsync(sessionId, connectionState, CancellationToken.None);
             }
         }
         catch (Exception ex)
@@ -2952,7 +2949,6 @@ public partial class ConnectService : IConnectService, IDisposable
     /// This is the unified method for sending manifests that include both APIs and shortcuts.
     /// </summary>
     private async Task SendCapabilityManifestWithShortcutsAsync(
-        WebSocket webSocket,
         string sessionId,
         ConnectionState connectionState,
         CancellationToken cancellationToken)
@@ -3025,17 +3021,12 @@ public partial class ConnectService : IConnectService, IDisposable
                 payload: manifestBytes
             );
 
-            var messageBytes = capabilityMessage.ToByteArray();
-
             _logger.LogInformation(
                 "Sending capability manifest to session {SessionId} with {ApiCount} APIs (including shortcuts)",
                 sessionId, availableApis.Count);
 
-            await webSocket.SendAsync(
-                new ArraySegment<byte>(messageBytes),
-                WebSocketMessageType.Binary,
-                endOfMessage: true,
-                cancellationToken);
+            // Route through connection manager for compression support
+            await _connectionManager.SendMessageAsync(sessionId, capabilityMessage, cancellationToken);
         }
         catch (Exception ex)
         {

@@ -22,6 +22,21 @@
 
 #nullable enable
 
+#pragma warning disable 108 // Disable "CS0108 '{derivedDto}.ToJson()' hides inherited member '{dtoBase}.ToJson()'. Use the new keyword if hiding was intended."
+#pragma warning disable 114 // Disable "CS0114 '{derivedDto}.RaisePropertyChanged(String)' hides inherited member 'dtoBase.RaisePropertyChanged(String)'. To make the current member override that implementation, add the override keyword. Otherwise add the new keyword."
+#pragma warning disable 472 // Disable "CS0472 The result of the expression is always 'false' since a value of type 'Int32' is never equal to 'null' of type 'Int32?'
+#pragma warning disable 612 // Disable "CS0612 '...' is obsolete"
+#pragma warning disable 649 // Disable "CS0649 Field is never assigned to, and will always have its default value null"
+#pragma warning disable 1573 // Disable "CS1573 Parameter '...' has no matching param tag in the XML comment for ...
+#pragma warning disable 1591 // Disable "CS1591 Missing XML comment for publicly visible type or member ..."
+#pragma warning disable 8073 // Disable "CS8073 The result of the expression is always 'false' since a value of type 'T' is never equal to 'null' of type 'T?'"
+#pragma warning disable 3016 // Disable "CS3016 Arrays as attribute arguments is not CLS-compliant"
+#pragma warning disable 8600 // Disable "CS8600 Converting null literal or possible null value to non-nullable type"
+#pragma warning disable 8602 // Disable "CS8602 Dereference of a possibly null reference"
+#pragma warning disable 8603 // Disable "CS8603 Possible null reference return"
+#pragma warning disable 8604 // Disable "CS8604 Possible null reference argument for parameter"
+#pragma warning disable 8625 // Disable "CS8625 Cannot convert null literal to non-nullable reference type"
+#pragma warning disable 8765 // Disable "CS8765 Nullability of type of parameter doesn't match overridden member (possibly because of nullability attributes)."
 
 namespace BeyondImmersion.BannouService.CharacterEncounter;
 
@@ -313,10 +328,12 @@ public interface ICharacterEncounterController : BeyondImmersion.BannouService.C
 public partial class CharacterEncounterController : Microsoft.AspNetCore.Mvc.ControllerBase
 {
     private ICharacterEncounterService _implementation;
+    private BeyondImmersion.BannouService.Services.ITelemetryProvider _telemetryProvider;
 
-    public CharacterEncounterController(ICharacterEncounterService implementation)
+    public CharacterEncounterController(ICharacterEncounterService implementation, BeyondImmersion.BannouService.Services.ITelemetryProvider telemetryProvider)
     {
         _implementation = implementation;
+        _telemetryProvider = telemetryProvider;
     }
 
     /// <summary>
@@ -370,6 +387,11 @@ public partial class CharacterEncounterController : Microsoft.AspNetCore.Mvc.Con
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.character-encounter",
+                "CharacterEncounterController.CreateEncounterType",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "character-encounter/type/create");
 
             var (statusCode, result) = await _implementation.CreateEncounterTypeAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -378,6 +400,7 @@ public partial class CharacterEncounterController : Microsoft.AspNetCore.Mvc.Con
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<CharacterEncounterController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:character-encounter/type/create");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -393,6 +416,7 @@ public partial class CharacterEncounterController : Microsoft.AspNetCore.Mvc.Con
                 endpoint: "post:character-encounter/type/create",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -411,6 +435,11 @@ public partial class CharacterEncounterController : Microsoft.AspNetCore.Mvc.Con
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.character-encounter",
+                "CharacterEncounterController.GetEncounterType",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "character-encounter/type/get");
 
             var (statusCode, result) = await _implementation.GetEncounterTypeAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -419,6 +448,7 @@ public partial class CharacterEncounterController : Microsoft.AspNetCore.Mvc.Con
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<CharacterEncounterController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:character-encounter/type/get");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -434,6 +464,7 @@ public partial class CharacterEncounterController : Microsoft.AspNetCore.Mvc.Con
                 endpoint: "post:character-encounter/type/get",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -452,6 +483,11 @@ public partial class CharacterEncounterController : Microsoft.AspNetCore.Mvc.Con
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.character-encounter",
+                "CharacterEncounterController.ListEncounterTypes",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "character-encounter/type/list");
 
             var (statusCode, result) = await _implementation.ListEncounterTypesAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -460,6 +496,7 @@ public partial class CharacterEncounterController : Microsoft.AspNetCore.Mvc.Con
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<CharacterEncounterController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:character-encounter/type/list");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -475,6 +512,7 @@ public partial class CharacterEncounterController : Microsoft.AspNetCore.Mvc.Con
                 endpoint: "post:character-encounter/type/list",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -494,6 +532,11 @@ public partial class CharacterEncounterController : Microsoft.AspNetCore.Mvc.Con
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.character-encounter",
+                "CharacterEncounterController.UpdateEncounterType",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "character-encounter/type/update");
 
             var (statusCode, result) = await _implementation.UpdateEncounterTypeAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -502,6 +545,7 @@ public partial class CharacterEncounterController : Microsoft.AspNetCore.Mvc.Con
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<CharacterEncounterController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:character-encounter/type/update");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -517,6 +561,7 @@ public partial class CharacterEncounterController : Microsoft.AspNetCore.Mvc.Con
                 endpoint: "post:character-encounter/type/update",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -536,6 +581,11 @@ public partial class CharacterEncounterController : Microsoft.AspNetCore.Mvc.Con
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.character-encounter",
+                "CharacterEncounterController.DeleteEncounterType",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "character-encounter/type/delete");
 
             var statusCode = await _implementation.DeleteEncounterTypeAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode);
@@ -544,6 +594,7 @@ public partial class CharacterEncounterController : Microsoft.AspNetCore.Mvc.Con
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<CharacterEncounterController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:character-encounter/type/delete");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -559,6 +610,7 @@ public partial class CharacterEncounterController : Microsoft.AspNetCore.Mvc.Con
                 endpoint: "post:character-encounter/type/delete",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -578,6 +630,11 @@ public partial class CharacterEncounterController : Microsoft.AspNetCore.Mvc.Con
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.character-encounter",
+                "CharacterEncounterController.SeedEncounterTypes",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "character-encounter/type/seed");
 
             var (statusCode, result) = await _implementation.SeedEncounterTypesAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -586,6 +643,7 @@ public partial class CharacterEncounterController : Microsoft.AspNetCore.Mvc.Con
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<CharacterEncounterController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:character-encounter/type/seed");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -601,6 +659,7 @@ public partial class CharacterEncounterController : Microsoft.AspNetCore.Mvc.Con
                 endpoint: "post:character-encounter/type/seed",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -623,6 +682,11 @@ public partial class CharacterEncounterController : Microsoft.AspNetCore.Mvc.Con
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.character-encounter",
+                "CharacterEncounterController.RecordEncounter",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "character-encounter/record");
 
             var (statusCode, result) = await _implementation.RecordEncounterAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -631,6 +695,7 @@ public partial class CharacterEncounterController : Microsoft.AspNetCore.Mvc.Con
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<CharacterEncounterController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:character-encounter/record");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -646,6 +711,7 @@ public partial class CharacterEncounterController : Microsoft.AspNetCore.Mvc.Con
                 endpoint: "post:character-encounter/record",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -665,6 +731,11 @@ public partial class CharacterEncounterController : Microsoft.AspNetCore.Mvc.Con
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.character-encounter",
+                "CharacterEncounterController.QueryByCharacter",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "character-encounter/query/by-character");
 
             var (statusCode, result) = await _implementation.QueryByCharacterAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -673,6 +744,7 @@ public partial class CharacterEncounterController : Microsoft.AspNetCore.Mvc.Con
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<CharacterEncounterController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:character-encounter/query/by-character");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -688,6 +760,7 @@ public partial class CharacterEncounterController : Microsoft.AspNetCore.Mvc.Con
                 endpoint: "post:character-encounter/query/by-character",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -707,6 +780,11 @@ public partial class CharacterEncounterController : Microsoft.AspNetCore.Mvc.Con
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.character-encounter",
+                "CharacterEncounterController.QueryBetween",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "character-encounter/query/between");
 
             var (statusCode, result) = await _implementation.QueryBetweenAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -715,6 +793,7 @@ public partial class CharacterEncounterController : Microsoft.AspNetCore.Mvc.Con
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<CharacterEncounterController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:character-encounter/query/between");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -730,6 +809,7 @@ public partial class CharacterEncounterController : Microsoft.AspNetCore.Mvc.Con
                 endpoint: "post:character-encounter/query/between",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -749,6 +829,11 @@ public partial class CharacterEncounterController : Microsoft.AspNetCore.Mvc.Con
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.character-encounter",
+                "CharacterEncounterController.QueryByLocation",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "character-encounter/query/by-location");
 
             var (statusCode, result) = await _implementation.QueryByLocationAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -757,6 +842,7 @@ public partial class CharacterEncounterController : Microsoft.AspNetCore.Mvc.Con
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<CharacterEncounterController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:character-encounter/query/by-location");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -772,6 +858,7 @@ public partial class CharacterEncounterController : Microsoft.AspNetCore.Mvc.Con
                 endpoint: "post:character-encounter/query/by-location",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -791,6 +878,11 @@ public partial class CharacterEncounterController : Microsoft.AspNetCore.Mvc.Con
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.character-encounter",
+                "CharacterEncounterController.HasMet",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "character-encounter/has-met");
 
             var (statusCode, result) = await _implementation.HasMetAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -799,6 +891,7 @@ public partial class CharacterEncounterController : Microsoft.AspNetCore.Mvc.Con
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<CharacterEncounterController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:character-encounter/has-met");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -814,6 +907,7 @@ public partial class CharacterEncounterController : Microsoft.AspNetCore.Mvc.Con
                 endpoint: "post:character-encounter/has-met",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -833,6 +927,11 @@ public partial class CharacterEncounterController : Microsoft.AspNetCore.Mvc.Con
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.character-encounter",
+                "CharacterEncounterController.GetSentiment",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "character-encounter/get-sentiment");
 
             var (statusCode, result) = await _implementation.GetSentimentAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -841,6 +940,7 @@ public partial class CharacterEncounterController : Microsoft.AspNetCore.Mvc.Con
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<CharacterEncounterController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:character-encounter/get-sentiment");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -856,6 +956,7 @@ public partial class CharacterEncounterController : Microsoft.AspNetCore.Mvc.Con
                 endpoint: "post:character-encounter/get-sentiment",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -875,6 +976,11 @@ public partial class CharacterEncounterController : Microsoft.AspNetCore.Mvc.Con
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.character-encounter",
+                "CharacterEncounterController.BatchGetSentiment",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "character-encounter/batch-get");
 
             var (statusCode, result) = await _implementation.BatchGetSentimentAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -883,6 +989,7 @@ public partial class CharacterEncounterController : Microsoft.AspNetCore.Mvc.Con
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<CharacterEncounterController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:character-encounter/batch-get");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -898,6 +1005,7 @@ public partial class CharacterEncounterController : Microsoft.AspNetCore.Mvc.Con
                 endpoint: "post:character-encounter/batch-get",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -917,6 +1025,11 @@ public partial class CharacterEncounterController : Microsoft.AspNetCore.Mvc.Con
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.character-encounter",
+                "CharacterEncounterController.GetPerspective",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "character-encounter/get-perspective");
 
             var (statusCode, result) = await _implementation.GetPerspectiveAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -925,6 +1038,7 @@ public partial class CharacterEncounterController : Microsoft.AspNetCore.Mvc.Con
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<CharacterEncounterController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:character-encounter/get-perspective");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -940,6 +1054,7 @@ public partial class CharacterEncounterController : Microsoft.AspNetCore.Mvc.Con
                 endpoint: "post:character-encounter/get-perspective",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -959,6 +1074,11 @@ public partial class CharacterEncounterController : Microsoft.AspNetCore.Mvc.Con
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.character-encounter",
+                "CharacterEncounterController.UpdatePerspective",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "character-encounter/update-perspective");
 
             var (statusCode, result) = await _implementation.UpdatePerspectiveAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -967,6 +1087,7 @@ public partial class CharacterEncounterController : Microsoft.AspNetCore.Mvc.Con
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<CharacterEncounterController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:character-encounter/update-perspective");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -982,6 +1103,7 @@ public partial class CharacterEncounterController : Microsoft.AspNetCore.Mvc.Con
                 endpoint: "post:character-encounter/update-perspective",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -1001,6 +1123,11 @@ public partial class CharacterEncounterController : Microsoft.AspNetCore.Mvc.Con
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.character-encounter",
+                "CharacterEncounterController.RefreshMemory",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "character-encounter/refresh-memory");
 
             var (statusCode, result) = await _implementation.RefreshMemoryAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1009,6 +1136,7 @@ public partial class CharacterEncounterController : Microsoft.AspNetCore.Mvc.Con
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<CharacterEncounterController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:character-encounter/refresh-memory");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -1024,6 +1152,7 @@ public partial class CharacterEncounterController : Microsoft.AspNetCore.Mvc.Con
                 endpoint: "post:character-encounter/refresh-memory",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -1043,6 +1172,11 @@ public partial class CharacterEncounterController : Microsoft.AspNetCore.Mvc.Con
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.character-encounter",
+                "CharacterEncounterController.DeleteEncounter",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "character-encounter/delete");
 
             var (statusCode, result) = await _implementation.DeleteEncounterAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1051,6 +1185,7 @@ public partial class CharacterEncounterController : Microsoft.AspNetCore.Mvc.Con
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<CharacterEncounterController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:character-encounter/delete");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -1066,6 +1201,7 @@ public partial class CharacterEncounterController : Microsoft.AspNetCore.Mvc.Con
                 endpoint: "post:character-encounter/delete",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -1085,6 +1221,11 @@ public partial class CharacterEncounterController : Microsoft.AspNetCore.Mvc.Con
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.character-encounter",
+                "CharacterEncounterController.DeleteByCharacter",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "character-encounter/delete-by-character");
 
             var (statusCode, result) = await _implementation.DeleteByCharacterAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1093,6 +1234,7 @@ public partial class CharacterEncounterController : Microsoft.AspNetCore.Mvc.Con
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<CharacterEncounterController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:character-encounter/delete-by-character");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -1108,6 +1250,7 @@ public partial class CharacterEncounterController : Microsoft.AspNetCore.Mvc.Con
                 endpoint: "post:character-encounter/delete-by-character",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -1128,6 +1271,11 @@ public partial class CharacterEncounterController : Microsoft.AspNetCore.Mvc.Con
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.character-encounter",
+                "CharacterEncounterController.DecayMemories",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "character-encounter/decay-memories");
 
             var (statusCode, result) = await _implementation.DecayMemoriesAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1136,6 +1284,7 @@ public partial class CharacterEncounterController : Microsoft.AspNetCore.Mvc.Con
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<CharacterEncounterController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:character-encounter/decay-memories");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -1151,6 +1300,7 @@ public partial class CharacterEncounterController : Microsoft.AspNetCore.Mvc.Con
                 endpoint: "post:character-encounter/decay-memories",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -1170,6 +1320,11 @@ public partial class CharacterEncounterController : Microsoft.AspNetCore.Mvc.Con
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.character-encounter",
+                "CharacterEncounterController.GetCompressData",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "character-encounter/get-compress-data");
 
             var (statusCode, result) = await _implementation.GetCompressDataAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1178,6 +1333,7 @@ public partial class CharacterEncounterController : Microsoft.AspNetCore.Mvc.Con
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<CharacterEncounterController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:character-encounter/get-compress-data");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -1193,6 +1349,7 @@ public partial class CharacterEncounterController : Microsoft.AspNetCore.Mvc.Con
                 endpoint: "post:character-encounter/get-compress-data",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -1212,6 +1369,11 @@ public partial class CharacterEncounterController : Microsoft.AspNetCore.Mvc.Con
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.character-encounter",
+                "CharacterEncounterController.RestoreFromArchive",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "character-encounter/restore-from-archive");
 
             var (statusCode, result) = await _implementation.RestoreFromArchiveAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1220,6 +1382,7 @@ public partial class CharacterEncounterController : Microsoft.AspNetCore.Mvc.Con
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<CharacterEncounterController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:character-encounter/restore-from-archive");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -1235,6 +1398,7 @@ public partial class CharacterEncounterController : Microsoft.AspNetCore.Mvc.Con
                 endpoint: "post:character-encounter/restore-from-archive",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }

@@ -22,6 +22,21 @@
 
 #nullable enable
 
+#pragma warning disable 108 // Disable "CS0108 '{derivedDto}.ToJson()' hides inherited member '{dtoBase}.ToJson()'. Use the new keyword if hiding was intended."
+#pragma warning disable 114 // Disable "CS0114 '{derivedDto}.RaisePropertyChanged(String)' hides inherited member 'dtoBase.RaisePropertyChanged(String)'. To make the current member override that implementation, add the override keyword. Otherwise add the new keyword."
+#pragma warning disable 472 // Disable "CS0472 The result of the expression is always 'false' since a value of type 'Int32' is never equal to 'null' of type 'Int32?'
+#pragma warning disable 612 // Disable "CS0612 '...' is obsolete"
+#pragma warning disable 649 // Disable "CS0649 Field is never assigned to, and will always have its default value null"
+#pragma warning disable 1573 // Disable "CS1573 Parameter '...' has no matching param tag in the XML comment for ...
+#pragma warning disable 1591 // Disable "CS1591 Missing XML comment for publicly visible type or member ..."
+#pragma warning disable 8073 // Disable "CS8073 The result of the expression is always 'false' since a value of type 'T' is never equal to 'null' of type 'T?'"
+#pragma warning disable 3016 // Disable "CS3016 Arrays as attribute arguments is not CLS-compliant"
+#pragma warning disable 8600 // Disable "CS8600 Converting null literal or possible null value to non-nullable type"
+#pragma warning disable 8602 // Disable "CS8602 Dereference of a possibly null reference"
+#pragma warning disable 8603 // Disable "CS8603 Possible null reference return"
+#pragma warning disable 8604 // Disable "CS8604 Possible null reference argument for parameter"
+#pragma warning disable 8625 // Disable "CS8625 Cannot convert null literal to non-nullable reference type"
+#pragma warning disable 8765 // Disable "CS8765 Nullability of type of parameter doesn't match overridden member (possibly because of nullability attributes)."
 
 namespace BeyondImmersion.BannouService.Permission;
 
@@ -142,10 +157,12 @@ public interface IPermissionController : BeyondImmersion.BannouService.Controlle
 public partial class PermissionController : Microsoft.AspNetCore.Mvc.ControllerBase
 {
     private IPermissionService _implementation;
+    private BeyondImmersion.BannouService.Services.ITelemetryProvider _telemetryProvider;
 
-    public PermissionController(IPermissionService implementation)
+    public PermissionController(IPermissionService implementation, BeyondImmersion.BannouService.Services.ITelemetryProvider telemetryProvider)
     {
         _implementation = implementation;
+        _telemetryProvider = telemetryProvider;
     }
 
     /// <summary>
@@ -198,6 +215,11 @@ public partial class PermissionController : Microsoft.AspNetCore.Mvc.ControllerB
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.permission",
+                "PermissionController.GetCapabilities",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "permission/capabilities");
 
             var (statusCode, result) = await _implementation.GetCapabilitiesAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -206,6 +228,7 @@ public partial class PermissionController : Microsoft.AspNetCore.Mvc.ControllerB
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<PermissionController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:permission/capabilities");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -221,6 +244,7 @@ public partial class PermissionController : Microsoft.AspNetCore.Mvc.ControllerB
                 endpoint: "post:permission/capabilities",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -239,6 +263,11 @@ public partial class PermissionController : Microsoft.AspNetCore.Mvc.ControllerB
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.permission",
+                "PermissionController.ValidateApiAccess",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "permission/validate");
 
             var (statusCode, result) = await _implementation.ValidateApiAccessAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -247,6 +276,7 @@ public partial class PermissionController : Microsoft.AspNetCore.Mvc.ControllerB
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<PermissionController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:permission/validate");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -262,6 +292,7 @@ public partial class PermissionController : Microsoft.AspNetCore.Mvc.ControllerB
                 endpoint: "post:permission/validate",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -280,6 +311,11 @@ public partial class PermissionController : Microsoft.AspNetCore.Mvc.ControllerB
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.permission",
+                "PermissionController.RegisterServicePermissions",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "permission/register-service");
 
             var (statusCode, result) = await _implementation.RegisterServicePermissionsAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -288,6 +324,7 @@ public partial class PermissionController : Microsoft.AspNetCore.Mvc.ControllerB
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<PermissionController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:permission/register-service");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -303,6 +340,7 @@ public partial class PermissionController : Microsoft.AspNetCore.Mvc.ControllerB
                 endpoint: "post:permission/register-service",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -321,6 +359,11 @@ public partial class PermissionController : Microsoft.AspNetCore.Mvc.ControllerB
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.permission",
+                "PermissionController.UpdateSessionState",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "permission/update-session-state");
 
             var (statusCode, result) = await _implementation.UpdateSessionStateAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -329,6 +372,7 @@ public partial class PermissionController : Microsoft.AspNetCore.Mvc.ControllerB
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<PermissionController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:permission/update-session-state");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -344,6 +388,7 @@ public partial class PermissionController : Microsoft.AspNetCore.Mvc.ControllerB
                 endpoint: "post:permission/update-session-state",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -362,6 +407,11 @@ public partial class PermissionController : Microsoft.AspNetCore.Mvc.ControllerB
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.permission",
+                "PermissionController.UpdateSessionRole",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "permission/update-session-role");
 
             var (statusCode, result) = await _implementation.UpdateSessionRoleAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -370,6 +420,7 @@ public partial class PermissionController : Microsoft.AspNetCore.Mvc.ControllerB
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<PermissionController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:permission/update-session-role");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -385,6 +436,7 @@ public partial class PermissionController : Microsoft.AspNetCore.Mvc.ControllerB
                 endpoint: "post:permission/update-session-role",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -405,6 +457,11 @@ public partial class PermissionController : Microsoft.AspNetCore.Mvc.ControllerB
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.permission",
+                "PermissionController.ClearSessionState",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "permission/clear-session-state");
 
             var (statusCode, result) = await _implementation.ClearSessionStateAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -413,6 +470,7 @@ public partial class PermissionController : Microsoft.AspNetCore.Mvc.ControllerB
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<PermissionController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:permission/clear-session-state");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -428,6 +486,7 @@ public partial class PermissionController : Microsoft.AspNetCore.Mvc.ControllerB
                 endpoint: "post:permission/clear-session-state",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -446,6 +505,11 @@ public partial class PermissionController : Microsoft.AspNetCore.Mvc.ControllerB
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.permission",
+                "PermissionController.GetSessionInfo",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "permission/get-session-info");
 
             var (statusCode, result) = await _implementation.GetSessionInfoAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -454,6 +518,7 @@ public partial class PermissionController : Microsoft.AspNetCore.Mvc.ControllerB
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<PermissionController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:permission/get-session-info");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -469,6 +534,7 @@ public partial class PermissionController : Microsoft.AspNetCore.Mvc.ControllerB
                 endpoint: "post:permission/get-session-info",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -493,6 +559,11 @@ public partial class PermissionController : Microsoft.AspNetCore.Mvc.ControllerB
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.permission",
+                "PermissionController.GetRegisteredServices",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "permission/services/list");
 
             var (statusCode, result) = await _implementation.GetRegisteredServicesAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -501,6 +572,7 @@ public partial class PermissionController : Microsoft.AspNetCore.Mvc.ControllerB
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<PermissionController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:permission/services/list");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -516,6 +588,7 @@ public partial class PermissionController : Microsoft.AspNetCore.Mvc.ControllerB
                 endpoint: "post:permission/services/list",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }

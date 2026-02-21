@@ -204,4 +204,24 @@ public class ConnectServiceConfiguration : IServiceConfiguration
     /// </summary>
     public CompanionRoomMode CompanionRoomMode { get; set; } = CompanionRoomMode.Disabled;
 
+    /// <summary>
+    /// Enable Brotli compression for outbound WebSocket payloads above the size threshold
+    /// Environment variable: CONNECT_COMPRESSION_ENABLED
+    /// </summary>
+    public bool CompressionEnabled { get; set; } = false;
+
+    /// <summary>
+    /// Minimum payload size in bytes before compression is applied (payloads below this are sent uncompressed)
+    /// Environment variable: CONNECT_COMPRESSION_THRESHOLD_BYTES
+    /// </summary>
+    [ConfigRange(Minimum = 64, Maximum = 1048576)]
+    public int CompressionThresholdBytes { get; set; } = 1024;
+
+    /// <summary>
+    /// Brotli compression quality level (0=no compression, 1=fastest, 11=best ratio). Quality 1 recommended for real-time traffic.
+    /// Environment variable: CONNECT_COMPRESSION_QUALITY
+    /// </summary>
+    [ConfigRange(Minimum = 0, Maximum = 11)]
+    public int CompressionQuality { get; set; } = 1;
+
 }

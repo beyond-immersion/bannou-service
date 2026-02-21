@@ -85,7 +85,11 @@ paths:
         \               \"minimum\": 1,\n                    \"nullable\": true,\n                    \"description\": \"\
         1-based regex capture group index for extracting CharacterId from actor ID.\\nExample: With idPattern \\\"npc-brain-([a-f0-9-]+)\\\
         \" and characterIdCaptureGroup: 1,\\nactor ID \\\"npc-brain-abc-123-def\\\" extracts \\\"abc-123-def\\\" as CharacterId
-        (parsed as GUID).\\n\"\n                }\n            }\n        }\n    }\n}"
+        (parsed as GUID).\\n\"\n                },\n                \"defaultRealmId\": {\n                    \"type\": \"\
+        string\",\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n                  \
+        \  \"description\": \"Default realm ID for auto-spawned actors when no CharacterId is available to resolve a realm.\\
+        nRequired when characterIdCaptureGroup is not configured and auto-spawn is enabled.\\n\"\n                }\n    \
+        \        }\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ActorTemplateResponse\"\
         ,\n    \"$defs\": {\n        \"ActorTemplateResponse\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
         : false,\n            \"description\": \"Response containing actor template details\",\n            \"required\":
@@ -130,7 +134,11 @@ paths:
         \     \"minimum\": 1,\n                    \"nullable\": true,\n                    \"description\": \"1-based regex
         capture group index for extracting CharacterId from actor ID.\\nExample: With idPattern \\\"npc-brain-([a-f0-9-]+)\\\
         \" and characterIdCaptureGroup: 1,\\nactor ID \\\"npc-brain-abc-123-def\\\" extracts \\\"abc-123-def\\\" as CharacterId
-        (parsed as GUID).\\n\"\n                }\n            }\n        }\n    }\n}"
+        (parsed as GUID).\\n\"\n                },\n                \"defaultRealmId\": {\n                    \"type\": \"\
+        string\",\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n                  \
+        \  \"description\": \"Default realm ID for auto-spawned actors when no CharacterId is available to resolve a realm.\\
+        nRequired when characterIdCaptureGroup is not configured and auto-spawn is enabled.\\n\"\n                }\n    \
+        \        }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Create an actor template (category definition)\",\n    \"description\"\
         : \"\",\n    \"tags\": [],\n    \"deprecated\": false,\n    \"operationId\": \"CreateActorTemplate\"\n}"
   /actor/template/get:
@@ -205,7 +213,11 @@ paths:
         \     \"minimum\": 1,\n                    \"nullable\": true,\n                    \"description\": \"1-based regex
         capture group index for extracting CharacterId from actor ID.\\nExample: With idPattern \\\"npc-brain-([a-f0-9-]+)\\\
         \" and characterIdCaptureGroup: 1,\\nactor ID \\\"npc-brain-abc-123-def\\\" extracts \\\"abc-123-def\\\" as CharacterId
-        (parsed as GUID).\\n\"\n                }\n            }\n        }\n    }\n}"
+        (parsed as GUID).\\n\"\n                },\n                \"defaultRealmId\": {\n                    \"type\": \"\
+        string\",\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n                  \
+        \  \"description\": \"Default realm ID for auto-spawned actors when no CharacterId is available to resolve a realm.\\
+        nRequired when characterIdCaptureGroup is not configured and auto-spawn is enabled.\\n\"\n                }\n    \
+        \        }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Get an actor template by ID or category\",\n    \"description\": \"\",\n\
         \    \"tags\": [],\n    \"deprecated\": false,\n    \"operationId\": \"GetActorTemplate\"\n}"
   /actor/template/list:
@@ -286,8 +298,11 @@ paths:
         : {\n                    \"type\": \"integer\",\n                    \"minimum\": 1,\n                    \"nullable\"\
         : true,\n                    \"description\": \"1-based regex capture group index for extracting CharacterId from
         actor ID.\\nExample: With idPattern \\\"npc-brain-([a-f0-9-]+)\\\" and characterIdCaptureGroup: 1,\\nactor ID \\\"\
-        npc-brain-abc-123-def\\\" extracts \\\"abc-123-def\\\" as CharacterId (parsed as GUID).\\n\"\n                }\n\
-        \            }\n        }\n    }\n}"
+        npc-brain-abc-123-def\\\" extracts \\\"abc-123-def\\\" as CharacterId (parsed as GUID).\\n\"\n                },\n\
+        \                \"defaultRealmId\": {\n                    \"type\": \"string\",\n                    \"format\"\
+        : \"uuid\",\n                    \"nullable\": true,\n                    \"description\": \"Default realm ID for
+        auto-spawned actors when no CharacterId is available to resolve a realm.\\nRequired when characterIdCaptureGroup is
+        not configured and auto-spawn is enabled.\\n\"\n                }\n            }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"List all actor templates\",\n    \"description\": \"\",\n    \"tags\":
         [],\n    \"deprecated\": false,\n    \"operationId\": \"ListActorTemplates\"\n}"
   /actor/template/update:
@@ -344,8 +359,11 @@ paths:
         : {\n                    \"type\": \"integer\",\n                    \"minimum\": 1,\n                    \"nullable\"\
         : true,\n                    \"description\": \"1-based regex capture group index for extracting CharacterId from
         actor ID.\\nExample: With idPattern \\\"npc-brain-([a-f0-9-]+)\\\" and characterIdCaptureGroup: 1,\\nactor ID \\\"\
-        npc-brain-abc-123-def\\\" extracts \\\"abc-123-def\\\" as CharacterId (parsed as GUID).\\n\"\n                }\n\
-        \            }\n        }\n    }\n}"
+        npc-brain-abc-123-def\\\" extracts \\\"abc-123-def\\\" as CharacterId (parsed as GUID).\\n\"\n                },\n\
+        \                \"defaultRealmId\": {\n                    \"type\": \"string\",\n                    \"format\"\
+        : \"uuid\",\n                    \"nullable\": true,\n                    \"description\": \"Default realm ID for
+        auto-spawned actors when no CharacterId is available to resolve a realm.\\nRequired when characterIdCaptureGroup is
+        not configured and auto-spawn is enabled.\\n\"\n                }\n            }\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ActorTemplateResponse\"\
         ,\n    \"$defs\": {\n        \"ActorTemplateResponse\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
         : false,\n            \"description\": \"Response containing actor template details\",\n            \"required\":
@@ -390,7 +408,11 @@ paths:
         \     \"minimum\": 1,\n                    \"nullable\": true,\n                    \"description\": \"1-based regex
         capture group index for extracting CharacterId from actor ID.\\nExample: With idPattern \\\"npc-brain-([a-f0-9-]+)\\\
         \" and characterIdCaptureGroup: 1,\\nactor ID \\\"npc-brain-abc-123-def\\\" extracts \\\"abc-123-def\\\" as CharacterId
-        (parsed as GUID).\\n\"\n                }\n            }\n        }\n    }\n}"
+        (parsed as GUID).\\n\"\n                },\n                \"defaultRealmId\": {\n                    \"type\": \"\
+        string\",\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n                  \
+        \  \"description\": \"Default realm ID for auto-spawned actors when no CharacterId is available to resolve a realm.\\
+        nRequired when characterIdCaptureGroup is not configured and auto-spawn is enabled.\\n\"\n                }\n    \
+        \        }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Update an actor template\",\n    \"description\": \"\",\n    \"tags\":
         [],\n    \"deprecated\": false,\n    \"operationId\": \"UpdateActorTemplate\"\n}"
   /actor/template/delete:
@@ -1342,6 +1364,13 @@ components:
             1-based regex capture group index for extracting CharacterId from actor ID.
             Example: With idPattern "npc-brain-([a-f0-9-]+)" and characterIdCaptureGroup: 1,
             actor ID "npc-brain-abc-123-def" extracts "abc-123-def" as CharacterId (parsed as GUID).
+        defaultRealmId:
+          type: string
+          format: uuid
+          nullable: true
+          description: |
+            Default realm ID for auto-spawned actors when no CharacterId is available to resolve a realm.
+            Required when characterIdCaptureGroup is not configured and auto-spawn is enabled.
     ActorTemplateResponse:
       type: object
       additionalProperties: false

@@ -137,5 +137,28 @@ x-service-configuration:
       default: Disabled
       description: How Connect manages companion chat rooms (Disabled, AutoJoinLazy, AutoJoin, Manual)
 
+    # === Outbound Payload Compression ===
+    CompressionEnabled:
+      type: boolean
+      env: CONNECT_COMPRESSION_ENABLED
+      default: false
+      description: Enable Brotli compression for outbound WebSocket payloads above the size threshold
+
+    CompressionThresholdBytes:
+      type: integer
+      env: CONNECT_COMPRESSION_THRESHOLD_BYTES
+      default: 1024
+      minimum: 64
+      maximum: 1048576
+      description: Minimum payload size in bytes before compression is applied (payloads below this are sent uncompressed)
+
+    CompressionQuality:
+      type: integer
+      env: CONNECT_COMPRESSION_QUALITY
+      default: 1
+      minimum: 0
+      maximum: 11
+      description: Brotli compression quality level (0=no compression, 1=fastest, 11=best ratio). Quality 1 recommended for real-time traffic.
+
 # Note: Event subscriptions are handled via MassTransit consumers in ConnectEventsController.cs
 # Topics subscribed: session.invalidated, permission.capabilities-updated

@@ -256,10 +256,12 @@ public interface IActorController : BeyondImmersion.BannouService.Controllers.IB
 public partial class ActorController : Microsoft.AspNetCore.Mvc.ControllerBase
 {
     private IActorService _implementation;
+    private BeyondImmersion.BannouService.Services.ITelemetryProvider _telemetryProvider;
 
-    public ActorController(IActorService implementation)
+    public ActorController(IActorService implementation, BeyondImmersion.BannouService.Services.ITelemetryProvider telemetryProvider)
     {
         _implementation = implementation;
+        _telemetryProvider = telemetryProvider;
     }
 
     /// <summary>
@@ -309,6 +311,11 @@ public partial class ActorController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.actor",
+                "ActorController.CreateActorTemplate",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "actor/template/create");
 
             var (statusCode, result) = await _implementation.CreateActorTemplateAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -317,6 +324,7 @@ public partial class ActorController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<ActorController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:actor/template/create");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -332,6 +340,7 @@ public partial class ActorController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:actor/template/create",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -347,6 +356,11 @@ public partial class ActorController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.actor",
+                "ActorController.GetActorTemplate",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "actor/template/get");
 
             var (statusCode, result) = await _implementation.GetActorTemplateAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -355,6 +369,7 @@ public partial class ActorController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<ActorController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:actor/template/get");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -370,6 +385,7 @@ public partial class ActorController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:actor/template/get",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -385,6 +401,11 @@ public partial class ActorController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.actor",
+                "ActorController.ListActorTemplates",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "actor/template/list");
 
             var (statusCode, result) = await _implementation.ListActorTemplatesAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -393,6 +414,7 @@ public partial class ActorController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<ActorController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:actor/template/list");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -408,6 +430,7 @@ public partial class ActorController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:actor/template/list",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -423,6 +446,11 @@ public partial class ActorController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.actor",
+                "ActorController.UpdateActorTemplate",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "actor/template/update");
 
             var (statusCode, result) = await _implementation.UpdateActorTemplateAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -431,6 +459,7 @@ public partial class ActorController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<ActorController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:actor/template/update");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -446,6 +475,7 @@ public partial class ActorController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:actor/template/update",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -461,6 +491,11 @@ public partial class ActorController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.actor",
+                "ActorController.DeleteActorTemplate",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "actor/template/delete");
 
             var (statusCode, result) = await _implementation.DeleteActorTemplateAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -469,6 +504,7 @@ public partial class ActorController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<ActorController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:actor/template/delete");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -484,6 +520,7 @@ public partial class ActorController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:actor/template/delete",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -499,6 +536,11 @@ public partial class ActorController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.actor",
+                "ActorController.SpawnActor",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "actor/spawn");
 
             var (statusCode, result) = await _implementation.SpawnActorAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -507,6 +549,7 @@ public partial class ActorController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<ActorController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:actor/spawn");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -522,6 +565,7 @@ public partial class ActorController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:actor/spawn",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -542,6 +586,11 @@ public partial class ActorController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.actor",
+                "ActorController.GetActor",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "actor/get");
 
             var (statusCode, result) = await _implementation.GetActorAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -550,6 +599,7 @@ public partial class ActorController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<ActorController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:actor/get");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -565,6 +615,7 @@ public partial class ActorController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:actor/get",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -580,6 +631,11 @@ public partial class ActorController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.actor",
+                "ActorController.StopActor",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "actor/stop");
 
             var (statusCode, result) = await _implementation.StopActorAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -588,6 +644,7 @@ public partial class ActorController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<ActorController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:actor/stop");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -603,6 +660,7 @@ public partial class ActorController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:actor/stop",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -624,6 +682,11 @@ public partial class ActorController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.actor",
+                "ActorController.BindActorCharacter",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "actor/bind-character");
 
             var (statusCode, result) = await _implementation.BindActorCharacterAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -632,6 +695,7 @@ public partial class ActorController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<ActorController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:actor/bind-character");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -647,6 +711,7 @@ public partial class ActorController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:actor/bind-character",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -668,6 +733,11 @@ public partial class ActorController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.actor",
+                "ActorController.CleanupByCharacter",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "actor/cleanup-by-character");
 
             var (statusCode, result) = await _implementation.CleanupByCharacterAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -676,6 +746,7 @@ public partial class ActorController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<ActorController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:actor/cleanup-by-character");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -691,6 +762,7 @@ public partial class ActorController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:actor/cleanup-by-character",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -706,6 +778,11 @@ public partial class ActorController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.actor",
+                "ActorController.ListActors",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "actor/list");
 
             var (statusCode, result) = await _implementation.ListActorsAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -714,6 +791,7 @@ public partial class ActorController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<ActorController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:actor/list");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -729,6 +807,7 @@ public partial class ActorController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:actor/list",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -749,6 +828,11 @@ public partial class ActorController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.actor",
+                "ActorController.InjectPerception",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "actor/inject-perception");
 
             var (statusCode, result) = await _implementation.InjectPerceptionAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -757,6 +841,7 @@ public partial class ActorController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<ActorController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:actor/inject-perception");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -772,6 +857,7 @@ public partial class ActorController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:actor/inject-perception",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -798,6 +884,11 @@ public partial class ActorController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.actor",
+                "ActorController.QueryOptions",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "actor/query-options");
 
             var (statusCode, result) = await _implementation.QueryOptionsAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -806,6 +897,7 @@ public partial class ActorController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<ActorController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:actor/query-options");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -821,6 +913,7 @@ public partial class ActorController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:actor/query-options",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -841,6 +934,11 @@ public partial class ActorController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.actor",
+                "ActorController.StartEncounter",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "actor/encounter/start");
 
             var statusCode = await _implementation.StartEncounterAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode);
@@ -849,6 +947,7 @@ public partial class ActorController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<ActorController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:actor/encounter/start");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -864,6 +963,7 @@ public partial class ActorController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:actor/encounter/start",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -883,6 +983,11 @@ public partial class ActorController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.actor",
+                "ActorController.UpdateEncounterPhase",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "actor/encounter/update-phase");
 
             var (statusCode, result) = await _implementation.UpdateEncounterPhaseAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -891,6 +996,7 @@ public partial class ActorController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<ActorController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:actor/encounter/update-phase");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -906,6 +1012,7 @@ public partial class ActorController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:actor/encounter/update-phase",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -925,6 +1032,11 @@ public partial class ActorController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.actor",
+                "ActorController.EndEncounter",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "actor/encounter/end");
 
             var (statusCode, result) = await _implementation.EndEncounterAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -933,6 +1045,7 @@ public partial class ActorController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<ActorController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:actor/encounter/end");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -948,6 +1061,7 @@ public partial class ActorController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:actor/encounter/end",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -967,6 +1081,11 @@ public partial class ActorController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.actor",
+                "ActorController.GetEncounter",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "actor/encounter/get");
 
             var (statusCode, result) = await _implementation.GetEncounterAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -975,6 +1094,7 @@ public partial class ActorController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<ActorController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:actor/encounter/get");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -990,6 +1110,7 @@ public partial class ActorController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:actor/encounter/get",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }

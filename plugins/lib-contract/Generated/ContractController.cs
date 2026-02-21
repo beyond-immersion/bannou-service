@@ -22,6 +22,21 @@
 
 #nullable enable
 
+#pragma warning disable 108 // Disable "CS0108 '{derivedDto}.ToJson()' hides inherited member '{dtoBase}.ToJson()'. Use the new keyword if hiding was intended."
+#pragma warning disable 114 // Disable "CS0114 '{derivedDto}.RaisePropertyChanged(String)' hides inherited member 'dtoBase.RaisePropertyChanged(String)'. To make the current member override that implementation, add the override keyword. Otherwise add the new keyword."
+#pragma warning disable 472 // Disable "CS0472 The result of the expression is always 'false' since a value of type 'Int32' is never equal to 'null' of type 'Int32?'
+#pragma warning disable 612 // Disable "CS0612 '...' is obsolete"
+#pragma warning disable 649 // Disable "CS0649 Field is never assigned to, and will always have its default value null"
+#pragma warning disable 1573 // Disable "CS1573 Parameter '...' has no matching param tag in the XML comment for ...
+#pragma warning disable 1591 // Disable "CS1591 Missing XML comment for publicly visible type or member ..."
+#pragma warning disable 8073 // Disable "CS8073 The result of the expression is always 'false' since a value of type 'T' is never equal to 'null' of type 'T?'"
+#pragma warning disable 3016 // Disable "CS3016 Arrays as attribute arguments is not CLS-compliant"
+#pragma warning disable 8600 // Disable "CS8600 Converting null literal or possible null value to non-nullable type"
+#pragma warning disable 8602 // Disable "CS8602 Dereference of a possibly null reference"
+#pragma warning disable 8603 // Disable "CS8603 Possible null reference return"
+#pragma warning disable 8604 // Disable "CS8604 Possible null reference argument for parameter"
+#pragma warning disable 8625 // Disable "CS8625 Cannot convert null literal to non-nullable reference type"
+#pragma warning disable 8765 // Disable "CS8765 Nullability of type of parameter doesn't match overridden member (possibly because of nullability attributes)."
 
 namespace BeyondImmersion.BannouService.Contract;
 
@@ -438,10 +453,12 @@ public interface IContractController : BeyondImmersion.BannouService.Controllers
 public partial class ContractController : Microsoft.AspNetCore.Mvc.ControllerBase
 {
     private IContractService _implementation;
+    private BeyondImmersion.BannouService.Services.ITelemetryProvider _telemetryProvider;
 
-    public ContractController(IContractService implementation)
+    public ContractController(IContractService implementation, BeyondImmersion.BannouService.Services.ITelemetryProvider telemetryProvider)
     {
         _implementation = implementation;
+        _telemetryProvider = telemetryProvider;
     }
 
     /// <summary>
@@ -495,6 +512,11 @@ public partial class ContractController : Microsoft.AspNetCore.Mvc.ControllerBas
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.contract",
+                "ContractController.CreateContractTemplate",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "contract/template/create");
 
             var (statusCode, result) = await _implementation.CreateContractTemplateAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -503,6 +525,7 @@ public partial class ContractController : Microsoft.AspNetCore.Mvc.ControllerBas
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<ContractController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:contract/template/create");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -518,6 +541,7 @@ public partial class ContractController : Microsoft.AspNetCore.Mvc.ControllerBas
                 endpoint: "post:contract/template/create",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -537,6 +561,11 @@ public partial class ContractController : Microsoft.AspNetCore.Mvc.ControllerBas
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.contract",
+                "ContractController.GetContractTemplate",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "contract/template/get");
 
             var (statusCode, result) = await _implementation.GetContractTemplateAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -545,6 +574,7 @@ public partial class ContractController : Microsoft.AspNetCore.Mvc.ControllerBas
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<ContractController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:contract/template/get");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -560,6 +590,7 @@ public partial class ContractController : Microsoft.AspNetCore.Mvc.ControllerBas
                 endpoint: "post:contract/template/get",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -579,6 +610,11 @@ public partial class ContractController : Microsoft.AspNetCore.Mvc.ControllerBas
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.contract",
+                "ContractController.ListContractTemplates",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "contract/template/list");
 
             var (statusCode, result) = await _implementation.ListContractTemplatesAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -587,6 +623,7 @@ public partial class ContractController : Microsoft.AspNetCore.Mvc.ControllerBas
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<ContractController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:contract/template/list");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -602,6 +639,7 @@ public partial class ContractController : Microsoft.AspNetCore.Mvc.ControllerBas
                 endpoint: "post:contract/template/list",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -621,6 +659,11 @@ public partial class ContractController : Microsoft.AspNetCore.Mvc.ControllerBas
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.contract",
+                "ContractController.UpdateContractTemplate",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "contract/template/update");
 
             var (statusCode, result) = await _implementation.UpdateContractTemplateAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -629,6 +672,7 @@ public partial class ContractController : Microsoft.AspNetCore.Mvc.ControllerBas
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<ContractController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:contract/template/update");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -644,6 +688,7 @@ public partial class ContractController : Microsoft.AspNetCore.Mvc.ControllerBas
                 endpoint: "post:contract/template/update",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -663,6 +708,11 @@ public partial class ContractController : Microsoft.AspNetCore.Mvc.ControllerBas
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.contract",
+                "ContractController.DeleteContractTemplate",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "contract/template/delete");
 
             var statusCode = await _implementation.DeleteContractTemplateAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode);
@@ -671,6 +721,7 @@ public partial class ContractController : Microsoft.AspNetCore.Mvc.ControllerBas
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<ContractController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:contract/template/delete");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -686,6 +737,7 @@ public partial class ContractController : Microsoft.AspNetCore.Mvc.ControllerBas
                 endpoint: "post:contract/template/delete",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -705,6 +757,11 @@ public partial class ContractController : Microsoft.AspNetCore.Mvc.ControllerBas
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.contract",
+                "ContractController.CreateContractInstance",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "contract/instance/create");
 
             var (statusCode, result) = await _implementation.CreateContractInstanceAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -713,6 +770,7 @@ public partial class ContractController : Microsoft.AspNetCore.Mvc.ControllerBas
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<ContractController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:contract/instance/create");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -728,6 +786,7 @@ public partial class ContractController : Microsoft.AspNetCore.Mvc.ControllerBas
                 endpoint: "post:contract/instance/create",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -747,6 +806,11 @@ public partial class ContractController : Microsoft.AspNetCore.Mvc.ControllerBas
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.contract",
+                "ContractController.ProposeContractInstance",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "contract/instance/propose");
 
             var (statusCode, result) = await _implementation.ProposeContractInstanceAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -755,6 +819,7 @@ public partial class ContractController : Microsoft.AspNetCore.Mvc.ControllerBas
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<ContractController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:contract/instance/propose");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -770,6 +835,7 @@ public partial class ContractController : Microsoft.AspNetCore.Mvc.ControllerBas
                 endpoint: "post:contract/instance/propose",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -789,6 +855,11 @@ public partial class ContractController : Microsoft.AspNetCore.Mvc.ControllerBas
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.contract",
+                "ContractController.ConsentToContract",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "contract/instance/consent");
 
             var (statusCode, result) = await _implementation.ConsentToContractAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -797,6 +868,7 @@ public partial class ContractController : Microsoft.AspNetCore.Mvc.ControllerBas
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<ContractController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:contract/instance/consent");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -812,6 +884,7 @@ public partial class ContractController : Microsoft.AspNetCore.Mvc.ControllerBas
                 endpoint: "post:contract/instance/consent",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -830,6 +903,11 @@ public partial class ContractController : Microsoft.AspNetCore.Mvc.ControllerBas
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.contract",
+                "ContractController.GetContractInstance",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "contract/instance/get");
 
             var (statusCode, result) = await _implementation.GetContractInstanceAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -838,6 +916,7 @@ public partial class ContractController : Microsoft.AspNetCore.Mvc.ControllerBas
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<ContractController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:contract/instance/get");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -853,6 +932,7 @@ public partial class ContractController : Microsoft.AspNetCore.Mvc.ControllerBas
                 endpoint: "post:contract/instance/get",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -872,6 +952,11 @@ public partial class ContractController : Microsoft.AspNetCore.Mvc.ControllerBas
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.contract",
+                "ContractController.QueryContractInstances",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "contract/instance/query");
 
             var (statusCode, result) = await _implementation.QueryContractInstancesAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -880,6 +965,7 @@ public partial class ContractController : Microsoft.AspNetCore.Mvc.ControllerBas
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<ContractController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:contract/instance/query");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -895,6 +981,7 @@ public partial class ContractController : Microsoft.AspNetCore.Mvc.ControllerBas
                 endpoint: "post:contract/instance/query",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -915,6 +1002,11 @@ public partial class ContractController : Microsoft.AspNetCore.Mvc.ControllerBas
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.contract",
+                "ContractController.TerminateContractInstance",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "contract/instance/terminate");
 
             var (statusCode, result) = await _implementation.TerminateContractInstanceAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -923,6 +1015,7 @@ public partial class ContractController : Microsoft.AspNetCore.Mvc.ControllerBas
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<ContractController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:contract/instance/terminate");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -938,6 +1031,7 @@ public partial class ContractController : Microsoft.AspNetCore.Mvc.ControllerBas
                 endpoint: "post:contract/instance/terminate",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -957,6 +1051,11 @@ public partial class ContractController : Microsoft.AspNetCore.Mvc.ControllerBas
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.contract",
+                "ContractController.GetContractInstanceStatus",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "contract/instance/get-status");
 
             var (statusCode, result) = await _implementation.GetContractInstanceStatusAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -965,6 +1064,7 @@ public partial class ContractController : Microsoft.AspNetCore.Mvc.ControllerBas
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<ContractController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:contract/instance/get-status");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -980,6 +1080,7 @@ public partial class ContractController : Microsoft.AspNetCore.Mvc.ControllerBas
                 endpoint: "post:contract/instance/get-status",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -1000,6 +1101,11 @@ public partial class ContractController : Microsoft.AspNetCore.Mvc.ControllerBas
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.contract",
+                "ContractController.CompleteMilestone",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "contract/milestone/complete");
 
             var (statusCode, result) = await _implementation.CompleteMilestoneAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1008,6 +1114,7 @@ public partial class ContractController : Microsoft.AspNetCore.Mvc.ControllerBas
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<ContractController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:contract/milestone/complete");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -1023,6 +1130,7 @@ public partial class ContractController : Microsoft.AspNetCore.Mvc.ControllerBas
                 endpoint: "post:contract/milestone/complete",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -1043,6 +1151,11 @@ public partial class ContractController : Microsoft.AspNetCore.Mvc.ControllerBas
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.contract",
+                "ContractController.FailMilestone",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "contract/milestone/fail");
 
             var (statusCode, result) = await _implementation.FailMilestoneAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1051,6 +1164,7 @@ public partial class ContractController : Microsoft.AspNetCore.Mvc.ControllerBas
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<ContractController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:contract/milestone/fail");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -1066,6 +1180,7 @@ public partial class ContractController : Microsoft.AspNetCore.Mvc.ControllerBas
                 endpoint: "post:contract/milestone/fail",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -1084,6 +1199,11 @@ public partial class ContractController : Microsoft.AspNetCore.Mvc.ControllerBas
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.contract",
+                "ContractController.GetMilestone",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "contract/milestone/get");
 
             var (statusCode, result) = await _implementation.GetMilestoneAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1092,6 +1212,7 @@ public partial class ContractController : Microsoft.AspNetCore.Mvc.ControllerBas
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<ContractController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:contract/milestone/get");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -1107,6 +1228,7 @@ public partial class ContractController : Microsoft.AspNetCore.Mvc.ControllerBas
                 endpoint: "post:contract/milestone/get",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -1127,6 +1249,11 @@ public partial class ContractController : Microsoft.AspNetCore.Mvc.ControllerBas
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.contract",
+                "ContractController.ReportBreach",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "contract/breach/report");
 
             var (statusCode, result) = await _implementation.ReportBreachAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1135,6 +1262,7 @@ public partial class ContractController : Microsoft.AspNetCore.Mvc.ControllerBas
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<ContractController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:contract/breach/report");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -1150,6 +1278,7 @@ public partial class ContractController : Microsoft.AspNetCore.Mvc.ControllerBas
                 endpoint: "post:contract/breach/report",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -1170,6 +1299,11 @@ public partial class ContractController : Microsoft.AspNetCore.Mvc.ControllerBas
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.contract",
+                "ContractController.CureBreach",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "contract/breach/cure");
 
             var (statusCode, result) = await _implementation.CureBreachAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1178,6 +1312,7 @@ public partial class ContractController : Microsoft.AspNetCore.Mvc.ControllerBas
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<ContractController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:contract/breach/cure");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -1193,6 +1328,7 @@ public partial class ContractController : Microsoft.AspNetCore.Mvc.ControllerBas
                 endpoint: "post:contract/breach/cure",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -1211,6 +1347,11 @@ public partial class ContractController : Microsoft.AspNetCore.Mvc.ControllerBas
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.contract",
+                "ContractController.GetBreach",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "contract/breach/get");
 
             var (statusCode, result) = await _implementation.GetBreachAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1219,6 +1360,7 @@ public partial class ContractController : Microsoft.AspNetCore.Mvc.ControllerBas
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<ContractController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:contract/breach/get");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -1234,6 +1376,7 @@ public partial class ContractController : Microsoft.AspNetCore.Mvc.ControllerBas
                 endpoint: "post:contract/breach/get",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -1254,6 +1397,11 @@ public partial class ContractController : Microsoft.AspNetCore.Mvc.ControllerBas
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.contract",
+                "ContractController.UpdateContractMetadata",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "contract/metadata/update");
 
             var (statusCode, result) = await _implementation.UpdateContractMetadataAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1262,6 +1410,7 @@ public partial class ContractController : Microsoft.AspNetCore.Mvc.ControllerBas
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<ContractController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:contract/metadata/update");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -1277,6 +1426,7 @@ public partial class ContractController : Microsoft.AspNetCore.Mvc.ControllerBas
                 endpoint: "post:contract/metadata/update",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -1295,6 +1445,11 @@ public partial class ContractController : Microsoft.AspNetCore.Mvc.ControllerBas
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.contract",
+                "ContractController.GetContractMetadata",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "contract/metadata/get");
 
             var (statusCode, result) = await _implementation.GetContractMetadataAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1303,6 +1458,7 @@ public partial class ContractController : Microsoft.AspNetCore.Mvc.ControllerBas
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<ContractController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:contract/metadata/get");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -1318,6 +1474,7 @@ public partial class ContractController : Microsoft.AspNetCore.Mvc.ControllerBas
                 endpoint: "post:contract/metadata/get",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -1337,6 +1494,11 @@ public partial class ContractController : Microsoft.AspNetCore.Mvc.ControllerBas
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.contract",
+                "ContractController.CheckContractConstraint",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "contract/check-constraint");
 
             var (statusCode, result) = await _implementation.CheckContractConstraintAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1345,6 +1507,7 @@ public partial class ContractController : Microsoft.AspNetCore.Mvc.ControllerBas
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<ContractController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:contract/check-constraint");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -1360,6 +1523,7 @@ public partial class ContractController : Microsoft.AspNetCore.Mvc.ControllerBas
                 endpoint: "post:contract/check-constraint",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -1379,6 +1543,11 @@ public partial class ContractController : Microsoft.AspNetCore.Mvc.ControllerBas
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.contract",
+                "ContractController.QueryActiveContracts",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "contract/query-active");
 
             var (statusCode, result) = await _implementation.QueryActiveContractsAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1387,6 +1556,7 @@ public partial class ContractController : Microsoft.AspNetCore.Mvc.ControllerBas
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<ContractController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:contract/query-active");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -1402,6 +1572,7 @@ public partial class ContractController : Microsoft.AspNetCore.Mvc.ControllerBas
                 endpoint: "post:contract/query-active",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -1422,6 +1593,11 @@ public partial class ContractController : Microsoft.AspNetCore.Mvc.ControllerBas
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.contract",
+                "ContractController.LockContract",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "contract/lock");
 
             var (statusCode, result) = await _implementation.LockContractAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1430,6 +1606,7 @@ public partial class ContractController : Microsoft.AspNetCore.Mvc.ControllerBas
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<ContractController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:contract/lock");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -1445,6 +1622,7 @@ public partial class ContractController : Microsoft.AspNetCore.Mvc.ControllerBas
                 endpoint: "post:contract/lock",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -1464,6 +1642,11 @@ public partial class ContractController : Microsoft.AspNetCore.Mvc.ControllerBas
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.contract",
+                "ContractController.UnlockContract",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "contract/unlock");
 
             var (statusCode, result) = await _implementation.UnlockContractAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1472,6 +1655,7 @@ public partial class ContractController : Microsoft.AspNetCore.Mvc.ControllerBas
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<ContractController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:contract/unlock");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -1487,6 +1671,7 @@ public partial class ContractController : Microsoft.AspNetCore.Mvc.ControllerBas
                 endpoint: "post:contract/unlock",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -1507,6 +1692,11 @@ public partial class ContractController : Microsoft.AspNetCore.Mvc.ControllerBas
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.contract",
+                "ContractController.TransferContractParty",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "contract/transfer-party");
 
             var (statusCode, result) = await _implementation.TransferContractPartyAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1515,6 +1705,7 @@ public partial class ContractController : Microsoft.AspNetCore.Mvc.ControllerBas
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<ContractController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:contract/transfer-party");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -1530,6 +1721,7 @@ public partial class ContractController : Microsoft.AspNetCore.Mvc.ControllerBas
                 endpoint: "post:contract/transfer-party",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -1551,6 +1743,11 @@ public partial class ContractController : Microsoft.AspNetCore.Mvc.ControllerBas
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.contract",
+                "ContractController.RegisterClauseType",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "contract/clause-type/register");
 
             var (statusCode, result) = await _implementation.RegisterClauseTypeAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1559,6 +1756,7 @@ public partial class ContractController : Microsoft.AspNetCore.Mvc.ControllerBas
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<ContractController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:contract/clause-type/register");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -1574,6 +1772,7 @@ public partial class ContractController : Microsoft.AspNetCore.Mvc.ControllerBas
                 endpoint: "post:contract/clause-type/register",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -1593,6 +1792,11 @@ public partial class ContractController : Microsoft.AspNetCore.Mvc.ControllerBas
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.contract",
+                "ContractController.ListClauseTypes",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "contract/clause-type/list");
 
             var (statusCode, result) = await _implementation.ListClauseTypesAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1601,6 +1805,7 @@ public partial class ContractController : Microsoft.AspNetCore.Mvc.ControllerBas
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<ContractController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:contract/clause-type/list");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -1616,6 +1821,7 @@ public partial class ContractController : Microsoft.AspNetCore.Mvc.ControllerBas
                 endpoint: "post:contract/clause-type/list",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -1636,6 +1842,11 @@ public partial class ContractController : Microsoft.AspNetCore.Mvc.ControllerBas
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.contract",
+                "ContractController.SetContractTemplateValues",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "contract/instance/set-template-values");
 
             var (statusCode, result) = await _implementation.SetContractTemplateValuesAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1644,6 +1855,7 @@ public partial class ContractController : Microsoft.AspNetCore.Mvc.ControllerBas
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<ContractController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:contract/instance/set-template-values");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -1659,6 +1871,7 @@ public partial class ContractController : Microsoft.AspNetCore.Mvc.ControllerBas
                 endpoint: "post:contract/instance/set-template-values",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -1679,6 +1892,11 @@ public partial class ContractController : Microsoft.AspNetCore.Mvc.ControllerBas
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.contract",
+                "ContractController.CheckAssetRequirements",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "contract/instance/check-asset-requirements");
 
             var (statusCode, result) = await _implementation.CheckAssetRequirementsAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1687,6 +1905,7 @@ public partial class ContractController : Microsoft.AspNetCore.Mvc.ControllerBas
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<ContractController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:contract/instance/check-asset-requirements");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -1702,6 +1921,7 @@ public partial class ContractController : Microsoft.AspNetCore.Mvc.ControllerBas
                 endpoint: "post:contract/instance/check-asset-requirements",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -1723,6 +1943,11 @@ public partial class ContractController : Microsoft.AspNetCore.Mvc.ControllerBas
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.contract",
+                "ContractController.ExecuteContract",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "contract/instance/execute");
 
             var (statusCode, result) = await _implementation.ExecuteContractAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1731,6 +1956,7 @@ public partial class ContractController : Microsoft.AspNetCore.Mvc.ControllerBas
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<ContractController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:contract/instance/execute");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -1746,6 +1972,7 @@ public partial class ContractController : Microsoft.AspNetCore.Mvc.ControllerBas
                 endpoint: "post:contract/instance/execute",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }

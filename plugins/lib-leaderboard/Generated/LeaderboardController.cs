@@ -22,6 +22,21 @@
 
 #nullable enable
 
+#pragma warning disable 108 // Disable "CS0108 '{derivedDto}.ToJson()' hides inherited member '{dtoBase}.ToJson()'. Use the new keyword if hiding was intended."
+#pragma warning disable 114 // Disable "CS0114 '{derivedDto}.RaisePropertyChanged(String)' hides inherited member 'dtoBase.RaisePropertyChanged(String)'. To make the current member override that implementation, add the override keyword. Otherwise add the new keyword."
+#pragma warning disable 472 // Disable "CS0472 The result of the expression is always 'false' since a value of type 'Int32' is never equal to 'null' of type 'Int32?'
+#pragma warning disable 612 // Disable "CS0612 '...' is obsolete"
+#pragma warning disable 649 // Disable "CS0649 Field is never assigned to, and will always have its default value null"
+#pragma warning disable 1573 // Disable "CS1573 Parameter '...' has no matching param tag in the XML comment for ...
+#pragma warning disable 1591 // Disable "CS1591 Missing XML comment for publicly visible type or member ..."
+#pragma warning disable 8073 // Disable "CS8073 The result of the expression is always 'false' since a value of type 'T' is never equal to 'null' of type 'T?'"
+#pragma warning disable 3016 // Disable "CS3016 Arrays as attribute arguments is not CLS-compliant"
+#pragma warning disable 8600 // Disable "CS8600 Converting null literal or possible null value to non-nullable type"
+#pragma warning disable 8602 // Disable "CS8602 Dereference of a possibly null reference"
+#pragma warning disable 8603 // Disable "CS8603 Possible null reference return"
+#pragma warning disable 8604 // Disable "CS8604 Possible null reference argument for parameter"
+#pragma warning disable 8625 // Disable "CS8625 Cannot convert null literal to non-nullable reference type"
+#pragma warning disable 8765 // Disable "CS8765 Nullability of type of parameter doesn't match overridden member (possibly because of nullability attributes)."
 
 namespace BeyondImmersion.BannouService.Leaderboard;
 
@@ -193,10 +208,12 @@ public interface ILeaderboardController : BeyondImmersion.BannouService.Controll
 public partial class LeaderboardController : Microsoft.AspNetCore.Mvc.ControllerBase
 {
     private ILeaderboardService _implementation;
+    private BeyondImmersion.BannouService.Services.ITelemetryProvider _telemetryProvider;
 
-    public LeaderboardController(ILeaderboardService implementation)
+    public LeaderboardController(ILeaderboardService implementation, BeyondImmersion.BannouService.Services.ITelemetryProvider telemetryProvider)
     {
         _implementation = implementation;
+        _telemetryProvider = telemetryProvider;
     }
 
     /// <summary>
@@ -250,6 +267,11 @@ public partial class LeaderboardController : Microsoft.AspNetCore.Mvc.Controller
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.leaderboard",
+                "LeaderboardController.CreateLeaderboardDefinition",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "leaderboard/definition/create");
 
             var (statusCode, result) = await _implementation.CreateLeaderboardDefinitionAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -258,6 +280,7 @@ public partial class LeaderboardController : Microsoft.AspNetCore.Mvc.Controller
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<LeaderboardController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:leaderboard/definition/create");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -273,6 +296,7 @@ public partial class LeaderboardController : Microsoft.AspNetCore.Mvc.Controller
                 endpoint: "post:leaderboard/definition/create",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -291,6 +315,11 @@ public partial class LeaderboardController : Microsoft.AspNetCore.Mvc.Controller
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.leaderboard",
+                "LeaderboardController.GetLeaderboardDefinition",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "leaderboard/definition/get");
 
             var (statusCode, result) = await _implementation.GetLeaderboardDefinitionAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -299,6 +328,7 @@ public partial class LeaderboardController : Microsoft.AspNetCore.Mvc.Controller
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<LeaderboardController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:leaderboard/definition/get");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -314,6 +344,7 @@ public partial class LeaderboardController : Microsoft.AspNetCore.Mvc.Controller
                 endpoint: "post:leaderboard/definition/get",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -332,6 +363,11 @@ public partial class LeaderboardController : Microsoft.AspNetCore.Mvc.Controller
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.leaderboard",
+                "LeaderboardController.ListLeaderboardDefinitions",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "leaderboard/definition/list");
 
             var (statusCode, result) = await _implementation.ListLeaderboardDefinitionsAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -340,6 +376,7 @@ public partial class LeaderboardController : Microsoft.AspNetCore.Mvc.Controller
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<LeaderboardController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:leaderboard/definition/list");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -355,6 +392,7 @@ public partial class LeaderboardController : Microsoft.AspNetCore.Mvc.Controller
                 endpoint: "post:leaderboard/definition/list",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -374,6 +412,11 @@ public partial class LeaderboardController : Microsoft.AspNetCore.Mvc.Controller
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.leaderboard",
+                "LeaderboardController.UpdateLeaderboardDefinition",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "leaderboard/definition/update");
 
             var (statusCode, result) = await _implementation.UpdateLeaderboardDefinitionAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -382,6 +425,7 @@ public partial class LeaderboardController : Microsoft.AspNetCore.Mvc.Controller
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<LeaderboardController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:leaderboard/definition/update");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -397,6 +441,7 @@ public partial class LeaderboardController : Microsoft.AspNetCore.Mvc.Controller
                 endpoint: "post:leaderboard/definition/update",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -416,6 +461,11 @@ public partial class LeaderboardController : Microsoft.AspNetCore.Mvc.Controller
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.leaderboard",
+                "LeaderboardController.DeleteLeaderboardDefinition",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "leaderboard/definition/delete");
 
             var statusCode = await _implementation.DeleteLeaderboardDefinitionAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode);
@@ -424,6 +474,7 @@ public partial class LeaderboardController : Microsoft.AspNetCore.Mvc.Controller
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<LeaderboardController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:leaderboard/definition/delete");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -439,6 +490,7 @@ public partial class LeaderboardController : Microsoft.AspNetCore.Mvc.Controller
                 endpoint: "post:leaderboard/definition/delete",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -462,6 +514,11 @@ public partial class LeaderboardController : Microsoft.AspNetCore.Mvc.Controller
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.leaderboard",
+                "LeaderboardController.SubmitScore",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "leaderboard/score/submit");
 
             var (statusCode, result) = await _implementation.SubmitScoreAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -470,6 +527,7 @@ public partial class LeaderboardController : Microsoft.AspNetCore.Mvc.Controller
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<LeaderboardController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:leaderboard/score/submit");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -485,6 +543,7 @@ public partial class LeaderboardController : Microsoft.AspNetCore.Mvc.Controller
                 endpoint: "post:leaderboard/score/submit",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -504,6 +563,11 @@ public partial class LeaderboardController : Microsoft.AspNetCore.Mvc.Controller
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.leaderboard",
+                "LeaderboardController.SubmitScoreBatch",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "leaderboard/score/submit-batch");
 
             var (statusCode, result) = await _implementation.SubmitScoreBatchAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -512,6 +576,7 @@ public partial class LeaderboardController : Microsoft.AspNetCore.Mvc.Controller
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<LeaderboardController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:leaderboard/score/submit-batch");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -527,6 +592,7 @@ public partial class LeaderboardController : Microsoft.AspNetCore.Mvc.Controller
                 endpoint: "post:leaderboard/score/submit-batch",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -545,6 +611,11 @@ public partial class LeaderboardController : Microsoft.AspNetCore.Mvc.Controller
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.leaderboard",
+                "LeaderboardController.GetEntityRank",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "leaderboard/rank/get");
 
             var (statusCode, result) = await _implementation.GetEntityRankAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -553,6 +624,7 @@ public partial class LeaderboardController : Microsoft.AspNetCore.Mvc.Controller
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<LeaderboardController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:leaderboard/rank/get");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -568,6 +640,7 @@ public partial class LeaderboardController : Microsoft.AspNetCore.Mvc.Controller
                 endpoint: "post:leaderboard/rank/get",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -586,6 +659,11 @@ public partial class LeaderboardController : Microsoft.AspNetCore.Mvc.Controller
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.leaderboard",
+                "LeaderboardController.GetTopRanks",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "leaderboard/rank/top");
 
             var (statusCode, result) = await _implementation.GetTopRanksAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -594,6 +672,7 @@ public partial class LeaderboardController : Microsoft.AspNetCore.Mvc.Controller
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<LeaderboardController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:leaderboard/rank/top");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -609,6 +688,7 @@ public partial class LeaderboardController : Microsoft.AspNetCore.Mvc.Controller
                 endpoint: "post:leaderboard/rank/top",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -628,6 +708,11 @@ public partial class LeaderboardController : Microsoft.AspNetCore.Mvc.Controller
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.leaderboard",
+                "LeaderboardController.GetRanksAround",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "leaderboard/rank/around");
 
             var (statusCode, result) = await _implementation.GetRanksAroundAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -636,6 +721,7 @@ public partial class LeaderboardController : Microsoft.AspNetCore.Mvc.Controller
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<LeaderboardController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:leaderboard/rank/around");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -651,6 +737,7 @@ public partial class LeaderboardController : Microsoft.AspNetCore.Mvc.Controller
                 endpoint: "post:leaderboard/rank/around",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -670,6 +757,11 @@ public partial class LeaderboardController : Microsoft.AspNetCore.Mvc.Controller
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.leaderboard",
+                "LeaderboardController.CreateSeason",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "leaderboard/season/create");
 
             var (statusCode, result) = await _implementation.CreateSeasonAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -678,6 +770,7 @@ public partial class LeaderboardController : Microsoft.AspNetCore.Mvc.Controller
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<LeaderboardController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:leaderboard/season/create");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -693,6 +786,7 @@ public partial class LeaderboardController : Microsoft.AspNetCore.Mvc.Controller
                 endpoint: "post:leaderboard/season/create",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -711,6 +805,11 @@ public partial class LeaderboardController : Microsoft.AspNetCore.Mvc.Controller
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.leaderboard",
+                "LeaderboardController.GetSeason",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "leaderboard/season/get");
 
             var (statusCode, result) = await _implementation.GetSeasonAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -719,6 +818,7 @@ public partial class LeaderboardController : Microsoft.AspNetCore.Mvc.Controller
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<LeaderboardController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:leaderboard/season/get");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -734,6 +834,7 @@ public partial class LeaderboardController : Microsoft.AspNetCore.Mvc.Controller
                 endpoint: "post:leaderboard/season/get",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }

@@ -22,6 +22,21 @@
 
 #nullable enable
 
+#pragma warning disable 108 // Disable "CS0108 '{derivedDto}.ToJson()' hides inherited member '{dtoBase}.ToJson()'. Use the new keyword if hiding was intended."
+#pragma warning disable 114 // Disable "CS0114 '{derivedDto}.RaisePropertyChanged(String)' hides inherited member 'dtoBase.RaisePropertyChanged(String)'. To make the current member override that implementation, add the override keyword. Otherwise add the new keyword."
+#pragma warning disable 472 // Disable "CS0472 The result of the expression is always 'false' since a value of type 'Int32' is never equal to 'null' of type 'Int32?'
+#pragma warning disable 612 // Disable "CS0612 '...' is obsolete"
+#pragma warning disable 649 // Disable "CS0649 Field is never assigned to, and will always have its default value null"
+#pragma warning disable 1573 // Disable "CS1573 Parameter '...' has no matching param tag in the XML comment for ...
+#pragma warning disable 1591 // Disable "CS1591 Missing XML comment for publicly visible type or member ..."
+#pragma warning disable 8073 // Disable "CS8073 The result of the expression is always 'false' since a value of type 'T' is never equal to 'null' of type 'T?'"
+#pragma warning disable 3016 // Disable "CS3016 Arrays as attribute arguments is not CLS-compliant"
+#pragma warning disable 8600 // Disable "CS8600 Converting null literal or possible null value to non-nullable type"
+#pragma warning disable 8602 // Disable "CS8602 Dereference of a possibly null reference"
+#pragma warning disable 8603 // Disable "CS8603 Possible null reference return"
+#pragma warning disable 8604 // Disable "CS8604 Possible null reference argument for parameter"
+#pragma warning disable 8625 // Disable "CS8625 Cannot convert null literal to non-nullable reference type"
+#pragma warning disable 8765 // Disable "CS8765 Nullability of type of parameter doesn't match overridden member (possibly because of nullability attributes)."
 
 namespace BeyondImmersion.BannouService.Scene;
 
@@ -294,10 +309,12 @@ public interface ISceneController : BeyondImmersion.BannouService.Controllers.IB
 public partial class SceneController : Microsoft.AspNetCore.Mvc.ControllerBase
 {
     private ISceneService _implementation;
+    private BeyondImmersion.BannouService.Services.ITelemetryProvider _telemetryProvider;
 
-    public SceneController(ISceneService implementation)
+    public SceneController(ISceneService implementation, BeyondImmersion.BannouService.Services.ITelemetryProvider telemetryProvider)
     {
         _implementation = implementation;
+        _telemetryProvider = telemetryProvider;
     }
 
     /// <summary>
@@ -352,6 +369,11 @@ public partial class SceneController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.scene",
+                "SceneController.CreateScene",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "scene/create");
 
             var (statusCode, result) = await _implementation.CreateSceneAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -360,6 +382,7 @@ public partial class SceneController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<SceneController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:scene/create");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -375,6 +398,7 @@ public partial class SceneController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:scene/create",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -394,6 +418,11 @@ public partial class SceneController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.scene",
+                "SceneController.GetScene",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "scene/get");
 
             var (statusCode, result) = await _implementation.GetSceneAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -402,6 +431,7 @@ public partial class SceneController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<SceneController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:scene/get");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -417,6 +447,7 @@ public partial class SceneController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:scene/get",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -436,6 +467,11 @@ public partial class SceneController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.scene",
+                "SceneController.ListScenes",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "scene/list");
 
             var (statusCode, result) = await _implementation.ListScenesAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -444,6 +480,7 @@ public partial class SceneController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<SceneController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:scene/list");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -459,6 +496,7 @@ public partial class SceneController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:scene/list",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -479,6 +517,11 @@ public partial class SceneController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.scene",
+                "SceneController.UpdateScene",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "scene/update");
 
             var (statusCode, result) = await _implementation.UpdateSceneAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -487,6 +530,7 @@ public partial class SceneController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<SceneController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:scene/update");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -502,6 +546,7 @@ public partial class SceneController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:scene/update",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -522,6 +567,11 @@ public partial class SceneController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.scene",
+                "SceneController.DeleteScene",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "scene/delete");
 
             var (statusCode, result) = await _implementation.DeleteSceneAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -530,6 +580,7 @@ public partial class SceneController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<SceneController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:scene/delete");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -545,6 +596,7 @@ public partial class SceneController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:scene/delete",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -564,6 +616,11 @@ public partial class SceneController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.scene",
+                "SceneController.ValidateScene",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "scene/validate");
 
             var (statusCode, result) = await _implementation.ValidateSceneAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -572,6 +629,7 @@ public partial class SceneController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<SceneController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:scene/validate");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -587,6 +645,7 @@ public partial class SceneController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:scene/validate",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -611,6 +670,11 @@ public partial class SceneController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.scene",
+                "SceneController.InstantiateScene",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "scene/instantiate");
 
             var (statusCode, result) = await _implementation.InstantiateSceneAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -619,6 +683,7 @@ public partial class SceneController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<SceneController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:scene/instantiate");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -634,6 +699,7 @@ public partial class SceneController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:scene/instantiate",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -653,6 +719,11 @@ public partial class SceneController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.scene",
+                "SceneController.DestroyInstance",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "scene/destroy-instance");
 
             var (statusCode, result) = await _implementation.DestroyInstanceAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -661,6 +732,7 @@ public partial class SceneController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<SceneController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:scene/destroy-instance");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -676,6 +748,7 @@ public partial class SceneController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:scene/destroy-instance",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -696,6 +769,11 @@ public partial class SceneController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.scene",
+                "SceneController.CheckoutScene",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "scene/checkout");
 
             var (statusCode, result) = await _implementation.CheckoutSceneAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -704,6 +782,7 @@ public partial class SceneController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<SceneController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:scene/checkout");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -719,6 +798,7 @@ public partial class SceneController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:scene/checkout",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -738,6 +818,11 @@ public partial class SceneController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.scene",
+                "SceneController.CommitScene",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "scene/commit");
 
             var (statusCode, result) = await _implementation.CommitSceneAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -746,6 +831,7 @@ public partial class SceneController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<SceneController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:scene/commit");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -761,6 +847,7 @@ public partial class SceneController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:scene/commit",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -780,6 +867,11 @@ public partial class SceneController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.scene",
+                "SceneController.DiscardCheckout",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "scene/discard");
 
             var (statusCode, result) = await _implementation.DiscardCheckoutAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -788,6 +880,7 @@ public partial class SceneController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<SceneController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:scene/discard");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -803,6 +896,7 @@ public partial class SceneController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:scene/discard",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -822,6 +916,11 @@ public partial class SceneController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.scene",
+                "SceneController.HeartbeatCheckout",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "scene/heartbeat");
 
             var (statusCode, result) = await _implementation.HeartbeatCheckoutAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -830,6 +929,7 @@ public partial class SceneController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<SceneController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:scene/heartbeat");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -845,6 +945,7 @@ public partial class SceneController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:scene/heartbeat",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -864,6 +965,11 @@ public partial class SceneController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.scene",
+                "SceneController.GetSceneHistory",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "scene/history");
 
             var (statusCode, result) = await _implementation.GetSceneHistoryAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -872,6 +978,7 @@ public partial class SceneController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<SceneController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:scene/history");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -887,6 +994,7 @@ public partial class SceneController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:scene/history",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -906,6 +1014,11 @@ public partial class SceneController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.scene",
+                "SceneController.RegisterValidationRules",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "scene/register-validation-rules");
 
             var (statusCode, result) = await _implementation.RegisterValidationRulesAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -914,6 +1027,7 @@ public partial class SceneController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<SceneController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:scene/register-validation-rules");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -929,6 +1043,7 @@ public partial class SceneController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:scene/register-validation-rules",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -948,6 +1063,11 @@ public partial class SceneController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.scene",
+                "SceneController.GetValidationRules",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "scene/get-validation-rules");
 
             var (statusCode, result) = await _implementation.GetValidationRulesAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -956,6 +1076,7 @@ public partial class SceneController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<SceneController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:scene/get-validation-rules");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -971,6 +1092,7 @@ public partial class SceneController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:scene/get-validation-rules",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -990,6 +1112,11 @@ public partial class SceneController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.scene",
+                "SceneController.SearchScenes",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "scene/search");
 
             var (statusCode, result) = await _implementation.SearchScenesAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -998,6 +1125,7 @@ public partial class SceneController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<SceneController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:scene/search");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -1013,6 +1141,7 @@ public partial class SceneController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:scene/search",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -1032,6 +1161,11 @@ public partial class SceneController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.scene",
+                "SceneController.FindReferences",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "scene/find-references");
 
             var (statusCode, result) = await _implementation.FindReferencesAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1040,6 +1174,7 @@ public partial class SceneController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<SceneController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:scene/find-references");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -1055,6 +1190,7 @@ public partial class SceneController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:scene/find-references",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -1074,6 +1210,11 @@ public partial class SceneController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.scene",
+                "SceneController.FindAssetUsage",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "scene/find-asset-usage");
 
             var (statusCode, result) = await _implementation.FindAssetUsageAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1082,6 +1223,7 @@ public partial class SceneController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<SceneController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:scene/find-asset-usage");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -1097,6 +1239,7 @@ public partial class SceneController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:scene/find-asset-usage",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -1116,6 +1259,11 @@ public partial class SceneController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.scene",
+                "SceneController.DuplicateScene",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "scene/duplicate");
 
             var (statusCode, result) = await _implementation.DuplicateSceneAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1124,6 +1272,7 @@ public partial class SceneController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<SceneController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:scene/duplicate");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -1139,6 +1288,7 @@ public partial class SceneController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:scene/duplicate",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }

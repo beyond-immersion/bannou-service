@@ -22,6 +22,21 @@
 
 #nullable enable
 
+#pragma warning disable 108 // Disable "CS0108 '{derivedDto}.ToJson()' hides inherited member '{dtoBase}.ToJson()'. Use the new keyword if hiding was intended."
+#pragma warning disable 114 // Disable "CS0114 '{derivedDto}.RaisePropertyChanged(String)' hides inherited member 'dtoBase.RaisePropertyChanged(String)'. To make the current member override that implementation, add the override keyword. Otherwise add the new keyword."
+#pragma warning disable 472 // Disable "CS0472 The result of the expression is always 'false' since a value of type 'Int32' is never equal to 'null' of type 'Int32?'
+#pragma warning disable 612 // Disable "CS0612 '...' is obsolete"
+#pragma warning disable 649 // Disable "CS0649 Field is never assigned to, and will always have its default value null"
+#pragma warning disable 1573 // Disable "CS1573 Parameter '...' has no matching param tag in the XML comment for ...
+#pragma warning disable 1591 // Disable "CS1591 Missing XML comment for publicly visible type or member ..."
+#pragma warning disable 8073 // Disable "CS8073 The result of the expression is always 'false' since a value of type 'T' is never equal to 'null' of type 'T?'"
+#pragma warning disable 3016 // Disable "CS3016 Arrays as attribute arguments is not CLS-compliant"
+#pragma warning disable 8600 // Disable "CS8600 Converting null literal or possible null value to non-nullable type"
+#pragma warning disable 8602 // Disable "CS8602 Dereference of a possibly null reference"
+#pragma warning disable 8603 // Disable "CS8603 Possible null reference return"
+#pragma warning disable 8604 // Disable "CS8604 Possible null reference argument for parameter"
+#pragma warning disable 8625 // Disable "CS8625 Cannot convert null literal to non-nullable reference type"
+#pragma warning disable 8765 // Disable "CS8765 Nullability of type of parameter doesn't match overridden member (possibly because of nullability attributes)."
 
 namespace BeyondImmersion.BannouService.Realm;
 
@@ -194,10 +209,12 @@ public interface IRealmController : BeyondImmersion.BannouService.Controllers.IB
 public partial class RealmController : Microsoft.AspNetCore.Mvc.ControllerBase
 {
     private IRealmService _implementation;
+    private BeyondImmersion.BannouService.Services.ITelemetryProvider _telemetryProvider;
 
-    public RealmController(IRealmService implementation)
+    public RealmController(IRealmService implementation, BeyondImmersion.BannouService.Services.ITelemetryProvider telemetryProvider)
     {
         _implementation = implementation;
+        _telemetryProvider = telemetryProvider;
     }
 
     /// <summary>
@@ -247,6 +264,11 @@ public partial class RealmController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.realm",
+                "RealmController.GetRealm",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "realm/get");
 
             var (statusCode, result) = await _implementation.GetRealmAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -255,6 +277,7 @@ public partial class RealmController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<RealmController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:realm/get");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -270,6 +293,7 @@ public partial class RealmController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:realm/get",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -288,6 +312,11 @@ public partial class RealmController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.realm",
+                "RealmController.GetRealmByCode",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "realm/get-by-code");
 
             var (statusCode, result) = await _implementation.GetRealmByCodeAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -296,6 +325,7 @@ public partial class RealmController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<RealmController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:realm/get-by-code");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -311,6 +341,7 @@ public partial class RealmController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:realm/get-by-code",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -329,6 +360,11 @@ public partial class RealmController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.realm",
+                "RealmController.ListRealms",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "realm/list");
 
             var (statusCode, result) = await _implementation.ListRealmsAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -337,6 +373,7 @@ public partial class RealmController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<RealmController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:realm/list");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -352,6 +389,7 @@ public partial class RealmController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:realm/list",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -367,6 +405,11 @@ public partial class RealmController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.realm",
+                "RealmController.CreateRealm",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "realm/create");
 
             var (statusCode, result) = await _implementation.CreateRealmAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -375,6 +418,7 @@ public partial class RealmController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<RealmController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:realm/create");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -390,6 +434,7 @@ public partial class RealmController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:realm/create",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -405,6 +450,11 @@ public partial class RealmController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.realm",
+                "RealmController.UpdateRealm",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "realm/update");
 
             var (statusCode, result) = await _implementation.UpdateRealmAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -413,6 +463,7 @@ public partial class RealmController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<RealmController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:realm/update");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -428,6 +479,7 @@ public partial class RealmController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:realm/update",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -449,6 +501,11 @@ public partial class RealmController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.realm",
+                "RealmController.DeleteRealm",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "realm/delete");
 
             var statusCode = await _implementation.DeleteRealmAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode);
@@ -457,6 +514,7 @@ public partial class RealmController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<RealmController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:realm/delete");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -472,6 +530,7 @@ public partial class RealmController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:realm/delete",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -494,6 +553,11 @@ public partial class RealmController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.realm",
+                "RealmController.DeprecateRealm",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "realm/deprecate");
 
             var (statusCode, result) = await _implementation.DeprecateRealmAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -502,6 +566,7 @@ public partial class RealmController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<RealmController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:realm/deprecate");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -517,6 +582,7 @@ public partial class RealmController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:realm/deprecate",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -536,6 +602,11 @@ public partial class RealmController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.realm",
+                "RealmController.UndeprecateRealm",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "realm/undeprecate");
 
             var (statusCode, result) = await _implementation.UndeprecateRealmAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -544,6 +615,7 @@ public partial class RealmController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<RealmController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:realm/undeprecate");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -559,6 +631,7 @@ public partial class RealmController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:realm/undeprecate",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -585,6 +658,11 @@ public partial class RealmController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.realm",
+                "RealmController.MergeRealms",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "realm/merge");
 
             var (statusCode, result) = await _implementation.MergeRealmsAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -593,6 +671,7 @@ public partial class RealmController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<RealmController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:realm/merge");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -608,6 +687,7 @@ public partial class RealmController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:realm/merge",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -627,6 +707,11 @@ public partial class RealmController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.realm",
+                "RealmController.RealmExists",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "realm/exists");
 
             var (statusCode, result) = await _implementation.RealmExistsAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -635,6 +720,7 @@ public partial class RealmController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<RealmController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:realm/exists");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -650,6 +736,7 @@ public partial class RealmController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:realm/exists",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -670,6 +757,11 @@ public partial class RealmController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.realm",
+                "RealmController.RealmsExistBatch",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "realm/exists-batch");
 
             var (statusCode, result) = await _implementation.RealmsExistBatchAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -678,6 +770,7 @@ public partial class RealmController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<RealmController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:realm/exists-batch");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -693,6 +786,7 @@ public partial class RealmController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:realm/exists-batch",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -713,6 +807,11 @@ public partial class RealmController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.realm",
+                "RealmController.SeedRealms",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "realm/seed");
 
             var (statusCode, result) = await _implementation.SeedRealmsAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -721,6 +820,7 @@ public partial class RealmController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<RealmController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:realm/seed");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -736,6 +836,7 @@ public partial class RealmController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:realm/seed",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }

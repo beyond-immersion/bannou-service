@@ -22,6 +22,21 @@
 
 #nullable enable
 
+#pragma warning disable 108 // Disable "CS0108 '{derivedDto}.ToJson()' hides inherited member '{dtoBase}.ToJson()'. Use the new keyword if hiding was intended."
+#pragma warning disable 114 // Disable "CS0114 '{derivedDto}.RaisePropertyChanged(String)' hides inherited member 'dtoBase.RaisePropertyChanged(String)'. To make the current member override that implementation, add the override keyword. Otherwise add the new keyword."
+#pragma warning disable 472 // Disable "CS0472 The result of the expression is always 'false' since a value of type 'Int32' is never equal to 'null' of type 'Int32?'
+#pragma warning disable 612 // Disable "CS0612 '...' is obsolete"
+#pragma warning disable 649 // Disable "CS0649 Field is never assigned to, and will always have its default value null"
+#pragma warning disable 1573 // Disable "CS1573 Parameter '...' has no matching param tag in the XML comment for ...
+#pragma warning disable 1591 // Disable "CS1591 Missing XML comment for publicly visible type or member ..."
+#pragma warning disable 8073 // Disable "CS8073 The result of the expression is always 'false' since a value of type 'T' is never equal to 'null' of type 'T?'"
+#pragma warning disable 3016 // Disable "CS3016 Arrays as attribute arguments is not CLS-compliant"
+#pragma warning disable 8600 // Disable "CS8600 Converting null literal or possible null value to non-nullable type"
+#pragma warning disable 8602 // Disable "CS8602 Dereference of a possibly null reference"
+#pragma warning disable 8603 // Disable "CS8603 Possible null reference return"
+#pragma warning disable 8604 // Disable "CS8604 Possible null reference argument for parameter"
+#pragma warning disable 8625 // Disable "CS8625 Cannot convert null literal to non-nullable reference type"
+#pragma warning disable 8765 // Disable "CS8765 Nullability of type of parameter doesn't match overridden member (possibly because of nullability attributes)."
 
 namespace BeyondImmersion.BannouService.Mesh;
 
@@ -145,10 +160,12 @@ public interface IMeshController : BeyondImmersion.BannouService.Controllers.IBa
 public partial class MeshController : Microsoft.AspNetCore.Mvc.ControllerBase
 {
     private IMeshService _implementation;
+    private BeyondImmersion.BannouService.Services.ITelemetryProvider _telemetryProvider;
 
-    public MeshController(IMeshService implementation)
+    public MeshController(IMeshService implementation, BeyondImmersion.BannouService.Services.ITelemetryProvider telemetryProvider)
     {
         _implementation = implementation;
+        _telemetryProvider = telemetryProvider;
     }
 
     /// <summary>
@@ -202,6 +219,11 @@ public partial class MeshController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.mesh",
+                "MeshController.GetEndpoints",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "mesh/endpoints/get");
 
             var (statusCode, result) = await _implementation.GetEndpointsAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -210,6 +232,7 @@ public partial class MeshController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<MeshController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:mesh/endpoints/get");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -225,6 +248,7 @@ public partial class MeshController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:mesh/endpoints/get",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -244,6 +268,11 @@ public partial class MeshController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.mesh",
+                "MeshController.ListEndpoints",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "mesh/endpoints/list");
 
             var (statusCode, result) = await _implementation.ListEndpointsAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -252,6 +281,7 @@ public partial class MeshController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<MeshController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:mesh/endpoints/list");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -267,6 +297,7 @@ public partial class MeshController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:mesh/endpoints/list",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -287,6 +318,11 @@ public partial class MeshController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.mesh",
+                "MeshController.RegisterEndpoint",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "mesh/register");
 
             var (statusCode, result) = await _implementation.RegisterEndpointAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -295,6 +331,7 @@ public partial class MeshController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<MeshController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:mesh/register");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -310,6 +347,7 @@ public partial class MeshController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:mesh/register",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -329,6 +367,11 @@ public partial class MeshController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.mesh",
+                "MeshController.DeregisterEndpoint",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "mesh/deregister");
 
             var statusCode = await _implementation.DeregisterEndpointAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode);
@@ -337,6 +380,7 @@ public partial class MeshController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<MeshController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:mesh/deregister");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -352,6 +396,7 @@ public partial class MeshController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:mesh/deregister",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -371,6 +416,11 @@ public partial class MeshController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.mesh",
+                "MeshController.Heartbeat",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "mesh/heartbeat");
 
             var (statusCode, result) = await _implementation.HeartbeatAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -379,6 +429,7 @@ public partial class MeshController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<MeshController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:mesh/heartbeat");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -394,6 +445,7 @@ public partial class MeshController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:mesh/heartbeat",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -413,6 +465,11 @@ public partial class MeshController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.mesh",
+                "MeshController.GetRoute",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "mesh/route");
 
             var (statusCode, result) = await _implementation.GetRouteAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -421,6 +478,7 @@ public partial class MeshController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<MeshController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:mesh/route");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -436,6 +494,7 @@ public partial class MeshController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:mesh/route",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -455,6 +514,11 @@ public partial class MeshController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.mesh",
+                "MeshController.GetMappings",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "mesh/mappings");
 
             var (statusCode, result) = await _implementation.GetMappingsAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -463,6 +527,7 @@ public partial class MeshController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<MeshController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:mesh/mappings");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -478,6 +543,7 @@ public partial class MeshController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:mesh/mappings",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -499,6 +565,11 @@ public partial class MeshController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.mesh",
+                "MeshController.GetHealth",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "mesh/health");
 
             var (statusCode, result) = await _implementation.GetHealthAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -507,6 +578,7 @@ public partial class MeshController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<MeshController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:mesh/health");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -522,6 +594,7 @@ public partial class MeshController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:mesh/health",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }

@@ -22,6 +22,21 @@
 
 #nullable enable
 
+#pragma warning disable 108 // Disable "CS0108 '{derivedDto}.ToJson()' hides inherited member '{dtoBase}.ToJson()'. Use the new keyword if hiding was intended."
+#pragma warning disable 114 // Disable "CS0114 '{derivedDto}.RaisePropertyChanged(String)' hides inherited member 'dtoBase.RaisePropertyChanged(String)'. To make the current member override that implementation, add the override keyword. Otherwise add the new keyword."
+#pragma warning disable 472 // Disable "CS0472 The result of the expression is always 'false' since a value of type 'Int32' is never equal to 'null' of type 'Int32?'
+#pragma warning disable 612 // Disable "CS0612 '...' is obsolete"
+#pragma warning disable 649 // Disable "CS0649 Field is never assigned to, and will always have its default value null"
+#pragma warning disable 1573 // Disable "CS1573 Parameter '...' has no matching param tag in the XML comment for ...
+#pragma warning disable 1591 // Disable "CS1591 Missing XML comment for publicly visible type or member ..."
+#pragma warning disable 8073 // Disable "CS8073 The result of the expression is always 'false' since a value of type 'T' is never equal to 'null' of type 'T?'"
+#pragma warning disable 3016 // Disable "CS3016 Arrays as attribute arguments is not CLS-compliant"
+#pragma warning disable 8600 // Disable "CS8600 Converting null literal or possible null value to non-nullable type"
+#pragma warning disable 8602 // Disable "CS8602 Dereference of a possibly null reference"
+#pragma warning disable 8603 // Disable "CS8603 Possible null reference return"
+#pragma warning disable 8604 // Disable "CS8604 Possible null reference argument for parameter"
+#pragma warning disable 8625 // Disable "CS8625 Cannot convert null literal to non-nullable reference type"
+#pragma warning disable 8765 // Disable "CS8765 Nullability of type of parameter doesn't match overridden member (possibly because of nullability attributes)."
 
 namespace BeyondImmersion.BannouService.Account;
 
@@ -205,10 +220,12 @@ public interface IAccountController : BeyondImmersion.BannouService.Controllers.
 public partial class AccountController : Microsoft.AspNetCore.Mvc.ControllerBase
 {
     private IAccountService _implementation;
+    private BeyondImmersion.BannouService.Services.ITelemetryProvider _telemetryProvider;
 
-    public AccountController(IAccountService implementation)
+    public AccountController(IAccountService implementation, BeyondImmersion.BannouService.Services.ITelemetryProvider telemetryProvider)
     {
         _implementation = implementation;
+        _telemetryProvider = telemetryProvider;
     }
 
     /// <summary>
@@ -258,6 +275,11 @@ public partial class AccountController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.account",
+                "AccountController.ListAccounts",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "account/list");
 
             var (statusCode, result) = await _implementation.ListAccountsAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -266,6 +288,7 @@ public partial class AccountController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<AccountController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:account/list");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -281,6 +304,7 @@ public partial class AccountController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:account/list",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -296,6 +320,11 @@ public partial class AccountController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.account",
+                "AccountController.CreateAccount",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "account/create");
 
             var (statusCode, result) = await _implementation.CreateAccountAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -304,6 +333,7 @@ public partial class AccountController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<AccountController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:account/create");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -319,6 +349,7 @@ public partial class AccountController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:account/create",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -334,6 +365,11 @@ public partial class AccountController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.account",
+                "AccountController.GetAccount",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "account/get");
 
             var (statusCode, result) = await _implementation.GetAccountAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -342,6 +378,7 @@ public partial class AccountController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<AccountController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:account/get");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -357,6 +394,7 @@ public partial class AccountController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:account/get",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -372,6 +410,11 @@ public partial class AccountController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.account",
+                "AccountController.UpdateAccount",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "account/update");
 
             var (statusCode, result) = await _implementation.UpdateAccountAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -380,6 +423,7 @@ public partial class AccountController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<AccountController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:account/update");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -395,6 +439,7 @@ public partial class AccountController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:account/update",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -410,6 +455,11 @@ public partial class AccountController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.account",
+                "AccountController.DeleteAccount",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "account/delete");
 
             var statusCode = await _implementation.DeleteAccountAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode);
@@ -418,6 +468,7 @@ public partial class AccountController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<AccountController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:account/delete");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -433,6 +484,7 @@ public partial class AccountController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:account/delete",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -448,6 +500,11 @@ public partial class AccountController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.account",
+                "AccountController.GetAccountByEmail",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "account/by-email");
 
             var (statusCode, result) = await _implementation.GetAccountByEmailAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -456,6 +513,7 @@ public partial class AccountController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<AccountController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:account/by-email");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -471,6 +529,7 @@ public partial class AccountController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:account/by-email",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -486,6 +545,11 @@ public partial class AccountController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.account",
+                "AccountController.GetAuthMethods",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "account/auth-methods/list");
 
             var (statusCode, result) = await _implementation.GetAuthMethodsAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -494,6 +558,7 @@ public partial class AccountController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<AccountController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:account/auth-methods/list");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -509,6 +574,7 @@ public partial class AccountController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:account/auth-methods/list",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -524,6 +590,11 @@ public partial class AccountController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.account",
+                "AccountController.AddAuthMethod",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "account/auth-methods/add");
 
             var (statusCode, result) = await _implementation.AddAuthMethodAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -532,6 +603,7 @@ public partial class AccountController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<AccountController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:account/auth-methods/add");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -547,6 +619,7 @@ public partial class AccountController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:account/auth-methods/add",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -562,6 +635,11 @@ public partial class AccountController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.account",
+                "AccountController.RemoveAuthMethod",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "account/auth-methods/remove");
 
             var statusCode = await _implementation.RemoveAuthMethodAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode);
@@ -570,6 +648,7 @@ public partial class AccountController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<AccountController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:account/auth-methods/remove");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -585,6 +664,7 @@ public partial class AccountController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:account/auth-methods/remove",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -600,6 +680,11 @@ public partial class AccountController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.account",
+                "AccountController.GetAccountByProvider",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "account/by-provider");
 
             var (statusCode, result) = await _implementation.GetAccountByProviderAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -608,6 +693,7 @@ public partial class AccountController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<AccountController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:account/by-provider");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -623,6 +709,7 @@ public partial class AccountController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:account/by-provider",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -638,6 +725,11 @@ public partial class AccountController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.account",
+                "AccountController.UpdateProfile",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "account/profile/update");
 
             var (statusCode, result) = await _implementation.UpdateProfileAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -646,6 +738,7 @@ public partial class AccountController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<AccountController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:account/profile/update");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -661,6 +754,7 @@ public partial class AccountController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:account/profile/update",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -676,6 +770,11 @@ public partial class AccountController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.account",
+                "AccountController.UpdatePasswordHash",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "account/password/update");
 
             var statusCode = await _implementation.UpdatePasswordHashAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode);
@@ -684,6 +783,7 @@ public partial class AccountController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<AccountController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:account/password/update");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -699,6 +799,7 @@ public partial class AccountController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:account/password/update",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -719,6 +820,11 @@ public partial class AccountController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.account",
+                "AccountController.UpdateMfa",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "account/mfa/update");
 
             var statusCode = await _implementation.UpdateMfaAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode);
@@ -727,6 +833,7 @@ public partial class AccountController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<AccountController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:account/mfa/update");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -742,6 +849,7 @@ public partial class AccountController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:account/mfa/update",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -757,6 +865,11 @@ public partial class AccountController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.account",
+                "AccountController.BatchGetAccounts",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "account/batch-get");
 
             var (statusCode, result) = await _implementation.BatchGetAccountsAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -765,6 +878,7 @@ public partial class AccountController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<AccountController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:account/batch-get");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -780,6 +894,7 @@ public partial class AccountController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:account/batch-get",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -795,6 +910,11 @@ public partial class AccountController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.account",
+                "AccountController.CountAccounts",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "account/count");
 
             var (statusCode, result) = await _implementation.CountAccountsAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -803,6 +923,7 @@ public partial class AccountController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<AccountController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:account/count");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -818,6 +939,7 @@ public partial class AccountController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:account/count",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -833,6 +955,11 @@ public partial class AccountController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.account",
+                "AccountController.BulkUpdateRoles",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "account/roles/bulk-update");
 
             var (statusCode, result) = await _implementation.BulkUpdateRolesAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -841,6 +968,7 @@ public partial class AccountController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<AccountController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:account/roles/bulk-update");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -856,6 +984,7 @@ public partial class AccountController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:account/roles/bulk-update",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -871,6 +1000,11 @@ public partial class AccountController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.account",
+                "AccountController.UpdateVerificationStatus",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "account/verification/update");
 
             var statusCode = await _implementation.UpdateVerificationStatusAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode);
@@ -879,6 +1013,7 @@ public partial class AccountController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<AccountController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:account/verification/update");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -894,6 +1029,7 @@ public partial class AccountController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:account/verification/update",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -909,6 +1045,11 @@ public partial class AccountController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.account",
+                "AccountController.UpdateEmail",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "account/email/update");
 
             var (statusCode, result) = await _implementation.UpdateEmailAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -917,6 +1058,7 @@ public partial class AccountController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<AccountController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:account/email/update");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -932,6 +1074,7 @@ public partial class AccountController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:account/email/update",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }

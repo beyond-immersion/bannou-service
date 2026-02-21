@@ -22,6 +22,21 @@
 
 #nullable enable
 
+#pragma warning disable 108 // Disable "CS0108 '{derivedDto}.ToJson()' hides inherited member '{dtoBase}.ToJson()'. Use the new keyword if hiding was intended."
+#pragma warning disable 114 // Disable "CS0114 '{derivedDto}.RaisePropertyChanged(String)' hides inherited member 'dtoBase.RaisePropertyChanged(String)'. To make the current member override that implementation, add the override keyword. Otherwise add the new keyword."
+#pragma warning disable 472 // Disable "CS0472 The result of the expression is always 'false' since a value of type 'Int32' is never equal to 'null' of type 'Int32?'
+#pragma warning disable 612 // Disable "CS0612 '...' is obsolete"
+#pragma warning disable 649 // Disable "CS0649 Field is never assigned to, and will always have its default value null"
+#pragma warning disable 1573 // Disable "CS1573 Parameter '...' has no matching param tag in the XML comment for ...
+#pragma warning disable 1591 // Disable "CS1591 Missing XML comment for publicly visible type or member ..."
+#pragma warning disable 8073 // Disable "CS8073 The result of the expression is always 'false' since a value of type 'T' is never equal to 'null' of type 'T?'"
+#pragma warning disable 3016 // Disable "CS3016 Arrays as attribute arguments is not CLS-compliant"
+#pragma warning disable 8600 // Disable "CS8600 Converting null literal or possible null value to non-nullable type"
+#pragma warning disable 8602 // Disable "CS8602 Dereference of a possibly null reference"
+#pragma warning disable 8603 // Disable "CS8603 Possible null reference return"
+#pragma warning disable 8604 // Disable "CS8604 Possible null reference argument for parameter"
+#pragma warning disable 8625 // Disable "CS8625 Cannot convert null literal to non-nullable reference type"
+#pragma warning disable 8765 // Disable "CS8765 Nullability of type of parameter doesn't match overridden member (possibly because of nullability attributes)."
 
 namespace BeyondImmersion.BannouService.Storyline;
 
@@ -248,10 +263,12 @@ public interface IStorylineController : BeyondImmersion.BannouService.Controller
 public partial class StorylineController : Microsoft.AspNetCore.Mvc.ControllerBase
 {
     private IStorylineService _implementation;
+    private BeyondImmersion.BannouService.Services.ITelemetryProvider _telemetryProvider;
 
-    public StorylineController(IStorylineService implementation)
+    public StorylineController(IStorylineService implementation, BeyondImmersion.BannouService.Services.ITelemetryProvider telemetryProvider)
     {
         _implementation = implementation;
+        _telemetryProvider = telemetryProvider;
     }
 
     /// <summary>
@@ -313,6 +330,11 @@ public partial class StorylineController : Microsoft.AspNetCore.Mvc.ControllerBa
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.storyline",
+                "StorylineController.Compose",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "storyline/compose");
 
             var (statusCode, result) = await _implementation.ComposeAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -321,6 +343,7 @@ public partial class StorylineController : Microsoft.AspNetCore.Mvc.ControllerBa
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<StorylineController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:storyline/compose");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -336,6 +359,7 @@ public partial class StorylineController : Microsoft.AspNetCore.Mvc.ControllerBa
                 endpoint: "post:storyline/compose",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -355,6 +379,11 @@ public partial class StorylineController : Microsoft.AspNetCore.Mvc.ControllerBa
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.storyline",
+                "StorylineController.GetPlan",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "storyline/plan/get");
 
             var (statusCode, result) = await _implementation.GetPlanAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -363,6 +392,7 @@ public partial class StorylineController : Microsoft.AspNetCore.Mvc.ControllerBa
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<StorylineController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:storyline/plan/get");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -378,6 +408,7 @@ public partial class StorylineController : Microsoft.AspNetCore.Mvc.ControllerBa
                 endpoint: "post:storyline/plan/get",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -397,6 +428,11 @@ public partial class StorylineController : Microsoft.AspNetCore.Mvc.ControllerBa
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.storyline",
+                "StorylineController.ListPlans",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "storyline/plan/list");
 
             var (statusCode, result) = await _implementation.ListPlansAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -405,6 +441,7 @@ public partial class StorylineController : Microsoft.AspNetCore.Mvc.ControllerBa
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<StorylineController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:storyline/plan/list");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -420,6 +457,7 @@ public partial class StorylineController : Microsoft.AspNetCore.Mvc.ControllerBa
                 endpoint: "post:storyline/plan/list",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -440,6 +478,11 @@ public partial class StorylineController : Microsoft.AspNetCore.Mvc.ControllerBa
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.storyline",
+                "StorylineController.CreateScenarioDefinition",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "storyline/scenario/create");
 
             var (statusCode, result) = await _implementation.CreateScenarioDefinitionAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -448,6 +491,7 @@ public partial class StorylineController : Microsoft.AspNetCore.Mvc.ControllerBa
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<StorylineController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:storyline/scenario/create");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -463,6 +507,7 @@ public partial class StorylineController : Microsoft.AspNetCore.Mvc.ControllerBa
                 endpoint: "post:storyline/scenario/create",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -482,6 +527,11 @@ public partial class StorylineController : Microsoft.AspNetCore.Mvc.ControllerBa
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.storyline",
+                "StorylineController.GetScenarioDefinition",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "storyline/scenario/get");
 
             var (statusCode, result) = await _implementation.GetScenarioDefinitionAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -490,6 +540,7 @@ public partial class StorylineController : Microsoft.AspNetCore.Mvc.ControllerBa
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<StorylineController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:storyline/scenario/get");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -505,6 +556,7 @@ public partial class StorylineController : Microsoft.AspNetCore.Mvc.ControllerBa
                 endpoint: "post:storyline/scenario/get",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -524,6 +576,11 @@ public partial class StorylineController : Microsoft.AspNetCore.Mvc.ControllerBa
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.storyline",
+                "StorylineController.ListScenarioDefinitions",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "storyline/scenario/list");
 
             var (statusCode, result) = await _implementation.ListScenarioDefinitionsAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -532,6 +589,7 @@ public partial class StorylineController : Microsoft.AspNetCore.Mvc.ControllerBa
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<StorylineController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:storyline/scenario/list");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -547,6 +605,7 @@ public partial class StorylineController : Microsoft.AspNetCore.Mvc.ControllerBa
                 endpoint: "post:storyline/scenario/list",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -566,6 +625,11 @@ public partial class StorylineController : Microsoft.AspNetCore.Mvc.ControllerBa
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.storyline",
+                "StorylineController.UpdateScenarioDefinition",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "storyline/scenario/update");
 
             var (statusCode, result) = await _implementation.UpdateScenarioDefinitionAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -574,6 +638,7 @@ public partial class StorylineController : Microsoft.AspNetCore.Mvc.ControllerBa
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<StorylineController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:storyline/scenario/update");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -589,6 +654,7 @@ public partial class StorylineController : Microsoft.AspNetCore.Mvc.ControllerBa
                 endpoint: "post:storyline/scenario/update",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -608,6 +674,11 @@ public partial class StorylineController : Microsoft.AspNetCore.Mvc.ControllerBa
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.storyline",
+                "StorylineController.DeprecateScenarioDefinition",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "storyline/scenario/deprecate");
 
             var statusCode = await _implementation.DeprecateScenarioDefinitionAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode);
@@ -616,6 +687,7 @@ public partial class StorylineController : Microsoft.AspNetCore.Mvc.ControllerBa
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<StorylineController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:storyline/scenario/deprecate");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -631,6 +703,7 @@ public partial class StorylineController : Microsoft.AspNetCore.Mvc.ControllerBa
                 endpoint: "post:storyline/scenario/deprecate",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -653,6 +726,11 @@ public partial class StorylineController : Microsoft.AspNetCore.Mvc.ControllerBa
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.storyline",
+                "StorylineController.FindAvailableScenarios",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "storyline/scenario/find-available");
 
             var (statusCode, result) = await _implementation.FindAvailableScenariosAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -661,6 +739,7 @@ public partial class StorylineController : Microsoft.AspNetCore.Mvc.ControllerBa
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<StorylineController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:storyline/scenario/find-available");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -676,6 +755,7 @@ public partial class StorylineController : Microsoft.AspNetCore.Mvc.ControllerBa
                 endpoint: "post:storyline/scenario/find-available",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -696,6 +776,11 @@ public partial class StorylineController : Microsoft.AspNetCore.Mvc.ControllerBa
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.storyline",
+                "StorylineController.TestScenarioTrigger",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "storyline/scenario/test");
 
             var (statusCode, result) = await _implementation.TestScenarioTriggerAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -704,6 +789,7 @@ public partial class StorylineController : Microsoft.AspNetCore.Mvc.ControllerBa
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<StorylineController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:storyline/scenario/test");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -719,6 +805,7 @@ public partial class StorylineController : Microsoft.AspNetCore.Mvc.ControllerBa
                 endpoint: "post:storyline/scenario/test",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -738,6 +825,11 @@ public partial class StorylineController : Microsoft.AspNetCore.Mvc.ControllerBa
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.storyline",
+                "StorylineController.EvaluateScenarioFit",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "storyline/scenario/evaluate-fit");
 
             var (statusCode, result) = await _implementation.EvaluateScenarioFitAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -746,6 +838,7 @@ public partial class StorylineController : Microsoft.AspNetCore.Mvc.ControllerBa
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<StorylineController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:storyline/scenario/evaluate-fit");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -761,6 +854,7 @@ public partial class StorylineController : Microsoft.AspNetCore.Mvc.ControllerBa
                 endpoint: "post:storyline/scenario/evaluate-fit",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -784,6 +878,11 @@ public partial class StorylineController : Microsoft.AspNetCore.Mvc.ControllerBa
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.storyline",
+                "StorylineController.TriggerScenario",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "storyline/scenario/trigger");
 
             var (statusCode, result) = await _implementation.TriggerScenarioAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -792,6 +891,7 @@ public partial class StorylineController : Microsoft.AspNetCore.Mvc.ControllerBa
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<StorylineController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:storyline/scenario/trigger");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -807,6 +907,7 @@ public partial class StorylineController : Microsoft.AspNetCore.Mvc.ControllerBa
                 endpoint: "post:storyline/scenario/trigger",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -825,6 +926,11 @@ public partial class StorylineController : Microsoft.AspNetCore.Mvc.ControllerBa
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.storyline",
+                "StorylineController.GetActiveScenarios",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "storyline/scenario/get-active");
 
             var (statusCode, result) = await _implementation.GetActiveScenariosAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -833,6 +939,7 @@ public partial class StorylineController : Microsoft.AspNetCore.Mvc.ControllerBa
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<StorylineController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:storyline/scenario/get-active");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -848,6 +955,7 @@ public partial class StorylineController : Microsoft.AspNetCore.Mvc.ControllerBa
                 endpoint: "post:storyline/scenario/get-active",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -866,6 +974,11 @@ public partial class StorylineController : Microsoft.AspNetCore.Mvc.ControllerBa
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.storyline",
+                "StorylineController.GetScenarioHistory",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "storyline/scenario/get-history");
 
             var (statusCode, result) = await _implementation.GetScenarioHistoryAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -874,6 +987,7 @@ public partial class StorylineController : Microsoft.AspNetCore.Mvc.ControllerBa
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<StorylineController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:storyline/scenario/get-history");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -889,6 +1003,7 @@ public partial class StorylineController : Microsoft.AspNetCore.Mvc.ControllerBa
                 endpoint: "post:storyline/scenario/get-history",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -908,6 +1023,11 @@ public partial class StorylineController : Microsoft.AspNetCore.Mvc.ControllerBa
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.storyline",
+                "StorylineController.GetCompressData",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "storyline/get-compress-data");
 
             var (statusCode, result) = await _implementation.GetCompressDataAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -916,6 +1036,7 @@ public partial class StorylineController : Microsoft.AspNetCore.Mvc.ControllerBa
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<StorylineController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:storyline/get-compress-data");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -931,6 +1052,7 @@ public partial class StorylineController : Microsoft.AspNetCore.Mvc.ControllerBa
                 endpoint: "post:storyline/get-compress-data",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }

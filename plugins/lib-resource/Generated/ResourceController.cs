@@ -22,6 +22,21 @@
 
 #nullable enable
 
+#pragma warning disable 108 // Disable "CS0108 '{derivedDto}.ToJson()' hides inherited member '{dtoBase}.ToJson()'. Use the new keyword if hiding was intended."
+#pragma warning disable 114 // Disable "CS0114 '{derivedDto}.RaisePropertyChanged(String)' hides inherited member 'dtoBase.RaisePropertyChanged(String)'. To make the current member override that implementation, add the override keyword. Otherwise add the new keyword."
+#pragma warning disable 472 // Disable "CS0472 The result of the expression is always 'false' since a value of type 'Int32' is never equal to 'null' of type 'Int32?'
+#pragma warning disable 612 // Disable "CS0612 '...' is obsolete"
+#pragma warning disable 649 // Disable "CS0649 Field is never assigned to, and will always have its default value null"
+#pragma warning disable 1573 // Disable "CS1573 Parameter '...' has no matching param tag in the XML comment for ...
+#pragma warning disable 1591 // Disable "CS1591 Missing XML comment for publicly visible type or member ..."
+#pragma warning disable 8073 // Disable "CS8073 The result of the expression is always 'false' since a value of type 'T' is never equal to 'null' of type 'T?'"
+#pragma warning disable 3016 // Disable "CS3016 Arrays as attribute arguments is not CLS-compliant"
+#pragma warning disable 8600 // Disable "CS8600 Converting null literal or possible null value to non-nullable type"
+#pragma warning disable 8602 // Disable "CS8602 Dereference of a possibly null reference"
+#pragma warning disable 8603 // Disable "CS8603 Possible null reference return"
+#pragma warning disable 8604 // Disable "CS8604 Possible null reference argument for parameter"
+#pragma warning disable 8625 // Disable "CS8625 Cannot convert null literal to non-nullable reference type"
+#pragma warning disable 8765 // Disable "CS8765 Nullability of type of parameter doesn't match overridden member (possibly because of nullability attributes)."
 
 namespace BeyondImmersion.BannouService.Resource;
 
@@ -306,10 +321,12 @@ public interface IResourceController : BeyondImmersion.BannouService.Controllers
 public partial class ResourceController : Microsoft.AspNetCore.Mvc.ControllerBase
 {
     private IResourceService _implementation;
+    private BeyondImmersion.BannouService.Services.ITelemetryProvider _telemetryProvider;
 
-    public ResourceController(IResourceService implementation)
+    public ResourceController(IResourceService implementation, BeyondImmersion.BannouService.Services.ITelemetryProvider telemetryProvider)
     {
         _implementation = implementation;
+        _telemetryProvider = telemetryProvider;
     }
 
     /// <summary>
@@ -363,6 +380,11 @@ public partial class ResourceController : Microsoft.AspNetCore.Mvc.ControllerBas
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.resource",
+                "ResourceController.RegisterReference",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "resource/register");
 
             var (statusCode, result) = await _implementation.RegisterReferenceAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -371,6 +393,7 @@ public partial class ResourceController : Microsoft.AspNetCore.Mvc.ControllerBas
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<ResourceController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:resource/register");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -386,6 +409,7 @@ public partial class ResourceController : Microsoft.AspNetCore.Mvc.ControllerBas
                 endpoint: "post:resource/register",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -405,6 +429,11 @@ public partial class ResourceController : Microsoft.AspNetCore.Mvc.ControllerBas
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.resource",
+                "ResourceController.UnregisterReference",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "resource/unregister");
 
             var (statusCode, result) = await _implementation.UnregisterReferenceAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -413,6 +442,7 @@ public partial class ResourceController : Microsoft.AspNetCore.Mvc.ControllerBas
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<ResourceController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:resource/unregister");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -428,6 +458,7 @@ public partial class ResourceController : Microsoft.AspNetCore.Mvc.ControllerBas
                 endpoint: "post:resource/unregister",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -447,6 +478,11 @@ public partial class ResourceController : Microsoft.AspNetCore.Mvc.ControllerBas
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.resource",
+                "ResourceController.CheckReferences",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "resource/check");
 
             var (statusCode, result) = await _implementation.CheckReferencesAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -455,6 +491,7 @@ public partial class ResourceController : Microsoft.AspNetCore.Mvc.ControllerBas
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<ResourceController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:resource/check");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -470,6 +507,7 @@ public partial class ResourceController : Microsoft.AspNetCore.Mvc.ControllerBas
                 endpoint: "post:resource/check",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -489,6 +527,11 @@ public partial class ResourceController : Microsoft.AspNetCore.Mvc.ControllerBas
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.resource",
+                "ResourceController.ListReferences",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "resource/list");
 
             var (statusCode, result) = await _implementation.ListReferencesAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -497,6 +540,7 @@ public partial class ResourceController : Microsoft.AspNetCore.Mvc.ControllerBas
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<ResourceController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:resource/list");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -512,6 +556,7 @@ public partial class ResourceController : Microsoft.AspNetCore.Mvc.ControllerBas
                 endpoint: "post:resource/list",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -532,6 +577,11 @@ public partial class ResourceController : Microsoft.AspNetCore.Mvc.ControllerBas
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.resource",
+                "ResourceController.DefineCleanupCallback",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "resource/cleanup/define");
 
             var (statusCode, result) = await _implementation.DefineCleanupCallbackAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -540,6 +590,7 @@ public partial class ResourceController : Microsoft.AspNetCore.Mvc.ControllerBas
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<ResourceController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:resource/cleanup/define");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -555,6 +606,7 @@ public partial class ResourceController : Microsoft.AspNetCore.Mvc.ControllerBas
                 endpoint: "post:resource/cleanup/define",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -575,6 +627,11 @@ public partial class ResourceController : Microsoft.AspNetCore.Mvc.ControllerBas
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.resource",
+                "ResourceController.ExecuteCleanup",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "resource/cleanup/execute");
 
             var (statusCode, result) = await _implementation.ExecuteCleanupAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -583,6 +640,7 @@ public partial class ResourceController : Microsoft.AspNetCore.Mvc.ControllerBas
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<ResourceController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:resource/cleanup/execute");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -598,6 +656,7 @@ public partial class ResourceController : Microsoft.AspNetCore.Mvc.ControllerBas
                 endpoint: "post:resource/cleanup/execute",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -617,6 +676,11 @@ public partial class ResourceController : Microsoft.AspNetCore.Mvc.ControllerBas
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.resource",
+                "ResourceController.ListCleanupCallbacks",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "resource/cleanup/list");
 
             var (statusCode, result) = await _implementation.ListCleanupCallbacksAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -625,6 +689,7 @@ public partial class ResourceController : Microsoft.AspNetCore.Mvc.ControllerBas
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<ResourceController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:resource/cleanup/list");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -640,6 +705,7 @@ public partial class ResourceController : Microsoft.AspNetCore.Mvc.ControllerBas
                 endpoint: "post:resource/cleanup/list",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -661,6 +727,11 @@ public partial class ResourceController : Microsoft.AspNetCore.Mvc.ControllerBas
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.resource",
+                "ResourceController.RemoveCleanupCallback",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "resource/cleanup/remove");
 
             var (statusCode, result) = await _implementation.RemoveCleanupCallbackAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -669,6 +740,7 @@ public partial class ResourceController : Microsoft.AspNetCore.Mvc.ControllerBas
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<ResourceController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:resource/cleanup/remove");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -684,6 +756,7 @@ public partial class ResourceController : Microsoft.AspNetCore.Mvc.ControllerBas
                 endpoint: "post:resource/cleanup/remove",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -707,6 +780,11 @@ public partial class ResourceController : Microsoft.AspNetCore.Mvc.ControllerBas
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.resource",
+                "ResourceController.DefineCompressCallback",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "resource/compress/define");
 
             var (statusCode, result) = await _implementation.DefineCompressCallbackAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -715,6 +793,7 @@ public partial class ResourceController : Microsoft.AspNetCore.Mvc.ControllerBas
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<ResourceController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:resource/compress/define");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -730,6 +809,7 @@ public partial class ResourceController : Microsoft.AspNetCore.Mvc.ControllerBas
                 endpoint: "post:resource/compress/define",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -760,6 +840,11 @@ public partial class ResourceController : Microsoft.AspNetCore.Mvc.ControllerBas
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.resource",
+                "ResourceController.ExecuteCompress",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "resource/compress/execute");
 
             var (statusCode, result) = await _implementation.ExecuteCompressAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -768,6 +853,7 @@ public partial class ResourceController : Microsoft.AspNetCore.Mvc.ControllerBas
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<ResourceController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:resource/compress/execute");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -783,6 +869,7 @@ public partial class ResourceController : Microsoft.AspNetCore.Mvc.ControllerBas
                 endpoint: "post:resource/compress/execute",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -805,6 +892,11 @@ public partial class ResourceController : Microsoft.AspNetCore.Mvc.ControllerBas
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.resource",
+                "ResourceController.ExecuteDecompress",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "resource/decompress/execute");
 
             var (statusCode, result) = await _implementation.ExecuteDecompressAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -813,6 +905,7 @@ public partial class ResourceController : Microsoft.AspNetCore.Mvc.ControllerBas
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<ResourceController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:resource/decompress/execute");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -828,6 +921,7 @@ public partial class ResourceController : Microsoft.AspNetCore.Mvc.ControllerBas
                 endpoint: "post:resource/decompress/execute",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -847,6 +941,11 @@ public partial class ResourceController : Microsoft.AspNetCore.Mvc.ControllerBas
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.resource",
+                "ResourceController.ListCompressCallbacks",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "resource/compress/list");
 
             var (statusCode, result) = await _implementation.ListCompressCallbacksAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -855,6 +954,7 @@ public partial class ResourceController : Microsoft.AspNetCore.Mvc.ControllerBas
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<ResourceController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:resource/compress/list");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -870,6 +970,7 @@ public partial class ResourceController : Microsoft.AspNetCore.Mvc.ControllerBas
                 endpoint: "post:resource/compress/list",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -889,6 +990,11 @@ public partial class ResourceController : Microsoft.AspNetCore.Mvc.ControllerBas
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.resource",
+                "ResourceController.GetArchive",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "resource/archive/get");
 
             var (statusCode, result) = await _implementation.GetArchiveAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -897,6 +1003,7 @@ public partial class ResourceController : Microsoft.AspNetCore.Mvc.ControllerBas
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<ResourceController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:resource/archive/get");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -912,6 +1019,7 @@ public partial class ResourceController : Microsoft.AspNetCore.Mvc.ControllerBas
                 endpoint: "post:resource/archive/get",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -947,6 +1055,11 @@ public partial class ResourceController : Microsoft.AspNetCore.Mvc.ControllerBas
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.resource",
+                "ResourceController.ExecuteSnapshot",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "resource/snapshot/execute");
 
             var (statusCode, result) = await _implementation.ExecuteSnapshotAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -955,6 +1068,7 @@ public partial class ResourceController : Microsoft.AspNetCore.Mvc.ControllerBas
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<ResourceController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:resource/snapshot/execute");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -970,6 +1084,7 @@ public partial class ResourceController : Microsoft.AspNetCore.Mvc.ControllerBas
                 endpoint: "post:resource/snapshot/execute",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -992,6 +1107,11 @@ public partial class ResourceController : Microsoft.AspNetCore.Mvc.ControllerBas
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.resource",
+                "ResourceController.GetSnapshot",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "resource/snapshot/get");
 
             var (statusCode, result) = await _implementation.GetSnapshotAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1000,6 +1120,7 @@ public partial class ResourceController : Microsoft.AspNetCore.Mvc.ControllerBas
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<ResourceController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:resource/snapshot/get");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -1015,6 +1136,7 @@ public partial class ResourceController : Microsoft.AspNetCore.Mvc.ControllerBas
                 endpoint: "post:resource/snapshot/get",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -1037,6 +1159,11 @@ public partial class ResourceController : Microsoft.AspNetCore.Mvc.ControllerBas
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.resource",
+                "ResourceController.ListSeededResources",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "resource/seeded/list");
 
             var (statusCode, result) = await _implementation.ListSeededResourcesAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1045,6 +1172,7 @@ public partial class ResourceController : Microsoft.AspNetCore.Mvc.ControllerBas
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<ResourceController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:resource/seeded/list");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -1060,6 +1188,7 @@ public partial class ResourceController : Microsoft.AspNetCore.Mvc.ControllerBas
                 endpoint: "post:resource/seeded/list",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -1082,6 +1211,11 @@ public partial class ResourceController : Microsoft.AspNetCore.Mvc.ControllerBas
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.resource",
+                "ResourceController.GetSeededResource",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "resource/seeded/get");
 
             var (statusCode, result) = await _implementation.GetSeededResourceAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1090,6 +1224,7 @@ public partial class ResourceController : Microsoft.AspNetCore.Mvc.ControllerBas
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<ResourceController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:resource/seeded/get");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -1105,6 +1240,7 @@ public partial class ResourceController : Microsoft.AspNetCore.Mvc.ControllerBas
                 endpoint: "post:resource/seeded/get",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }

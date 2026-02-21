@@ -22,6 +22,21 @@
 
 #nullable enable
 
+#pragma warning disable 108 // Disable "CS0108 '{derivedDto}.ToJson()' hides inherited member '{dtoBase}.ToJson()'. Use the new keyword if hiding was intended."
+#pragma warning disable 114 // Disable "CS0114 '{derivedDto}.RaisePropertyChanged(String)' hides inherited member 'dtoBase.RaisePropertyChanged(String)'. To make the current member override that implementation, add the override keyword. Otherwise add the new keyword."
+#pragma warning disable 472 // Disable "CS0472 The result of the expression is always 'false' since a value of type 'Int32' is never equal to 'null' of type 'Int32?'
+#pragma warning disable 612 // Disable "CS0612 '...' is obsolete"
+#pragma warning disable 649 // Disable "CS0649 Field is never assigned to, and will always have its default value null"
+#pragma warning disable 1573 // Disable "CS1573 Parameter '...' has no matching param tag in the XML comment for ...
+#pragma warning disable 1591 // Disable "CS1591 Missing XML comment for publicly visible type or member ..."
+#pragma warning disable 8073 // Disable "CS8073 The result of the expression is always 'false' since a value of type 'T' is never equal to 'null' of type 'T?'"
+#pragma warning disable 3016 // Disable "CS3016 Arrays as attribute arguments is not CLS-compliant"
+#pragma warning disable 8600 // Disable "CS8600 Converting null literal or possible null value to non-nullable type"
+#pragma warning disable 8602 // Disable "CS8602 Dereference of a possibly null reference"
+#pragma warning disable 8603 // Disable "CS8603 Possible null reference return"
+#pragma warning disable 8604 // Disable "CS8604 Possible null reference argument for parameter"
+#pragma warning disable 8625 // Disable "CS8625 Cannot convert null literal to non-nullable reference type"
+#pragma warning disable 8765 // Disable "CS8765 Nullability of type of parameter doesn't match overridden member (possibly because of nullability attributes)."
 
 namespace BeyondImmersion.BannouService.Location;
 
@@ -366,10 +381,12 @@ public interface ILocationController : BeyondImmersion.BannouService.Controllers
 public partial class LocationController : Microsoft.AspNetCore.Mvc.ControllerBase
 {
     private ILocationService _implementation;
+    private BeyondImmersion.BannouService.Services.ITelemetryProvider _telemetryProvider;
 
-    public LocationController(ILocationService implementation)
+    public LocationController(ILocationService implementation, BeyondImmersion.BannouService.Services.ITelemetryProvider telemetryProvider)
     {
         _implementation = implementation;
+        _telemetryProvider = telemetryProvider;
     }
 
     /// <summary>
@@ -419,6 +436,11 @@ public partial class LocationController : Microsoft.AspNetCore.Mvc.ControllerBas
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.location",
+                "LocationController.GetLocation",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "location/get");
 
             var (statusCode, result) = await _implementation.GetLocationAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -427,6 +449,7 @@ public partial class LocationController : Microsoft.AspNetCore.Mvc.ControllerBas
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<LocationController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:location/get");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -442,6 +465,7 @@ public partial class LocationController : Microsoft.AspNetCore.Mvc.ControllerBas
                 endpoint: "post:location/get",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -460,6 +484,11 @@ public partial class LocationController : Microsoft.AspNetCore.Mvc.ControllerBas
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.location",
+                "LocationController.GetLocationByCode",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "location/get-by-code");
 
             var (statusCode, result) = await _implementation.GetLocationByCodeAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -468,6 +497,7 @@ public partial class LocationController : Microsoft.AspNetCore.Mvc.ControllerBas
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<LocationController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:location/get-by-code");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -483,6 +513,7 @@ public partial class LocationController : Microsoft.AspNetCore.Mvc.ControllerBas
                 endpoint: "post:location/get-by-code",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -501,6 +532,11 @@ public partial class LocationController : Microsoft.AspNetCore.Mvc.ControllerBas
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.location",
+                "LocationController.ListLocations",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "location/list");
 
             var (statusCode, result) = await _implementation.ListLocationsAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -509,6 +545,7 @@ public partial class LocationController : Microsoft.AspNetCore.Mvc.ControllerBas
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<LocationController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:location/list");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -524,6 +561,7 @@ public partial class LocationController : Microsoft.AspNetCore.Mvc.ControllerBas
                 endpoint: "post:location/list",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -544,6 +582,11 @@ public partial class LocationController : Microsoft.AspNetCore.Mvc.ControllerBas
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.location",
+                "LocationController.ListLocationsByRealm",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "location/list-by-realm");
 
             var (statusCode, result) = await _implementation.ListLocationsByRealmAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -552,6 +595,7 @@ public partial class LocationController : Microsoft.AspNetCore.Mvc.ControllerBas
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<LocationController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:location/list-by-realm");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -567,6 +611,7 @@ public partial class LocationController : Microsoft.AspNetCore.Mvc.ControllerBas
                 endpoint: "post:location/list-by-realm",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -586,6 +631,11 @@ public partial class LocationController : Microsoft.AspNetCore.Mvc.ControllerBas
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.location",
+                "LocationController.ListLocationsByParent",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "location/list-by-parent");
 
             var (statusCode, result) = await _implementation.ListLocationsByParentAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -594,6 +644,7 @@ public partial class LocationController : Microsoft.AspNetCore.Mvc.ControllerBas
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<LocationController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:location/list-by-parent");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -609,6 +660,7 @@ public partial class LocationController : Microsoft.AspNetCore.Mvc.ControllerBas
                 endpoint: "post:location/list-by-parent",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -628,6 +680,11 @@ public partial class LocationController : Microsoft.AspNetCore.Mvc.ControllerBas
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.location",
+                "LocationController.ListRootLocations",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "location/list-root");
 
             var (statusCode, result) = await _implementation.ListRootLocationsAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -636,6 +693,7 @@ public partial class LocationController : Microsoft.AspNetCore.Mvc.ControllerBas
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<LocationController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:location/list-root");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -651,6 +709,7 @@ public partial class LocationController : Microsoft.AspNetCore.Mvc.ControllerBas
                 endpoint: "post:location/list-root",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -671,6 +730,11 @@ public partial class LocationController : Microsoft.AspNetCore.Mvc.ControllerBas
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.location",
+                "LocationController.GetLocationAncestors",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "location/get-ancestors");
 
             var (statusCode, result) = await _implementation.GetLocationAncestorsAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -679,6 +743,7 @@ public partial class LocationController : Microsoft.AspNetCore.Mvc.ControllerBas
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<LocationController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:location/get-ancestors");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -694,6 +759,7 @@ public partial class LocationController : Microsoft.AspNetCore.Mvc.ControllerBas
                 endpoint: "post:location/get-ancestors",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -717,6 +783,11 @@ public partial class LocationController : Microsoft.AspNetCore.Mvc.ControllerBas
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.location",
+                "LocationController.ValidateTerritory",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "location/validate-territory");
 
             var (statusCode, result) = await _implementation.ValidateTerritoryAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -725,6 +796,7 @@ public partial class LocationController : Microsoft.AspNetCore.Mvc.ControllerBas
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<LocationController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:location/validate-territory");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -740,6 +812,7 @@ public partial class LocationController : Microsoft.AspNetCore.Mvc.ControllerBas
                 endpoint: "post:location/validate-territory",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -760,6 +833,11 @@ public partial class LocationController : Microsoft.AspNetCore.Mvc.ControllerBas
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.location",
+                "LocationController.GetLocationDescendants",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "location/get-descendants");
 
             var (statusCode, result) = await _implementation.GetLocationDescendantsAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -768,6 +846,7 @@ public partial class LocationController : Microsoft.AspNetCore.Mvc.ControllerBas
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<LocationController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:location/get-descendants");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -783,6 +862,7 @@ public partial class LocationController : Microsoft.AspNetCore.Mvc.ControllerBas
                 endpoint: "post:location/get-descendants",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -798,6 +878,11 @@ public partial class LocationController : Microsoft.AspNetCore.Mvc.ControllerBas
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.location",
+                "LocationController.CreateLocation",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "location/create");
 
             var (statusCode, result) = await _implementation.CreateLocationAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -806,6 +891,7 @@ public partial class LocationController : Microsoft.AspNetCore.Mvc.ControllerBas
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<LocationController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:location/create");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -821,6 +907,7 @@ public partial class LocationController : Microsoft.AspNetCore.Mvc.ControllerBas
                 endpoint: "post:location/create",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -836,6 +923,11 @@ public partial class LocationController : Microsoft.AspNetCore.Mvc.ControllerBas
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.location",
+                "LocationController.UpdateLocation",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "location/update");
 
             var (statusCode, result) = await _implementation.UpdateLocationAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -844,6 +936,7 @@ public partial class LocationController : Microsoft.AspNetCore.Mvc.ControllerBas
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<LocationController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:location/update");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -859,6 +952,7 @@ public partial class LocationController : Microsoft.AspNetCore.Mvc.ControllerBas
                 endpoint: "post:location/update",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -881,6 +975,11 @@ public partial class LocationController : Microsoft.AspNetCore.Mvc.ControllerBas
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.location",
+                "LocationController.SetLocationParent",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "location/set-parent");
 
             var (statusCode, result) = await _implementation.SetLocationParentAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -889,6 +988,7 @@ public partial class LocationController : Microsoft.AspNetCore.Mvc.ControllerBas
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<LocationController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:location/set-parent");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -904,6 +1004,7 @@ public partial class LocationController : Microsoft.AspNetCore.Mvc.ControllerBas
                 endpoint: "post:location/set-parent",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -923,6 +1024,11 @@ public partial class LocationController : Microsoft.AspNetCore.Mvc.ControllerBas
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.location",
+                "LocationController.RemoveLocationParent",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "location/remove-parent");
 
             var (statusCode, result) = await _implementation.RemoveLocationParentAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -931,6 +1037,7 @@ public partial class LocationController : Microsoft.AspNetCore.Mvc.ControllerBas
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<LocationController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:location/remove-parent");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -946,6 +1053,7 @@ public partial class LocationController : Microsoft.AspNetCore.Mvc.ControllerBas
                 endpoint: "post:location/remove-parent",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -968,6 +1076,11 @@ public partial class LocationController : Microsoft.AspNetCore.Mvc.ControllerBas
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.location",
+                "LocationController.DeleteLocation",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "location/delete");
 
             var statusCode = await _implementation.DeleteLocationAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode);
@@ -976,6 +1089,7 @@ public partial class LocationController : Microsoft.AspNetCore.Mvc.ControllerBas
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<LocationController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:location/delete");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -991,6 +1105,7 @@ public partial class LocationController : Microsoft.AspNetCore.Mvc.ControllerBas
                 endpoint: "post:location/delete",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -1013,6 +1128,11 @@ public partial class LocationController : Microsoft.AspNetCore.Mvc.ControllerBas
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.location",
+                "LocationController.TransferLocationToRealm",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "location/transfer-realm");
 
             var (statusCode, result) = await _implementation.TransferLocationToRealmAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1021,6 +1141,7 @@ public partial class LocationController : Microsoft.AspNetCore.Mvc.ControllerBas
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<LocationController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:location/transfer-realm");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -1036,6 +1157,7 @@ public partial class LocationController : Microsoft.AspNetCore.Mvc.ControllerBas
                 endpoint: "post:location/transfer-realm",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -1058,6 +1180,11 @@ public partial class LocationController : Microsoft.AspNetCore.Mvc.ControllerBas
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.location",
+                "LocationController.DeprecateLocation",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "location/deprecate");
 
             var (statusCode, result) = await _implementation.DeprecateLocationAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1066,6 +1193,7 @@ public partial class LocationController : Microsoft.AspNetCore.Mvc.ControllerBas
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<LocationController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:location/deprecate");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -1081,6 +1209,7 @@ public partial class LocationController : Microsoft.AspNetCore.Mvc.ControllerBas
                 endpoint: "post:location/deprecate",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -1100,6 +1229,11 @@ public partial class LocationController : Microsoft.AspNetCore.Mvc.ControllerBas
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.location",
+                "LocationController.UndeprecateLocation",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "location/undeprecate");
 
             var (statusCode, result) = await _implementation.UndeprecateLocationAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1108,6 +1242,7 @@ public partial class LocationController : Microsoft.AspNetCore.Mvc.ControllerBas
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<LocationController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:location/undeprecate");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -1123,6 +1258,7 @@ public partial class LocationController : Microsoft.AspNetCore.Mvc.ControllerBas
                 endpoint: "post:location/undeprecate",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -1142,6 +1278,11 @@ public partial class LocationController : Microsoft.AspNetCore.Mvc.ControllerBas
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.location",
+                "LocationController.LocationExists",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "location/exists");
 
             var (statusCode, result) = await _implementation.LocationExistsAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1150,6 +1291,7 @@ public partial class LocationController : Microsoft.AspNetCore.Mvc.ControllerBas
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<LocationController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:location/exists");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -1165,6 +1307,7 @@ public partial class LocationController : Microsoft.AspNetCore.Mvc.ControllerBas
                 endpoint: "post:location/exists",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -1186,6 +1329,11 @@ public partial class LocationController : Microsoft.AspNetCore.Mvc.ControllerBas
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.location",
+                "LocationController.QueryLocationsByPosition",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "location/query/by-position");
 
             var (statusCode, result) = await _implementation.QueryLocationsByPositionAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1194,6 +1342,7 @@ public partial class LocationController : Microsoft.AspNetCore.Mvc.ControllerBas
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<LocationController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:location/query/by-position");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -1209,6 +1358,7 @@ public partial class LocationController : Microsoft.AspNetCore.Mvc.ControllerBas
                 endpoint: "post:location/query/by-position",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -1230,6 +1380,11 @@ public partial class LocationController : Microsoft.AspNetCore.Mvc.ControllerBas
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.location",
+                "LocationController.SeedLocations",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "location/seed");
 
             var (statusCode, result) = await _implementation.SeedLocationsAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1238,6 +1393,7 @@ public partial class LocationController : Microsoft.AspNetCore.Mvc.ControllerBas
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<LocationController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:location/seed");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -1253,6 +1409,7 @@ public partial class LocationController : Microsoft.AspNetCore.Mvc.ControllerBas
                 endpoint: "post:location/seed",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -1278,6 +1435,11 @@ public partial class LocationController : Microsoft.AspNetCore.Mvc.ControllerBas
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.location",
+                "LocationController.ReportEntityPosition",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "location/report-entity-position");
 
             var (statusCode, result) = await _implementation.ReportEntityPositionAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1286,6 +1448,7 @@ public partial class LocationController : Microsoft.AspNetCore.Mvc.ControllerBas
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<LocationController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:location/report-entity-position");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -1301,6 +1464,7 @@ public partial class LocationController : Microsoft.AspNetCore.Mvc.ControllerBas
                 endpoint: "post:location/report-entity-position",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -1320,6 +1484,11 @@ public partial class LocationController : Microsoft.AspNetCore.Mvc.ControllerBas
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.location",
+                "LocationController.GetEntityLocation",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "location/get-entity-location");
 
             var (statusCode, result) = await _implementation.GetEntityLocationAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1328,6 +1497,7 @@ public partial class LocationController : Microsoft.AspNetCore.Mvc.ControllerBas
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<LocationController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:location/get-entity-location");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -1343,6 +1513,7 @@ public partial class LocationController : Microsoft.AspNetCore.Mvc.ControllerBas
                 endpoint: "post:location/get-entity-location",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -1363,6 +1534,11 @@ public partial class LocationController : Microsoft.AspNetCore.Mvc.ControllerBas
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.location",
+                "LocationController.ListEntitiesAtLocation",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "location/list-entities-at-location");
 
             var (statusCode, result) = await _implementation.ListEntitiesAtLocationAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1371,6 +1547,7 @@ public partial class LocationController : Microsoft.AspNetCore.Mvc.ControllerBas
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<LocationController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:location/list-entities-at-location");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -1386,6 +1563,7 @@ public partial class LocationController : Microsoft.AspNetCore.Mvc.ControllerBas
                 endpoint: "post:location/list-entities-at-location",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -1405,6 +1583,11 @@ public partial class LocationController : Microsoft.AspNetCore.Mvc.ControllerBas
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.location",
+                "LocationController.ClearEntityPosition",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "location/clear-entity-position");
 
             var (statusCode, result) = await _implementation.ClearEntityPositionAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1413,6 +1596,7 @@ public partial class LocationController : Microsoft.AspNetCore.Mvc.ControllerBas
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<LocationController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:location/clear-entity-position");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -1428,6 +1612,7 @@ public partial class LocationController : Microsoft.AspNetCore.Mvc.ControllerBas
                 endpoint: "post:location/clear-entity-position",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }

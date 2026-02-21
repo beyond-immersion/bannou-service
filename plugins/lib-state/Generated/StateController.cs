@@ -22,6 +22,21 @@
 
 #nullable enable
 
+#pragma warning disable 108 // Disable "CS0108 '{derivedDto}.ToJson()' hides inherited member '{dtoBase}.ToJson()'. Use the new keyword if hiding was intended."
+#pragma warning disable 114 // Disable "CS0114 '{derivedDto}.RaisePropertyChanged(String)' hides inherited member 'dtoBase.RaisePropertyChanged(String)'. To make the current member override that implementation, add the override keyword. Otherwise add the new keyword."
+#pragma warning disable 472 // Disable "CS0472 The result of the expression is always 'false' since a value of type 'Int32' is never equal to 'null' of type 'Int32?'
+#pragma warning disable 612 // Disable "CS0612 '...' is obsolete"
+#pragma warning disable 649 // Disable "CS0649 Field is never assigned to, and will always have its default value null"
+#pragma warning disable 1573 // Disable "CS1573 Parameter '...' has no matching param tag in the XML comment for ...
+#pragma warning disable 1591 // Disable "CS1591 Missing XML comment for publicly visible type or member ..."
+#pragma warning disable 8073 // Disable "CS8073 The result of the expression is always 'false' since a value of type 'T' is never equal to 'null' of type 'T?'"
+#pragma warning disable 3016 // Disable "CS3016 Arrays as attribute arguments is not CLS-compliant"
+#pragma warning disable 8600 // Disable "CS8600 Converting null literal or possible null value to non-nullable type"
+#pragma warning disable 8602 // Disable "CS8602 Dereference of a possibly null reference"
+#pragma warning disable 8603 // Disable "CS8603 Possible null reference return"
+#pragma warning disable 8604 // Disable "CS8604 Possible null reference argument for parameter"
+#pragma warning disable 8625 // Disable "CS8625 Cannot convert null literal to non-nullable reference type"
+#pragma warning disable 8765 // Disable "CS8765 Nullability of type of parameter doesn't match overridden member (possibly because of nullability attributes)."
 
 namespace BeyondImmersion.BannouService.State;
 
@@ -119,10 +134,12 @@ public interface IStateController : BeyondImmersion.BannouService.Controllers.IB
 public partial class StateController : Microsoft.AspNetCore.Mvc.ControllerBase
 {
     private IStateService _implementation;
+    private BeyondImmersion.BannouService.Services.ITelemetryProvider _telemetryProvider;
 
-    public StateController(IStateService implementation)
+    public StateController(IStateService implementation, BeyondImmersion.BannouService.Services.ITelemetryProvider telemetryProvider)
     {
         _implementation = implementation;
+        _telemetryProvider = telemetryProvider;
     }
 
     /// <summary>
@@ -172,6 +189,11 @@ public partial class StateController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.state",
+                "StateController.GetState",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "state/get");
 
             var (statusCode, result) = await _implementation.GetStateAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -180,6 +202,7 @@ public partial class StateController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<StateController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:state/get");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -195,6 +218,7 @@ public partial class StateController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:state/get",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -210,6 +234,11 @@ public partial class StateController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.state",
+                "StateController.SaveState",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "state/save");
 
             var (statusCode, result) = await _implementation.SaveStateAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -218,6 +247,7 @@ public partial class StateController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<StateController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:state/save");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -233,6 +263,7 @@ public partial class StateController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:state/save",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -248,6 +279,11 @@ public partial class StateController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.state",
+                "StateController.DeleteState",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "state/delete");
 
             var (statusCode, result) = await _implementation.DeleteStateAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -256,6 +292,7 @@ public partial class StateController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<StateController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:state/delete");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -271,6 +308,7 @@ public partial class StateController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:state/delete",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -286,6 +324,11 @@ public partial class StateController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.state",
+                "StateController.QueryState",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "state/query");
 
             var (statusCode, result) = await _implementation.QueryStateAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -294,6 +337,7 @@ public partial class StateController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<StateController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:state/query");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -309,6 +353,7 @@ public partial class StateController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:state/query",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -324,6 +369,11 @@ public partial class StateController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.state",
+                "StateController.BulkGetState",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "state/bulk-get");
 
             var (statusCode, result) = await _implementation.BulkGetStateAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -332,6 +382,7 @@ public partial class StateController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<StateController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:state/bulk-get");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -347,6 +398,7 @@ public partial class StateController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:state/bulk-get",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -362,6 +414,11 @@ public partial class StateController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.state",
+                "StateController.BulkSaveState",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "state/bulk-save");
 
             var (statusCode, result) = await _implementation.BulkSaveStateAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -370,6 +427,7 @@ public partial class StateController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<StateController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:state/bulk-save");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -385,6 +443,7 @@ public partial class StateController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:state/bulk-save",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -400,6 +459,11 @@ public partial class StateController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.state",
+                "StateController.BulkExistsState",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "state/bulk-exists");
 
             var (statusCode, result) = await _implementation.BulkExistsStateAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -408,6 +472,7 @@ public partial class StateController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<StateController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:state/bulk-exists");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -423,6 +488,7 @@ public partial class StateController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:state/bulk-exists",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -438,6 +504,11 @@ public partial class StateController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.state",
+                "StateController.BulkDeleteState",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "state/bulk-delete");
 
             var (statusCode, result) = await _implementation.BulkDeleteStateAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -446,6 +517,7 @@ public partial class StateController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<StateController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:state/bulk-delete");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -461,6 +533,7 @@ public partial class StateController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:state/bulk-delete",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -476,6 +549,11 @@ public partial class StateController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.state",
+                "StateController.ListStores",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "state/list-stores");
 
             var (statusCode, result) = await _implementation.ListStoresAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -484,6 +562,7 @@ public partial class StateController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<StateController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:state/list-stores");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -499,6 +578,7 @@ public partial class StateController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:state/list-stores",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }

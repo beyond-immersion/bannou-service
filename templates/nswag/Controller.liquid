@@ -55,10 +55,12 @@ public interface I{{ Class }}Controller : BeyondImmersion.BannouService.Controll
 public {% if hasControllerOnlyMethods %}abstract{% else %}partial{% endif %} class {{ Class }}Controller{% if hasControllerOnlyMethods %}Base{% endif %} : {% if HasBaseClass %}{{ BaseClass }}{% else %}{{ AspNetNamespace }}.{% if IsAspNetCore %}ControllerBase{% else %}ApiController{% endif %}{% endif %}
 {
     private I{{ Class }}Service _implementation;
+    private BeyondImmersion.BannouService.Services.ITelemetryProvider _telemetryProvider;
 
-    public {{ Class }}Controller{% if hasControllerOnlyMethods %}Base{% endif %}(I{{ Class }}Service implementation)
+    public {{ Class }}Controller{% if hasControllerOnlyMethods %}Base{% endif %}(I{{ Class }}Service implementation, BeyondImmersion.BannouService.Services.ITelemetryProvider telemetryProvider)
     {
         _implementation = implementation;
+        _telemetryProvider = telemetryProvider;
     }
 
     /// <summary>
@@ -167,6 +169,11 @@ public {% if hasControllerOnlyMethods %}abstract{% else %}partial{% endif %} cla
 {%-         assign pathParts_ = operation.Path | split: "/" -%}
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.{{ pathParts_[0] }}",
+                "{{ Class }}Controller.{{ operation.ActualOperationName }}",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "{{ operation.Path }}");
 {%-             if IsAspNetCore and operation.WrapResponse %}
             var result = await _implementation.{{ operation.ActualOperationName }}Async({% for parameter in operation.Parameters %}{{ parameter.VariableName }}{% if parameter.HasDefault %} ?? {{parameter.Default}}{% endif %}{% if parameter.IsLast == false or UseCancellationToken %}, {% endif %}{% endfor %}{% if UseCancellationToken %}cancellationToken{% endif %}).ConfigureAwait(false);
 
@@ -210,6 +217,7 @@ public {% if hasControllerOnlyMethods %}abstract{% else %}partial{% endif %} cla
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<{{ Class }}Controller{% if hasControllerOnlyMethods %}Base{% endif %}>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "{{ operation.HttpMethodUpper | downcase }}:{{ operation.Path }}");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -225,6 +233,7 @@ public {% if hasControllerOnlyMethods %}abstract{% else %}partial{% endif %} cla
                 endpoint: "{{ operation.HttpMethodUpper | downcase }}:{{ operation.Path }}",
                 stack: ex_.StackTrace,
                 cancellationToken: {% if UseCancellationToken %}cancellationToken{% else %}default{% endif %});
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }

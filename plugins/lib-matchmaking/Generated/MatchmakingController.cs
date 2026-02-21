@@ -22,6 +22,21 @@
 
 #nullable enable
 
+#pragma warning disable 108 // Disable "CS0108 '{derivedDto}.ToJson()' hides inherited member '{dtoBase}.ToJson()'. Use the new keyword if hiding was intended."
+#pragma warning disable 114 // Disable "CS0114 '{derivedDto}.RaisePropertyChanged(String)' hides inherited member 'dtoBase.RaisePropertyChanged(String)'. To make the current member override that implementation, add the override keyword. Otherwise add the new keyword."
+#pragma warning disable 472 // Disable "CS0472 The result of the expression is always 'false' since a value of type 'Int32' is never equal to 'null' of type 'Int32?'
+#pragma warning disable 612 // Disable "CS0612 '...' is obsolete"
+#pragma warning disable 649 // Disable "CS0649 Field is never assigned to, and will always have its default value null"
+#pragma warning disable 1573 // Disable "CS1573 Parameter '...' has no matching param tag in the XML comment for ...
+#pragma warning disable 1591 // Disable "CS1591 Missing XML comment for publicly visible type or member ..."
+#pragma warning disable 8073 // Disable "CS8073 The result of the expression is always 'false' since a value of type 'T' is never equal to 'null' of type 'T?'"
+#pragma warning disable 3016 // Disable "CS3016 Arrays as attribute arguments is not CLS-compliant"
+#pragma warning disable 8600 // Disable "CS8600 Converting null literal or possible null value to non-nullable type"
+#pragma warning disable 8602 // Disable "CS8602 Dereference of a possibly null reference"
+#pragma warning disable 8603 // Disable "CS8603 Possible null reference return"
+#pragma warning disable 8604 // Disable "CS8604 Possible null reference argument for parameter"
+#pragma warning disable 8625 // Disable "CS8625 Cannot convert null literal to non-nullable reference type"
+#pragma warning disable 8765 // Disable "CS8765 Nullability of type of parameter doesn't match overridden member (possibly because of nullability attributes)."
 
 namespace BeyondImmersion.BannouService.Matchmaking;
 
@@ -185,10 +200,12 @@ public interface IMatchmakingController : BeyondImmersion.BannouService.Controll
 public partial class MatchmakingController : Microsoft.AspNetCore.Mvc.ControllerBase
 {
     private IMatchmakingService _implementation;
+    private BeyondImmersion.BannouService.Services.ITelemetryProvider _telemetryProvider;
 
-    public MatchmakingController(IMatchmakingService implementation)
+    public MatchmakingController(IMatchmakingService implementation, BeyondImmersion.BannouService.Services.ITelemetryProvider telemetryProvider)
     {
         _implementation = implementation;
+        _telemetryProvider = telemetryProvider;
     }
 
     /// <summary>
@@ -242,6 +259,11 @@ public partial class MatchmakingController : Microsoft.AspNetCore.Mvc.Controller
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.matchmaking",
+                "MatchmakingController.ListQueues",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "matchmaking/queue/list");
 
             var (statusCode, result) = await _implementation.ListQueuesAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -250,6 +272,7 @@ public partial class MatchmakingController : Microsoft.AspNetCore.Mvc.Controller
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<MatchmakingController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:matchmaking/queue/list");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -265,6 +288,7 @@ public partial class MatchmakingController : Microsoft.AspNetCore.Mvc.Controller
                 endpoint: "post:matchmaking/queue/list",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -283,6 +307,11 @@ public partial class MatchmakingController : Microsoft.AspNetCore.Mvc.Controller
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.matchmaking",
+                "MatchmakingController.GetQueue",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "matchmaking/queue/get");
 
             var (statusCode, result) = await _implementation.GetQueueAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -291,6 +320,7 @@ public partial class MatchmakingController : Microsoft.AspNetCore.Mvc.Controller
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<MatchmakingController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:matchmaking/queue/get");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -306,6 +336,7 @@ public partial class MatchmakingController : Microsoft.AspNetCore.Mvc.Controller
                 endpoint: "post:matchmaking/queue/get",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -326,6 +357,11 @@ public partial class MatchmakingController : Microsoft.AspNetCore.Mvc.Controller
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.matchmaking",
+                "MatchmakingController.CreateQueue",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "matchmaking/queue/create");
 
             var (statusCode, result) = await _implementation.CreateQueueAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -334,6 +370,7 @@ public partial class MatchmakingController : Microsoft.AspNetCore.Mvc.Controller
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<MatchmakingController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:matchmaking/queue/create");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -349,6 +386,7 @@ public partial class MatchmakingController : Microsoft.AspNetCore.Mvc.Controller
                 endpoint: "post:matchmaking/queue/create",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -368,6 +406,11 @@ public partial class MatchmakingController : Microsoft.AspNetCore.Mvc.Controller
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.matchmaking",
+                "MatchmakingController.UpdateQueue",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "matchmaking/queue/update");
 
             var (statusCode, result) = await _implementation.UpdateQueueAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -376,6 +419,7 @@ public partial class MatchmakingController : Microsoft.AspNetCore.Mvc.Controller
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<MatchmakingController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:matchmaking/queue/update");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -391,6 +435,7 @@ public partial class MatchmakingController : Microsoft.AspNetCore.Mvc.Controller
                 endpoint: "post:matchmaking/queue/update",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -410,6 +455,11 @@ public partial class MatchmakingController : Microsoft.AspNetCore.Mvc.Controller
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.matchmaking",
+                "MatchmakingController.DeleteQueue",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "matchmaking/queue/delete");
 
             var statusCode = await _implementation.DeleteQueueAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode);
@@ -418,6 +468,7 @@ public partial class MatchmakingController : Microsoft.AspNetCore.Mvc.Controller
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<MatchmakingController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:matchmaking/queue/delete");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -433,6 +484,7 @@ public partial class MatchmakingController : Microsoft.AspNetCore.Mvc.Controller
                 endpoint: "post:matchmaking/queue/delete",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -454,6 +506,11 @@ public partial class MatchmakingController : Microsoft.AspNetCore.Mvc.Controller
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.matchmaking",
+                "MatchmakingController.JoinMatchmaking",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "matchmaking/join");
 
             var (statusCode, result) = await _implementation.JoinMatchmakingAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -462,6 +519,7 @@ public partial class MatchmakingController : Microsoft.AspNetCore.Mvc.Controller
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<MatchmakingController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:matchmaking/join");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -477,6 +535,7 @@ public partial class MatchmakingController : Microsoft.AspNetCore.Mvc.Controller
                 endpoint: "post:matchmaking/join",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -496,6 +555,11 @@ public partial class MatchmakingController : Microsoft.AspNetCore.Mvc.Controller
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.matchmaking",
+                "MatchmakingController.LeaveMatchmaking",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "matchmaking/leave");
 
             var statusCode = await _implementation.LeaveMatchmakingAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode);
@@ -504,6 +568,7 @@ public partial class MatchmakingController : Microsoft.AspNetCore.Mvc.Controller
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<MatchmakingController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:matchmaking/leave");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -519,6 +584,7 @@ public partial class MatchmakingController : Microsoft.AspNetCore.Mvc.Controller
                 endpoint: "post:matchmaking/leave",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -538,6 +604,11 @@ public partial class MatchmakingController : Microsoft.AspNetCore.Mvc.Controller
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.matchmaking",
+                "MatchmakingController.GetMatchmakingStatus",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "matchmaking/status");
 
             var (statusCode, result) = await _implementation.GetMatchmakingStatusAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -546,6 +617,7 @@ public partial class MatchmakingController : Microsoft.AspNetCore.Mvc.Controller
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<MatchmakingController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:matchmaking/status");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -561,6 +633,7 @@ public partial class MatchmakingController : Microsoft.AspNetCore.Mvc.Controller
                 endpoint: "post:matchmaking/status",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -581,6 +654,11 @@ public partial class MatchmakingController : Microsoft.AspNetCore.Mvc.Controller
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.matchmaking",
+                "MatchmakingController.AcceptMatch",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "matchmaking/accept");
 
             var (statusCode, result) = await _implementation.AcceptMatchAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -589,6 +667,7 @@ public partial class MatchmakingController : Microsoft.AspNetCore.Mvc.Controller
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<MatchmakingController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:matchmaking/accept");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -604,6 +683,7 @@ public partial class MatchmakingController : Microsoft.AspNetCore.Mvc.Controller
                 endpoint: "post:matchmaking/accept",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -624,6 +704,11 @@ public partial class MatchmakingController : Microsoft.AspNetCore.Mvc.Controller
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.matchmaking",
+                "MatchmakingController.DeclineMatch",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "matchmaking/decline");
 
             var statusCode = await _implementation.DeclineMatchAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode);
@@ -632,6 +717,7 @@ public partial class MatchmakingController : Microsoft.AspNetCore.Mvc.Controller
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<MatchmakingController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:matchmaking/decline");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -647,6 +733,7 @@ public partial class MatchmakingController : Microsoft.AspNetCore.Mvc.Controller
                 endpoint: "post:matchmaking/decline",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -666,6 +753,11 @@ public partial class MatchmakingController : Microsoft.AspNetCore.Mvc.Controller
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.matchmaking",
+                "MatchmakingController.GetMatchmakingStats",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "matchmaking/stats");
 
             var (statusCode, result) = await _implementation.GetMatchmakingStatsAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -674,6 +766,7 @@ public partial class MatchmakingController : Microsoft.AspNetCore.Mvc.Controller
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<MatchmakingController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:matchmaking/stats");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -689,6 +782,7 @@ public partial class MatchmakingController : Microsoft.AspNetCore.Mvc.Controller
                 endpoint: "post:matchmaking/stats",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }

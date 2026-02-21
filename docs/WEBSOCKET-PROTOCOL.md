@@ -125,9 +125,9 @@ Bit 7  Bit 6  Bit 5  Bit 4  Bit 3  Bit 2  Bit 1  Bit 0
 |------|-----|-------------|
 | None | 0x00 | Default: JSON payload, service request, expects response |
 | Binary | 0x01 | Payload is binary data (not UTF-8 JSON) |
-| Encrypted | 0x02 | Payload is encrypted (reserved for future use) |
-| Compressed | 0x04 | Payload is gzip compressed (reserved for future use) |
-| HighPriority | 0x08 | Skip to front of processing queues |
+| Reserved | 0x02 | Reserved for future use |
+| Compressed | 0x04 | Payload is Brotli-compressed. Client must decompress before parsing. Only set on server-to-client messages when compression is enabled (`CONNECT_COMPRESSION_ENABLED=true`) and payload exceeds the configured threshold (`CONNECT_COMPRESSION_THRESHOLD_BYTES`, default 1024) |
+| Reserved | 0x08 | Reserved for future use |
 | Event | 0x10 | Fire-and-forget, no response expected |
 | Client | 0x20 | Route to another WebSocket client (P2P) |
 | Response | 0x40 | This is a response (uses 16-byte header format) |

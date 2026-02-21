@@ -22,6 +22,21 @@
 
 #nullable enable
 
+#pragma warning disable 108 // Disable "CS0108 '{derivedDto}.ToJson()' hides inherited member '{dtoBase}.ToJson()'. Use the new keyword if hiding was intended."
+#pragma warning disable 114 // Disable "CS0114 '{derivedDto}.RaisePropertyChanged(String)' hides inherited member 'dtoBase.RaisePropertyChanged(String)'. To make the current member override that implementation, add the override keyword. Otherwise add the new keyword."
+#pragma warning disable 472 // Disable "CS0472 The result of the expression is always 'false' since a value of type 'Int32' is never equal to 'null' of type 'Int32?'
+#pragma warning disable 612 // Disable "CS0612 '...' is obsolete"
+#pragma warning disable 649 // Disable "CS0649 Field is never assigned to, and will always have its default value null"
+#pragma warning disable 1573 // Disable "CS1573 Parameter '...' has no matching param tag in the XML comment for ...
+#pragma warning disable 1591 // Disable "CS1591 Missing XML comment for publicly visible type or member ..."
+#pragma warning disable 8073 // Disable "CS8073 The result of the expression is always 'false' since a value of type 'T' is never equal to 'null' of type 'T?'"
+#pragma warning disable 3016 // Disable "CS3016 Arrays as attribute arguments is not CLS-compliant"
+#pragma warning disable 8600 // Disable "CS8600 Converting null literal or possible null value to non-nullable type"
+#pragma warning disable 8602 // Disable "CS8602 Dereference of a possibly null reference"
+#pragma warning disable 8603 // Disable "CS8603 Possible null reference return"
+#pragma warning disable 8604 // Disable "CS8604 Possible null reference argument for parameter"
+#pragma warning disable 8625 // Disable "CS8625 Cannot convert null literal to non-nullable reference type"
+#pragma warning disable 8765 // Disable "CS8765 Nullability of type of parameter doesn't match overridden member (possibly because of nullability attributes)."
 
 namespace BeyondImmersion.BannouService.Chat;
 
@@ -374,10 +389,12 @@ public interface IChatController : BeyondImmersion.BannouService.Controllers.IBa
 public partial class ChatController : Microsoft.AspNetCore.Mvc.ControllerBase
 {
     private IChatService _implementation;
+    private BeyondImmersion.BannouService.Services.ITelemetryProvider _telemetryProvider;
 
-    public ChatController(IChatService implementation)
+    public ChatController(IChatService implementation, BeyondImmersion.BannouService.Services.ITelemetryProvider telemetryProvider)
     {
         _implementation = implementation;
+        _telemetryProvider = telemetryProvider;
     }
 
     /// <summary>
@@ -430,6 +447,11 @@ public partial class ChatController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.chat",
+                "ChatController.RegisterRoomType",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "chat/type/register");
 
             var (statusCode, result) = await _implementation.RegisterRoomTypeAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -438,6 +460,7 @@ public partial class ChatController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<ChatController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:chat/type/register");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -453,6 +476,7 @@ public partial class ChatController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:chat/type/register",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -471,6 +495,11 @@ public partial class ChatController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.chat",
+                "ChatController.GetRoomType",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "chat/type/get");
 
             var (statusCode, result) = await _implementation.GetRoomTypeAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -479,6 +508,7 @@ public partial class ChatController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<ChatController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:chat/type/get");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -494,6 +524,7 @@ public partial class ChatController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:chat/type/get",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -512,6 +543,11 @@ public partial class ChatController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.chat",
+                "ChatController.ListRoomTypes",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "chat/type/list");
 
             var (statusCode, result) = await _implementation.ListRoomTypesAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -520,6 +556,7 @@ public partial class ChatController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<ChatController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:chat/type/list");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -535,6 +572,7 @@ public partial class ChatController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:chat/type/list",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -553,6 +591,11 @@ public partial class ChatController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.chat",
+                "ChatController.UpdateRoomType",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "chat/type/update");
 
             var (statusCode, result) = await _implementation.UpdateRoomTypeAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -561,6 +604,7 @@ public partial class ChatController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<ChatController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:chat/type/update");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -576,6 +620,7 @@ public partial class ChatController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:chat/type/update",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -594,6 +639,11 @@ public partial class ChatController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.chat",
+                "ChatController.DeprecateRoomType",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "chat/type/deprecate");
 
             var (statusCode, result) = await _implementation.DeprecateRoomTypeAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -602,6 +652,7 @@ public partial class ChatController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<ChatController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:chat/type/deprecate");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -617,6 +668,7 @@ public partial class ChatController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:chat/type/deprecate",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -635,6 +687,11 @@ public partial class ChatController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.chat",
+                "ChatController.CreateRoom",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "chat/room/create");
 
             var (statusCode, result) = await _implementation.CreateRoomAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -643,6 +700,7 @@ public partial class ChatController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<ChatController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:chat/room/create");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -658,6 +716,7 @@ public partial class ChatController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:chat/room/create",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -676,6 +735,11 @@ public partial class ChatController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.chat",
+                "ChatController.GetRoom",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "chat/room/get");
 
             var (statusCode, result) = await _implementation.GetRoomAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -684,6 +748,7 @@ public partial class ChatController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<ChatController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:chat/room/get");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -699,6 +764,7 @@ public partial class ChatController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:chat/room/get",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -717,6 +783,11 @@ public partial class ChatController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.chat",
+                "ChatController.ListRooms",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "chat/room/list");
 
             var (statusCode, result) = await _implementation.ListRoomsAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -725,6 +796,7 @@ public partial class ChatController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<ChatController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:chat/room/list");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -740,6 +812,7 @@ public partial class ChatController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:chat/room/list",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -758,6 +831,11 @@ public partial class ChatController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.chat",
+                "ChatController.UpdateRoom",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "chat/room/update");
 
             var (statusCode, result) = await _implementation.UpdateRoomAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -766,6 +844,7 @@ public partial class ChatController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<ChatController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:chat/room/update");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -781,6 +860,7 @@ public partial class ChatController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:chat/room/update",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -799,6 +879,11 @@ public partial class ChatController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.chat",
+                "ChatController.DeleteRoom",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "chat/room/delete");
 
             var (statusCode, result) = await _implementation.DeleteRoomAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -807,6 +892,7 @@ public partial class ChatController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<ChatController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:chat/room/delete");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -822,6 +908,7 @@ public partial class ChatController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:chat/room/delete",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -840,6 +927,11 @@ public partial class ChatController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.chat",
+                "ChatController.ArchiveRoom",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "chat/room/archive");
 
             var (statusCode, result) = await _implementation.ArchiveRoomAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -848,6 +940,7 @@ public partial class ChatController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<ChatController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:chat/room/archive");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -863,6 +956,7 @@ public partial class ChatController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:chat/room/archive",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -881,6 +975,11 @@ public partial class ChatController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.chat",
+                "ChatController.JoinRoom",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "chat/room/join");
 
             var (statusCode, result) = await _implementation.JoinRoomAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -889,6 +988,7 @@ public partial class ChatController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<ChatController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:chat/room/join");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -904,6 +1004,7 @@ public partial class ChatController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:chat/room/join",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -922,6 +1023,11 @@ public partial class ChatController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.chat",
+                "ChatController.LeaveRoom",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "chat/room/leave");
 
             var (statusCode, result) = await _implementation.LeaveRoomAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -930,6 +1036,7 @@ public partial class ChatController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<ChatController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:chat/room/leave");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -945,6 +1052,7 @@ public partial class ChatController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:chat/room/leave",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -963,6 +1071,11 @@ public partial class ChatController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.chat",
+                "ChatController.ListParticipants",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "chat/room/participants");
 
             var (statusCode, result) = await _implementation.ListParticipantsAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -971,6 +1084,7 @@ public partial class ChatController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<ChatController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:chat/room/participants");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -986,6 +1100,7 @@ public partial class ChatController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:chat/room/participants",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -1004,6 +1119,11 @@ public partial class ChatController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.chat",
+                "ChatController.KickParticipant",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "chat/room/participant/kick");
 
             var (statusCode, result) = await _implementation.KickParticipantAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1012,6 +1132,7 @@ public partial class ChatController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<ChatController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:chat/room/participant/kick");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -1027,6 +1148,7 @@ public partial class ChatController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:chat/room/participant/kick",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -1045,6 +1167,11 @@ public partial class ChatController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.chat",
+                "ChatController.BanParticipant",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "chat/room/participant/ban");
 
             var (statusCode, result) = await _implementation.BanParticipantAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1053,6 +1180,7 @@ public partial class ChatController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<ChatController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:chat/room/participant/ban");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -1068,6 +1196,7 @@ public partial class ChatController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:chat/room/participant/ban",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -1086,6 +1215,11 @@ public partial class ChatController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.chat",
+                "ChatController.UnbanParticipant",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "chat/room/participant/unban");
 
             var (statusCode, result) = await _implementation.UnbanParticipantAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1094,6 +1228,7 @@ public partial class ChatController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<ChatController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:chat/room/participant/unban");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -1109,6 +1244,7 @@ public partial class ChatController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:chat/room/participant/unban",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -1127,6 +1263,11 @@ public partial class ChatController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.chat",
+                "ChatController.MuteParticipant",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "chat/room/participant/mute");
 
             var (statusCode, result) = await _implementation.MuteParticipantAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1135,6 +1276,7 @@ public partial class ChatController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<ChatController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:chat/room/participant/mute");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -1150,6 +1292,7 @@ public partial class ChatController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:chat/room/participant/mute",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -1168,6 +1311,11 @@ public partial class ChatController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.chat",
+                "ChatController.SendMessage",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "chat/message/send");
 
             var (statusCode, result) = await _implementation.SendMessageAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1176,6 +1324,7 @@ public partial class ChatController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<ChatController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:chat/message/send");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -1191,6 +1340,7 @@ public partial class ChatController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:chat/message/send",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -1209,6 +1359,11 @@ public partial class ChatController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.chat",
+                "ChatController.SendMessageBatch",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "chat/message/send-batch");
 
             var (statusCode, result) = await _implementation.SendMessageBatchAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1217,6 +1372,7 @@ public partial class ChatController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<ChatController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:chat/message/send-batch");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -1232,6 +1388,7 @@ public partial class ChatController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:chat/message/send-batch",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -1250,6 +1407,11 @@ public partial class ChatController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.chat",
+                "ChatController.GetMessageHistory",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "chat/message/history");
 
             var (statusCode, result) = await _implementation.GetMessageHistoryAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1258,6 +1420,7 @@ public partial class ChatController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<ChatController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:chat/message/history");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -1273,6 +1436,7 @@ public partial class ChatController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:chat/message/history",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -1291,6 +1455,11 @@ public partial class ChatController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.chat",
+                "ChatController.DeleteMessage",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "chat/message/delete");
 
             var (statusCode, result) = await _implementation.DeleteMessageAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1299,6 +1468,7 @@ public partial class ChatController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<ChatController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:chat/message/delete");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -1314,6 +1484,7 @@ public partial class ChatController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:chat/message/delete",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -1332,6 +1503,11 @@ public partial class ChatController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.chat",
+                "ChatController.PinMessage",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "chat/message/pin");
 
             var (statusCode, result) = await _implementation.PinMessageAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1340,6 +1516,7 @@ public partial class ChatController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<ChatController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:chat/message/pin");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -1355,6 +1532,7 @@ public partial class ChatController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:chat/message/pin",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -1373,6 +1551,11 @@ public partial class ChatController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.chat",
+                "ChatController.UnpinMessage",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "chat/message/unpin");
 
             var (statusCode, result) = await _implementation.UnpinMessageAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1381,6 +1564,7 @@ public partial class ChatController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<ChatController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:chat/message/unpin");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -1396,6 +1580,7 @@ public partial class ChatController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:chat/message/unpin",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -1414,6 +1599,11 @@ public partial class ChatController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.chat",
+                "ChatController.SearchMessages",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "chat/message/search");
 
             var (statusCode, result) = await _implementation.SearchMessagesAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1422,6 +1612,7 @@ public partial class ChatController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<ChatController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:chat/message/search");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -1437,6 +1628,7 @@ public partial class ChatController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:chat/message/search",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -1455,6 +1647,11 @@ public partial class ChatController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.chat",
+                "ChatController.AdminListRooms",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "chat/admin/rooms");
 
             var (statusCode, result) = await _implementation.AdminListRoomsAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1463,6 +1660,7 @@ public partial class ChatController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<ChatController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:chat/admin/rooms");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -1478,6 +1676,7 @@ public partial class ChatController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:chat/admin/rooms",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -1496,6 +1695,11 @@ public partial class ChatController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.chat",
+                "ChatController.AdminGetStats",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "chat/admin/stats");
 
             var (statusCode, result) = await _implementation.AdminGetStatsAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1504,6 +1708,7 @@ public partial class ChatController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<ChatController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:chat/admin/stats");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -1519,6 +1724,7 @@ public partial class ChatController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:chat/admin/stats",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -1537,6 +1743,11 @@ public partial class ChatController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.chat",
+                "ChatController.AdminForceCleanup",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "chat/admin/cleanup");
 
             var (statusCode, result) = await _implementation.AdminForceCleanupAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1545,6 +1756,7 @@ public partial class ChatController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<ChatController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:chat/admin/cleanup");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -1560,6 +1772,7 @@ public partial class ChatController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:chat/admin/cleanup",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }

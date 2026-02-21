@@ -22,6 +22,21 @@
 
 #nullable enable
 
+#pragma warning disable 108 // Disable "CS0108 '{derivedDto}.ToJson()' hides inherited member '{dtoBase}.ToJson()'. Use the new keyword if hiding was intended."
+#pragma warning disable 114 // Disable "CS0114 '{derivedDto}.RaisePropertyChanged(String)' hides inherited member 'dtoBase.RaisePropertyChanged(String)'. To make the current member override that implementation, add the override keyword. Otherwise add the new keyword."
+#pragma warning disable 472 // Disable "CS0472 The result of the expression is always 'false' since a value of type 'Int32' is never equal to 'null' of type 'Int32?'
+#pragma warning disable 612 // Disable "CS0612 '...' is obsolete"
+#pragma warning disable 649 // Disable "CS0649 Field is never assigned to, and will always have its default value null"
+#pragma warning disable 1573 // Disable "CS1573 Parameter '...' has no matching param tag in the XML comment for ...
+#pragma warning disable 1591 // Disable "CS1591 Missing XML comment for publicly visible type or member ..."
+#pragma warning disable 8073 // Disable "CS8073 The result of the expression is always 'false' since a value of type 'T' is never equal to 'null' of type 'T?'"
+#pragma warning disable 3016 // Disable "CS3016 Arrays as attribute arguments is not CLS-compliant"
+#pragma warning disable 8600 // Disable "CS8600 Converting null literal or possible null value to non-nullable type"
+#pragma warning disable 8602 // Disable "CS8602 Dereference of a possibly null reference"
+#pragma warning disable 8603 // Disable "CS8603 Possible null reference return"
+#pragma warning disable 8604 // Disable "CS8604 Possible null reference argument for parameter"
+#pragma warning disable 8625 // Disable "CS8625 Cannot convert null literal to non-nullable reference type"
+#pragma warning disable 8765 // Disable "CS8765 Nullability of type of parameter doesn't match overridden member (possibly because of nullability attributes)."
 
 namespace BeyondImmersion.BannouService.Divine;
 
@@ -328,10 +343,12 @@ public interface IDivineController : BeyondImmersion.BannouService.Controllers.I
 public partial class DivineController : Microsoft.AspNetCore.Mvc.ControllerBase
 {
     private IDivineService _implementation;
+    private BeyondImmersion.BannouService.Services.ITelemetryProvider _telemetryProvider;
 
-    public DivineController(IDivineService implementation)
+    public DivineController(IDivineService implementation, BeyondImmersion.BannouService.Services.ITelemetryProvider telemetryProvider)
     {
         _implementation = implementation;
+        _telemetryProvider = telemetryProvider;
     }
 
     /// <summary>
@@ -386,6 +403,11 @@ public partial class DivineController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.divine",
+                "DivineController.CreateDeity",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "divine/deity/create");
 
             var (statusCode, result) = await _implementation.CreateDeityAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -394,6 +416,7 @@ public partial class DivineController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<DivineController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:divine/deity/create");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -409,6 +432,7 @@ public partial class DivineController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:divine/deity/create",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -427,6 +451,11 @@ public partial class DivineController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.divine",
+                "DivineController.GetDeity",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "divine/deity/get");
 
             var (statusCode, result) = await _implementation.GetDeityAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -435,6 +464,7 @@ public partial class DivineController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<DivineController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:divine/deity/get");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -450,6 +480,7 @@ public partial class DivineController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:divine/deity/get",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -468,6 +499,11 @@ public partial class DivineController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.divine",
+                "DivineController.GetDeityByCode",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "divine/deity/get-by-code");
 
             var (statusCode, result) = await _implementation.GetDeityByCodeAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -476,6 +512,7 @@ public partial class DivineController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<DivineController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:divine/deity/get-by-code");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -491,6 +528,7 @@ public partial class DivineController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:divine/deity/get-by-code",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -510,6 +548,11 @@ public partial class DivineController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.divine",
+                "DivineController.ListDeities",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "divine/deity/list");
 
             var (statusCode, result) = await _implementation.ListDeitiesAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -518,6 +561,7 @@ public partial class DivineController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<DivineController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:divine/deity/list");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -533,6 +577,7 @@ public partial class DivineController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:divine/deity/list",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -552,6 +597,11 @@ public partial class DivineController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.divine",
+                "DivineController.UpdateDeity",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "divine/deity/update");
 
             var (statusCode, result) = await _implementation.UpdateDeityAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -560,6 +610,7 @@ public partial class DivineController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<DivineController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:divine/deity/update");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -575,6 +626,7 @@ public partial class DivineController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:divine/deity/update",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -594,6 +646,11 @@ public partial class DivineController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.divine",
+                "DivineController.ActivateDeity",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "divine/deity/activate");
 
             var (statusCode, result) = await _implementation.ActivateDeityAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -602,6 +659,7 @@ public partial class DivineController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<DivineController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:divine/deity/activate");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -617,6 +675,7 @@ public partial class DivineController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:divine/deity/activate",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -636,6 +695,11 @@ public partial class DivineController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.divine",
+                "DivineController.DeactivateDeity",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "divine/deity/deactivate");
 
             var (statusCode, result) = await _implementation.DeactivateDeityAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -644,6 +708,7 @@ public partial class DivineController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<DivineController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:divine/deity/deactivate");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -659,6 +724,7 @@ public partial class DivineController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:divine/deity/deactivate",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -680,6 +746,11 @@ public partial class DivineController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.divine",
+                "DivineController.DeleteDeity",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "divine/deity/delete");
 
             var statusCode = await _implementation.DeleteDeityAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode);
@@ -688,6 +759,7 @@ public partial class DivineController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<DivineController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:divine/deity/delete");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -703,6 +775,7 @@ public partial class DivineController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:divine/deity/delete",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -721,6 +794,11 @@ public partial class DivineController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.divine",
+                "DivineController.GetDivinityBalance",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "divine/divinity/get-balance");
 
             var (statusCode, result) = await _implementation.GetDivinityBalanceAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -729,6 +807,7 @@ public partial class DivineController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<DivineController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:divine/divinity/get-balance");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -744,6 +823,7 @@ public partial class DivineController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:divine/divinity/get-balance",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -763,6 +843,11 @@ public partial class DivineController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.divine",
+                "DivineController.CreditDivinity",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "divine/divinity/credit");
 
             var (statusCode, result) = await _implementation.CreditDivinityAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -771,6 +856,7 @@ public partial class DivineController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<DivineController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:divine/divinity/credit");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -786,6 +872,7 @@ public partial class DivineController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:divine/divinity/credit",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -806,6 +893,11 @@ public partial class DivineController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.divine",
+                "DivineController.DebitDivinity",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "divine/divinity/debit");
 
             var (statusCode, result) = await _implementation.DebitDivinityAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -814,6 +906,7 @@ public partial class DivineController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<DivineController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:divine/divinity/debit");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -829,6 +922,7 @@ public partial class DivineController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:divine/divinity/debit",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -847,6 +941,11 @@ public partial class DivineController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.divine",
+                "DivineController.GetDivinityHistory",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "divine/divinity/get-history");
 
             var (statusCode, result) = await _implementation.GetDivinityHistoryAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -855,6 +954,7 @@ public partial class DivineController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<DivineController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:divine/divinity/get-history");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -870,6 +970,7 @@ public partial class DivineController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:divine/divinity/get-history",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -892,6 +993,11 @@ public partial class DivineController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.divine",
+                "DivineController.GrantBlessing",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "divine/blessing/grant");
 
             var (statusCode, result) = await _implementation.GrantBlessingAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -900,6 +1006,7 @@ public partial class DivineController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<DivineController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:divine/blessing/grant");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -915,6 +1022,7 @@ public partial class DivineController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:divine/blessing/grant",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -935,6 +1043,11 @@ public partial class DivineController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.divine",
+                "DivineController.RevokeBlessing",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "divine/blessing/revoke");
 
             var (statusCode, result) = await _implementation.RevokeBlessingAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -943,6 +1056,7 @@ public partial class DivineController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<DivineController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:divine/blessing/revoke");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -958,6 +1072,7 @@ public partial class DivineController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:divine/blessing/revoke",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -976,6 +1091,11 @@ public partial class DivineController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.divine",
+                "DivineController.ListBlessingsByEntity",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "divine/blessing/list-by-entity");
 
             var (statusCode, result) = await _implementation.ListBlessingsByEntityAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -984,6 +1104,7 @@ public partial class DivineController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<DivineController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:divine/blessing/list-by-entity");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -999,6 +1120,7 @@ public partial class DivineController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:divine/blessing/list-by-entity",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -1017,6 +1139,11 @@ public partial class DivineController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.divine",
+                "DivineController.ListBlessingsByDeity",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "divine/blessing/list-by-deity");
 
             var (statusCode, result) = await _implementation.ListBlessingsByDeityAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1025,6 +1152,7 @@ public partial class DivineController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<DivineController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:divine/blessing/list-by-deity");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -1040,6 +1168,7 @@ public partial class DivineController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:divine/blessing/list-by-deity",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -1058,6 +1187,11 @@ public partial class DivineController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.divine",
+                "DivineController.GetBlessing",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "divine/blessing/get");
 
             var (statusCode, result) = await _implementation.GetBlessingAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1066,6 +1200,7 @@ public partial class DivineController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<DivineController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:divine/blessing/get");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -1081,6 +1216,7 @@ public partial class DivineController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:divine/blessing/get",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -1101,6 +1237,11 @@ public partial class DivineController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.divine",
+                "DivineController.RegisterFollower",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "divine/follower/register");
 
             var (statusCode, result) = await _implementation.RegisterFollowerAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1109,6 +1250,7 @@ public partial class DivineController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<DivineController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:divine/follower/register");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -1124,6 +1266,7 @@ public partial class DivineController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:divine/follower/register",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -1143,6 +1286,11 @@ public partial class DivineController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.divine",
+                "DivineController.UnregisterFollower",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "divine/follower/unregister");
 
             var statusCode = await _implementation.UnregisterFollowerAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode);
@@ -1151,6 +1299,7 @@ public partial class DivineController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<DivineController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:divine/follower/unregister");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -1166,6 +1315,7 @@ public partial class DivineController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:divine/follower/unregister",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -1184,6 +1334,11 @@ public partial class DivineController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.divine",
+                "DivineController.GetFollowers",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "divine/follower/get-followers");
 
             var (statusCode, result) = await _implementation.GetFollowersAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1192,6 +1347,7 @@ public partial class DivineController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<DivineController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:divine/follower/get-followers");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -1207,6 +1363,7 @@ public partial class DivineController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:divine/follower/get-followers",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -1228,6 +1385,11 @@ public partial class DivineController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.divine",
+                "DivineController.CleanupByCharacter",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "divine/cleanup-by-character");
 
             var statusCode = await _implementation.CleanupByCharacterAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode);
@@ -1236,6 +1398,7 @@ public partial class DivineController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<DivineController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:divine/cleanup-by-character");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -1251,6 +1414,7 @@ public partial class DivineController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:divine/cleanup-by-character",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -1271,6 +1435,11 @@ public partial class DivineController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.divine",
+                "DivineController.CleanupByGameService",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "divine/cleanup-by-game-service");
 
             var statusCode = await _implementation.CleanupByGameServiceAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode);
@@ -1279,6 +1448,7 @@ public partial class DivineController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<DivineController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:divine/cleanup-by-game-service");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -1294,6 +1464,7 @@ public partial class DivineController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:divine/cleanup-by-game-service",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }

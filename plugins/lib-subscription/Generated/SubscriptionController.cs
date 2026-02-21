@@ -22,6 +22,21 @@
 
 #nullable enable
 
+#pragma warning disable 108 // Disable "CS0108 '{derivedDto}.ToJson()' hides inherited member '{dtoBase}.ToJson()'. Use the new keyword if hiding was intended."
+#pragma warning disable 114 // Disable "CS0114 '{derivedDto}.RaisePropertyChanged(String)' hides inherited member 'dtoBase.RaisePropertyChanged(String)'. To make the current member override that implementation, add the override keyword. Otherwise add the new keyword."
+#pragma warning disable 472 // Disable "CS0472 The result of the expression is always 'false' since a value of type 'Int32' is never equal to 'null' of type 'Int32?'
+#pragma warning disable 612 // Disable "CS0612 '...' is obsolete"
+#pragma warning disable 649 // Disable "CS0649 Field is never assigned to, and will always have its default value null"
+#pragma warning disable 1573 // Disable "CS1573 Parameter '...' has no matching param tag in the XML comment for ...
+#pragma warning disable 1591 // Disable "CS1591 Missing XML comment for publicly visible type or member ..."
+#pragma warning disable 8073 // Disable "CS8073 The result of the expression is always 'false' since a value of type 'T' is never equal to 'null' of type 'T?'"
+#pragma warning disable 3016 // Disable "CS3016 Arrays as attribute arguments is not CLS-compliant"
+#pragma warning disable 8600 // Disable "CS8600 Converting null literal or possible null value to non-nullable type"
+#pragma warning disable 8602 // Disable "CS8602 Dereference of a possibly null reference"
+#pragma warning disable 8603 // Disable "CS8603 Possible null reference return"
+#pragma warning disable 8604 // Disable "CS8604 Possible null reference argument for parameter"
+#pragma warning disable 8625 // Disable "CS8625 Cannot convert null literal to non-nullable reference type"
+#pragma warning disable 8765 // Disable "CS8765 Nullability of type of parameter doesn't match overridden member (possibly because of nullability attributes)."
 
 namespace BeyondImmersion.BannouService.Subscription;
 
@@ -125,10 +140,12 @@ public interface ISubscriptionController : BeyondImmersion.BannouService.Control
 public partial class SubscriptionController : Microsoft.AspNetCore.Mvc.ControllerBase
 {
     private ISubscriptionService _implementation;
+    private BeyondImmersion.BannouService.Services.ITelemetryProvider _telemetryProvider;
 
-    public SubscriptionController(ISubscriptionService implementation)
+    public SubscriptionController(ISubscriptionService implementation, BeyondImmersion.BannouService.Services.ITelemetryProvider telemetryProvider)
     {
         _implementation = implementation;
+        _telemetryProvider = telemetryProvider;
     }
 
     /// <summary>
@@ -181,6 +198,11 @@ public partial class SubscriptionController : Microsoft.AspNetCore.Mvc.Controlle
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.subscription",
+                "SubscriptionController.GetAccountSubscriptions",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "subscription/account/list");
 
             var (statusCode, result) = await _implementation.GetAccountSubscriptionsAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -189,6 +211,7 @@ public partial class SubscriptionController : Microsoft.AspNetCore.Mvc.Controlle
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<SubscriptionController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:subscription/account/list");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -204,6 +227,7 @@ public partial class SubscriptionController : Microsoft.AspNetCore.Mvc.Controlle
                 endpoint: "post:subscription/account/list",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -227,6 +251,11 @@ public partial class SubscriptionController : Microsoft.AspNetCore.Mvc.Controlle
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.subscription",
+                "SubscriptionController.QueryCurrentSubscriptions",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "subscription/query");
 
             var (statusCode, result) = await _implementation.QueryCurrentSubscriptionsAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -235,6 +264,7 @@ public partial class SubscriptionController : Microsoft.AspNetCore.Mvc.Controlle
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<SubscriptionController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:subscription/query");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -250,6 +280,7 @@ public partial class SubscriptionController : Microsoft.AspNetCore.Mvc.Controlle
                 endpoint: "post:subscription/query",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -265,6 +296,11 @@ public partial class SubscriptionController : Microsoft.AspNetCore.Mvc.Controlle
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.subscription",
+                "SubscriptionController.GetSubscription",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "subscription/get");
 
             var (statusCode, result) = await _implementation.GetSubscriptionAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -273,6 +309,7 @@ public partial class SubscriptionController : Microsoft.AspNetCore.Mvc.Controlle
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<SubscriptionController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:subscription/get");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -288,6 +325,7 @@ public partial class SubscriptionController : Microsoft.AspNetCore.Mvc.Controlle
                 endpoint: "post:subscription/get",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -306,6 +344,11 @@ public partial class SubscriptionController : Microsoft.AspNetCore.Mvc.Controlle
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.subscription",
+                "SubscriptionController.CreateSubscription",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "subscription/create");
 
             var (statusCode, result) = await _implementation.CreateSubscriptionAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -314,6 +357,7 @@ public partial class SubscriptionController : Microsoft.AspNetCore.Mvc.Controlle
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<SubscriptionController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:subscription/create");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -329,6 +373,7 @@ public partial class SubscriptionController : Microsoft.AspNetCore.Mvc.Controlle
                 endpoint: "post:subscription/create",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -347,6 +392,11 @@ public partial class SubscriptionController : Microsoft.AspNetCore.Mvc.Controlle
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.subscription",
+                "SubscriptionController.UpdateSubscription",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "subscription/update");
 
             var (statusCode, result) = await _implementation.UpdateSubscriptionAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -355,6 +405,7 @@ public partial class SubscriptionController : Microsoft.AspNetCore.Mvc.Controlle
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<SubscriptionController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:subscription/update");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -370,6 +421,7 @@ public partial class SubscriptionController : Microsoft.AspNetCore.Mvc.Controlle
                 endpoint: "post:subscription/update",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -389,6 +441,11 @@ public partial class SubscriptionController : Microsoft.AspNetCore.Mvc.Controlle
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.subscription",
+                "SubscriptionController.CancelSubscription",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "subscription/cancel");
 
             var (statusCode, result) = await _implementation.CancelSubscriptionAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -397,6 +454,7 @@ public partial class SubscriptionController : Microsoft.AspNetCore.Mvc.Controlle
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<SubscriptionController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:subscription/cancel");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -412,6 +470,7 @@ public partial class SubscriptionController : Microsoft.AspNetCore.Mvc.Controlle
                 endpoint: "post:subscription/cancel",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -430,6 +489,11 @@ public partial class SubscriptionController : Microsoft.AspNetCore.Mvc.Controlle
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.subscription",
+                "SubscriptionController.RenewSubscription",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "subscription/renew");
 
             var (statusCode, result) = await _implementation.RenewSubscriptionAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -438,6 +502,7 @@ public partial class SubscriptionController : Microsoft.AspNetCore.Mvc.Controlle
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<SubscriptionController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:subscription/renew");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -453,6 +518,7 @@ public partial class SubscriptionController : Microsoft.AspNetCore.Mvc.Controlle
                 endpoint: "post:subscription/renew",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }

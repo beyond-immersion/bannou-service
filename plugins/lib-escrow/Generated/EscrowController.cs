@@ -22,6 +22,21 @@
 
 #nullable enable
 
+#pragma warning disable 108 // Disable "CS0108 '{derivedDto}.ToJson()' hides inherited member '{dtoBase}.ToJson()'. Use the new keyword if hiding was intended."
+#pragma warning disable 114 // Disable "CS0114 '{derivedDto}.RaisePropertyChanged(String)' hides inherited member 'dtoBase.RaisePropertyChanged(String)'. To make the current member override that implementation, add the override keyword. Otherwise add the new keyword."
+#pragma warning disable 472 // Disable "CS0472 The result of the expression is always 'false' since a value of type 'Int32' is never equal to 'null' of type 'Int32?'
+#pragma warning disable 612 // Disable "CS0612 '...' is obsolete"
+#pragma warning disable 649 // Disable "CS0649 Field is never assigned to, and will always have its default value null"
+#pragma warning disable 1573 // Disable "CS1573 Parameter '...' has no matching param tag in the XML comment for ...
+#pragma warning disable 1591 // Disable "CS1591 Missing XML comment for publicly visible type or member ..."
+#pragma warning disable 8073 // Disable "CS8073 The result of the expression is always 'false' since a value of type 'T' is never equal to 'null' of type 'T?'"
+#pragma warning disable 3016 // Disable "CS3016 Arrays as attribute arguments is not CLS-compliant"
+#pragma warning disable 8600 // Disable "CS8600 Converting null literal or possible null value to non-nullable type"
+#pragma warning disable 8602 // Disable "CS8602 Dereference of a possibly null reference"
+#pragma warning disable 8603 // Disable "CS8603 Possible null reference return"
+#pragma warning disable 8604 // Disable "CS8604 Possible null reference argument for parameter"
+#pragma warning disable 8625 // Disable "CS8625 Cannot convert null literal to non-nullable reference type"
+#pragma warning disable 8765 // Disable "CS8765 Nullability of type of parameter doesn't match overridden member (possibly because of nullability attributes)."
 
 namespace BeyondImmersion.BannouService.Escrow;
 
@@ -317,10 +332,12 @@ public interface IEscrowController : BeyondImmersion.BannouService.Controllers.I
 public partial class EscrowController : Microsoft.AspNetCore.Mvc.ControllerBase
 {
     private IEscrowService _implementation;
+    private BeyondImmersion.BannouService.Services.ITelemetryProvider _telemetryProvider;
 
-    public EscrowController(IEscrowService implementation)
+    public EscrowController(IEscrowService implementation, BeyondImmersion.BannouService.Services.ITelemetryProvider telemetryProvider)
     {
         _implementation = implementation;
+        _telemetryProvider = telemetryProvider;
     }
 
     /// <summary>
@@ -376,6 +393,11 @@ public partial class EscrowController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.escrow",
+                "EscrowController.CreateEscrow",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "escrow/create");
 
             var (statusCode, result) = await _implementation.CreateEscrowAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -384,6 +406,7 @@ public partial class EscrowController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<EscrowController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:escrow/create");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -399,6 +422,7 @@ public partial class EscrowController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:escrow/create",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -417,6 +441,11 @@ public partial class EscrowController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.escrow",
+                "EscrowController.GetEscrow",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "escrow/get");
 
             var (statusCode, result) = await _implementation.GetEscrowAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -425,6 +454,7 @@ public partial class EscrowController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<EscrowController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:escrow/get");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -440,6 +470,7 @@ public partial class EscrowController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:escrow/get",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -458,6 +489,11 @@ public partial class EscrowController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.escrow",
+                "EscrowController.ListEscrows",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "escrow/list");
 
             var (statusCode, result) = await _implementation.ListEscrowsAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -466,6 +502,7 @@ public partial class EscrowController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<EscrowController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:escrow/list");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -481,6 +518,7 @@ public partial class EscrowController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:escrow/list",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -502,6 +540,11 @@ public partial class EscrowController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.escrow",
+                "EscrowController.GetMyToken",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "escrow/get-my-token");
 
             var (statusCode, result) = await _implementation.GetMyTokenAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -510,6 +553,7 @@ public partial class EscrowController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<EscrowController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:escrow/get-my-token");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -525,6 +569,7 @@ public partial class EscrowController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:escrow/get-my-token",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -547,6 +592,11 @@ public partial class EscrowController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.escrow",
+                "EscrowController.Deposit",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "escrow/deposit");
 
             var (statusCode, result) = await _implementation.DepositAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -555,6 +605,7 @@ public partial class EscrowController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<EscrowController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:escrow/deposit");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -570,6 +621,7 @@ public partial class EscrowController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:escrow/deposit",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -588,6 +640,11 @@ public partial class EscrowController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.escrow",
+                "EscrowController.ValidateDeposit",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "escrow/deposit/validate");
 
             var (statusCode, result) = await _implementation.ValidateDepositAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -596,6 +653,7 @@ public partial class EscrowController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<EscrowController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:escrow/deposit/validate");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -611,6 +669,7 @@ public partial class EscrowController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:escrow/deposit/validate",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -629,6 +688,11 @@ public partial class EscrowController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.escrow",
+                "EscrowController.GetDepositStatus",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "escrow/deposit/status");
 
             var (statusCode, result) = await _implementation.GetDepositStatusAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -637,6 +701,7 @@ public partial class EscrowController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<EscrowController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:escrow/deposit/status");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -652,6 +717,7 @@ public partial class EscrowController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:escrow/deposit/status",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -670,6 +736,11 @@ public partial class EscrowController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.escrow",
+                "EscrowController.RecordConsent",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "escrow/consent");
 
             var (statusCode, result) = await _implementation.RecordConsentAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -678,6 +749,7 @@ public partial class EscrowController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<EscrowController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:escrow/consent");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -693,6 +765,7 @@ public partial class EscrowController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:escrow/consent",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -711,6 +784,11 @@ public partial class EscrowController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.escrow",
+                "EscrowController.GetConsentStatus",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "escrow/consent/status");
 
             var (statusCode, result) = await _implementation.GetConsentStatusAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -719,6 +797,7 @@ public partial class EscrowController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<EscrowController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:escrow/consent/status");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -734,6 +813,7 @@ public partial class EscrowController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:escrow/consent/status",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -754,6 +834,11 @@ public partial class EscrowController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.escrow",
+                "EscrowController.Release",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "escrow/release");
 
             var (statusCode, result) = await _implementation.ReleaseAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -762,6 +847,7 @@ public partial class EscrowController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<EscrowController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:escrow/release");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -777,6 +863,7 @@ public partial class EscrowController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:escrow/release",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -795,6 +882,11 @@ public partial class EscrowController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.escrow",
+                "EscrowController.Refund",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "escrow/refund");
 
             var (statusCode, result) = await _implementation.RefundAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -803,6 +895,7 @@ public partial class EscrowController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<EscrowController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:escrow/refund");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -818,6 +911,7 @@ public partial class EscrowController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:escrow/refund",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -836,6 +930,11 @@ public partial class EscrowController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.escrow",
+                "EscrowController.Cancel",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "escrow/cancel");
 
             var (statusCode, result) = await _implementation.CancelAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -844,6 +943,7 @@ public partial class EscrowController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<EscrowController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:escrow/cancel");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -859,6 +959,7 @@ public partial class EscrowController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:escrow/cancel",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -877,6 +978,11 @@ public partial class EscrowController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.escrow",
+                "EscrowController.Dispute",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "escrow/dispute");
 
             var (statusCode, result) = await _implementation.DisputeAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -885,6 +991,7 @@ public partial class EscrowController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<EscrowController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:escrow/dispute");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -900,6 +1007,7 @@ public partial class EscrowController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:escrow/dispute",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -919,6 +1027,11 @@ public partial class EscrowController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.escrow",
+                "EscrowController.ConfirmRelease",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "escrow/confirm-release");
 
             var (statusCode, result) = await _implementation.ConfirmReleaseAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -927,6 +1040,7 @@ public partial class EscrowController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<EscrowController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:escrow/confirm-release");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -942,6 +1056,7 @@ public partial class EscrowController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:escrow/confirm-release",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -961,6 +1076,11 @@ public partial class EscrowController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.escrow",
+                "EscrowController.ConfirmRefund",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "escrow/confirm-refund");
 
             var (statusCode, result) = await _implementation.ConfirmRefundAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -969,6 +1089,7 @@ public partial class EscrowController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<EscrowController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:escrow/confirm-refund");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -984,6 +1105,7 @@ public partial class EscrowController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:escrow/confirm-refund",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -1002,6 +1124,11 @@ public partial class EscrowController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.escrow",
+                "EscrowController.Resolve",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "escrow/resolve");
 
             var (statusCode, result) = await _implementation.ResolveAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1010,6 +1137,7 @@ public partial class EscrowController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<EscrowController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:escrow/resolve");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -1025,6 +1153,7 @@ public partial class EscrowController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:escrow/resolve",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -1044,6 +1173,11 @@ public partial class EscrowController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.escrow",
+                "EscrowController.VerifyCondition",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "escrow/verify-condition");
 
             var (statusCode, result) = await _implementation.VerifyConditionAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1052,6 +1186,7 @@ public partial class EscrowController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<EscrowController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:escrow/verify-condition");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -1067,6 +1202,7 @@ public partial class EscrowController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:escrow/verify-condition",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -1085,6 +1221,11 @@ public partial class EscrowController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.escrow",
+                "EscrowController.ValidateEscrow",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "escrow/validate");
 
             var (statusCode, result) = await _implementation.ValidateEscrowAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1093,6 +1234,7 @@ public partial class EscrowController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<EscrowController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:escrow/validate");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -1108,6 +1250,7 @@ public partial class EscrowController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:escrow/validate",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -1126,6 +1269,11 @@ public partial class EscrowController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.escrow",
+                "EscrowController.Reaffirm",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "escrow/reaffirm");
 
             var (statusCode, result) = await _implementation.ReaffirmAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1134,6 +1282,7 @@ public partial class EscrowController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<EscrowController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:escrow/reaffirm");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -1149,6 +1298,7 @@ public partial class EscrowController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:escrow/reaffirm",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -1167,6 +1317,11 @@ public partial class EscrowController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.escrow",
+                "EscrowController.RegisterHandler",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "escrow/handler/register");
 
             var (statusCode, result) = await _implementation.RegisterHandlerAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1175,6 +1330,7 @@ public partial class EscrowController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<EscrowController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:escrow/handler/register");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -1190,6 +1346,7 @@ public partial class EscrowController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:escrow/handler/register",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -1208,6 +1365,11 @@ public partial class EscrowController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.escrow",
+                "EscrowController.ListHandlers",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "escrow/handler/list");
 
             var (statusCode, result) = await _implementation.ListHandlersAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1216,6 +1378,7 @@ public partial class EscrowController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<EscrowController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:escrow/handler/list");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -1231,6 +1394,7 @@ public partial class EscrowController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:escrow/handler/list",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -1249,6 +1413,11 @@ public partial class EscrowController : Microsoft.AspNetCore.Mvc.ControllerBase
 
         try
         {
+            using var activity_ = _telemetryProvider.StartActivity(
+                "bannou.escrow",
+                "EscrowController.DeregisterHandler",
+                System.Diagnostics.ActivityKind.Server);
+            activity_?.SetTag("http.route", "escrow/handler/deregister");
 
             var (statusCode, result) = await _implementation.DeregisterHandlerAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1257,6 +1426,7 @@ public partial class EscrowController : Microsoft.AspNetCore.Mvc.ControllerBase
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<EscrowController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:escrow/handler/deregister");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -1272,6 +1442,7 @@ public partial class EscrowController : Microsoft.AspNetCore.Mvc.ControllerBase
                 endpoint: "post:escrow/handler/deregister",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
