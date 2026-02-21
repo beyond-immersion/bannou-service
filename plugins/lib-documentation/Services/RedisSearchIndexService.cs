@@ -327,21 +327,20 @@ public class RedisSearchIndexService : ISearchIndexService
             var searchStore = _stateStoreFactory.GetSearchableStore<DocumentIndexData>(StateStoreDefinitions.Documentation);
             var indexName = GetIndexName(namespaceId);
 
-            // Query for all documents in namespace, optionally filtered by category.
-            // TAG-only filters work correctly in Redis Search without a text query component.
-            // Do NOT prepend "*" — it is a special match-all query that cannot be combined
-            // with field-specific filters via space-separation (causes "Syntax error at offset 2").
-            var queryParts = new List<string>
-            {
-                $"@namespace:{{{EscapeTagValue(namespaceId)}}}"
-            };
-
+            // The search index is already scoped by namespace prefix (doc:{namespaceId}:),
+            // so all documents in the index belong to the target namespace. The @namespace
+            // TAG filter is redundant and TAG-only queries (without a text component) return
+            // 0 results in Redis 8 JSON indexes. Use "*" (match all) as the base query.
+            // For category filtering, combine with a TAG filter on the category field.
+            string query;
             if (!string.IsNullOrEmpty(category))
             {
-                queryParts.Add($"@category:{{{EscapeTagValue(category)}}}");
+                query = $"@category:{{{EscapeTagValue(category)}}}";
             }
-
-            var query = string.Join(" ", queryParts);
+            else
+            {
+                query = "*";
+            }
 
             var result = await searchStore.SearchAsync(
                 indexName,

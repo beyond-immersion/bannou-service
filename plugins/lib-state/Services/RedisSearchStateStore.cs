@@ -62,7 +62,6 @@ public sealed class RedisSearchStateStore<TValue> : ISearchableStateStore<TValue
     /// <inheritdoc/>
     public async Task<TValue?> GetAsync(string key, CancellationToken cancellationToken = default)
     {
-
         var fullKey = GetFullKey(key);
 
         try
@@ -72,7 +71,7 @@ public sealed class RedisSearchStateStore<TValue> : ISearchableStateStore<TValue
             // overload GetAsync<T>(key, "$") has a subtle bug with collection types (e.g. List<string>):
             // NRedisStack's internal JSONPath unwrap→serialize→deserialize round-trip fails when TValue
             // is itself a collection. The non-generic approach with BannouJson.Deserialize works for
-            // all types consistently, matching GetBulkAsync's proven deserialization pattern.
+            // all types consistently.
             var value = await _jsonCommands.GetAsync(fullKey);
             if (value.IsNull)
             {
@@ -113,7 +112,6 @@ public sealed class RedisSearchStateStore<TValue> : ISearchableStateStore<TValue
         string key,
         CancellationToken cancellationToken = default)
     {
-
         var fullKey = GetFullKey(key);
         var metaKey = GetMetaKey(key);
 
@@ -315,25 +313,59 @@ public sealed class RedisSearchStateStore<TValue> : ISearchableStateStore<TValue
 
             for (var i = 0; i < keyList.Count; i++)
             {
-                if (values[i] != null && !values[i].IsNull && values[i].Length > 0)
+                if (values[i] == null || values[i].IsNull)
                 {
-                    var jsonValue = values[i][0];
-                    if (!jsonValue.IsNull)
+                    continue;
+                }
+
+                try
+                {
+                    string? jsonString;
+
+                    if (values[i].Length > 0)
                     {
-                        try
+                        // Redis 7 (redis-stack-server): JSON.MGET returns nested RESP arrays.
+                        // Each values[i] is an array; extract [0] for the JSONPath "$" result.
+                        var jsonValue = values[i][0];
+                        if (jsonValue.IsNull)
                         {
-                            var deserialized = BannouJson.Deserialize<TValue>(jsonValue.ToString());
-                            if (deserialized != null)
-                            {
-                                result[keyList[i]] = deserialized;
-                            }
+                            continue;
                         }
-                        catch (System.Text.Json.JsonException ex)
-                        {
-                            // IMPLEMENTATION TENETS: Log data corruption as error and skip the item
-                            _logger.LogError(ex, "JSON deserialization failed for key '{Key}' in store '{Store}' - skipping corrupted item", keyList[i], _keyPrefix);
-                        }
+                        jsonString = jsonValue.ToString();
                     }
+                    else
+                    {
+                        // Redis 8 (built-in JSON): JSON.MGET returns bulk strings.
+                        // RedisResult.Length returns -1 for non-array types. The string
+                        // contains the JSONPath "$" array-wrapped result like "[{...}]".
+                        // Parse and unwrap [0] to get the actual JSON value.
+                        var rawJson = values[i].ToString();
+                        if (string.IsNullOrEmpty(rawJson))
+                        {
+                            continue;
+                        }
+
+                        using var jsonDoc = System.Text.Json.JsonDocument.Parse(rawJson);
+                        if (jsonDoc.RootElement.ValueKind != System.Text.Json.JsonValueKind.Array
+                            || jsonDoc.RootElement.GetArrayLength() == 0
+                            || jsonDoc.RootElement[0].ValueKind == System.Text.Json.JsonValueKind.Null)
+                        {
+                            continue;
+                        }
+
+                        jsonString = jsonDoc.RootElement[0].GetRawText();
+                    }
+
+                    var deserialized = BannouJson.Deserialize<TValue>(jsonString);
+                    if (deserialized != null)
+                    {
+                        result[keyList[i]] = deserialized;
+                    }
+                }
+                catch (System.Text.Json.JsonException ex)
+                {
+                    // IMPLEMENTATION TENETS: Log data corruption as error and skip the item
+                    _logger.LogError(ex, "JSON deserialization failed for key '{Key}' in store '{Store}' - skipping corrupted item", keyList[i], _keyPrefix);
                 }
             }
         }
