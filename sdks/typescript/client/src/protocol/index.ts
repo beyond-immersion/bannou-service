@@ -16,6 +16,7 @@ export {
   isEvent as isEventFlag,
   isMeta as isMetaFlag,
   isBinary as isBinaryFlag,
+  isCompressed as isCompressedFlag,
 } from './MessageFlags.js';
 
 export {
@@ -57,3 +58,10 @@ export {
   isError,
   isMeta,
 } from './BinaryMessage.js';
+
+export {
+  initializeDecompressor,
+  setPayloadDecompressor,
+  decompressPayload,
+  resetDecompressor,
+} from './PayloadDecompressor.js';

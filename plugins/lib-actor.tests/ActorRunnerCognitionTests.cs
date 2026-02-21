@@ -480,13 +480,18 @@ public class ActorRunnerCognitionTests
             builderReturnsNull: true,
             config: config);
 
-        // Act: start runner — the first tick should fail during initialization
-        using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
-        await runner.StartAsync(cts.Token);
+        // Act: start runner — the first tick should fail during initialization.
+        // Use a long-lived CTS for the runner so the loop's error retry path doesn't
+        // see a cancelled token. The loop catch block skips setting Error status when
+        // ct.IsCancellationRequested is true (it treats cancellation as shutdown, not error).
+        // On slow CI machines, a short CTS can fire before the first tick completes,
+        // causing the catch block to skip Error and exit the loop as Running.
+        using var runnerCts = new CancellationTokenSource(TimeSpan.FromSeconds(30));
+        await runner.StartAsync(runnerCts.Token);
 
         // Wait for the runner to transition to Error state
         var started = DateTime.UtcNow;
-        while (runner.Status != ActorStatus.Error && DateTime.UtcNow - started < TimeSpan.FromSeconds(5))
+        while (runner.Status != ActorStatus.Error && DateTime.UtcNow - started < TimeSpan.FromSeconds(10))
         {
             await Task.Delay(10);
         }
@@ -499,7 +504,7 @@ public class ActorRunnerCognitionTests
         builderMock.Verify(b => b.Build("nonexistent-template", It.IsAny<CognitionOverrides?>()), Times.Once);
 
         // Clean up
-        await runner.StopAsync(cancellationToken: cts.Token);
+        await runner.StopAsync(cancellationToken: runnerCts.Token);
     }
 
     #endregion
