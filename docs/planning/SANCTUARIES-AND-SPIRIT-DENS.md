@@ -2,8 +2,8 @@
 
 > **Status**: Vision Document (design analysis, no implementation)
 > **Priority**: High (Living Game Worlds -- North Star #1, Emergent Over Authored -- North Star #5, Content Flywheel -- North Star #2)
-> **Related**: `docs/planning/PREDATOR-ECOLOGY-PATTERNS.md`, `docs/planning/MEMENTO-INVENTORIES.md`, `docs/planning/DEATH-AND-PLOT-ARMOR.md`, `docs/planning/ACTOR-BOUND-ENTITIES.md`
-> **Services**: Environment, Location, Divine, Seed, Actor, Character, Status, Item, Inventory, Collection, Ethology, Worldstate, Transit
+> **Related**: `docs/planning/PREDATOR-ECOLOGY-PATTERNS.md`, `docs/planning/MEMENTO-INVENTORIES.md`, `docs/planning/LOCATION-BOUND-PRODUCTION.md`, `docs/planning/DEATH-AND-PLOT-ARMOR.md`, `docs/planning/ACTOR-BOUND-ENTITIES.md`
+> **Services**: Environment, Location, Divine, Seed, Actor, Character, Status, Item, Inventory, Collection, Ethology, Worldstate, Transit, Workshop
 > **Metaphysics**: Logos/Pneuma framework (VISION.md), Memento system (MEMENTO-INVENTORIES.md), Actor-Bound Entity pattern (ACTOR-BOUND-ENTITIES.md)
 
 ---
@@ -491,7 +491,246 @@ The spiritual geography feeds both the primary and secondary content flywheels:
 
 ---
 
-## Part 5: Gameplay Implications
+## Part 5: Workshop Production as Spiritual Sustenance
+
+### The Core Insight: Followers as Workers, Faith as Production
+
+The Workshop service (L4) provides time-based production with lazy evaluation: workers assigned to blueprints consume inputs and produce outputs over game-time, with the entire production history computed retroactively on query rather than through per-tick simulation. This pattern (documented in LOCATION-BOUND-PRODUCTION.md) maps directly onto the spiritual sustenance of both sanctuaries and spirit dens. When a spirit den crystallizes or a god creates a sanctuary, a Workshop production task is automatically created -- turning the sacred location into a "spiritual factory" where the presence of faithful entities produces the resource that sustains the location.
+
+This is not a metaphor. It is literal Workshop infrastructure: blueprints, source containers, destination containers, worker counts, rate modifiers, and lazy evaluation. The Workshop service doesn't know or care that it's producing "sanctity" instead of "iron ingots." It sees inputs, outputs, workers, rate modifiers, and game-time. The spiritual meaning is entirely in the consuming systems and the ABML behaviors.
+
+**Why this matters**: 100,000 spirit dens and sanctuaries can exist simultaneously with zero server cost. Workshop's lazy evaluation means no ticks, no polling, no per-second updates. When someone queries a sanctuary's strength or a spirit den's growth, Workshop retroactively computes the entire production history in one pass -- accounting for worker count changes, seasonal rate shifts, and time elapsed. A spirit den undiscovered for five game-years gets its entire growth history materialized in a single calculation.
+
+### Sanctuary Production: The Divine Maintenance Factory
+
+When a god creates a sanctuary, the system automatically:
+
+1. Creates a `sanctuary_core` sub-location under the parent Location
+2. Creates Workshop stage containers for spiritual refinement
+3. Creates Workshop tasks linking the stages with blueprints
+4. The sanctuary begins producing maintenance output immediately
+
+#### Stage Inventory Pattern for Sanctuaries
+
+Spiritual reinforcement flows through stages of refinement (progression as movement between containers, per LOCATION-BOUND-PRODUCTION.md):
+
+```
+STAGE 1: RAW PRESENCE
+  Container: sanctuary_raw_presence
+  Source: Generated passively by peaceful coexistence (inexhaustible, rate-limited)
+  Blueprint: presence_to_reverence
+  minWorkers: 0 (passive -- animals living in peace produce this automatically)
+  Workers: Each creature living peacefully in the sanctuary adds to rate
+
+STAGE 2: ACCUMULATED REVERENCE
+  Container: sanctuary_reverence
+  Blueprint: reverence_to_sanctity
+  minWorkers: 1 (requires at least one conscious worshiper -- animal peace
+               alone sustains Stage 1 but cannot advance to Stage 2)
+  Workers: NPC pilgrims, worshipers, devotees
+
+STAGE 3: CONSECRATED SANCTITY
+  Container: sanctuary_sanctity
+  Blueprint: sanctity_to_resonance
+  minWorkers: 0 (shrine keeper consecration is a burst input, not continuous)
+  Workers: Shrine keepers performing ritual (high-value burst workers)
+
+STAGE 4: DIVINE RESONANCE (output)
+  Container: sanctuary_resonance
+  Output consumed by: sanctuary_suppression field maintenance
+  The resonance container drains at a steady rate (natural decay).
+  Production must outpace drain to maintain or strengthen the sanctuary.
+```
+
+This creates the critical dynamic: **the sanctuary's health is a race between production (faith) and drain (natural decay)**. If production > drain, the sanctuary strengthens. If production < drain, it weakens. The equilibrium depends entirely on the worker count -- how many faithful entities are present.
+
+#### Worker Weights by Entity Type (Sanctuary)
+
+Not all "workers" contribute equally to production rate:
+
+| Entity | Worker Weight | Rationale |
+|--------|-------------|-----------|
+| Herbivore/prey living in sanctuary | 0.5 | Passive contribution -- a deer choosing safety despite instinct |
+| Predator at peace (overriding its nature) | 1.5 | A wolf at peace is a stronger testament to the sanctuary's power |
+| Ordinary animal (any species) | 0.7 | Baseline peaceful presence |
+| NPC pilgrim visiting | 2.0 | Conscious reverence contributes more than passive animal presence |
+| NPC worshiper performing devotion | 3.0 | Active worship is concentrated faith production |
+| Shrine keeper performing consecration | 5.0-10.0 | Ritual transmutation of mementos (per MEMENTO-INVENTORIES.md) |
+| God-actor investing divinity directly | 50.0+ | Massive but costs the god's finite divinity resource |
+
+The predator-at-peace weighting is thematically precise -- a wolf drinking peacefully beside a deer IS the sanctuary's miracle made manifest, and mechanically it contributes more to the sanctuary's maintenance than the deer does. The sanctuary is literally sustained by the impossibility it creates.
+
+#### Rate Modifiers (Sanctuary)
+
+Workshop rate modifiers from Environment and Worldstate:
+
+| Modifier | Effect | Source |
+|----------|--------|--------|
+| **Season** | Holy seasons (realm-configurable) boost rate; harsh seasons reduce | `${world.season}` |
+| **Holy day calendar** | Configurable sacred dates provide burst multipliers | `${world.calendar_event}` |
+| **Divine imprint strength** | The original miracle's magnitude sets a base multiplier that decays | Divine service data |
+| **Memento density** | Higher memento density at the location slightly boosts rate (spiritual weight of history) | Memento inventory analysis |
+| **Time of day** | Dawn and dusk (liminal times) may provide small boosts | `${world.day_period}` |
+
+#### The Feedback Loops
+
+**Virtuous cycle**:
+```
+Strong sanctuary
+  → more creatures enter peacefully (gradient zone is wide)
+  → more workers on production tasks
+  → production outpaces decay
+  → sanctuary_resonance container fills
+  → sanctuary_suppression field strengthens
+  → gradient zone expands further
+  → more creatures enter
+  → more workers
+  → ...
+```
+
+**Death spiral**:
+```
+Weakening sanctuary
+  → edge gradient recedes
+  → creatures at edges resume normal ecology (predators hunt)
+  → prey flees edges, predators follow
+  → fewer creatures in sanctuary
+  → fewer workers on production tasks
+  → production drops below decay rate
+  → sanctuary_resonance container drains
+  → sanctuary_suppression weakens further
+  → gradient recedes more
+  → ...
+```
+
+The four-phase decay model described earlier (Full Strength → Weakening → Failing → Collapsed) is now **mechanistic rather than narrative**. The phases are emergent states of the production-vs-decay equilibrium. Phase 1 is when workers >> decay rate and the resonance container is full. Phase 4 is when workers = 0 and the container is empty. The transitions happen naturally as the worker count shifts. No hardcoded thresholds needed -- the Workshop math produces the phases organically.
+
+### Spirit Den Production: The Logos Crystallization Factory
+
+When a spirit den crystallizes (memento threshold + leyline conditions met), the system automatically:
+
+1. Creates a `spirit_den` sub-location under the parent Location
+2. Creates a Seed (type: `spirit_animal`, species_code, location_id)
+3. Creates Workshop stage containers for logos crystallization
+4. Creates Workshop tasks linking stages with blueprints
+5. Activates conspecific attraction effect at the Location
+
+#### Stage Inventory Pattern for Spirit Dens
+
+```
+STAGE 1: AMBIENT LOGOS
+  Container: den_ambient_logos
+  Source: Leyline energy + passive species presence (inexhaustible, rate-limited by leyline_proximity)
+  Blueprint: logos_to_resonance
+  minWorkers: 0 (the leyline alone trickles even with no kin present)
+  Workers: Each kin animal in the congregation zone adds to rate
+
+STAGE 2: SPECIES RESONANCE
+  Container: den_species_resonance
+  Blueprint: resonance_to_essence
+  minWorkers: 0 (passive, but rate scales heavily with kin count)
+  Workers: Kin animals (primary), visiting shamans/druids (secondary)
+
+STAGE 3: CRYSTALLIZED ESSENCE
+  Container: den_crystallized_essence
+  Blueprint: essence_to_manifestation
+  minWorkers: 0
+  Workers: Spirit animal itself at Stirring+ phase (bootstrapping -- its own
+           presence accelerates its own growth)
+
+STAGE 4: SPIRITUAL MANIFESTATION (output)
+  Container: den_manifestation
+  Output consumed by: Seed growth domain (e.g., essence.crystallization)
+  Also feeds: conspecific_attraction strength at the Location
+```
+
+The spirit animal's Seed growth is directly driven by Workshop production output. As the Seed grows through phases (Dormant → Stirring → Awakened → Ancient), the spirit animal gains capabilities -- and at Stirring+, the spirit animal itself becomes a high-value worker on its own production chain. This is the **bootstrapping effect**: the spirit animal's existence accelerates its own development.
+
+#### Worker Weights by Entity Type (Spirit Den)
+
+| Entity | Worker Weight | Rationale |
+|--------|-------------|-----------|
+| Ordinary kin animal | 1.0 | Base contribution -- simple presence of species logos |
+| Exceptional kin (high significance score) | 1.5-2.0 | A notably old/strong/storied animal contributes more logos |
+| Death memento of kin (passive, permanent) | 0.5 | Death mementos contribute to crystallization even without a living animal present |
+| Spirit animal itself (Stirring phase) | 5.0 | Bootstrapping -- its manifesting presence concentrates the logos field |
+| Spirit animal itself (Awakened phase) | 10.0 | Stronger bootstrapping at higher cognitive development |
+| Spirit animal itself (Ancient phase) | 20.0 | The ancient spirit is a logos engine unto itself |
+| Visiting shaman/druid performing communion | 3.0-5.0 | Conscious spiritual interaction amplifies the logos field |
+| Visiting necromancer consuming mementos | **-2.0** | Actively removes logos from the inventory, slowing crystallization |
+
+The necromancer entry creates genuine mechanical tension between character archetypes. A necromancer raiding a spirit den's memento inventory is literally stealing the raw material that feeds the spirit animal's growth. This isn't authored rivalry -- it's emergent conflict driven by incompatible resource needs. The necromancer wants death mementos for summoning; the spirit den needs them for crystallization. Both are legitimate uses of the same resource.
+
+#### Rate Modifiers (Spirit Den)
+
+| Modifier | Effect | Source |
+|----------|--------|--------|
+| **Leyline proximity** | The primary rate multiplier. Stronger leylines = faster crystallization | `${environment.leyline_proximity}` |
+| **Season** | Spring/summer: pneuma flows stronger (world is more "alive"). Winter: reduced flow | `${world.season}` |
+| **Moon phase** | Full moon amplifies pneuma conductivity (folklore-grounded, metaphysically consistent) | `${world.calendar_event}` |
+| **Ecological health** | Healthy prey_availability pool = more kin can sustain in area = more workers. Predator imbalance crashes prey = kin drop = workers drop | `${environment.prey_availability}` |
+| **Memento quality** | Higher average significance of accumulated mementos boosts rate (richer logos template) | Memento inventory analysis |
+| **Disturbance** | Recent humanoid activity reduces rate (seclusion requirement) | Location visit tracking |
+
+#### The Self-Reinforcing Growth Loop
+
+```
+Spirit den crystallizes
+  → kin animals drawn by conspecific attraction
+  → more kin = more workers on production tasks
+  → faster logos crystallization = faster Seed growth
+  → spirit animal reaches Stirring phase
+  → spirit animal becomes a high-value worker (bootstrapping)
+  → crystallization accelerates further
+  → stronger conspecific attraction draws more kin
+  → more workers
+  → spirit animal reaches Awakened phase
+  → spirit animal becomes an even higher-value worker
+  → crystallization reaches maximum sustainable rate
+  → ...
+```
+
+The inverse: ecological disruption disperses kin → fewer workers → production slows → spirit animal weakens → less conspecific attraction → more kin leave → fewer workers → death spiral.
+
+### The Generalized Sacred Production Pattern
+
+Once the "location-based spiritual production with entity-as-worker" pattern exists, it applies to every sacred or supernatural location concept in the game:
+
+| Location Type | Blueprint | Workers | Output | Related Document |
+|--------------|-----------|---------|--------|-----------------|
+| **Spirit den** | `logos_crystallization` | Kin animals, spirit animal itself | Seed growth for spirit animal | This document |
+| **Sanctuary** | `divine_maintenance` | Peaceful creatures, worshipers, shrine keepers | `sanctuary_suppression` maintenance | This document |
+| **Temple** | `divine_accumulation` | Worshipers, priests, devoted NPCs | Divinity generation for the patron god | DIVINE.md |
+| **Haunted battlefield** | `death_resonance` | Death echoes, visiting necromancers | Memento density + atmospheric intensity | MEMENTO-INVENTORIES.md |
+| **Sacred grove** | `nature_communion` | Druids, healthy trees, wildlife | Leyline conductivity boost for area | (future planning) |
+| **Dungeon core chamber** | `mana_absorption` | Dungeon inhabitants, intruder deaths | Dungeon mana reserves | DUNGEON-EXTENSIONS-NOTES.md |
+| **Shrine** | `votive_accumulation` | Pilgrims leaving offerings | Collection entries, Status effects | MEMENTO-INVENTORIES.md |
+| **Leyline nexus** | `pneuma_focusing` | Ambient mana, ritual channelers | Area-wide mana density boost | (future planning) |
+
+The Workshop service handles all of these identically. Different blueprints, different worker types, different rate modifiers -- but the same lazy evaluation engine, the same stage inventory pattern, the same production-vs-decay dynamics. This is game-agnostic infrastructure producing game-specific spiritual experiences -- North Star #4 (Ship Games Fast).
+
+### Lazy Evaluation and Scale
+
+The Workshop lazy evaluation model is what makes this viable at world scale:
+
+- A realm might have 500+ locations with some form of spiritual production (spirit dens, sanctuaries, temples, shrines, haunted sites)
+- Each has Workshop tasks with worker counts and rate modifiers
+- **Zero server ticks**. No production task is updated until queried
+- When a player approaches a sanctuary, the query triggers Workshop materialization:
+  1. Compute elapsed real time since last materialization
+  2. Convert to game time via Worldstate's realm time ratio
+  3. Break into rate segments (accounting for seasonal changes, worker count changes at recorded timestamps, divine investment events)
+  4. Compute total production across all segments
+  5. Compare production vs decay drain
+  6. Update sanctuary_suppression field to current value
+- A sanctuary untouched for two real-world months gets its entire spiritual history computed in one pass
+- A spirit den that nobody has visited for a game-year materializes centuries of crystallization retroactively
+
+This means the spiritual geography of the world is effectively "frozen in time" between queries, and "thaws" with full fidelity whenever observed. The same pattern that lets 100,000 NPC farms grow wheat without server ticks lets 500 sacred sites accumulate faith without server ticks.
+
+---
+
+## Part 6: Gameplay Implications
 
 ### Discovery as Progressive Disclosure
 
@@ -547,7 +786,7 @@ These emerge naturally from the systems:
 
 ---
 
-## Part 6: Architectural Notes
+## Part 7: Architectural Notes
 
 ### Environment Service Extensions
 
