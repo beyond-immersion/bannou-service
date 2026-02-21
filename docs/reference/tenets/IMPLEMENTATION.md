@@ -2,7 +2,7 @@
 
 > **Category**: Coding Patterns & Practices
 > **When to Reference**: While actively writing service code
-> **Tenets**: T3, T7, T8, T9, T14, T17, T20, T21, T23, T24, T25, T26
+> **Tenets**: T3, T7, T8, T9, T14, T17, T20, T21, T23, T24, T25, T26, T30
 
 These tenets define the patterns you follow while implementing services.
 
@@ -484,6 +484,93 @@ For existing sentinel values: update schema to nullable → regenerate → updat
 
 ---
 
+## Tenet 30: Telemetry Span Instrumentation (MANDATORY)
+
+**Rule**: All async methods in service code MUST create a telemetry span via `ITelemetryProvider.StartActivity`. This applies to generated controller wrappers, helper DI services, and async methods in service implementation classes (except the primary methods that generated controllers already wrap).
+
+### Why This Matters
+
+Bannou's telemetry system builds on .NET's `System.Diagnostics.Activity` and `System.Diagnostics.Metrics`. With an exporter configured (OTLP, Prometheus, console), spans provide a 4-level hierarchy that answers "where is time being spent?" without printf-debugging:
+
+```
+Mesh span (transport + everything)
+  └─ Controller span (endpoint handler, without transport)
+       ├─ HelperService.MethodA (domain logic chunk)
+       │    ├─ StateStore.GetAsync (already instrumented via WrapStateStore)
+       │    └─ MessageBus.TryPublishAsync (already instrumented)
+       └─ HelperService.MethodB
+            └─ MeshClient.InvokeMethodAsync (already instrumented via lib-mesh)
+```
+
+- **Mesh span**: Already exists — lib-mesh instruments all inter-service calls
+- **Controller span**: Generated into controller wrappers — measures endpoint execution without transport
+- **Helper/service spans**: Added per this tenet — measures domain logic chunks
+- **Infrastructure spans**: Already exist — lib-state, lib-messaging, lib-mesh wrap operations
+
+### The Zero-Signature-Change Pattern
+
+`Activity.Current` is ambient via `AsyncLocal<T>`. When a controller span starts an `Activity`, every async method called within that `await` chain automatically sees it as the parent. Child spans nest automatically. **No parameter passing or signature changes are required.**
+
+```csharp
+// In a helper DI service — span automatically nests under the controller span
+public async Task<TicketModel?> ResolveTicketAsync(Guid ticketId, CancellationToken ct)
+{
+    using var activity = _telemetryProvider.StartActivity(
+        "bannou.matchmaking", "TicketResolver.ResolveTicket");
+
+    var ticket = await _stateStore.GetAsync(key, ct);  // state store span nests under this
+    if (ticket == null) return null;
+
+    await _permissionClient.ClearSessionStateAsync(...);  // mesh span nests under this
+    return ticket;
+}
+```
+
+### Scope Rules
+
+| Code Location | Span Required? | How |
+|---------------|---------------|-----|
+| **Generated controllers** | Yes | Code generation adds spans automatically |
+| **Helper DI services** (`Services/*.cs`) | Yes — all `async` methods | Manual: add `StartActivity` call |
+| **Service implementation** (`*Service.cs`) | Yes — async helper methods only | Manual: add `StartActivity` call |
+| **Service implementation** — primary interface methods | No | Controller span already covers these |
+| **Event handlers** (`*ServiceEvents.cs`) | Yes — all `async` handlers | Manual: add `StartActivity` call |
+| **Infrastructure libs** (lib-state, lib-messaging, lib-mesh) | Already instrumented | No action needed |
+
+### The Async Heuristic
+
+"If it's `async`, it gets a span" — including methods with `await Task.CompletedTask` that are currently synchronous. Those methods are async because they logically should (or will) contain awaitable operations. The span costs nothing when telemetry is disabled (`StartActivity` returns null, all `?.SetTag` calls no-op) and will provide value when the method eventually gains real async work.
+
+### Naming Convention
+
+Activity names follow the pattern `{component}.{class}.{method}`:
+
+```csharp
+// Component is the service's telemetry component name
+_telemetryProvider.StartActivity("bannou.matchmaking", "QueueProcessor.ProcessQueue");
+_telemetryProvider.StartActivity("bannou.account", "AccountLookupHelper.ResolveByEmail");
+_telemetryProvider.StartActivity("bannou.matchmaking", "MatchmakingServiceEvents.HandleSessionDisconnected");
+```
+
+### What NOT to Instrument
+
+- **Pure synchronous computation** (non-async methods): These are CPU-bound and show up as the gap between async spans. The gap is almost always trivial.
+- **Trivial property accessors or validation helpers**: Only instrument methods that represent meaningful units of work.
+- **Generated code**: Never add spans to `*/Generated/` files — instrument via code generation templates instead.
+
+### Implementation Priority
+
+1. **Generated controller spans** — highest value per effort, zero ongoing maintenance. Add to NSwag templates so every endpoint gets a span automatically.
+2. **Helper DI service spans** — manual but targeted. Add to all async methods in `Services/*.cs` files within plugins.
+3. **Service implementation async helpers** — the private async methods in `*Service.cs` that aren't primary interface methods.
+4. **Event handler spans** — async handlers in `*ServiceEvents.cs`.
+
+### Dependency
+
+Services that need to create spans must have access to `ITelemetryProvider`. This is already available via DI (constructor injection) in all services since it's an L0 infrastructure dependency. Helper DI services should accept `ITelemetryProvider` in their constructors.
+
+---
+
 ## Quick Reference: Implementation Violations
 
 | Violation | Tenet | Fix |
@@ -522,9 +609,14 @@ For existing sentinel values: update schema to nullable → regenerate → updat
 | Using empty string for "absent" | T26 | Make field `string?` nullable |
 | Using `DateTime.MinValue` for "not set" | T26 | Make field `DateTime?` nullable |
 | Non-nullable model when schema is nullable | T26 | Match nullability in internal model |
+| Async helper method without `StartActivity` span | T30 | Add `using var activity = _telemetryProvider.StartActivity(...)` |
+| Span on generated code (manual edit) | T30 | Add to code generation templates, not generated files |
+| Span on non-async synchronous method | T30 | Only async methods need spans |
+| Missing `ITelemetryProvider` in helper service constructor | T30 | Add constructor parameter for span creation |
+| Span name not following `{component}.{class}.{method}` pattern | T30 | Use `"bannou.{service}", "{Class}.{Method}"` format |
 
 > **Schema-related violations** (shared type in events schema, API `$ref` to events, cross-service `$ref`) are covered in [SCHEMA-RULES.md](../SCHEMA-RULES.md).
 
 ---
 
-*This document covers tenets T3, T7, T8, T9, T14, T17, T20, T21, T23, T24, T25, T26. See [TENETS.md](../TENETS.md) for the complete index.*
+*This document covers tenets T3, T7, T8, T9, T14, T17, T20, T21, T23, T24, T25, T26, T30. See [TENETS.md](../TENETS.md) for the complete index.*

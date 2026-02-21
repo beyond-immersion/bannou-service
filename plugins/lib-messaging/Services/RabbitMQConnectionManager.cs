@@ -4,6 +4,7 @@ using BeyondImmersion.Bannou.Core;
 using Microsoft.Extensions.Logging;
 using RabbitMQ.Client;
 using System.Collections.Concurrent;
+using System.Diagnostics;
 
 namespace BeyondImmersion.BannouService.Messaging.Services;
 
@@ -155,9 +156,18 @@ public sealed class RabbitMQConnectionManager : IChannelManager
     {
         if (_connection == null || !_connection.IsOpen)
         {
+            _logger.LogDebug("DIAG: GetChannelAsync - connection not open, initializing");
+            var initSw = Stopwatch.StartNew();
             if (!await InitializeAsync(cancellationToken))
             {
                 throw new InvalidOperationException("Failed to initialize RabbitMQ connection");
+            }
+            initSw.Stop();
+            if (initSw.ElapsedMilliseconds > 100)
+            {
+                _logger.LogWarning(
+                    "DIAG: InitializeAsync took {ElapsedMs}ms",
+                    initSw.ElapsedMilliseconds);
             }
         }
 
@@ -173,6 +183,10 @@ public sealed class RabbitMQConnectionManager : IChannelManager
             Interlocked.Decrement(ref _pooledChannelCount);
             if (channel.IsOpen)
             {
+                _logger.LogDebug(
+                    "DIAG: GetChannelAsync - got channel from pool (remaining pool: {PoolSize}, total active: {TotalActive})",
+                    Volatile.Read(ref _pooledChannelCount),
+                    Volatile.Read(ref _totalActiveChannels));
                 return channel; // Ownership transferred to caller
             }
             // Channel was closed, close it properly before trying next
@@ -189,6 +203,10 @@ public sealed class RabbitMQConnectionManager : IChannelManager
 
         // No usable channel in pool - check if we can create more
         var currentTotal = Volatile.Read(ref _totalActiveChannels);
+        _logger.LogDebug(
+            "DIAG: GetChannelAsync - pool empty, must create channel (total active: {TotalActive}, max: {MaxTotal})",
+            currentTotal, _configuration.MaxTotalChannels);
+
         if (currentTotal >= _configuration.MaxTotalChannels)
         {
             throw new InvalidOperationException(
@@ -200,7 +218,17 @@ public sealed class RabbitMQConnectionManager : IChannelManager
         // Use semaphore to limit concurrent channel creation (backpressure)
         var semaphore = _channelCreationSemaphore
             ?? throw new InvalidOperationException("Channel creation semaphore not initialized");
+
+        var semaphoreSw = Stopwatch.StartNew();
         await semaphore.WaitAsync(cancellationToken);
+        semaphoreSw.Stop();
+        if (semaphoreSw.ElapsedMilliseconds > 100)
+        {
+            _logger.LogWarning(
+                "DIAG: Channel creation semaphore wait took {ElapsedMs}ms (total active: {TotalActive})",
+                semaphoreSw.ElapsedMilliseconds, Volatile.Read(ref _totalActiveChannels));
+        }
+
         try
         {
             // Double-check limit after acquiring semaphore (another thread may have created channels)
@@ -217,13 +245,27 @@ public sealed class RabbitMQConnectionManager : IChannelManager
                 publisherConfirmationsEnabled: _configuration.EnablePublisherConfirms,
                 publisherConfirmationTrackingEnabled: _configuration.EnablePublisherConfirms);
 
+            var createSw = Stopwatch.StartNew();
             var newChannel = await _connection.CreateChannelAsync(channelOptions, cancellationToken);
+            createSw.Stop();
             Interlocked.Increment(ref _totalActiveChannels);
 
-            _logger.LogDebug(
-                "Created new channel (total active: {TotalActive}, pool size: {PoolSize})",
-                Volatile.Read(ref _totalActiveChannels),
-                Volatile.Read(ref _pooledChannelCount));
+            if (createSw.ElapsedMilliseconds > 100)
+            {
+                _logger.LogWarning(
+                    "DIAG: CreateChannelAsync took {ElapsedMs}ms (total active: {TotalActive}, pool size: {PoolSize})",
+                    createSw.ElapsedMilliseconds,
+                    Volatile.Read(ref _totalActiveChannels),
+                    Volatile.Read(ref _pooledChannelCount));
+            }
+            else
+            {
+                _logger.LogDebug(
+                    "Created new channel in {ElapsedMs}ms (total active: {TotalActive}, pool size: {PoolSize})",
+                    createSw.ElapsedMilliseconds,
+                    Volatile.Read(ref _totalActiveChannels),
+                    Volatile.Read(ref _pooledChannelCount));
+            }
 
             return newChannel;
         }

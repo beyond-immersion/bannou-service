@@ -181,11 +181,38 @@ public sealed class RabbitMQMessageBus : IMessageBus, IAsyncDisposable
                 return success;
             }
 
+            _logger.LogDebug(
+                "DIAG: TryPublishAsync entering GetChannelAsync for {EventType} topic '{Topic}' (exchange: '{Exchange}')",
+                typeof(TEvent).Name, topic, exchange);
+
+            var getChannelSw = Stopwatch.StartNew();
             var channel = await _channelManager.GetChannelAsync(cancellationToken);
+            getChannelSw.Stop();
+            if (getChannelSw.ElapsedMilliseconds > 100)
+            {
+                _logger.LogWarning(
+                    "DIAG: GetChannelAsync took {ElapsedMs}ms for {EventType} on topic '{Topic}'",
+                    getChannelSw.ElapsedMilliseconds, typeof(TEvent).Name, topic);
+            }
+            else
+            {
+                _logger.LogDebug(
+                    "DIAG: GetChannelAsync completed in {ElapsedMs}ms for {EventType} on topic '{Topic}'",
+                    getChannelSw.ElapsedMilliseconds, typeof(TEvent).Name, topic);
+            }
+
             try
             {
                 // Ensure exchange exists
+                var ensureExchangeSw = Stopwatch.StartNew();
                 await EnsureExchangeAsync(channel, exchange, exchangeType, cancellationToken);
+                ensureExchangeSw.Stop();
+                if (ensureExchangeSw.ElapsedMilliseconds > 100)
+                {
+                    _logger.LogWarning(
+                        "DIAG: EnsureExchangeAsync took {ElapsedMs}ms for {EventType} on exchange '{Exchange}'",
+                        ensureExchangeSw.ElapsedMilliseconds, typeof(TEvent).Name, exchange);
+                }
 
                 // Build properties
                 var properties = new BasicProperties
@@ -240,6 +267,11 @@ public sealed class RabbitMQMessageBus : IMessageBus, IAsyncDisposable
                 // Publish - for fanout, routing key is ignored but we still pass it for logging
                 var effectiveRoutingKey = exchangeType == PublishOptionsExchangeType.Fanout ? "" : routingKey;
 
+                _logger.LogDebug(
+                    "DIAG: TryPublishAsync entering BasicPublishAsync for {EventType} topic '{Topic}' exchange '{Exchange}'",
+                    typeof(TEvent).Name, topic, exchange);
+
+                var publishSw = Stopwatch.StartNew();
                 await channel.BasicPublishAsync(
                     exchange: exchange,
                     routingKey: effectiveRoutingKey,
@@ -247,6 +279,20 @@ public sealed class RabbitMQMessageBus : IMessageBus, IAsyncDisposable
                     basicProperties: properties,
                     body: body,
                     cancellationToken: cancellationToken);
+                publishSw.Stop();
+
+                if (publishSw.ElapsedMilliseconds > 100)
+                {
+                    _logger.LogWarning(
+                        "DIAG: BasicPublishAsync took {ElapsedMs}ms for {EventType} on topic '{Topic}' exchange '{Exchange}'",
+                        publishSw.ElapsedMilliseconds, typeof(TEvent).Name, topic, exchange);
+                }
+                else
+                {
+                    _logger.LogDebug(
+                        "DIAG: BasicPublishAsync completed in {ElapsedMs}ms for {EventType} on topic '{Topic}'",
+                        publishSw.ElapsedMilliseconds, typeof(TEvent).Name, topic);
+                }
 
                 _logger.LogDebug(
                     "Published {EventType} to exchange '{Exchange}' (type: {ExchangeType}, routingKey: '{RoutingKey}') with MessageId {MessageId}",

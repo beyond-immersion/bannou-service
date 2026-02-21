@@ -18,7 +18,7 @@ When documenting tenet compliance in source code comments, **NEVER use specific 
 
 **Instead, use category names:**
 - `FOUNDATION TENETS` - for T4, T5, T6, T13, T15, T18, T27, T28, T29
-- `IMPLEMENTATION TENETS` - for T3, T7, T8, T9, T14, T17, T20, T21, T23, T24, T25, T26
+- `IMPLEMENTATION TENETS` - for T3, T7, T8, T9, T14, T17, T20, T21, T23, T24, T25, T26, T30
 - `QUALITY TENETS` - for T10, T11, T12, T16, T19, T22
 - `SERVICE HIERARCHY` - for Tenet 2 (service layer dependencies)
 
@@ -178,7 +178,7 @@ Tenets are organized into categories based on when they're needed:
 | [**Schema Rules**](SCHEMA-RULES.md) | Tenet 1 | Before creating or modifying any schema file |
 | [**Service Hierarchy**](SERVICE-HIERARCHY.md) | Tenet 2 | Before adding any service client dependency |
 | [**Foundation**](tenets/FOUNDATION.md) | T4, T5, T6, T13, T15, T18, T27, T28, T29 | Before starting any new service or feature |
-| [**Implementation**](tenets/IMPLEMENTATION.md) | T3, T7, T8, T9, T14, T17, T20, T21, T23, T24, T25, T26 | While actively writing service code |
+| [**Implementation**](tenets/IMPLEMENTATION.md) | T3, T7, T8, T9, T14, T17, T20, T21, T23, T24, T25, T26, T30 | While actively writing service code |
 | [**Quality**](tenets/QUALITY.md) | T10, T11, T12, T16, T19, T22 | During code review or before PR submission |
 
 > **Note**: Tenets 1 and 2 reference standalone documents (SCHEMA-RULES.md and SERVICE-HIERARCHY.md) that contain their own detailed rules.
@@ -221,6 +221,7 @@ Tenets are organized into categories based on when they're needed:
 | **T24** | Using Statement Pattern | Use `using` for disposables; manual Dispose only for class-owned resources |
 | **T25** | Type Safety Across All Models | ALL models use proper types (enums, Guids); "JSON requires strings" is FALSE |
 | **T26** | No Sentinel Values | Never use magic values (Guid.Empty, -1, empty string) for absence; use nullable types |
+| **T30** | Telemetry Span Instrumentation | All async methods get `StartActivity` spans; zero-signature-change via `Activity.Current` ambient context |
 
 ---
 
@@ -322,6 +323,9 @@ Tenets are organized into categories based on when they're needed:
 | Subscribing to `*.deleted` for dependent data cleanup | T28 | Register with lib-resource; implement cleanup callback via `ISeededResourceProvider` |
 | Event-based cleanup for persistent dependent data | T28 | Use lib-resource with CASCADE/RESTRICT/DETACH policy |
 | Cleanup handler in `*ServiceEvents.cs` for another service's entity | T28 | Move to lib-resource cleanup callback; remove event subscription |
+| Async helper method without `StartActivity` span | T30 | Add `using var activity = _telemetryProvider.StartActivity(...)` |
+| Manually adding spans to generated code | T30 | Add to code generation templates, not generated files |
+| Missing `ITelemetryProvider` in helper service constructor | T30 | Add constructor parameter for span creation |
 
 ---
 

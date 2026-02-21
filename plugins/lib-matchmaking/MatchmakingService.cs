@@ -1154,11 +1154,27 @@ public partial class MatchmakingService : IMatchmakingService
 
     /// <summary>
     /// Cancels a ticket internally with reason.
+    /// Uses atomic delete as an idempotency gate to prevent concurrent cancellations
+    /// of the same ticket from blocking the event dispatch pipeline.
     /// </summary>
     private async Task CancelTicketInternalAsync(Guid ticketId, CancelReason reason, CancellationToken cancellationToken)
     {
         var ticket = await LoadTicketAsync(ticketId, cancellationToken);
         if (ticket == null) return;
+
+        // Atomic idempotency gate: delete the ticket first. Only the thread that
+        // successfully deletes it proceeds with the expensive cleanup operations
+        // (client event publish, permission HTTP call, service event publish).
+        // This prevents concurrent cancellations from the API thread and event
+        // handler thread from both running the full cancellation path.
+        var wasDeleted = await DeleteTicketAsync(ticketId, cancellationToken);
+        if (!wasDeleted)
+        {
+            _logger.LogDebug(
+                "Ticket {TicketId} already cancelled by another thread, skipping duplicate cancellation with reason {Reason}",
+                ticketId, reason);
+            return;
+        }
 
         var waitTime = (DateTimeOffset.UtcNow - ticket.CreatedAt).TotalSeconds;
 
@@ -1190,8 +1206,9 @@ public partial class MatchmakingService : IMatchmakingService
             _logger.LogDebug(ex, "Failed to clear permission state for session {SessionId}", ticket.WebSocketSessionId);
         }
 
-        // Clean up ticket
-        await CleanupTicketAsync(ticketId, ticket.AccountId, ticket.QueueId, cancellationToken);
+        // Clean up remaining ticket references (ticket itself already deleted above)
+        await RemoveFromPlayerTicketsAsync(ticket.AccountId, ticketId, cancellationToken);
+        await RemoveFromQueueTicketsAsync(ticket.QueueId, ticketId, cancellationToken);
 
         // Publish service event (cast from client events enum to API enum - identical values)
         await _messageBus.TryPublishAsync(TICKET_CANCELLED_TOPIC, new MatchmakingTicketCancelledEvent
@@ -1454,9 +1471,9 @@ public partial class MatchmakingService : IMatchmakingService
             .SaveAsync(TICKET_KEY_PREFIX + ticket.TicketId, ticket, cancellationToken: cancellationToken);
     }
 
-    private async Task DeleteTicketAsync(Guid ticketId, CancellationToken cancellationToken)
+    private async Task<bool> DeleteTicketAsync(Guid ticketId, CancellationToken cancellationToken)
     {
-        await _stateStoreFactory.GetStore<TicketModel>(StateStoreDefinitions.Matchmaking)
+        return await _stateStoreFactory.GetStore<TicketModel>(StateStoreDefinitions.Matchmaking)
             .DeleteAsync(TICKET_KEY_PREFIX + ticketId, cancellationToken);
     }
 
