@@ -328,12 +328,11 @@ public class RedisSearchIndexService : ISearchIndexService
             var indexName = GetIndexName(namespaceId);
 
             // Query for all documents in namespace, optionally filtered by category.
-            // The leading "*" is required because TAG-only filters (without a text query component)
-            // may return 0 results in some Redis Search versions. The "*" matches all documents
-            // and the TAG filters restrict the result set.
+            // TAG-only filters work correctly in Redis Search without a text query component.
+            // Do NOT prepend "*" — it is a special match-all query that cannot be combined
+            // with field-specific filters via space-separation (causes "Syntax error at offset 2").
             var queryParts = new List<string>
             {
-                "*",
                 $"@namespace:{{{EscapeTagValue(namespaceId)}}}"
             };
 

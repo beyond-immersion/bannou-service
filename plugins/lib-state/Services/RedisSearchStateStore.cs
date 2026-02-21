@@ -67,17 +67,19 @@ public sealed class RedisSearchStateStore<TValue> : ISearchableStateStore<TValue
 
         try
         {
-            // Use generic overload with explicit JSONPath "$" for consistent behavior across
-            // Redis versions. JSON.GET without a path uses legacy root path "." which may
-            // return results differently for array types in Redis 8.x. The generic overload
-            // handles JSONPath array unwrapping internally and uses BannouJson.Options for
-            // case-insensitive property matching and enum conversion.
-            var value = await _jsonCommands.GetAsync<TValue>(fullKey, "$", BannouJson.Options);
-            if (value == null)
+            // Use non-generic GetAsync without explicit path. This uses the legacy root path "."
+            // which returns the raw JSON value directly (no JSONPath array wrapping). The generic
+            // overload GetAsync<T>(key, "$") has a subtle bug with collection types (e.g. List<string>):
+            // NRedisStack's internal JSONPath unwrap→serialize→deserialize round-trip fails when TValue
+            // is itself a collection. The non-generic approach with BannouJson.Deserialize works for
+            // all types consistently, matching GetBulkAsync's proven deserialization pattern.
+            var value = await _jsonCommands.GetAsync(fullKey);
+            if (value.IsNull)
             {
                 _logger.LogDebug("Key '{Key}' not found in store '{Store}'", key, _keyPrefix);
+                return null;
             }
-            return value;
+            return BannouJson.Deserialize<TValue>(value.ToString());
         }
         catch (System.Text.Json.JsonException ex)
         {
@@ -117,22 +119,23 @@ public sealed class RedisSearchStateStore<TValue> : ISearchableStateStore<TValue
 
         try
         {
-            // Use generic overload with explicit JSONPath "$" for consistent behavior
-            // across Redis versions (see GetAsync for rationale).
-            var valueTask = _jsonCommands.GetAsync<TValue>(fullKey, "$", BannouJson.Options);
+            // Use non-generic GetAsync without explicit path (see GetAsync for rationale
+            // on why the generic overload with JSONPath "$" is avoided).
+            var valueTask = _jsonCommands.GetAsync(fullKey);
             var versionTask = _database.HashGetAsync(metaKey, "version");
 
             await Task.WhenAll(valueTask, versionTask);
 
-            var value = await valueTask;
+            var rawValue = await valueTask;
             var version = await versionTask;
 
-            if (value == null)
+            if (rawValue.IsNull)
             {
                 return (null, null);
             }
 
             var etag = version.HasValue ? version.ToString() : "0";
+            var value = BannouJson.Deserialize<TValue>(rawValue.ToString());
             return (value, etag);
         }
         catch (System.Text.Json.JsonException ex)
