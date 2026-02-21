@@ -37,27 +37,11 @@ jobs:
           run-url: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
           repository-url: ${{ github.server_url }}/${{ github.repository }}
 
-      # Unit Tests
-      - name: Unit Tests
-        run: |
-          echo "🧪 Running unit tests..."
-          dotnet test --configuration Release --no-build
-
-      - name: Notify Unit Tests Result
-        if: always()
-        uses: ./.github/actions/discord-notify
-        with:
-          webhook-url: ${{ env.DISCORD_WEBHOOK }}
-          stage-name: "Unit Tests"
-          status: ${{ job.status }}
-          commit-message: ${{ steps.setup.outputs.commit-message }}
-          commit-author: ${{ steps.setup.outputs.commit-author }}
-          run-url: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
-          repository-url: ${{ github.server_url }}/${{ github.repository }}
+      # Unit tests are NOT run here — ci.unit.yml runs on every push and covers them.
+      # Running them again would double CI time and duplicate Discord notifications.
 
       # Infrastructure Tests (minimal dependencies - still uses secrets for security)
       - name: Infrastructure Tests
-        if: success()
         uses: ./.github/actions/infrastructure-test
 
       - name: Notify Infrastructure Tests Result

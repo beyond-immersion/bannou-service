@@ -132,22 +132,21 @@ public class ActorRunnerCognitionTests
         return (runner, cognitionBuilderMock, executorMock);
     }
 
-    private static Task WaitForIterationsAsync(ActorRunner runner, int targetIterations, TimeSpan timeout)
+    private static async Task WaitForIterationsAsync(ActorRunner runner, int targetIterations, TimeSpan timeout)
     {
-        // Uses SpinWait instead of async polling to avoid starving the background loop's
-        // Task.Yield() continuation on xUnit's SynchronizationContext (see FailedTemplate test)
-        var reached = SpinWait.SpinUntil(
-            () => runner.LoopIterations >= targetIterations,
-            timeout);
+        var deadline = DateTime.UtcNow + timeout;
 
-        if (!reached)
+        while (runner.LoopIterations < targetIterations)
         {
-            throw new TimeoutException(
-                $"Timed out waiting for {targetIterations} iterations after {timeout.TotalSeconds}s. " +
-                $"Current iterations: {runner.LoopIterations}");
-        }
+            if (DateTime.UtcNow >= deadline)
+            {
+                throw new TimeoutException(
+                    $"Timed out waiting for {targetIterations} iterations after {timeout.TotalSeconds}s. " +
+                    $"Current iterations: {runner.LoopIterations}");
+            }
 
-        return Task.CompletedTask;
+            await Task.Delay(10);
+        }
     }
 
     #region Template Resolution Order
@@ -487,18 +486,26 @@ public class ActorRunnerCognitionTests
         // Use a long-lived CTS for the runner so the loop's error retry path doesn't
         // see a cancelled token. The loop catch block skips setting Error status when
         // ct.IsCancellationRequested is true (it treats cancellation as shutdown, not error).
-        // On slow CI machines, a short CTS can fire before the first tick completes,
-        // causing the catch block to skip Error and exit the loop as Running.
         using var runnerCts = new CancellationTokenSource(TimeSpan.FromSeconds(30));
-        await runner.StartAsync(runnerCts.Token);
+
+        // Task.Run moves the background loop off xUnit's MaxConcurrencySyncContext onto
+        // the ThreadPool. Without this, the loop's Task.Yield() (in ProcessPerceptionsAsync)
+        // posts its continuation to xUnit's SC, which has only N worker threads (N = CPU cores).
+        // On GitHub Actions (2 cores), the test's async polling and the background loop both
+        // compete for 2 SC worker threads, causing starvation and the loop never reaching Error.
+        // Task.Run ensures the loop runs on ThreadPool threads where Task.Yield() posts to the
+        // ThreadPool scheduler instead, avoiding the SC bottleneck entirely.
+        await Task.Run(() => runner.StartAsync(runnerCts.Token));
 
         // Wait for the runner to transition to Error state.
-        // Uses SpinWait instead of await Task.Delay polling: the background loop's
-        // Task.Yield() continuation (in ProcessPerceptionsAsync) is posted to xUnit's
-        // SynchronizationContext. An async polling loop (await Task.Delay) also posts
-        // continuations to the same SC, starving the background task on slow CI machines.
-        // SpinWait.SpinUntil uses Thread.Sleep/Yield at the OS level, avoiding the SC entirely.
-        SpinWait.SpinUntil(() => runner.Status == ActorStatus.Error, TimeSpan.FromSeconds(10));
+        // await Task.Delay polling correctly releases the xUnit worker thread between polls,
+        // and since the background loop is on the ThreadPool (via Task.Run above), there's
+        // no SC contention.
+        var deadline = DateTime.UtcNow + TimeSpan.FromSeconds(10);
+        while (runner.Status != ActorStatus.Error && DateTime.UtcNow < deadline)
+        {
+            await Task.Delay(10);
+        }
 
         // Assert: runner entered error state because template was specified but unresolvable
         // Check BEFORE StopAsync, which unconditionally sets Status = Stopped
