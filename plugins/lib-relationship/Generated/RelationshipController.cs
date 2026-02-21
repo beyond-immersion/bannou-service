@@ -22,21 +22,6 @@
 
 #nullable enable
 
-#pragma warning disable 108 // Disable "CS0108 '{derivedDto}.ToJson()' hides inherited member '{dtoBase}.ToJson()'. Use the new keyword if hiding was intended."
-#pragma warning disable 114 // Disable "CS0114 '{derivedDto}.RaisePropertyChanged(String)' hides inherited member 'dtoBase.RaisePropertyChanged(String)'. To make the current member override that implementation, add the override keyword. Otherwise add the new keyword."
-#pragma warning disable 472 // Disable "CS0472 The result of the expression is always 'false' since a value of type 'Int32' is never equal to 'null' of type 'Int32?'
-#pragma warning disable 612 // Disable "CS0612 '...' is obsolete"
-#pragma warning disable 649 // Disable "CS0649 Field is never assigned to, and will always have its default value null"
-#pragma warning disable 1573 // Disable "CS1573 Parameter '...' has no matching param tag in the XML comment for ...
-#pragma warning disable 1591 // Disable "CS1591 Missing XML comment for publicly visible type or member ..."
-#pragma warning disable 8073 // Disable "CS8073 The result of the expression is always 'false' since a value of type 'T' is never equal to 'null' of type 'T?'"
-#pragma warning disable 3016 // Disable "CS3016 Arrays as attribute arguments is not CLS-compliant"
-#pragma warning disable 8600 // Disable "CS8600 Converting null literal or possible null value to non-nullable type"
-#pragma warning disable 8602 // Disable "CS8602 Dereference of a possibly null reference"
-#pragma warning disable 8603 // Disable "CS8603 Possible null reference return"
-#pragma warning disable 8604 // Disable "CS8604 Possible null reference argument for parameter"
-#pragma warning disable 8625 // Disable "CS8625 Cannot convert null literal to non-nullable reference type"
-#pragma warning disable 8765 // Disable "CS8765 Nullability of type of parameter doesn't match overridden member (possibly because of nullability attributes)."
 
 namespace BeyondImmersion.BannouService.Relationship;
 
@@ -387,13 +372,13 @@ public partial class RelationshipController : Microsoft.AspNetCore.Mvc.Controlle
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RelationshipResponse>> CreateRelationship([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] CreateRelationshipRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.relationship",
+            "RelationshipController.CreateRelationship",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "relationship/create");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.relationship",
-                "RelationshipController.CreateRelationship",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "relationship/create");
 
             var (statusCode, result) = await _implementation.CreateRelationshipAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -432,13 +417,13 @@ public partial class RelationshipController : Microsoft.AspNetCore.Mvc.Controlle
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RelationshipResponse>> GetRelationship([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] GetRelationshipRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.relationship",
+            "RelationshipController.GetRelationship",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "relationship/get");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.relationship",
-                "RelationshipController.GetRelationship",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "relationship/get");
 
             var (statusCode, result) = await _implementation.GetRelationshipAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -482,13 +467,13 @@ public partial class RelationshipController : Microsoft.AspNetCore.Mvc.Controlle
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RelationshipListResponse>> ListRelationshipsByEntity([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] ListRelationshipsByEntityRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.relationship",
+            "RelationshipController.ListRelationshipsByEntity",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "relationship/list-by-entity");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.relationship",
-                "RelationshipController.ListRelationshipsByEntity",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "relationship/list-by-entity");
 
             var (statusCode, result) = await _implementation.ListRelationshipsByEntityAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -531,13 +516,13 @@ public partial class RelationshipController : Microsoft.AspNetCore.Mvc.Controlle
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RelationshipListResponse>> GetRelationshipsBetween([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] GetRelationshipsBetweenRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.relationship",
+            "RelationshipController.GetRelationshipsBetween",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "relationship/get-between");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.relationship",
-                "RelationshipController.GetRelationshipsBetween",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "relationship/get-between");
 
             var (statusCode, result) = await _implementation.GetRelationshipsBetweenAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -580,13 +565,13 @@ public partial class RelationshipController : Microsoft.AspNetCore.Mvc.Controlle
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RelationshipListResponse>> ListRelationshipsByType([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] ListRelationshipsByTypeRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.relationship",
+            "RelationshipController.ListRelationshipsByType",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "relationship/list-by-type");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.relationship",
-                "RelationshipController.ListRelationshipsByType",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "relationship/list-by-type");
 
             var (statusCode, result) = await _implementation.ListRelationshipsByTypeAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -628,13 +613,13 @@ public partial class RelationshipController : Microsoft.AspNetCore.Mvc.Controlle
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RelationshipResponse>> UpdateRelationship([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] UpdateRelationshipRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.relationship",
+            "RelationshipController.UpdateRelationship",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "relationship/update");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.relationship",
-                "RelationshipController.UpdateRelationship",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "relationship/update");
 
             var (statusCode, result) = await _implementation.UpdateRelationshipAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -679,13 +664,13 @@ public partial class RelationshipController : Microsoft.AspNetCore.Mvc.Controlle
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> EndRelationship([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] EndRelationshipRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.relationship",
+            "RelationshipController.EndRelationship",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "relationship/end");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.relationship",
-                "RelationshipController.EndRelationship",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "relationship/end");
 
             var statusCode = await _implementation.EndRelationshipAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode);
@@ -731,13 +716,13 @@ public partial class RelationshipController : Microsoft.AspNetCore.Mvc.Controlle
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CleanupByEntityResponse>> CleanupByEntity([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] CleanupByEntityRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.relationship",
+            "RelationshipController.CleanupByEntity",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "relationship/cleanup-by-entity");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.relationship",
-                "RelationshipController.CleanupByEntity",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "relationship/cleanup-by-entity");
 
             var (statusCode, result) = await _implementation.CleanupByEntityAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -776,13 +761,13 @@ public partial class RelationshipController : Microsoft.AspNetCore.Mvc.Controlle
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RelationshipTypeResponse>> GetRelationshipType([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] GetRelationshipTypeRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.relationship-type",
+            "RelationshipController.GetRelationshipType",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "relationship-type/get");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.relationship-type",
-                "RelationshipController.GetRelationshipType",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "relationship-type/get");
 
             var (statusCode, result) = await _implementation.GetRelationshipTypeAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -824,13 +809,13 @@ public partial class RelationshipController : Microsoft.AspNetCore.Mvc.Controlle
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RelationshipTypeResponse>> GetRelationshipTypeByCode([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] GetRelationshipTypeByCodeRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.relationship-type",
+            "RelationshipController.GetRelationshipTypeByCode",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "relationship-type/get-by-code");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.relationship-type",
-                "RelationshipController.GetRelationshipTypeByCode",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "relationship-type/get-by-code");
 
             var (statusCode, result) = await _implementation.GetRelationshipTypeByCodeAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -872,13 +857,13 @@ public partial class RelationshipController : Microsoft.AspNetCore.Mvc.Controlle
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RelationshipTypeListResponse>> ListRelationshipTypes([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] ListRelationshipTypesRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.relationship-type",
+            "RelationshipController.ListRelationshipTypes",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "relationship-type/list");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.relationship-type",
-                "RelationshipController.ListRelationshipTypes",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "relationship-type/list");
 
             var (statusCode, result) = await _implementation.ListRelationshipTypesAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -920,13 +905,13 @@ public partial class RelationshipController : Microsoft.AspNetCore.Mvc.Controlle
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RelationshipTypeListResponse>> GetChildRelationshipTypes([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] GetChildRelationshipTypesRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.relationship-type",
+            "RelationshipController.GetChildRelationshipTypes",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "relationship-type/get-children");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.relationship-type",
-                "RelationshipController.GetChildRelationshipTypes",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "relationship-type/get-children");
 
             var (statusCode, result) = await _implementation.GetChildRelationshipTypesAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -970,13 +955,13 @@ public partial class RelationshipController : Microsoft.AspNetCore.Mvc.Controlle
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<MatchesHierarchyResponse>> MatchesHierarchy([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] MatchesHierarchyRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.relationship-type",
+            "RelationshipController.MatchesHierarchy",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "relationship-type/matches-hierarchy");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.relationship-type",
-                "RelationshipController.MatchesHierarchy",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "relationship-type/matches-hierarchy");
 
             var (statusCode, result) = await _implementation.MatchesHierarchyAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1019,13 +1004,13 @@ public partial class RelationshipController : Microsoft.AspNetCore.Mvc.Controlle
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RelationshipTypeListResponse>> GetAncestors([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] GetAncestorsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.relationship-type",
+            "RelationshipController.GetAncestors",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "relationship-type/get-ancestors");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.relationship-type",
-                "RelationshipController.GetAncestors",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "relationship-type/get-ancestors");
 
             var (statusCode, result) = await _implementation.GetAncestorsAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1064,13 +1049,13 @@ public partial class RelationshipController : Microsoft.AspNetCore.Mvc.Controlle
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RelationshipTypeResponse>> CreateRelationshipType([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] CreateRelationshipTypeRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.relationship-type",
+            "RelationshipController.CreateRelationshipType",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "relationship-type/create");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.relationship-type",
-                "RelationshipController.CreateRelationshipType",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "relationship-type/create");
 
             var (statusCode, result) = await _implementation.CreateRelationshipTypeAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1109,13 +1094,13 @@ public partial class RelationshipController : Microsoft.AspNetCore.Mvc.Controlle
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RelationshipTypeResponse>> UpdateRelationshipType([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] UpdateRelationshipTypeRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.relationship-type",
+            "RelationshipController.UpdateRelationshipType",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "relationship-type/update");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.relationship-type",
-                "RelationshipController.UpdateRelationshipType",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "relationship-type/update");
 
             var (statusCode, result) = await _implementation.UpdateRelationshipTypeAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1159,13 +1144,13 @@ public partial class RelationshipController : Microsoft.AspNetCore.Mvc.Controlle
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> DeleteRelationshipType([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] DeleteRelationshipTypeRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.relationship-type",
+            "RelationshipController.DeleteRelationshipType",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "relationship-type/delete");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.relationship-type",
-                "RelationshipController.DeleteRelationshipType",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "relationship-type/delete");
 
             var statusCode = await _implementation.DeleteRelationshipTypeAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode);
@@ -1212,13 +1197,13 @@ public partial class RelationshipController : Microsoft.AspNetCore.Mvc.Controlle
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RelationshipTypeResponse>> DeprecateRelationshipType([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] DeprecateRelationshipTypeRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.relationship-type",
+            "RelationshipController.DeprecateRelationshipType",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "relationship-type/deprecate");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.relationship-type",
-                "RelationshipController.DeprecateRelationshipType",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "relationship-type/deprecate");
 
             var (statusCode, result) = await _implementation.DeprecateRelationshipTypeAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1261,13 +1246,13 @@ public partial class RelationshipController : Microsoft.AspNetCore.Mvc.Controlle
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RelationshipTypeResponse>> UndeprecateRelationshipType([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] UndeprecateRelationshipTypeRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.relationship-type",
+            "RelationshipController.UndeprecateRelationshipType",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "relationship-type/undeprecate");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.relationship-type",
-                "RelationshipController.UndeprecateRelationshipType",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "relationship-type/undeprecate");
 
             var (statusCode, result) = await _implementation.UndeprecateRelationshipTypeAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1319,13 +1304,13 @@ public partial class RelationshipController : Microsoft.AspNetCore.Mvc.Controlle
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<MergeRelationshipTypeResponse>> MergeRelationshipType([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] MergeRelationshipTypeRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.relationship-type",
+            "RelationshipController.MergeRelationshipType",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "relationship-type/merge");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.relationship-type",
-                "RelationshipController.MergeRelationshipType",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "relationship-type/merge");
 
             var (statusCode, result) = await _implementation.MergeRelationshipTypeAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1369,13 +1354,13 @@ public partial class RelationshipController : Microsoft.AspNetCore.Mvc.Controlle
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SeedRelationshipTypesResponse>> SeedRelationshipTypes([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] SeedRelationshipTypesRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.relationship-type",
+            "RelationshipController.SeedRelationshipTypes",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "relationship-type/seed");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.relationship-type",
-                "RelationshipController.SeedRelationshipTypes",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "relationship-type/seed");
 
             var (statusCode, result) = await _implementation.SeedRelationshipTypesAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);

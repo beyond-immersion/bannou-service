@@ -22,21 +22,6 @@
 
 #nullable enable
 
-#pragma warning disable 108 // Disable "CS0108 '{derivedDto}.ToJson()' hides inherited member '{dtoBase}.ToJson()'. Use the new keyword if hiding was intended."
-#pragma warning disable 114 // Disable "CS0114 '{derivedDto}.RaisePropertyChanged(String)' hides inherited member 'dtoBase.RaisePropertyChanged(String)'. To make the current member override that implementation, add the override keyword. Otherwise add the new keyword."
-#pragma warning disable 472 // Disable "CS0472 The result of the expression is always 'false' since a value of type 'Int32' is never equal to 'null' of type 'Int32?'
-#pragma warning disable 612 // Disable "CS0612 '...' is obsolete"
-#pragma warning disable 649 // Disable "CS0649 Field is never assigned to, and will always have its default value null"
-#pragma warning disable 1573 // Disable "CS1573 Parameter '...' has no matching param tag in the XML comment for ...
-#pragma warning disable 1591 // Disable "CS1591 Missing XML comment for publicly visible type or member ..."
-#pragma warning disable 8073 // Disable "CS8073 The result of the expression is always 'false' since a value of type 'T' is never equal to 'null' of type 'T?'"
-#pragma warning disable 3016 // Disable "CS3016 Arrays as attribute arguments is not CLS-compliant"
-#pragma warning disable 8600 // Disable "CS8600 Converting null literal or possible null value to non-nullable type"
-#pragma warning disable 8602 // Disable "CS8602 Dereference of a possibly null reference"
-#pragma warning disable 8603 // Disable "CS8603 Possible null reference return"
-#pragma warning disable 8604 // Disable "CS8604 Possible null reference argument for parameter"
-#pragma warning disable 8625 // Disable "CS8625 Cannot convert null literal to non-nullable reference type"
-#pragma warning disable 8765 // Disable "CS8765 Nullability of type of parameter doesn't match overridden member (possibly because of nullability attributes)."
 
 namespace BeyondImmersion.BannouService.RealmHistory;
 
@@ -271,13 +256,13 @@ public partial class RealmHistoryController : Microsoft.AspNetCore.Mvc.Controlle
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RealmHistoricalParticipation>> RecordRealmParticipation([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] RecordRealmParticipationRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.realm-history",
+            "RealmHistoryController.RecordRealmParticipation",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "realm-history/record-participation");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.realm-history",
-                "RealmHistoryController.RecordRealmParticipation",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "realm-history/record-participation");
 
             var (statusCode, result) = await _implementation.RecordRealmParticipationAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -320,13 +305,13 @@ public partial class RealmHistoryController : Microsoft.AspNetCore.Mvc.Controlle
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RealmParticipationListResponse>> GetRealmParticipation([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] GetRealmParticipationRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.realm-history",
+            "RealmHistoryController.GetRealmParticipation",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "realm-history/get-participation");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.realm-history",
-                "RealmHistoryController.GetRealmParticipation",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "realm-history/get-participation");
 
             var (statusCode, result) = await _implementation.GetRealmParticipationAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -369,13 +354,13 @@ public partial class RealmHistoryController : Microsoft.AspNetCore.Mvc.Controlle
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RealmParticipationListResponse>> GetRealmEventParticipants([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] GetRealmEventParticipantsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.realm-history",
+            "RealmHistoryController.GetRealmEventParticipants",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "realm-history/get-event-participants");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.realm-history",
-                "RealmHistoryController.GetRealmEventParticipants",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "realm-history/get-event-participants");
 
             var (statusCode, result) = await _implementation.GetRealmEventParticipantsAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -418,13 +403,13 @@ public partial class RealmHistoryController : Microsoft.AspNetCore.Mvc.Controlle
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> DeleteRealmParticipation([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] DeleteRealmParticipationRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.realm-history",
+            "RealmHistoryController.DeleteRealmParticipation",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "realm-history/delete-participation");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.realm-history",
-                "RealmHistoryController.DeleteRealmParticipation",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "realm-history/delete-participation");
 
             var statusCode = await _implementation.DeleteRealmParticipationAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode);
@@ -468,13 +453,13 @@ public partial class RealmHistoryController : Microsoft.AspNetCore.Mvc.Controlle
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RealmLoreResponse>> GetRealmLore([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] GetRealmLoreRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.realm-history",
+            "RealmHistoryController.GetRealmLore",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "realm-history/get-lore");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.realm-history",
-                "RealmHistoryController.GetRealmLore",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "realm-history/get-lore");
 
             var (statusCode, result) = await _implementation.GetRealmLoreAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -517,13 +502,13 @@ public partial class RealmHistoryController : Microsoft.AspNetCore.Mvc.Controlle
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RealmLoreResponse>> SetRealmLore([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] SetRealmLoreRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.realm-history",
+            "RealmHistoryController.SetRealmLore",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "realm-history/set-lore");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.realm-history",
-                "RealmHistoryController.SetRealmLore",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "realm-history/set-lore");
 
             var (statusCode, result) = await _implementation.SetRealmLoreAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -566,13 +551,13 @@ public partial class RealmHistoryController : Microsoft.AspNetCore.Mvc.Controlle
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RealmLoreResponse>> AddRealmLoreElement([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] AddRealmLoreElementRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.realm-history",
+            "RealmHistoryController.AddRealmLoreElement",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "realm-history/add-lore-element");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.realm-history",
-                "RealmHistoryController.AddRealmLoreElement",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "realm-history/add-lore-element");
 
             var (statusCode, result) = await _implementation.AddRealmLoreElementAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -615,13 +600,13 @@ public partial class RealmHistoryController : Microsoft.AspNetCore.Mvc.Controlle
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> DeleteRealmLore([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] DeleteRealmLoreRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.realm-history",
+            "RealmHistoryController.DeleteRealmLore",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "realm-history/delete-lore");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.realm-history",
-                "RealmHistoryController.DeleteRealmLore",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "realm-history/delete-lore");
 
             var statusCode = await _implementation.DeleteRealmLoreAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode);
@@ -664,13 +649,13 @@ public partial class RealmHistoryController : Microsoft.AspNetCore.Mvc.Controlle
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<DeleteAllRealmHistoryResponse>> DeleteAllRealmHistory([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] DeleteAllRealmHistoryRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.realm-history",
+            "RealmHistoryController.DeleteAllRealmHistory",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "realm-history/delete-all");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.realm-history",
-                "RealmHistoryController.DeleteAllRealmHistory",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "realm-history/delete-all");
 
             var (statusCode, result) = await _implementation.DeleteAllRealmHistoryAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -713,13 +698,13 @@ public partial class RealmHistoryController : Microsoft.AspNetCore.Mvc.Controlle
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RealmHistorySummaryResponse>> SummarizeRealmHistory([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] SummarizeRealmHistoryRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.realm-history",
+            "RealmHistoryController.SummarizeRealmHistory",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "realm-history/summarize");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.realm-history",
-                "RealmHistoryController.SummarizeRealmHistory",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "realm-history/summarize");
 
             var (statusCode, result) = await _implementation.SummarizeRealmHistoryAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -763,13 +748,13 @@ public partial class RealmHistoryController : Microsoft.AspNetCore.Mvc.Controlle
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RealmHistoryArchive>> GetCompressData([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] GetCompressDataRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.realm-history",
+            "RealmHistoryController.GetCompressData",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "realm-history/get-compress-data");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.realm-history",
-                "RealmHistoryController.GetCompressData",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "realm-history/get-compress-data");
 
             var (statusCode, result) = await _implementation.GetCompressDataAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -813,13 +798,13 @@ public partial class RealmHistoryController : Microsoft.AspNetCore.Mvc.Controlle
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RestoreFromArchiveResponse>> RestoreFromArchive([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] RestoreFromArchiveRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.realm-history",
+            "RealmHistoryController.RestoreFromArchive",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "realm-history/restore-from-archive");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.realm-history",
-                "RealmHistoryController.RestoreFromArchive",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "realm-history/restore-from-archive");
 
             var (statusCode, result) = await _implementation.RestoreFromArchiveAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);

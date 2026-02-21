@@ -934,6 +934,13 @@ public partial class BannouClient : IBannouClient
                         try
                         {
                             var message = BinaryMessage.Parse(messageBytes, messageBytes.Length);
+
+                            // Decompress payload if the server set the Compressed flag
+                            if (message.Flags.HasFlag(MessageFlags.Compressed))
+                            {
+                                message = PayloadDecompressor.Decompress(message);
+                            }
+
                             HandleReceivedMessage(message);
                         }
                         catch

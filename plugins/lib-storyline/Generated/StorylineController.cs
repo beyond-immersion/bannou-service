@@ -22,21 +22,6 @@
 
 #nullable enable
 
-#pragma warning disable 108 // Disable "CS0108 '{derivedDto}.ToJson()' hides inherited member '{dtoBase}.ToJson()'. Use the new keyword if hiding was intended."
-#pragma warning disable 114 // Disable "CS0114 '{derivedDto}.RaisePropertyChanged(String)' hides inherited member 'dtoBase.RaisePropertyChanged(String)'. To make the current member override that implementation, add the override keyword. Otherwise add the new keyword."
-#pragma warning disable 472 // Disable "CS0472 The result of the expression is always 'false' since a value of type 'Int32' is never equal to 'null' of type 'Int32?'
-#pragma warning disable 612 // Disable "CS0612 '...' is obsolete"
-#pragma warning disable 649 // Disable "CS0649 Field is never assigned to, and will always have its default value null"
-#pragma warning disable 1573 // Disable "CS1573 Parameter '...' has no matching param tag in the XML comment for ...
-#pragma warning disable 1591 // Disable "CS1591 Missing XML comment for publicly visible type or member ..."
-#pragma warning disable 8073 // Disable "CS8073 The result of the expression is always 'false' since a value of type 'T' is never equal to 'null' of type 'T?'"
-#pragma warning disable 3016 // Disable "CS3016 Arrays as attribute arguments is not CLS-compliant"
-#pragma warning disable 8600 // Disable "CS8600 Converting null literal or possible null value to non-nullable type"
-#pragma warning disable 8602 // Disable "CS8602 Dereference of a possibly null reference"
-#pragma warning disable 8603 // Disable "CS8603 Possible null reference return"
-#pragma warning disable 8604 // Disable "CS8604 Possible null reference argument for parameter"
-#pragma warning disable 8625 // Disable "CS8625 Cannot convert null literal to non-nullable reference type"
-#pragma warning disable 8765 // Disable "CS8765 Nullability of type of parameter doesn't match overridden member (possibly because of nullability attributes)."
 
 namespace BeyondImmersion.BannouService.Storyline;
 
@@ -328,13 +313,13 @@ public partial class StorylineController : Microsoft.AspNetCore.Mvc.ControllerBa
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ComposeResponse>> Compose([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] ComposeRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.storyline",
+            "StorylineController.Compose",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "storyline/compose");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.storyline",
-                "StorylineController.Compose",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "storyline/compose");
 
             var (statusCode, result) = await _implementation.ComposeAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -377,13 +362,13 @@ public partial class StorylineController : Microsoft.AspNetCore.Mvc.ControllerBa
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<GetPlanResponse>> GetPlan([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] GetPlanRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.storyline",
+            "StorylineController.GetPlan",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "storyline/plan/get");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.storyline",
-                "StorylineController.GetPlan",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "storyline/plan/get");
 
             var (statusCode, result) = await _implementation.GetPlanAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -426,13 +411,13 @@ public partial class StorylineController : Microsoft.AspNetCore.Mvc.ControllerBa
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ListPlansResponse>> ListPlans([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] ListPlansRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.storyline",
+            "StorylineController.ListPlans",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "storyline/plan/list");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.storyline",
-                "StorylineController.ListPlans",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "storyline/plan/list");
 
             var (statusCode, result) = await _implementation.ListPlansAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -476,13 +461,13 @@ public partial class StorylineController : Microsoft.AspNetCore.Mvc.ControllerBa
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ScenarioDefinition>> CreateScenarioDefinition([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] CreateScenarioDefinitionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.storyline",
+            "StorylineController.CreateScenarioDefinition",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "storyline/scenario/create");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.storyline",
-                "StorylineController.CreateScenarioDefinition",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "storyline/scenario/create");
 
             var (statusCode, result) = await _implementation.CreateScenarioDefinitionAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -525,13 +510,13 @@ public partial class StorylineController : Microsoft.AspNetCore.Mvc.ControllerBa
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<GetScenarioDefinitionResponse>> GetScenarioDefinition([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] GetScenarioDefinitionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.storyline",
+            "StorylineController.GetScenarioDefinition",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "storyline/scenario/get");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.storyline",
-                "StorylineController.GetScenarioDefinition",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "storyline/scenario/get");
 
             var (statusCode, result) = await _implementation.GetScenarioDefinitionAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -574,13 +559,13 @@ public partial class StorylineController : Microsoft.AspNetCore.Mvc.ControllerBa
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ListScenarioDefinitionsResponse>> ListScenarioDefinitions([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] ListScenarioDefinitionsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.storyline",
+            "StorylineController.ListScenarioDefinitions",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "storyline/scenario/list");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.storyline",
-                "StorylineController.ListScenarioDefinitions",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "storyline/scenario/list");
 
             var (statusCode, result) = await _implementation.ListScenarioDefinitionsAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -623,13 +608,13 @@ public partial class StorylineController : Microsoft.AspNetCore.Mvc.ControllerBa
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ScenarioDefinition>> UpdateScenarioDefinition([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] UpdateScenarioDefinitionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.storyline",
+            "StorylineController.UpdateScenarioDefinition",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "storyline/scenario/update");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.storyline",
-                "StorylineController.UpdateScenarioDefinition",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "storyline/scenario/update");
 
             var (statusCode, result) = await _implementation.UpdateScenarioDefinitionAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -672,13 +657,13 @@ public partial class StorylineController : Microsoft.AspNetCore.Mvc.ControllerBa
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> DeprecateScenarioDefinition([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] DeprecateScenarioDefinitionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.storyline",
+            "StorylineController.DeprecateScenarioDefinition",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "storyline/scenario/deprecate");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.storyline",
-                "StorylineController.DeprecateScenarioDefinition",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "storyline/scenario/deprecate");
 
             var statusCode = await _implementation.DeprecateScenarioDefinitionAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode);
@@ -724,13 +709,13 @@ public partial class StorylineController : Microsoft.AspNetCore.Mvc.ControllerBa
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<FindAvailableScenariosResponse>> FindAvailableScenarios([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] FindAvailableScenariosRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.storyline",
+            "StorylineController.FindAvailableScenarios",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "storyline/scenario/find-available");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.storyline",
-                "StorylineController.FindAvailableScenarios",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "storyline/scenario/find-available");
 
             var (statusCode, result) = await _implementation.FindAvailableScenariosAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -774,13 +759,13 @@ public partial class StorylineController : Microsoft.AspNetCore.Mvc.ControllerBa
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<TestScenarioResponse>> TestScenarioTrigger([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] TestScenarioRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.storyline",
+            "StorylineController.TestScenarioTrigger",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "storyline/scenario/test");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.storyline",
-                "StorylineController.TestScenarioTrigger",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "storyline/scenario/test");
 
             var (statusCode, result) = await _implementation.TestScenarioTriggerAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -823,13 +808,13 @@ public partial class StorylineController : Microsoft.AspNetCore.Mvc.ControllerBa
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<EvaluateFitResponse>> EvaluateScenarioFit([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] EvaluateFitRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.storyline",
+            "StorylineController.EvaluateScenarioFit",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "storyline/scenario/evaluate-fit");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.storyline",
-                "StorylineController.EvaluateScenarioFit",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "storyline/scenario/evaluate-fit");
 
             var (statusCode, result) = await _implementation.EvaluateScenarioFitAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -876,13 +861,13 @@ public partial class StorylineController : Microsoft.AspNetCore.Mvc.ControllerBa
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<TriggerScenarioResponse>> TriggerScenario([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] TriggerScenarioRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.storyline",
+            "StorylineController.TriggerScenario",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "storyline/scenario/trigger");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.storyline",
-                "StorylineController.TriggerScenario",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "storyline/scenario/trigger");
 
             var (statusCode, result) = await _implementation.TriggerScenarioAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -924,13 +909,13 @@ public partial class StorylineController : Microsoft.AspNetCore.Mvc.ControllerBa
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<GetActiveScenariosResponse>> GetActiveScenarios([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] GetActiveScenariosRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.storyline",
+            "StorylineController.GetActiveScenarios",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "storyline/scenario/get-active");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.storyline",
-                "StorylineController.GetActiveScenarios",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "storyline/scenario/get-active");
 
             var (statusCode, result) = await _implementation.GetActiveScenariosAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -972,13 +957,13 @@ public partial class StorylineController : Microsoft.AspNetCore.Mvc.ControllerBa
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<GetScenarioHistoryResponse>> GetScenarioHistory([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] GetScenarioHistoryRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.storyline",
+            "StorylineController.GetScenarioHistory",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "storyline/scenario/get-history");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.storyline",
-                "StorylineController.GetScenarioHistory",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "storyline/scenario/get-history");
 
             var (statusCode, result) = await _implementation.GetScenarioHistoryAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1021,13 +1006,13 @@ public partial class StorylineController : Microsoft.AspNetCore.Mvc.ControllerBa
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<StorylineArchive>> GetCompressData([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] GetCompressDataRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.storyline",
+            "StorylineController.GetCompressData",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "storyline/get-compress-data");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.storyline",
-                "StorylineController.GetCompressData",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "storyline/get-compress-data");
 
             var (statusCode, result) = await _implementation.GetCompressDataAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);

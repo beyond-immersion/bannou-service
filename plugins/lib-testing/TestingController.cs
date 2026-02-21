@@ -13,10 +13,12 @@ public class TestingController : ControllerBase
 {
     private readonly ITestingService _testingService;
     private readonly ILogger<TestingController> _logger;
+    private readonly BeyondImmersion.BannouService.Services.ITelemetryProvider _telemetryProvider;
 
-    public TestingController(ITestingService testingService, ILogger<TestingController> logger)
+    public TestingController(ITestingService testingService, BeyondImmersion.BannouService.Services.ITelemetryProvider telemetryProvider, ILogger<TestingController> logger)
     {
         _testingService = testingService;
+        _telemetryProvider = telemetryProvider;
         _logger = logger;
     }
 

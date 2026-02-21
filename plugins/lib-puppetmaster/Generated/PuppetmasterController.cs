@@ -22,21 +22,6 @@
 
 #nullable enable
 
-#pragma warning disable 108 // Disable "CS0108 '{derivedDto}.ToJson()' hides inherited member '{dtoBase}.ToJson()'. Use the new keyword if hiding was intended."
-#pragma warning disable 114 // Disable "CS0114 '{derivedDto}.RaisePropertyChanged(String)' hides inherited member 'dtoBase.RaisePropertyChanged(String)'. To make the current member override that implementation, add the override keyword. Otherwise add the new keyword."
-#pragma warning disable 472 // Disable "CS0472 The result of the expression is always 'false' since a value of type 'Int32' is never equal to 'null' of type 'Int32?'
-#pragma warning disable 612 // Disable "CS0612 '...' is obsolete"
-#pragma warning disable 649 // Disable "CS0649 Field is never assigned to, and will always have its default value null"
-#pragma warning disable 1573 // Disable "CS1573 Parameter '...' has no matching param tag in the XML comment for ...
-#pragma warning disable 1591 // Disable "CS1591 Missing XML comment for publicly visible type or member ..."
-#pragma warning disable 8073 // Disable "CS8073 The result of the expression is always 'false' since a value of type 'T' is never equal to 'null' of type 'T?'"
-#pragma warning disable 3016 // Disable "CS3016 Arrays as attribute arguments is not CLS-compliant"
-#pragma warning disable 8600 // Disable "CS8600 Converting null literal or possible null value to non-nullable type"
-#pragma warning disable 8602 // Disable "CS8602 Dereference of a possibly null reference"
-#pragma warning disable 8603 // Disable "CS8603 Possible null reference return"
-#pragma warning disable 8604 // Disable "CS8604 Possible null reference argument for parameter"
-#pragma warning disable 8625 // Disable "CS8625 Cannot convert null literal to non-nullable reference type"
-#pragma warning disable 8765 // Disable "CS8765 Nullability of type of parameter doesn't match overridden member (possibly because of nullability attributes)."
 
 namespace BeyondImmersion.BannouService.Puppetmaster;
 
@@ -184,13 +169,13 @@ public partial class PuppetmasterController : Microsoft.AspNetCore.Mvc.Controlle
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<PuppetmasterStatusResponse>> GetStatus([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] GetStatusRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.puppetmaster",
+            "PuppetmasterController.GetStatus",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "puppetmaster/status");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.puppetmaster",
-                "PuppetmasterController.GetStatus",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "puppetmaster/status");
 
             var (statusCode, result) = await _implementation.GetStatusAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -233,13 +218,13 @@ public partial class PuppetmasterController : Microsoft.AspNetCore.Mvc.Controlle
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<InvalidateBehaviorsResponse>> InvalidateBehaviors([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] InvalidateBehaviorsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.puppetmaster",
+            "PuppetmasterController.InvalidateBehaviors",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "puppetmaster/behaviors/invalidate");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.puppetmaster",
-                "PuppetmasterController.InvalidateBehaviors",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "puppetmaster/behaviors/invalidate");
 
             var (statusCode, result) = await _implementation.InvalidateBehaviorsAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -281,13 +266,13 @@ public partial class PuppetmasterController : Microsoft.AspNetCore.Mvc.Controlle
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ListWatchersResponse>> ListWatchers([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] ListWatchersRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.puppetmaster",
+            "PuppetmasterController.ListWatchers",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "puppetmaster/watchers/list");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.puppetmaster",
-                "PuppetmasterController.ListWatchers",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "puppetmaster/watchers/list");
 
             var (statusCode, result) = await _implementation.ListWatchersAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -330,13 +315,13 @@ public partial class PuppetmasterController : Microsoft.AspNetCore.Mvc.Controlle
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<StartWatcherResponse>> StartWatcher([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] StartWatcherRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.puppetmaster",
+            "PuppetmasterController.StartWatcher",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "puppetmaster/watchers/start");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.puppetmaster",
-                "PuppetmasterController.StartWatcher",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "puppetmaster/watchers/start");
 
             var (statusCode, result) = await _implementation.StartWatcherAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -378,13 +363,13 @@ public partial class PuppetmasterController : Microsoft.AspNetCore.Mvc.Controlle
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<StopWatcherResponse>> StopWatcher([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] StopWatcherRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.puppetmaster",
+            "PuppetmasterController.StopWatcher",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "puppetmaster/watchers/stop");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.puppetmaster",
-                "PuppetmasterController.StopWatcher",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "puppetmaster/watchers/stop");
 
             var (statusCode, result) = await _implementation.StopWatcherAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -427,13 +412,13 @@ public partial class PuppetmasterController : Microsoft.AspNetCore.Mvc.Controlle
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<StartWatchersForRealmResponse>> StartWatchersForRealm([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] StartWatchersForRealmRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.puppetmaster",
+            "PuppetmasterController.StartWatchersForRealm",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "puppetmaster/watchers/start-for-realm");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.puppetmaster",
-                "PuppetmasterController.StartWatchersForRealm",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "puppetmaster/watchers/start-for-realm");
 
             var (statusCode, result) = await _implementation.StartWatchersForRealmAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);

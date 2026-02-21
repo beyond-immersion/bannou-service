@@ -22,21 +22,6 @@
 
 #nullable enable
 
-#pragma warning disable 108 // Disable "CS0108 '{derivedDto}.ToJson()' hides inherited member '{dtoBase}.ToJson()'. Use the new keyword if hiding was intended."
-#pragma warning disable 114 // Disable "CS0114 '{derivedDto}.RaisePropertyChanged(String)' hides inherited member 'dtoBase.RaisePropertyChanged(String)'. To make the current member override that implementation, add the override keyword. Otherwise add the new keyword."
-#pragma warning disable 472 // Disable "CS0472 The result of the expression is always 'false' since a value of type 'Int32' is never equal to 'null' of type 'Int32?'
-#pragma warning disable 612 // Disable "CS0612 '...' is obsolete"
-#pragma warning disable 649 // Disable "CS0649 Field is never assigned to, and will always have its default value null"
-#pragma warning disable 1573 // Disable "CS1573 Parameter '...' has no matching param tag in the XML comment for ...
-#pragma warning disable 1591 // Disable "CS1591 Missing XML comment for publicly visible type or member ..."
-#pragma warning disable 8073 // Disable "CS8073 The result of the expression is always 'false' since a value of type 'T' is never equal to 'null' of type 'T?'"
-#pragma warning disable 3016 // Disable "CS3016 Arrays as attribute arguments is not CLS-compliant"
-#pragma warning disable 8600 // Disable "CS8600 Converting null literal or possible null value to non-nullable type"
-#pragma warning disable 8602 // Disable "CS8602 Dereference of a possibly null reference"
-#pragma warning disable 8603 // Disable "CS8603 Possible null reference return"
-#pragma warning disable 8604 // Disable "CS8604 Possible null reference argument for parameter"
-#pragma warning disable 8625 // Disable "CS8625 Cannot convert null literal to non-nullable reference type"
-#pragma warning disable 8765 // Disable "CS8765 Nullability of type of parameter doesn't match overridden member (possibly because of nullability attributes)."
 
 namespace BeyondImmersion.BannouService.Scene;
 
@@ -367,13 +352,13 @@ public partial class SceneController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SceneResponse>> CreateScene([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] CreateSceneRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.scene",
+            "SceneController.CreateScene",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "scene/create");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.scene",
-                "SceneController.CreateScene",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "scene/create");
 
             var (statusCode, result) = await _implementation.CreateSceneAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -416,13 +401,13 @@ public partial class SceneController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<GetSceneResponse>> GetScene([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] GetSceneRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.scene",
+            "SceneController.GetScene",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "scene/get");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.scene",
-                "SceneController.GetScene",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "scene/get");
 
             var (statusCode, result) = await _implementation.GetSceneAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -465,13 +450,13 @@ public partial class SceneController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ListScenesResponse>> ListScenes([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] ListScenesRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.scene",
+            "SceneController.ListScenes",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "scene/list");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.scene",
-                "SceneController.ListScenes",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "scene/list");
 
             var (statusCode, result) = await _implementation.ListScenesAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -515,13 +500,13 @@ public partial class SceneController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SceneResponse>> UpdateScene([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] UpdateSceneRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.scene",
+            "SceneController.UpdateScene",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "scene/update");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.scene",
-                "SceneController.UpdateScene",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "scene/update");
 
             var (statusCode, result) = await _implementation.UpdateSceneAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -565,13 +550,13 @@ public partial class SceneController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<DeleteSceneResponse>> DeleteScene([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] DeleteSceneRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.scene",
+            "SceneController.DeleteScene",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "scene/delete");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.scene",
-                "SceneController.DeleteScene",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "scene/delete");
 
             var (statusCode, result) = await _implementation.DeleteSceneAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -614,13 +599,13 @@ public partial class SceneController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ValidationResult>> ValidateScene([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] ValidateSceneRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.scene",
+            "SceneController.ValidateScene",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "scene/validate");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.scene",
-                "SceneController.ValidateScene",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "scene/validate");
 
             var (statusCode, result) = await _implementation.ValidateSceneAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -668,13 +653,13 @@ public partial class SceneController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<InstantiateSceneResponse>> InstantiateScene([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] InstantiateSceneRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.scene",
+            "SceneController.InstantiateScene",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "scene/instantiate");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.scene",
-                "SceneController.InstantiateScene",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "scene/instantiate");
 
             var (statusCode, result) = await _implementation.InstantiateSceneAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -717,13 +702,13 @@ public partial class SceneController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<DestroyInstanceResponse>> DestroyInstance([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] DestroyInstanceRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.scene",
+            "SceneController.DestroyInstance",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "scene/destroy-instance");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.scene",
-                "SceneController.DestroyInstance",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "scene/destroy-instance");
 
             var (statusCode, result) = await _implementation.DestroyInstanceAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -767,13 +752,13 @@ public partial class SceneController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CheckoutResponse>> CheckoutScene([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] CheckoutRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.scene",
+            "SceneController.CheckoutScene",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "scene/checkout");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.scene",
-                "SceneController.CheckoutScene",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "scene/checkout");
 
             var (statusCode, result) = await _implementation.CheckoutSceneAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -816,13 +801,13 @@ public partial class SceneController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CommitResponse>> CommitScene([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] CommitRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.scene",
+            "SceneController.CommitScene",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "scene/commit");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.scene",
-                "SceneController.CommitScene",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "scene/commit");
 
             var (statusCode, result) = await _implementation.CommitSceneAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -865,13 +850,13 @@ public partial class SceneController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<DiscardResponse>> DiscardCheckout([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] DiscardRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.scene",
+            "SceneController.DiscardCheckout",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "scene/discard");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.scene",
-                "SceneController.DiscardCheckout",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "scene/discard");
 
             var (statusCode, result) = await _implementation.DiscardCheckoutAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -914,13 +899,13 @@ public partial class SceneController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<HeartbeatResponse>> HeartbeatCheckout([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] HeartbeatRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.scene",
+            "SceneController.HeartbeatCheckout",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "scene/heartbeat");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.scene",
-                "SceneController.HeartbeatCheckout",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "scene/heartbeat");
 
             var (statusCode, result) = await _implementation.HeartbeatCheckoutAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -963,13 +948,13 @@ public partial class SceneController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<HistoryResponse>> GetSceneHistory([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] HistoryRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.scene",
+            "SceneController.GetSceneHistory",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "scene/history");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.scene",
-                "SceneController.GetSceneHistory",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "scene/history");
 
             var (statusCode, result) = await _implementation.GetSceneHistoryAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1012,13 +997,13 @@ public partial class SceneController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RegisterValidationRulesResponse>> RegisterValidationRules([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] RegisterValidationRulesRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.scene",
+            "SceneController.RegisterValidationRules",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "scene/register-validation-rules");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.scene",
-                "SceneController.RegisterValidationRules",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "scene/register-validation-rules");
 
             var (statusCode, result) = await _implementation.RegisterValidationRulesAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1061,13 +1046,13 @@ public partial class SceneController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<GetValidationRulesResponse>> GetValidationRules([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] GetValidationRulesRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.scene",
+            "SceneController.GetValidationRules",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "scene/get-validation-rules");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.scene",
-                "SceneController.GetValidationRules",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "scene/get-validation-rules");
 
             var (statusCode, result) = await _implementation.GetValidationRulesAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1110,13 +1095,13 @@ public partial class SceneController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SearchScenesResponse>> SearchScenes([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] SearchScenesRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.scene",
+            "SceneController.SearchScenes",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "scene/search");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.scene",
-                "SceneController.SearchScenes",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "scene/search");
 
             var (statusCode, result) = await _implementation.SearchScenesAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1159,13 +1144,13 @@ public partial class SceneController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<FindReferencesResponse>> FindReferences([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] FindReferencesRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.scene",
+            "SceneController.FindReferences",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "scene/find-references");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.scene",
-                "SceneController.FindReferences",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "scene/find-references");
 
             var (statusCode, result) = await _implementation.FindReferencesAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1208,13 +1193,13 @@ public partial class SceneController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<FindAssetUsageResponse>> FindAssetUsage([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] FindAssetUsageRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.scene",
+            "SceneController.FindAssetUsage",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "scene/find-asset-usage");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.scene",
-                "SceneController.FindAssetUsage",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "scene/find-asset-usage");
 
             var (statusCode, result) = await _implementation.FindAssetUsageAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1257,13 +1242,13 @@ public partial class SceneController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SceneResponse>> DuplicateScene([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] DuplicateSceneRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.scene",
+            "SceneController.DuplicateScene",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "scene/duplicate");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.scene",
-                "SceneController.DuplicateScene",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "scene/duplicate");
 
             var (statusCode, result) = await _implementation.DuplicateSceneAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);

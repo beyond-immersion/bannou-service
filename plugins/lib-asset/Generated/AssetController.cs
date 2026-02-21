@@ -22,21 +22,6 @@
 
 #nullable enable
 
-#pragma warning disable 108 // Disable "CS0108 '{derivedDto}.ToJson()' hides inherited member '{dtoBase}.ToJson()'. Use the new keyword if hiding was intended."
-#pragma warning disable 114 // Disable "CS0114 '{derivedDto}.RaisePropertyChanged(String)' hides inherited member 'dtoBase.RaisePropertyChanged(String)'. To make the current member override that implementation, add the override keyword. Otherwise add the new keyword."
-#pragma warning disable 472 // Disable "CS0472 The result of the expression is always 'false' since a value of type 'Int32' is never equal to 'null' of type 'Int32?'
-#pragma warning disable 612 // Disable "CS0612 '...' is obsolete"
-#pragma warning disable 649 // Disable "CS0649 Field is never assigned to, and will always have its default value null"
-#pragma warning disable 1573 // Disable "CS1573 Parameter '...' has no matching param tag in the XML comment for ...
-#pragma warning disable 1591 // Disable "CS1591 Missing XML comment for publicly visible type or member ..."
-#pragma warning disable 8073 // Disable "CS8073 The result of the expression is always 'false' since a value of type 'T' is never equal to 'null' of type 'T?'"
-#pragma warning disable 3016 // Disable "CS3016 Arrays as attribute arguments is not CLS-compliant"
-#pragma warning disable 8600 // Disable "CS8600 Converting null literal or possible null value to non-nullable type"
-#pragma warning disable 8602 // Disable "CS8602 Dereference of a possibly null reference"
-#pragma warning disable 8603 // Disable "CS8603 Possible null reference return"
-#pragma warning disable 8604 // Disable "CS8604 Possible null reference argument for parameter"
-#pragma warning disable 8625 // Disable "CS8625 Cannot convert null literal to non-nullable reference type"
-#pragma warning disable 8765 // Disable "CS8765 Nullability of type of parameter doesn't match overridden member (possibly because of nullability attributes)."
 
 namespace BeyondImmersion.BannouService.Asset;
 
@@ -417,13 +402,13 @@ public partial class AssetController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<UploadResponse>> RequestUpload([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] UploadRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.assets",
+            "AssetController.RequestUpload",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "assets/upload/request");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.assets",
-                "AssetController.RequestUpload",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "assets/upload/request");
 
             var (statusCode, result) = await _implementation.RequestUploadAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -467,13 +452,13 @@ public partial class AssetController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<AssetMetadata>> CompleteUpload([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] CompleteUploadRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.assets",
+            "AssetController.CompleteUpload",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "assets/upload/complete");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.assets",
-                "AssetController.CompleteUpload",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "assets/upload/complete");
 
             var (statusCode, result) = await _implementation.CompleteUploadAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -516,13 +501,13 @@ public partial class AssetController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<AssetWithDownloadUrl>> GetAsset([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] GetAssetRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.assets",
+            "AssetController.GetAsset",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "assets/get");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.assets",
-                "AssetController.GetAsset",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "assets/get");
 
             var (statusCode, result) = await _implementation.GetAssetAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -565,13 +550,13 @@ public partial class AssetController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<DeleteAssetResponse>> DeleteAsset([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] DeleteAssetRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.assets",
+            "AssetController.DeleteAsset",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "assets/delete");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.assets",
-                "AssetController.DeleteAsset",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "assets/delete");
 
             var (statusCode, result) = await _implementation.DeleteAssetAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -614,13 +599,13 @@ public partial class AssetController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<AssetVersionList>> ListAssetVersions([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] ListVersionsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.assets",
+            "AssetController.ListAssetVersions",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "assets/list-versions");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.assets",
-                "AssetController.ListAssetVersions",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "assets/list-versions");
 
             var (statusCode, result) = await _implementation.ListAssetVersionsAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -663,13 +648,13 @@ public partial class AssetController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<AssetSearchResult>> SearchAssets([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] AssetSearchRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.assets",
+            "AssetController.SearchAssets",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "assets/search");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.assets",
-                "AssetController.SearchAssets",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "assets/search");
 
             var (statusCode, result) = await _implementation.SearchAssetsAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -713,13 +698,13 @@ public partial class AssetController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CreateBundleResponse>> CreateBundle([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] CreateBundleRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.bundles",
+            "AssetController.CreateBundle",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "bundles/create");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.bundles",
-                "AssetController.CreateBundle",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "bundles/create");
 
             var (statusCode, result) = await _implementation.CreateBundleAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -762,13 +747,13 @@ public partial class AssetController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<BundleWithDownloadUrl>> GetBundle([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] GetBundleRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.bundles",
+            "AssetController.GetBundle",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "bundles/get");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.bundles",
-                "AssetController.GetBundle",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "bundles/get");
 
             var (statusCode, result) = await _implementation.GetBundleAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -811,13 +796,13 @@ public partial class AssetController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<UploadResponse>> RequestBundleUpload([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] BundleUploadRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.bundles",
+            "AssetController.RequestBundleUpload",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "bundles/upload/request");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.bundles",
-                "AssetController.RequestBundleUpload",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "bundles/upload/request");
 
             var (statusCode, result) = await _implementation.RequestBundleUploadAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -865,13 +850,13 @@ public partial class AssetController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CreateMetabundleResponse>> CreateMetabundle([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] CreateMetabundleRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.bundles",
+            "AssetController.CreateMetabundle",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "bundles/metabundle/create");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.bundles",
-                "AssetController.CreateMetabundle",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "bundles/metabundle/create");
 
             var (statusCode, result) = await _implementation.CreateMetabundleAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -917,13 +902,13 @@ public partial class AssetController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<GetJobStatusResponse>> GetJobStatus([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] GetJobStatusRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.bundles",
+            "AssetController.GetJobStatus",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "bundles/job/status");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.bundles",
-                "AssetController.GetJobStatus",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "bundles/job/status");
 
             var (statusCode, result) = await _implementation.GetJobStatusAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -969,13 +954,13 @@ public partial class AssetController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CancelJobResponse>> CancelJob([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] CancelJobRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.bundles",
+            "AssetController.CancelJob",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "bundles/job/cancel");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.bundles",
-                "AssetController.CancelJob",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "bundles/job/cancel");
 
             var (statusCode, result) = await _implementation.CancelJobAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1026,13 +1011,13 @@ public partial class AssetController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ResolveBundlesResponse>> ResolveBundles([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] ResolveBundlesRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.bundles",
+            "AssetController.ResolveBundles",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "bundles/resolve");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.bundles",
-                "AssetController.ResolveBundles",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "bundles/resolve");
 
             var (statusCode, result) = await _implementation.ResolveBundlesAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1076,13 +1061,13 @@ public partial class AssetController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<QueryBundlesByAssetResponse>> QueryBundlesByAsset([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] QueryBundlesByAssetRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.bundles",
+            "AssetController.QueryBundlesByAsset",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "bundles/query/by-asset");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.bundles",
-                "AssetController.QueryBundlesByAsset",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "bundles/query/by-asset");
 
             var (statusCode, result) = await _implementation.QueryBundlesByAssetAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1128,13 +1113,13 @@ public partial class AssetController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<UpdateBundleResponse>> UpdateBundle([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] UpdateBundleRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.bundles",
+            "AssetController.UpdateBundle",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "bundles/update");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.bundles",
-                "AssetController.UpdateBundle",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "bundles/update");
 
             var (statusCode, result) = await _implementation.UpdateBundleAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1182,13 +1167,13 @@ public partial class AssetController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<DeleteBundleResponse>> DeleteBundle([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] DeleteBundleRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.bundles",
+            "AssetController.DeleteBundle",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "bundles/delete");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.bundles",
-                "AssetController.DeleteBundle",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "bundles/delete");
 
             var (statusCode, result) = await _implementation.DeleteBundleAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1233,13 +1218,13 @@ public partial class AssetController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RestoreBundleResponse>> RestoreBundle([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] RestoreBundleRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.bundles",
+            "AssetController.RestoreBundle",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "bundles/restore");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.bundles",
-                "AssetController.RestoreBundle",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "bundles/restore");
 
             var (statusCode, result) = await _implementation.RestoreBundleAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1289,13 +1274,13 @@ public partial class AssetController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<QueryBundlesResponse>> QueryBundles([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] QueryBundlesRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.bundles",
+            "AssetController.QueryBundles",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "bundles/query");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.bundles",
-                "AssetController.QueryBundles",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "bundles/query");
 
             var (statusCode, result) = await _implementation.QueryBundlesAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1345,13 +1330,13 @@ public partial class AssetController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ListBundleVersionsResponse>> ListBundleVersions([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] ListBundleVersionsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.bundles",
+            "AssetController.ListBundleVersions",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "bundles/list-versions");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.bundles",
-                "AssetController.ListBundleVersions",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "bundles/list-versions");
 
             var (statusCode, result) = await _implementation.ListBundleVersionsAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1395,13 +1380,13 @@ public partial class AssetController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<BulkGetAssetsResponse>> BulkGetAssets([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] BulkGetAssetsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.assets",
+            "AssetController.BulkGetAssets",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "assets/bulk-get");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.assets",
-                "AssetController.BulkGetAssets",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "assets/bulk-get");
 
             var (statusCode, result) = await _implementation.BulkGetAssetsAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);

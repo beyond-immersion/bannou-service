@@ -22,21 +22,6 @@
 
 #nullable enable
 
-#pragma warning disable 108 // Disable "CS0108 '{derivedDto}.ToJson()' hides inherited member '{dtoBase}.ToJson()'. Use the new keyword if hiding was intended."
-#pragma warning disable 114 // Disable "CS0114 '{derivedDto}.RaisePropertyChanged(String)' hides inherited member 'dtoBase.RaisePropertyChanged(String)'. To make the current member override that implementation, add the override keyword. Otherwise add the new keyword."
-#pragma warning disable 472 // Disable "CS0472 The result of the expression is always 'false' since a value of type 'Int32' is never equal to 'null' of type 'Int32?'
-#pragma warning disable 612 // Disable "CS0612 '...' is obsolete"
-#pragma warning disable 649 // Disable "CS0649 Field is never assigned to, and will always have its default value null"
-#pragma warning disable 1573 // Disable "CS1573 Parameter '...' has no matching param tag in the XML comment for ...
-#pragma warning disable 1591 // Disable "CS1591 Missing XML comment for publicly visible type or member ..."
-#pragma warning disable 8073 // Disable "CS8073 The result of the expression is always 'false' since a value of type 'T' is never equal to 'null' of type 'T?'"
-#pragma warning disable 3016 // Disable "CS3016 Arrays as attribute arguments is not CLS-compliant"
-#pragma warning disable 8600 // Disable "CS8600 Converting null literal or possible null value to non-nullable type"
-#pragma warning disable 8602 // Disable "CS8602 Dereference of a possibly null reference"
-#pragma warning disable 8603 // Disable "CS8603 Possible null reference return"
-#pragma warning disable 8604 // Disable "CS8604 Possible null reference argument for parameter"
-#pragma warning disable 8625 // Disable "CS8625 Cannot convert null literal to non-nullable reference type"
-#pragma warning disable 8765 // Disable "CS8765 Nullability of type of parameter doesn't match overridden member (possibly because of nullability attributes)."
 
 namespace BeyondImmersion.BannouService.Chat;
 
@@ -445,13 +430,13 @@ public partial class ChatController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RoomTypeResponse>> RegisterRoomType([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] RegisterRoomTypeRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.chat",
+            "ChatController.RegisterRoomType",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "chat/type/register");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.chat",
-                "ChatController.RegisterRoomType",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "chat/type/register");
 
             var (statusCode, result) = await _implementation.RegisterRoomTypeAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -493,13 +478,13 @@ public partial class ChatController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RoomTypeResponse>> GetRoomType([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] GetRoomTypeRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.chat",
+            "ChatController.GetRoomType",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "chat/type/get");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.chat",
-                "ChatController.GetRoomType",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "chat/type/get");
 
             var (statusCode, result) = await _implementation.GetRoomTypeAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -541,13 +526,13 @@ public partial class ChatController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ListRoomTypesResponse>> ListRoomTypes([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] ListRoomTypesRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.chat",
+            "ChatController.ListRoomTypes",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "chat/type/list");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.chat",
-                "ChatController.ListRoomTypes",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "chat/type/list");
 
             var (statusCode, result) = await _implementation.ListRoomTypesAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -589,13 +574,13 @@ public partial class ChatController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RoomTypeResponse>> UpdateRoomType([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] UpdateRoomTypeRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.chat",
+            "ChatController.UpdateRoomType",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "chat/type/update");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.chat",
-                "ChatController.UpdateRoomType",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "chat/type/update");
 
             var (statusCode, result) = await _implementation.UpdateRoomTypeAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -637,13 +622,13 @@ public partial class ChatController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RoomTypeResponse>> DeprecateRoomType([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] DeprecateRoomTypeRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.chat",
+            "ChatController.DeprecateRoomType",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "chat/type/deprecate");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.chat",
-                "ChatController.DeprecateRoomType",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "chat/type/deprecate");
 
             var (statusCode, result) = await _implementation.DeprecateRoomTypeAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -685,13 +670,13 @@ public partial class ChatController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ChatRoomResponse>> CreateRoom([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] CreateRoomRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.chat",
+            "ChatController.CreateRoom",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "chat/room/create");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.chat",
-                "ChatController.CreateRoom",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "chat/room/create");
 
             var (statusCode, result) = await _implementation.CreateRoomAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -733,13 +718,13 @@ public partial class ChatController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ChatRoomResponse>> GetRoom([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] GetRoomRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.chat",
+            "ChatController.GetRoom",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "chat/room/get");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.chat",
-                "ChatController.GetRoom",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "chat/room/get");
 
             var (statusCode, result) = await _implementation.GetRoomAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -781,13 +766,13 @@ public partial class ChatController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ListRoomsResponse>> ListRooms([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] ListRoomsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.chat",
+            "ChatController.ListRooms",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "chat/room/list");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.chat",
-                "ChatController.ListRooms",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "chat/room/list");
 
             var (statusCode, result) = await _implementation.ListRoomsAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -829,13 +814,13 @@ public partial class ChatController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ChatRoomResponse>> UpdateRoom([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] UpdateRoomRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.chat",
+            "ChatController.UpdateRoom",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "chat/room/update");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.chat",
-                "ChatController.UpdateRoom",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "chat/room/update");
 
             var (statusCode, result) = await _implementation.UpdateRoomAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -877,13 +862,13 @@ public partial class ChatController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ChatRoomResponse>> DeleteRoom([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] DeleteRoomRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.chat",
+            "ChatController.DeleteRoom",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "chat/room/delete");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.chat",
-                "ChatController.DeleteRoom",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "chat/room/delete");
 
             var (statusCode, result) = await _implementation.DeleteRoomAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -925,13 +910,13 @@ public partial class ChatController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ChatRoomResponse>> ArchiveRoom([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] ArchiveRoomRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.chat",
+            "ChatController.ArchiveRoom",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "chat/room/archive");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.chat",
-                "ChatController.ArchiveRoom",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "chat/room/archive");
 
             var (statusCode, result) = await _implementation.ArchiveRoomAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -973,13 +958,13 @@ public partial class ChatController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ChatRoomResponse>> JoinRoom([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] JoinRoomRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.chat",
+            "ChatController.JoinRoom",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "chat/room/join");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.chat",
-                "ChatController.JoinRoom",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "chat/room/join");
 
             var (statusCode, result) = await _implementation.JoinRoomAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1021,13 +1006,13 @@ public partial class ChatController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ChatRoomResponse>> LeaveRoom([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] LeaveRoomRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.chat",
+            "ChatController.LeaveRoom",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "chat/room/leave");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.chat",
-                "ChatController.LeaveRoom",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "chat/room/leave");
 
             var (statusCode, result) = await _implementation.LeaveRoomAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1069,13 +1054,13 @@ public partial class ChatController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ParticipantsResponse>> ListParticipants([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] ListParticipantsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.chat",
+            "ChatController.ListParticipants",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "chat/room/participants");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.chat",
-                "ChatController.ListParticipants",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "chat/room/participants");
 
             var (statusCode, result) = await _implementation.ListParticipantsAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1117,13 +1102,13 @@ public partial class ChatController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ChatRoomResponse>> KickParticipant([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] KickParticipantRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.chat",
+            "ChatController.KickParticipant",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "chat/room/participant/kick");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.chat",
-                "ChatController.KickParticipant",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "chat/room/participant/kick");
 
             var (statusCode, result) = await _implementation.KickParticipantAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1165,13 +1150,13 @@ public partial class ChatController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ChatRoomResponse>> BanParticipant([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] BanParticipantRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.chat",
+            "ChatController.BanParticipant",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "chat/room/participant/ban");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.chat",
-                "ChatController.BanParticipant",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "chat/room/participant/ban");
 
             var (statusCode, result) = await _implementation.BanParticipantAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1213,13 +1198,13 @@ public partial class ChatController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ChatRoomResponse>> UnbanParticipant([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] UnbanParticipantRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.chat",
+            "ChatController.UnbanParticipant",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "chat/room/participant/unban");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.chat",
-                "ChatController.UnbanParticipant",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "chat/room/participant/unban");
 
             var (statusCode, result) = await _implementation.UnbanParticipantAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1261,13 +1246,13 @@ public partial class ChatController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ChatRoomResponse>> MuteParticipant([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] MuteParticipantRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.chat",
+            "ChatController.MuteParticipant",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "chat/room/participant/mute");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.chat",
-                "ChatController.MuteParticipant",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "chat/room/participant/mute");
 
             var (statusCode, result) = await _implementation.MuteParticipantAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1309,13 +1294,13 @@ public partial class ChatController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ChatMessageResponse>> SendMessage([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] SendMessageRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.chat",
+            "ChatController.SendMessage",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "chat/message/send");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.chat",
-                "ChatController.SendMessage",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "chat/message/send");
 
             var (statusCode, result) = await _implementation.SendMessageAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1357,13 +1342,13 @@ public partial class ChatController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SendMessageBatchResponse>> SendMessageBatch([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] SendMessageBatchRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.chat",
+            "ChatController.SendMessageBatch",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "chat/message/send-batch");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.chat",
-                "ChatController.SendMessageBatch",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "chat/message/send-batch");
 
             var (statusCode, result) = await _implementation.SendMessageBatchAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1405,13 +1390,13 @@ public partial class ChatController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<MessageHistoryResponse>> GetMessageHistory([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] MessageHistoryRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.chat",
+            "ChatController.GetMessageHistory",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "chat/message/history");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.chat",
-                "ChatController.GetMessageHistory",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "chat/message/history");
 
             var (statusCode, result) = await _implementation.GetMessageHistoryAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1453,13 +1438,13 @@ public partial class ChatController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ChatMessageResponse>> DeleteMessage([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] DeleteMessageRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.chat",
+            "ChatController.DeleteMessage",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "chat/message/delete");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.chat",
-                "ChatController.DeleteMessage",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "chat/message/delete");
 
             var (statusCode, result) = await _implementation.DeleteMessageAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1501,13 +1486,13 @@ public partial class ChatController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ChatMessageResponse>> PinMessage([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] PinMessageRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.chat",
+            "ChatController.PinMessage",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "chat/message/pin");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.chat",
-                "ChatController.PinMessage",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "chat/message/pin");
 
             var (statusCode, result) = await _implementation.PinMessageAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1549,13 +1534,13 @@ public partial class ChatController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ChatMessageResponse>> UnpinMessage([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] UnpinMessageRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.chat",
+            "ChatController.UnpinMessage",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "chat/message/unpin");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.chat",
-                "ChatController.UnpinMessage",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "chat/message/unpin");
 
             var (statusCode, result) = await _implementation.UnpinMessageAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1597,13 +1582,13 @@ public partial class ChatController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SearchMessagesResponse>> SearchMessages([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] SearchMessagesRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.chat",
+            "ChatController.SearchMessages",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "chat/message/search");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.chat",
-                "ChatController.SearchMessages",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "chat/message/search");
 
             var (statusCode, result) = await _implementation.SearchMessagesAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1645,13 +1630,13 @@ public partial class ChatController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ListRoomsResponse>> AdminListRooms([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] AdminListRoomsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.chat",
+            "ChatController.AdminListRooms",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "chat/admin/rooms");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.chat",
-                "ChatController.AdminListRooms",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "chat/admin/rooms");
 
             var (statusCode, result) = await _implementation.AdminListRoomsAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1693,13 +1678,13 @@ public partial class ChatController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<AdminStatsResponse>> AdminGetStats([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] AdminGetStatsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.chat",
+            "ChatController.AdminGetStats",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "chat/admin/stats");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.chat",
-                "ChatController.AdminGetStats",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "chat/admin/stats");
 
             var (statusCode, result) = await _implementation.AdminGetStatsAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1741,13 +1726,13 @@ public partial class ChatController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<AdminCleanupResponse>> AdminForceCleanup([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] AdminForceCleanupRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.chat",
+            "ChatController.AdminForceCleanup",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "chat/admin/cleanup");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.chat",
-                "ChatController.AdminForceCleanup",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "chat/admin/cleanup");
 
             var (statusCode, result) = await _implementation.AdminForceCleanupAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);

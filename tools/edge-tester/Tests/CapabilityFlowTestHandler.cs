@@ -214,7 +214,7 @@ public class CapabilityFlowTestHandler : IServiceTestHandler
 
                 if (result.Count > 0)
                 {
-                    var receivedMessage = BinaryMessage.Parse(receiveBuffer, result.Count);
+                    var receivedMessage = BinaryMessageHelper.ParseAndDecompress(receiveBuffer, result.Count);
                     var responseText = Encoding.UTF8.GetString(receivedMessage.Payload.Span);
                     Console.WriteLine($"   Payload preview: {responseText[..Math.Min(500, responseText.Length)]}");
 
@@ -481,7 +481,7 @@ public class CapabilityFlowTestHandler : IServiceTestHandler
 
             if (result.Count > 0)
             {
-                var receivedMessage = BinaryMessage.Parse(receiveBuffer, result.Count);
+                var receivedMessage = BinaryMessageHelper.ParseAndDecompress(receiveBuffer, result.Count);
                 var responseText = Encoding.UTF8.GetString(receivedMessage.Payload.Span);
 
                 Console.WriteLine($"   Response: {responseText[..Math.Min(500, responseText.Length)]}");
@@ -592,7 +592,7 @@ public class CapabilityFlowTestHandler : IServiceTestHandler
                 return false;
             }
 
-            var receivedMessage = BinaryMessage.Parse(receiveBuffer, result.Count);
+            var receivedMessage = BinaryMessageHelper.ParseAndDecompress(receiveBuffer, result.Count);
             var responseText = Encoding.UTF8.GetString(receivedMessage.Payload.Span);
             var initialManifest = BannouJson.Deserialize<CapabilityManifestEvent>(responseText);
 
@@ -660,7 +660,7 @@ public class CapabilityFlowTestHandler : IServiceTestHandler
                 result = await webSocket.ReceiveAsync(new ArraySegment<byte>(receiveBuffer), cts2.Token);
                 Console.WriteLine($"📥 Received capability update: {result.Count} bytes");
 
-                receivedMessage = BinaryMessage.Parse(receiveBuffer, result.Count);
+                receivedMessage = BinaryMessageHelper.ParseAndDecompress(receiveBuffer, result.Count);
                 responseText = Encoding.UTF8.GetString(receivedMessage.Payload.Span);
                 var updatedManifest = BannouJson.Deserialize<CapabilityManifestEvent>(responseText);
 

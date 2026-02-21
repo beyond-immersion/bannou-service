@@ -22,21 +22,6 @@
 
 #nullable enable
 
-#pragma warning disable 108 // Disable "CS0108 '{derivedDto}.ToJson()' hides inherited member '{dtoBase}.ToJson()'. Use the new keyword if hiding was intended."
-#pragma warning disable 114 // Disable "CS0114 '{derivedDto}.RaisePropertyChanged(String)' hides inherited member 'dtoBase.RaisePropertyChanged(String)'. To make the current member override that implementation, add the override keyword. Otherwise add the new keyword."
-#pragma warning disable 472 // Disable "CS0472 The result of the expression is always 'false' since a value of type 'Int32' is never equal to 'null' of type 'Int32?'
-#pragma warning disable 612 // Disable "CS0612 '...' is obsolete"
-#pragma warning disable 649 // Disable "CS0649 Field is never assigned to, and will always have its default value null"
-#pragma warning disable 1573 // Disable "CS1573 Parameter '...' has no matching param tag in the XML comment for ...
-#pragma warning disable 1591 // Disable "CS1591 Missing XML comment for publicly visible type or member ..."
-#pragma warning disable 8073 // Disable "CS8073 The result of the expression is always 'false' since a value of type 'T' is never equal to 'null' of type 'T?'"
-#pragma warning disable 3016 // Disable "CS3016 Arrays as attribute arguments is not CLS-compliant"
-#pragma warning disable 8600 // Disable "CS8600 Converting null literal or possible null value to non-nullable type"
-#pragma warning disable 8602 // Disable "CS8602 Dereference of a possibly null reference"
-#pragma warning disable 8603 // Disable "CS8603 Possible null reference return"
-#pragma warning disable 8604 // Disable "CS8604 Possible null reference argument for parameter"
-#pragma warning disable 8625 // Disable "CS8625 Cannot convert null literal to non-nullable reference type"
-#pragma warning disable 8765 // Disable "CS8765 Nullability of type of parameter doesn't match overridden member (possibly because of nullability attributes)."
 
 namespace BeyondImmersion.BannouService.Inventory;
 
@@ -317,13 +302,13 @@ public partial class InventoryController : Microsoft.AspNetCore.Mvc.ControllerBa
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ContainerResponse>> CreateContainer([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] CreateContainerRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.inventory",
+            "InventoryController.CreateContainer",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "inventory/container/create");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.inventory",
-                "InventoryController.CreateContainer",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "inventory/container/create");
 
             var (statusCode, result) = await _implementation.CreateContainerAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -365,13 +350,13 @@ public partial class InventoryController : Microsoft.AspNetCore.Mvc.ControllerBa
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ContainerWithContentsResponse>> GetContainer([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] GetContainerRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.inventory",
+            "InventoryController.GetContainer",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "inventory/container/get");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.inventory",
-                "InventoryController.GetContainer",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "inventory/container/get");
 
             var (statusCode, result) = await _implementation.GetContainerAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -415,13 +400,13 @@ public partial class InventoryController : Microsoft.AspNetCore.Mvc.ControllerBa
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ContainerResponse>> GetOrCreateContainer([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] GetOrCreateContainerRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.inventory",
+            "InventoryController.GetOrCreateContainer",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "inventory/container/get-or-create");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.inventory",
-                "InventoryController.GetOrCreateContainer",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "inventory/container/get-or-create");
 
             var (statusCode, result) = await _implementation.GetOrCreateContainerAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -463,13 +448,13 @@ public partial class InventoryController : Microsoft.AspNetCore.Mvc.ControllerBa
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ListContainersResponse>> ListContainers([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] ListContainersRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.inventory",
+            "InventoryController.ListContainers",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "inventory/container/list");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.inventory",
-                "InventoryController.ListContainers",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "inventory/container/list");
 
             var (statusCode, result) = await _implementation.ListContainersAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -511,13 +496,13 @@ public partial class InventoryController : Microsoft.AspNetCore.Mvc.ControllerBa
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ContainerResponse>> UpdateContainer([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] UpdateContainerRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.inventory",
+            "InventoryController.UpdateContainer",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "inventory/container/update");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.inventory",
-                "InventoryController.UpdateContainer",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "inventory/container/update");
 
             var (statusCode, result) = await _implementation.UpdateContainerAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -560,13 +545,13 @@ public partial class InventoryController : Microsoft.AspNetCore.Mvc.ControllerBa
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<DeleteContainerResponse>> DeleteContainer([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] DeleteContainerRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.inventory",
+            "InventoryController.DeleteContainer",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "inventory/container/delete");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.inventory",
-                "InventoryController.DeleteContainer",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "inventory/container/delete");
 
             var (statusCode, result) = await _implementation.DeleteContainerAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -610,13 +595,13 @@ public partial class InventoryController : Microsoft.AspNetCore.Mvc.ControllerBa
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<AddItemResponse>> AddItemToContainer([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] AddItemRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.inventory",
+            "InventoryController.AddItemToContainer",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "inventory/add");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.inventory",
-                "InventoryController.AddItemToContainer",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "inventory/add");
 
             var (statusCode, result) = await _implementation.AddItemToContainerAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -659,13 +644,13 @@ public partial class InventoryController : Microsoft.AspNetCore.Mvc.ControllerBa
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RemoveItemResponse>> RemoveItemFromContainer([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] RemoveItemRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.inventory",
+            "InventoryController.RemoveItemFromContainer",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "inventory/remove");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.inventory",
-                "InventoryController.RemoveItemFromContainer",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "inventory/remove");
 
             var (statusCode, result) = await _implementation.RemoveItemFromContainerAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -709,13 +694,13 @@ public partial class InventoryController : Microsoft.AspNetCore.Mvc.ControllerBa
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<MoveItemResponse>> MoveItem([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] MoveItemRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.inventory",
+            "InventoryController.MoveItem",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "inventory/move");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.inventory",
-                "InventoryController.MoveItem",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "inventory/move");
 
             var (statusCode, result) = await _implementation.MoveItemAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -758,13 +743,13 @@ public partial class InventoryController : Microsoft.AspNetCore.Mvc.ControllerBa
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<TransferItemResponse>> TransferItem([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] TransferItemRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.inventory",
+            "InventoryController.TransferItem",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "inventory/transfer");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.inventory",
-                "InventoryController.TransferItem",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "inventory/transfer");
 
             var (statusCode, result) = await _implementation.TransferItemAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -807,13 +792,13 @@ public partial class InventoryController : Microsoft.AspNetCore.Mvc.ControllerBa
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SplitStackResponse>> SplitStack([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] SplitStackRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.inventory",
+            "InventoryController.SplitStack",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "inventory/split");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.inventory",
-                "InventoryController.SplitStack",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "inventory/split");
 
             var (statusCode, result) = await _implementation.SplitStackAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -856,13 +841,13 @@ public partial class InventoryController : Microsoft.AspNetCore.Mvc.ControllerBa
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<MergeStacksResponse>> MergeStacks([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] MergeStacksRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.inventory",
+            "InventoryController.MergeStacks",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "inventory/merge");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.inventory",
-                "InventoryController.MergeStacks",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "inventory/merge");
 
             var (statusCode, result) = await _implementation.MergeStacksAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -905,13 +890,13 @@ public partial class InventoryController : Microsoft.AspNetCore.Mvc.ControllerBa
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<QueryItemsResponse>> QueryItems([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] QueryItemsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.inventory",
+            "InventoryController.QueryItems",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "inventory/query");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.inventory",
-                "InventoryController.QueryItems",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "inventory/query");
 
             var (statusCode, result) = await _implementation.QueryItemsAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -953,13 +938,13 @@ public partial class InventoryController : Microsoft.AspNetCore.Mvc.ControllerBa
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CountItemsResponse>> CountItems([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] CountItemsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.inventory",
+            "InventoryController.CountItems",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "inventory/count");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.inventory",
-                "InventoryController.CountItems",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "inventory/count");
 
             var (statusCode, result) = await _implementation.CountItemsAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1002,13 +987,13 @@ public partial class InventoryController : Microsoft.AspNetCore.Mvc.ControllerBa
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<HasItemsResponse>> HasItems([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] HasItemsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.inventory",
+            "InventoryController.HasItems",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "inventory/has");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.inventory",
-                "InventoryController.HasItems",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "inventory/has");
 
             var (statusCode, result) = await _implementation.HasItemsAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1051,13 +1036,13 @@ public partial class InventoryController : Microsoft.AspNetCore.Mvc.ControllerBa
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<FindSpaceResponse>> FindSpace([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] FindSpaceRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.inventory",
+            "InventoryController.FindSpace",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "inventory/find-space");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.inventory",
-                "InventoryController.FindSpace",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "inventory/find-space");
 
             var (statusCode, result) = await _implementation.FindSpaceAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);

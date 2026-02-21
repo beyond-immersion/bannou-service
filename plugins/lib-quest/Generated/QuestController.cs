@@ -22,21 +22,6 @@
 
 #nullable enable
 
-#pragma warning disable 108 // Disable "CS0108 '{derivedDto}.ToJson()' hides inherited member '{dtoBase}.ToJson()'. Use the new keyword if hiding was intended."
-#pragma warning disable 114 // Disable "CS0114 '{derivedDto}.RaisePropertyChanged(String)' hides inherited member 'dtoBase.RaisePropertyChanged(String)'. To make the current member override that implementation, add the override keyword. Otherwise add the new keyword."
-#pragma warning disable 472 // Disable "CS0472 The result of the expression is always 'false' since a value of type 'Int32' is never equal to 'null' of type 'Int32?'
-#pragma warning disable 612 // Disable "CS0612 '...' is obsolete"
-#pragma warning disable 649 // Disable "CS0649 Field is never assigned to, and will always have its default value null"
-#pragma warning disable 1573 // Disable "CS1573 Parameter '...' has no matching param tag in the XML comment for ...
-#pragma warning disable 1591 // Disable "CS1591 Missing XML comment for publicly visible type or member ..."
-#pragma warning disable 8073 // Disable "CS8073 The result of the expression is always 'false' since a value of type 'T' is never equal to 'null' of type 'T?'"
-#pragma warning disable 3016 // Disable "CS3016 Arrays as attribute arguments is not CLS-compliant"
-#pragma warning disable 8600 // Disable "CS8600 Converting null literal or possible null value to non-nullable type"
-#pragma warning disable 8602 // Disable "CS8602 Dereference of a possibly null reference"
-#pragma warning disable 8603 // Disable "CS8603 Possible null reference return"
-#pragma warning disable 8604 // Disable "CS8604 Possible null reference argument for parameter"
-#pragma warning disable 8625 // Disable "CS8625 Cannot convert null literal to non-nullable reference type"
-#pragma warning disable 8765 // Disable "CS8765 Nullability of type of parameter doesn't match overridden member (possibly because of nullability attributes)."
 
 namespace BeyondImmersion.BannouService.Quest;
 
@@ -314,13 +299,13 @@ public partial class QuestController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<QuestDefinitionResponse>> CreateQuestDefinition([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] CreateQuestDefinitionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.quest",
+            "QuestController.CreateQuestDefinition",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "quest/definition/create");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.quest",
-                "QuestController.CreateQuestDefinition",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "quest/definition/create");
 
             var (statusCode, result) = await _implementation.CreateQuestDefinitionAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -362,13 +347,13 @@ public partial class QuestController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<QuestDefinitionResponse>> GetQuestDefinition([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] GetQuestDefinitionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.quest",
+            "QuestController.GetQuestDefinition",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "quest/definition/get");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.quest",
-                "QuestController.GetQuestDefinition",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "quest/definition/get");
 
             var (statusCode, result) = await _implementation.GetQuestDefinitionAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -410,13 +395,13 @@ public partial class QuestController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ListQuestDefinitionsResponse>> ListQuestDefinitions([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] ListQuestDefinitionsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.quest",
+            "QuestController.ListQuestDefinitions",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "quest/definition/list");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.quest",
-                "QuestController.ListQuestDefinitions",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "quest/definition/list");
 
             var (statusCode, result) = await _implementation.ListQuestDefinitionsAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -458,13 +443,13 @@ public partial class QuestController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<QuestDefinitionResponse>> UpdateQuestDefinition([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] UpdateQuestDefinitionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.quest",
+            "QuestController.UpdateQuestDefinition",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "quest/definition/update");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.quest",
-                "QuestController.UpdateQuestDefinition",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "quest/definition/update");
 
             var (statusCode, result) = await _implementation.UpdateQuestDefinitionAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -506,13 +491,13 @@ public partial class QuestController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<QuestDefinitionResponse>> DeprecateQuestDefinition([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] DeprecateQuestDefinitionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.quest",
+            "QuestController.DeprecateQuestDefinition",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "quest/definition/deprecate");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.quest",
-                "QuestController.DeprecateQuestDefinition",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "quest/definition/deprecate");
 
             var (statusCode, result) = await _implementation.DeprecateQuestDefinitionAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -554,13 +539,13 @@ public partial class QuestController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<QuestInstanceResponse>> AcceptQuest([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] AcceptQuestRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.quest",
+            "QuestController.AcceptQuest",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "quest/accept");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.quest",
-                "QuestController.AcceptQuest",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "quest/accept");
 
             var (statusCode, result) = await _implementation.AcceptQuestAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -602,13 +587,13 @@ public partial class QuestController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<QuestInstanceResponse>> AbandonQuest([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] AbandonQuestRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.quest",
+            "QuestController.AbandonQuest",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "quest/abandon");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.quest",
-                "QuestController.AbandonQuest",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "quest/abandon");
 
             var (statusCode, result) = await _implementation.AbandonQuestAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -650,13 +635,13 @@ public partial class QuestController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<QuestInstanceResponse>> GetQuest([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] GetQuestRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.quest",
+            "QuestController.GetQuest",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "quest/get");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.quest",
-                "QuestController.GetQuest",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "quest/get");
 
             var (statusCode, result) = await _implementation.GetQuestAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -698,13 +683,13 @@ public partial class QuestController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ListQuestsResponse>> ListQuests([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] ListQuestsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.quest",
+            "QuestController.ListQuests",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "quest/list");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.quest",
-                "QuestController.ListQuests",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "quest/list");
 
             var (statusCode, result) = await _implementation.ListQuestsAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -746,13 +731,13 @@ public partial class QuestController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ListAvailableQuestsResponse>> ListAvailableQuests([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] ListAvailableQuestsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.quest",
+            "QuestController.ListAvailableQuests",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "quest/list-available");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.quest",
-                "QuestController.ListAvailableQuests",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "quest/list-available");
 
             var (statusCode, result) = await _implementation.ListAvailableQuestsAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -794,13 +779,13 @@ public partial class QuestController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<QuestLogResponse>> GetQuestLog([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] GetQuestLogRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.quest",
+            "QuestController.GetQuestLog",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "quest/log");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.quest",
-                "QuestController.GetQuestLog",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "quest/log");
 
             var (statusCode, result) = await _implementation.GetQuestLogAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -842,13 +827,13 @@ public partial class QuestController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ObjectiveProgressResponse>> ReportObjectiveProgress([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] ReportProgressRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.quest",
+            "QuestController.ReportObjectiveProgress",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "quest/objective/progress");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.quest",
-                "QuestController.ReportObjectiveProgress",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "quest/objective/progress");
 
             var (statusCode, result) = await _implementation.ReportObjectiveProgressAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -890,13 +875,13 @@ public partial class QuestController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ObjectiveProgressResponse>> ForceCompleteObjective([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] ForceCompleteObjectiveRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.quest",
+            "QuestController.ForceCompleteObjective",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "quest/objective/complete");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.quest",
-                "QuestController.ForceCompleteObjective",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "quest/objective/complete");
 
             var (statusCode, result) = await _implementation.ForceCompleteObjectiveAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -938,13 +923,13 @@ public partial class QuestController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ObjectiveProgressResponse>> GetObjectiveProgress([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] GetObjectiveProgressRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.quest",
+            "QuestController.GetObjectiveProgress",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "quest/objective/get");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.quest",
-                "QuestController.GetObjectiveProgress",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "quest/objective/get");
 
             var (statusCode, result) = await _implementation.GetObjectiveProgressAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -986,13 +971,13 @@ public partial class QuestController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> HandleMilestoneCompleted([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] MilestoneCompletedCallback body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.quest",
+            "QuestController.HandleMilestoneCompleted",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "quest/internal/milestone-completed");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.quest",
-                "QuestController.HandleMilestoneCompleted",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "quest/internal/milestone-completed");
 
             var statusCode = await _implementation.HandleMilestoneCompletedAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode);
@@ -1034,13 +1019,13 @@ public partial class QuestController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> HandleQuestCompleted([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] QuestCompletedCallback body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.quest",
+            "QuestController.HandleQuestCompleted",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "quest/internal/quest-completed");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.quest",
-                "QuestController.HandleQuestCompleted",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "quest/internal/quest-completed");
 
             var statusCode = await _implementation.HandleQuestCompletedAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode);
@@ -1083,13 +1068,13 @@ public partial class QuestController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<QuestArchive>> GetCompressData([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] GetCompressDataRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.quest",
+            "QuestController.GetCompressData",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "quest/get-compress-data");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.quest",
-                "QuestController.GetCompressData",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "quest/get-compress-data");
 
             var (statusCode, result) = await _implementation.GetCompressDataAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);

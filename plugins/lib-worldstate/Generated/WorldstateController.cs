@@ -254,10 +254,12 @@ public interface IWorldstateController : BeyondImmersion.BannouService.Controlle
 public partial class WorldstateController : Microsoft.AspNetCore.Mvc.ControllerBase
 {
     private IWorldstateService _implementation;
+    private BeyondImmersion.BannouService.Services.ITelemetryProvider _telemetryProvider;
 
-    public WorldstateController(IWorldstateService implementation)
+    public WorldstateController(IWorldstateService implementation, BeyondImmersion.BannouService.Services.ITelemetryProvider telemetryProvider)
     {
         _implementation = implementation;
+        _telemetryProvider = telemetryProvider;
     }
 
     /// <summary>
@@ -308,6 +310,11 @@ public partial class WorldstateController : Microsoft.AspNetCore.Mvc.ControllerB
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<GameTimeSnapshot>> GetRealmTime([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] GetRealmTimeRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.worldstate",
+            "WorldstateController.GetRealmTime",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "worldstate/clock/get-realm-time");
         try
         {
 
@@ -318,6 +325,7 @@ public partial class WorldstateController : Microsoft.AspNetCore.Mvc.ControllerB
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<WorldstateController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:worldstate/clock/get-realm-time");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -333,6 +341,7 @@ public partial class WorldstateController : Microsoft.AspNetCore.Mvc.ControllerB
                 endpoint: "post:worldstate/clock/get-realm-time",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -349,6 +358,11 @@ public partial class WorldstateController : Microsoft.AspNetCore.Mvc.ControllerB
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<GameTimeSnapshot>> GetRealmTimeByCode([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] GetRealmTimeByCodeRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.worldstate",
+            "WorldstateController.GetRealmTimeByCode",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "worldstate/clock/get-realm-time-by-code");
         try
         {
 
@@ -359,6 +373,7 @@ public partial class WorldstateController : Microsoft.AspNetCore.Mvc.ControllerB
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<WorldstateController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:worldstate/clock/get-realm-time-by-code");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -374,6 +389,7 @@ public partial class WorldstateController : Microsoft.AspNetCore.Mvc.ControllerB
                 endpoint: "post:worldstate/clock/get-realm-time-by-code",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -390,6 +406,11 @@ public partial class WorldstateController : Microsoft.AspNetCore.Mvc.ControllerB
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<BatchGetRealmTimesResponse>> BatchGetRealmTimes([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] BatchGetRealmTimesRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.worldstate",
+            "WorldstateController.BatchGetRealmTimes",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "worldstate/clock/batch-get-realm-times");
         try
         {
 
@@ -400,6 +421,7 @@ public partial class WorldstateController : Microsoft.AspNetCore.Mvc.ControllerB
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<WorldstateController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:worldstate/clock/batch-get-realm-times");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -415,6 +437,7 @@ public partial class WorldstateController : Microsoft.AspNetCore.Mvc.ControllerB
                 endpoint: "post:worldstate/clock/batch-get-realm-times",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -431,6 +454,11 @@ public partial class WorldstateController : Microsoft.AspNetCore.Mvc.ControllerB
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<GetElapsedGameTimeResponse>> GetElapsedGameTime([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] GetElapsedGameTimeRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.worldstate",
+            "WorldstateController.GetElapsedGameTime",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "worldstate/clock/get-elapsed-game-time");
         try
         {
 
@@ -441,6 +469,7 @@ public partial class WorldstateController : Microsoft.AspNetCore.Mvc.ControllerB
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<WorldstateController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:worldstate/clock/get-elapsed-game-time");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -456,6 +485,7 @@ public partial class WorldstateController : Microsoft.AspNetCore.Mvc.ControllerB
                 endpoint: "post:worldstate/clock/get-elapsed-game-time",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -472,6 +502,11 @@ public partial class WorldstateController : Microsoft.AspNetCore.Mvc.ControllerB
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<TriggerTimeSyncResponse>> TriggerTimeSync([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] TriggerTimeSyncRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.worldstate",
+            "WorldstateController.TriggerTimeSync",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "worldstate/clock/trigger-sync");
         try
         {
 
@@ -482,6 +517,7 @@ public partial class WorldstateController : Microsoft.AspNetCore.Mvc.ControllerB
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<WorldstateController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:worldstate/clock/trigger-sync");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -497,6 +533,7 @@ public partial class WorldstateController : Microsoft.AspNetCore.Mvc.ControllerB
                 endpoint: "post:worldstate/clock/trigger-sync",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -513,6 +550,11 @@ public partial class WorldstateController : Microsoft.AspNetCore.Mvc.ControllerB
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<InitializeRealmClockResponse>> InitializeRealmClock([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] InitializeRealmClockRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.worldstate",
+            "WorldstateController.InitializeRealmClock",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "worldstate/clock/initialize");
         try
         {
 
@@ -523,6 +565,7 @@ public partial class WorldstateController : Microsoft.AspNetCore.Mvc.ControllerB
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<WorldstateController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:worldstate/clock/initialize");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -538,6 +581,7 @@ public partial class WorldstateController : Microsoft.AspNetCore.Mvc.ControllerB
                 endpoint: "post:worldstate/clock/initialize",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -554,6 +598,11 @@ public partial class WorldstateController : Microsoft.AspNetCore.Mvc.ControllerB
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SetTimeRatioResponse>> SetTimeRatio([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] SetTimeRatioRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.worldstate",
+            "WorldstateController.SetTimeRatio",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "worldstate/clock/set-ratio");
         try
         {
 
@@ -564,6 +613,7 @@ public partial class WorldstateController : Microsoft.AspNetCore.Mvc.ControllerB
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<WorldstateController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:worldstate/clock/set-ratio");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -579,6 +629,7 @@ public partial class WorldstateController : Microsoft.AspNetCore.Mvc.ControllerB
                 endpoint: "post:worldstate/clock/set-ratio",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -595,6 +646,11 @@ public partial class WorldstateController : Microsoft.AspNetCore.Mvc.ControllerB
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<AdvanceClockResponse>> AdvanceClock([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] AdvanceClockRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.worldstate",
+            "WorldstateController.AdvanceClock",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "worldstate/clock/advance");
         try
         {
 
@@ -605,6 +661,7 @@ public partial class WorldstateController : Microsoft.AspNetCore.Mvc.ControllerB
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<WorldstateController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:worldstate/clock/advance");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -620,6 +677,7 @@ public partial class WorldstateController : Microsoft.AspNetCore.Mvc.ControllerB
                 endpoint: "post:worldstate/clock/advance",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -636,6 +694,11 @@ public partial class WorldstateController : Microsoft.AspNetCore.Mvc.ControllerB
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CalendarTemplateResponse>> SeedCalendar([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] SeedCalendarRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.worldstate",
+            "WorldstateController.SeedCalendar",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "worldstate/calendar/seed");
         try
         {
 
@@ -646,6 +709,7 @@ public partial class WorldstateController : Microsoft.AspNetCore.Mvc.ControllerB
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<WorldstateController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:worldstate/calendar/seed");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -661,6 +725,7 @@ public partial class WorldstateController : Microsoft.AspNetCore.Mvc.ControllerB
                 endpoint: "post:worldstate/calendar/seed",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -677,6 +742,11 @@ public partial class WorldstateController : Microsoft.AspNetCore.Mvc.ControllerB
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CalendarTemplateResponse>> GetCalendar([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] GetCalendarRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.worldstate",
+            "WorldstateController.GetCalendar",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "worldstate/calendar/get");
         try
         {
 
@@ -687,6 +757,7 @@ public partial class WorldstateController : Microsoft.AspNetCore.Mvc.ControllerB
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<WorldstateController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:worldstate/calendar/get");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -702,6 +773,7 @@ public partial class WorldstateController : Microsoft.AspNetCore.Mvc.ControllerB
                 endpoint: "post:worldstate/calendar/get",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -718,6 +790,11 @@ public partial class WorldstateController : Microsoft.AspNetCore.Mvc.ControllerB
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ListCalendarsResponse>> ListCalendars([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] ListCalendarsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.worldstate",
+            "WorldstateController.ListCalendars",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "worldstate/calendar/list");
         try
         {
 
@@ -728,6 +805,7 @@ public partial class WorldstateController : Microsoft.AspNetCore.Mvc.ControllerB
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<WorldstateController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:worldstate/calendar/list");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -743,6 +821,7 @@ public partial class WorldstateController : Microsoft.AspNetCore.Mvc.ControllerB
                 endpoint: "post:worldstate/calendar/list",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -759,6 +838,11 @@ public partial class WorldstateController : Microsoft.AspNetCore.Mvc.ControllerB
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CalendarTemplateResponse>> UpdateCalendar([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] UpdateCalendarRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.worldstate",
+            "WorldstateController.UpdateCalendar",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "worldstate/calendar/update");
         try
         {
 
@@ -769,6 +853,7 @@ public partial class WorldstateController : Microsoft.AspNetCore.Mvc.ControllerB
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<WorldstateController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:worldstate/calendar/update");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -784,6 +869,7 @@ public partial class WorldstateController : Microsoft.AspNetCore.Mvc.ControllerB
                 endpoint: "post:worldstate/calendar/update",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -800,6 +886,11 @@ public partial class WorldstateController : Microsoft.AspNetCore.Mvc.ControllerB
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<DeleteCalendarResponse>> DeleteCalendar([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] DeleteCalendarRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.worldstate",
+            "WorldstateController.DeleteCalendar",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "worldstate/calendar/delete");
         try
         {
 
@@ -810,6 +901,7 @@ public partial class WorldstateController : Microsoft.AspNetCore.Mvc.ControllerB
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<WorldstateController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:worldstate/calendar/delete");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -825,6 +917,7 @@ public partial class WorldstateController : Microsoft.AspNetCore.Mvc.ControllerB
                 endpoint: "post:worldstate/calendar/delete",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -841,6 +934,11 @@ public partial class WorldstateController : Microsoft.AspNetCore.Mvc.ControllerB
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RealmConfigResponse>> GetRealmConfig([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] GetRealmConfigRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.worldstate",
+            "WorldstateController.GetRealmConfig",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "worldstate/realm-config/get");
         try
         {
 
@@ -851,6 +949,7 @@ public partial class WorldstateController : Microsoft.AspNetCore.Mvc.ControllerB
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<WorldstateController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:worldstate/realm-config/get");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -866,6 +965,7 @@ public partial class WorldstateController : Microsoft.AspNetCore.Mvc.ControllerB
                 endpoint: "post:worldstate/realm-config/get",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -882,6 +982,11 @@ public partial class WorldstateController : Microsoft.AspNetCore.Mvc.ControllerB
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RealmConfigResponse>> UpdateRealmConfig([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] UpdateRealmConfigRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.worldstate",
+            "WorldstateController.UpdateRealmConfig",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "worldstate/realm-config/update");
         try
         {
 
@@ -892,6 +997,7 @@ public partial class WorldstateController : Microsoft.AspNetCore.Mvc.ControllerB
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<WorldstateController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:worldstate/realm-config/update");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -907,6 +1013,7 @@ public partial class WorldstateController : Microsoft.AspNetCore.Mvc.ControllerB
                 endpoint: "post:worldstate/realm-config/update",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -923,6 +1030,11 @@ public partial class WorldstateController : Microsoft.AspNetCore.Mvc.ControllerB
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ListRealmClocksResponse>> ListRealmClocks([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] ListRealmClocksRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.worldstate",
+            "WorldstateController.ListRealmClocks",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "worldstate/realm-config/list");
         try
         {
 
@@ -933,6 +1045,7 @@ public partial class WorldstateController : Microsoft.AspNetCore.Mvc.ControllerB
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<WorldstateController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:worldstate/realm-config/list");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -948,6 +1061,7 @@ public partial class WorldstateController : Microsoft.AspNetCore.Mvc.ControllerB
                 endpoint: "post:worldstate/realm-config/list",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -964,6 +1078,11 @@ public partial class WorldstateController : Microsoft.AspNetCore.Mvc.ControllerB
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CleanupByRealmResponse>> CleanupByRealm([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] CleanupByRealmRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.worldstate",
+            "WorldstateController.CleanupByRealm",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "worldstate/cleanup-by-realm");
         try
         {
 
@@ -974,6 +1093,7 @@ public partial class WorldstateController : Microsoft.AspNetCore.Mvc.ControllerB
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<WorldstateController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:worldstate/cleanup-by-realm");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -989,6 +1109,7 @@ public partial class WorldstateController : Microsoft.AspNetCore.Mvc.ControllerB
                 endpoint: "post:worldstate/cleanup-by-realm",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }
@@ -1005,6 +1126,11 @@ public partial class WorldstateController : Microsoft.AspNetCore.Mvc.ControllerB
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CleanupByGameServiceResponse>> CleanupByGameService([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] CleanupByGameServiceRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.worldstate",
+            "WorldstateController.CleanupByGameService",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "worldstate/cleanup-by-game-service");
         try
         {
 
@@ -1015,6 +1141,7 @@ public partial class WorldstateController : Microsoft.AspNetCore.Mvc.ControllerB
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<WorldstateController>>(HttpContext.RequestServices);
             Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:worldstate/cleanup-by-game-service");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
@@ -1030,6 +1157,7 @@ public partial class WorldstateController : Microsoft.AspNetCore.Mvc.ControllerB
                 endpoint: "post:worldstate/cleanup-by-game-service",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
             return StatusCode(500);
         }
     }

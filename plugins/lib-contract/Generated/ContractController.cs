@@ -22,21 +22,6 @@
 
 #nullable enable
 
-#pragma warning disable 108 // Disable "CS0108 '{derivedDto}.ToJson()' hides inherited member '{dtoBase}.ToJson()'. Use the new keyword if hiding was intended."
-#pragma warning disable 114 // Disable "CS0114 '{derivedDto}.RaisePropertyChanged(String)' hides inherited member 'dtoBase.RaisePropertyChanged(String)'. To make the current member override that implementation, add the override keyword. Otherwise add the new keyword."
-#pragma warning disable 472 // Disable "CS0472 The result of the expression is always 'false' since a value of type 'Int32' is never equal to 'null' of type 'Int32?'
-#pragma warning disable 612 // Disable "CS0612 '...' is obsolete"
-#pragma warning disable 649 // Disable "CS0649 Field is never assigned to, and will always have its default value null"
-#pragma warning disable 1573 // Disable "CS1573 Parameter '...' has no matching param tag in the XML comment for ...
-#pragma warning disable 1591 // Disable "CS1591 Missing XML comment for publicly visible type or member ..."
-#pragma warning disable 8073 // Disable "CS8073 The result of the expression is always 'false' since a value of type 'T' is never equal to 'null' of type 'T?'"
-#pragma warning disable 3016 // Disable "CS3016 Arrays as attribute arguments is not CLS-compliant"
-#pragma warning disable 8600 // Disable "CS8600 Converting null literal or possible null value to non-nullable type"
-#pragma warning disable 8602 // Disable "CS8602 Dereference of a possibly null reference"
-#pragma warning disable 8603 // Disable "CS8603 Possible null reference return"
-#pragma warning disable 8604 // Disable "CS8604 Possible null reference argument for parameter"
-#pragma warning disable 8625 // Disable "CS8625 Cannot convert null literal to non-nullable reference type"
-#pragma warning disable 8765 // Disable "CS8765 Nullability of type of parameter doesn't match overridden member (possibly because of nullability attributes)."
 
 namespace BeyondImmersion.BannouService.Contract;
 
@@ -510,13 +495,13 @@ public partial class ContractController : Microsoft.AspNetCore.Mvc.ControllerBas
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ContractTemplateResponse>> CreateContractTemplate([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] CreateContractTemplateRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.contract",
+            "ContractController.CreateContractTemplate",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "contract/template/create");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.contract",
-                "ContractController.CreateContractTemplate",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "contract/template/create");
 
             var (statusCode, result) = await _implementation.CreateContractTemplateAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -559,13 +544,13 @@ public partial class ContractController : Microsoft.AspNetCore.Mvc.ControllerBas
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ContractTemplateResponse>> GetContractTemplate([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] GetContractTemplateRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.contract",
+            "ContractController.GetContractTemplate",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "contract/template/get");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.contract",
-                "ContractController.GetContractTemplate",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "contract/template/get");
 
             var (statusCode, result) = await _implementation.GetContractTemplateAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -608,13 +593,13 @@ public partial class ContractController : Microsoft.AspNetCore.Mvc.ControllerBas
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ListContractTemplatesResponse>> ListContractTemplates([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] ListContractTemplatesRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.contract",
+            "ContractController.ListContractTemplates",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "contract/template/list");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.contract",
-                "ContractController.ListContractTemplates",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "contract/template/list");
 
             var (statusCode, result) = await _implementation.ListContractTemplatesAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -657,13 +642,13 @@ public partial class ContractController : Microsoft.AspNetCore.Mvc.ControllerBas
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ContractTemplateResponse>> UpdateContractTemplate([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] UpdateContractTemplateRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.contract",
+            "ContractController.UpdateContractTemplate",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "contract/template/update");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.contract",
-                "ContractController.UpdateContractTemplate",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "contract/template/update");
 
             var (statusCode, result) = await _implementation.UpdateContractTemplateAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -706,13 +691,13 @@ public partial class ContractController : Microsoft.AspNetCore.Mvc.ControllerBas
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> DeleteContractTemplate([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] DeleteContractTemplateRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.contract",
+            "ContractController.DeleteContractTemplate",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "contract/template/delete");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.contract",
-                "ContractController.DeleteContractTemplate",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "contract/template/delete");
 
             var statusCode = await _implementation.DeleteContractTemplateAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode);
@@ -755,13 +740,13 @@ public partial class ContractController : Microsoft.AspNetCore.Mvc.ControllerBas
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ContractInstanceResponse>> CreateContractInstance([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] CreateContractInstanceRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.contract",
+            "ContractController.CreateContractInstance",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "contract/instance/create");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.contract",
-                "ContractController.CreateContractInstance",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "contract/instance/create");
 
             var (statusCode, result) = await _implementation.CreateContractInstanceAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -804,13 +789,13 @@ public partial class ContractController : Microsoft.AspNetCore.Mvc.ControllerBas
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ContractInstanceResponse>> ProposeContractInstance([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] ProposeContractInstanceRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.contract",
+            "ContractController.ProposeContractInstance",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "contract/instance/propose");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.contract",
-                "ContractController.ProposeContractInstance",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "contract/instance/propose");
 
             var (statusCode, result) = await _implementation.ProposeContractInstanceAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -853,13 +838,13 @@ public partial class ContractController : Microsoft.AspNetCore.Mvc.ControllerBas
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ContractInstanceResponse>> ConsentToContract([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] ConsentToContractRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.contract",
+            "ContractController.ConsentToContract",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "contract/instance/consent");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.contract",
-                "ContractController.ConsentToContract",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "contract/instance/consent");
 
             var (statusCode, result) = await _implementation.ConsentToContractAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -901,13 +886,13 @@ public partial class ContractController : Microsoft.AspNetCore.Mvc.ControllerBas
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ContractInstanceResponse>> GetContractInstance([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] GetContractInstanceRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.contract",
+            "ContractController.GetContractInstance",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "contract/instance/get");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.contract",
-                "ContractController.GetContractInstance",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "contract/instance/get");
 
             var (statusCode, result) = await _implementation.GetContractInstanceAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -950,13 +935,13 @@ public partial class ContractController : Microsoft.AspNetCore.Mvc.ControllerBas
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<QueryContractInstancesResponse>> QueryContractInstances([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] QueryContractInstancesRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.contract",
+            "ContractController.QueryContractInstances",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "contract/instance/query");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.contract",
-                "ContractController.QueryContractInstances",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "contract/instance/query");
 
             var (statusCode, result) = await _implementation.QueryContractInstancesAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1000,13 +985,13 @@ public partial class ContractController : Microsoft.AspNetCore.Mvc.ControllerBas
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ContractInstanceResponse>> TerminateContractInstance([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] TerminateContractInstanceRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.contract",
+            "ContractController.TerminateContractInstance",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "contract/instance/terminate");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.contract",
-                "ContractController.TerminateContractInstance",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "contract/instance/terminate");
 
             var (statusCode, result) = await _implementation.TerminateContractInstanceAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1049,13 +1034,13 @@ public partial class ContractController : Microsoft.AspNetCore.Mvc.ControllerBas
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ContractInstanceStatusResponse>> GetContractInstanceStatus([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] GetContractInstanceStatusRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.contract",
+            "ContractController.GetContractInstanceStatus",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "contract/instance/get-status");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.contract",
-                "ContractController.GetContractInstanceStatus",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "contract/instance/get-status");
 
             var (statusCode, result) = await _implementation.GetContractInstanceStatusAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1099,13 +1084,13 @@ public partial class ContractController : Microsoft.AspNetCore.Mvc.ControllerBas
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<MilestoneResponse>> CompleteMilestone([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] CompleteMilestoneRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.contract",
+            "ContractController.CompleteMilestone",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "contract/milestone/complete");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.contract",
-                "ContractController.CompleteMilestone",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "contract/milestone/complete");
 
             var (statusCode, result) = await _implementation.CompleteMilestoneAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1149,13 +1134,13 @@ public partial class ContractController : Microsoft.AspNetCore.Mvc.ControllerBas
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<MilestoneResponse>> FailMilestone([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] FailMilestoneRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.contract",
+            "ContractController.FailMilestone",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "contract/milestone/fail");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.contract",
-                "ContractController.FailMilestone",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "contract/milestone/fail");
 
             var (statusCode, result) = await _implementation.FailMilestoneAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1197,13 +1182,13 @@ public partial class ContractController : Microsoft.AspNetCore.Mvc.ControllerBas
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<MilestoneResponse>> GetMilestone([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] GetMilestoneRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.contract",
+            "ContractController.GetMilestone",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "contract/milestone/get");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.contract",
-                "ContractController.GetMilestone",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "contract/milestone/get");
 
             var (statusCode, result) = await _implementation.GetMilestoneAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1247,13 +1232,13 @@ public partial class ContractController : Microsoft.AspNetCore.Mvc.ControllerBas
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<BreachResponse>> ReportBreach([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] ReportBreachRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.contract",
+            "ContractController.ReportBreach",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "contract/breach/report");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.contract",
-                "ContractController.ReportBreach",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "contract/breach/report");
 
             var (statusCode, result) = await _implementation.ReportBreachAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1297,13 +1282,13 @@ public partial class ContractController : Microsoft.AspNetCore.Mvc.ControllerBas
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<BreachResponse>> CureBreach([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] CureBreachRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.contract",
+            "ContractController.CureBreach",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "contract/breach/cure");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.contract",
-                "ContractController.CureBreach",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "contract/breach/cure");
 
             var (statusCode, result) = await _implementation.CureBreachAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1345,13 +1330,13 @@ public partial class ContractController : Microsoft.AspNetCore.Mvc.ControllerBas
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<BreachResponse>> GetBreach([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] GetBreachRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.contract",
+            "ContractController.GetBreach",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "contract/breach/get");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.contract",
-                "ContractController.GetBreach",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "contract/breach/get");
 
             var (statusCode, result) = await _implementation.GetBreachAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1395,13 +1380,13 @@ public partial class ContractController : Microsoft.AspNetCore.Mvc.ControllerBas
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ContractMetadataResponse>> UpdateContractMetadata([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] UpdateContractMetadataRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.contract",
+            "ContractController.UpdateContractMetadata",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "contract/metadata/update");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.contract",
-                "ContractController.UpdateContractMetadata",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "contract/metadata/update");
 
             var (statusCode, result) = await _implementation.UpdateContractMetadataAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1443,13 +1428,13 @@ public partial class ContractController : Microsoft.AspNetCore.Mvc.ControllerBas
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ContractMetadataResponse>> GetContractMetadata([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] GetContractMetadataRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.contract",
+            "ContractController.GetContractMetadata",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "contract/metadata/get");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.contract",
-                "ContractController.GetContractMetadata",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "contract/metadata/get");
 
             var (statusCode, result) = await _implementation.GetContractMetadataAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1492,13 +1477,13 @@ public partial class ContractController : Microsoft.AspNetCore.Mvc.ControllerBas
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CheckConstraintResponse>> CheckContractConstraint([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] CheckConstraintRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.contract",
+            "ContractController.CheckContractConstraint",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "contract/check-constraint");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.contract",
-                "ContractController.CheckContractConstraint",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "contract/check-constraint");
 
             var (statusCode, result) = await _implementation.CheckContractConstraintAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1541,13 +1526,13 @@ public partial class ContractController : Microsoft.AspNetCore.Mvc.ControllerBas
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<QueryActiveContractsResponse>> QueryActiveContracts([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] QueryActiveContractsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.contract",
+            "ContractController.QueryActiveContracts",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "contract/query-active");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.contract",
-                "ContractController.QueryActiveContracts",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "contract/query-active");
 
             var (statusCode, result) = await _implementation.QueryActiveContractsAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1591,13 +1576,13 @@ public partial class ContractController : Microsoft.AspNetCore.Mvc.ControllerBas
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<LockContractResponse>> LockContract([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] LockContractRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.contract",
+            "ContractController.LockContract",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "contract/lock");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.contract",
-                "ContractController.LockContract",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "contract/lock");
 
             var (statusCode, result) = await _implementation.LockContractAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1640,13 +1625,13 @@ public partial class ContractController : Microsoft.AspNetCore.Mvc.ControllerBas
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<UnlockContractResponse>> UnlockContract([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] UnlockContractRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.contract",
+            "ContractController.UnlockContract",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "contract/unlock");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.contract",
-                "ContractController.UnlockContract",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "contract/unlock");
 
             var (statusCode, result) = await _implementation.UnlockContractAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1690,13 +1675,13 @@ public partial class ContractController : Microsoft.AspNetCore.Mvc.ControllerBas
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<TransferContractPartyResponse>> TransferContractParty([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] TransferContractPartyRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.contract",
+            "ContractController.TransferContractParty",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "contract/transfer-party");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.contract",
-                "ContractController.TransferContractParty",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "contract/transfer-party");
 
             var (statusCode, result) = await _implementation.TransferContractPartyAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1741,13 +1726,13 @@ public partial class ContractController : Microsoft.AspNetCore.Mvc.ControllerBas
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RegisterClauseTypeResponse>> RegisterClauseType([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] RegisterClauseTypeRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.contract",
+            "ContractController.RegisterClauseType",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "contract/clause-type/register");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.contract",
-                "ContractController.RegisterClauseType",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "contract/clause-type/register");
 
             var (statusCode, result) = await _implementation.RegisterClauseTypeAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1790,13 +1775,13 @@ public partial class ContractController : Microsoft.AspNetCore.Mvc.ControllerBas
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ListClauseTypesResponse>> ListClauseTypes([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] ListClauseTypesRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.contract",
+            "ContractController.ListClauseTypes",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "contract/clause-type/list");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.contract",
-                "ContractController.ListClauseTypes",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "contract/clause-type/list");
 
             var (statusCode, result) = await _implementation.ListClauseTypesAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1840,13 +1825,13 @@ public partial class ContractController : Microsoft.AspNetCore.Mvc.ControllerBas
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SetTemplateValuesResponse>> SetContractTemplateValues([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] SetTemplateValuesRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.contract",
+            "ContractController.SetContractTemplateValues",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "contract/instance/set-template-values");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.contract",
-                "ContractController.SetContractTemplateValues",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "contract/instance/set-template-values");
 
             var (statusCode, result) = await _implementation.SetContractTemplateValuesAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1890,13 +1875,13 @@ public partial class ContractController : Microsoft.AspNetCore.Mvc.ControllerBas
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CheckAssetRequirementsResponse>> CheckAssetRequirements([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] CheckAssetRequirementsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.contract",
+            "ContractController.CheckAssetRequirements",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "contract/instance/check-asset-requirements");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.contract",
-                "ContractController.CheckAssetRequirements",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "contract/instance/check-asset-requirements");
 
             var (statusCode, result) = await _implementation.CheckAssetRequirementsAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1941,13 +1926,13 @@ public partial class ContractController : Microsoft.AspNetCore.Mvc.ControllerBas
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ExecuteContractResponse>> ExecuteContract([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] ExecuteContractRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.contract",
+            "ContractController.ExecuteContract",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "contract/instance/execute");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.contract",
-                "ContractController.ExecuteContract",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "contract/instance/execute");
 
             var (statusCode, result) = await _implementation.ExecuteContractAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);

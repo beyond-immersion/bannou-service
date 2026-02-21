@@ -180,7 +180,7 @@ public class ClientEventTestHandler : IServiceTestHandler
                 return false;
             }
 
-            var receivedMessage = BinaryMessage.Parse(receiveBuffer, result.Count);
+            var receivedMessage = BinaryMessageHelper.ParseAndDecompress(receiveBuffer, result.Count);
             var responseText = Encoding.UTF8.GetString(receivedMessage.Payload.Span);
             var manifest = JsonNode.Parse(responseText)?.AsObject();
 
@@ -245,7 +245,7 @@ public class ClientEventTestHandler : IServiceTestHandler
                     return false;
                 }
 
-                receivedMessage = BinaryMessage.Parse(receiveBuffer, result.Count);
+                receivedMessage = BinaryMessageHelper.ParseAndDecompress(receiveBuffer, result.Count);
                 responseText = Encoding.UTF8.GetString(receivedMessage.Payload.Span);
                 Console.WriteLine($"Received event: {responseText[..Math.Min(500, responseText.Length)]}");
 
@@ -268,7 +268,7 @@ public class ClientEventTestHandler : IServiceTestHandler
                     result = await webSocket.ReceiveAsync(new ArraySegment<byte>(receiveBuffer), cts3.Token);
                     if (result.Count > 0)
                     {
-                        receivedMessage = BinaryMessage.Parse(receiveBuffer, result.Count);
+                        receivedMessage = BinaryMessageHelper.ParseAndDecompress(receiveBuffer, result.Count);
                         responseText = Encoding.UTF8.GetString(receivedMessage.Payload.Span);
                         Console.WriteLine($"Received second event: {responseText[..Math.Min(500, responseText.Length)]}");
 
@@ -355,7 +355,7 @@ public class ClientEventTestHandler : IServiceTestHandler
 
             if (result.Count > 0)
             {
-                var receivedMessage = BinaryMessage.Parse(receiveBuffer, result.Count);
+                var receivedMessage = BinaryMessageHelper.ParseAndDecompress(receiveBuffer, result.Count);
                 var responseText = Encoding.UTF8.GetString(receivedMessage.Payload.Span);
                 var manifest = JsonNode.Parse(responseText)?.AsObject();
 
@@ -452,7 +452,7 @@ public class ClientEventTestHandler : IServiceTestHandler
                 var result = await webSocket2.ReceiveAsync(new ArraySegment<byte>(receiveBuffer), cts2.Token);
                 if (result.Count > 0)
                 {
-                    var receivedMessage = BinaryMessage.Parse(receiveBuffer, result.Count);
+                    var receivedMessage = BinaryMessageHelper.ParseAndDecompress(receiveBuffer, result.Count);
                     var responseText = Encoding.UTF8.GetString(receivedMessage.Payload.Span);
                     Console.WriteLine($"Received on reconnect: {responseText[..Math.Min(300, responseText.Length)]}");
 
@@ -469,7 +469,7 @@ public class ClientEventTestHandler : IServiceTestHandler
                         result = await webSocket2.ReceiveAsync(new ArraySegment<byte>(receiveBuffer), cts3.Token);
                         if (result.Count > 0)
                         {
-                            receivedMessage = BinaryMessage.Parse(receiveBuffer, result.Count);
+                            receivedMessage = BinaryMessageHelper.ParseAndDecompress(receiveBuffer, result.Count);
                             responseText = Encoding.UTF8.GetString(receivedMessage.Payload.Span);
                             eventObj = JsonNode.Parse(responseText)?.AsObject();
                             var eventName = eventObj?["eventName"]?.GetValue<string>();

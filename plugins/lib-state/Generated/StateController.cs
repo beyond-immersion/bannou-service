@@ -22,21 +22,6 @@
 
 #nullable enable
 
-#pragma warning disable 108 // Disable "CS0108 '{derivedDto}.ToJson()' hides inherited member '{dtoBase}.ToJson()'. Use the new keyword if hiding was intended."
-#pragma warning disable 114 // Disable "CS0114 '{derivedDto}.RaisePropertyChanged(String)' hides inherited member 'dtoBase.RaisePropertyChanged(String)'. To make the current member override that implementation, add the override keyword. Otherwise add the new keyword."
-#pragma warning disable 472 // Disable "CS0472 The result of the expression is always 'false' since a value of type 'Int32' is never equal to 'null' of type 'Int32?'
-#pragma warning disable 612 // Disable "CS0612 '...' is obsolete"
-#pragma warning disable 649 // Disable "CS0649 Field is never assigned to, and will always have its default value null"
-#pragma warning disable 1573 // Disable "CS1573 Parameter '...' has no matching param tag in the XML comment for ...
-#pragma warning disable 1591 // Disable "CS1591 Missing XML comment for publicly visible type or member ..."
-#pragma warning disable 8073 // Disable "CS8073 The result of the expression is always 'false' since a value of type 'T' is never equal to 'null' of type 'T?'"
-#pragma warning disable 3016 // Disable "CS3016 Arrays as attribute arguments is not CLS-compliant"
-#pragma warning disable 8600 // Disable "CS8600 Converting null literal or possible null value to non-nullable type"
-#pragma warning disable 8602 // Disable "CS8602 Dereference of a possibly null reference"
-#pragma warning disable 8603 // Disable "CS8603 Possible null reference return"
-#pragma warning disable 8604 // Disable "CS8604 Possible null reference argument for parameter"
-#pragma warning disable 8625 // Disable "CS8625 Cannot convert null literal to non-nullable reference type"
-#pragma warning disable 8765 // Disable "CS8765 Nullability of type of parameter doesn't match overridden member (possibly because of nullability attributes)."
 
 namespace BeyondImmersion.BannouService.State;
 
@@ -187,13 +172,13 @@ public partial class StateController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<GetStateResponse>> GetState([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] GetStateRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.state",
+            "StateController.GetState",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "state/get");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.state",
-                "StateController.GetState",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "state/get");
 
             var (statusCode, result) = await _implementation.GetStateAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -232,13 +217,13 @@ public partial class StateController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SaveStateResponse>> SaveState([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] SaveStateRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.state",
+            "StateController.SaveState",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "state/save");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.state",
-                "StateController.SaveState",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "state/save");
 
             var (statusCode, result) = await _implementation.SaveStateAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -277,13 +262,13 @@ public partial class StateController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<DeleteStateResponse>> DeleteState([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] DeleteStateRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.state",
+            "StateController.DeleteState",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "state/delete");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.state",
-                "StateController.DeleteState",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "state/delete");
 
             var (statusCode, result) = await _implementation.DeleteStateAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -322,13 +307,13 @@ public partial class StateController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<QueryStateResponse>> QueryState([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] QueryStateRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.state",
+            "StateController.QueryState",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "state/query");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.state",
-                "StateController.QueryState",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "state/query");
 
             var (statusCode, result) = await _implementation.QueryStateAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -367,13 +352,13 @@ public partial class StateController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<BulkGetStateResponse>> BulkGetState([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] BulkGetStateRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.state",
+            "StateController.BulkGetState",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "state/bulk-get");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.state",
-                "StateController.BulkGetState",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "state/bulk-get");
 
             var (statusCode, result) = await _implementation.BulkGetStateAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -412,13 +397,13 @@ public partial class StateController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<BulkSaveStateResponse>> BulkSaveState([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] BulkSaveStateRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.state",
+            "StateController.BulkSaveState",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "state/bulk-save");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.state",
-                "StateController.BulkSaveState",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "state/bulk-save");
 
             var (statusCode, result) = await _implementation.BulkSaveStateAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -457,13 +442,13 @@ public partial class StateController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<BulkExistsStateResponse>> BulkExistsState([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] BulkExistsStateRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.state",
+            "StateController.BulkExistsState",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "state/bulk-exists");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.state",
-                "StateController.BulkExistsState",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "state/bulk-exists");
 
             var (statusCode, result) = await _implementation.BulkExistsStateAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -502,13 +487,13 @@ public partial class StateController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<BulkDeleteStateResponse>> BulkDeleteState([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] BulkDeleteStateRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.state",
+            "StateController.BulkDeleteState",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "state/bulk-delete");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.state",
-                "StateController.BulkDeleteState",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "state/bulk-delete");
 
             var (statusCode, result) = await _implementation.BulkDeleteStateAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -547,13 +532,13 @@ public partial class StateController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ListStoresResponse>> ListStores([Microsoft.AspNetCore.Mvc.FromBody] ListStoresRequest? body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.state",
+            "StateController.ListStores",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "state/list-stores");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.state",
-                "StateController.ListStores",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "state/list-stores");
 
             var (statusCode, result) = await _implementation.ListStoresAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);

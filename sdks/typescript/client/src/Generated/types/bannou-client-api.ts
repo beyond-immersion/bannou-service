@@ -13326,6 +13326,12 @@ export interface components {
        *     actor ID "npc-brain-abc-123-def" extracts "abc-123-def" as CharacterId (parsed as GUID).
        */
       characterIdCaptureGroup?: number | null;
+      /**
+       * Format: uuid
+       * @description Default realm ID for auto-spawned actors when no CharacterId is available to resolve a realm.
+       *     Required when characterIdCaptureGroup is not configured and auto-spawn is enabled.
+       */
+      defaultRealmId?: string | null;
     };
     /** @description Autogain status for a balance */
     AutogainInfo: {

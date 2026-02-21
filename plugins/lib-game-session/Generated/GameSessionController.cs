@@ -22,21 +22,6 @@
 
 #nullable enable
 
-#pragma warning disable 108 // Disable "CS0108 '{derivedDto}.ToJson()' hides inherited member '{dtoBase}.ToJson()'. Use the new keyword if hiding was intended."
-#pragma warning disable 114 // Disable "CS0114 '{derivedDto}.RaisePropertyChanged(String)' hides inherited member 'dtoBase.RaisePropertyChanged(String)'. To make the current member override that implementation, add the override keyword. Otherwise add the new keyword."
-#pragma warning disable 472 // Disable "CS0472 The result of the expression is always 'false' since a value of type 'Int32' is never equal to 'null' of type 'Int32?'
-#pragma warning disable 612 // Disable "CS0612 '...' is obsolete"
-#pragma warning disable 649 // Disable "CS0649 Field is never assigned to, and will always have its default value null"
-#pragma warning disable 1573 // Disable "CS1573 Parameter '...' has no matching param tag in the XML comment for ...
-#pragma warning disable 1591 // Disable "CS1591 Missing XML comment for publicly visible type or member ..."
-#pragma warning disable 8073 // Disable "CS8073 The result of the expression is always 'false' since a value of type 'T' is never equal to 'null' of type 'T?'"
-#pragma warning disable 3016 // Disable "CS3016 Arrays as attribute arguments is not CLS-compliant"
-#pragma warning disable 8600 // Disable "CS8600 Converting null literal or possible null value to non-nullable type"
-#pragma warning disable 8602 // Disable "CS8602 Dereference of a possibly null reference"
-#pragma warning disable 8603 // Disable "CS8603 Possible null reference return"
-#pragma warning disable 8604 // Disable "CS8604 Possible null reference argument for parameter"
-#pragma warning disable 8625 // Disable "CS8625 Cannot convert null literal to non-nullable reference type"
-#pragma warning disable 8765 // Disable "CS8765 Nullability of type of parameter doesn't match overridden member (possibly because of nullability attributes)."
 
 namespace BeyondImmersion.BannouService.GameSession;
 
@@ -241,13 +226,13 @@ public partial class GameSessionController : Microsoft.AspNetCore.Mvc.Controller
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<GameSessionListResponse>> ListGameSessions([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] ListGameSessionsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.sessions",
+            "GameSessionController.ListGameSessions",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "sessions/list");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.sessions",
-                "GameSessionController.ListGameSessions",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "sessions/list");
 
             var (statusCode, result) = await _implementation.ListGameSessionsAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -290,13 +275,13 @@ public partial class GameSessionController : Microsoft.AspNetCore.Mvc.Controller
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<GameSessionResponse>> CreateGameSession([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] CreateGameSessionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.sessions",
+            "GameSessionController.CreateGameSession",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "sessions/create");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.sessions",
-                "GameSessionController.CreateGameSession",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "sessions/create");
 
             var (statusCode, result) = await _implementation.CreateGameSessionAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -338,13 +323,13 @@ public partial class GameSessionController : Microsoft.AspNetCore.Mvc.Controller
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<GameSessionResponse>> GetGameSession([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] GetGameSessionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.sessions",
+            "GameSessionController.GetGameSession",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "sessions/get");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.sessions",
-                "GameSessionController.GetGameSession",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "sessions/get");
 
             var (statusCode, result) = await _implementation.GetGameSessionAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -389,13 +374,13 @@ public partial class GameSessionController : Microsoft.AspNetCore.Mvc.Controller
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<JoinGameSessionResponse>> JoinGameSession([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] JoinGameSessionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.sessions",
+            "GameSessionController.JoinGameSession",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "sessions/join");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.sessions",
-                "GameSessionController.JoinGameSession",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "sessions/join");
 
             var (statusCode, result) = await _implementation.JoinGameSessionAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -434,13 +419,13 @@ public partial class GameSessionController : Microsoft.AspNetCore.Mvc.Controller
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> LeaveGameSession([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] LeaveGameSessionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.sessions",
+            "GameSessionController.LeaveGameSession",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "sessions/leave");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.sessions",
-                "GameSessionController.LeaveGameSession",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "sessions/leave");
 
             var statusCode = await _implementation.LeaveGameSessionAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode);
@@ -479,13 +464,13 @@ public partial class GameSessionController : Microsoft.AspNetCore.Mvc.Controller
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> KickPlayer([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] KickPlayerRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.sessions",
+            "GameSessionController.KickPlayer",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "sessions/kick");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.sessions",
-                "GameSessionController.KickPlayer",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "sessions/kick");
 
             var statusCode = await _implementation.KickPlayerAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode);
@@ -524,13 +509,13 @@ public partial class GameSessionController : Microsoft.AspNetCore.Mvc.Controller
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> SendChatMessage([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] ChatMessageRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.sessions",
+            "GameSessionController.SendChatMessage",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "sessions/chat");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.sessions",
-                "GameSessionController.SendChatMessage",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "sessions/chat");
 
             var statusCode = await _implementation.SendChatMessageAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode);
@@ -569,13 +554,13 @@ public partial class GameSessionController : Microsoft.AspNetCore.Mvc.Controller
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<GameActionResponse>> PerformGameAction([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] GameActionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.sessions",
+            "GameSessionController.PerformGameAction",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "sessions/actions");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.sessions",
-                "GameSessionController.PerformGameAction",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "sessions/actions");
 
             var (statusCode, result) = await _implementation.PerformGameActionAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -620,13 +605,13 @@ public partial class GameSessionController : Microsoft.AspNetCore.Mvc.Controller
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<JoinGameSessionResponse>> JoinGameSessionById([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] JoinGameSessionByIdRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.sessions",
+            "GameSessionController.JoinGameSessionById",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "sessions/join-session");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.sessions",
-                "GameSessionController.JoinGameSessionById",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "sessions/join-session");
 
             var (statusCode, result) = await _implementation.JoinGameSessionByIdAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -669,13 +654,13 @@ public partial class GameSessionController : Microsoft.AspNetCore.Mvc.Controller
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> LeaveGameSessionById([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] LeaveGameSessionByIdRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.sessions",
+            "GameSessionController.LeaveGameSessionById",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "sessions/leave-session");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.sessions",
-                "GameSessionController.LeaveGameSessionById",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "sessions/leave-session");
 
             var statusCode = await _implementation.LeaveGameSessionByIdAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode);
@@ -719,13 +704,13 @@ public partial class GameSessionController : Microsoft.AspNetCore.Mvc.Controller
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<PublishJoinShortcutResponse>> PublishJoinShortcut([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] PublishJoinShortcutRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.sessions",
+            "GameSessionController.PublishJoinShortcut",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "sessions/publish-join-shortcut");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.sessions",
-                "GameSessionController.PublishJoinShortcut",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "sessions/publish-join-shortcut");
 
             var (statusCode, result) = await _implementation.PublishJoinShortcutAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);

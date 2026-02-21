@@ -22,21 +22,6 @@
 
 #nullable enable
 
-#pragma warning disable 108 // Disable "CS0108 '{derivedDto}.ToJson()' hides inherited member '{dtoBase}.ToJson()'. Use the new keyword if hiding was intended."
-#pragma warning disable 114 // Disable "CS0114 '{derivedDto}.RaisePropertyChanged(String)' hides inherited member 'dtoBase.RaisePropertyChanged(String)'. To make the current member override that implementation, add the override keyword. Otherwise add the new keyword."
-#pragma warning disable 472 // Disable "CS0472 The result of the expression is always 'false' since a value of type 'Int32' is never equal to 'null' of type 'Int32?'
-#pragma warning disable 612 // Disable "CS0612 '...' is obsolete"
-#pragma warning disable 649 // Disable "CS0649 Field is never assigned to, and will always have its default value null"
-#pragma warning disable 1573 // Disable "CS1573 Parameter '...' has no matching param tag in the XML comment for ...
-#pragma warning disable 1591 // Disable "CS1591 Missing XML comment for publicly visible type or member ..."
-#pragma warning disable 8073 // Disable "CS8073 The result of the expression is always 'false' since a value of type 'T' is never equal to 'null' of type 'T?'"
-#pragma warning disable 3016 // Disable "CS3016 Arrays as attribute arguments is not CLS-compliant"
-#pragma warning disable 8600 // Disable "CS8600 Converting null literal or possible null value to non-nullable type"
-#pragma warning disable 8602 // Disable "CS8602 Dereference of a possibly null reference"
-#pragma warning disable 8603 // Disable "CS8603 Possible null reference return"
-#pragma warning disable 8604 // Disable "CS8604 Possible null reference argument for parameter"
-#pragma warning disable 8625 // Disable "CS8625 Cannot convert null literal to non-nullable reference type"
-#pragma warning disable 8765 // Disable "CS8765 Nullability of type of parameter doesn't match overridden member (possibly because of nullability attributes)."
 
 namespace BeyondImmersion.BannouService.Currency;
 
@@ -525,13 +510,13 @@ public partial class CurrencyController : Microsoft.AspNetCore.Mvc.ControllerBas
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CurrencyDefinitionResponse>> CreateCurrencyDefinition([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] CreateCurrencyDefinitionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.currency",
+            "CurrencyController.CreateCurrencyDefinition",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "currency/definition/create");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.currency",
-                "CurrencyController.CreateCurrencyDefinition",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "currency/definition/create");
 
             var (statusCode, result) = await _implementation.CreateCurrencyDefinitionAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -574,13 +559,13 @@ public partial class CurrencyController : Microsoft.AspNetCore.Mvc.ControllerBas
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CurrencyDefinitionResponse>> GetCurrencyDefinition([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] GetCurrencyDefinitionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.currency",
+            "CurrencyController.GetCurrencyDefinition",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "currency/definition/get");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.currency",
-                "CurrencyController.GetCurrencyDefinition",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "currency/definition/get");
 
             var (statusCode, result) = await _implementation.GetCurrencyDefinitionAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -623,13 +608,13 @@ public partial class CurrencyController : Microsoft.AspNetCore.Mvc.ControllerBas
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ListCurrencyDefinitionsResponse>> ListCurrencyDefinitions([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] ListCurrencyDefinitionsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.currency",
+            "CurrencyController.ListCurrencyDefinitions",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "currency/definition/list");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.currency",
-                "CurrencyController.ListCurrencyDefinitions",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "currency/definition/list");
 
             var (statusCode, result) = await _implementation.ListCurrencyDefinitionsAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -672,13 +657,13 @@ public partial class CurrencyController : Microsoft.AspNetCore.Mvc.ControllerBas
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CurrencyDefinitionResponse>> UpdateCurrencyDefinition([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] UpdateCurrencyDefinitionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.currency",
+            "CurrencyController.UpdateCurrencyDefinition",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "currency/definition/update");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.currency",
-                "CurrencyController.UpdateCurrencyDefinition",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "currency/definition/update");
 
             var (statusCode, result) = await _implementation.UpdateCurrencyDefinitionAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -721,13 +706,13 @@ public partial class CurrencyController : Microsoft.AspNetCore.Mvc.ControllerBas
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<WalletResponse>> CreateWallet([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] CreateWalletRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.currency",
+            "CurrencyController.CreateWallet",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "currency/wallet/create");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.currency",
-                "CurrencyController.CreateWallet",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "currency/wallet/create");
 
             var (statusCode, result) = await _implementation.CreateWalletAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -770,13 +755,13 @@ public partial class CurrencyController : Microsoft.AspNetCore.Mvc.ControllerBas
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<WalletWithBalancesResponse>> GetWallet([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] GetWalletRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.currency",
+            "CurrencyController.GetWallet",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "currency/wallet/get");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.currency",
-                "CurrencyController.GetWallet",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "currency/wallet/get");
 
             var (statusCode, result) = await _implementation.GetWalletAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -819,13 +804,13 @@ public partial class CurrencyController : Microsoft.AspNetCore.Mvc.ControllerBas
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<GetOrCreateWalletResponse>> GetOrCreateWallet([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] GetOrCreateWalletRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.currency",
+            "CurrencyController.GetOrCreateWallet",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "currency/wallet/get-or-create");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.currency",
-                "CurrencyController.GetOrCreateWallet",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "currency/wallet/get-or-create");
 
             var (statusCode, result) = await _implementation.GetOrCreateWalletAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -868,13 +853,13 @@ public partial class CurrencyController : Microsoft.AspNetCore.Mvc.ControllerBas
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<WalletResponse>> FreezeWallet([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] FreezeWalletRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.currency",
+            "CurrencyController.FreezeWallet",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "currency/wallet/freeze");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.currency",
-                "CurrencyController.FreezeWallet",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "currency/wallet/freeze");
 
             var (statusCode, result) = await _implementation.FreezeWalletAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -916,13 +901,13 @@ public partial class CurrencyController : Microsoft.AspNetCore.Mvc.ControllerBas
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<WalletResponse>> UnfreezeWallet([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] UnfreezeWalletRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.currency",
+            "CurrencyController.UnfreezeWallet",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "currency/wallet/unfreeze");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.currency",
-                "CurrencyController.UnfreezeWallet",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "currency/wallet/unfreeze");
 
             var (statusCode, result) = await _implementation.UnfreezeWalletAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -965,13 +950,13 @@ public partial class CurrencyController : Microsoft.AspNetCore.Mvc.ControllerBas
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CloseWalletResponse>> CloseWallet([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] CloseWalletRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.currency",
+            "CurrencyController.CloseWallet",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "currency/wallet/close");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.currency",
-                "CurrencyController.CloseWallet",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "currency/wallet/close");
 
             var (statusCode, result) = await _implementation.CloseWalletAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1015,13 +1000,13 @@ public partial class CurrencyController : Microsoft.AspNetCore.Mvc.ControllerBas
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<GetBalanceResponse>> GetBalance([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] GetBalanceRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.currency",
+            "CurrencyController.GetBalance",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "currency/balance/get");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.currency",
-                "CurrencyController.GetBalance",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "currency/balance/get");
 
             var (statusCode, result) = await _implementation.GetBalanceAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1064,13 +1049,13 @@ public partial class CurrencyController : Microsoft.AspNetCore.Mvc.ControllerBas
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<BatchGetBalancesResponse>> BatchGetBalances([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] BatchGetBalancesRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.currency",
+            "CurrencyController.BatchGetBalances",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "currency/balance/batch-get");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.currency",
-                "CurrencyController.BatchGetBalances",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "currency/balance/batch-get");
 
             var (statusCode, result) = await _implementation.BatchGetBalancesAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1113,13 +1098,13 @@ public partial class CurrencyController : Microsoft.AspNetCore.Mvc.ControllerBas
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CreditCurrencyResponse>> CreditCurrency([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] CreditCurrencyRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.currency",
+            "CurrencyController.CreditCurrency",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "currency/credit");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.currency",
-                "CurrencyController.CreditCurrency",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "currency/credit");
 
             var (statusCode, result) = await _implementation.CreditCurrencyAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1162,13 +1147,13 @@ public partial class CurrencyController : Microsoft.AspNetCore.Mvc.ControllerBas
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<DebitCurrencyResponse>> DebitCurrency([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] DebitCurrencyRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.currency",
+            "CurrencyController.DebitCurrency",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "currency/debit");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.currency",
-                "CurrencyController.DebitCurrency",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "currency/debit");
 
             var (statusCode, result) = await _implementation.DebitCurrencyAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1211,13 +1196,13 @@ public partial class CurrencyController : Microsoft.AspNetCore.Mvc.ControllerBas
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<TransferCurrencyResponse>> TransferCurrency([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] TransferCurrencyRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.currency",
+            "CurrencyController.TransferCurrency",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "currency/transfer");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.currency",
-                "CurrencyController.TransferCurrency",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "currency/transfer");
 
             var (statusCode, result) = await _implementation.TransferCurrencyAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1260,13 +1245,13 @@ public partial class CurrencyController : Microsoft.AspNetCore.Mvc.ControllerBas
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<BatchCreditResponse>> BatchCreditCurrency([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] BatchCreditRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.currency",
+            "CurrencyController.BatchCreditCurrency",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "currency/batch-credit");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.currency",
-                "CurrencyController.BatchCreditCurrency",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "currency/batch-credit");
 
             var (statusCode, result) = await _implementation.BatchCreditCurrencyAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1309,13 +1294,13 @@ public partial class CurrencyController : Microsoft.AspNetCore.Mvc.ControllerBas
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CalculateConversionResponse>> CalculateConversion([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] CalculateConversionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.currency",
+            "CurrencyController.CalculateConversion",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "currency/convert/calculate");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.currency",
-                "CurrencyController.CalculateConversion",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "currency/convert/calculate");
 
             var (statusCode, result) = await _implementation.CalculateConversionAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1358,13 +1343,13 @@ public partial class CurrencyController : Microsoft.AspNetCore.Mvc.ControllerBas
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ExecuteConversionResponse>> ExecuteConversion([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] ExecuteConversionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.currency",
+            "CurrencyController.ExecuteConversion",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "currency/convert/execute");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.currency",
-                "CurrencyController.ExecuteConversion",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "currency/convert/execute");
 
             var (statusCode, result) = await _implementation.ExecuteConversionAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1407,13 +1392,13 @@ public partial class CurrencyController : Microsoft.AspNetCore.Mvc.ControllerBas
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<GetExchangeRateResponse>> GetExchangeRate([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] GetExchangeRateRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.currency",
+            "CurrencyController.GetExchangeRate",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "currency/exchange-rate/get");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.currency",
-                "CurrencyController.GetExchangeRate",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "currency/exchange-rate/get");
 
             var (statusCode, result) = await _implementation.GetExchangeRateAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1456,13 +1441,13 @@ public partial class CurrencyController : Microsoft.AspNetCore.Mvc.ControllerBas
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<UpdateExchangeRateResponse>> UpdateExchangeRate([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] UpdateExchangeRateRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.currency",
+            "CurrencyController.UpdateExchangeRate",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "currency/exchange-rate/update");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.currency",
-                "CurrencyController.UpdateExchangeRate",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "currency/exchange-rate/update");
 
             var (statusCode, result) = await _implementation.UpdateExchangeRateAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1504,13 +1489,13 @@ public partial class CurrencyController : Microsoft.AspNetCore.Mvc.ControllerBas
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<TransactionResponse>> GetTransaction([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] GetTransactionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.currency",
+            "CurrencyController.GetTransaction",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "currency/transaction/get");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.currency",
-                "CurrencyController.GetTransaction",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "currency/transaction/get");
 
             var (statusCode, result) = await _implementation.GetTransactionAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1553,13 +1538,13 @@ public partial class CurrencyController : Microsoft.AspNetCore.Mvc.ControllerBas
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<GetTransactionHistoryResponse>> GetTransactionHistory([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] GetTransactionHistoryRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.currency",
+            "CurrencyController.GetTransactionHistory",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "currency/transaction/history");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.currency",
-                "CurrencyController.GetTransactionHistory",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "currency/transaction/history");
 
             var (statusCode, result) = await _implementation.GetTransactionHistoryAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1602,13 +1587,13 @@ public partial class CurrencyController : Microsoft.AspNetCore.Mvc.ControllerBas
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<GetTransactionsByReferenceResponse>> GetTransactionsByReference([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] GetTransactionsByReferenceRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.currency",
+            "CurrencyController.GetTransactionsByReference",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "currency/transaction/by-reference");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.currency",
-                "CurrencyController.GetTransactionsByReference",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "currency/transaction/by-reference");
 
             var (statusCode, result) = await _implementation.GetTransactionsByReferenceAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1651,13 +1636,13 @@ public partial class CurrencyController : Microsoft.AspNetCore.Mvc.ControllerBas
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<GetGlobalSupplyResponse>> GetGlobalSupply([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] GetGlobalSupplyRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.currency",
+            "CurrencyController.GetGlobalSupply",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "currency/stats/global-supply");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.currency",
-                "CurrencyController.GetGlobalSupply",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "currency/stats/global-supply");
 
             var (statusCode, result) = await _implementation.GetGlobalSupplyAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1700,13 +1685,13 @@ public partial class CurrencyController : Microsoft.AspNetCore.Mvc.ControllerBas
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<GetWalletDistributionResponse>> GetWalletDistribution([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] GetWalletDistributionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.currency",
+            "CurrencyController.GetWalletDistribution",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "currency/stats/wallet-distribution");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.currency",
-                "CurrencyController.GetWalletDistribution",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "currency/stats/wallet-distribution");
 
             var (statusCode, result) = await _implementation.GetWalletDistributionAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1749,13 +1734,13 @@ public partial class CurrencyController : Microsoft.AspNetCore.Mvc.ControllerBas
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<EscrowDepositResponse>> EscrowDeposit([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] EscrowDepositRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.currency",
+            "CurrencyController.EscrowDeposit",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "currency/escrow/deposit");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.currency",
-                "CurrencyController.EscrowDeposit",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "currency/escrow/deposit");
 
             var (statusCode, result) = await _implementation.EscrowDepositAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1798,13 +1783,13 @@ public partial class CurrencyController : Microsoft.AspNetCore.Mvc.ControllerBas
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<EscrowReleaseResponse>> EscrowRelease([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] EscrowReleaseRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.currency",
+            "CurrencyController.EscrowRelease",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "currency/escrow/release");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.currency",
-                "CurrencyController.EscrowRelease",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "currency/escrow/release");
 
             var (statusCode, result) = await _implementation.EscrowReleaseAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1847,13 +1832,13 @@ public partial class CurrencyController : Microsoft.AspNetCore.Mvc.ControllerBas
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<EscrowRefundResponse>> EscrowRefund([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] EscrowRefundRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.currency",
+            "CurrencyController.EscrowRefund",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "currency/escrow/refund");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.currency",
-                "CurrencyController.EscrowRefund",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "currency/escrow/refund");
 
             var (statusCode, result) = await _implementation.EscrowRefundAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1897,13 +1882,13 @@ public partial class CurrencyController : Microsoft.AspNetCore.Mvc.ControllerBas
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<HoldResponse>> CreateHold([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] CreateHoldRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.currency",
+            "CurrencyController.CreateHold",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "currency/hold/create");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.currency",
-                "CurrencyController.CreateHold",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "currency/hold/create");
 
             var (statusCode, result) = await _implementation.CreateHoldAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1946,13 +1931,13 @@ public partial class CurrencyController : Microsoft.AspNetCore.Mvc.ControllerBas
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CaptureHoldResponse>> CaptureHold([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] CaptureHoldRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.currency",
+            "CurrencyController.CaptureHold",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "currency/hold/capture");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.currency",
-                "CurrencyController.CaptureHold",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "currency/hold/capture");
 
             var (statusCode, result) = await _implementation.CaptureHoldAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1995,13 +1980,13 @@ public partial class CurrencyController : Microsoft.AspNetCore.Mvc.ControllerBas
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<HoldResponse>> ReleaseHold([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] ReleaseHoldRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.currency",
+            "CurrencyController.ReleaseHold",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "currency/hold/release");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.currency",
-                "CurrencyController.ReleaseHold",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "currency/hold/release");
 
             var (statusCode, result) = await _implementation.ReleaseHoldAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -2043,13 +2028,13 @@ public partial class CurrencyController : Microsoft.AspNetCore.Mvc.ControllerBas
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<HoldResponse>> GetHold([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] GetHoldRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.currency",
+            "CurrencyController.GetHold",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "currency/hold/get");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.currency",
-                "CurrencyController.GetHold",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "currency/hold/get");
 
             var (statusCode, result) = await _implementation.GetHoldAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);

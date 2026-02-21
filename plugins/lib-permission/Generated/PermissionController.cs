@@ -22,21 +22,6 @@
 
 #nullable enable
 
-#pragma warning disable 108 // Disable "CS0108 '{derivedDto}.ToJson()' hides inherited member '{dtoBase}.ToJson()'. Use the new keyword if hiding was intended."
-#pragma warning disable 114 // Disable "CS0114 '{derivedDto}.RaisePropertyChanged(String)' hides inherited member 'dtoBase.RaisePropertyChanged(String)'. To make the current member override that implementation, add the override keyword. Otherwise add the new keyword."
-#pragma warning disable 472 // Disable "CS0472 The result of the expression is always 'false' since a value of type 'Int32' is never equal to 'null' of type 'Int32?'
-#pragma warning disable 612 // Disable "CS0612 '...' is obsolete"
-#pragma warning disable 649 // Disable "CS0649 Field is never assigned to, and will always have its default value null"
-#pragma warning disable 1573 // Disable "CS1573 Parameter '...' has no matching param tag in the XML comment for ...
-#pragma warning disable 1591 // Disable "CS1591 Missing XML comment for publicly visible type or member ..."
-#pragma warning disable 8073 // Disable "CS8073 The result of the expression is always 'false' since a value of type 'T' is never equal to 'null' of type 'T?'"
-#pragma warning disable 3016 // Disable "CS3016 Arrays as attribute arguments is not CLS-compliant"
-#pragma warning disable 8600 // Disable "CS8600 Converting null literal or possible null value to non-nullable type"
-#pragma warning disable 8602 // Disable "CS8602 Dereference of a possibly null reference"
-#pragma warning disable 8603 // Disable "CS8603 Possible null reference return"
-#pragma warning disable 8604 // Disable "CS8604 Possible null reference argument for parameter"
-#pragma warning disable 8625 // Disable "CS8625 Cannot convert null literal to non-nullable reference type"
-#pragma warning disable 8765 // Disable "CS8765 Nullability of type of parameter doesn't match overridden member (possibly because of nullability attributes)."
 
 namespace BeyondImmersion.BannouService.Permission;
 
@@ -213,13 +198,13 @@ public partial class PermissionController : Microsoft.AspNetCore.Mvc.ControllerB
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CapabilityResponse>> GetCapabilities([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] CapabilityRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.permission",
+            "PermissionController.GetCapabilities",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "permission/capabilities");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.permission",
-                "PermissionController.GetCapabilities",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "permission/capabilities");
 
             var (statusCode, result) = await _implementation.GetCapabilitiesAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -261,13 +246,13 @@ public partial class PermissionController : Microsoft.AspNetCore.Mvc.ControllerB
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ValidationResponse>> ValidateApiAccess([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] ValidationRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.permission",
+            "PermissionController.ValidateApiAccess",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "permission/validate");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.permission",
-                "PermissionController.ValidateApiAccess",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "permission/validate");
 
             var (statusCode, result) = await _implementation.ValidateApiAccessAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -309,13 +294,13 @@ public partial class PermissionController : Microsoft.AspNetCore.Mvc.ControllerB
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RegistrationResponse>> RegisterServicePermissions([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] ServicePermissionMatrix body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.permission",
+            "PermissionController.RegisterServicePermissions",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "permission/register-service");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.permission",
-                "PermissionController.RegisterServicePermissions",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "permission/register-service");
 
             var (statusCode, result) = await _implementation.RegisterServicePermissionsAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -357,13 +342,13 @@ public partial class PermissionController : Microsoft.AspNetCore.Mvc.ControllerB
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SessionUpdateResponse>> UpdateSessionState([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] SessionStateUpdate body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.permission",
+            "PermissionController.UpdateSessionState",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "permission/update-session-state");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.permission",
-                "PermissionController.UpdateSessionState",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "permission/update-session-state");
 
             var (statusCode, result) = await _implementation.UpdateSessionStateAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -405,13 +390,13 @@ public partial class PermissionController : Microsoft.AspNetCore.Mvc.ControllerB
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SessionUpdateResponse>> UpdateSessionRole([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] SessionRoleUpdate body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.permission",
+            "PermissionController.UpdateSessionRole",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "permission/update-session-role");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.permission",
-                "PermissionController.UpdateSessionRole",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "permission/update-session-role");
 
             var (statusCode, result) = await _implementation.UpdateSessionRoleAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -455,13 +440,13 @@ public partial class PermissionController : Microsoft.AspNetCore.Mvc.ControllerB
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SessionUpdateResponse>> ClearSessionState([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] ClearSessionStateRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.permission",
+            "PermissionController.ClearSessionState",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "permission/clear-session-state");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.permission",
-                "PermissionController.ClearSessionState",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "permission/clear-session-state");
 
             var (statusCode, result) = await _implementation.ClearSessionStateAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -503,13 +488,13 @@ public partial class PermissionController : Microsoft.AspNetCore.Mvc.ControllerB
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SessionInfo>> GetSessionInfo([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] SessionInfoRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.permission",
+            "PermissionController.GetSessionInfo",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "permission/get-session-info");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.permission",
-                "PermissionController.GetSessionInfo",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "permission/get-session-info");
 
             var (statusCode, result) = await _implementation.GetSessionInfoAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -557,13 +542,13 @@ public partial class PermissionController : Microsoft.AspNetCore.Mvc.ControllerB
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RegisteredServicesResponse>> GetRegisteredServices([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] ListServicesRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.permission",
+            "PermissionController.GetRegisteredServices",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "permission/services/list");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.permission",
-                "PermissionController.GetRegisteredServices",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "permission/services/list");
 
             var (statusCode, result) = await _implementation.GetRegisteredServicesAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);

@@ -22,21 +22,6 @@
 
 #nullable enable
 
-#pragma warning disable 108 // Disable "CS0108 '{derivedDto}.ToJson()' hides inherited member '{dtoBase}.ToJson()'. Use the new keyword if hiding was intended."
-#pragma warning disable 114 // Disable "CS0114 '{derivedDto}.RaisePropertyChanged(String)' hides inherited member 'dtoBase.RaisePropertyChanged(String)'. To make the current member override that implementation, add the override keyword. Otherwise add the new keyword."
-#pragma warning disable 472 // Disable "CS0472 The result of the expression is always 'false' since a value of type 'Int32' is never equal to 'null' of type 'Int32?'
-#pragma warning disable 612 // Disable "CS0612 '...' is obsolete"
-#pragma warning disable 649 // Disable "CS0649 Field is never assigned to, and will always have its default value null"
-#pragma warning disable 1573 // Disable "CS1573 Parameter '...' has no matching param tag in the XML comment for ...
-#pragma warning disable 1591 // Disable "CS1591 Missing XML comment for publicly visible type or member ..."
-#pragma warning disable 8073 // Disable "CS8073 The result of the expression is always 'false' since a value of type 'T' is never equal to 'null' of type 'T?'"
-#pragma warning disable 3016 // Disable "CS3016 Arrays as attribute arguments is not CLS-compliant"
-#pragma warning disable 8600 // Disable "CS8600 Converting null literal or possible null value to non-nullable type"
-#pragma warning disable 8602 // Disable "CS8602 Dereference of a possibly null reference"
-#pragma warning disable 8603 // Disable "CS8603 Possible null reference return"
-#pragma warning disable 8604 // Disable "CS8604 Possible null reference argument for parameter"
-#pragma warning disable 8625 // Disable "CS8625 Cannot convert null literal to non-nullable reference type"
-#pragma warning disable 8765 // Disable "CS8765 Nullability of type of parameter doesn't match overridden member (possibly because of nullability attributes)."
 
 namespace BeyondImmersion.BannouService.Item;
 
@@ -323,13 +308,13 @@ public partial class ItemController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ItemTemplateResponse>> CreateItemTemplate([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] CreateItemTemplateRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.item",
+            "ItemController.CreateItemTemplate",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "item/template/create");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.item",
-                "ItemController.CreateItemTemplate",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "item/template/create");
 
             var (statusCode, result) = await _implementation.CreateItemTemplateAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -372,13 +357,13 @@ public partial class ItemController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ItemTemplateResponse>> GetItemTemplate([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] GetItemTemplateRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.item",
+            "ItemController.GetItemTemplate",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "item/template/get");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.item",
-                "ItemController.GetItemTemplate",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "item/template/get");
 
             var (statusCode, result) = await _implementation.GetItemTemplateAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -421,13 +406,13 @@ public partial class ItemController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ListItemTemplatesResponse>> ListItemTemplates([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] ListItemTemplatesRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.item",
+            "ItemController.ListItemTemplates",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "item/template/list");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.item",
-                "ItemController.ListItemTemplates",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "item/template/list");
 
             var (statusCode, result) = await _implementation.ListItemTemplatesAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -470,13 +455,13 @@ public partial class ItemController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ItemTemplateResponse>> UpdateItemTemplate([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] UpdateItemTemplateRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.item",
+            "ItemController.UpdateItemTemplate",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "item/template/update");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.item",
-                "ItemController.UpdateItemTemplate",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "item/template/update");
 
             var (statusCode, result) = await _implementation.UpdateItemTemplateAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -520,13 +505,13 @@ public partial class ItemController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ItemTemplateResponse>> DeprecateItemTemplate([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] DeprecateItemTemplateRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.item",
+            "ItemController.DeprecateItemTemplate",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "item/template/deprecate");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.item",
-                "ItemController.DeprecateItemTemplate",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "item/template/deprecate");
 
             var (statusCode, result) = await _implementation.DeprecateItemTemplateAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -570,13 +555,13 @@ public partial class ItemController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ItemInstanceResponse>> CreateItemInstance([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] CreateItemInstanceRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.item",
+            "ItemController.CreateItemInstance",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "item/instance/create");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.item",
-                "ItemController.CreateItemInstance",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "item/instance/create");
 
             var (statusCode, result) = await _implementation.CreateItemInstanceAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -618,13 +603,13 @@ public partial class ItemController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ItemInstanceResponse>> GetItemInstance([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] GetItemInstanceRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.item",
+            "ItemController.GetItemInstance",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "item/instance/get");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.item",
-                "ItemController.GetItemInstance",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "item/instance/get");
 
             var (statusCode, result) = await _implementation.GetItemInstanceAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -667,13 +652,13 @@ public partial class ItemController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ItemInstanceResponse>> ModifyItemInstance([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] ModifyItemInstanceRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.item",
+            "ItemController.ModifyItemInstance",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "item/instance/modify");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.item",
-                "ItemController.ModifyItemInstance",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "item/instance/modify");
 
             var (statusCode, result) = await _implementation.ModifyItemInstanceAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -716,13 +701,13 @@ public partial class ItemController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ItemInstanceResponse>> BindItemInstance([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] BindItemInstanceRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.item",
+            "ItemController.BindItemInstance",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "item/instance/bind");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.item",
-                "ItemController.BindItemInstance",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "item/instance/bind");
 
             var (statusCode, result) = await _implementation.BindItemInstanceAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -765,13 +750,13 @@ public partial class ItemController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ItemInstanceResponse>> UnbindItemInstance([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] UnbindItemInstanceRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.item",
+            "ItemController.UnbindItemInstance",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "item/instance/unbind");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.item",
-                "ItemController.UnbindItemInstance",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "item/instance/unbind");
 
             var (statusCode, result) = await _implementation.UnbindItemInstanceAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -814,13 +799,13 @@ public partial class ItemController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<DestroyItemInstanceResponse>> DestroyItemInstance([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] DestroyItemInstanceRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.item",
+            "ItemController.DestroyItemInstance",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "item/instance/destroy");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.item",
-                "ItemController.DestroyItemInstance",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "item/instance/destroy");
 
             var (statusCode, result) = await _implementation.DestroyItemInstanceAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -866,13 +851,13 @@ public partial class ItemController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<UseItemResponse>> UseItem([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] UseItemRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.item",
+            "ItemController.UseItem",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "item/use");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.item",
-                "ItemController.UseItem",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "item/use");
 
             var (statusCode, result) = await _implementation.UseItemAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -918,13 +903,13 @@ public partial class ItemController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<UseItemStepResponse>> UseItemStep([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] UseItemStepRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.item",
+            "ItemController.UseItemStep",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "item/use-step");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.item",
-                "ItemController.UseItemStep",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "item/use-step");
 
             var (statusCode, result) = await _implementation.UseItemStepAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -966,13 +951,13 @@ public partial class ItemController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ListItemsResponse>> ListItemsByContainer([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] ListItemsByContainerRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.item",
+            "ItemController.ListItemsByContainer",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "item/instance/list-by-container");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.item",
-                "ItemController.ListItemsByContainer",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "item/instance/list-by-container");
 
             var (statusCode, result) = await _implementation.ListItemsByContainerAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1015,13 +1000,13 @@ public partial class ItemController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ListItemsResponse>> ListItemsByTemplate([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] ListItemsByTemplateRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.item",
+            "ItemController.ListItemsByTemplate",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "item/instance/list-by-template");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.item",
-                "ItemController.ListItemsByTemplate",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "item/instance/list-by-template");
 
             var (statusCode, result) = await _implementation.ListItemsByTemplateAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1063,13 +1048,13 @@ public partial class ItemController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<BatchGetItemInstancesResponse>> BatchGetItemInstances([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] BatchGetItemInstancesRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.item",
+            "ItemController.BatchGetItemInstances",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "item/instance/batch-get");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.item",
-                "ItemController.BatchGetItemInstances",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "item/instance/batch-get");
 
             var (statusCode, result) = await _implementation.BatchGetItemInstancesAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);

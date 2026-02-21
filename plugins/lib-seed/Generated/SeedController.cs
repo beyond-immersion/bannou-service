@@ -22,21 +22,6 @@
 
 #nullable enable
 
-#pragma warning disable 108 // Disable "CS0108 '{derivedDto}.ToJson()' hides inherited member '{dtoBase}.ToJson()'. Use the new keyword if hiding was intended."
-#pragma warning disable 114 // Disable "CS0114 '{derivedDto}.RaisePropertyChanged(String)' hides inherited member 'dtoBase.RaisePropertyChanged(String)'. To make the current member override that implementation, add the override keyword. Otherwise add the new keyword."
-#pragma warning disable 472 // Disable "CS0472 The result of the expression is always 'false' since a value of type 'Int32' is never equal to 'null' of type 'Int32?'
-#pragma warning disable 612 // Disable "CS0612 '...' is obsolete"
-#pragma warning disable 649 // Disable "CS0649 Field is never assigned to, and will always have its default value null"
-#pragma warning disable 1573 // Disable "CS1573 Parameter '...' has no matching param tag in the XML comment for ...
-#pragma warning disable 1591 // Disable "CS1591 Missing XML comment for publicly visible type or member ..."
-#pragma warning disable 8073 // Disable "CS8073 The result of the expression is always 'false' since a value of type 'T' is never equal to 'null' of type 'T?'"
-#pragma warning disable 3016 // Disable "CS3016 Arrays as attribute arguments is not CLS-compliant"
-#pragma warning disable 8600 // Disable "CS8600 Converting null literal or possible null value to non-nullable type"
-#pragma warning disable 8602 // Disable "CS8602 Dereference of a possibly null reference"
-#pragma warning disable 8603 // Disable "CS8603 Possible null reference return"
-#pragma warning disable 8604 // Disable "CS8604 Possible null reference argument for parameter"
-#pragma warning disable 8625 // Disable "CS8625 Cannot convert null literal to non-nullable reference type"
-#pragma warning disable 8765 // Disable "CS8765 Nullability of type of parameter doesn't match overridden member (possibly because of nullability attributes)."
 
 namespace BeyondImmersion.BannouService.Seed;
 
@@ -397,13 +382,13 @@ public partial class SeedController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SeedResponse>> CreateSeed([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] CreateSeedRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.seed",
+            "SeedController.CreateSeed",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "seed/create");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.seed",
-                "SeedController.CreateSeed",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "seed/create");
 
             var (statusCode, result) = await _implementation.CreateSeedAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -445,13 +430,13 @@ public partial class SeedController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SeedResponse>> GetSeed([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] GetSeedRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.seed",
+            "SeedController.GetSeed",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "seed/get");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.seed",
-                "SeedController.GetSeed",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "seed/get");
 
             var (statusCode, result) = await _implementation.GetSeedAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -493,13 +478,13 @@ public partial class SeedController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ListSeedsResponse>> GetSeedsByOwner([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] GetSeedsByOwnerRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.seed",
+            "SeedController.GetSeedsByOwner",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "seed/get-by-owner");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.seed",
-                "SeedController.GetSeedsByOwner",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "seed/get-by-owner");
 
             var (statusCode, result) = await _implementation.GetSeedsByOwnerAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -541,13 +526,13 @@ public partial class SeedController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ListSeedsResponse>> ListSeeds([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] ListSeedsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.seed",
+            "SeedController.ListSeeds",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "seed/list");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.seed",
-                "SeedController.ListSeeds",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "seed/list");
 
             var (statusCode, result) = await _implementation.ListSeedsAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -589,13 +574,13 @@ public partial class SeedController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SeedResponse>> UpdateSeed([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] UpdateSeedRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.seed",
+            "SeedController.UpdateSeed",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "seed/update");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.seed",
-                "SeedController.UpdateSeed",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "seed/update");
 
             var (statusCode, result) = await _implementation.UpdateSeedAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -637,13 +622,13 @@ public partial class SeedController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SeedResponse>> ActivateSeed([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] ActivateSeedRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.seed",
+            "SeedController.ActivateSeed",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "seed/activate");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.seed",
-                "SeedController.ActivateSeed",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "seed/activate");
 
             var (statusCode, result) = await _implementation.ActivateSeedAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -685,13 +670,13 @@ public partial class SeedController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SeedResponse>> ArchiveSeed([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] ArchiveSeedRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.seed",
+            "SeedController.ArchiveSeed",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "seed/archive");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.seed",
-                "SeedController.ArchiveSeed",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "seed/archive");
 
             var (statusCode, result) = await _implementation.ArchiveSeedAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -733,13 +718,13 @@ public partial class SeedController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<GrowthResponse>> GetGrowth([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] GetGrowthRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.seed",
+            "SeedController.GetGrowth",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "seed/growth/get");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.seed",
-                "SeedController.GetGrowth",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "seed/growth/get");
 
             var (statusCode, result) = await _implementation.GetGrowthAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -781,13 +766,13 @@ public partial class SeedController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<GrowthResponse>> RecordGrowth([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] RecordGrowthRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.seed",
+            "SeedController.RecordGrowth",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "seed/growth/record");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.seed",
-                "SeedController.RecordGrowth",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "seed/growth/record");
 
             var (statusCode, result) = await _implementation.RecordGrowthAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -829,13 +814,13 @@ public partial class SeedController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<GrowthResponse>> RecordGrowthBatch([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] RecordGrowthBatchRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.seed",
+            "SeedController.RecordGrowthBatch",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "seed/growth/record-batch");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.seed",
-                "SeedController.RecordGrowthBatch",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "seed/growth/record-batch");
 
             var (statusCode, result) = await _implementation.RecordGrowthBatchAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -877,13 +862,13 @@ public partial class SeedController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<GrowthPhaseResponse>> GetGrowthPhase([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] GetGrowthPhaseRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.seed",
+            "SeedController.GetGrowthPhase",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "seed/growth/get-phase");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.seed",
-                "SeedController.GetGrowthPhase",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "seed/growth/get-phase");
 
             var (statusCode, result) = await _implementation.GetGrowthPhaseAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -925,13 +910,13 @@ public partial class SeedController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CapabilityManifestResponse>> GetCapabilityManifest([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] GetCapabilityManifestRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.seed",
+            "SeedController.GetCapabilityManifest",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "seed/capability/get-manifest");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.seed",
-                "SeedController.GetCapabilityManifest",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "seed/capability/get-manifest");
 
             var (statusCode, result) = await _implementation.GetCapabilityManifestAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -973,13 +958,13 @@ public partial class SeedController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SeedTypeResponse>> RegisterSeedType([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] RegisterSeedTypeRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.seed",
+            "SeedController.RegisterSeedType",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "seed/type/register");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.seed",
-                "SeedController.RegisterSeedType",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "seed/type/register");
 
             var (statusCode, result) = await _implementation.RegisterSeedTypeAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1021,13 +1006,13 @@ public partial class SeedController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SeedTypeResponse>> GetSeedType([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] GetSeedTypeRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.seed",
+            "SeedController.GetSeedType",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "seed/type/get");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.seed",
-                "SeedController.GetSeedType",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "seed/type/get");
 
             var (statusCode, result) = await _implementation.GetSeedTypeAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1069,13 +1054,13 @@ public partial class SeedController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ListSeedTypesResponse>> ListSeedTypes([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] ListSeedTypesRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.seed",
+            "SeedController.ListSeedTypes",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "seed/type/list");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.seed",
-                "SeedController.ListSeedTypes",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "seed/type/list");
 
             var (statusCode, result) = await _implementation.ListSeedTypesAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1117,13 +1102,13 @@ public partial class SeedController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SeedTypeResponse>> UpdateSeedType([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] UpdateSeedTypeRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.seed",
+            "SeedController.UpdateSeedType",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "seed/type/update");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.seed",
-                "SeedController.UpdateSeedType",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "seed/type/update");
 
             var (statusCode, result) = await _implementation.UpdateSeedTypeAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1165,13 +1150,13 @@ public partial class SeedController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SeedTypeResponse>> DeprecateSeedType([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] DeprecateSeedTypeRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.seed",
+            "SeedController.DeprecateSeedType",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "seed/type/deprecate");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.seed",
-                "SeedController.DeprecateSeedType",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "seed/type/deprecate");
 
             var (statusCode, result) = await _implementation.DeprecateSeedTypeAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1213,13 +1198,13 @@ public partial class SeedController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SeedTypeResponse>> UndeprecateSeedType([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] UndeprecateSeedTypeRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.seed",
+            "SeedController.UndeprecateSeedType",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "seed/type/undeprecate");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.seed",
-                "SeedController.UndeprecateSeedType",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "seed/type/undeprecate");
 
             var (statusCode, result) = await _implementation.UndeprecateSeedTypeAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1261,13 +1246,13 @@ public partial class SeedController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> DeleteSeedType([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] DeleteSeedTypeRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.seed",
+            "SeedController.DeleteSeedType",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "seed/type/delete");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.seed",
-                "SeedController.DeleteSeedType",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "seed/type/delete");
 
             var statusCode = await _implementation.DeleteSeedTypeAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode);
@@ -1309,13 +1294,13 @@ public partial class SeedController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<BondResponse>> InitiateBond([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] InitiateBondRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.seed",
+            "SeedController.InitiateBond",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "seed/bond/initiate");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.seed",
-                "SeedController.InitiateBond",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "seed/bond/initiate");
 
             var (statusCode, result) = await _implementation.InitiateBondAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1357,13 +1342,13 @@ public partial class SeedController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<BondResponse>> ConfirmBond([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] ConfirmBondRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.seed",
+            "SeedController.ConfirmBond",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "seed/bond/confirm");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.seed",
-                "SeedController.ConfirmBond",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "seed/bond/confirm");
 
             var (statusCode, result) = await _implementation.ConfirmBondAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1405,13 +1390,13 @@ public partial class SeedController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<BondResponse>> GetBond([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] GetBondRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.seed",
+            "SeedController.GetBond",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "seed/bond/get");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.seed",
-                "SeedController.GetBond",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "seed/bond/get");
 
             var (statusCode, result) = await _implementation.GetBondAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1453,13 +1438,13 @@ public partial class SeedController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<BondResponse>> GetBondForSeed([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] GetBondForSeedRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.seed",
+            "SeedController.GetBondForSeed",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "seed/bond/get-for-seed");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.seed",
-                "SeedController.GetBondForSeed",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "seed/bond/get-for-seed");
 
             var (statusCode, result) = await _implementation.GetBondForSeedAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1501,13 +1486,13 @@ public partial class SeedController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<BondPartnersResponse>> GetBondPartners([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] GetBondPartnersRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.seed",
+            "SeedController.GetBondPartners",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "seed/bond/get-partners");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.seed",
-                "SeedController.GetBondPartners",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "seed/bond/get-partners");
 
             var (statusCode, result) = await _implementation.GetBondPartnersAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);

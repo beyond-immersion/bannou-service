@@ -377,6 +377,9 @@ This document lists all configuration options defined in Bannou's configuration 
 |---------------------|------|---------|-------------|
 | `CONNECT_BUFFER_SIZE` | int | `65536` | Size of message buffers in bytes |
 | `CONNECT_COMPANION_ROOM_MODE` | string | `Disabled` | How Connect manages companion chat rooms (Disabled, AutoJoin... |
+| `CONNECT_COMPRESSION_ENABLED` | bool | `false` | Enable Brotli compression for outbound WebSocket payloads ab... |
+| `CONNECT_COMPRESSION_QUALITY` | int | `1` | Brotli compression quality level (0=no compression, 1=fastes... |
+| `CONNECT_COMPRESSION_THRESHOLD_BYTES` | int | `1024` | Minimum payload size in bytes before compression is applied ... |
 | `CONNECT_CONNECTION_CLEANUP_INTERVAL_SECONDS` | int | `30` | Interval in seconds between connection cleanup runs |
 | `CONNECT_CONNECTION_MODE` | string | `external` | Connection mode: external (default, no broadcast), relayed (... |
 | `CONNECT_CONNECTION_SHUTDOWN_TIMEOUT_SECONDS` | int | `5` | Timeout in seconds when waiting for connection closure durin... |
@@ -1174,9 +1177,9 @@ Applied when... |
 
 ## Configuration Summary
 
-- **Total properties**: 887
+- **Total properties**: 890
 - **Required (no default)**: 52
-- **Optional (has default)**: 835
+- **Optional (has default)**: 838
 
 ## Environment Variable Naming Convention
 

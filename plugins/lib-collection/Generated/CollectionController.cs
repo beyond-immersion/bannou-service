@@ -22,21 +22,6 @@
 
 #nullable enable
 
-#pragma warning disable 108 // Disable "CS0108 '{derivedDto}.ToJson()' hides inherited member '{dtoBase}.ToJson()'. Use the new keyword if hiding was intended."
-#pragma warning disable 114 // Disable "CS0114 '{derivedDto}.RaisePropertyChanged(String)' hides inherited member 'dtoBase.RaisePropertyChanged(String)'. To make the current member override that implementation, add the override keyword. Otherwise add the new keyword."
-#pragma warning disable 472 // Disable "CS0472 The result of the expression is always 'false' since a value of type 'Int32' is never equal to 'null' of type 'Int32?'
-#pragma warning disable 612 // Disable "CS0612 '...' is obsolete"
-#pragma warning disable 649 // Disable "CS0649 Field is never assigned to, and will always have its default value null"
-#pragma warning disable 1573 // Disable "CS1573 Parameter '...' has no matching param tag in the XML comment for ...
-#pragma warning disable 1591 // Disable "CS1591 Missing XML comment for publicly visible type or member ..."
-#pragma warning disable 8073 // Disable "CS8073 The result of the expression is always 'false' since a value of type 'T' is never equal to 'null' of type 'T?'"
-#pragma warning disable 3016 // Disable "CS3016 Arrays as attribute arguments is not CLS-compliant"
-#pragma warning disable 8600 // Disable "CS8600 Converting null literal or possible null value to non-nullable type"
-#pragma warning disable 8602 // Disable "CS8602 Dereference of a possibly null reference"
-#pragma warning disable 8603 // Disable "CS8603 Possible null reference return"
-#pragma warning disable 8604 // Disable "CS8604 Possible null reference argument for parameter"
-#pragma warning disable 8625 // Disable "CS8625 Cannot convert null literal to non-nullable reference type"
-#pragma warning disable 8765 // Disable "CS8765 Nullability of type of parameter doesn't match overridden member (possibly because of nullability attributes)."
 
 namespace BeyondImmersion.BannouService.Collection;
 
@@ -362,13 +347,13 @@ public partial class CollectionController : Microsoft.AspNetCore.Mvc.ControllerB
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<EntryTemplateResponse>> CreateEntryTemplate([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] CreateEntryTemplateRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.collection",
+            "CollectionController.CreateEntryTemplate",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "collection/entry-template/create");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.collection",
-                "CollectionController.CreateEntryTemplate",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "collection/entry-template/create");
 
             var (statusCode, result) = await _implementation.CreateEntryTemplateAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -410,13 +395,13 @@ public partial class CollectionController : Microsoft.AspNetCore.Mvc.ControllerB
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<EntryTemplateResponse>> GetEntryTemplate([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] GetEntryTemplateRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.collection",
+            "CollectionController.GetEntryTemplate",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "collection/entry-template/get");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.collection",
-                "CollectionController.GetEntryTemplate",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "collection/entry-template/get");
 
             var (statusCode, result) = await _implementation.GetEntryTemplateAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -458,13 +443,13 @@ public partial class CollectionController : Microsoft.AspNetCore.Mvc.ControllerB
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ListEntryTemplatesResponse>> ListEntryTemplates([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] ListEntryTemplatesRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.collection",
+            "CollectionController.ListEntryTemplates",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "collection/entry-template/list");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.collection",
-                "CollectionController.ListEntryTemplates",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "collection/entry-template/list");
 
             var (statusCode, result) = await _implementation.ListEntryTemplatesAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -506,13 +491,13 @@ public partial class CollectionController : Microsoft.AspNetCore.Mvc.ControllerB
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<EntryTemplateResponse>> UpdateEntryTemplate([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] UpdateEntryTemplateRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.collection",
+            "CollectionController.UpdateEntryTemplate",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "collection/entry-template/update");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.collection",
-                "CollectionController.UpdateEntryTemplate",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "collection/entry-template/update");
 
             var (statusCode, result) = await _implementation.UpdateEntryTemplateAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -554,13 +539,13 @@ public partial class CollectionController : Microsoft.AspNetCore.Mvc.ControllerB
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<EntryTemplateResponse>> DeleteEntryTemplate([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] DeleteEntryTemplateRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.collection",
+            "CollectionController.DeleteEntryTemplate",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "collection/entry-template/delete");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.collection",
-                "CollectionController.DeleteEntryTemplate",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "collection/entry-template/delete");
 
             var (statusCode, result) = await _implementation.DeleteEntryTemplateAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -602,13 +587,13 @@ public partial class CollectionController : Microsoft.AspNetCore.Mvc.ControllerB
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SeedEntryTemplatesResponse>> SeedEntryTemplates([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] SeedEntryTemplatesRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.collection",
+            "CollectionController.SeedEntryTemplates",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "collection/entry-template/seed");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.collection",
-                "CollectionController.SeedEntryTemplates",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "collection/entry-template/seed");
 
             var (statusCode, result) = await _implementation.SeedEntryTemplatesAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -652,13 +637,13 @@ public partial class CollectionController : Microsoft.AspNetCore.Mvc.ControllerB
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CollectionResponse>> CreateCollection([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] CreateCollectionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.collection",
+            "CollectionController.CreateCollection",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "collection/create");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.collection",
-                "CollectionController.CreateCollection",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "collection/create");
 
             var (statusCode, result) = await _implementation.CreateCollectionAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -700,13 +685,13 @@ public partial class CollectionController : Microsoft.AspNetCore.Mvc.ControllerB
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CollectionResponse>> GetCollection([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] GetCollectionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.collection",
+            "CollectionController.GetCollection",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "collection/get");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.collection",
-                "CollectionController.GetCollection",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "collection/get");
 
             var (statusCode, result) = await _implementation.GetCollectionAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -748,13 +733,13 @@ public partial class CollectionController : Microsoft.AspNetCore.Mvc.ControllerB
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ListCollectionsResponse>> ListCollections([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] ListCollectionsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.collection",
+            "CollectionController.ListCollections",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "collection/list");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.collection",
-                "CollectionController.ListCollections",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "collection/list");
 
             var (statusCode, result) = await _implementation.ListCollectionsAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -796,13 +781,13 @@ public partial class CollectionController : Microsoft.AspNetCore.Mvc.ControllerB
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CollectionResponse>> DeleteCollection([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] DeleteCollectionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.collection",
+            "CollectionController.DeleteCollection",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "collection/delete");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.collection",
-                "CollectionController.DeleteCollection",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "collection/delete");
 
             var (statusCode, result) = await _implementation.DeleteCollectionAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -847,13 +832,13 @@ public partial class CollectionController : Microsoft.AspNetCore.Mvc.ControllerB
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<GrantEntryResponse>> GrantEntry([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] GrantEntryRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.collection",
+            "CollectionController.GrantEntry",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "collection/grant");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.collection",
-                "CollectionController.GrantEntry",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "collection/grant");
 
             var (statusCode, result) = await _implementation.GrantEntryAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -895,13 +880,13 @@ public partial class CollectionController : Microsoft.AspNetCore.Mvc.ControllerB
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<HasEntryResponse>> HasEntry([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] HasEntryRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.collection",
+            "CollectionController.HasEntry",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "collection/has");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.collection",
-                "CollectionController.HasEntry",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "collection/has");
 
             var (statusCode, result) = await _implementation.HasEntryAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -943,13 +928,13 @@ public partial class CollectionController : Microsoft.AspNetCore.Mvc.ControllerB
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<QueryEntriesResponse>> QueryEntries([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] QueryEntriesRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.collection",
+            "CollectionController.QueryEntries",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "collection/query");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.collection",
-                "CollectionController.QueryEntries",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "collection/query");
 
             var (statusCode, result) = await _implementation.QueryEntriesAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -991,13 +976,13 @@ public partial class CollectionController : Microsoft.AspNetCore.Mvc.ControllerB
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<UnlockedEntryResponse>> UpdateEntryMetadata([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] UpdateEntryMetadataRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.collection",
+            "CollectionController.UpdateEntryMetadata",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "collection/update-metadata");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.collection",
-                "CollectionController.UpdateEntryMetadata",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "collection/update-metadata");
 
             var (statusCode, result) = await _implementation.UpdateEntryMetadataAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1039,13 +1024,13 @@ public partial class CollectionController : Microsoft.AspNetCore.Mvc.ControllerB
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CompletionStatsResponse>> GetCompletionStats([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] GetCompletionStatsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.collection",
+            "CollectionController.GetCompletionStats",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "collection/stats");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.collection",
-                "CollectionController.GetCompletionStats",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "collection/stats");
 
             var (statusCode, result) = await _implementation.GetCompletionStatsAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1089,13 +1074,13 @@ public partial class CollectionController : Microsoft.AspNetCore.Mvc.ControllerB
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ContentSelectionResponse>> SelectContentForArea([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] SelectContentForAreaRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.collection",
+            "CollectionController.SelectContentForArea",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "collection/content/select-for-area");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.collection",
-                "CollectionController.SelectContentForArea",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "collection/content/select-for-area");
 
             var (statusCode, result) = await _implementation.SelectContentForAreaAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1137,13 +1122,13 @@ public partial class CollectionController : Microsoft.AspNetCore.Mvc.ControllerB
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<AreaContentConfigResponse>> SetAreaContentConfig([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] SetAreaContentConfigRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.collection",
+            "CollectionController.SetAreaContentConfig",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "collection/content/area-config/set");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.collection",
-                "CollectionController.SetAreaContentConfig",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "collection/content/area-config/set");
 
             var (statusCode, result) = await _implementation.SetAreaContentConfigAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1185,13 +1170,13 @@ public partial class CollectionController : Microsoft.AspNetCore.Mvc.ControllerB
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<AreaContentConfigResponse>> GetAreaContentConfig([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] GetAreaContentConfigRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.collection",
+            "CollectionController.GetAreaContentConfig",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "collection/content/area-config/get");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.collection",
-                "CollectionController.GetAreaContentConfig",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "collection/content/area-config/get");
 
             var (statusCode, result) = await _implementation.GetAreaContentConfigAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1233,13 +1218,13 @@ public partial class CollectionController : Microsoft.AspNetCore.Mvc.ControllerB
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ListAreaContentConfigsResponse>> ListAreaContentConfigs([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] ListAreaContentConfigsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.collection",
+            "CollectionController.ListAreaContentConfigs",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "collection/content/area-config/list");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.collection",
-                "CollectionController.ListAreaContentConfigs",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "collection/content/area-config/list");
 
             var (statusCode, result) = await _implementation.ListAreaContentConfigsAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1283,13 +1268,13 @@ public partial class CollectionController : Microsoft.AspNetCore.Mvc.ControllerB
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<AdvanceDiscoveryResponse>> AdvanceDiscovery([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] AdvanceDiscoveryRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.collection",
+            "CollectionController.AdvanceDiscovery",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "collection/discovery/advance");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.collection",
-                "CollectionController.AdvanceDiscovery",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "collection/discovery/advance");
 
             var (statusCode, result) = await _implementation.AdvanceDiscoveryAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);

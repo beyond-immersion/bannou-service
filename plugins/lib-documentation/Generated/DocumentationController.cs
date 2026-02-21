@@ -22,21 +22,6 @@
 
 #nullable enable
 
-#pragma warning disable 108 // Disable "CS0108 '{derivedDto}.ToJson()' hides inherited member '{dtoBase}.ToJson()'. Use the new keyword if hiding was intended."
-#pragma warning disable 114 // Disable "CS0114 '{derivedDto}.RaisePropertyChanged(String)' hides inherited member 'dtoBase.RaisePropertyChanged(String)'. To make the current member override that implementation, add the override keyword. Otherwise add the new keyword."
-#pragma warning disable 472 // Disable "CS0472 The result of the expression is always 'false' since a value of type 'Int32' is never equal to 'null' of type 'Int32?'
-#pragma warning disable 612 // Disable "CS0612 '...' is obsolete"
-#pragma warning disable 649 // Disable "CS0649 Field is never assigned to, and will always have its default value null"
-#pragma warning disable 1573 // Disable "CS1573 Parameter '...' has no matching param tag in the XML comment for ...
-#pragma warning disable 1591 // Disable "CS1591 Missing XML comment for publicly visible type or member ..."
-#pragma warning disable 8073 // Disable "CS8073 The result of the expression is always 'false' since a value of type 'T' is never equal to 'null' of type 'T?'"
-#pragma warning disable 3016 // Disable "CS3016 Arrays as attribute arguments is not CLS-compliant"
-#pragma warning disable 8600 // Disable "CS8600 Converting null literal or possible null value to non-nullable type"
-#pragma warning disable 8602 // Disable "CS8602 Dereference of a possibly null reference"
-#pragma warning disable 8603 // Disable "CS8603 Possible null reference return"
-#pragma warning disable 8604 // Disable "CS8604 Possible null reference argument for parameter"
-#pragma warning disable 8625 // Disable "CS8625 Cannot convert null literal to non-nullable reference type"
-#pragma warning disable 8765 // Disable "CS8765 Nullability of type of parameter doesn't match overridden member (possibly because of nullability attributes)."
 
 namespace BeyondImmersion.BannouService.Documentation;
 
@@ -465,13 +450,13 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<QueryDocumentationResponse>> QueryDocumentation([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] QueryDocumentationRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.documentation",
+            "DocumentationController.QueryDocumentation",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "documentation/query");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.documentation",
-                "DocumentationController.QueryDocumentation",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "documentation/query");
 
             var (statusCode, result) = await _implementation.QueryDocumentationAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -514,13 +499,13 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<GetDocumentResponse>> GetDocument([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] GetDocumentRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.documentation",
+            "DocumentationController.GetDocument",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "documentation/get");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.documentation",
-                "DocumentationController.GetDocument",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "documentation/get");
 
             var (statusCode, result) = await _implementation.GetDocumentAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -563,13 +548,13 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SearchDocumentationResponse>> SearchDocumentation([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] SearchDocumentationRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.documentation",
+            "DocumentationController.SearchDocumentation",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "documentation/search");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.documentation",
-                "DocumentationController.SearchDocumentation",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "documentation/search");
 
             var (statusCode, result) = await _implementation.SearchDocumentationAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -612,13 +597,13 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ListDocumentsResponse>> ListDocuments([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] ListDocumentsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.documentation",
+            "DocumentationController.ListDocuments",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "documentation/list");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.documentation",
-                "DocumentationController.ListDocuments",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "documentation/list");
 
             var (statusCode, result) = await _implementation.ListDocumentsAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -661,13 +646,13 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SuggestRelatedResponse>> SuggestRelatedTopics([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] SuggestRelatedRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.documentation",
+            "DocumentationController.SuggestRelatedTopics",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "documentation/suggest");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.documentation",
-                "DocumentationController.SuggestRelatedTopics",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "documentation/suggest");
 
             var (statusCode, result) = await _implementation.SuggestRelatedTopicsAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -706,13 +691,13 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CreateDocumentResponse>> CreateDocument([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] CreateDocumentRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.documentation",
+            "DocumentationController.CreateDocument",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "documentation/create");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.documentation",
-                "DocumentationController.CreateDocument",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "documentation/create");
 
             var (statusCode, result) = await _implementation.CreateDocumentAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -751,13 +736,13 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<UpdateDocumentResponse>> UpdateDocument([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] UpdateDocumentRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.documentation",
+            "DocumentationController.UpdateDocument",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "documentation/update");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.documentation",
-                "DocumentationController.UpdateDocument",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "documentation/update");
 
             var (statusCode, result) = await _implementation.UpdateDocumentAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -800,13 +785,13 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<DeleteDocumentResponse>> DeleteDocument([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] DeleteDocumentRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.documentation",
+            "DocumentationController.DeleteDocument",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "documentation/delete");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.documentation",
-                "DocumentationController.DeleteDocument",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "documentation/delete");
 
             var (statusCode, result) = await _implementation.DeleteDocumentAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -849,13 +834,13 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RecoverDocumentResponse>> RecoverDocument([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] RecoverDocumentRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.documentation",
+            "DocumentationController.RecoverDocument",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "documentation/recover");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.documentation",
-                "DocumentationController.RecoverDocument",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "documentation/recover");
 
             var (statusCode, result) = await _implementation.RecoverDocumentAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -898,13 +883,13 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<BulkUpdateResponse>> BulkUpdateDocuments([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] BulkUpdateRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.documentation",
+            "DocumentationController.BulkUpdateDocuments",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "documentation/bulk-update");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.documentation",
-                "DocumentationController.BulkUpdateDocuments",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "documentation/bulk-update");
 
             var (statusCode, result) = await _implementation.BulkUpdateDocumentsAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -947,13 +932,13 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<BulkDeleteResponse>> BulkDeleteDocuments([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] BulkDeleteRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.documentation",
+            "DocumentationController.BulkDeleteDocuments",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "documentation/bulk-delete");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.documentation",
-                "DocumentationController.BulkDeleteDocuments",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "documentation/bulk-delete");
 
             var (statusCode, result) = await _implementation.BulkDeleteDocumentsAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -996,13 +981,13 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ImportDocumentationResponse>> ImportDocumentation([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] ImportDocumentationRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.documentation",
+            "DocumentationController.ImportDocumentation",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "documentation/import");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.documentation",
-                "DocumentationController.ImportDocumentation",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "documentation/import");
 
             var (statusCode, result) = await _implementation.ImportDocumentationAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1045,13 +1030,13 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ListTrashcanResponse>> ListTrashcan([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] ListTrashcanRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.documentation",
+            "DocumentationController.ListTrashcan",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "documentation/trashcan");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.documentation",
-                "DocumentationController.ListTrashcan",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "documentation/trashcan");
 
             var (statusCode, result) = await _implementation.ListTrashcanAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1094,13 +1079,13 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<PurgeTrashcanResponse>> PurgeTrashcan([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] PurgeTrashcanRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.documentation",
+            "DocumentationController.PurgeTrashcan",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "documentation/purge");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.documentation",
-                "DocumentationController.PurgeTrashcan",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "documentation/purge");
 
             var (statusCode, result) = await _implementation.PurgeTrashcanAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1143,13 +1128,13 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<NamespaceStatsResponse>> GetNamespaceStats([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] GetNamespaceStatsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.documentation",
+            "DocumentationController.GetNamespaceStats",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "documentation/stats");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.documentation",
-                "DocumentationController.GetNamespaceStats",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "documentation/stats");
 
             var (statusCode, result) = await _implementation.GetNamespaceStatsAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1193,13 +1178,13 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<BindRepositoryResponse>> BindRepository([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] BindRepositoryRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.documentation",
+            "DocumentationController.BindRepository",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "documentation/repo/bind");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.documentation",
-                "DocumentationController.BindRepository",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "documentation/repo/bind");
 
             var (statusCode, result) = await _implementation.BindRepositoryAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1242,13 +1227,13 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<UnbindRepositoryResponse>> UnbindRepository([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] UnbindRepositoryRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.documentation",
+            "DocumentationController.UnbindRepository",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "documentation/repo/unbind");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.documentation",
-                "DocumentationController.UnbindRepository",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "documentation/repo/unbind");
 
             var (statusCode, result) = await _implementation.UnbindRepositoryAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1291,13 +1276,13 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SyncRepositoryResponse>> SyncRepository([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] SyncRepositoryRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.documentation",
+            "DocumentationController.SyncRepository",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "documentation/repo/sync");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.documentation",
-                "DocumentationController.SyncRepository",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "documentation/repo/sync");
 
             var (statusCode, result) = await _implementation.SyncRepositoryAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1339,13 +1324,13 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RepositoryStatusResponse>> GetRepositoryStatus([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] RepositoryStatusRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.documentation",
+            "DocumentationController.GetRepositoryStatus",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "documentation/repo/status");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.documentation",
-                "DocumentationController.GetRepositoryStatus",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "documentation/repo/status");
 
             var (statusCode, result) = await _implementation.GetRepositoryStatusAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1387,13 +1372,13 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ListRepositoryBindingsResponse>> ListRepositoryBindings([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] ListRepositoryBindingsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.documentation",
+            "DocumentationController.ListRepositoryBindings",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "documentation/repo/list");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.documentation",
-                "DocumentationController.ListRepositoryBindings",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "documentation/repo/list");
 
             var (statusCode, result) = await _implementation.ListRepositoryBindingsAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1435,13 +1420,13 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<UpdateRepositoryBindingResponse>> UpdateRepositoryBinding([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] UpdateRepositoryBindingRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.documentation",
+            "DocumentationController.UpdateRepositoryBinding",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "documentation/repo/update");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.documentation",
-                "DocumentationController.UpdateRepositoryBinding",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "documentation/repo/update");
 
             var (statusCode, result) = await _implementation.UpdateRepositoryBindingAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1484,13 +1469,13 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CreateArchiveResponse>> CreateDocumentationArchive([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] CreateArchiveRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.documentation",
+            "DocumentationController.CreateDocumentationArchive",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "documentation/repo/archive/create");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.documentation",
-                "DocumentationController.CreateDocumentationArchive",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "documentation/repo/archive/create");
 
             var (statusCode, result) = await _implementation.CreateDocumentationArchiveAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1532,13 +1517,13 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ListArchivesResponse>> ListDocumentationArchives([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] ListArchivesRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.documentation",
+            "DocumentationController.ListDocumentationArchives",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "documentation/repo/archive/list");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.documentation",
-                "DocumentationController.ListDocumentationArchives",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "documentation/repo/archive/list");
 
             var (statusCode, result) = await _implementation.ListDocumentationArchivesAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1581,13 +1566,13 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RestoreArchiveResponse>> RestoreDocumentationArchive([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] RestoreArchiveRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.documentation",
+            "DocumentationController.RestoreDocumentationArchive",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "documentation/repo/archive/restore");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.documentation",
-                "DocumentationController.RestoreDocumentationArchive",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "documentation/repo/archive/restore");
 
             var (statusCode, result) = await _implementation.RestoreDocumentationArchiveAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1629,13 +1614,13 @@ public partial class DocumentationController : Microsoft.AspNetCore.Mvc.Controll
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<DeleteArchiveResponse>> DeleteDocumentationArchive([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] DeleteArchiveRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.documentation",
+            "DocumentationController.DeleteDocumentationArchive",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "documentation/repo/archive/delete");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.documentation",
-                "DocumentationController.DeleteDocumentationArchive",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "documentation/repo/archive/delete");
 
             var (statusCode, result) = await _implementation.DeleteDocumentationArchiveAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);

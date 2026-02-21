@@ -22,21 +22,6 @@
 
 #nullable enable
 
-#pragma warning disable 108 // Disable "CS0108 '{derivedDto}.ToJson()' hides inherited member '{dtoBase}.ToJson()'. Use the new keyword if hiding was intended."
-#pragma warning disable 114 // Disable "CS0114 '{derivedDto}.RaisePropertyChanged(String)' hides inherited member 'dtoBase.RaisePropertyChanged(String)'. To make the current member override that implementation, add the override keyword. Otherwise add the new keyword."
-#pragma warning disable 472 // Disable "CS0472 The result of the expression is always 'false' since a value of type 'Int32' is never equal to 'null' of type 'Int32?'
-#pragma warning disable 612 // Disable "CS0612 '...' is obsolete"
-#pragma warning disable 649 // Disable "CS0649 Field is never assigned to, and will always have its default value null"
-#pragma warning disable 1573 // Disable "CS1573 Parameter '...' has no matching param tag in the XML comment for ...
-#pragma warning disable 1591 // Disable "CS1591 Missing XML comment for publicly visible type or member ..."
-#pragma warning disable 8073 // Disable "CS8073 The result of the expression is always 'false' since a value of type 'T' is never equal to 'null' of type 'T?'"
-#pragma warning disable 3016 // Disable "CS3016 Arrays as attribute arguments is not CLS-compliant"
-#pragma warning disable 8600 // Disable "CS8600 Converting null literal or possible null value to non-nullable type"
-#pragma warning disable 8602 // Disable "CS8602 Dereference of a possibly null reference"
-#pragma warning disable 8603 // Disable "CS8603 Possible null reference return"
-#pragma warning disable 8604 // Disable "CS8604 Possible null reference argument for parameter"
-#pragma warning disable 8625 // Disable "CS8625 Cannot convert null literal to non-nullable reference type"
-#pragma warning disable 8765 // Disable "CS8765 Nullability of type of parameter doesn't match overridden member (possibly because of nullability attributes)."
 
 namespace BeyondImmersion.BannouService.Status;
 
@@ -328,13 +313,13 @@ public partial class StatusController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<StatusTemplateResponse>> CreateStatusTemplate([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] CreateStatusTemplateRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.status",
+            "StatusController.CreateStatusTemplate",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "status/template/create");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.status",
-                "StatusController.CreateStatusTemplate",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "status/template/create");
 
             var (statusCode, result) = await _implementation.CreateStatusTemplateAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -376,13 +361,13 @@ public partial class StatusController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<StatusTemplateResponse>> GetStatusTemplate([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] GetStatusTemplateRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.status",
+            "StatusController.GetStatusTemplate",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "status/template/get");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.status",
-                "StatusController.GetStatusTemplate",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "status/template/get");
 
             var (statusCode, result) = await _implementation.GetStatusTemplateAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -424,13 +409,13 @@ public partial class StatusController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<StatusTemplateResponse>> GetStatusTemplateByCode([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] GetStatusTemplateByCodeRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.status",
+            "StatusController.GetStatusTemplateByCode",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "status/template/get-by-code");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.status",
-                "StatusController.GetStatusTemplateByCode",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "status/template/get-by-code");
 
             var (statusCode, result) = await _implementation.GetStatusTemplateByCodeAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -472,13 +457,13 @@ public partial class StatusController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ListStatusTemplatesResponse>> ListStatusTemplates([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] ListStatusTemplatesRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.status",
+            "StatusController.ListStatusTemplates",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "status/template/list");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.status",
-                "StatusController.ListStatusTemplates",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "status/template/list");
 
             var (statusCode, result) = await _implementation.ListStatusTemplatesAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -520,13 +505,13 @@ public partial class StatusController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<StatusTemplateResponse>> UpdateStatusTemplate([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] UpdateStatusTemplateRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.status",
+            "StatusController.UpdateStatusTemplate",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "status/template/update");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.status",
-                "StatusController.UpdateStatusTemplate",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "status/template/update");
 
             var (statusCode, result) = await _implementation.UpdateStatusTemplateAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -568,13 +553,13 @@ public partial class StatusController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SeedStatusTemplatesResponse>> SeedStatusTemplates([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] SeedStatusTemplatesRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.status",
+            "StatusController.SeedStatusTemplates",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "status/template/seed");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.status",
-                "StatusController.SeedStatusTemplates",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "status/template/seed");
 
             var (statusCode, result) = await _implementation.SeedStatusTemplatesAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -626,13 +611,13 @@ public partial class StatusController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<GrantStatusResponse>> GrantStatus([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] GrantStatusRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.status",
+            "StatusController.GrantStatus",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "status/grant");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.status",
-                "StatusController.GrantStatus",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "status/grant");
 
             var (statusCode, result) = await _implementation.GrantStatusAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -676,13 +661,13 @@ public partial class StatusController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<StatusInstanceResponse>> RemoveStatus([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] RemoveStatusRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.status",
+            "StatusController.RemoveStatus",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "status/remove");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.status",
-                "StatusController.RemoveStatus",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "status/remove");
 
             var (statusCode, result) = await _implementation.RemoveStatusAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -724,13 +709,13 @@ public partial class StatusController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RemoveStatusesResponse>> RemoveBySource([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] RemoveBySourceRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.status",
+            "StatusController.RemoveBySource",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "status/remove-by-source");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.status",
-                "StatusController.RemoveBySource",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "status/remove-by-source");
 
             var (statusCode, result) = await _implementation.RemoveBySourceAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -772,13 +757,13 @@ public partial class StatusController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RemoveStatusesResponse>> RemoveByCategory([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] RemoveByCategoryRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.status",
+            "StatusController.RemoveByCategory",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "status/remove-by-category");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.status",
-                "StatusController.RemoveByCategory",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "status/remove-by-category");
 
             var (statusCode, result) = await _implementation.RemoveByCategoryAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -820,13 +805,13 @@ public partial class StatusController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<HasStatusResponse>> HasStatus([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] HasStatusRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.status",
+            "StatusController.HasStatus",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "status/has");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.status",
-                "StatusController.HasStatus",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "status/has");
 
             var (statusCode, result) = await _implementation.HasStatusAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -870,13 +855,13 @@ public partial class StatusController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ListStatusesResponse>> ListStatuses([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] ListStatusesRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.status",
+            "StatusController.ListStatuses",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "status/list");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.status",
-                "StatusController.ListStatuses",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "status/list");
 
             var (statusCode, result) = await _implementation.ListStatusesAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -918,13 +903,13 @@ public partial class StatusController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<StatusInstanceResponse>> GetStatus([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] GetStatusRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.status",
+            "StatusController.GetStatus",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "status/get");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.status",
-                "StatusController.GetStatus",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "status/get");
 
             var (statusCode, result) = await _implementation.GetStatusAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -968,13 +953,13 @@ public partial class StatusController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<GetEffectsResponse>> GetEffects([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] GetEffectsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.status",
+            "StatusController.GetEffects",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "status/effects/get");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.status",
-                "StatusController.GetEffects",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "status/effects/get");
 
             var (statusCode, result) = await _implementation.GetEffectsAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1018,13 +1003,13 @@ public partial class StatusController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SeedEffectsResponse>> GetSeedEffects([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] GetSeedEffectsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.status",
+            "StatusController.GetSeedEffects",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "status/effects/get-seed");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.status",
-                "StatusController.GetSeedEffects",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "status/effects/get-seed");
 
             var (statusCode, result) = await _implementation.GetSeedEffectsAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1069,13 +1054,13 @@ public partial class StatusController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CleanupResponse>> CleanupByOwner([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] CleanupByOwnerRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.status",
+            "StatusController.CleanupByOwner",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "status/cleanup-by-owner");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.status",
-                "StatusController.CleanupByOwner",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "status/cleanup-by-owner");
 
             var (statusCode, result) = await _implementation.CleanupByOwnerAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);

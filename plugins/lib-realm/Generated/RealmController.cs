@@ -22,21 +22,6 @@
 
 #nullable enable
 
-#pragma warning disable 108 // Disable "CS0108 '{derivedDto}.ToJson()' hides inherited member '{dtoBase}.ToJson()'. Use the new keyword if hiding was intended."
-#pragma warning disable 114 // Disable "CS0114 '{derivedDto}.RaisePropertyChanged(String)' hides inherited member 'dtoBase.RaisePropertyChanged(String)'. To make the current member override that implementation, add the override keyword. Otherwise add the new keyword."
-#pragma warning disable 472 // Disable "CS0472 The result of the expression is always 'false' since a value of type 'Int32' is never equal to 'null' of type 'Int32?'
-#pragma warning disable 612 // Disable "CS0612 '...' is obsolete"
-#pragma warning disable 649 // Disable "CS0649 Field is never assigned to, and will always have its default value null"
-#pragma warning disable 1573 // Disable "CS1573 Parameter '...' has no matching param tag in the XML comment for ...
-#pragma warning disable 1591 // Disable "CS1591 Missing XML comment for publicly visible type or member ..."
-#pragma warning disable 8073 // Disable "CS8073 The result of the expression is always 'false' since a value of type 'T' is never equal to 'null' of type 'T?'"
-#pragma warning disable 3016 // Disable "CS3016 Arrays as attribute arguments is not CLS-compliant"
-#pragma warning disable 8600 // Disable "CS8600 Converting null literal or possible null value to non-nullable type"
-#pragma warning disable 8602 // Disable "CS8602 Dereference of a possibly null reference"
-#pragma warning disable 8603 // Disable "CS8603 Possible null reference return"
-#pragma warning disable 8604 // Disable "CS8604 Possible null reference argument for parameter"
-#pragma warning disable 8625 // Disable "CS8625 Cannot convert null literal to non-nullable reference type"
-#pragma warning disable 8765 // Disable "CS8765 Nullability of type of parameter doesn't match overridden member (possibly because of nullability attributes)."
 
 namespace BeyondImmersion.BannouService.Realm;
 
@@ -262,13 +247,13 @@ public partial class RealmController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RealmResponse>> GetRealm([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] GetRealmRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.realm",
+            "RealmController.GetRealm",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "realm/get");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.realm",
-                "RealmController.GetRealm",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "realm/get");
 
             var (statusCode, result) = await _implementation.GetRealmAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -310,13 +295,13 @@ public partial class RealmController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RealmResponse>> GetRealmByCode([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] GetRealmByCodeRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.realm",
+            "RealmController.GetRealmByCode",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "realm/get-by-code");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.realm",
-                "RealmController.GetRealmByCode",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "realm/get-by-code");
 
             var (statusCode, result) = await _implementation.GetRealmByCodeAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -358,13 +343,13 @@ public partial class RealmController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RealmListResponse>> ListRealms([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] ListRealmsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.realm",
+            "RealmController.ListRealms",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "realm/list");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.realm",
-                "RealmController.ListRealms",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "realm/list");
 
             var (statusCode, result) = await _implementation.ListRealmsAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -403,13 +388,13 @@ public partial class RealmController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RealmResponse>> CreateRealm([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] CreateRealmRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.realm",
+            "RealmController.CreateRealm",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "realm/create");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.realm",
-                "RealmController.CreateRealm",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "realm/create");
 
             var (statusCode, result) = await _implementation.CreateRealmAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -448,13 +433,13 @@ public partial class RealmController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RealmResponse>> UpdateRealm([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] UpdateRealmRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.realm",
+            "RealmController.UpdateRealm",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "realm/update");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.realm",
-                "RealmController.UpdateRealm",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "realm/update");
 
             var (statusCode, result) = await _implementation.UpdateRealmAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -499,13 +484,13 @@ public partial class RealmController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> DeleteRealm([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] DeleteRealmRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.realm",
+            "RealmController.DeleteRealm",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "realm/delete");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.realm",
-                "RealmController.DeleteRealm",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "realm/delete");
 
             var statusCode = await _implementation.DeleteRealmAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode);
@@ -551,13 +536,13 @@ public partial class RealmController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RealmResponse>> DeprecateRealm([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] DeprecateRealmRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.realm",
+            "RealmController.DeprecateRealm",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "realm/deprecate");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.realm",
-                "RealmController.DeprecateRealm",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "realm/deprecate");
 
             var (statusCode, result) = await _implementation.DeprecateRealmAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -600,13 +585,13 @@ public partial class RealmController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RealmResponse>> UndeprecateRealm([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] UndeprecateRealmRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.realm",
+            "RealmController.UndeprecateRealm",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "realm/undeprecate");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.realm",
-                "RealmController.UndeprecateRealm",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "realm/undeprecate");
 
             var (statusCode, result) = await _implementation.UndeprecateRealmAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -656,13 +641,13 @@ public partial class RealmController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<MergeRealmsResponse>> MergeRealms([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] MergeRealmsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.realm",
+            "RealmController.MergeRealms",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "realm/merge");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.realm",
-                "RealmController.MergeRealms",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "realm/merge");
 
             var (statusCode, result) = await _implementation.MergeRealmsAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -705,13 +690,13 @@ public partial class RealmController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RealmExistsResponse>> RealmExists([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] RealmExistsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.realm",
+            "RealmController.RealmExists",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "realm/exists");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.realm",
-                "RealmController.RealmExists",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "realm/exists");
 
             var (statusCode, result) = await _implementation.RealmExistsAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -755,13 +740,13 @@ public partial class RealmController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RealmsExistBatchResponse>> RealmsExistBatch([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] RealmsExistBatchRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.realm",
+            "RealmController.RealmsExistBatch",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "realm/exists-batch");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.realm",
-                "RealmController.RealmsExistBatch",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "realm/exists-batch");
 
             var (statusCode, result) = await _implementation.RealmsExistBatchAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -805,13 +790,13 @@ public partial class RealmController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SeedRealmsResponse>> SeedRealms([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] SeedRealmsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.realm",
+            "RealmController.SeedRealms",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "realm/seed");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.realm",
-                "RealmController.SeedRealms",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "realm/seed");
 
             var (statusCode, result) = await _implementation.SeedRealmsAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);

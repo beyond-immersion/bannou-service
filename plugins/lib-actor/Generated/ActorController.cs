@@ -22,21 +22,6 @@
 
 #nullable enable
 
-#pragma warning disable 108 // Disable "CS0108 '{derivedDto}.ToJson()' hides inherited member '{dtoBase}.ToJson()'. Use the new keyword if hiding was intended."
-#pragma warning disable 114 // Disable "CS0114 '{derivedDto}.RaisePropertyChanged(String)' hides inherited member 'dtoBase.RaisePropertyChanged(String)'. To make the current member override that implementation, add the override keyword. Otherwise add the new keyword."
-#pragma warning disable 472 // Disable "CS0472 The result of the expression is always 'false' since a value of type 'Int32' is never equal to 'null' of type 'Int32?'
-#pragma warning disable 612 // Disable "CS0612 '...' is obsolete"
-#pragma warning disable 649 // Disable "CS0649 Field is never assigned to, and will always have its default value null"
-#pragma warning disable 1573 // Disable "CS1573 Parameter '...' has no matching param tag in the XML comment for ...
-#pragma warning disable 1591 // Disable "CS1591 Missing XML comment for publicly visible type or member ..."
-#pragma warning disable 8073 // Disable "CS8073 The result of the expression is always 'false' since a value of type 'T' is never equal to 'null' of type 'T?'"
-#pragma warning disable 3016 // Disable "CS3016 Arrays as attribute arguments is not CLS-compliant"
-#pragma warning disable 8600 // Disable "CS8600 Converting null literal or possible null value to non-nullable type"
-#pragma warning disable 8602 // Disable "CS8602 Dereference of a possibly null reference"
-#pragma warning disable 8603 // Disable "CS8603 Possible null reference return"
-#pragma warning disable 8604 // Disable "CS8604 Possible null reference argument for parameter"
-#pragma warning disable 8625 // Disable "CS8625 Cannot convert null literal to non-nullable reference type"
-#pragma warning disable 8765 // Disable "CS8765 Nullability of type of parameter doesn't match overridden member (possibly because of nullability attributes)."
 
 namespace BeyondImmersion.BannouService.Actor;
 
@@ -309,13 +294,13 @@ public partial class ActorController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ActorTemplateResponse>> CreateActorTemplate([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] CreateActorTemplateRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.actor",
+            "ActorController.CreateActorTemplate",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "actor/template/create");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.actor",
-                "ActorController.CreateActorTemplate",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "actor/template/create");
 
             var (statusCode, result) = await _implementation.CreateActorTemplateAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -354,13 +339,13 @@ public partial class ActorController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ActorTemplateResponse>> GetActorTemplate([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] GetActorTemplateRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.actor",
+            "ActorController.GetActorTemplate",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "actor/template/get");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.actor",
-                "ActorController.GetActorTemplate",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "actor/template/get");
 
             var (statusCode, result) = await _implementation.GetActorTemplateAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -399,13 +384,13 @@ public partial class ActorController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ListActorTemplatesResponse>> ListActorTemplates([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] ListActorTemplatesRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.actor",
+            "ActorController.ListActorTemplates",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "actor/template/list");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.actor",
-                "ActorController.ListActorTemplates",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "actor/template/list");
 
             var (statusCode, result) = await _implementation.ListActorTemplatesAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -444,13 +429,13 @@ public partial class ActorController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ActorTemplateResponse>> UpdateActorTemplate([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] UpdateActorTemplateRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.actor",
+            "ActorController.UpdateActorTemplate",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "actor/template/update");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.actor",
-                "ActorController.UpdateActorTemplate",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "actor/template/update");
 
             var (statusCode, result) = await _implementation.UpdateActorTemplateAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -489,13 +474,13 @@ public partial class ActorController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<DeleteActorTemplateResponse>> DeleteActorTemplate([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] DeleteActorTemplateRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.actor",
+            "ActorController.DeleteActorTemplate",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "actor/template/delete");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.actor",
-                "ActorController.DeleteActorTemplate",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "actor/template/delete");
 
             var (statusCode, result) = await _implementation.DeleteActorTemplateAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -534,13 +519,13 @@ public partial class ActorController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ActorInstanceResponse>> SpawnActor([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] SpawnActorRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.actor",
+            "ActorController.SpawnActor",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "actor/spawn");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.actor",
-                "ActorController.SpawnActor",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "actor/spawn");
 
             var (statusCode, result) = await _implementation.SpawnActorAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -584,13 +569,13 @@ public partial class ActorController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ActorInstanceResponse>> GetActor([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] GetActorRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.actor",
+            "ActorController.GetActor",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "actor/get");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.actor",
-                "ActorController.GetActor",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "actor/get");
 
             var (statusCode, result) = await _implementation.GetActorAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -629,13 +614,13 @@ public partial class ActorController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<StopActorResponse>> StopActor([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] StopActorRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.actor",
+            "ActorController.StopActor",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "actor/stop");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.actor",
-                "ActorController.StopActor",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "actor/stop");
 
             var (statusCode, result) = await _implementation.StopActorAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -680,13 +665,13 @@ public partial class ActorController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ActorInstanceResponse>> BindActorCharacter([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] BindActorCharacterRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.actor",
+            "ActorController.BindActorCharacter",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "actor/bind-character");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.actor",
-                "ActorController.BindActorCharacter",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "actor/bind-character");
 
             var (statusCode, result) = await _implementation.BindActorCharacterAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -731,13 +716,13 @@ public partial class ActorController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CleanupByCharacterResponse>> CleanupByCharacter([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] CleanupByCharacterRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.actor",
+            "ActorController.CleanupByCharacter",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "actor/cleanup-by-character");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.actor",
-                "ActorController.CleanupByCharacter",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "actor/cleanup-by-character");
 
             var (statusCode, result) = await _implementation.CleanupByCharacterAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -776,13 +761,13 @@ public partial class ActorController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ListActorsResponse>> ListActors([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] ListActorsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.actor",
+            "ActorController.ListActors",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "actor/list");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.actor",
-                "ActorController.ListActors",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "actor/list");
 
             var (statusCode, result) = await _implementation.ListActorsAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -826,13 +811,13 @@ public partial class ActorController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<InjectPerceptionResponse>> InjectPerception([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] InjectPerceptionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.actor",
+            "ActorController.InjectPerception",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "actor/inject-perception");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.actor",
-                "ActorController.InjectPerception",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "actor/inject-perception");
 
             var (statusCode, result) = await _implementation.InjectPerceptionAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -882,13 +867,13 @@ public partial class ActorController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<QueryOptionsResponse>> QueryOptions([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] QueryOptionsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.actor",
+            "ActorController.QueryOptions",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "actor/query-options");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.actor",
-                "ActorController.QueryOptions",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "actor/query-options");
 
             var (statusCode, result) = await _implementation.QueryOptionsAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -932,13 +917,13 @@ public partial class ActorController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> StartEncounter([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] StartEncounterRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.actor",
+            "ActorController.StartEncounter",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "actor/encounter/start");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.actor",
-                "ActorController.StartEncounter",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "actor/encounter/start");
 
             var statusCode = await _implementation.StartEncounterAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode);
@@ -981,13 +966,13 @@ public partial class ActorController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<UpdateEncounterPhaseResponse>> UpdateEncounterPhase([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] UpdateEncounterPhaseRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.actor",
+            "ActorController.UpdateEncounterPhase",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "actor/encounter/update-phase");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.actor",
-                "ActorController.UpdateEncounterPhase",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "actor/encounter/update-phase");
 
             var (statusCode, result) = await _implementation.UpdateEncounterPhaseAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1030,13 +1015,13 @@ public partial class ActorController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<EndEncounterResponse>> EndEncounter([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] EndEncounterRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.actor",
+            "ActorController.EndEncounter",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "actor/encounter/end");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.actor",
-                "ActorController.EndEncounter",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "actor/encounter/end");
 
             var (statusCode, result) = await _implementation.EndEncounterAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1079,13 +1064,13 @@ public partial class ActorController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<GetEncounterResponse>> GetEncounter([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] GetEncounterRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.actor",
+            "ActorController.GetEncounter",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "actor/encounter/get");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.actor",
-                "ActorController.GetEncounter",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "actor/encounter/get");
 
             var (statusCode, result) = await _implementation.GetEncounterAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);

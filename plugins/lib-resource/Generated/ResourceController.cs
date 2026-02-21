@@ -22,21 +22,6 @@
 
 #nullable enable
 
-#pragma warning disable 108 // Disable "CS0108 '{derivedDto}.ToJson()' hides inherited member '{dtoBase}.ToJson()'. Use the new keyword if hiding was intended."
-#pragma warning disable 114 // Disable "CS0114 '{derivedDto}.RaisePropertyChanged(String)' hides inherited member 'dtoBase.RaisePropertyChanged(String)'. To make the current member override that implementation, add the override keyword. Otherwise add the new keyword."
-#pragma warning disable 472 // Disable "CS0472 The result of the expression is always 'false' since a value of type 'Int32' is never equal to 'null' of type 'Int32?'
-#pragma warning disable 612 // Disable "CS0612 '...' is obsolete"
-#pragma warning disable 649 // Disable "CS0649 Field is never assigned to, and will always have its default value null"
-#pragma warning disable 1573 // Disable "CS1573 Parameter '...' has no matching param tag in the XML comment for ...
-#pragma warning disable 1591 // Disable "CS1591 Missing XML comment for publicly visible type or member ..."
-#pragma warning disable 8073 // Disable "CS8073 The result of the expression is always 'false' since a value of type 'T' is never equal to 'null' of type 'T?'"
-#pragma warning disable 3016 // Disable "CS3016 Arrays as attribute arguments is not CLS-compliant"
-#pragma warning disable 8600 // Disable "CS8600 Converting null literal or possible null value to non-nullable type"
-#pragma warning disable 8602 // Disable "CS8602 Dereference of a possibly null reference"
-#pragma warning disable 8603 // Disable "CS8603 Possible null reference return"
-#pragma warning disable 8604 // Disable "CS8604 Possible null reference argument for parameter"
-#pragma warning disable 8625 // Disable "CS8625 Cannot convert null literal to non-nullable reference type"
-#pragma warning disable 8765 // Disable "CS8765 Nullability of type of parameter doesn't match overridden member (possibly because of nullability attributes)."
 
 namespace BeyondImmersion.BannouService.Resource;
 
@@ -378,13 +363,13 @@ public partial class ResourceController : Microsoft.AspNetCore.Mvc.ControllerBas
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RegisterReferenceResponse>> RegisterReference([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] RegisterReferenceRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.resource",
+            "ResourceController.RegisterReference",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "resource/register");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.resource",
-                "ResourceController.RegisterReference",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "resource/register");
 
             var (statusCode, result) = await _implementation.RegisterReferenceAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -427,13 +412,13 @@ public partial class ResourceController : Microsoft.AspNetCore.Mvc.ControllerBas
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<UnregisterReferenceResponse>> UnregisterReference([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] UnregisterReferenceRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.resource",
+            "ResourceController.UnregisterReference",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "resource/unregister");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.resource",
-                "ResourceController.UnregisterReference",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "resource/unregister");
 
             var (statusCode, result) = await _implementation.UnregisterReferenceAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -476,13 +461,13 @@ public partial class ResourceController : Microsoft.AspNetCore.Mvc.ControllerBas
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CheckReferencesResponse>> CheckReferences([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] CheckReferencesRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.resource",
+            "ResourceController.CheckReferences",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "resource/check");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.resource",
-                "ResourceController.CheckReferences",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "resource/check");
 
             var (statusCode, result) = await _implementation.CheckReferencesAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -525,13 +510,13 @@ public partial class ResourceController : Microsoft.AspNetCore.Mvc.ControllerBas
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ListReferencesResponse>> ListReferences([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] ListReferencesRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.resource",
+            "ResourceController.ListReferences",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "resource/list");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.resource",
-                "ResourceController.ListReferences",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "resource/list");
 
             var (statusCode, result) = await _implementation.ListReferencesAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -575,13 +560,13 @@ public partial class ResourceController : Microsoft.AspNetCore.Mvc.ControllerBas
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<DefineCleanupResponse>> DefineCleanupCallback([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] DefineCleanupRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.resource",
+            "ResourceController.DefineCleanupCallback",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "resource/cleanup/define");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.resource",
-                "ResourceController.DefineCleanupCallback",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "resource/cleanup/define");
 
             var (statusCode, result) = await _implementation.DefineCleanupCallbackAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -625,13 +610,13 @@ public partial class ResourceController : Microsoft.AspNetCore.Mvc.ControllerBas
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ExecuteCleanupResponse>> ExecuteCleanup([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] ExecuteCleanupRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.resource",
+            "ResourceController.ExecuteCleanup",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "resource/cleanup/execute");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.resource",
-                "ResourceController.ExecuteCleanup",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "resource/cleanup/execute");
 
             var (statusCode, result) = await _implementation.ExecuteCleanupAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -674,13 +659,13 @@ public partial class ResourceController : Microsoft.AspNetCore.Mvc.ControllerBas
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ListCleanupCallbacksResponse>> ListCleanupCallbacks([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] ListCleanupCallbacksRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.resource",
+            "ResourceController.ListCleanupCallbacks",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "resource/cleanup/list");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.resource",
-                "ResourceController.ListCleanupCallbacks",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "resource/cleanup/list");
 
             var (statusCode, result) = await _implementation.ListCleanupCallbacksAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -725,13 +710,13 @@ public partial class ResourceController : Microsoft.AspNetCore.Mvc.ControllerBas
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RemoveCleanupCallbackResponse>> RemoveCleanupCallback([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] RemoveCleanupCallbackRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.resource",
+            "ResourceController.RemoveCleanupCallback",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "resource/cleanup/remove");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.resource",
-                "ResourceController.RemoveCleanupCallback",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "resource/cleanup/remove");
 
             var (statusCode, result) = await _implementation.RemoveCleanupCallbackAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -778,13 +763,13 @@ public partial class ResourceController : Microsoft.AspNetCore.Mvc.ControllerBas
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<DefineCompressCallbackResponse>> DefineCompressCallback([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] DefineCompressCallbackRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.resource",
+            "ResourceController.DefineCompressCallback",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "resource/compress/define");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.resource",
-                "ResourceController.DefineCompressCallback",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "resource/compress/define");
 
             var (statusCode, result) = await _implementation.DefineCompressCallbackAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -838,13 +823,13 @@ public partial class ResourceController : Microsoft.AspNetCore.Mvc.ControllerBas
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ExecuteCompressResponse>> ExecuteCompress([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] ExecuteCompressRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.resource",
+            "ResourceController.ExecuteCompress",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "resource/compress/execute");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.resource",
-                "ResourceController.ExecuteCompress",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "resource/compress/execute");
 
             var (statusCode, result) = await _implementation.ExecuteCompressAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -890,13 +875,13 @@ public partial class ResourceController : Microsoft.AspNetCore.Mvc.ControllerBas
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ExecuteDecompressResponse>> ExecuteDecompress([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] ExecuteDecompressRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.resource",
+            "ResourceController.ExecuteDecompress",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "resource/decompress/execute");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.resource",
-                "ResourceController.ExecuteDecompress",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "resource/decompress/execute");
 
             var (statusCode, result) = await _implementation.ExecuteDecompressAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -939,13 +924,13 @@ public partial class ResourceController : Microsoft.AspNetCore.Mvc.ControllerBas
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ListCompressCallbacksResponse>> ListCompressCallbacks([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] ListCompressCallbacksRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.resource",
+            "ResourceController.ListCompressCallbacks",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "resource/compress/list");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.resource",
-                "ResourceController.ListCompressCallbacks",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "resource/compress/list");
 
             var (statusCode, result) = await _implementation.ListCompressCallbacksAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -988,13 +973,13 @@ public partial class ResourceController : Microsoft.AspNetCore.Mvc.ControllerBas
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<GetArchiveResponse>> GetArchive([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] GetArchiveRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.resource",
+            "ResourceController.GetArchive",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "resource/archive/get");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.resource",
-                "ResourceController.GetArchive",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "resource/archive/get");
 
             var (statusCode, result) = await _implementation.GetArchiveAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1053,13 +1038,13 @@ public partial class ResourceController : Microsoft.AspNetCore.Mvc.ControllerBas
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ExecuteSnapshotResponse>> ExecuteSnapshot([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] ExecuteSnapshotRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.resource",
+            "ResourceController.ExecuteSnapshot",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "resource/snapshot/execute");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.resource",
-                "ResourceController.ExecuteSnapshot",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "resource/snapshot/execute");
 
             var (statusCode, result) = await _implementation.ExecuteSnapshotAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1105,13 +1090,13 @@ public partial class ResourceController : Microsoft.AspNetCore.Mvc.ControllerBas
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<GetSnapshotResponse>> GetSnapshot([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] GetSnapshotRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.resource",
+            "ResourceController.GetSnapshot",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "resource/snapshot/get");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.resource",
-                "ResourceController.GetSnapshot",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "resource/snapshot/get");
 
             var (statusCode, result) = await _implementation.GetSnapshotAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1157,13 +1142,13 @@ public partial class ResourceController : Microsoft.AspNetCore.Mvc.ControllerBas
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ListSeededResourcesResponse>> ListSeededResources([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] ListSeededResourcesRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.resource",
+            "ResourceController.ListSeededResources",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "resource/seeded/list");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.resource",
-                "ResourceController.ListSeededResources",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "resource/seeded/list");
 
             var (statusCode, result) = await _implementation.ListSeededResourcesAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1209,13 +1194,13 @@ public partial class ResourceController : Microsoft.AspNetCore.Mvc.ControllerBas
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<GetSeededResourceResponse>> GetSeededResource([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] GetSeededResourceRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.resource",
+            "ResourceController.GetSeededResource",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "resource/seeded/get");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.resource",
-                "ResourceController.GetSeededResource",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "resource/seeded/get");
 
             var (statusCode, result) = await _implementation.GetSeededResourceAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);

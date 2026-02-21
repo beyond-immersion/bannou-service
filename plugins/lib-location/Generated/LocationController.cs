@@ -22,21 +22,6 @@
 
 #nullable enable
 
-#pragma warning disable 108 // Disable "CS0108 '{derivedDto}.ToJson()' hides inherited member '{dtoBase}.ToJson()'. Use the new keyword if hiding was intended."
-#pragma warning disable 114 // Disable "CS0114 '{derivedDto}.RaisePropertyChanged(String)' hides inherited member 'dtoBase.RaisePropertyChanged(String)'. To make the current member override that implementation, add the override keyword. Otherwise add the new keyword."
-#pragma warning disable 472 // Disable "CS0472 The result of the expression is always 'false' since a value of type 'Int32' is never equal to 'null' of type 'Int32?'
-#pragma warning disable 612 // Disable "CS0612 '...' is obsolete"
-#pragma warning disable 649 // Disable "CS0649 Field is never assigned to, and will always have its default value null"
-#pragma warning disable 1573 // Disable "CS1573 Parameter '...' has no matching param tag in the XML comment for ...
-#pragma warning disable 1591 // Disable "CS1591 Missing XML comment for publicly visible type or member ..."
-#pragma warning disable 8073 // Disable "CS8073 The result of the expression is always 'false' since a value of type 'T' is never equal to 'null' of type 'T?'"
-#pragma warning disable 3016 // Disable "CS3016 Arrays as attribute arguments is not CLS-compliant"
-#pragma warning disable 8600 // Disable "CS8600 Converting null literal or possible null value to non-nullable type"
-#pragma warning disable 8602 // Disable "CS8602 Dereference of a possibly null reference"
-#pragma warning disable 8603 // Disable "CS8603 Possible null reference return"
-#pragma warning disable 8604 // Disable "CS8604 Possible null reference argument for parameter"
-#pragma warning disable 8625 // Disable "CS8625 Cannot convert null literal to non-nullable reference type"
-#pragma warning disable 8765 // Disable "CS8765 Nullability of type of parameter doesn't match overridden member (possibly because of nullability attributes)."
 
 namespace BeyondImmersion.BannouService.Location;
 
@@ -434,13 +419,13 @@ public partial class LocationController : Microsoft.AspNetCore.Mvc.ControllerBas
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<LocationResponse>> GetLocation([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] GetLocationRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.location",
+            "LocationController.GetLocation",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "location/get");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.location",
-                "LocationController.GetLocation",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "location/get");
 
             var (statusCode, result) = await _implementation.GetLocationAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -482,13 +467,13 @@ public partial class LocationController : Microsoft.AspNetCore.Mvc.ControllerBas
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<LocationResponse>> GetLocationByCode([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] GetLocationByCodeRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.location",
+            "LocationController.GetLocationByCode",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "location/get-by-code");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.location",
-                "LocationController.GetLocationByCode",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "location/get-by-code");
 
             var (statusCode, result) = await _implementation.GetLocationByCodeAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -530,13 +515,13 @@ public partial class LocationController : Microsoft.AspNetCore.Mvc.ControllerBas
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<LocationListResponse>> ListLocations([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] ListLocationsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.location",
+            "LocationController.ListLocations",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "location/list");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.location",
-                "LocationController.ListLocations",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "location/list");
 
             var (statusCode, result) = await _implementation.ListLocationsAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -580,13 +565,13 @@ public partial class LocationController : Microsoft.AspNetCore.Mvc.ControllerBas
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<LocationListResponse>> ListLocationsByRealm([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] ListLocationsByRealmRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.location",
+            "LocationController.ListLocationsByRealm",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "location/list-by-realm");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.location",
-                "LocationController.ListLocationsByRealm",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "location/list-by-realm");
 
             var (statusCode, result) = await _implementation.ListLocationsByRealmAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -629,13 +614,13 @@ public partial class LocationController : Microsoft.AspNetCore.Mvc.ControllerBas
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<LocationListResponse>> ListLocationsByParent([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] ListLocationsByParentRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.location",
+            "LocationController.ListLocationsByParent",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "location/list-by-parent");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.location",
-                "LocationController.ListLocationsByParent",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "location/list-by-parent");
 
             var (statusCode, result) = await _implementation.ListLocationsByParentAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -678,13 +663,13 @@ public partial class LocationController : Microsoft.AspNetCore.Mvc.ControllerBas
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<LocationListResponse>> ListRootLocations([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] ListRootLocationsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.location",
+            "LocationController.ListRootLocations",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "location/list-root");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.location",
-                "LocationController.ListRootLocations",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "location/list-root");
 
             var (statusCode, result) = await _implementation.ListRootLocationsAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -728,13 +713,13 @@ public partial class LocationController : Microsoft.AspNetCore.Mvc.ControllerBas
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<LocationListResponse>> GetLocationAncestors([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] GetLocationAncestorsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.location",
+            "LocationController.GetLocationAncestors",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "location/get-ancestors");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.location",
-                "LocationController.GetLocationAncestors",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "location/get-ancestors");
 
             var (statusCode, result) = await _implementation.GetLocationAncestorsAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -781,13 +766,13 @@ public partial class LocationController : Microsoft.AspNetCore.Mvc.ControllerBas
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ValidateTerritoryResponse>> ValidateTerritory([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] ValidateTerritoryRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.location",
+            "LocationController.ValidateTerritory",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "location/validate-territory");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.location",
-                "LocationController.ValidateTerritory",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "location/validate-territory");
 
             var (statusCode, result) = await _implementation.ValidateTerritoryAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -831,13 +816,13 @@ public partial class LocationController : Microsoft.AspNetCore.Mvc.ControllerBas
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<LocationListResponse>> GetLocationDescendants([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] GetLocationDescendantsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.location",
+            "LocationController.GetLocationDescendants",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "location/get-descendants");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.location",
-                "LocationController.GetLocationDescendants",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "location/get-descendants");
 
             var (statusCode, result) = await _implementation.GetLocationDescendantsAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -876,13 +861,13 @@ public partial class LocationController : Microsoft.AspNetCore.Mvc.ControllerBas
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<LocationResponse>> CreateLocation([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] CreateLocationRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.location",
+            "LocationController.CreateLocation",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "location/create");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.location",
-                "LocationController.CreateLocation",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "location/create");
 
             var (statusCode, result) = await _implementation.CreateLocationAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -921,13 +906,13 @@ public partial class LocationController : Microsoft.AspNetCore.Mvc.ControllerBas
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<LocationResponse>> UpdateLocation([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] UpdateLocationRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.location",
+            "LocationController.UpdateLocation",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "location/update");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.location",
-                "LocationController.UpdateLocation",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "location/update");
 
             var (statusCode, result) = await _implementation.UpdateLocationAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -973,13 +958,13 @@ public partial class LocationController : Microsoft.AspNetCore.Mvc.ControllerBas
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<LocationResponse>> SetLocationParent([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] SetLocationParentRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.location",
+            "LocationController.SetLocationParent",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "location/set-parent");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.location",
-                "LocationController.SetLocationParent",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "location/set-parent");
 
             var (statusCode, result) = await _implementation.SetLocationParentAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1022,13 +1007,13 @@ public partial class LocationController : Microsoft.AspNetCore.Mvc.ControllerBas
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<LocationResponse>> RemoveLocationParent([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] RemoveLocationParentRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.location",
+            "LocationController.RemoveLocationParent",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "location/remove-parent");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.location",
-                "LocationController.RemoveLocationParent",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "location/remove-parent");
 
             var (statusCode, result) = await _implementation.RemoveLocationParentAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1074,13 +1059,13 @@ public partial class LocationController : Microsoft.AspNetCore.Mvc.ControllerBas
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> DeleteLocation([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] DeleteLocationRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.location",
+            "LocationController.DeleteLocation",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "location/delete");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.location",
-                "LocationController.DeleteLocation",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "location/delete");
 
             var statusCode = await _implementation.DeleteLocationAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode);
@@ -1126,13 +1111,13 @@ public partial class LocationController : Microsoft.AspNetCore.Mvc.ControllerBas
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<LocationResponse>> TransferLocationToRealm([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] TransferLocationToRealmRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.location",
+            "LocationController.TransferLocationToRealm",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "location/transfer-realm");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.location",
-                "LocationController.TransferLocationToRealm",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "location/transfer-realm");
 
             var (statusCode, result) = await _implementation.TransferLocationToRealmAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1178,13 +1163,13 @@ public partial class LocationController : Microsoft.AspNetCore.Mvc.ControllerBas
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<LocationResponse>> DeprecateLocation([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] DeprecateLocationRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.location",
+            "LocationController.DeprecateLocation",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "location/deprecate");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.location",
-                "LocationController.DeprecateLocation",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "location/deprecate");
 
             var (statusCode, result) = await _implementation.DeprecateLocationAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1227,13 +1212,13 @@ public partial class LocationController : Microsoft.AspNetCore.Mvc.ControllerBas
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<LocationResponse>> UndeprecateLocation([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] UndeprecateLocationRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.location",
+            "LocationController.UndeprecateLocation",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "location/undeprecate");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.location",
-                "LocationController.UndeprecateLocation",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "location/undeprecate");
 
             var (statusCode, result) = await _implementation.UndeprecateLocationAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1276,13 +1261,13 @@ public partial class LocationController : Microsoft.AspNetCore.Mvc.ControllerBas
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<LocationExistsResponse>> LocationExists([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] LocationExistsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.location",
+            "LocationController.LocationExists",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "location/exists");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.location",
-                "LocationController.LocationExists",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "location/exists");
 
             var (statusCode, result) = await _implementation.LocationExistsAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1327,13 +1312,13 @@ public partial class LocationController : Microsoft.AspNetCore.Mvc.ControllerBas
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<LocationListResponse>> QueryLocationsByPosition([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] QueryLocationsByPositionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.location",
+            "LocationController.QueryLocationsByPosition",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "location/query/by-position");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.location",
-                "LocationController.QueryLocationsByPosition",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "location/query/by-position");
 
             var (statusCode, result) = await _implementation.QueryLocationsByPositionAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1378,13 +1363,13 @@ public partial class LocationController : Microsoft.AspNetCore.Mvc.ControllerBas
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SeedLocationsResponse>> SeedLocations([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] SeedLocationsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.location",
+            "LocationController.SeedLocations",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "location/seed");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.location",
-                "LocationController.SeedLocations",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "location/seed");
 
             var (statusCode, result) = await _implementation.SeedLocationsAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1433,13 +1418,13 @@ public partial class LocationController : Microsoft.AspNetCore.Mvc.ControllerBas
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ReportEntityPositionResponse>> ReportEntityPosition([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] ReportEntityPositionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.location",
+            "LocationController.ReportEntityPosition",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "location/report-entity-position");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.location",
-                "LocationController.ReportEntityPosition",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "location/report-entity-position");
 
             var (statusCode, result) = await _implementation.ReportEntityPositionAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1482,13 +1467,13 @@ public partial class LocationController : Microsoft.AspNetCore.Mvc.ControllerBas
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<GetEntityLocationResponse>> GetEntityLocation([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] GetEntityLocationRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.location",
+            "LocationController.GetEntityLocation",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "location/get-entity-location");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.location",
-                "LocationController.GetEntityLocation",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "location/get-entity-location");
 
             var (statusCode, result) = await _implementation.GetEntityLocationAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1532,13 +1517,13 @@ public partial class LocationController : Microsoft.AspNetCore.Mvc.ControllerBas
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ListEntitiesAtLocationResponse>> ListEntitiesAtLocation([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] ListEntitiesAtLocationRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.location",
+            "LocationController.ListEntitiesAtLocation",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "location/list-entities-at-location");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.location",
-                "LocationController.ListEntitiesAtLocation",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "location/list-entities-at-location");
 
             var (statusCode, result) = await _implementation.ListEntitiesAtLocationAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1581,13 +1566,13 @@ public partial class LocationController : Microsoft.AspNetCore.Mvc.ControllerBas
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ClearEntityPositionResponse>> ClearEntityPosition([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] ClearEntityPositionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.location",
+            "LocationController.ClearEntityPosition",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "location/clear-entity-position");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.location",
-                "LocationController.ClearEntityPosition",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "location/clear-entity-position");
 
             var (statusCode, result) = await _implementation.ClearEntityPositionAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);

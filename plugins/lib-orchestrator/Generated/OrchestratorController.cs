@@ -22,21 +22,6 @@
 
 #nullable enable
 
-#pragma warning disable 108 // Disable "CS0108 '{derivedDto}.ToJson()' hides inherited member '{dtoBase}.ToJson()'. Use the new keyword if hiding was intended."
-#pragma warning disable 114 // Disable "CS0114 '{derivedDto}.RaisePropertyChanged(String)' hides inherited member 'dtoBase.RaisePropertyChanged(String)'. To make the current member override that implementation, add the override keyword. Otherwise add the new keyword."
-#pragma warning disable 472 // Disable "CS0472 The result of the expression is always 'false' since a value of type 'Int32' is never equal to 'null' of type 'Int32?'
-#pragma warning disable 612 // Disable "CS0612 '...' is obsolete"
-#pragma warning disable 649 // Disable "CS0649 Field is never assigned to, and will always have its default value null"
-#pragma warning disable 1573 // Disable "CS1573 Parameter '...' has no matching param tag in the XML comment for ...
-#pragma warning disable 1591 // Disable "CS1591 Missing XML comment for publicly visible type or member ..."
-#pragma warning disable 8073 // Disable "CS8073 The result of the expression is always 'false' since a value of type 'T' is never equal to 'null' of type 'T?'"
-#pragma warning disable 3016 // Disable "CS3016 Arrays as attribute arguments is not CLS-compliant"
-#pragma warning disable 8600 // Disable "CS8600 Converting null literal or possible null value to non-nullable type"
-#pragma warning disable 8602 // Disable "CS8602 Dereference of a possibly null reference"
-#pragma warning disable 8603 // Disable "CS8603 Possible null reference return"
-#pragma warning disable 8604 // Disable "CS8604 Possible null reference argument for parameter"
-#pragma warning disable 8625 // Disable "CS8625 Cannot convert null literal to non-nullable reference type"
-#pragma warning disable 8765 // Disable "CS8765 Nullability of type of parameter doesn't match overridden member (possibly because of nullability attributes)."
 
 namespace BeyondImmersion.BannouService.Orchestrator;
 
@@ -495,13 +480,13 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<InfrastructureHealthResponse>> GetInfrastructureHealth([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] InfrastructureHealthRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.orchestrator",
+            "OrchestratorController.GetInfrastructureHealth",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "orchestrator/health/infrastructure");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.orchestrator",
-                "OrchestratorController.GetInfrastructureHealth",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "orchestrator/health/infrastructure");
 
             var (statusCode, result) = await _implementation.GetInfrastructureHealthAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -544,13 +529,13 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ServiceHealthReport>> GetServicesHealth([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] ServiceHealthRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.orchestrator",
+            "OrchestratorController.GetServicesHealth",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "orchestrator/health/services");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.orchestrator",
-                "OrchestratorController.GetServicesHealth",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "orchestrator/health/services");
 
             var (statusCode, result) = await _implementation.GetServicesHealthAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -595,13 +580,13 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ServiceRestartResult>> RestartService([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] ServiceRestartRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.orchestrator",
+            "OrchestratorController.RestartService",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "orchestrator/services/restart");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.orchestrator",
-                "OrchestratorController.RestartService",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "orchestrator/services/restart");
 
             var (statusCode, result) = await _implementation.RestartServiceAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -649,13 +634,13 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RestartRecommendation>> ShouldRestartService([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] ShouldRestartServiceRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.orchestrator",
+            "OrchestratorController.ShouldRestartService",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "orchestrator/services/should-restart");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.orchestrator",
-                "OrchestratorController.ShouldRestartService",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "orchestrator/services/should-restart");
 
             var (statusCode, result) = await _implementation.ShouldRestartServiceAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -710,13 +695,13 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<BackendsResponse>> GetBackends([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] ListBackendsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.orchestrator",
+            "OrchestratorController.GetBackends",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "orchestrator/backends/list");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.orchestrator",
-                "OrchestratorController.GetBackends",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "orchestrator/backends/list");
 
             var (statusCode, result) = await _implementation.GetBackendsAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -767,13 +752,13 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<PresetsResponse>> GetPresets([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] ListPresetsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.orchestrator",
+            "OrchestratorController.GetPresets",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "orchestrator/presets/list");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.orchestrator",
-                "OrchestratorController.GetPresets",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "orchestrator/presets/list");
 
             var (statusCode, result) = await _implementation.GetPresetsAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -831,13 +816,13 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<DeployResponse>> Deploy([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] DeployRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.orchestrator",
+            "OrchestratorController.Deploy",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "orchestrator/deploy");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.orchestrator",
-                "OrchestratorController.Deploy",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "orchestrator/deploy");
 
             var (statusCode, result) = await _implementation.DeployAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -888,13 +873,13 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ServiceRoutingResponse>> GetServiceRouting([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] GetServiceRoutingRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.orchestrator",
+            "OrchestratorController.GetServiceRouting",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "orchestrator/service-routing");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.orchestrator",
-                "OrchestratorController.GetServiceRouting",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "orchestrator/service-routing");
 
             var (statusCode, result) = await _implementation.GetServiceRoutingAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -941,13 +926,13 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<EnvironmentStatus>> GetStatus([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] GetStatusRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.orchestrator",
+            "OrchestratorController.GetStatus",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "orchestrator/status");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.orchestrator",
-                "OrchestratorController.GetStatus",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "orchestrator/status");
 
             var (statusCode, result) = await _implementation.GetStatusAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -995,13 +980,13 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<TeardownResponse>> Teardown([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] TeardownRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.orchestrator",
+            "OrchestratorController.Teardown",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "orchestrator/teardown");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.orchestrator",
-                "OrchestratorController.Teardown",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "orchestrator/teardown");
 
             var (statusCode, result) = await _implementation.TeardownAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1053,13 +1038,13 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CleanResponse>> Clean([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] CleanRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.orchestrator",
+            "OrchestratorController.Clean",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "orchestrator/clean");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.orchestrator",
-                "OrchestratorController.Clean",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "orchestrator/clean");
 
             var (statusCode, result) = await _implementation.CleanAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1102,13 +1087,13 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<LogsResponse>> GetLogs([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] GetLogsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.orchestrator",
+            "OrchestratorController.GetLogs",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "orchestrator/logs");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.orchestrator",
-                "OrchestratorController.GetLogs",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "orchestrator/logs");
 
             var (statusCode, result) = await _implementation.GetLogsAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1157,13 +1142,13 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<TopologyUpdateResponse>> UpdateTopology([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] TopologyUpdateRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.orchestrator",
+            "OrchestratorController.UpdateTopology",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "orchestrator/topology");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.orchestrator",
-                "OrchestratorController.UpdateTopology",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "orchestrator/topology");
 
             var (statusCode, result) = await _implementation.UpdateTopologyAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1218,13 +1203,13 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ContainerRestartResponse>> RequestContainerRestart([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] ContainerRestartRequestBody body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.orchestrator",
+            "OrchestratorController.RequestContainerRestart",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "orchestrator/containers/request-restart");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.orchestrator",
-                "OrchestratorController.RequestContainerRestart",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "orchestrator/containers/request-restart");
 
             var (statusCode, result) = await _implementation.RequestContainerRestartAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1267,13 +1252,13 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ContainerStatus>> GetContainerStatus([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] GetContainerStatusRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.orchestrator",
+            "OrchestratorController.GetContainerStatus",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "orchestrator/containers/status");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.orchestrator",
-                "OrchestratorController.GetContainerStatus",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "orchestrator/containers/status");
 
             var (statusCode, result) = await _implementation.GetContainerStatusAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1320,13 +1305,13 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ConfigRollbackResponse>> RollbackConfiguration([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] ConfigRollbackRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.orchestrator",
+            "OrchestratorController.RollbackConfiguration",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "orchestrator/config/rollback");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.orchestrator",
-                "OrchestratorController.RollbackConfiguration",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "orchestrator/config/rollback");
 
             var (statusCode, result) = await _implementation.RollbackConfigurationAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1369,13 +1354,13 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ConfigVersionResponse>> GetConfigVersion([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] GetConfigVersionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.orchestrator",
+            "OrchestratorController.GetConfigVersion",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "orchestrator/config/version");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.orchestrator",
-                "OrchestratorController.GetConfigVersion",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "orchestrator/config/version");
 
             var (statusCode, result) = await _implementation.GetConfigVersionAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1419,13 +1404,13 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<AcquireProcessorResponse>> AcquireProcessor([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] AcquireProcessorRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.orchestrator",
+            "OrchestratorController.AcquireProcessor",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "orchestrator/processing-pool/acquire");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.orchestrator",
-                "OrchestratorController.AcquireProcessor",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "orchestrator/processing-pool/acquire");
 
             var (statusCode, result) = await _implementation.AcquireProcessorAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1468,13 +1453,13 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ReleaseProcessorResponse>> ReleaseProcessor([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] ReleaseProcessorRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.orchestrator",
+            "OrchestratorController.ReleaseProcessor",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "orchestrator/processing-pool/release");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.orchestrator",
-                "OrchestratorController.ReleaseProcessor",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "orchestrator/processing-pool/release");
 
             var (statusCode, result) = await _implementation.ReleaseProcessorAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1520,13 +1505,13 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<PoolStatusResponse>> GetPoolStatus([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] GetPoolStatusRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.orchestrator",
+            "OrchestratorController.GetPoolStatus",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "orchestrator/processing-pool/status");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.orchestrator",
-                "OrchestratorController.GetPoolStatus",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "orchestrator/processing-pool/status");
 
             var (statusCode, result) = await _implementation.GetPoolStatusAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1570,13 +1555,13 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ScalePoolResponse>> ScalePool([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] ScalePoolRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.orchestrator",
+            "OrchestratorController.ScalePool",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "orchestrator/processing-pool/scale");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.orchestrator",
-                "OrchestratorController.ScalePool",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "orchestrator/processing-pool/scale");
 
             var (statusCode, result) = await _implementation.ScalePoolAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1619,13 +1604,13 @@ public partial class OrchestratorController : Microsoft.AspNetCore.Mvc.Controlle
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CleanupPoolResponse>> CleanupPool([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] CleanupPoolRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.orchestrator",
+            "OrchestratorController.CleanupPool",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "orchestrator/processing-pool/cleanup");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.orchestrator",
-                "OrchestratorController.CleanupPool",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "orchestrator/processing-pool/cleanup");
 
             var (statusCode, result) = await _implementation.CleanupPoolAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);

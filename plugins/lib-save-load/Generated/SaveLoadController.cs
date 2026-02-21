@@ -22,21 +22,6 @@
 
 #nullable enable
 
-#pragma warning disable 108 // Disable "CS0108 '{derivedDto}.ToJson()' hides inherited member '{dtoBase}.ToJson()'. Use the new keyword if hiding was intended."
-#pragma warning disable 114 // Disable "CS0114 '{derivedDto}.RaisePropertyChanged(String)' hides inherited member 'dtoBase.RaisePropertyChanged(String)'. To make the current member override that implementation, add the override keyword. Otherwise add the new keyword."
-#pragma warning disable 472 // Disable "CS0472 The result of the expression is always 'false' since a value of type 'Int32' is never equal to 'null' of type 'Int32?'
-#pragma warning disable 612 // Disable "CS0612 '...' is obsolete"
-#pragma warning disable 649 // Disable "CS0649 Field is never assigned to, and will always have its default value null"
-#pragma warning disable 1573 // Disable "CS1573 Parameter '...' has no matching param tag in the XML comment for ...
-#pragma warning disable 1591 // Disable "CS1591 Missing XML comment for publicly visible type or member ..."
-#pragma warning disable 8073 // Disable "CS8073 The result of the expression is always 'false' since a value of type 'T' is never equal to 'null' of type 'T?'"
-#pragma warning disable 3016 // Disable "CS3016 Arrays as attribute arguments is not CLS-compliant"
-#pragma warning disable 8600 // Disable "CS8600 Converting null literal or possible null value to non-nullable type"
-#pragma warning disable 8602 // Disable "CS8602 Dereference of a possibly null reference"
-#pragma warning disable 8603 // Disable "CS8603 Possible null reference return"
-#pragma warning disable 8604 // Disable "CS8604 Possible null reference argument for parameter"
-#pragma warning disable 8625 // Disable "CS8625 Cannot convert null literal to non-nullable reference type"
-#pragma warning disable 8765 // Disable "CS8765 Nullability of type of parameter doesn't match overridden member (possibly because of nullability attributes)."
 
 namespace BeyondImmersion.BannouService.SaveLoad;
 
@@ -456,13 +441,13 @@ public partial class SaveLoadController : Microsoft.AspNetCore.Mvc.ControllerBas
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SlotResponse>> CreateSlot([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] CreateSlotRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.save-load",
+            "SaveLoadController.CreateSlot",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "save-load/slot/create");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.save-load",
-                "SaveLoadController.CreateSlot",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "save-load/slot/create");
 
             var (statusCode, result) = await _implementation.CreateSlotAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -504,13 +489,13 @@ public partial class SaveLoadController : Microsoft.AspNetCore.Mvc.ControllerBas
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SlotResponse>> GetSlot([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] GetSlotRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.save-load",
+            "SaveLoadController.GetSlot",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "save-load/slot/get");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.save-load",
-                "SaveLoadController.GetSlot",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "save-load/slot/get");
 
             var (statusCode, result) = await _implementation.GetSlotAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -552,13 +537,13 @@ public partial class SaveLoadController : Microsoft.AspNetCore.Mvc.ControllerBas
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ListSlotsResponse>> ListSlots([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] ListSlotsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.save-load",
+            "SaveLoadController.ListSlots",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "save-load/slot/list");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.save-load",
-                "SaveLoadController.ListSlots",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "save-load/slot/list");
 
             var (statusCode, result) = await _implementation.ListSlotsAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -601,13 +586,13 @@ public partial class SaveLoadController : Microsoft.AspNetCore.Mvc.ControllerBas
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<DeleteSlotResponse>> DeleteSlot([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] DeleteSlotRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.save-load",
+            "SaveLoadController.DeleteSlot",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "save-load/slot/delete");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.save-load",
-                "SaveLoadController.DeleteSlot",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "save-load/slot/delete");
 
             var (statusCode, result) = await _implementation.DeleteSlotAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -650,13 +635,13 @@ public partial class SaveLoadController : Microsoft.AspNetCore.Mvc.ControllerBas
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SlotResponse>> RenameSlot([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] RenameSlotRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.save-load",
+            "SaveLoadController.RenameSlot",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "save-load/slot/rename");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.save-load",
-                "SaveLoadController.RenameSlot",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "save-load/slot/rename");
 
             var (statusCode, result) = await _implementation.RenameSlotAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -699,13 +684,13 @@ public partial class SaveLoadController : Microsoft.AspNetCore.Mvc.ControllerBas
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<BulkDeleteSlotsResponse>> BulkDeleteSlots([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] BulkDeleteSlotsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.save-load",
+            "SaveLoadController.BulkDeleteSlots",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "save-load/slot/bulk-delete");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.save-load",
-                "SaveLoadController.BulkDeleteSlots",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "save-load/slot/bulk-delete");
 
             var (statusCode, result) = await _implementation.BulkDeleteSlotsAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -751,13 +736,13 @@ public partial class SaveLoadController : Microsoft.AspNetCore.Mvc.ControllerBas
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SaveResponse>> Save([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] SaveRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.save-load",
+            "SaveLoadController.Save",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "save-load/save");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.save-load",
-                "SaveLoadController.Save",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "save-load/save");
 
             var (statusCode, result) = await _implementation.SaveAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -800,13 +785,13 @@ public partial class SaveLoadController : Microsoft.AspNetCore.Mvc.ControllerBas
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<LoadResponse>> Load([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] LoadRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.save-load",
+            "SaveLoadController.Load",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "save-load/load");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.save-load",
-                "SaveLoadController.Load",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "save-load/load");
 
             var (statusCode, result) = await _implementation.LoadAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -855,13 +840,13 @@ public partial class SaveLoadController : Microsoft.AspNetCore.Mvc.ControllerBas
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SaveDeltaResponse>> SaveDelta([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] SaveDeltaRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.save-load",
+            "SaveLoadController.SaveDelta",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "save-load/save-delta");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.save-load",
-                "SaveLoadController.SaveDelta",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "save-load/save-delta");
 
             var (statusCode, result) = await _implementation.SaveDeltaAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -907,13 +892,13 @@ public partial class SaveLoadController : Microsoft.AspNetCore.Mvc.ControllerBas
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<LoadResponse>> LoadWithDeltas([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] LoadRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.save-load",
+            "SaveLoadController.LoadWithDeltas",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "save-load/load-with-deltas");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.save-load",
-                "SaveLoadController.LoadWithDeltas",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "save-load/load-with-deltas");
 
             var (statusCode, result) = await _implementation.LoadWithDeltasAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -956,13 +941,13 @@ public partial class SaveLoadController : Microsoft.AspNetCore.Mvc.ControllerBas
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SaveResponse>> CollapseDeltas([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] CollapseDeltasRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.save-load",
+            "SaveLoadController.CollapseDeltas",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "save-load/collapse-deltas");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.save-load",
-                "SaveLoadController.CollapseDeltas",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "save-load/collapse-deltas");
 
             var (statusCode, result) = await _implementation.CollapseDeltasAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1004,13 +989,13 @@ public partial class SaveLoadController : Microsoft.AspNetCore.Mvc.ControllerBas
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ListVersionsResponse>> ListVersions([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] ListVersionsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.save-load",
+            "SaveLoadController.ListVersions",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "save-load/version/list");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.save-load",
-                "SaveLoadController.ListVersions",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "save-load/version/list");
 
             var (statusCode, result) = await _implementation.ListVersionsAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1053,13 +1038,13 @@ public partial class SaveLoadController : Microsoft.AspNetCore.Mvc.ControllerBas
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<VersionResponse>> PinVersion([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] PinVersionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.save-load",
+            "SaveLoadController.PinVersion",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "save-load/version/pin");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.save-load",
-                "SaveLoadController.PinVersion",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "save-load/version/pin");
 
             var (statusCode, result) = await _implementation.PinVersionAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1101,13 +1086,13 @@ public partial class SaveLoadController : Microsoft.AspNetCore.Mvc.ControllerBas
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<VersionResponse>> UnpinVersion([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] UnpinVersionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.save-load",
+            "SaveLoadController.UnpinVersion",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "save-load/version/unpin");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.save-load",
-                "SaveLoadController.UnpinVersion",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "save-load/version/unpin");
 
             var (statusCode, result) = await _implementation.UnpinVersionAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1150,13 +1135,13 @@ public partial class SaveLoadController : Microsoft.AspNetCore.Mvc.ControllerBas
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<DeleteVersionResponse>> DeleteVersion([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] DeleteVersionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.save-load",
+            "SaveLoadController.DeleteVersion",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "save-load/version/delete");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.save-load",
-                "SaveLoadController.DeleteVersion",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "save-load/version/delete");
 
             var (statusCode, result) = await _implementation.DeleteVersionAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1199,13 +1184,13 @@ public partial class SaveLoadController : Microsoft.AspNetCore.Mvc.ControllerBas
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<QuerySavesResponse>> QuerySaves([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] QuerySavesRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.save-load",
+            "SaveLoadController.QuerySaves",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "save-load/query");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.save-load",
-                "SaveLoadController.QuerySaves",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "save-load/query");
 
             var (statusCode, result) = await _implementation.QuerySavesAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1248,13 +1233,13 @@ public partial class SaveLoadController : Microsoft.AspNetCore.Mvc.ControllerBas
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SaveResponse>> CopySave([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] CopySaveRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.save-load",
+            "SaveLoadController.CopySave",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "save-load/copy");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.save-load",
-                "SaveLoadController.CopySave",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "save-load/copy");
 
             var (statusCode, result) = await _implementation.CopySaveAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1297,13 +1282,13 @@ public partial class SaveLoadController : Microsoft.AspNetCore.Mvc.ControllerBas
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ExportSavesResponse>> ExportSaves([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] ExportSavesRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.save-load",
+            "SaveLoadController.ExportSaves",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "save-load/export");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.save-load",
-                "SaveLoadController.ExportSaves",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "save-load/export");
 
             var (statusCode, result) = await _implementation.ExportSavesAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1346,13 +1331,13 @@ public partial class SaveLoadController : Microsoft.AspNetCore.Mvc.ControllerBas
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ImportSavesResponse>> ImportSaves([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] ImportSavesRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.save-load",
+            "SaveLoadController.ImportSaves",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "save-load/import");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.save-load",
-                "SaveLoadController.ImportSaves",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "save-load/import");
 
             var (statusCode, result) = await _implementation.ImportSavesAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1395,13 +1380,13 @@ public partial class SaveLoadController : Microsoft.AspNetCore.Mvc.ControllerBas
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<VerifyIntegrityResponse>> VerifyIntegrity([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] VerifyIntegrityRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.save-load",
+            "SaveLoadController.VerifyIntegrity",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "save-load/verify");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.save-load",
-                "SaveLoadController.VerifyIntegrity",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "save-load/verify");
 
             var (statusCode, result) = await _implementation.VerifyIntegrityAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1444,13 +1429,13 @@ public partial class SaveLoadController : Microsoft.AspNetCore.Mvc.ControllerBas
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SaveResponse>> PromoteVersion([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] PromoteVersionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.save-load",
+            "SaveLoadController.PromoteVersion",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "save-load/version/promote");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.save-load",
-                "SaveLoadController.PromoteVersion",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "save-load/version/promote");
 
             var (statusCode, result) = await _implementation.PromoteVersionAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1493,13 +1478,13 @@ public partial class SaveLoadController : Microsoft.AspNetCore.Mvc.ControllerBas
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<MigrateSaveResponse>> MigrateSave([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] MigrateSaveRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.save-load",
+            "SaveLoadController.MigrateSave",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "save-load/migrate");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.save-load",
-                "SaveLoadController.MigrateSave",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "save-load/migrate");
 
             var (statusCode, result) = await _implementation.MigrateSaveAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1542,13 +1527,13 @@ public partial class SaveLoadController : Microsoft.AspNetCore.Mvc.ControllerBas
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SchemaResponse>> RegisterSchema([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] RegisterSchemaRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.save-load",
+            "SaveLoadController.RegisterSchema",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "save-load/schema/register");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.save-load",
-                "SaveLoadController.RegisterSchema",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "save-load/schema/register");
 
             var (statusCode, result) = await _implementation.RegisterSchemaAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1590,13 +1575,13 @@ public partial class SaveLoadController : Microsoft.AspNetCore.Mvc.ControllerBas
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ListSchemasResponse>> ListSchemas([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] ListSchemasRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.save-load",
+            "SaveLoadController.ListSchemas",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "save-load/schema/list");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.save-load",
-                "SaveLoadController.ListSchemas",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "save-load/schema/list");
 
             var (statusCode, result) = await _implementation.ListSchemasAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1639,13 +1624,13 @@ public partial class SaveLoadController : Microsoft.AspNetCore.Mvc.ControllerBas
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<AdminCleanupResponse>> AdminCleanup([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] AdminCleanupRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.save-load",
+            "SaveLoadController.AdminCleanup",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "save-load/admin/cleanup");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.save-load",
-                "SaveLoadController.AdminCleanup",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "save-load/admin/cleanup");
 
             var (statusCode, result) = await _implementation.AdminCleanupAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1687,13 +1672,13 @@ public partial class SaveLoadController : Microsoft.AspNetCore.Mvc.ControllerBas
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<AdminStatsResponse>> AdminStats([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] AdminStatsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.save-load",
+            "SaveLoadController.AdminStats",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "save-load/admin/stats");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.save-load",
-                "SaveLoadController.AdminStats",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "save-load/admin/stats");
 
             var (statusCode, result) = await _implementation.AdminStatsAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);

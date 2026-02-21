@@ -22,21 +22,6 @@
 
 #nullable enable
 
-#pragma warning disable 108 // Disable "CS0108 '{derivedDto}.ToJson()' hides inherited member '{dtoBase}.ToJson()'. Use the new keyword if hiding was intended."
-#pragma warning disable 114 // Disable "CS0114 '{derivedDto}.RaisePropertyChanged(String)' hides inherited member 'dtoBase.RaisePropertyChanged(String)'. To make the current member override that implementation, add the override keyword. Otherwise add the new keyword."
-#pragma warning disable 472 // Disable "CS0472 The result of the expression is always 'false' since a value of type 'Int32' is never equal to 'null' of type 'Int32?'
-#pragma warning disable 612 // Disable "CS0612 '...' is obsolete"
-#pragma warning disable 649 // Disable "CS0649 Field is never assigned to, and will always have its default value null"
-#pragma warning disable 1573 // Disable "CS1573 Parameter '...' has no matching param tag in the XML comment for ...
-#pragma warning disable 1591 // Disable "CS1591 Missing XML comment for publicly visible type or member ..."
-#pragma warning disable 8073 // Disable "CS8073 The result of the expression is always 'false' since a value of type 'T' is never equal to 'null' of type 'T?'"
-#pragma warning disable 3016 // Disable "CS3016 Arrays as attribute arguments is not CLS-compliant"
-#pragma warning disable 8600 // Disable "CS8600 Converting null literal or possible null value to non-nullable type"
-#pragma warning disable 8602 // Disable "CS8602 Dereference of a possibly null reference"
-#pragma warning disable 8603 // Disable "CS8603 Possible null reference return"
-#pragma warning disable 8604 // Disable "CS8604 Possible null reference argument for parameter"
-#pragma warning disable 8625 // Disable "CS8625 Cannot convert null literal to non-nullable reference type"
-#pragma warning disable 8765 // Disable "CS8765 Nullability of type of parameter doesn't match overridden member (possibly because of nullability attributes)."
 
 namespace BeyondImmersion.BannouService.Auth;
 
@@ -349,13 +334,13 @@ public partial class AuthController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<LoginResponse>> Login([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] LoginRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.auth",
+            "AuthController.Login",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "auth/login");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.auth",
-                "AuthController.Login",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "auth/login");
 
             var (statusCode, result) = await _implementation.LoginAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -394,13 +379,13 @@ public partial class AuthController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RegisterResponse>> Register([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] RegisterRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.auth",
+            "AuthController.Register",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "auth/register");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.auth",
-                "AuthController.Register",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "auth/register");
 
             var (statusCode, result) = await _implementation.RegisterAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -449,13 +434,13 @@ public partial class AuthController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<AuthResponse>> CompleteOAuth([Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] Provider provider, [Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] OAuthCallbackRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.auth",
+            "AuthController.CompleteOAuth",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "auth/oauth/{provider}/callback");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.auth",
-                "AuthController.CompleteOAuth",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "auth/oauth/{provider}/callback");
 
             var (statusCode, result) = await _implementation.CompleteOAuthAsync(provider, body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -499,13 +484,13 @@ public partial class AuthController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<AuthResponse>> VerifySteamAuth([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] SteamVerifyRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.auth",
+            "AuthController.VerifySteamAuth",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "auth/steam/verify");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.auth",
-                "AuthController.VerifySteamAuth",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "auth/steam/verify");
 
             var (statusCode, result) = await _implementation.VerifySteamAuthAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -549,13 +534,13 @@ public partial class AuthController : Microsoft.AspNetCore.Mvc.ControllerBase
         if (string.IsNullOrEmpty(jwt))
             return Unauthorized("Missing or invalid Authorization header");
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.auth",
+            "AuthController.RefreshToken",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "auth/refresh");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.auth",
-                "AuthController.RefreshToken",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "auth/refresh");
 
             var (statusCode, result) = await _implementation.RefreshTokenAsync(jwt, body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -599,13 +584,13 @@ public partial class AuthController : Microsoft.AspNetCore.Mvc.ControllerBase
         if (string.IsNullOrEmpty(jwt))
             return Unauthorized("Missing or invalid Authorization header");
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.auth",
+            "AuthController.ValidateToken",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "auth/validate");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.auth",
-                "AuthController.ValidateToken",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "auth/validate");
 
             var (statusCode, result) = await _implementation.ValidateTokenAsync(jwt, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -649,13 +634,13 @@ public partial class AuthController : Microsoft.AspNetCore.Mvc.ControllerBase
         if (string.IsNullOrEmpty(jwt))
             return Unauthorized("Missing or invalid Authorization header");
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.auth",
+            "AuthController.Logout",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "auth/logout");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.auth",
-                "AuthController.Logout",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "auth/logout");
 
             var statusCode = await _implementation.LogoutAsync(jwt, body, cancellationToken);
             return ConvertToActionResult(statusCode);
@@ -699,13 +684,13 @@ public partial class AuthController : Microsoft.AspNetCore.Mvc.ControllerBase
         if (string.IsNullOrEmpty(jwt))
             return Unauthorized("Missing or invalid Authorization header");
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.auth",
+            "AuthController.GetSessions",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "auth/sessions/list");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.auth",
-                "AuthController.GetSessions",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "auth/sessions/list");
 
             var (statusCode, result) = await _implementation.GetSessionsAsync(jwt, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -749,13 +734,13 @@ public partial class AuthController : Microsoft.AspNetCore.Mvc.ControllerBase
         if (string.IsNullOrEmpty(jwt))
             return Unauthorized("Missing or invalid Authorization header");
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.auth",
+            "AuthController.TerminateSession",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "auth/sessions/terminate");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.auth",
-                "AuthController.TerminateSession",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "auth/sessions/terminate");
 
             var statusCode = await _implementation.TerminateSessionAsync(jwt, body, cancellationToken);
             return ConvertToActionResult(statusCode);
@@ -799,13 +784,13 @@ public partial class AuthController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RevocationListResponse>> GetRevocationList([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] GetRevocationListRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.auth",
+            "AuthController.GetRevocationList",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "auth/revocation-list");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.auth",
-                "AuthController.GetRevocationList",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "auth/revocation-list");
 
             var (statusCode, result) = await _implementation.GetRevocationListAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -844,13 +829,13 @@ public partial class AuthController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> RequestPasswordReset([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] PasswordResetRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.auth",
+            "AuthController.RequestPasswordReset",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "auth/password/reset");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.auth",
-                "AuthController.RequestPasswordReset",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "auth/password/reset");
 
             var statusCode = await _implementation.RequestPasswordResetAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode);
@@ -889,13 +874,13 @@ public partial class AuthController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> ConfirmPasswordReset([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] PasswordResetConfirmRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.auth",
+            "AuthController.ConfirmPasswordReset",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "auth/password/confirm");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.auth",
-                "AuthController.ConfirmPasswordReset",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "auth/password/confirm");
 
             var statusCode = await _implementation.ConfirmPasswordResetAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode);
@@ -939,13 +924,13 @@ public partial class AuthController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ProvidersResponse>> ListProviders(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.auth",
+            "AuthController.ListProviders",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "auth/providers");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.auth",
-                "AuthController.ListProviders",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "auth/providers");
 
             var (statusCode, result) = await _implementation.ListProvidersAsync(cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -994,13 +979,13 @@ public partial class AuthController : Microsoft.AspNetCore.Mvc.ControllerBase
         if (string.IsNullOrEmpty(jwt))
             return Unauthorized("Missing or invalid Authorization header");
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.auth",
+            "AuthController.SetupMfa",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "auth/mfa/setup");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.auth",
-                "AuthController.SetupMfa",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "auth/mfa/setup");
 
             var (statusCode, result) = await _implementation.SetupMfaAsync(jwt, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1049,13 +1034,13 @@ public partial class AuthController : Microsoft.AspNetCore.Mvc.ControllerBase
         if (string.IsNullOrEmpty(jwt))
             return Unauthorized("Missing or invalid Authorization header");
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.auth",
+            "AuthController.EnableMfa",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "auth/mfa/enable");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.auth",
-                "AuthController.EnableMfa",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "auth/mfa/enable");
 
             var statusCode = await _implementation.EnableMfaAsync(jwt, body, cancellationToken);
             return ConvertToActionResult(statusCode);
@@ -1104,13 +1089,13 @@ public partial class AuthController : Microsoft.AspNetCore.Mvc.ControllerBase
         if (string.IsNullOrEmpty(jwt))
             return Unauthorized("Missing or invalid Authorization header");
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.auth",
+            "AuthController.DisableMfa",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "auth/mfa/disable");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.auth",
-                "AuthController.DisableMfa",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "auth/mfa/disable");
 
             var statusCode = await _implementation.DisableMfaAsync(jwt, body, cancellationToken);
             return ConvertToActionResult(statusCode);
@@ -1153,13 +1138,13 @@ public partial class AuthController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> AdminDisableMfa([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] AdminDisableMfaRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.auth",
+            "AuthController.AdminDisableMfa",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "auth/mfa/admin-disable");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.auth",
-                "AuthController.AdminDisableMfa",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "auth/mfa/admin-disable");
 
             var statusCode = await _implementation.AdminDisableMfaAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode);
@@ -1204,13 +1189,13 @@ public partial class AuthController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<AuthResponse>> VerifyMfa([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] MfaVerifyRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.auth",
+            "AuthController.VerifyMfa",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "auth/mfa/verify");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.auth",
-                "AuthController.VerifyMfa",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "auth/mfa/verify");
 
             var (statusCode, result) = await _implementation.VerifyMfaAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);

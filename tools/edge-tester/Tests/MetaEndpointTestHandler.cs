@@ -140,7 +140,7 @@ public class MetaEndpointTestHandler : IServiceTestHandler
 
                 if (result.MessageType == WebSocketMessageType.Binary && result.Count >= BinaryMessage.ResponseHeaderSize)
                 {
-                    var message = BinaryMessage.Parse(receiveBuffer, result.Count);
+                    var message = BinaryMessageHelper.ParseAndDecompress(receiveBuffer, result.Count);
 
                     if (message.Flags.HasFlag(MessageFlags.Event) && message.Payload.Length > 0)
                     {
@@ -251,7 +251,7 @@ public class MetaEndpointTestHandler : IServiceTestHandler
 
             if (result.MessageType == WebSocketMessageType.Binary && result.Count >= BinaryMessage.ResponseHeaderSize)
             {
-                var response = BinaryMessage.Parse(receiveBuffer, result.Count);
+                var response = BinaryMessageHelper.ParseAndDecompress(receiveBuffer, result.Count);
 
                 // Skip events - wait for our response
                 if (response.Flags.HasFlag(MessageFlags.Event))
@@ -604,7 +604,7 @@ public class MetaEndpointTestHandler : IServiceTestHandler
 
                 if (result.MessageType == WebSocketMessageType.Binary && result.Count >= BinaryMessage.ResponseHeaderSize)
                 {
-                    var response = BinaryMessage.Parse(receiveBuffer, result.Count);
+                    var response = BinaryMessageHelper.ParseAndDecompress(receiveBuffer, result.Count);
 
                     // Skip events
                     if (response.Flags.HasFlag(MessageFlags.Event))

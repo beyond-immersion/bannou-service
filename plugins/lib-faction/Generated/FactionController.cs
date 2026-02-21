@@ -22,21 +22,6 @@
 
 #nullable enable
 
-#pragma warning disable 108 // Disable "CS0108 '{derivedDto}.ToJson()' hides inherited member '{dtoBase}.ToJson()'. Use the new keyword if hiding was intended."
-#pragma warning disable 114 // Disable "CS0114 '{derivedDto}.RaisePropertyChanged(String)' hides inherited member 'dtoBase.RaisePropertyChanged(String)'. To make the current member override that implementation, add the override keyword. Otherwise add the new keyword."
-#pragma warning disable 472 // Disable "CS0472 The result of the expression is always 'false' since a value of type 'Int32' is never equal to 'null' of type 'Int32?'
-#pragma warning disable 612 // Disable "CS0612 '...' is obsolete"
-#pragma warning disable 649 // Disable "CS0649 Field is never assigned to, and will always have its default value null"
-#pragma warning disable 1573 // Disable "CS1573 Parameter '...' has no matching param tag in the XML comment for ...
-#pragma warning disable 1591 // Disable "CS1591 Missing XML comment for publicly visible type or member ..."
-#pragma warning disable 8073 // Disable "CS8073 The result of the expression is always 'false' since a value of type 'T' is never equal to 'null' of type 'T?'"
-#pragma warning disable 3016 // Disable "CS3016 Arrays as attribute arguments is not CLS-compliant"
-#pragma warning disable 8600 // Disable "CS8600 Converting null literal or possible null value to non-nullable type"
-#pragma warning disable 8602 // Disable "CS8602 Dereference of a possibly null reference"
-#pragma warning disable 8603 // Disable "CS8603 Possible null reference return"
-#pragma warning disable 8604 // Disable "CS8604 Possible null reference argument for parameter"
-#pragma warning disable 8625 // Disable "CS8625 Cannot convert null literal to non-nullable reference type"
-#pragma warning disable 8765 // Disable "CS8765 Nullability of type of parameter doesn't match overridden member (possibly because of nullability attributes)."
 
 namespace BeyondImmersion.BannouService.Faction;
 
@@ -584,13 +569,13 @@ public partial class FactionController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<FactionResponse>> CreateFaction([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] CreateFactionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.faction",
+            "FactionController.CreateFaction",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "faction/create");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.faction",
-                "FactionController.CreateFaction",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "faction/create");
 
             var (statusCode, result) = await _implementation.CreateFactionAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -633,13 +618,13 @@ public partial class FactionController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<FactionResponse>> GetFaction([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] GetFactionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.faction",
+            "FactionController.GetFaction",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "faction/get");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.faction",
-                "FactionController.GetFaction",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "faction/get");
 
             var (statusCode, result) = await _implementation.GetFactionAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -682,13 +667,13 @@ public partial class FactionController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<FactionResponse>> GetFactionByCode([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] GetFactionByCodeRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.faction",
+            "FactionController.GetFactionByCode",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "faction/get-by-code");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.faction",
-                "FactionController.GetFactionByCode",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "faction/get-by-code");
 
             var (statusCode, result) = await _implementation.GetFactionByCodeAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -731,13 +716,13 @@ public partial class FactionController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ListFactionsResponse>> ListFactions([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] ListFactionsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.faction",
+            "FactionController.ListFactions",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "faction/list");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.faction",
-                "FactionController.ListFactions",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "faction/list");
 
             var (statusCode, result) = await _implementation.ListFactionsAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -781,13 +766,13 @@ public partial class FactionController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<FactionResponse>> UpdateFaction([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] UpdateFactionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.faction",
+            "FactionController.UpdateFaction",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "faction/update");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.faction",
-                "FactionController.UpdateFaction",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "faction/update");
 
             var (statusCode, result) = await _implementation.UpdateFactionAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -831,13 +816,13 @@ public partial class FactionController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<FactionResponse>> DeprecateFaction([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] DeprecateFactionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.faction",
+            "FactionController.DeprecateFaction",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "faction/deprecate");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.faction",
-                "FactionController.DeprecateFaction",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "faction/deprecate");
 
             var (statusCode, result) = await _implementation.DeprecateFactionAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -879,13 +864,13 @@ public partial class FactionController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<FactionResponse>> UndeprecateFaction([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] UndeprecateFactionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.faction",
+            "FactionController.UndeprecateFaction",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "faction/undeprecate");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.faction",
-                "FactionController.UndeprecateFaction",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "faction/undeprecate");
 
             var (statusCode, result) = await _implementation.UndeprecateFactionAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -930,13 +915,13 @@ public partial class FactionController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> DeleteFaction([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] DeleteFactionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.faction",
+            "FactionController.DeleteFaction",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "faction/delete");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.faction",
-                "FactionController.DeleteFaction",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "faction/delete");
 
             var statusCode = await _implementation.DeleteFactionAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode);
@@ -983,13 +968,13 @@ public partial class FactionController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SeedFactionsResponse>> SeedFactions([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] SeedFactionsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.faction",
+            "FactionController.SeedFactions",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "faction/seed");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.faction",
-                "FactionController.SeedFactions",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "faction/seed");
 
             var (statusCode, result) = await _implementation.SeedFactionsAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1037,13 +1022,13 @@ public partial class FactionController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<FactionResponse>> DesignateRealmBaseline([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] DesignateRealmBaselineRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.faction",
+            "FactionController.DesignateRealmBaseline",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "faction/designate-realm-baseline");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.faction",
-                "FactionController.DesignateRealmBaseline",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "faction/designate-realm-baseline");
 
             var (statusCode, result) = await _implementation.DesignateRealmBaselineAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1086,13 +1071,13 @@ public partial class FactionController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<FactionResponse>> GetRealmBaseline([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] GetRealmBaselineRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.faction",
+            "FactionController.GetRealmBaseline",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "faction/get-realm-baseline");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.faction",
-                "FactionController.GetRealmBaseline",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "faction/get-realm-baseline");
 
             var (statusCode, result) = await _implementation.GetRealmBaselineAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1141,13 +1126,13 @@ public partial class FactionController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<FactionMemberResponse>> AddMember([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] AddMemberRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.faction",
+            "FactionController.AddMember",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "faction/member/add");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.faction",
-                "FactionController.AddMember",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "faction/member/add");
 
             var (statusCode, result) = await _implementation.AddMemberAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1190,13 +1175,13 @@ public partial class FactionController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> RemoveMember([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] RemoveMemberRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.faction",
+            "FactionController.RemoveMember",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "faction/member/remove");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.faction",
-                "FactionController.RemoveMember",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "faction/member/remove");
 
             var statusCode = await _implementation.RemoveMemberAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode);
@@ -1239,13 +1224,13 @@ public partial class FactionController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ListMembersResponse>> ListMembers([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] ListMembersRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.faction",
+            "FactionController.ListMembers",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "faction/member/list");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.faction",
-                "FactionController.ListMembers",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "faction/member/list");
 
             var (statusCode, result) = await _implementation.ListMembersAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1289,13 +1274,13 @@ public partial class FactionController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ListMembershipsByCharacterResponse>> ListMembershipsByCharacter([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] ListMembershipsByCharacterRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.faction",
+            "FactionController.ListMembershipsByCharacter",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "faction/member/list-by-character");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.faction",
-                "FactionController.ListMembershipsByCharacter",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "faction/member/list-by-character");
 
             var (statusCode, result) = await _implementation.ListMembershipsByCharacterAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1338,13 +1323,13 @@ public partial class FactionController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<FactionMemberResponse>> UpdateMemberRole([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] UpdateMemberRoleRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.faction",
+            "FactionController.UpdateMemberRole",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "faction/member/update-role");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.faction",
-                "FactionController.UpdateMemberRole",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "faction/member/update-role");
 
             var (statusCode, result) = await _implementation.UpdateMemberRoleAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1387,13 +1372,13 @@ public partial class FactionController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CheckMembershipResponse>> CheckMembership([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] CheckMembershipRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.faction",
+            "FactionController.CheckMembership",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "faction/member/check");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.faction",
-                "FactionController.CheckMembership",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "faction/member/check");
 
             var (statusCode, result) = await _implementation.CheckMembershipAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1440,13 +1425,13 @@ public partial class FactionController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<TerritoryClaimResponse>> ClaimTerritory([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] ClaimTerritoryRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.faction",
+            "FactionController.ClaimTerritory",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "faction/territory/claim");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.faction",
-                "FactionController.ClaimTerritory",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "faction/territory/claim");
 
             var (statusCode, result) = await _implementation.ClaimTerritoryAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1489,13 +1474,13 @@ public partial class FactionController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> ReleaseTerritory([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] ReleaseTerritoryRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.faction",
+            "FactionController.ReleaseTerritory",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "faction/territory/release");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.faction",
-                "FactionController.ReleaseTerritory",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "faction/territory/release");
 
             var statusCode = await _implementation.ReleaseTerritoryAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode);
@@ -1538,13 +1523,13 @@ public partial class FactionController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ListTerritoryClaimsResponse>> ListTerritoryClaims([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] ListTerritoryClaimsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.faction",
+            "FactionController.ListTerritoryClaims",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "faction/territory/list");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.faction",
-                "FactionController.ListTerritoryClaims",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "faction/territory/list");
 
             var (statusCode, result) = await _implementation.ListTerritoryClaimsAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1590,13 +1575,13 @@ public partial class FactionController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ControllingFactionResponse>> GetControllingFaction([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] GetControllingFactionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.faction",
+            "FactionController.GetControllingFaction",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "faction/territory/get-controlling");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.faction",
-                "FactionController.GetControllingFaction",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "faction/territory/get-controlling");
 
             var (statusCode, result) = await _implementation.GetControllingFactionAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1652,13 +1637,13 @@ public partial class FactionController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<NormDefinitionResponse>> DefineNorm([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] DefineNormRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.faction",
+            "FactionController.DefineNorm",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "faction/norm/define");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.faction",
-                "FactionController.DefineNorm",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "faction/norm/define");
 
             var (statusCode, result) = await _implementation.DefineNormAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1702,13 +1687,13 @@ public partial class FactionController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<NormDefinitionResponse>> UpdateNorm([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] UpdateNormRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.faction",
+            "FactionController.UpdateNorm",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "faction/norm/update");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.faction",
-                "FactionController.UpdateNorm",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "faction/norm/update");
 
             var (statusCode, result) = await _implementation.UpdateNormAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1750,13 +1735,13 @@ public partial class FactionController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> DeleteNorm([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] DeleteNormRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.faction",
+            "FactionController.DeleteNorm",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "faction/norm/delete");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.faction",
-                "FactionController.DeleteNorm",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "faction/norm/delete");
 
             var statusCode = await _implementation.DeleteNormAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode);
@@ -1799,13 +1784,13 @@ public partial class FactionController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ListNormsResponse>> ListNorms([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] ListNormsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.faction",
+            "FactionController.ListNorms",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "faction/norm/list");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.faction",
-                "FactionController.ListNorms",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "faction/norm/list");
 
             var (statusCode, result) = await _implementation.ListNormsAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1861,13 +1846,13 @@ public partial class FactionController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<QueryApplicableNormsResponse>> QueryApplicableNorms([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] QueryApplicableNormsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.faction",
+            "FactionController.QueryApplicableNorms",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "faction/norm/query-applicable");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.faction",
-                "FactionController.QueryApplicableNorms",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "faction/norm/query-applicable");
 
             var (statusCode, result) = await _implementation.QueryApplicableNormsAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1911,13 +1896,13 @@ public partial class FactionController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CleanupByCharacterResponse>> CleanupByCharacter([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] CleanupByCharacterRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.faction",
+            "FactionController.CleanupByCharacter",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "faction/cleanup-by-character");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.faction",
-                "FactionController.CleanupByCharacter",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "faction/cleanup-by-character");
 
             var (statusCode, result) = await _implementation.CleanupByCharacterAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1961,13 +1946,13 @@ public partial class FactionController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CleanupByRealmResponse>> CleanupByRealm([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] CleanupByRealmRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.faction",
+            "FactionController.CleanupByRealm",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "faction/cleanup-by-realm");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.faction",
-                "FactionController.CleanupByRealm",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "faction/cleanup-by-realm");
 
             var (statusCode, result) = await _implementation.CleanupByRealmAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -2011,13 +1996,13 @@ public partial class FactionController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CleanupByLocationResponse>> CleanupByLocation([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] CleanupByLocationRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.faction",
+            "FactionController.CleanupByLocation",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "faction/cleanup-by-location");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.faction",
-                "FactionController.CleanupByLocation",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "faction/cleanup-by-location");
 
             var (statusCode, result) = await _implementation.CleanupByLocationAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -2061,13 +2046,13 @@ public partial class FactionController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<FactionArchive>> GetCompressData([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] GetCompressDataRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.faction",
+            "FactionController.GetCompressData",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "faction/get-compress-data");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.faction",
-                "FactionController.GetCompressData",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "faction/get-compress-data");
 
             var (statusCode, result) = await _implementation.GetCompressDataAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -2111,13 +2096,13 @@ public partial class FactionController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RestoreFromArchiveResponse>> RestoreFromArchive([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] RestoreFromArchiveRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.faction",
+            "FactionController.RestoreFromArchive",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "faction/restore-from-archive");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.faction",
-                "FactionController.RestoreFromArchive",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "faction/restore-from-archive");
 
             var (statusCode, result) = await _implementation.RestoreFromArchiveAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);

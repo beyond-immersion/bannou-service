@@ -317,7 +317,7 @@ public class ConnectWebSocketTestHandler : IServiceTestHandler
             // Try to parse the response
             try
             {
-                var receivedMessage = BinaryMessage.Parse(receiveBuffer.Array, result.Count);
+                var receivedMessage = BinaryMessageHelper.ParseAndDecompress(receiveBuffer.Array, result.Count);
                 Console.WriteLine("✅ Successfully parsed binary protocol response:");
                 Console.WriteLine($"   Flags: {receivedMessage.Flags}");
                 Console.WriteLine($"   Channel: {receivedMessage.Channel}");
@@ -403,7 +403,7 @@ public class ConnectWebSocketTestHandler : IServiceTestHandler
                     return false;
                 }
 
-                var receivedMessage = BinaryMessage.Parse(receiveBuffer.Array, result.Count);
+                var receivedMessage = BinaryMessageHelper.ParseAndDecompress(receiveBuffer.Array, result.Count);
                 var responsePayload = Encoding.UTF8.GetString(receivedMessage.Payload.Span);
                 Console.WriteLine($"   Payload preview: {responsePayload[..Math.Min(500, responsePayload.Length)]}");
 
@@ -1378,18 +1378,11 @@ public class ConnectWebSocketTestHandler : IServiceTestHandler
 
     /// <summary>
     /// Tries to extract JSON text from a binary message payload.
+    /// Handles decompression transparently when the Compressed flag is set.
     /// </summary>
     private static string? TryParseAsJsonFromBinary(byte[] buffer, int count)
     {
-        try
-        {
-            var message = BinaryMessage.Parse(buffer, count);
-            return Encoding.UTF8.GetString(message.Payload.Span);
-        }
-        catch
-        {
-            return null;
-        }
+        return BinaryMessageHelper.TryParseJsonPayload(buffer, count);
     }
 
     /// <summary>
@@ -1429,7 +1422,7 @@ public class ConnectWebSocketTestHandler : IServiceTestHandler
 
                 if (result.Count > 0 && receiveBuffer.Array != null)
                 {
-                    var receivedMessage = BinaryMessage.Parse(receiveBuffer.Array, result.Count);
+                    var receivedMessage = BinaryMessageHelper.ParseAndDecompress(receiveBuffer.Array, result.Count);
                     var payloadText = Encoding.UTF8.GetString(receivedMessage.Payload.Span);
 
                     // Check if this is a capability manifest
@@ -1495,7 +1488,7 @@ public class ConnectWebSocketTestHandler : IServiceTestHandler
 
                 if (receiveBuffer.Array == null || result.Count == 0) continue;
 
-                var receivedMessage = BinaryMessage.Parse(receiveBuffer.Array, result.Count);
+                var receivedMessage = BinaryMessageHelper.ParseAndDecompress(receiveBuffer.Array, result.Count);
                 if (!receivedMessage.Flags.HasFlag(MessageFlags.Event)) continue;
                 if (receivedMessage.Payload.Length == 0) continue;
 
@@ -1585,7 +1578,7 @@ public class ConnectWebSocketTestHandler : IServiceTestHandler
                 }
 
                 // Parse the binary message
-                var receivedMessage = BinaryMessage.Parse(receiveBuffer.Array, result.Count);
+                var receivedMessage = BinaryMessageHelper.ParseAndDecompress(receiveBuffer.Array, result.Count);
 
                 // Check if this is an event message (capability manifest)
                 if (!receivedMessage.Flags.HasFlag(MessageFlags.Event))
@@ -1709,7 +1702,7 @@ public class ConnectWebSocketTestHandler : IServiceTestHandler
                 }
 
                 // Parse the binary message
-                var message = BinaryMessage.Parse(receiveBuffer.Array, result.Count);
+                var message = BinaryMessageHelper.ParseAndDecompress(receiveBuffer.Array, result.Count);
 
                 Console.WriteLine($"   Received message: flags={message.Flags}, channel={message.Channel}, msgId={message.MessageId}");
 
@@ -2140,7 +2133,7 @@ public class ConnectWebSocketTestHandler : IServiceTestHandler
                 }
 
                 // Parse the binary message
-                var receivedMessage = BinaryMessage.Parse(receiveBuffer.Array, result.Count);
+                var receivedMessage = BinaryMessageHelper.ParseAndDecompress(receiveBuffer.Array, result.Count);
 
                 // Check if this is an event message (capability manifest)
                 if (!receivedMessage.Flags.HasFlag(MessageFlags.Event))

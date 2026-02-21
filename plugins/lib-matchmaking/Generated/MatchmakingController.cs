@@ -22,21 +22,6 @@
 
 #nullable enable
 
-#pragma warning disable 108 // Disable "CS0108 '{derivedDto}.ToJson()' hides inherited member '{dtoBase}.ToJson()'. Use the new keyword if hiding was intended."
-#pragma warning disable 114 // Disable "CS0114 '{derivedDto}.RaisePropertyChanged(String)' hides inherited member 'dtoBase.RaisePropertyChanged(String)'. To make the current member override that implementation, add the override keyword. Otherwise add the new keyword."
-#pragma warning disable 472 // Disable "CS0472 The result of the expression is always 'false' since a value of type 'Int32' is never equal to 'null' of type 'Int32?'
-#pragma warning disable 612 // Disable "CS0612 '...' is obsolete"
-#pragma warning disable 649 // Disable "CS0649 Field is never assigned to, and will always have its default value null"
-#pragma warning disable 1573 // Disable "CS1573 Parameter '...' has no matching param tag in the XML comment for ...
-#pragma warning disable 1591 // Disable "CS1591 Missing XML comment for publicly visible type or member ..."
-#pragma warning disable 8073 // Disable "CS8073 The result of the expression is always 'false' since a value of type 'T' is never equal to 'null' of type 'T?'"
-#pragma warning disable 3016 // Disable "CS3016 Arrays as attribute arguments is not CLS-compliant"
-#pragma warning disable 8600 // Disable "CS8600 Converting null literal or possible null value to non-nullable type"
-#pragma warning disable 8602 // Disable "CS8602 Dereference of a possibly null reference"
-#pragma warning disable 8603 // Disable "CS8603 Possible null reference return"
-#pragma warning disable 8604 // Disable "CS8604 Possible null reference argument for parameter"
-#pragma warning disable 8625 // Disable "CS8625 Cannot convert null literal to non-nullable reference type"
-#pragma warning disable 8765 // Disable "CS8765 Nullability of type of parameter doesn't match overridden member (possibly because of nullability attributes)."
 
 namespace BeyondImmersion.BannouService.Matchmaking;
 
@@ -257,13 +242,13 @@ public partial class MatchmakingController : Microsoft.AspNetCore.Mvc.Controller
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ListQueuesResponse>> ListQueues([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] ListQueuesRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.matchmaking",
+            "MatchmakingController.ListQueues",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "matchmaking/queue/list");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.matchmaking",
-                "MatchmakingController.ListQueues",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "matchmaking/queue/list");
 
             var (statusCode, result) = await _implementation.ListQueuesAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -305,13 +290,13 @@ public partial class MatchmakingController : Microsoft.AspNetCore.Mvc.Controller
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<QueueResponse>> GetQueue([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] GetQueueRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.matchmaking",
+            "MatchmakingController.GetQueue",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "matchmaking/queue/get");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.matchmaking",
-                "MatchmakingController.GetQueue",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "matchmaking/queue/get");
 
             var (statusCode, result) = await _implementation.GetQueueAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -355,13 +340,13 @@ public partial class MatchmakingController : Microsoft.AspNetCore.Mvc.Controller
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<QueueResponse>> CreateQueue([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] CreateQueueRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.matchmaking",
+            "MatchmakingController.CreateQueue",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "matchmaking/queue/create");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.matchmaking",
-                "MatchmakingController.CreateQueue",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "matchmaking/queue/create");
 
             var (statusCode, result) = await _implementation.CreateQueueAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -404,13 +389,13 @@ public partial class MatchmakingController : Microsoft.AspNetCore.Mvc.Controller
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<QueueResponse>> UpdateQueue([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] UpdateQueueRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.matchmaking",
+            "MatchmakingController.UpdateQueue",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "matchmaking/queue/update");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.matchmaking",
-                "MatchmakingController.UpdateQueue",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "matchmaking/queue/update");
 
             var (statusCode, result) = await _implementation.UpdateQueueAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -453,13 +438,13 @@ public partial class MatchmakingController : Microsoft.AspNetCore.Mvc.Controller
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> DeleteQueue([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] DeleteQueueRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.matchmaking",
+            "MatchmakingController.DeleteQueue",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "matchmaking/queue/delete");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.matchmaking",
-                "MatchmakingController.DeleteQueue",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "matchmaking/queue/delete");
 
             var statusCode = await _implementation.DeleteQueueAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode);
@@ -504,13 +489,13 @@ public partial class MatchmakingController : Microsoft.AspNetCore.Mvc.Controller
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<JoinMatchmakingResponse>> JoinMatchmaking([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] JoinMatchmakingRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.matchmaking",
+            "MatchmakingController.JoinMatchmaking",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "matchmaking/join");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.matchmaking",
-                "MatchmakingController.JoinMatchmaking",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "matchmaking/join");
 
             var (statusCode, result) = await _implementation.JoinMatchmakingAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -553,13 +538,13 @@ public partial class MatchmakingController : Microsoft.AspNetCore.Mvc.Controller
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> LeaveMatchmaking([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] LeaveMatchmakingRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.matchmaking",
+            "MatchmakingController.LeaveMatchmaking",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "matchmaking/leave");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.matchmaking",
-                "MatchmakingController.LeaveMatchmaking",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "matchmaking/leave");
 
             var statusCode = await _implementation.LeaveMatchmakingAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode);
@@ -602,13 +587,13 @@ public partial class MatchmakingController : Microsoft.AspNetCore.Mvc.Controller
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<MatchmakingStatusResponse>> GetMatchmakingStatus([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] GetMatchmakingStatusRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.matchmaking",
+            "MatchmakingController.GetMatchmakingStatus",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "matchmaking/status");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.matchmaking",
-                "MatchmakingController.GetMatchmakingStatus",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "matchmaking/status");
 
             var (statusCode, result) = await _implementation.GetMatchmakingStatusAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -652,13 +637,13 @@ public partial class MatchmakingController : Microsoft.AspNetCore.Mvc.Controller
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<AcceptMatchResponse>> AcceptMatch([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] AcceptMatchRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.matchmaking",
+            "MatchmakingController.AcceptMatch",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "matchmaking/accept");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.matchmaking",
-                "MatchmakingController.AcceptMatch",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "matchmaking/accept");
 
             var (statusCode, result) = await _implementation.AcceptMatchAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -702,13 +687,13 @@ public partial class MatchmakingController : Microsoft.AspNetCore.Mvc.Controller
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> DeclineMatch([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] DeclineMatchRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.matchmaking",
+            "MatchmakingController.DeclineMatch",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "matchmaking/decline");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.matchmaking",
-                "MatchmakingController.DeclineMatch",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "matchmaking/decline");
 
             var statusCode = await _implementation.DeclineMatchAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode);
@@ -751,13 +736,13 @@ public partial class MatchmakingController : Microsoft.AspNetCore.Mvc.Controller
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<MatchmakingStatsResponse>> GetMatchmakingStats([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] GetMatchmakingStatsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.matchmaking",
+            "MatchmakingController.GetMatchmakingStats",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "matchmaking/stats");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.matchmaking",
-                "MatchmakingController.GetMatchmakingStats",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "matchmaking/stats");
 
             var (statusCode, result) = await _implementation.GetMatchmakingStatsAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);

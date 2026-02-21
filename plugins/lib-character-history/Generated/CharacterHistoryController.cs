@@ -22,21 +22,6 @@
 
 #nullable enable
 
-#pragma warning disable 108 // Disable "CS0108 '{derivedDto}.ToJson()' hides inherited member '{dtoBase}.ToJson()'. Use the new keyword if hiding was intended."
-#pragma warning disable 114 // Disable "CS0114 '{derivedDto}.RaisePropertyChanged(String)' hides inherited member 'dtoBase.RaisePropertyChanged(String)'. To make the current member override that implementation, add the override keyword. Otherwise add the new keyword."
-#pragma warning disable 472 // Disable "CS0472 The result of the expression is always 'false' since a value of type 'Int32' is never equal to 'null' of type 'Int32?'
-#pragma warning disable 612 // Disable "CS0612 '...' is obsolete"
-#pragma warning disable 649 // Disable "CS0649 Field is never assigned to, and will always have its default value null"
-#pragma warning disable 1573 // Disable "CS1573 Parameter '...' has no matching param tag in the XML comment for ...
-#pragma warning disable 1591 // Disable "CS1591 Missing XML comment for publicly visible type or member ..."
-#pragma warning disable 8073 // Disable "CS8073 The result of the expression is always 'false' since a value of type 'T' is never equal to 'null' of type 'T?'"
-#pragma warning disable 3016 // Disable "CS3016 Arrays as attribute arguments is not CLS-compliant"
-#pragma warning disable 8600 // Disable "CS8600 Converting null literal or possible null value to non-nullable type"
-#pragma warning disable 8602 // Disable "CS8602 Dereference of a possibly null reference"
-#pragma warning disable 8603 // Disable "CS8603 Possible null reference return"
-#pragma warning disable 8604 // Disable "CS8604 Possible null reference argument for parameter"
-#pragma warning disable 8625 // Disable "CS8625 Cannot convert null literal to non-nullable reference type"
-#pragma warning disable 8765 // Disable "CS8765 Nullability of type of parameter doesn't match overridden member (possibly because of nullability attributes)."
 
 namespace BeyondImmersion.BannouService.CharacterHistory;
 
@@ -270,13 +255,13 @@ public partial class CharacterHistoryController : Microsoft.AspNetCore.Mvc.Contr
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<HistoricalParticipation>> RecordParticipation([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] RecordParticipationRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.character-history",
+            "CharacterHistoryController.RecordParticipation",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "character-history/record-participation");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.character-history",
-                "CharacterHistoryController.RecordParticipation",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "character-history/record-participation");
 
             var (statusCode, result) = await _implementation.RecordParticipationAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -319,13 +304,13 @@ public partial class CharacterHistoryController : Microsoft.AspNetCore.Mvc.Contr
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ParticipationListResponse>> GetParticipation([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] GetParticipationRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.character-history",
+            "CharacterHistoryController.GetParticipation",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "character-history/get-participation");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.character-history",
-                "CharacterHistoryController.GetParticipation",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "character-history/get-participation");
 
             var (statusCode, result) = await _implementation.GetParticipationAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -368,13 +353,13 @@ public partial class CharacterHistoryController : Microsoft.AspNetCore.Mvc.Contr
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ParticipationListResponse>> GetEventParticipants([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] GetEventParticipantsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.character-history",
+            "CharacterHistoryController.GetEventParticipants",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "character-history/get-event-participants");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.character-history",
-                "CharacterHistoryController.GetEventParticipants",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "character-history/get-event-participants");
 
             var (statusCode, result) = await _implementation.GetEventParticipantsAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -417,13 +402,13 @@ public partial class CharacterHistoryController : Microsoft.AspNetCore.Mvc.Contr
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> DeleteParticipation([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] DeleteParticipationRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.character-history",
+            "CharacterHistoryController.DeleteParticipation",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "character-history/delete-participation");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.character-history",
-                "CharacterHistoryController.DeleteParticipation",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "character-history/delete-participation");
 
             var statusCode = await _implementation.DeleteParticipationAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode);
@@ -467,13 +452,13 @@ public partial class CharacterHistoryController : Microsoft.AspNetCore.Mvc.Contr
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<BackstoryResponse>> GetBackstory([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] GetBackstoryRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.character-history",
+            "CharacterHistoryController.GetBackstory",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "character-history/get-backstory");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.character-history",
-                "CharacterHistoryController.GetBackstory",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "character-history/get-backstory");
 
             var (statusCode, result) = await _implementation.GetBackstoryAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -516,13 +501,13 @@ public partial class CharacterHistoryController : Microsoft.AspNetCore.Mvc.Contr
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<BackstoryResponse>> SetBackstory([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] SetBackstoryRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.character-history",
+            "CharacterHistoryController.SetBackstory",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "character-history/set-backstory");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.character-history",
-                "CharacterHistoryController.SetBackstory",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "character-history/set-backstory");
 
             var (statusCode, result) = await _implementation.SetBackstoryAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -565,13 +550,13 @@ public partial class CharacterHistoryController : Microsoft.AspNetCore.Mvc.Contr
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<BackstoryResponse>> AddBackstoryElement([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] AddBackstoryElementRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.character-history",
+            "CharacterHistoryController.AddBackstoryElement",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "character-history/add-backstory-element");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.character-history",
-                "CharacterHistoryController.AddBackstoryElement",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "character-history/add-backstory-element");
 
             var (statusCode, result) = await _implementation.AddBackstoryElementAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -614,13 +599,13 @@ public partial class CharacterHistoryController : Microsoft.AspNetCore.Mvc.Contr
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> DeleteBackstory([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] DeleteBackstoryRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.character-history",
+            "CharacterHistoryController.DeleteBackstory",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "character-history/delete-backstory");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.character-history",
-                "CharacterHistoryController.DeleteBackstory",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "character-history/delete-backstory");
 
             var statusCode = await _implementation.DeleteBackstoryAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode);
@@ -663,13 +648,13 @@ public partial class CharacterHistoryController : Microsoft.AspNetCore.Mvc.Contr
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<DeleteAllHistoryResponse>> DeleteAllHistory([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] DeleteAllHistoryRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.character-history",
+            "CharacterHistoryController.DeleteAllHistory",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "character-history/delete-all");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.character-history",
-                "CharacterHistoryController.DeleteAllHistory",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "character-history/delete-all");
 
             var (statusCode, result) = await _implementation.DeleteAllHistoryAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -713,13 +698,13 @@ public partial class CharacterHistoryController : Microsoft.AspNetCore.Mvc.Contr
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<HistorySummaryResponse>> SummarizeHistory([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] SummarizeHistoryRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.character-history",
+            "CharacterHistoryController.SummarizeHistory",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "character-history/summarize");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.character-history",
-                "CharacterHistoryController.SummarizeHistory",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "character-history/summarize");
 
             var (statusCode, result) = await _implementation.SummarizeHistoryAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -762,13 +747,13 @@ public partial class CharacterHistoryController : Microsoft.AspNetCore.Mvc.Contr
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CharacterHistoryArchive>> GetCompressData([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] GetCompressDataRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.character-history",
+            "CharacterHistoryController.GetCompressData",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "character-history/get-compress-data");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.character-history",
-                "CharacterHistoryController.GetCompressData",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "character-history/get-compress-data");
 
             var (statusCode, result) = await _implementation.GetCompressDataAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -811,13 +796,13 @@ public partial class CharacterHistoryController : Microsoft.AspNetCore.Mvc.Contr
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RestoreFromArchiveResponse>> RestoreFromArchive([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] RestoreFromArchiveRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.character-history",
+            "CharacterHistoryController.RestoreFromArchive",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "character-history/restore-from-archive");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.character-history",
-                "CharacterHistoryController.RestoreFromArchive",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "character-history/restore-from-archive");
 
             var (statusCode, result) = await _implementation.RestoreFromArchiveAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);

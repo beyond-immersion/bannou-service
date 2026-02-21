@@ -22,21 +22,6 @@
 
 #nullable enable
 
-#pragma warning disable 108 // Disable "CS0108 '{derivedDto}.ToJson()' hides inherited member '{dtoBase}.ToJson()'. Use the new keyword if hiding was intended."
-#pragma warning disable 114 // Disable "CS0114 '{derivedDto}.RaisePropertyChanged(String)' hides inherited member 'dtoBase.RaisePropertyChanged(String)'. To make the current member override that implementation, add the override keyword. Otherwise add the new keyword."
-#pragma warning disable 472 // Disable "CS0472 The result of the expression is always 'false' since a value of type 'Int32' is never equal to 'null' of type 'Int32?'
-#pragma warning disable 612 // Disable "CS0612 '...' is obsolete"
-#pragma warning disable 649 // Disable "CS0649 Field is never assigned to, and will always have its default value null"
-#pragma warning disable 1573 // Disable "CS1573 Parameter '...' has no matching param tag in the XML comment for ...
-#pragma warning disable 1591 // Disable "CS1591 Missing XML comment for publicly visible type or member ..."
-#pragma warning disable 8073 // Disable "CS8073 The result of the expression is always 'false' since a value of type 'T' is never equal to 'null' of type 'T?'"
-#pragma warning disable 3016 // Disable "CS3016 Arrays as attribute arguments is not CLS-compliant"
-#pragma warning disable 8600 // Disable "CS8600 Converting null literal or possible null value to non-nullable type"
-#pragma warning disable 8602 // Disable "CS8602 Dereference of a possibly null reference"
-#pragma warning disable 8603 // Disable "CS8603 Possible null reference return"
-#pragma warning disable 8604 // Disable "CS8604 Possible null reference argument for parameter"
-#pragma warning disable 8625 // Disable "CS8625 Cannot convert null literal to non-nullable reference type"
-#pragma warning disable 8765 // Disable "CS8765 Nullability of type of parameter doesn't match overridden member (possibly because of nullability attributes)."
 
 namespace BeyondImmersion.BannouService.Account;
 
@@ -273,13 +258,13 @@ public partial class AccountController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<AccountListResponse>> ListAccounts([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] ListAccountsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.account",
+            "AccountController.ListAccounts",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "account/list");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.account",
-                "AccountController.ListAccounts",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "account/list");
 
             var (statusCode, result) = await _implementation.ListAccountsAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -318,13 +303,13 @@ public partial class AccountController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<AccountResponse>> CreateAccount([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] CreateAccountRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.account",
+            "AccountController.CreateAccount",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "account/create");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.account",
-                "AccountController.CreateAccount",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "account/create");
 
             var (statusCode, result) = await _implementation.CreateAccountAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -363,13 +348,13 @@ public partial class AccountController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<AccountResponse>> GetAccount([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] GetAccountRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.account",
+            "AccountController.GetAccount",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "account/get");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.account",
-                "AccountController.GetAccount",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "account/get");
 
             var (statusCode, result) = await _implementation.GetAccountAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -408,13 +393,13 @@ public partial class AccountController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<AccountResponse>> UpdateAccount([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] UpdateAccountRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.account",
+            "AccountController.UpdateAccount",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "account/update");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.account",
-                "AccountController.UpdateAccount",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "account/update");
 
             var (statusCode, result) = await _implementation.UpdateAccountAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -453,13 +438,13 @@ public partial class AccountController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> DeleteAccount([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] DeleteAccountRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.account",
+            "AccountController.DeleteAccount",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "account/delete");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.account",
-                "AccountController.DeleteAccount",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "account/delete");
 
             var statusCode = await _implementation.DeleteAccountAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode);
@@ -498,13 +483,13 @@ public partial class AccountController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<AccountResponse>> GetAccountByEmail([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] GetAccountByEmailRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.account",
+            "AccountController.GetAccountByEmail",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "account/by-email");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.account",
-                "AccountController.GetAccountByEmail",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "account/by-email");
 
             var (statusCode, result) = await _implementation.GetAccountByEmailAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -543,13 +528,13 @@ public partial class AccountController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<AuthMethodsResponse>> GetAuthMethods([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] GetAuthMethodsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.account",
+            "AccountController.GetAuthMethods",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "account/auth-methods/list");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.account",
-                "AccountController.GetAuthMethods",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "account/auth-methods/list");
 
             var (statusCode, result) = await _implementation.GetAuthMethodsAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -588,13 +573,13 @@ public partial class AccountController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<AuthMethodResponse>> AddAuthMethod([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] AddAuthMethodRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.account",
+            "AccountController.AddAuthMethod",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "account/auth-methods/add");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.account",
-                "AccountController.AddAuthMethod",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "account/auth-methods/add");
 
             var (statusCode, result) = await _implementation.AddAuthMethodAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -633,13 +618,13 @@ public partial class AccountController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> RemoveAuthMethod([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] RemoveAuthMethodRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.account",
+            "AccountController.RemoveAuthMethod",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "account/auth-methods/remove");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.account",
-                "AccountController.RemoveAuthMethod",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "account/auth-methods/remove");
 
             var statusCode = await _implementation.RemoveAuthMethodAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode);
@@ -678,13 +663,13 @@ public partial class AccountController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<AccountResponse>> GetAccountByProvider([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] GetAccountByProviderRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.account",
+            "AccountController.GetAccountByProvider",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "account/by-provider");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.account",
-                "AccountController.GetAccountByProvider",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "account/by-provider");
 
             var (statusCode, result) = await _implementation.GetAccountByProviderAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -723,13 +708,13 @@ public partial class AccountController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<AccountResponse>> UpdateProfile([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] UpdateProfileRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.account",
+            "AccountController.UpdateProfile",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "account/profile/update");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.account",
-                "AccountController.UpdateProfile",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "account/profile/update");
 
             var (statusCode, result) = await _implementation.UpdateProfileAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -768,13 +753,13 @@ public partial class AccountController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> UpdatePasswordHash([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] UpdatePasswordRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.account",
+            "AccountController.UpdatePasswordHash",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "account/password/update");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.account",
-                "AccountController.UpdatePasswordHash",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "account/password/update");
 
             var statusCode = await _implementation.UpdatePasswordHashAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode);
@@ -818,13 +803,13 @@ public partial class AccountController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> UpdateMfa([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] UpdateMfaRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.account",
+            "AccountController.UpdateMfa",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "account/mfa/update");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.account",
-                "AccountController.UpdateMfa",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "account/mfa/update");
 
             var statusCode = await _implementation.UpdateMfaAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode);
@@ -863,13 +848,13 @@ public partial class AccountController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<BatchGetAccountsResponse>> BatchGetAccounts([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] BatchGetAccountsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.account",
+            "AccountController.BatchGetAccounts",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "account/batch-get");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.account",
-                "AccountController.BatchGetAccounts",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "account/batch-get");
 
             var (statusCode, result) = await _implementation.BatchGetAccountsAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -908,13 +893,13 @@ public partial class AccountController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CountAccountsResponse>> CountAccounts([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] CountAccountsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.account",
+            "AccountController.CountAccounts",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "account/count");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.account",
-                "AccountController.CountAccounts",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "account/count");
 
             var (statusCode, result) = await _implementation.CountAccountsAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -953,13 +938,13 @@ public partial class AccountController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<BulkUpdateRolesResponse>> BulkUpdateRoles([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] BulkUpdateRolesRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.account",
+            "AccountController.BulkUpdateRoles",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "account/roles/bulk-update");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.account",
-                "AccountController.BulkUpdateRoles",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "account/roles/bulk-update");
 
             var (statusCode, result) = await _implementation.BulkUpdateRolesAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -998,13 +983,13 @@ public partial class AccountController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> UpdateVerificationStatus([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] UpdateVerificationRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.account",
+            "AccountController.UpdateVerificationStatus",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "account/verification/update");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.account",
-                "AccountController.UpdateVerificationStatus",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "account/verification/update");
 
             var statusCode = await _implementation.UpdateVerificationStatusAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode);
@@ -1043,13 +1028,13 @@ public partial class AccountController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<AccountResponse>> UpdateEmail([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] UpdateEmailRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.account",
+            "AccountController.UpdateEmail",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "account/email/update");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.account",
-                "AccountController.UpdateEmail",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "account/email/update");
 
             var (statusCode, result) = await _implementation.UpdateEmailAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);

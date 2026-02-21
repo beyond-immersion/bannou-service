@@ -22,21 +22,6 @@
 
 #nullable enable
 
-#pragma warning disable 108 // Disable "CS0108 '{derivedDto}.ToJson()' hides inherited member '{dtoBase}.ToJson()'. Use the new keyword if hiding was intended."
-#pragma warning disable 114 // Disable "CS0114 '{derivedDto}.RaisePropertyChanged(String)' hides inherited member 'dtoBase.RaisePropertyChanged(String)'. To make the current member override that implementation, add the override keyword. Otherwise add the new keyword."
-#pragma warning disable 472 // Disable "CS0472 The result of the expression is always 'false' since a value of type 'Int32' is never equal to 'null' of type 'Int32?'
-#pragma warning disable 612 // Disable "CS0612 '...' is obsolete"
-#pragma warning disable 649 // Disable "CS0649 Field is never assigned to, and will always have its default value null"
-#pragma warning disable 1573 // Disable "CS1573 Parameter '...' has no matching param tag in the XML comment for ...
-#pragma warning disable 1591 // Disable "CS1591 Missing XML comment for publicly visible type or member ..."
-#pragma warning disable 8073 // Disable "CS8073 The result of the expression is always 'false' since a value of type 'T' is never equal to 'null' of type 'T?'"
-#pragma warning disable 3016 // Disable "CS3016 Arrays as attribute arguments is not CLS-compliant"
-#pragma warning disable 8600 // Disable "CS8600 Converting null literal or possible null value to non-nullable type"
-#pragma warning disable 8602 // Disable "CS8602 Dereference of a possibly null reference"
-#pragma warning disable 8603 // Disable "CS8603 Possible null reference return"
-#pragma warning disable 8604 // Disable "CS8604 Possible null reference argument for parameter"
-#pragma warning disable 8625 // Disable "CS8625 Cannot convert null literal to non-nullable reference type"
-#pragma warning disable 8765 // Disable "CS8765 Nullability of type of parameter doesn't match overridden member (possibly because of nullability attributes)."
 
 namespace BeyondImmersion.BannouService.Divine;
 
@@ -401,13 +386,13 @@ public partial class DivineController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<DeityResponse>> CreateDeity([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] CreateDeityRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.divine",
+            "DivineController.CreateDeity",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "divine/deity/create");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.divine",
-                "DivineController.CreateDeity",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "divine/deity/create");
 
             var (statusCode, result) = await _implementation.CreateDeityAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -449,13 +434,13 @@ public partial class DivineController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<DeityResponse>> GetDeity([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] GetDeityRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.divine",
+            "DivineController.GetDeity",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "divine/deity/get");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.divine",
-                "DivineController.GetDeity",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "divine/deity/get");
 
             var (statusCode, result) = await _implementation.GetDeityAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -497,13 +482,13 @@ public partial class DivineController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<DeityResponse>> GetDeityByCode([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] GetDeityByCodeRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.divine",
+            "DivineController.GetDeityByCode",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "divine/deity/get-by-code");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.divine",
-                "DivineController.GetDeityByCode",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "divine/deity/get-by-code");
 
             var (statusCode, result) = await _implementation.GetDeityByCodeAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -546,13 +531,13 @@ public partial class DivineController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ListDeitiesResponse>> ListDeities([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] ListDeitiesRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.divine",
+            "DivineController.ListDeities",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "divine/deity/list");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.divine",
-                "DivineController.ListDeities",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "divine/deity/list");
 
             var (statusCode, result) = await _implementation.ListDeitiesAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -595,13 +580,13 @@ public partial class DivineController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<DeityResponse>> UpdateDeity([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] UpdateDeityRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.divine",
+            "DivineController.UpdateDeity",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "divine/deity/update");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.divine",
-                "DivineController.UpdateDeity",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "divine/deity/update");
 
             var (statusCode, result) = await _implementation.UpdateDeityAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -644,13 +629,13 @@ public partial class DivineController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<DeityResponse>> ActivateDeity([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] ActivateDeityRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.divine",
+            "DivineController.ActivateDeity",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "divine/deity/activate");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.divine",
-                "DivineController.ActivateDeity",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "divine/deity/activate");
 
             var (statusCode, result) = await _implementation.ActivateDeityAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -693,13 +678,13 @@ public partial class DivineController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<DeityResponse>> DeactivateDeity([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] DeactivateDeityRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.divine",
+            "DivineController.DeactivateDeity",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "divine/deity/deactivate");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.divine",
-                "DivineController.DeactivateDeity",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "divine/deity/deactivate");
 
             var (statusCode, result) = await _implementation.DeactivateDeityAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -744,13 +729,13 @@ public partial class DivineController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> DeleteDeity([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] DeleteDeityRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.divine",
+            "DivineController.DeleteDeity",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "divine/deity/delete");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.divine",
-                "DivineController.DeleteDeity",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "divine/deity/delete");
 
             var statusCode = await _implementation.DeleteDeityAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode);
@@ -792,13 +777,13 @@ public partial class DivineController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<DivinityBalanceResponse>> GetDivinityBalance([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] GetDivinityBalanceRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.divine",
+            "DivineController.GetDivinityBalance",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "divine/divinity/get-balance");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.divine",
-                "DivineController.GetDivinityBalance",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "divine/divinity/get-balance");
 
             var (statusCode, result) = await _implementation.GetDivinityBalanceAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -841,13 +826,13 @@ public partial class DivineController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<DivinityBalanceResponse>> CreditDivinity([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] CreditDivinityRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.divine",
+            "DivineController.CreditDivinity",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "divine/divinity/credit");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.divine",
-                "DivineController.CreditDivinity",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "divine/divinity/credit");
 
             var (statusCode, result) = await _implementation.CreditDivinityAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -891,13 +876,13 @@ public partial class DivineController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<DivinityBalanceResponse>> DebitDivinity([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] DebitDivinityRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.divine",
+            "DivineController.DebitDivinity",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "divine/divinity/debit");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.divine",
-                "DivineController.DebitDivinity",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "divine/divinity/debit");
 
             var (statusCode, result) = await _implementation.DebitDivinityAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -939,13 +924,13 @@ public partial class DivineController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<DivinityHistoryResponse>> GetDivinityHistory([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] GetDivinityHistoryRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.divine",
+            "DivineController.GetDivinityHistory",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "divine/divinity/get-history");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.divine",
-                "DivineController.GetDivinityHistory",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "divine/divinity/get-history");
 
             var (statusCode, result) = await _implementation.GetDivinityHistoryAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -991,13 +976,13 @@ public partial class DivineController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<BlessingResponse>> GrantBlessing([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] GrantBlessingRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.divine",
+            "DivineController.GrantBlessing",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "divine/blessing/grant");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.divine",
-                "DivineController.GrantBlessing",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "divine/blessing/grant");
 
             var (statusCode, result) = await _implementation.GrantBlessingAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1041,13 +1026,13 @@ public partial class DivineController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<BlessingResponse>> RevokeBlessing([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] RevokeBlessingRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.divine",
+            "DivineController.RevokeBlessing",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "divine/blessing/revoke");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.divine",
-                "DivineController.RevokeBlessing",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "divine/blessing/revoke");
 
             var (statusCode, result) = await _implementation.RevokeBlessingAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1089,13 +1074,13 @@ public partial class DivineController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ListBlessingsResponse>> ListBlessingsByEntity([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] ListBlessingsByEntityRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.divine",
+            "DivineController.ListBlessingsByEntity",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "divine/blessing/list-by-entity");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.divine",
-                "DivineController.ListBlessingsByEntity",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "divine/blessing/list-by-entity");
 
             var (statusCode, result) = await _implementation.ListBlessingsByEntityAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1137,13 +1122,13 @@ public partial class DivineController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ListBlessingsResponse>> ListBlessingsByDeity([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] ListBlessingsByDeityRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.divine",
+            "DivineController.ListBlessingsByDeity",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "divine/blessing/list-by-deity");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.divine",
-                "DivineController.ListBlessingsByDeity",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "divine/blessing/list-by-deity");
 
             var (statusCode, result) = await _implementation.ListBlessingsByDeityAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1185,13 +1170,13 @@ public partial class DivineController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<BlessingResponse>> GetBlessing([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] GetBlessingRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.divine",
+            "DivineController.GetBlessing",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "divine/blessing/get");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.divine",
-                "DivineController.GetBlessing",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "divine/blessing/get");
 
             var (statusCode, result) = await _implementation.GetBlessingAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1235,13 +1220,13 @@ public partial class DivineController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<FollowerResponse>> RegisterFollower([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] RegisterFollowerRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.divine",
+            "DivineController.RegisterFollower",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "divine/follower/register");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.divine",
-                "DivineController.RegisterFollower",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "divine/follower/register");
 
             var (statusCode, result) = await _implementation.RegisterFollowerAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1284,13 +1269,13 @@ public partial class DivineController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> UnregisterFollower([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] UnregisterFollowerRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.divine",
+            "DivineController.UnregisterFollower",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "divine/follower/unregister");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.divine",
-                "DivineController.UnregisterFollower",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "divine/follower/unregister");
 
             var statusCode = await _implementation.UnregisterFollowerAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode);
@@ -1332,13 +1317,13 @@ public partial class DivineController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ListFollowersResponse>> GetFollowers([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] GetFollowersRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.divine",
+            "DivineController.GetFollowers",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "divine/follower/get-followers");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.divine",
-                "DivineController.GetFollowers",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "divine/follower/get-followers");
 
             var (statusCode, result) = await _implementation.GetFollowersAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1383,13 +1368,13 @@ public partial class DivineController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> CleanupByCharacter([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] CleanupByCharacterRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.divine",
+            "DivineController.CleanupByCharacter",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "divine/cleanup-by-character");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.divine",
-                "DivineController.CleanupByCharacter",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "divine/cleanup-by-character");
 
             var statusCode = await _implementation.CleanupByCharacterAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode);
@@ -1433,13 +1418,13 @@ public partial class DivineController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> CleanupByGameService([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] CleanupByGameServiceRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.divine",
+            "DivineController.CleanupByGameService",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "divine/cleanup-by-game-service");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.divine",
-                "DivineController.CleanupByGameService",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "divine/cleanup-by-game-service");
 
             var statusCode = await _implementation.CleanupByGameServiceAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode);

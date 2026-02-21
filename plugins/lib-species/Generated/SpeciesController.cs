@@ -22,21 +22,6 @@
 
 #nullable enable
 
-#pragma warning disable 108 // Disable "CS0108 '{derivedDto}.ToJson()' hides inherited member '{dtoBase}.ToJson()'. Use the new keyword if hiding was intended."
-#pragma warning disable 114 // Disable "CS0114 '{derivedDto}.RaisePropertyChanged(String)' hides inherited member 'dtoBase.RaisePropertyChanged(String)'. To make the current member override that implementation, add the override keyword. Otherwise add the new keyword."
-#pragma warning disable 472 // Disable "CS0472 The result of the expression is always 'false' since a value of type 'Int32' is never equal to 'null' of type 'Int32?'
-#pragma warning disable 612 // Disable "CS0612 '...' is obsolete"
-#pragma warning disable 649 // Disable "CS0649 Field is never assigned to, and will always have its default value null"
-#pragma warning disable 1573 // Disable "CS1573 Parameter '...' has no matching param tag in the XML comment for ...
-#pragma warning disable 1591 // Disable "CS1591 Missing XML comment for publicly visible type or member ..."
-#pragma warning disable 8073 // Disable "CS8073 The result of the expression is always 'false' since a value of type 'T' is never equal to 'null' of type 'T?'"
-#pragma warning disable 3016 // Disable "CS3016 Arrays as attribute arguments is not CLS-compliant"
-#pragma warning disable 8600 // Disable "CS8600 Converting null literal or possible null value to non-nullable type"
-#pragma warning disable 8602 // Disable "CS8602 Dereference of a possibly null reference"
-#pragma warning disable 8603 // Disable "CS8603 Possible null reference return"
-#pragma warning disable 8604 // Disable "CS8604 Possible null reference argument for parameter"
-#pragma warning disable 8625 // Disable "CS8625 Cannot convert null literal to non-nullable reference type"
-#pragma warning disable 8765 // Disable "CS8765 Nullability of type of parameter doesn't match overridden member (possibly because of nullability attributes)."
 
 namespace BeyondImmersion.BannouService.Species;
 
@@ -273,13 +258,13 @@ public partial class SpeciesController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SpeciesResponse>> GetSpecies([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] GetSpeciesRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.species",
+            "SpeciesController.GetSpecies",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "species/get");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.species",
-                "SpeciesController.GetSpecies",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "species/get");
 
             var (statusCode, result) = await _implementation.GetSpeciesAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -321,13 +306,13 @@ public partial class SpeciesController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SpeciesResponse>> GetSpeciesByCode([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] GetSpeciesByCodeRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.species",
+            "SpeciesController.GetSpeciesByCode",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "species/get-by-code");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.species",
-                "SpeciesController.GetSpeciesByCode",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "species/get-by-code");
 
             var (statusCode, result) = await _implementation.GetSpeciesByCodeAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -369,13 +354,13 @@ public partial class SpeciesController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SpeciesListResponse>> ListSpecies([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] ListSpeciesRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.species",
+            "SpeciesController.ListSpecies",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "species/list");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.species",
-                "SpeciesController.ListSpecies",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "species/list");
 
             var (statusCode, result) = await _implementation.ListSpeciesAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -417,13 +402,13 @@ public partial class SpeciesController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SpeciesListResponse>> ListSpeciesByRealm([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] ListSpeciesByRealmRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.species",
+            "SpeciesController.ListSpeciesByRealm",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "species/list-by-realm");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.species",
-                "SpeciesController.ListSpeciesByRealm",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "species/list-by-realm");
 
             var (statusCode, result) = await _implementation.ListSpeciesByRealmAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -462,13 +447,13 @@ public partial class SpeciesController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SpeciesResponse>> CreateSpecies([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] CreateSpeciesRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.species",
+            "SpeciesController.CreateSpecies",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "species/create");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.species",
-                "SpeciesController.CreateSpecies",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "species/create");
 
             var (statusCode, result) = await _implementation.CreateSpeciesAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -507,13 +492,13 @@ public partial class SpeciesController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SpeciesResponse>> UpdateSpecies([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] UpdateSpeciesRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.species",
+            "SpeciesController.UpdateSpecies",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "species/update");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.species",
-                "SpeciesController.UpdateSpecies",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "species/update");
 
             var (statusCode, result) = await _implementation.UpdateSpeciesAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -557,13 +542,13 @@ public partial class SpeciesController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> DeleteSpecies([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] DeleteSpeciesRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.species",
+            "SpeciesController.DeleteSpecies",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "species/delete");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.species",
-                "SpeciesController.DeleteSpecies",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "species/delete");
 
             var statusCode = await _implementation.DeleteSpeciesAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode);
@@ -610,13 +595,13 @@ public partial class SpeciesController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SpeciesResponse>> DeprecateSpecies([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] DeprecateSpeciesRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.species",
+            "SpeciesController.DeprecateSpecies",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "species/deprecate");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.species",
-                "SpeciesController.DeprecateSpecies",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "species/deprecate");
 
             var (statusCode, result) = await _implementation.DeprecateSpeciesAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -659,13 +644,13 @@ public partial class SpeciesController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SpeciesResponse>> UndeprecateSpecies([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] UndeprecateSpeciesRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.species",
+            "SpeciesController.UndeprecateSpecies",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "species/undeprecate");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.species",
-                "SpeciesController.UndeprecateSpecies",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "species/undeprecate");
 
             var (statusCode, result) = await _implementation.UndeprecateSpeciesAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -717,13 +702,13 @@ public partial class SpeciesController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<MergeSpeciesResponse>> MergeSpecies([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] MergeSpeciesRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.species",
+            "SpeciesController.MergeSpecies",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "species/merge");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.species",
-                "SpeciesController.MergeSpecies",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "species/merge");
 
             var (statusCode, result) = await _implementation.MergeSpeciesAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -765,13 +750,13 @@ public partial class SpeciesController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SpeciesResponse>> AddSpeciesToRealm([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] AddSpeciesToRealmRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.species",
+            "SpeciesController.AddSpeciesToRealm",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "species/add-to-realm");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.species",
-                "SpeciesController.AddSpeciesToRealm",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "species/add-to-realm");
 
             var (statusCode, result) = await _implementation.AddSpeciesToRealmAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -813,13 +798,13 @@ public partial class SpeciesController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SpeciesResponse>> RemoveSpeciesFromRealm([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] RemoveSpeciesFromRealmRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.species",
+            "SpeciesController.RemoveSpeciesFromRealm",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "species/remove-from-realm");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.species",
-                "SpeciesController.RemoveSpeciesFromRealm",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "species/remove-from-realm");
 
             var (statusCode, result) = await _implementation.RemoveSpeciesFromRealmAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -863,13 +848,13 @@ public partial class SpeciesController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SeedSpeciesResponse>> SeedSpecies([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] SeedSpeciesRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.species",
+            "SpeciesController.SeedSpecies",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "species/seed");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.species",
-                "SpeciesController.SeedSpecies",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "species/seed");
 
             var (statusCode, result) = await _implementation.SeedSpeciesAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);

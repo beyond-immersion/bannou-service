@@ -15,7 +15,7 @@ public partial class ConnectController : ConnectControllerBase
     private readonly IConnectService _connectService;
     private readonly ILogger<ConnectController> _logger;
 
-    public ConnectController(IConnectService connectService, ILogger<ConnectController> logger) : base(connectService)
+    public ConnectController(IConnectService connectService, BeyondImmersion.BannouService.Services.ITelemetryProvider telemetryProvider, ILogger<ConnectController> logger) : base(connectService, telemetryProvider)
     {
         _connectService = connectService;
         _logger = logger;

@@ -22,21 +22,6 @@
 
 #nullable enable
 
-#pragma warning disable 108 // Disable "CS0108 '{derivedDto}.ToJson()' hides inherited member '{dtoBase}.ToJson()'. Use the new keyword if hiding was intended."
-#pragma warning disable 114 // Disable "CS0114 '{derivedDto}.RaisePropertyChanged(String)' hides inherited member 'dtoBase.RaisePropertyChanged(String)'. To make the current member override that implementation, add the override keyword. Otherwise add the new keyword."
-#pragma warning disable 472 // Disable "CS0472 The result of the expression is always 'false' since a value of type 'Int32' is never equal to 'null' of type 'Int32?'
-#pragma warning disable 612 // Disable "CS0612 '...' is obsolete"
-#pragma warning disable 649 // Disable "CS0649 Field is never assigned to, and will always have its default value null"
-#pragma warning disable 1573 // Disable "CS1573 Parameter '...' has no matching param tag in the XML comment for ...
-#pragma warning disable 1591 // Disable "CS1591 Missing XML comment for publicly visible type or member ..."
-#pragma warning disable 8073 // Disable "CS8073 The result of the expression is always 'false' since a value of type 'T' is never equal to 'null' of type 'T?'"
-#pragma warning disable 3016 // Disable "CS3016 Arrays as attribute arguments is not CLS-compliant"
-#pragma warning disable 8600 // Disable "CS8600 Converting null literal or possible null value to non-nullable type"
-#pragma warning disable 8602 // Disable "CS8602 Dereference of a possibly null reference"
-#pragma warning disable 8603 // Disable "CS8603 Possible null reference return"
-#pragma warning disable 8604 // Disable "CS8604 Possible null reference argument for parameter"
-#pragma warning disable 8625 // Disable "CS8625 Cannot convert null literal to non-nullable reference type"
-#pragma warning disable 8765 // Disable "CS8765 Nullability of type of parameter doesn't match overridden member (possibly because of nullability attributes)."
 
 namespace BeyondImmersion.BannouService.Mapping;
 
@@ -358,13 +343,13 @@ public partial class MappingController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<AuthorityGrant>> CreateChannel([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] CreateChannelRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.mapping",
+            "MappingController.CreateChannel",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "mapping/create-channel");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.mapping",
-                "MappingController.CreateChannel",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "mapping/create-channel");
 
             var (statusCode, result) = await _implementation.CreateChannelAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -407,13 +392,13 @@ public partial class MappingController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ReleaseAuthorityResponse>> ReleaseAuthority([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] ReleaseAuthorityRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.mapping",
+            "MappingController.ReleaseAuthority",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "mapping/release-authority");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.mapping",
-                "MappingController.ReleaseAuthority",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "mapping/release-authority");
 
             var (statusCode, result) = await _implementation.ReleaseAuthorityAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -456,13 +441,13 @@ public partial class MappingController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<AuthorityHeartbeatResponse>> AuthorityHeartbeat([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] AuthorityHeartbeatRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.mapping",
+            "MappingController.AuthorityHeartbeat",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "mapping/authority-heartbeat");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.mapping",
-                "MappingController.AuthorityHeartbeat",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "mapping/authority-heartbeat");
 
             var (statusCode, result) = await _implementation.AuthorityHeartbeatAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -506,13 +491,13 @@ public partial class MappingController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<PublishMapUpdateResponse>> PublishMapUpdate([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] PublishMapUpdateRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.mapping",
+            "MappingController.PublishMapUpdate",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "mapping/publish");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.mapping",
-                "MappingController.PublishMapUpdate",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "mapping/publish");
 
             var (statusCode, result) = await _implementation.PublishMapUpdateAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -556,13 +541,13 @@ public partial class MappingController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<PublishObjectChangesResponse>> PublishObjectChanges([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] PublishObjectChangesRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.mapping",
+            "MappingController.PublishObjectChanges",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "mapping/publish-objects");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.mapping",
-                "MappingController.PublishObjectChanges",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "mapping/publish-objects");
 
             var (statusCode, result) = await _implementation.PublishObjectChangesAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -606,13 +591,13 @@ public partial class MappingController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RequestSnapshotResponse>> RequestSnapshot([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] RequestSnapshotRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.mapping",
+            "MappingController.RequestSnapshot",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "mapping/request-snapshot");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.mapping",
-                "MappingController.RequestSnapshot",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "mapping/request-snapshot");
 
             var (statusCode, result) = await _implementation.RequestSnapshotAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -656,13 +641,13 @@ public partial class MappingController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<QueryPointResponse>> QueryPoint([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] QueryPointRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.mapping",
+            "MappingController.QueryPoint",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "mapping/query/point");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.mapping",
-                "MappingController.QueryPoint",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "mapping/query/point");
 
             var (statusCode, result) = await _implementation.QueryPointAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -706,13 +691,13 @@ public partial class MappingController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<QueryBoundsResponse>> QueryBounds([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] QueryBoundsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.mapping",
+            "MappingController.QueryBounds",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "mapping/query/bounds");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.mapping",
-                "MappingController.QueryBounds",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "mapping/query/bounds");
 
             var (statusCode, result) = await _implementation.QueryBoundsAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -755,13 +740,13 @@ public partial class MappingController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<QueryObjectsByTypeResponse>> QueryObjectsByType([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] QueryObjectsByTypeRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.mapping",
+            "MappingController.QueryObjectsByType",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "mapping/query/objects-by-type");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.mapping",
-                "MappingController.QueryObjectsByType",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "mapping/query/objects-by-type");
 
             var (statusCode, result) = await _implementation.QueryObjectsByTypeAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -812,13 +797,13 @@ public partial class MappingController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<AffordanceQueryResponse>> QueryAffordance([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] AffordanceQueryRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.mapping",
+            "MappingController.QueryAffordance",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "mapping/query/affordance");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.mapping",
-                "MappingController.QueryAffordance",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "mapping/query/affordance");
 
             var (statusCode, result) = await _implementation.QueryAffordanceAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -862,13 +847,13 @@ public partial class MappingController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<AuthoringCheckoutResponse>> CheckoutForAuthoring([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] AuthoringCheckoutRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.mapping",
+            "MappingController.CheckoutForAuthoring",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "mapping/authoring/checkout");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.mapping",
-                "MappingController.CheckoutForAuthoring",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "mapping/authoring/checkout");
 
             var (statusCode, result) = await _implementation.CheckoutForAuthoringAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -911,13 +896,13 @@ public partial class MappingController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<AuthoringCommitResponse>> CommitAuthoring([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] AuthoringCommitRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.mapping",
+            "MappingController.CommitAuthoring",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "mapping/authoring/commit");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.mapping",
-                "MappingController.CommitAuthoring",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "mapping/authoring/commit");
 
             var (statusCode, result) = await _implementation.CommitAuthoringAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -960,13 +945,13 @@ public partial class MappingController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<AuthoringReleaseResponse>> ReleaseAuthoring([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] AuthoringReleaseRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.mapping",
+            "MappingController.ReleaseAuthoring",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "mapping/authoring/release");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.mapping",
-                "MappingController.ReleaseAuthoring",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "mapping/authoring/release");
 
             var (statusCode, result) = await _implementation.ReleaseAuthoringAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1010,13 +995,13 @@ public partial class MappingController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<MapDefinition>> CreateDefinition([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] CreateDefinitionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.mapping",
+            "MappingController.CreateDefinition",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "mapping/definition/create");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.mapping",
-                "MappingController.CreateDefinition",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "mapping/definition/create");
 
             var (statusCode, result) = await _implementation.CreateDefinitionAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1058,13 +1043,13 @@ public partial class MappingController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<MapDefinition>> GetDefinition([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] GetDefinitionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.mapping",
+            "MappingController.GetDefinition",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "mapping/definition/get");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.mapping",
-                "MappingController.GetDefinition",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "mapping/definition/get");
 
             var (statusCode, result) = await _implementation.GetDefinitionAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1106,13 +1091,13 @@ public partial class MappingController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ListDefinitionsResponse>> ListDefinitions([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] ListDefinitionsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.mapping",
+            "MappingController.ListDefinitions",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "mapping/definition/list");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.mapping",
-                "MappingController.ListDefinitions",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "mapping/definition/list");
 
             var (statusCode, result) = await _implementation.ListDefinitionsAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1155,13 +1140,13 @@ public partial class MappingController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<MapDefinition>> UpdateDefinition([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] UpdateDefinitionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.mapping",
+            "MappingController.UpdateDefinition",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "mapping/definition/update");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.mapping",
-                "MappingController.UpdateDefinition",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "mapping/definition/update");
 
             var (statusCode, result) = await _implementation.UpdateDefinitionAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1203,13 +1188,13 @@ public partial class MappingController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<DeleteDefinitionResponse>> DeleteDefinition([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] DeleteDefinitionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.mapping",
+            "MappingController.DeleteDefinition",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "mapping/definition/delete");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.mapping",
-                "MappingController.DeleteDefinition",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "mapping/definition/delete");
 
             var (statusCode, result) = await _implementation.DeleteDefinitionAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);

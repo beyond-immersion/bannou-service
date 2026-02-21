@@ -22,21 +22,6 @@
 
 #nullable enable
 
-#pragma warning disable 108 // Disable "CS0108 '{derivedDto}.ToJson()' hides inherited member '{dtoBase}.ToJson()'. Use the new keyword if hiding was intended."
-#pragma warning disable 114 // Disable "CS0114 '{derivedDto}.RaisePropertyChanged(String)' hides inherited member 'dtoBase.RaisePropertyChanged(String)'. To make the current member override that implementation, add the override keyword. Otherwise add the new keyword."
-#pragma warning disable 472 // Disable "CS0472 The result of the expression is always 'false' since a value of type 'Int32' is never equal to 'null' of type 'Int32?'
-#pragma warning disable 612 // Disable "CS0612 '...' is obsolete"
-#pragma warning disable 649 // Disable "CS0649 Field is never assigned to, and will always have its default value null"
-#pragma warning disable 1573 // Disable "CS1573 Parameter '...' has no matching param tag in the XML comment for ...
-#pragma warning disable 1591 // Disable "CS1591 Missing XML comment for publicly visible type or member ..."
-#pragma warning disable 8073 // Disable "CS8073 The result of the expression is always 'false' since a value of type 'T' is never equal to 'null' of type 'T?'"
-#pragma warning disable 3016 // Disable "CS3016 Arrays as attribute arguments is not CLS-compliant"
-#pragma warning disable 8600 // Disable "CS8600 Converting null literal or possible null value to non-nullable type"
-#pragma warning disable 8602 // Disable "CS8602 Dereference of a possibly null reference"
-#pragma warning disable 8603 // Disable "CS8603 Possible null reference return"
-#pragma warning disable 8604 // Disable "CS8604 Possible null reference argument for parameter"
-#pragma warning disable 8625 // Disable "CS8625 Cannot convert null literal to non-nullable reference type"
-#pragma warning disable 8765 // Disable "CS8765 Nullability of type of parameter doesn't match overridden member (possibly because of nullability attributes)."
 
 namespace BeyondImmersion.BannouService.Gardener;
 
@@ -413,13 +398,13 @@ public partial class GardenerController : Microsoft.AspNetCore.Mvc.ControllerBas
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<GardenStateResponse>> EnterGarden([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] EnterGardenRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.gardener",
+            "GardenerController.EnterGarden",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "gardener/garden/enter");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.gardener",
-                "GardenerController.EnterGarden",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "gardener/garden/enter");
 
             var (statusCode, result) = await _implementation.EnterGardenAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -461,13 +446,13 @@ public partial class GardenerController : Microsoft.AspNetCore.Mvc.ControllerBas
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<GardenStateResponse>> GetGardenState([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] GetGardenStateRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.gardener",
+            "GardenerController.GetGardenState",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "gardener/garden/get");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.gardener",
-                "GardenerController.GetGardenState",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "gardener/garden/get");
 
             var (statusCode, result) = await _implementation.GetGardenStateAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -510,13 +495,13 @@ public partial class GardenerController : Microsoft.AspNetCore.Mvc.ControllerBas
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<PositionUpdateResponse>> UpdatePosition([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] UpdatePositionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.gardener",
+            "GardenerController.UpdatePosition",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "gardener/garden/update-position");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.gardener",
-                "GardenerController.UpdatePosition",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "gardener/garden/update-position");
 
             var (statusCode, result) = await _implementation.UpdatePositionAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -559,13 +544,13 @@ public partial class GardenerController : Microsoft.AspNetCore.Mvc.ControllerBas
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<LeaveGardenResponse>> LeaveGarden([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] LeaveGardenRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.gardener",
+            "GardenerController.LeaveGarden",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "gardener/garden/leave");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.gardener",
-                "GardenerController.LeaveGarden",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "gardener/garden/leave");
 
             var (statusCode, result) = await _implementation.LeaveGardenAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -607,13 +592,13 @@ public partial class GardenerController : Microsoft.AspNetCore.Mvc.ControllerBas
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ListPoisResponse>> ListPois([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] ListPoisRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.gardener",
+            "GardenerController.ListPois",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "gardener/poi/list");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.gardener",
-                "GardenerController.ListPois",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "gardener/poi/list");
 
             var (statusCode, result) = await _implementation.ListPoisAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -657,13 +642,13 @@ public partial class GardenerController : Microsoft.AspNetCore.Mvc.ControllerBas
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<PoiInteractionResponse>> InteractWithPoi([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] InteractWithPoiRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.gardener",
+            "GardenerController.InteractWithPoi",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "gardener/poi/interact");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.gardener",
-                "GardenerController.InteractWithPoi",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "gardener/poi/interact");
 
             var (statusCode, result) = await _implementation.InteractWithPoiAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -706,13 +691,13 @@ public partial class GardenerController : Microsoft.AspNetCore.Mvc.ControllerBas
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<DeclinePoiResponse>> DeclinePoi([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] DeclinePoiRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.gardener",
+            "GardenerController.DeclinePoi",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "gardener/poi/decline");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.gardener",
-                "GardenerController.DeclinePoi",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "gardener/poi/decline");
 
             var (statusCode, result) = await _implementation.DeclinePoiAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -756,13 +741,13 @@ public partial class GardenerController : Microsoft.AspNetCore.Mvc.ControllerBas
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ScenarioStateResponse>> EnterScenario([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] EnterScenarioRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.gardener",
+            "GardenerController.EnterScenario",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "gardener/scenario/enter");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.gardener",
-                "GardenerController.EnterScenario",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "gardener/scenario/enter");
 
             var (statusCode, result) = await _implementation.EnterScenarioAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -804,13 +789,13 @@ public partial class GardenerController : Microsoft.AspNetCore.Mvc.ControllerBas
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ScenarioStateResponse>> GetScenarioState([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] GetScenarioStateRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.gardener",
+            "GardenerController.GetScenarioState",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "gardener/scenario/get");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.gardener",
-                "GardenerController.GetScenarioState",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "gardener/scenario/get");
 
             var (statusCode, result) = await _implementation.GetScenarioStateAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -853,13 +838,13 @@ public partial class GardenerController : Microsoft.AspNetCore.Mvc.ControllerBas
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ScenarioCompletionResponse>> CompleteScenario([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] CompleteScenarioRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.gardener",
+            "GardenerController.CompleteScenario",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "gardener/scenario/complete");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.gardener",
-                "GardenerController.CompleteScenario",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "gardener/scenario/complete");
 
             var (statusCode, result) = await _implementation.CompleteScenarioAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -902,13 +887,13 @@ public partial class GardenerController : Microsoft.AspNetCore.Mvc.ControllerBas
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<AbandonScenarioResponse>> AbandonScenario([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] AbandonScenarioRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.gardener",
+            "GardenerController.AbandonScenario",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "gardener/scenario/abandon");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.gardener",
-                "GardenerController.AbandonScenario",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "gardener/scenario/abandon");
 
             var (statusCode, result) = await _implementation.AbandonScenarioAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -952,13 +937,13 @@ public partial class GardenerController : Microsoft.AspNetCore.Mvc.ControllerBas
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ScenarioStateResponse>> ChainScenario([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] ChainScenarioRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.gardener",
+            "GardenerController.ChainScenario",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "gardener/scenario/chain");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.gardener",
-                "GardenerController.ChainScenario",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "gardener/scenario/chain");
 
             var (statusCode, result) = await _implementation.ChainScenarioAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1000,13 +985,13 @@ public partial class GardenerController : Microsoft.AspNetCore.Mvc.ControllerBas
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ScenarioTemplateResponse>> CreateTemplate([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] CreateTemplateRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.gardener",
+            "GardenerController.CreateTemplate",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "gardener/template/create");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.gardener",
-                "GardenerController.CreateTemplate",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "gardener/template/create");
 
             var (statusCode, result) = await _implementation.CreateTemplateAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1048,13 +1033,13 @@ public partial class GardenerController : Microsoft.AspNetCore.Mvc.ControllerBas
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ScenarioTemplateResponse>> GetTemplate([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] GetTemplateRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.gardener",
+            "GardenerController.GetTemplate",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "gardener/template/get");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.gardener",
-                "GardenerController.GetTemplate",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "gardener/template/get");
 
             var (statusCode, result) = await _implementation.GetTemplateAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1096,13 +1081,13 @@ public partial class GardenerController : Microsoft.AspNetCore.Mvc.ControllerBas
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ScenarioTemplateResponse>> GetTemplateByCode([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] GetTemplateByCodeRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.gardener",
+            "GardenerController.GetTemplateByCode",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "gardener/template/get-by-code");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.gardener",
-                "GardenerController.GetTemplateByCode",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "gardener/template/get-by-code");
 
             var (statusCode, result) = await _implementation.GetTemplateByCodeAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1144,13 +1129,13 @@ public partial class GardenerController : Microsoft.AspNetCore.Mvc.ControllerBas
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ListTemplatesResponse>> ListTemplates([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] ListTemplatesRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.gardener",
+            "GardenerController.ListTemplates",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "gardener/template/list");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.gardener",
-                "GardenerController.ListTemplates",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "gardener/template/list");
 
             var (statusCode, result) = await _implementation.ListTemplatesAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1192,13 +1177,13 @@ public partial class GardenerController : Microsoft.AspNetCore.Mvc.ControllerBas
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ScenarioTemplateResponse>> UpdateTemplate([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] UpdateTemplateRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.gardener",
+            "GardenerController.UpdateTemplate",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "gardener/template/update");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.gardener",
-                "GardenerController.UpdateTemplate",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "gardener/template/update");
 
             var (statusCode, result) = await _implementation.UpdateTemplateAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1240,13 +1225,13 @@ public partial class GardenerController : Microsoft.AspNetCore.Mvc.ControllerBas
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ScenarioTemplateResponse>> DeprecateTemplate([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] DeprecateTemplateRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.gardener",
+            "GardenerController.DeprecateTemplate",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "gardener/template/deprecate");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.gardener",
-                "GardenerController.DeprecateTemplate",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "gardener/template/deprecate");
 
             var (statusCode, result) = await _implementation.DeprecateTemplateAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1288,13 +1273,13 @@ public partial class GardenerController : Microsoft.AspNetCore.Mvc.ControllerBas
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ScenarioTemplateResponse>> DeleteTemplate([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] DeleteTemplateRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.gardener",
+            "GardenerController.DeleteTemplate",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "gardener/template/delete");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.gardener",
-                "GardenerController.DeleteTemplate",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "gardener/template/delete");
 
             var (statusCode, result) = await _implementation.DeleteTemplateAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1336,13 +1321,13 @@ public partial class GardenerController : Microsoft.AspNetCore.Mvc.ControllerBas
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<PhaseConfigResponse>> GetPhaseConfig([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] GetPhaseConfigRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.gardener",
+            "GardenerController.GetPhaseConfig",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "gardener/phase/get");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.gardener",
-                "GardenerController.GetPhaseConfig",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "gardener/phase/get");
 
             var (statusCode, result) = await _implementation.GetPhaseConfigAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1384,13 +1369,13 @@ public partial class GardenerController : Microsoft.AspNetCore.Mvc.ControllerBas
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<PhaseConfigResponse>> UpdatePhaseConfig([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] UpdatePhaseConfigRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.gardener",
+            "GardenerController.UpdatePhaseConfig",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "gardener/phase/update");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.gardener",
-                "GardenerController.UpdatePhaseConfig",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "gardener/phase/update");
 
             var (statusCode, result) = await _implementation.UpdatePhaseConfigAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1432,13 +1417,13 @@ public partial class GardenerController : Microsoft.AspNetCore.Mvc.ControllerBas
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<PhaseMetricsResponse>> GetPhaseMetrics([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] GetPhaseMetricsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.gardener",
+            "GardenerController.GetPhaseMetrics",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "gardener/phase/get-metrics");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.gardener",
-                "GardenerController.GetPhaseMetrics",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "gardener/phase/get-metrics");
 
             var (statusCode, result) = await _implementation.GetPhaseMetricsAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1481,13 +1466,13 @@ public partial class GardenerController : Microsoft.AspNetCore.Mvc.ControllerBas
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ScenarioStateResponse>> EnterScenarioTogether([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] EnterTogetherRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.gardener",
+            "GardenerController.EnterScenarioTogether",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "gardener/bond/enter-together");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.gardener",
-                "GardenerController.EnterScenarioTogether",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "gardener/bond/enter-together");
 
             var (statusCode, result) = await _implementation.EnterScenarioTogetherAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1529,13 +1514,13 @@ public partial class GardenerController : Microsoft.AspNetCore.Mvc.ControllerBas
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SharedGardenStateResponse>> GetSharedGardenState([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] GetSharedGardenRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.gardener",
+            "GardenerController.GetSharedGardenState",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "gardener/bond/get-shared-garden");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.gardener",
-                "GardenerController.GetSharedGardenState",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "gardener/bond/get-shared-garden");
 
             var (statusCode, result) = await _implementation.GetSharedGardenStateAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);

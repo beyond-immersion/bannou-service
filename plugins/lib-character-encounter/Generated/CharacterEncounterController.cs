@@ -22,21 +22,6 @@
 
 #nullable enable
 
-#pragma warning disable 108 // Disable "CS0108 '{derivedDto}.ToJson()' hides inherited member '{dtoBase}.ToJson()'. Use the new keyword if hiding was intended."
-#pragma warning disable 114 // Disable "CS0114 '{derivedDto}.RaisePropertyChanged(String)' hides inherited member 'dtoBase.RaisePropertyChanged(String)'. To make the current member override that implementation, add the override keyword. Otherwise add the new keyword."
-#pragma warning disable 472 // Disable "CS0472 The result of the expression is always 'false' since a value of type 'Int32' is never equal to 'null' of type 'Int32?'
-#pragma warning disable 612 // Disable "CS0612 '...' is obsolete"
-#pragma warning disable 649 // Disable "CS0649 Field is never assigned to, and will always have its default value null"
-#pragma warning disable 1573 // Disable "CS1573 Parameter '...' has no matching param tag in the XML comment for ...
-#pragma warning disable 1591 // Disable "CS1591 Missing XML comment for publicly visible type or member ..."
-#pragma warning disable 8073 // Disable "CS8073 The result of the expression is always 'false' since a value of type 'T' is never equal to 'null' of type 'T?'"
-#pragma warning disable 3016 // Disable "CS3016 Arrays as attribute arguments is not CLS-compliant"
-#pragma warning disable 8600 // Disable "CS8600 Converting null literal or possible null value to non-nullable type"
-#pragma warning disable 8602 // Disable "CS8602 Dereference of a possibly null reference"
-#pragma warning disable 8603 // Disable "CS8603 Possible null reference return"
-#pragma warning disable 8604 // Disable "CS8604 Possible null reference argument for parameter"
-#pragma warning disable 8625 // Disable "CS8625 Cannot convert null literal to non-nullable reference type"
-#pragma warning disable 8765 // Disable "CS8765 Nullability of type of parameter doesn't match overridden member (possibly because of nullability attributes)."
 
 namespace BeyondImmersion.BannouService.CharacterEncounter;
 
@@ -385,13 +370,13 @@ public partial class CharacterEncounterController : Microsoft.AspNetCore.Mvc.Con
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<EncounterTypeResponse>> CreateEncounterType([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] CreateEncounterTypeRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.character-encounter",
+            "CharacterEncounterController.CreateEncounterType",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "character-encounter/type/create");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.character-encounter",
-                "CharacterEncounterController.CreateEncounterType",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "character-encounter/type/create");
 
             var (statusCode, result) = await _implementation.CreateEncounterTypeAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -433,13 +418,13 @@ public partial class CharacterEncounterController : Microsoft.AspNetCore.Mvc.Con
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<EncounterTypeResponse>> GetEncounterType([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] GetEncounterTypeRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.character-encounter",
+            "CharacterEncounterController.GetEncounterType",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "character-encounter/type/get");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.character-encounter",
-                "CharacterEncounterController.GetEncounterType",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "character-encounter/type/get");
 
             var (statusCode, result) = await _implementation.GetEncounterTypeAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -481,13 +466,13 @@ public partial class CharacterEncounterController : Microsoft.AspNetCore.Mvc.Con
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<EncounterTypeListResponse>> ListEncounterTypes([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] ListEncounterTypesRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.character-encounter",
+            "CharacterEncounterController.ListEncounterTypes",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "character-encounter/type/list");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.character-encounter",
-                "CharacterEncounterController.ListEncounterTypes",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "character-encounter/type/list");
 
             var (statusCode, result) = await _implementation.ListEncounterTypesAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -530,13 +515,13 @@ public partial class CharacterEncounterController : Microsoft.AspNetCore.Mvc.Con
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<EncounterTypeResponse>> UpdateEncounterType([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] UpdateEncounterTypeRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.character-encounter",
+            "CharacterEncounterController.UpdateEncounterType",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "character-encounter/type/update");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.character-encounter",
-                "CharacterEncounterController.UpdateEncounterType",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "character-encounter/type/update");
 
             var (statusCode, result) = await _implementation.UpdateEncounterTypeAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -579,13 +564,13 @@ public partial class CharacterEncounterController : Microsoft.AspNetCore.Mvc.Con
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> DeleteEncounterType([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] DeleteEncounterTypeRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.character-encounter",
+            "CharacterEncounterController.DeleteEncounterType",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "character-encounter/type/delete");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.character-encounter",
-                "CharacterEncounterController.DeleteEncounterType",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "character-encounter/type/delete");
 
             var statusCode = await _implementation.DeleteEncounterTypeAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode);
@@ -628,13 +613,13 @@ public partial class CharacterEncounterController : Microsoft.AspNetCore.Mvc.Con
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SeedEncounterTypesResponse>> SeedEncounterTypes([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] SeedEncounterTypesRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.character-encounter",
+            "CharacterEncounterController.SeedEncounterTypes",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "character-encounter/type/seed");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.character-encounter",
-                "CharacterEncounterController.SeedEncounterTypes",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "character-encounter/type/seed");
 
             var (statusCode, result) = await _implementation.SeedEncounterTypesAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -680,13 +665,13 @@ public partial class CharacterEncounterController : Microsoft.AspNetCore.Mvc.Con
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<EncounterResponse>> RecordEncounter([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] RecordEncounterRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.character-encounter",
+            "CharacterEncounterController.RecordEncounter",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "character-encounter/record");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.character-encounter",
-                "CharacterEncounterController.RecordEncounter",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "character-encounter/record");
 
             var (statusCode, result) = await _implementation.RecordEncounterAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -729,13 +714,13 @@ public partial class CharacterEncounterController : Microsoft.AspNetCore.Mvc.Con
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<EncounterListResponse>> QueryByCharacter([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] QueryByCharacterRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.character-encounter",
+            "CharacterEncounterController.QueryByCharacter",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "character-encounter/query/by-character");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.character-encounter",
-                "CharacterEncounterController.QueryByCharacter",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "character-encounter/query/by-character");
 
             var (statusCode, result) = await _implementation.QueryByCharacterAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -778,13 +763,13 @@ public partial class CharacterEncounterController : Microsoft.AspNetCore.Mvc.Con
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<EncounterListResponse>> QueryBetween([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] QueryBetweenRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.character-encounter",
+            "CharacterEncounterController.QueryBetween",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "character-encounter/query/between");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.character-encounter",
-                "CharacterEncounterController.QueryBetween",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "character-encounter/query/between");
 
             var (statusCode, result) = await _implementation.QueryBetweenAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -827,13 +812,13 @@ public partial class CharacterEncounterController : Microsoft.AspNetCore.Mvc.Con
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<EncounterListResponse>> QueryByLocation([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] QueryByLocationRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.character-encounter",
+            "CharacterEncounterController.QueryByLocation",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "character-encounter/query/by-location");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.character-encounter",
-                "CharacterEncounterController.QueryByLocation",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "character-encounter/query/by-location");
 
             var (statusCode, result) = await _implementation.QueryByLocationAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -876,13 +861,13 @@ public partial class CharacterEncounterController : Microsoft.AspNetCore.Mvc.Con
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<HasMetResponse>> HasMet([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] HasMetRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.character-encounter",
+            "CharacterEncounterController.HasMet",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "character-encounter/has-met");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.character-encounter",
-                "CharacterEncounterController.HasMet",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "character-encounter/has-met");
 
             var (statusCode, result) = await _implementation.HasMetAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -925,13 +910,13 @@ public partial class CharacterEncounterController : Microsoft.AspNetCore.Mvc.Con
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SentimentResponse>> GetSentiment([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] GetSentimentRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.character-encounter",
+            "CharacterEncounterController.GetSentiment",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "character-encounter/get-sentiment");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.character-encounter",
-                "CharacterEncounterController.GetSentiment",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "character-encounter/get-sentiment");
 
             var (statusCode, result) = await _implementation.GetSentimentAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -974,13 +959,13 @@ public partial class CharacterEncounterController : Microsoft.AspNetCore.Mvc.Con
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<BatchSentimentResponse>> BatchGetSentiment([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] BatchGetSentimentRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.character-encounter",
+            "CharacterEncounterController.BatchGetSentiment",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "character-encounter/batch-get");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.character-encounter",
-                "CharacterEncounterController.BatchGetSentiment",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "character-encounter/batch-get");
 
             var (statusCode, result) = await _implementation.BatchGetSentimentAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1023,13 +1008,13 @@ public partial class CharacterEncounterController : Microsoft.AspNetCore.Mvc.Con
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<PerspectiveResponse>> GetPerspective([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] GetPerspectiveRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.character-encounter",
+            "CharacterEncounterController.GetPerspective",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "character-encounter/get-perspective");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.character-encounter",
-                "CharacterEncounterController.GetPerspective",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "character-encounter/get-perspective");
 
             var (statusCode, result) = await _implementation.GetPerspectiveAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1072,13 +1057,13 @@ public partial class CharacterEncounterController : Microsoft.AspNetCore.Mvc.Con
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<PerspectiveResponse>> UpdatePerspective([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] UpdatePerspectiveRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.character-encounter",
+            "CharacterEncounterController.UpdatePerspective",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "character-encounter/update-perspective");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.character-encounter",
-                "CharacterEncounterController.UpdatePerspective",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "character-encounter/update-perspective");
 
             var (statusCode, result) = await _implementation.UpdatePerspectiveAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1121,13 +1106,13 @@ public partial class CharacterEncounterController : Microsoft.AspNetCore.Mvc.Con
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<PerspectiveResponse>> RefreshMemory([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] RefreshMemoryRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.character-encounter",
+            "CharacterEncounterController.RefreshMemory",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "character-encounter/refresh-memory");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.character-encounter",
-                "CharacterEncounterController.RefreshMemory",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "character-encounter/refresh-memory");
 
             var (statusCode, result) = await _implementation.RefreshMemoryAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1170,13 +1155,13 @@ public partial class CharacterEncounterController : Microsoft.AspNetCore.Mvc.Con
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<DeleteEncounterResponse>> DeleteEncounter([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] DeleteEncounterRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.character-encounter",
+            "CharacterEncounterController.DeleteEncounter",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "character-encounter/delete");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.character-encounter",
-                "CharacterEncounterController.DeleteEncounter",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "character-encounter/delete");
 
             var (statusCode, result) = await _implementation.DeleteEncounterAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1219,13 +1204,13 @@ public partial class CharacterEncounterController : Microsoft.AspNetCore.Mvc.Con
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<DeleteByCharacterResponse>> DeleteByCharacter([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] DeleteByCharacterRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.character-encounter",
+            "CharacterEncounterController.DeleteByCharacter",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "character-encounter/delete-by-character");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.character-encounter",
-                "CharacterEncounterController.DeleteByCharacter",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "character-encounter/delete-by-character");
 
             var (statusCode, result) = await _implementation.DeleteByCharacterAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1269,13 +1254,13 @@ public partial class CharacterEncounterController : Microsoft.AspNetCore.Mvc.Con
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<DecayMemoriesResponse>> DecayMemories([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] DecayMemoriesRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.character-encounter",
+            "CharacterEncounterController.DecayMemories",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "character-encounter/decay-memories");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.character-encounter",
-                "CharacterEncounterController.DecayMemories",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "character-encounter/decay-memories");
 
             var (statusCode, result) = await _implementation.DecayMemoriesAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1318,13 +1303,13 @@ public partial class CharacterEncounterController : Microsoft.AspNetCore.Mvc.Con
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CharacterEncounterArchive>> GetCompressData([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] GetCompressDataRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.character-encounter",
+            "CharacterEncounterController.GetCompressData",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "character-encounter/get-compress-data");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.character-encounter",
-                "CharacterEncounterController.GetCompressData",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "character-encounter/get-compress-data");
 
             var (statusCode, result) = await _implementation.GetCompressDataAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -1367,13 +1352,13 @@ public partial class CharacterEncounterController : Microsoft.AspNetCore.Mvc.Con
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<RestoreFromArchiveResponse>> RestoreFromArchive([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] RestoreFromArchiveRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.character-encounter",
+            "CharacterEncounterController.RestoreFromArchive",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "character-encounter/restore-from-archive");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.character-encounter",
-                "CharacterEncounterController.RestoreFromArchive",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "character-encounter/restore-from-archive");
 
             var (statusCode, result) = await _implementation.RestoreFromArchiveAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);

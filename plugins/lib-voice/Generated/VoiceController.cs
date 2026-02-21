@@ -22,21 +22,6 @@
 
 #nullable enable
 
-#pragma warning disable 108 // Disable "CS0108 '{derivedDto}.ToJson()' hides inherited member '{dtoBase}.ToJson()'. Use the new keyword if hiding was intended."
-#pragma warning disable 114 // Disable "CS0114 '{derivedDto}.RaisePropertyChanged(String)' hides inherited member 'dtoBase.RaisePropertyChanged(String)'. To make the current member override that implementation, add the override keyword. Otherwise add the new keyword."
-#pragma warning disable 472 // Disable "CS0472 The result of the expression is always 'false' since a value of type 'Int32' is never equal to 'null' of type 'Int32?'
-#pragma warning disable 612 // Disable "CS0612 '...' is obsolete"
-#pragma warning disable 649 // Disable "CS0649 Field is never assigned to, and will always have its default value null"
-#pragma warning disable 1573 // Disable "CS1573 Parameter '...' has no matching param tag in the XML comment for ...
-#pragma warning disable 1591 // Disable "CS1591 Missing XML comment for publicly visible type or member ..."
-#pragma warning disable 8073 // Disable "CS8073 The result of the expression is always 'false' since a value of type 'T' is never equal to 'null' of type 'T?'"
-#pragma warning disable 3016 // Disable "CS3016 Arrays as attribute arguments is not CLS-compliant"
-#pragma warning disable 8600 // Disable "CS8600 Converting null literal or possible null value to non-nullable type"
-#pragma warning disable 8602 // Disable "CS8602 Dereference of a possibly null reference"
-#pragma warning disable 8603 // Disable "CS8603 Possible null reference return"
-#pragma warning disable 8604 // Disable "CS8604 Possible null reference argument for parameter"
-#pragma warning disable 8625 // Disable "CS8625 Cannot convert null literal to non-nullable reference type"
-#pragma warning disable 8765 // Disable "CS8765 Nullability of type of parameter doesn't match overridden member (possibly because of nullability attributes)."
 
 namespace BeyondImmersion.BannouService.Voice;
 
@@ -254,13 +239,13 @@ public partial class VoiceController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<VoiceRoomResponse>> CreateVoiceRoom([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] CreateVoiceRoomRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.voice",
+            "VoiceController.CreateVoiceRoom",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "voice/room/create");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.voice",
-                "VoiceController.CreateVoiceRoom",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "voice/room/create");
 
             var (statusCode, result) = await _implementation.CreateVoiceRoomAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -302,13 +287,13 @@ public partial class VoiceController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<VoiceRoomResponse>> GetVoiceRoom([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] GetVoiceRoomRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.voice",
+            "VoiceController.GetVoiceRoom",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "voice/room/get");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.voice",
-                "VoiceController.GetVoiceRoom",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "voice/room/get");
 
             var (statusCode, result) = await _implementation.GetVoiceRoomAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -353,13 +338,13 @@ public partial class VoiceController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<JoinVoiceRoomResponse>> JoinVoiceRoom([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] JoinVoiceRoomRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.voice",
+            "VoiceController.JoinVoiceRoom",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "voice/room/join");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.voice",
-                "VoiceController.JoinVoiceRoom",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "voice/room/join");
 
             var (statusCode, result) = await _implementation.JoinVoiceRoomAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -401,13 +386,13 @@ public partial class VoiceController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> LeaveVoiceRoom([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] LeaveVoiceRoomRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.voice",
+            "VoiceController.LeaveVoiceRoom",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "voice/room/leave");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.voice",
-                "VoiceController.LeaveVoiceRoom",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "voice/room/leave");
 
             var statusCode = await _implementation.LeaveVoiceRoomAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode);
@@ -449,13 +434,13 @@ public partial class VoiceController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> DeleteVoiceRoom([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] DeleteVoiceRoomRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.voice",
+            "VoiceController.DeleteVoiceRoom",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "voice/room/delete");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.voice",
-                "VoiceController.DeleteVoiceRoom",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "voice/room/delete");
 
             var statusCode = await _implementation.DeleteVoiceRoomAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode);
@@ -498,13 +483,13 @@ public partial class VoiceController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> PeerHeartbeat([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] PeerHeartbeatRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.voice",
+            "VoiceController.PeerHeartbeat",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "voice/peer/heartbeat");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.voice",
-                "VoiceController.PeerHeartbeat",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "voice/peer/heartbeat");
 
             var statusCode = await _implementation.PeerHeartbeatAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode);
@@ -552,13 +537,13 @@ public partial class VoiceController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> AnswerPeer([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] AnswerPeerRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.voice",
+            "VoiceController.AnswerPeer",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "voice/peer/answer");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.voice",
-                "VoiceController.AnswerPeer",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "voice/peer/answer");
 
             var statusCode = await _implementation.AnswerPeerAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode);
@@ -601,13 +586,13 @@ public partial class VoiceController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<BroadcastConsentStatus>> RequestBroadcastConsent([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] BroadcastConsentRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.voice",
+            "VoiceController.RequestBroadcastConsent",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "voice/room/broadcast/request");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.voice",
-                "VoiceController.RequestBroadcastConsent",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "voice/room/broadcast/request");
 
             var (statusCode, result) = await _implementation.RequestBroadcastConsentAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -649,13 +634,13 @@ public partial class VoiceController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<BroadcastConsentStatus>> RespondBroadcastConsent([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] BroadcastConsentResponse body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.voice",
+            "VoiceController.RespondBroadcastConsent",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "voice/room/broadcast/consent");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.voice",
-                "VoiceController.RespondBroadcastConsent",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "voice/room/broadcast/consent");
 
             var (statusCode, result) = await _implementation.RespondBroadcastConsentAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
@@ -697,13 +682,13 @@ public partial class VoiceController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> StopBroadcast([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] StopBroadcastConsentRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.voice",
+            "VoiceController.StopBroadcast",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "voice/room/broadcast/stop");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.voice",
-                "VoiceController.StopBroadcast",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "voice/room/broadcast/stop");
 
             var statusCode = await _implementation.StopBroadcastAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode);
@@ -745,13 +730,13 @@ public partial class VoiceController : Microsoft.AspNetCore.Mvc.ControllerBase
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<BroadcastConsentStatus>> GetBroadcastStatus([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] BroadcastStatusRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.voice",
+            "VoiceController.GetBroadcastStatus",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "voice/room/broadcast/status");
         try
         {
-            using var activity_ = _telemetryProvider.StartActivity(
-                "bannou.voice",
-                "VoiceController.GetBroadcastStatus",
-                System.Diagnostics.ActivityKind.Server);
-            activity_?.SetTag("http.route", "voice/room/broadcast/status");
 
             var (statusCode, result) = await _implementation.GetBroadcastStatusAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
