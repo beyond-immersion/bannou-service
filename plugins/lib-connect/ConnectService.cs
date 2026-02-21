@@ -1406,11 +1406,20 @@ public partial class ConnectService : IConnectService, IDisposable
                 }
                 else if (apiResult.ErrorMessage != null)
                 {
-                    // Transport-level error (timeout, connection refused, etc.)
-                    _logger.LogError("Service {Service} transport error: {Error}",
-                        serviceName, apiResult.ErrorMessage);
-                    await PublishErrorEventAsync("RouteToService", "transport_error", apiResult.ErrorMessage,
-                        dependency: serviceName, details: new { Method = httpMethod, Path = path, StatusCode = apiResult.StatusCode });
+                    // If the request was cancelled because the client disconnected, that's normal — not an error
+                    if (cancellationToken.IsCancellationRequested && apiResult.StatusCode == 0)
+                    {
+                        _logger.LogDebug("Service {Service} request cancelled due to client disconnect",
+                            serviceName);
+                    }
+                    else
+                    {
+                        // Transport-level error (timeout, connection refused, etc.)
+                        _logger.LogError("Service {Service} transport error: {Error}",
+                            serviceName, apiResult.ErrorMessage);
+                        await PublishErrorEventAsync("RouteToService", "transport_error", apiResult.ErrorMessage,
+                            dependency: serviceName, details: new { Method = httpMethod, Path = path, StatusCode = apiResult.StatusCode });
+                    }
                 }
                 else
                 {
@@ -1440,6 +1449,13 @@ public partial class ConnectService : IConnectService, IDisposable
             }
 
             // Remove from pending messages
+            connectionState.RemovePendingMessage(message.MessageId);
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            // Client disconnected while request was in-flight — normal, not an error
+            _logger.LogDebug("Request to service {Service} cancelled due to client disconnect for session {SessionId}",
+                routeInfo.ServiceName, sessionId);
             connectionState.RemovePendingMessage(message.MessageId);
         }
         catch (Exception ex)

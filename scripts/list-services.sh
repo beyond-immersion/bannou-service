@@ -18,7 +18,7 @@ while IFS= read -r -d '' proj; do
         echo "  🔧 $service_name (from $project_name)"
         found_services+=("$service_name")
     fi
-done < <(find . -name '*.csproj' -exec grep -l '<ServiceLib>' {} \; -print0)
+done < <(find ./plugins -name '*.csproj' -print0 | xargs -0 grep -l '<ServiceLib>' | tr '\n' '\0')
 
 echo ""
 

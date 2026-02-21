@@ -419,6 +419,7 @@ public class RedisSearchIndexService : ISearchIndexService
     private static string EscapeSearchTerm(string term)
     {
         // Escape special Redis Search query characters
+        // Reference: https://redis.io/docs/interact/search-and-query/advanced-concepts/query_syntax/
         var escaped = term
             .Replace("\\", "\\\\")
             .Replace("@", "\\@")
@@ -432,7 +433,15 @@ public class RedisSearchIndexService : ISearchIndexService
             .Replace("|", "\\|")
             .Replace("~", "\\~")
             .Replace("*", "\\*")
-            .Replace(":", "\\:");
+            .Replace(":", "\\:")
+            .Replace("?", "\\?")
+            .Replace("!", "\\!")
+            .Replace("%", "\\%")
+            .Replace("'", "\\'")
+            .Replace("<", "\\<")
+            .Replace(">", "\\>")
+            .Replace(";", "\\;")
+            .Replace(".", "\\.");
 
         return escaped;
     }

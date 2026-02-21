@@ -11,6 +11,9 @@
 help: ## Show this help message
 	@scripts/show-help.sh
 
+list: ## List all target names (pipe to grep: make list | grep -i 'test')
+	@grep -E '^[a-zA-Z0-9_-]+:' Makefile | cut -d: -f1 | sort
+
 all: ## Complete development cycle - clean, generate, format, build, test, docker build, infrastructure test
 	@echo "🚀 Running complete development cycle..."
 	@$(MAKE) clean
