@@ -1835,7 +1835,6 @@ public partial class ConnectService : IConnectService, IDisposable
     /// </summary>
     public async Task OnStartAsync(WebApplication webApp, CancellationToken cancellationToken)
     {
-        await Task.CompletedTask;
         _logger.LogInformation("Registering Connect service RabbitMQ event handlers");
 
         // Register auth event handler (subscribes via MassTransit, not mesh Topics)
@@ -1860,6 +1859,45 @@ public partial class ConnectService : IConnectService, IDisposable
         _pendingRPCCleanupTimer = new Timer(CleanupExpiredPendingRPCs, null,
             TimeSpan.FromSeconds(_configuration.RpcCleanupIntervalSeconds),
             TimeSpan.FromSeconds(_configuration.RpcCleanupIntervalSeconds));
+
+        // Register inter-node broadcast WebSocket endpoint (internal infrastructure, not in OpenAPI schema)
+        webApp.Map("/connect/broadcast", async (HttpContext context) =>
+        {
+            if (!context.WebSockets.IsWebSocketRequest)
+            {
+                context.Response.StatusCode = 400;
+                await context.Response.WriteAsync("WebSocket upgrade required");
+                return;
+            }
+
+            // Validate internal auth (same as Internal connection mode)
+            if (_internalAuthMode == InternalAuthMode.ServiceToken)
+            {
+                var serviceToken = context.Request.Headers["X-Service-Token"].FirstOrDefault();
+                if (string.IsNullOrEmpty(serviceToken) || serviceToken != _internalServiceToken)
+                {
+                    _logger.LogWarning("Broadcast connection rejected: invalid or missing service token");
+                    context.Response.StatusCode = 401;
+                    await context.Response.WriteAsync("Invalid service token");
+                    return;
+                }
+            }
+
+            // Extract remote instance ID from query string
+            if (!Guid.TryParse(context.Request.Query["instanceId"], out var remoteInstanceId))
+            {
+                _logger.LogWarning("Broadcast connection rejected: missing or invalid instanceId query parameter");
+                context.Response.StatusCode = 400;
+                await context.Response.WriteAsync("Missing or invalid instanceId");
+                return;
+            }
+
+            var ws = await context.WebSockets.AcceptWebSocketAsync();
+            await _interNodeBroadcast.HandleIncomingConnectionAsync(ws, remoteInstanceId, context.RequestAborted);
+        });
+
+        // Initialize inter-node broadcast mesh (register in Redis, discover peers, start heartbeat)
+        await _interNodeBroadcast.InitializeAsync(cancellationToken);
     }
 
     #endregion

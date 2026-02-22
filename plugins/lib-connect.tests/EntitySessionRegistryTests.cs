@@ -1,3 +1,4 @@
+using BeyondImmersion.BannouService.ClientEvents;
 using BeyondImmersion.BannouService.Connect;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Messaging;
@@ -15,6 +16,7 @@ public class EntitySessionRegistryTests
 {
     private readonly Mock<IStateStoreFactory> _mockStateStoreFactory;
     private readonly Mock<IMessageBus> _mockMessageBus;
+    private readonly Mock<IClientEventPublisher> _mockClientEventPublisher;
     private readonly Mock<ILogger<EntitySessionRegistry>> _mockLogger;
     private readonly ConnectServiceConfiguration _configuration;
     private readonly EntitySessionRegistry _registry;
@@ -27,6 +29,7 @@ public class EntitySessionRegistryTests
     {
         _mockStateStoreFactory = new Mock<IStateStoreFactory>();
         _mockMessageBus = new Mock<IMessageBus>();
+        _mockClientEventPublisher = new Mock<IClientEventPublisher>();
         _mockLogger = new Mock<ILogger<EntitySessionRegistry>>();
         _configuration = new ConnectServiceConfiguration();
 
@@ -69,6 +72,7 @@ public class EntitySessionRegistryTests
         _registry = new EntitySessionRegistry(
             _mockStateStoreFactory.Object,
             _mockMessageBus.Object,
+            _mockClientEventPublisher.Object,
             _configuration,
             _mockLogger.Object);
     }
