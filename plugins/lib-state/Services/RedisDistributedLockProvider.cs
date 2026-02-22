@@ -147,7 +147,9 @@ public sealed class RedisDistributedLockProvider : IDistributedLockProvider, IAs
 
     private async Task<ILockResponse> AcquireRedisLockAsync(string lockKey, string lockValue, string lockOwner, TimeSpan expiry)
     {
-        var database = _redisOperations!.GetDatabase();
+        var redisOps = _redisOperations ?? throw new InvalidOperationException(
+            "Redis operations not available after initialization completed with Redis mode");
+        var database = redisOps.GetDatabase();
 
         try
         {
@@ -257,7 +259,7 @@ internal sealed class RedisLockResponse : ILockResponse
 
 /// <summary>
 /// In-memory lock response for fallback mode.
-/// IMPLEMENTATION TENETS (T24): Properly releases lock on disposal via cleanup callback.
+/// IMPLEMENTATION TENETS: Properly releases lock on disposal via cleanup callback.
 /// </summary>
 internal sealed class InMemoryLockResponse : ILockResponse
 {

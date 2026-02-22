@@ -1333,7 +1333,8 @@ public sealed class RedisSearchStateStore<TValue> : ISearchableStateStore<TValue
 
         try
         {
-            return BannouJson.Deserialize<TField>(value!);
+            // value.IsNullOrEmpty checked above; ToString() returns non-null string
+            return BannouJson.Deserialize<TField>(value.ToString());
         }
         catch (System.Text.Json.JsonException ex)
         {

@@ -42,10 +42,10 @@ This is **NOT** a code investigation tool. It reports the state depicted in each
 
 | Plugin | Layer | Score | Bugs | Summary |
 |--------|-------|-------|------|---------|
-| [State](#state-status) | L0 | 95% | 0 | Rock-solid foundation. No stubs, no bugs. Only migration tooling remains. |
+| [State](#state-status) | L0 | 97% | 0 | L3-hardened. Schema NRT compliance, null-forgiving removal, config cleanup, layer comments fixed. 397 tests, 0 warnings. |
 | [Messaging](#messaging-status) | L0 | 97% | 0 | L3-hardened. Dead letter consumer, IMeshInstanceIdentifier, shutdown timeout. 216 tests, 0 warnings. |
 | [Mesh](#mesh-status) | L0 | 97% | 0 | L3-hardened. IMeshInstanceIdentifier canonical identity, dead fields removed, no extensions remaining. |
-| [Telemetry](#telemetry-status) | L0 | 97% | 0 | L3-hardened. Self-instrumentation, schema fixes, null safety. 58 tests, 0 warnings. Only speculative extensions remain. |
+| [Telemetry](#telemetry-status) | L0 | 98% | 0 | L3-hardened. Self-instrumentation, schema fixes, null safety, tail-based sampling. 58 tests, 0 warnings. Only speculative extensions remain. |
 | [Account](#account-status) | L1 | 92% | 0 | Production-ready. Only post-launch extensions remain. |
 | [Auth](#auth-status) | L1 | 88% | 0 | Core complete with MFA. Remaining items are downstream integration. |
 | [Chat](#chat-status) | L1 | 90% | 0 | All 28 endpoints complete. Dual storage, rate limiting, moderation. Design considerations remain. |
@@ -125,9 +125,9 @@ This is **NOT** a code investigation tool. It reports the state depicted in each
 
 **Layer**: L0 Infrastructure | **Deep Dive**: [STATE.md](plugins/STATE.md)
 
-### Production Readiness: 95%
+### Production Readiness: 97%
 
-The bedrock of the entire platform. Provides unified Redis/MySQL/InMemory state access to all 54 services via `IStateStoreFactory`. Manages ~107 state stores (~70 Redis, ~37 MySQL). Full interface hierarchy: `IStateStore<T>` (core CRUD), `ICacheableStateStore<T>` (sets, sorted sets, counters, hashes), `ISearchableStateStore<T>` (full-text via RedisSearch), `IQueryableStateStore<T>` / `IJsonQueryableStateStore<T>` (MySQL LINQ/JSON path queries), `IRedisOperations` (Lua scripts), `IDistributedLockProvider` (distributed mutex). Optimistic concurrency via ETags on all backends. Error event publishing with deduplication. No stubs, no bugs, no design considerations. 11 well-documented intentional quirks. The only extension is store migration tooling.
+The bedrock of the entire platform. Provides unified Redis/MySQL/InMemory/SQLite state access to all 54 services via `IStateStoreFactory`. Manages ~107 state stores (~70 Redis, ~37 MySQL). Full interface hierarchy: `IStateStore<T>` (core CRUD), `ICacheableStateStore<T>` (sets, sorted sets, counters, hashes), `ISearchableStateStore<T>` (full-text via RedisSearch), `IQueryableStateStore<T>` / `IJsonQueryableStateStore<T>` (MySQL LINQ/JSON path queries), `IRedisOperations` (Lua scripts), `IDistributedLockProvider` (distributed mutex). Optimistic concurrency via ETags on all backends. Error event publishing with deduplication. No stubs, no bugs, no design considerations. 11 well-documented intentional quirks. L3-hardened (2026-02-22): schema NRT compliance (added `required` arrays to 7 response schemas), `additionalProperties` corrected on generic value objects, redundant nullable config removed, layer comments fixed in state-stores.yaml, null-forgiving operators replaced with safe `.ToString()` in Redis stores, LINQ expression tree null coalescing fixed in MySQL/SQLite stores, T0 violation fixed. 397 tests passing, 0 warnings.
 
 ### Bug Count: 0
 
@@ -285,9 +285,9 @@ gh issue list --search "Auth:" --state open
 
 **Layer**: L0 Infrastructure (Optional) | **Deep Dive**: [TELEMETRY.md](plugins/TELEMETRY.md)
 
-### Production Readiness: 97%
+### Production Readiness: 98%
 
-L3-hardened. Feature-complete OpenTelemetry tracing and Prometheus metrics with full instrumentation decorators for all infrastructure libs (state, messaging, mesh, telemetry). Schema issues fixed (events file, NRT annotations, OtlpProtocol enum typed). Null-forgiving operators eliminated. T23/T30 compliant (async pattern, self-instrumentation spans). 58 tests, 0 warnings. Only speculative extensions remain (managed exporters, Grafana dashboards, tail-based sampling).
+L3-hardened. Feature-complete OpenTelemetry tracing and Prometheus metrics with full instrumentation decorators for all infrastructure libs (state, messaging, mesh, telemetry). Schema issues fixed (events file, NRT annotations, OtlpProtocol enum typed). Null-forgiving operators eliminated. T23/T30 compliant (async pattern, self-instrumentation spans). Tail-based sampling implemented in OTEL Collector (100% error/high-latency retention, 10% probabilistic default). 58 tests, 0 warnings. Only speculative extensions remain (managed exporters, Grafana dashboards).
 
 ### Bug Count: 0
 
@@ -303,7 +303,7 @@ No known bugs.
 |---|-------------|-------------|-------|
 | 1 | **Managed platform exporters** | Datadog, Azure Application Insights, AWS X-Ray, Elastic APM exporters beyond base OTLP. | [#183](https://github.com/beyond-immersion/bannou-service/issues/183) |
 | 2 | **Enhanced Grafana dashboards + SLO alerting** | Per-service dashboards, SLO alerting rules, error monitoring, automated provisioning. | [#185](https://github.com/beyond-immersion/bannou-service/issues/185) |
-| 3 | **OTEL Collector tail-based sampling** | Retain 100% of error/high-latency traces while reducing sampling for normal operations. | [#186](https://github.com/beyond-immersion/bannou-service/issues/186) |
+| 3 | ~~**OTEL Collector tail-based sampling**~~ | **DONE.** 100% error/high-latency retention, 10% probabilistic default. | [#186](https://github.com/beyond-immersion/bannou-service/issues/186) |
 
 ### GH Issues
 

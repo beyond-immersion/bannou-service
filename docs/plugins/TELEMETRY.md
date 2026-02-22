@@ -184,7 +184,7 @@ None currently identified.
 
 2. **Enhanced Grafana dashboards with SLO alerting** ([#185](https://github.com/beyond-immersion/bannou-service/issues/185)): Per-service dashboards, SLO alerting rules (availability, latency, error rate, saturation), error monitoring dashboards, and automated dashboard provisioning.
 
-3. **OTEL Collector tail-based sampling** ([#186](https://github.com/beyond-immersion/bannou-service/issues/186)): Implement tail-based sampling in the OTEL Collector to retain 100% of error/high-latency traces while reducing sampling for normal operations.
+3. ~~**OTEL Collector tail-based sampling**~~ ([#186](https://github.com/beyond-immersion/bannou-service/issues/186)): **DONE**. Tail-based sampling configured in `provisioning/observability/otel-collector/config.yaml`. Three policies: 100% error retention, 100% high-latency (>500ms) retention, 10% probabilistic for normal traces. Uses `tail_sampling` processor from the contrib collector image.
 
 4. **Metric aggregation views**: Add custom histogram bucket boundaries optimized for Bannou's typical latency distributions.
 
@@ -222,4 +222,4 @@ None currently identified.
 |-------|--------|-------------|
 | [#183](https://github.com/beyond-immersion/bannou-service/issues/183) | Open | Managed platform telemetry exporters (Datadog, Azure, AWS, Elastic) |
 | [#185](https://github.com/beyond-immersion/bannou-service/issues/185) | Open | Enhanced Grafana dashboards with per-service views and SLO alerting |
-| [#186](https://github.com/beyond-immersion/bannou-service/issues/186) | Open | OTEL Collector tail-based sampling for intelligent trace retention |
+| [#186](https://github.com/beyond-immersion/bannou-service/issues/186) | **Closed** | OTEL Collector tail-based sampling for intelligent trace retention |

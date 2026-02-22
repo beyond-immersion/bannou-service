@@ -1477,6 +1477,11 @@ public sealed class MySqlStateStore<TValue> : IJsonQueryableStateStore<TValue>
                 return false;
             }
 
+            if (value == null)
+            {
+                return false;
+            }
+
             var queryOperator = methodCall.Method.Name switch
             {
                 "Contains" => QueryOperator.Contains,
@@ -1494,7 +1499,7 @@ public sealed class MySqlStateStore<TValue> : IJsonQueryableStateStore<TValue>
             {
                 Path = path,
                 Operator = queryOperator.Value,
-                Value = value ?? string.Empty
+                Value = value
             });
 
             return true;

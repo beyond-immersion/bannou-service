@@ -255,6 +255,8 @@ None.
 
 1. **Store migration tooling**: Move data between Redis and MySQL backends without downtime.
    <!-- AUDIT:NEEDS_DESIGN:2026-01-31:https://github.com/beyond-immersion/bannou-service/issues/190 -->
+2. **~~SQLite backend~~**: Already implemented via `UseSqlite` configuration. Provides file-based SQL storage for self-hosted/embedded deployments without MySQL. Redis-configured stores fall back to in-memory when SQLite mode is active.
+   <!-- AUDIT:DONE:2026-02-22:https://github.com/beyond-immersion/bannou-service/issues/442 -->
 
 ---
 
