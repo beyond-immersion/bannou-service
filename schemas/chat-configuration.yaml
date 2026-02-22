@@ -94,6 +94,22 @@ x-service-configuration:
       default: Archive
       description: Default action when governing contract expires naturally
 
+    ContractRoomQueryBatchSize:
+      type: integer
+      env: CHAT_CONTRACT_ROOM_QUERY_BATCH_SIZE
+      default: 100
+      minimum: 10
+      maximum: 1000
+      description: Page size for paginated contract-room queries during contract lifecycle events
+
+    MaxContractRoomQueryResults:
+      type: integer
+      env: CHAT_MAX_CONTRACT_ROOM_QUERY_RESULTS
+      default: 1000
+      minimum: 100
+      maximum: 10000
+      description: Safety cap on total rooms processed per contract lifecycle event, logs warning if reached
+
     MessageHistoryPageSize:
       type: integer
       env: CHAT_MESSAGE_HISTORY_PAGE_SIZE

@@ -127,6 +127,20 @@ public class ChatServiceConfiguration : IServiceConfiguration
     public ContractRoomAction DefaultContractExpiredAction { get; set; } = ContractRoomAction.Archive;
 
     /// <summary>
+    /// Page size for paginated contract-room queries during contract lifecycle events
+    /// Environment variable: CHAT_CONTRACT_ROOM_QUERY_BATCH_SIZE
+    /// </summary>
+    [ConfigRange(Minimum = 10, Maximum = 1000)]
+    public int ContractRoomQueryBatchSize { get; set; } = 100;
+
+    /// <summary>
+    /// Safety cap on total rooms processed per contract lifecycle event, logs warning if reached
+    /// Environment variable: CHAT_MAX_CONTRACT_ROOM_QUERY_RESULTS
+    /// </summary>
+    [ConfigRange(Minimum = 100, Maximum = 10000)]
+    public int MaxContractRoomQueryResults { get; set; } = 1000;
+
+    /// <summary>
     /// Default page size for message history queries
     /// Environment variable: CHAT_MESSAGE_HISTORY_PAGE_SIZE
     /// </summary>

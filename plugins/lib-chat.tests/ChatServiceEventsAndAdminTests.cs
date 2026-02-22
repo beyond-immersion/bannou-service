@@ -213,7 +213,7 @@ public class ChatServiceEventsAndAdminTests : ChatServiceTestBase
             .Setup(s => s.JsonQueryPagedAsync(
                 It.Is<IReadOnlyList<QueryCondition>>(c =>
                     c.Any(q => q.Path == "$.ContractId" && (string)q.Value == contractId.ToString())),
-                0, 100, It.IsAny<JsonSortSpec?>(), It.IsAny<CancellationToken>()))
+                It.IsAny<int>(), It.IsAny<int>(), It.IsAny<JsonSortSpec?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new JsonPagedResult<ChatRoomModel>(
                 new List<JsonQueryResult<ChatRoomModel>>(), 0, 0, 100));
 
@@ -498,7 +498,7 @@ public class ChatServiceEventsAndAdminTests : ChatServiceTestBase
             .Setup(s => s.JsonQueryPagedAsync(
                 It.Is<IReadOnlyList<QueryCondition>>(c =>
                     c.Any(q => q.Path == "$.ContractId" && (string)q.Value == contractId.ToString())),
-                0, 100, It.IsAny<JsonSortSpec?>(), It.IsAny<CancellationToken>()))
+                It.IsAny<int>(), It.IsAny<int>(), It.IsAny<JsonSortSpec?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new JsonPagedResult<ChatRoomModel>(queryResults, rooms.Length, 0, 100));
     }
 

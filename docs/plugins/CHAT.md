@@ -153,6 +153,8 @@ The Chat service (L1 AppFoundation) provides universal typed message channel pri
 | `DefaultContractBreachAction` | `CHAT_DEFAULT_CONTRACT_BREACH_ACTION` | Lock | Default action on governing contract breach |
 | `DefaultContractTerminatedAction` | `CHAT_DEFAULT_CONTRACT_TERMINATED_ACTION` | Delete | Default action on governing contract termination |
 | `DefaultContractExpiredAction` | `CHAT_DEFAULT_CONTRACT_EXPIRED_ACTION` | Archive | Default action on governing contract expiration |
+| `ContractRoomQueryBatchSize` | `CHAT_CONTRACT_ROOM_QUERY_BATCH_SIZE` | 100 | Page size for paginated contract-room queries during contract lifecycle events |
+| `MaxContractRoomQueryResults` | `CHAT_MAX_CONTRACT_ROOM_QUERY_RESULTS` | 1000 | Safety cap on total rooms processed per contract lifecycle event, logs warning if reached |
 | `MessageHistoryPageSize` | `CHAT_MESSAGE_HISTORY_PAGE_SIZE` | 50 | Default page size for message history queries |
 | `LockExpirySeconds` | `CHAT_LOCK_EXPIRY_SECONDS` | 15 | Distributed lock expiry timeout |
 | `IdleRoomCleanupStartupDelaySeconds` | `CHAT_IDLE_ROOM_CLEANUP_STARTUP_DELAY_SECONDS` | 30 | Initial delay before first cleanup cycle |

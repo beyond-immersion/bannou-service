@@ -178,7 +178,30 @@ public partial class ChatService
             new() { Path = "$.RoomId", Operator = QueryOperator.Exists, Value = true },
         };
 
-        var result = await _roomStore.JsonQueryPagedAsync(conditions, 0, 100, cancellationToken: ct);
-        return result.Items.Select(i => i.Value).ToList();
+        var batchSize = _configuration.ContractRoomQueryBatchSize;
+        var maxResults = _configuration.MaxContractRoomQueryResults;
+        var allRooms = new List<ChatRoomModel>();
+        var offset = 0;
+
+        do
+        {
+            var result = await _roomStore.JsonQueryPagedAsync(conditions, offset, batchSize, cancellationToken: ct);
+            allRooms.AddRange(result.Items.Select(i => i.Value));
+            offset += result.Items.Count;
+
+            if (allRooms.Count >= maxResults)
+            {
+                _logger.LogWarning(
+                    "Contract room query for contract {ContractId} reached safety cap of {MaxResults} rooms (total available: {TotalCount})",
+                    contractId, maxResults, result.TotalCount);
+                break;
+            }
+
+            if (!result.HasMore)
+                break;
+        }
+        while (true);
+
+        return allRooms;
     }
 }
