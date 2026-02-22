@@ -61,13 +61,6 @@ public class PermissionServiceConfiguration : IServiceConfiguration
     public int MaxConcurrentRecompilations { get; set; } = 50;
 
     /// <summary>
-    /// In-memory permission cache TTL in seconds. Cached capabilities older than this are refreshed from Redis on next access. 0 disables TTL (cache never expires). Recommended non-zero value is 300 (5 minutes). Acts as a safety net against lost event-driven recompilation triggers.
-    /// Environment variable: PERMISSION_CACHE_TTL_SECONDS
-    /// </summary>
-    [ConfigRange(Minimum = 0, Maximum = 86400)]
-    public int PermissionCacheTtlSeconds { get; set; } = 300;
-
-    /// <summary>
     /// Redis TTL in seconds for session permission data keys (states and compiled permissions). With heartbeat-driven TTL refresh (every 30s via ISessionActivityListener), active sessions continuously extend their TTL. Dead sessions expire naturally when heartbeats stop. Default 600 (10 minutes, ~20 heartbeat intervals of headroom). 0 disables Redis TTL. Maximum 604800 (7 days).
     /// Environment variable: PERMISSION_SESSION_DATA_TTL_SECONDS
     /// </summary>

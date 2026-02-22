@@ -10,7 +10,6 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -54,9 +53,6 @@ public partial class PermissionService : IPermissionService, IPermissionRegistry
     /// </summary>
     private const string SESSION_ROLE_KEY = "role";
 
-    // Cache for compiled permissions (in-memory cache with lib-state backing)
-    private readonly ConcurrentDictionary<string, CapabilityResponse> _sessionCapabilityCache;
-
     public PermissionService(
         ILogger<PermissionService> logger,
         PermissionServiceConfiguration configuration,
@@ -74,7 +70,6 @@ public partial class PermissionService : IPermissionService, IPermissionRegistry
         _clientEventPublisher = clientEventPublisher;
         _telemetryProvider = telemetryProvider;
         _lockProvider = lockProvider;
-        _sessionCapabilityCache = new ConcurrentDictionary<string, CapabilityResponse>();
 
         // Register event handlers via partial class (PermissionServiceEvents.cs)
         RegisterEventConsumers(eventConsumer);
@@ -113,7 +108,7 @@ public partial class PermissionService : IPermissionService, IPermissionRegistry
     }
 
     /// <summary>
-    /// Get compiled capabilities for a session from lib-state store with in-memory caching.
+    /// Get compiled capabilities for a session from Redis.
     /// </summary>
     public async Task<(StatusCodes, CapabilityResponse?)> GetCapabilitiesAsync(
         CapabilityRequest body,
@@ -122,31 +117,6 @@ public partial class PermissionService : IPermissionService, IPermissionRegistry
         _logger.LogDebug("Getting capabilities for session {SessionId}", body.SessionId);
 
         var sessionIdStr = body.SessionId.ToString();
-        if (_sessionCapabilityCache.TryGetValue(sessionIdStr, out var cachedResponse))
-        {
-            if (_configuration.PermissionCacheTtlSeconds > 0)
-            {
-                var age = DateTimeOffset.UtcNow - cachedResponse.GeneratedAt;
-                if (age.TotalSeconds > _configuration.PermissionCacheTtlSeconds)
-                {
-                    _logger.LogDebug(
-                        "Cached capabilities for session {SessionId} expired (age: {AgeSeconds}s, TTL: {TtlSeconds}s), refreshing from Redis",
-                        body.SessionId, (int)age.TotalSeconds, _configuration.PermissionCacheTtlSeconds);
-                    _sessionCapabilityCache.TryRemove(sessionIdStr, out _);
-                }
-                else
-                {
-                    _logger.LogDebug("Returning cached capabilities for session {SessionId}", body.SessionId);
-                    return (StatusCodes.OK, cachedResponse);
-                }
-            }
-            else
-            {
-                _logger.LogDebug("Returning cached capabilities for session {SessionId}", body.SessionId);
-                return (StatusCodes.OK, cachedResponse);
-            }
-        }
-
         var permissionsKey = string.Format(SESSION_PERMISSIONS_KEY, sessionIdStr);
         var permissionsData = await _stateStoreFactory.GetStore<Dictionary<string, object>>(StateStoreDefinitions.Permission)
             .GetAsync(permissionsKey, cancellationToken);
@@ -185,8 +155,6 @@ public partial class PermissionService : IPermissionService, IPermissionRegistry
             Permissions = permissions,
             GeneratedAt = generatedAt
         };
-
-        _sessionCapabilityCache[sessionIdStr] = response;
 
         _logger.LogDebug("Retrieved capabilities for session {SessionId} with {ServiceCount} services",
             body.SessionId, permissions.Count);
@@ -757,8 +725,6 @@ public partial class PermissionService : IPermissionService, IPermissionRegistry
 
             await permissionsStore.SaveAsync(permissionsKey, newPermissionData, options: GetSessionDataStateOptions(), cancellationToken: cancellationToken);
 
-            _sessionCapabilityCache.TryRemove(sessionId, out _);
-
             await PublishCapabilityUpdateAsync(
                 sessionId,
                 compiledPermissions.ToDictionary(k => k.Key, v => (IEnumerable<string>)v.Value.ToList()),
@@ -1080,7 +1046,6 @@ public partial class PermissionService : IPermissionService, IPermissionRegistry
             await cacheStore.RemoveFromSetAsync<string>(ACTIVE_SESSIONS_KEY, sessionId, cancellationToken);
 
             await ClearSessionStateAsync(new ClearSessionStateRequest { SessionId = Guid.Parse(sessionId) }, cancellationToken);
-            _sessionCapabilityCache.TryRemove(sessionId, out _);
 
             _logger.LogDebug("Cleared state for non-reconnectable session {SessionId}", sessionId);
         }
