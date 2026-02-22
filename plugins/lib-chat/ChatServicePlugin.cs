@@ -22,6 +22,7 @@ public class ChatServicePlugin : StandardServicePlugin<IChatService>
         services.AddHostedService<IdleRoomCleanupWorker>();
         services.AddHostedService<TypingExpiryWorker>();
         services.AddHostedService<BanExpiryWorker>();
+        services.AddHostedService<MessageRetentionWorker>();
 
         Logger?.LogDebug("Service dependencies configured");
     }

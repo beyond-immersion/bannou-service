@@ -190,6 +190,34 @@ public class ChatServiceConfiguration : IServiceConfiguration
     public int BanExpiryLockExpirySeconds { get; set; } = 120;
 
     /// <summary>
+    /// How often the background worker checks for expired persistent messages
+    /// Environment variable: CHAT_MESSAGE_RETENTION_CLEANUP_INTERVAL_MINUTES
+    /// </summary>
+    [ConfigRange(Minimum = 30, Maximum = 10080)]
+    public int MessageRetentionCleanupIntervalMinutes { get; set; } = 360;
+
+    /// <summary>
+    /// Initial delay before the message retention cleanup worker begins its first cycle
+    /// Environment variable: CHAT_MESSAGE_RETENTION_STARTUP_DELAY_SECONDS
+    /// </summary>
+    [ConfigRange(Minimum = 10, Maximum = 600)]
+    public int MessageRetentionStartupDelaySeconds { get; set; } = 60;
+
+    /// <summary>
+    /// Maximum expired messages to delete per room per cleanup cycle
+    /// Environment variable: CHAT_MESSAGE_RETENTION_BATCH_SIZE
+    /// </summary>
+    [ConfigRange(Minimum = 10, Maximum = 5000)]
+    public int MessageRetentionBatchSize { get; set; } = 500;
+
+    /// <summary>
+    /// Distributed lock expiry for message retention cleanup cycle
+    /// Environment variable: CHAT_MESSAGE_RETENTION_LOCK_EXPIRY_SECONDS
+    /// </summary>
+    [ConfigRange(Minimum = 60, Maximum = 1800)]
+    public int MessageRetentionLockExpirySeconds { get; set; } = 300;
+
+    /// <summary>
     /// Seconds of inactivity before typing indicator auto-expires
     /// Environment variable: CHAT_TYPING_TIMEOUT_SECONDS
     /// </summary>

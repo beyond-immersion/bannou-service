@@ -166,6 +166,38 @@ x-service-configuration:
       maximum: 600
       description: Distributed lock expiry for ban expiry batch cycle
 
+    MessageRetentionCleanupIntervalMinutes:
+      type: integer
+      env: CHAT_MESSAGE_RETENTION_CLEANUP_INTERVAL_MINUTES
+      default: 360
+      minimum: 30
+      maximum: 10080
+      description: How often the background worker checks for expired persistent messages
+
+    MessageRetentionStartupDelaySeconds:
+      type: integer
+      env: CHAT_MESSAGE_RETENTION_STARTUP_DELAY_SECONDS
+      default: 60
+      minimum: 10
+      maximum: 600
+      description: Initial delay before the message retention cleanup worker begins its first cycle
+
+    MessageRetentionBatchSize:
+      type: integer
+      env: CHAT_MESSAGE_RETENTION_BATCH_SIZE
+      default: 500
+      minimum: 10
+      maximum: 5000
+      description: Maximum expired messages to delete per room per cleanup cycle
+
+    MessageRetentionLockExpirySeconds:
+      type: integer
+      env: CHAT_MESSAGE_RETENTION_LOCK_EXPIRY_SECONDS
+      default: 300
+      minimum: 60
+      maximum: 1800
+      description: Distributed lock expiry for message retention cleanup cycle
+
     TypingTimeoutSeconds:
       type: integer
       env: CHAT_TYPING_TIMEOUT_SECONDS

@@ -192,8 +192,8 @@ public partial class ChatService
             if (allRooms.Count >= maxResults)
             {
                 _logger.LogWarning(
-                    "Contract room query for contract {ContractId} reached safety cap of {MaxResults} rooms (total available: {TotalCount})",
-                    contractId, maxResults, result.TotalCount);
+                    "Contract room query for contract {ContractId} reached safety cap of {MaxResults} rooms (processed: {ProcessedCount}, total available: {TotalCount})",
+                    contractId, maxResults, allRooms.Count, result.TotalCount);
                 break;
             }
 

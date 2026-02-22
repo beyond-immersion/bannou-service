@@ -165,6 +165,10 @@ The Chat service (L1 AppFoundation) provides universal typed message channel pri
 | `BanExpiryStartupDelaySeconds` | `CHAT_BAN_EXPIRY_STARTUP_DELAY_SECONDS` | 30 | Initial delay before ban expiry worker begins first cycle |
 | `BanExpiryBatchSize` | `CHAT_BAN_EXPIRY_BATCH_SIZE` | 1000 | Maximum expired ban records processed per worker cycle |
 | `BanExpiryLockExpirySeconds` | `CHAT_BAN_EXPIRY_LOCK_EXPIRY_SECONDS` | 120 | Distributed lock expiry for ban expiry batch cycle |
+| `MessageRetentionCleanupIntervalMinutes` | `CHAT_MESSAGE_RETENTION_CLEANUP_INTERVAL_MINUTES` | 360 | How often the background worker checks for expired persistent messages |
+| `MessageRetentionStartupDelaySeconds` | `CHAT_MESSAGE_RETENTION_STARTUP_DELAY_SECONDS` | 60 | Initial delay before the message retention cleanup worker begins first cycle |
+| `MessageRetentionBatchSize` | `CHAT_MESSAGE_RETENTION_BATCH_SIZE` | 500 | Maximum expired messages to delete per room per cleanup cycle |
+| `MessageRetentionLockExpirySeconds` | `CHAT_MESSAGE_RETENTION_LOCK_EXPIRY_SECONDS` | 300 | Distributed lock expiry for message retention cleanup cycle |
 | `ServerSalt` | `CHAT_SERVER_SALT` | (dev default) | Server salt for session shortcut GUID generation |
 
 ---
@@ -178,7 +182,7 @@ The Chat service (L1 AppFoundation) provides universal typed message channel pri
 | `IEntitySessionRegistry` | Room-level entity session management and typing event fan-out |
 | `IDistributedLockProvider` | Distributed locks for room type, room, and participant mutations |
 | `ILogger<ChatService>` | Structured logging |
-| `ChatServiceConfiguration` | Typed configuration access (18 properties) |
+| `ChatServiceConfiguration` | Typed configuration access (26 properties) |
 | `IEventConsumer` | Event consumer registration for 4 contract lifecycle events |
 | `IContractClient` | Contract instance validation on room creation |
 | `IResourceClient` | Room archival via `ExecuteCompressAsync` |
@@ -187,6 +191,7 @@ The Chat service (L1 AppFoundation) provides universal typed message channel pri
 | `IdleRoomCleanupWorker` | Background hosted service for periodic idle room cleanup |
 | `TypingExpiryWorker` | Background hosted service for typing indicator timeout enforcement |
 | `BanExpiryWorker` | Background hosted service for periodic expired ban cleanup |
+| `MessageRetentionWorker` | Background hosted service for periodic expired persistent message cleanup |
 | `ITelemetryProvider` | Telemetry span instrumentation for async helpers |
 
 ---
@@ -283,7 +288,7 @@ None. All 30 API endpoints are fully implemented with complete business logic, v
 
 3. **Message reactions**: Allow participants to add emoji reactions to messages, stored as a separate model linked by message ID.
 
-4. **Room-level message retention worker**: Background service that enforces room type `RetentionDays` by periodically deleting messages older than the threshold.
+4. ~~**Room-level message retention worker**~~: **IMPLEMENTED** (2026-02-22) - `MessageRetentionWorker` background service periodically deletes persistent messages older than the room type's `RetentionDays` threshold. Uses distributed lock for multi-instance safety. Configurable via `MessageRetentionCleanupIntervalMinutes`, `MessageRetentionStartupDelaySeconds`, `MessageRetentionBatchSize`, and `MessageRetentionLockExpirySeconds`.
 
 5. ~~**Ban expiry worker**~~: **IMPLEMENTED** (2026-02-22) - `BanExpiryWorker` background service periodically scans for and deletes expired time-limited bans. Configurable via `BanExpiryIntervalMinutes`, `BanExpiryStartupDelaySeconds`, `BanExpiryBatchSize`, and `BanExpiryLockExpirySeconds`.
 
@@ -329,7 +334,7 @@ None. All 30 API endpoints are fully implemented with complete business logic, v
 
 ### Design Considerations (Requires Planning)
 
-1. **Contract event room query limited to 100**: `FindRoomsByContractIdAsync` queries with `limit: 100`. If a contract governs more than 100 rooms, only the first 100 receive the contract action. Should implement pagination for large contracts.
+1. ~~**Contract event room query limited to 100**~~: **FIXED** (2026-02-22) - `FindRoomsByContractIdAsync` now paginates through all rooms using configurable `ContractRoomQueryBatchSize` (default 100) with a `MaxContractRoomQueryResults` safety cap (default 1000) that logs a warning when reached.
 
 2. ~~**SendMessageBatch silently skips validation failures**~~: **FIXED** (2026-02-22) - Batch response now includes per-message failure tracking via `failed` array with index and error details. Storage failures are also caught per-item and reported.
 
@@ -342,4 +347,6 @@ None. All 30 API endpoints are fully implemented with complete business logic, v
 ## Work Tracking
 
 ### Completed
+- **2026-02-22**: Issue #446 - Paginated `FindRoomsByContractIdAsync` with configurable batch size and safety cap
 - **2026-02-22**: Issue #447 - Added `BanExpiryWorker` background service for periodic expired ban cleanup
+- **2026-02-22**: Issue #448 - Added `MessageRetentionWorker` background service for periodic expired persistent message cleanup
