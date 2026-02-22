@@ -219,7 +219,10 @@ Season Lifecycle
 
 ### Bugs (Fix Immediately)
 
-1. ~~**`archivePrevious` request parameter is ignored**~~: **FIXED** (2026-01-31) - `CreateSeasonAsync` now uses `body.ArchivePrevious` instead of `_configuration.AutoArchiveOnSeasonEnd`. The request parameter defaults to `true` per the schema, giving callers per-request control over archival behavior.
+1. **T29 violation: definition `metadata` reads `scoreType`/`ratingType` by convention**: `LeaderboardServiceEvents` reads `scoreType` and `ratingType` keys from definition metadata via `MetadataHelper.TryGetString()` for analytics event matching. Schema claims "No Bannou plugin reads specific keys." These should be typed fields (`analyticsScoreType`, `analyticsRatingType`) on the leaderboard definition schema.
+   <!-- AUDIT:NEEDS_DESIGN:2026-02-22:https://github.com/beyond-immersion/bannou-service/issues/465 -->
+
+2. ~~**`archivePrevious` request parameter is ignored**~~: **FIXED** (2026-01-31) - `CreateSeasonAsync` now uses `body.ArchivePrevious` instead of `_configuration.AutoArchiveOnSeasonEnd`. The request parameter defaults to `true` per the schema, giving callers per-request control over archival behavior.
 
 ### Intentional Quirks
 

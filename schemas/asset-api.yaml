@@ -1263,7 +1263,7 @@ components:
           type: object
           additionalProperties: true
           nullable: true
-          description: Custom metadata for the bundle (null if none)
+          description: Custom metadata for the bundle (null if none). No Bannou plugin reads specific keys from this field by convention.
 
     CreateBundleResponse:
       description: Response with bundle creation status and estimated size
@@ -1519,7 +1519,7 @@ components:
           type: object
           additionalProperties: true
           nullable: true
-          description: Custom metadata for the metabundle
+          description: Custom metadata for the metabundle. No Bannou plugin reads specific keys from this field by convention.
 
     CreateMetabundleResponse:
       type: object

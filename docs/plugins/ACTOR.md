@@ -647,7 +647,11 @@ Actor State Model
 
 ### Bugs (Fix Immediately)
 
-No bugs identified.
+1. **T29 violation: `cognitionOverrides` uses `additionalProperties: true` but is deserialized to typed `CognitionOverrides`**: The `cognitionOverrides` field on `CreateActorTemplateRequest`, `UpdateActorTemplateRequest`, and `ActorTemplateResponse` is defined as an opaque metadata bag but `ActorTemplateData.DeserializeCognitionOverrides()` explicitly calls `BannouJson.Deserialize<CognitionOverrides>()` to convert it to a fully typed record with 5 discriminated `ICognitionOverride` subtypes. Should be a typed schema with `oneOf`/discriminator pattern.
+   <!-- AUDIT:NEEDS_DESIGN:2026-02-22:https://github.com/beyond-immersion/bannou-service/issues/462 -->
+
+2. **T29 violation: `initialState` uses `additionalProperties: true` but is deserialized to `ActorStateSnapshot`**: `SpawnActorRequest.initialState` is marked opaque but `ActorRunner.InitializeFromState()` casts it to `ActorStateSnapshot` and reads `.Feelings`, `.Goals`, `.Memories`, `.WorkingMemory`, `.CognitionOverrides`. Schema description contradicts itself. Should define `ActorStateSnapshot` (or API-appropriate subset) as a typed schema.
+   <!-- AUDIT:NEEDS_DESIGN:2026-02-22:https://github.com/beyond-immersion/bannou-service/issues/463 -->
 
 ### Intentional Quirks
 

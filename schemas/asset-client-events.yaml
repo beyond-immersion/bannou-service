@@ -404,7 +404,7 @@ components:
           type: object
           additionalProperties: true
           nullable: true
-          description: Asset metadata
+          description: Asset metadata. No Bannou plugin reads specific keys from this field by convention.
 
     # ============================================
     # Supporting Types

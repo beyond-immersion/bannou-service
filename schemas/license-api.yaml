@@ -754,7 +754,7 @@ components:
           type: object
           nullable: true
           additionalProperties: true
-          description: Game-specific metadata for this license node
+          description: Game-specific metadata for this license node. No Bannou plugin reads specific keys from this field by convention.
 
     # ==========================================================================
     # Request/Response Models - Board Template
@@ -1070,7 +1070,7 @@ components:
           type: object
           nullable: true
           additionalProperties: true
-          description: Game-specific metadata for this license node
+          description: Game-specific metadata for this license node. No Bannou plugin reads specific keys from this field by convention.
 
     GetLicenseDefinitionRequest:
       type: object
@@ -1122,7 +1122,7 @@ components:
           type: object
           nullable: true
           additionalProperties: true
-          description: Updated game-specific metadata
+          description: Updated game-specific metadata. No Bannou plugin reads specific keys from this field by convention.
 
     RemoveLicenseDefinitionRequest:
       type: object
@@ -1200,7 +1200,7 @@ components:
           type: object
           nullable: true
           additionalProperties: true
-          description: Game-specific metadata for this license node
+          description: Game-specific metadata for this license node. No Bannou plugin reads specific keys from this field by convention.
         createdAt:
           type: string
           format: date-time

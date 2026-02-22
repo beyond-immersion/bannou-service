@@ -901,7 +901,8 @@ components:
             additionalProperties because the metadata content is determined by the
             Auth service's event payload and varies by auth provider — Connect
             treats it as opaque context for logging (client-opaque pass-through
-            per FOUNDATION TENETS).
+            per FOUNDATION TENETS). No Bannou plugin reads specific keys from
+            this field by convention.
 
     AuthEventType:
       type: string

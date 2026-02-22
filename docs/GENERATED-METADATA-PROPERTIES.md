@@ -30,9 +30,9 @@ Compliant properties include one of these phrases in their description:
 | Metric | Count |
 |--------|-------|
 | Total metadata bag properties | 165 |
-| Compliant (has marker) | 111 |
-| Non-compliant (missing marker) | 54 |
-| Compliance rate | 67% |
+| Compliant (has marker) | 141 |
+| Non-compliant (missing marker) | 24 |
+| Compliance rate | 85% |
 
 ## Properties by Service
 
@@ -69,7 +69,7 @@ Compliant properties include one of these phrases in their description:
 
 | Schema Type | Property | Schema File | Compliant | Description |
 |-------------|----------|-------------|-----------|-------------|
-| `AuthEvent` | `metadata` | `connect-api.yaml` | **N** | Additional auth event metadata (device info, location, etc.). Uses additional... |
+| `AuthEvent` | `metadata` | `connect-api.yaml` | Y | Additional auth event metadata (device info, location, etc.). Uses additional... |
 | `GetEndpointMetaResponse` | `data` | `connect-api.yaml` | **N** | Metadata payload whose structure varies by metaType (endpoint-info returns su... |
 | `InternalProxyRequest` | `body` | `connect-api.yaml` | **N** | Request body to forward to target service (null for no body). Uses additional... |
 
@@ -118,17 +118,17 @@ Compliant properties include one of these phrases in their description:
 
 | Schema Type | Property | Schema File | Compliant | Description |
 |-------------|----------|-------------|-----------|-------------|
-| `EntryMetadata` | `customData` | `collection-api.yaml` | **N** | Arbitrary custom data for game-specific metadata |
-| `UpdateEntryMetadataRequest` | `customData` | `collection-api.yaml` | **N** | Updated custom data (merged with existing) |
+| `EntryMetadata` | `customData` | `collection-api.yaml` | Y | Arbitrary custom data for game-specific metadata. No Bannou plugin reads spec... |
+| `UpdateEntryMetadataRequest` | `customData` | `collection-api.yaml` | Y | Updated custom data (merged with existing). No Bannou plugin reads specific k... |
 
 #### Currency
 
 | Schema Type | Property | Schema File | Compliant | Description |
 |-------------|----------|-------------|-----------|-------------|
-| `CreditCurrencyRequest` | `metadata` | `currency-api.yaml` | **N** | Free-form transaction metadata |
-| `CurrencyTransactionRecord` | `metadata` | `currency-api.yaml` | **N** | Free-form metadata |
-| `DebitCurrencyRequest` | `metadata` | `currency-api.yaml` | **N** | Free-form transaction metadata |
-| `TransferCurrencyRequest` | `metadata` | `currency-api.yaml` | **N** | Free-form transaction metadata |
+| `CreditCurrencyRequest` | `metadata` | `currency-api.yaml` | Y | Free-form transaction metadata. No Bannou plugin reads specific keys from thi... |
+| `CurrencyTransactionRecord` | `metadata` | `currency-api.yaml` | Y | Free-form metadata. No Bannou plugin reads specific keys from this field by c... |
+| `DebitCurrencyRequest` | `metadata` | `currency-api.yaml` | Y | Free-form transaction metadata. No Bannou plugin reads specific keys from thi... |
+| `TransferCurrencyRequest` | `metadata` | `currency-api.yaml` | Y | Free-form transaction metadata. No Bannou plugin reads specific keys from thi... |
 
 #### Game Session
 
@@ -208,8 +208,8 @@ Compliant properties include one of these phrases in their description:
 
 | Schema Type | Property | Schema File | Compliant | Description |
 |-------------|----------|-------------|-----------|-------------|
-| `CreateBundleRequest` | `metadata` | `asset-api.yaml` | **N** | Custom metadata for the bundle (null if none) |
-| `CreateMetabundleRequest` | `metadata` | `asset-api.yaml` | **N** | Custom metadata for the metabundle |
+| `CreateBundleRequest` | `metadata` | `asset-api.yaml` | Y | Custom metadata for the bundle (null if none). No Bannou plugin reads specifi... |
+| `CreateMetabundleRequest` | `metadata` | `asset-api.yaml` | Y | Custom metadata for the metabundle. No Bannou plugin reads specific keys from... |
 
 #### Documentation
 
@@ -233,9 +233,9 @@ Compliant properties include one of these phrases in their description:
 
 | Schema Type | Property | Schema File | Compliant | Description |
 |-------------|----------|-------------|-----------|-------------|
-| `Analytics` | `otherTrackers` | `website-api.yaml` | **N** | Configuration for other analytics trackers |
-| `DownloadInfo` | `minimumRequirements` | `website-api.yaml` | **N** | Minimum system requirements for the client |
-| `PageContent` | `metadata` | `website-api.yaml` | **N** | Custom metadata for the page |
+| `Analytics` | `otherTrackers` | `website-api.yaml` | Y | Configuration for other analytics trackers. No Bannou plugin reads specific k... |
+| `DownloadInfo` | `minimumRequirements` | `website-api.yaml` | Y | Minimum system requirements for the client. No Bannou plugin reads specific k... |
+| `PageContent` | `metadata` | `website-api.yaml` | Y | Custom metadata for the page. No Bannou plugin reads specific keys from this ... |
 
 ### Game Features (L4)
 
@@ -278,8 +278,8 @@ Compliant properties include one of these phrases in their description:
 
 | Schema Type | Property | Schema File | Compliant | Description |
 |-------------|----------|-------------|-----------|-------------|
-| `EvolveCombatRequest` | `contextData` | `character-personality-api.yaml` | **N** | Optional context for logging and debugging (e.g., enemy type, ally count, loc... |
-| `RecordExperienceRequest` | `contextData` | `character-personality-api.yaml` | **N** | Optional context for logging and debugging. Not used in evolution calculations.  |
+| `EvolveCombatRequest` | `contextData` | `character-personality-api.yaml` | Y | Optional context for logging and debugging (e.g., enemy type, ally count, loc... |
+| `RecordExperienceRequest` | `contextData` | `character-personality-api.yaml` | Y | Optional context for logging and debugging. Not used in evolution calculation... |
 
 #### Escrow
 
@@ -291,8 +291,8 @@ Compliant properties include one of these phrases in their description:
 | `EscrowAssetInput` | `customAssetData` | `escrow-api.yaml` | Y | Custom asset handler-specific data. No Bannou plugin reads specific keys from... |
 | `ValidationFailure` | `details` | `escrow-api.yaml` | Y | Validation failure diagnostic details. No Bannou plugin reads specific keys f... |
 | `VerifyConditionRequest` | `verificationData` | `escrow-api.yaml` | Y | Caller-provided proof/evidence data for condition verification. No Bannou plu... |
-| `ReleaseAllocationWithConfirmation` | `confirmationShortcut` | `escrow-events.yaml` | **N** | Prebound API shortcut for client confirmation (pushed via WebSocket) |
-| `ValidationFailureInfo` | `details` | `escrow-events.yaml` | **N** | Additional failure details |
+| `ReleaseAllocationWithConfirmation` | `confirmationShortcut` | `escrow-events.yaml` | Y | Prebound API shortcut for client confirmation (pushed via WebSocket). No Bann... |
+| `ValidationFailureInfo` | `details` | `escrow-events.yaml` | Y | Additional failure details. No Bannou plugin reads specific keys from this fi... |
 
 #### Leaderboard
 
@@ -307,10 +307,10 @@ Compliant properties include one of these phrases in their description:
 
 | Schema Type | Property | Schema File | Compliant | Description |
 |-------------|----------|-------------|-----------|-------------|
-| `AddLicenseDefinitionRequest` | `metadata` | `license-api.yaml` | **N** | Game-specific metadata for this license node |
-| `BoardNodeState` | `metadata` | `license-api.yaml` | **N** | Game-specific metadata for this license node |
-| `LicenseDefinitionResponse` | `metadata` | `license-api.yaml` | **N** | Game-specific metadata for this license node |
-| `UpdateLicenseDefinitionRequest` | `metadata` | `license-api.yaml` | **N** | Updated game-specific metadata |
+| `AddLicenseDefinitionRequest` | `metadata` | `license-api.yaml` | Y | Game-specific metadata for this license node. No Bannou plugin reads specific... |
+| `BoardNodeState` | `metadata` | `license-api.yaml` | Y | Game-specific metadata for this license node. No Bannou plugin reads specific... |
+| `LicenseDefinitionResponse` | `metadata` | `license-api.yaml` | Y | Game-specific metadata for this license node. No Bannou plugin reads specific... |
+| `UpdateLicenseDefinitionRequest` | `metadata` | `license-api.yaml` | Y | Updated game-specific metadata. No Bannou plugin reads specific keys from thi... |
 
 #### Mapping
 
@@ -364,7 +364,7 @@ Compliant properties include one of these phrases in their description:
 
 | Schema Type | Property | Schema File | Compliant | Description |
 |-------------|----------|-------------|-----------|-------------|
-| `AssetReadyEvent` | `metadata` | `asset-client-events.yaml` | **N** | Asset metadata |
+| `AssetReadyEvent` | `metadata` | `asset-client-events.yaml` | Y | Asset metadata. No Bannou plugin reads specific keys from this field by conve... |
 
 #### Common
 
@@ -373,25 +373,62 @@ Compliant properties include one of these phrases in their description:
 | `GoalState` | `goalParameters` | `common-events.yaml` | **N** | Parameters for the primary goal (e.g., target entity, location) |
 | `MemoryUpdate` | `memoryValue` | `common-events.yaml` | **N** | Memory value (entity ID, context, intensity, etc.) |
 | `ServiceErrorEvent` | `details` | `common-events.yaml` | **N** | Redacted structured context (exclude PII/secrets) |
-| `ServiceHeartbeatEvent` | `metadata` | `common-events.yaml` | **N** | Additional instance-level metadata |
-| `ServiceStatus` | `metadata` | `common-events.yaml` | **N** | Service-specific metadata from OnHeartbeat callback |
-| `SessionConnectedEvent` | `clientInfo` | `common-events.yaml` | **N** | Optional client metadata (version, platform, etc.) |
-| `SessionReconnectedEvent` | `reconnectionContext` | `common-events.yaml` | **N** | Optional context from the reconnection (client info, etc.) |
+| `ServiceHeartbeatEvent` | `metadata` | `common-events.yaml` | Y | Additional instance-level metadata. No Bannou plugin reads specific keys from... |
+| `ServiceStatus` | `metadata` | `common-events.yaml` | Y | Service-specific metadata from OnHeartbeat callback. No Bannou plugin reads s... |
+| `SessionConnectedEvent` | `clientInfo` | `common-events.yaml` | Y | Optional client metadata (version, platform, etc.). No Bannou plugin reads sp... |
+| `SessionReconnectedEvent` | `reconnectionContext` | `common-events.yaml` | Y | Optional context from the reconnection (client info, etc.). No Bannou plugin ... |
 
 #### Common Client
 
 | Schema Type | Property | Schema File | Compliant | Description |
 |-------------|----------|-------------|-----------|-------------|
-| `SystemErrorEvent` | `details` | `common-client-events.yaml` | **N** | Additional error details (service-specific) |
+| `SystemErrorEvent` | `details` | `common-client-events.yaml` | Y | Additional error details (service-specific). No Bannou plugin reads specific ... |
 
 #### Game Session Client
 
 | Schema Type | Property | Schema File | Compliant | Description |
 |-------------|----------|-------------|-----------|-------------|
-| `GameActionResultEvent` | `resultData` | `game-session-client-events.yaml` | **N** | Action-specific result data |
-| `GameStateUpdatedEvent` | `stateDelta` | `game-session-client-events.yaml` | **N** | Partial game state changes |
-| `PlayerInfo` | `characterData` | `game-session-client-events.yaml` | **N** | Game-specific character data |
-| `VisibleEffect` | `effectData` | `game-session-client-events.yaml` | **N** | Effect-specific parameters |
+| `GameActionResultEvent` | `resultData` | `game-session-client-events.yaml` | Y | Action-specific result data. No Bannou plugin reads specific keys from this f... |
+| `GameStateUpdatedEvent` | `stateDelta` | `game-session-client-events.yaml` | Y | Partial game state changes. No Bannou plugin reads specific keys from this fi... |
+| `PlayerInfo` | `characterData` | `game-session-client-events.yaml` | Y | Game-specific character data. No Bannou plugin reads specific keys from this ... |
+| `VisibleEffect` | `effectData` | `game-session-client-events.yaml` | Y | Effect-specific parameters. No Bannou plugin reads specific keys from this fi... |
+
+## Structural Exceptions
+
+These properties use `additionalProperties: true` for structural reasons that are
+fundamentally different from metadata bags. They are **not subject to T29** because
+they are not data contracts between services -- they are the infrastructure primitives
+that other services build on, or they represent genuinely polymorphic payloads whose
+shape is defined by authored content rather than service convention.
+
+### Infrastructure Primitives
+
+These exist because the service's entire purpose is storing/forwarding arbitrary data:
+
+| Service | Property | Why Exempt |
+|---------|----------|-----------|
+| **State** (L0) | `SaveStateRequest.value`, `GetStateResponse.value`, `BulkSaveItem.value`, `BulkStateItem.value` | Key-value store. The entire purpose is to persist any JSON value. Not a metadata bag -- it IS the storage primitive. |
+| **Messaging** (L0) | `PublishEventRequest.payload` | Generic pub/sub bus. Must accept any event shape for forwarding. Wrapped opaquely in `GenericMessageEnvelope`. |
+| **Connect** (L1) | `InternalProxyRequest.body` | HTTP proxy forwarding body. Must accept any shape because it forwards arbitrary service request payloads. |
+
+### Polymorphic Response Data
+
+These vary by a typed discriminator field, not by cross-service convention:
+
+| Service | Property | Why Exempt |
+|---------|----------|-----------|
+| **Connect** (L1) | `GetEndpointMetaResponse.data` | Structure varies by `metaType` discriminator. Each meta type has a known shape. |
+| **Common** | `ServiceErrorEvent.details` | Diagnostic context that varies per error type. No service reads other services' error details by key. |
+
+### Behavior-Authored Content
+
+These are free-form because the keys are defined by ABML behavior documents (authored
+YAML content), not by any service schema. Different NPCs have different keys:
+
+| Service | Property | Why Exempt |
+|---------|----------|-----------|
+| **Behavior** (L4) | `GoapPlanRequest.worldState`, `ValidateGoapPlanRequest.worldState`, `CharacterContext.worldState` | GOAP world state keys (e.g., `hunger`, `gold`, `in_combat`) are defined per-NPC by behavior documents. The planner iterates them generically. |
+| **Common** | `GoalState.goalParameters`, `MemoryUpdate.memoryValue` | Actor internal state populated by behavior execution. Keys are behavior-authored. |
 
 ## Non-Compliant Properties
 
@@ -407,41 +444,14 @@ or is it being misused as a cross-service data contract?
 | Actor | `ActorTemplateResponse` | `cognitionOverrides` | `actor-api.yaml` | Static template-level cognition overrides (polymorphic JSON). Deserialized in... |
 | Actor | `UpdateActorTemplateRequest` | `cognitionOverrides` | `actor-api.yaml` | Updated cognition overrides (polymorphic JSON). Deserialized internally to Co... |
 | Analytics | `IngestEventRequest` | `metadata` | `analytics-api.yaml` | Additional event-specific data |
-| Asset | `CreateBundleRequest` | `metadata` | `asset-api.yaml` | Custom metadata for the bundle (null if none) |
-| Asset | `CreateMetabundleRequest` | `metadata` | `asset-api.yaml` | Custom metadata for the metabundle |
-| Asset Client | `AssetReadyEvent` | `metadata` | `asset-client-events.yaml` | Asset metadata |
 | Behavior | `CharacterContext` | `worldState` | `behavior-api.yaml` | Relevant world state information |
 | Behavior | `GoapPlanRequest` | `worldState` | `behavior-api.yaml` | Current world state as key-value pairs |
 | Behavior | `ValidateGoapPlanRequest` | `worldState` | `behavior-api.yaml` | Current world state |
-| Character Personality | `RecordExperienceRequest` | `contextData` | `character-personality-api.yaml` | Optional context for logging and debugging. Not used in evolution calculations.  |
-| Character Personality | `EvolveCombatRequest` | `contextData` | `character-personality-api.yaml` | Optional context for logging and debugging (e.g., enemy type, ally count, loc... |
-| Collection | `EntryMetadata` | `customData` | `collection-api.yaml` | Arbitrary custom data for game-specific metadata |
-| Collection | `UpdateEntryMetadataRequest` | `customData` | `collection-api.yaml` | Updated custom data (merged with existing) |
-| Common | `SessionConnectedEvent` | `clientInfo` | `common-events.yaml` | Optional client metadata (version, platform, etc.) |
 | Common | `ServiceErrorEvent` | `details` | `common-events.yaml` | Redacted structured context (exclude PII/secrets) |
 | Common | `GoalState` | `goalParameters` | `common-events.yaml` | Parameters for the primary goal (e.g., target entity, location) |
 | Common | `MemoryUpdate` | `memoryValue` | `common-events.yaml` | Memory value (entity ID, context, intensity, etc.) |
-| Common | `ServiceHeartbeatEvent` | `metadata` | `common-events.yaml` | Additional instance-level metadata |
-| Common | `ServiceStatus` | `metadata` | `common-events.yaml` | Service-specific metadata from OnHeartbeat callback |
-| Common | `SessionReconnectedEvent` | `reconnectionContext` | `common-events.yaml` | Optional context from the reconnection (client info, etc.) |
-| Common Client | `SystemErrorEvent` | `details` | `common-client-events.yaml` | Additional error details (service-specific) |
 | Connect | `InternalProxyRequest` | `body` | `connect-api.yaml` | Request body to forward to target service (null for no body). Uses additional... |
 | Connect | `GetEndpointMetaResponse` | `data` | `connect-api.yaml` | Metadata payload whose structure varies by metaType (endpoint-info returns su... |
-| Connect | `AuthEvent` | `metadata` | `connect-api.yaml` | Additional auth event metadata (device info, location, etc.). Uses additional... |
-| Currency | `CreditCurrencyRequest` | `metadata` | `currency-api.yaml` | Free-form transaction metadata |
-| Currency | `DebitCurrencyRequest` | `metadata` | `currency-api.yaml` | Free-form transaction metadata |
-| Currency | `TransferCurrencyRequest` | `metadata` | `currency-api.yaml` | Free-form transaction metadata |
-| Currency | `CurrencyTransactionRecord` | `metadata` | `currency-api.yaml` | Free-form metadata |
-| Escrow | `ReleaseAllocationWithConfirmation` | `confirmationShortcut` | `escrow-events.yaml` | Prebound API shortcut for client confirmation (pushed via WebSocket) |
-| Escrow | `ValidationFailureInfo` | `details` | `escrow-events.yaml` | Additional failure details |
-| Game Session Client | `PlayerInfo` | `characterData` | `game-session-client-events.yaml` | Game-specific character data |
-| Game Session Client | `VisibleEffect` | `effectData` | `game-session-client-events.yaml` | Effect-specific parameters |
-| Game Session Client | `GameActionResultEvent` | `resultData` | `game-session-client-events.yaml` | Action-specific result data |
-| Game Session Client | `GameStateUpdatedEvent` | `stateDelta` | `game-session-client-events.yaml` | Partial game state changes |
-| License | `BoardNodeState` | `metadata` | `license-api.yaml` | Game-specific metadata for this license node |
-| License | `AddLicenseDefinitionRequest` | `metadata` | `license-api.yaml` | Game-specific metadata for this license node |
-| License | `UpdateLicenseDefinitionRequest` | `metadata` | `license-api.yaml` | Updated game-specific metadata |
-| License | `LicenseDefinitionResponse` | `metadata` | `license-api.yaml` | Game-specific metadata for this license node |
 | Mapping | `EventMapObject` | `data` | `mapping-events.yaml` | Schema-less object data (publisher-defined) |
 | Mapping | `IngestPayload` | `data` | `mapping-events.yaml` | Schema-less object data (publisher-defined) |
 | Mapping | `ObjectChangeEvent` | `data` | `mapping-events.yaml` | Object data (for created/updated) |
@@ -452,9 +462,6 @@ or is it being misused as a cross-service data contract?
 | State | `BulkSaveItem` | `value` | `state-api.yaml` | The value to store |
 | Status | `GrantStatusRequest` | `metadata` | `status-api.yaml` | Arbitrary key-value data passed to contract template values and stored on the... |
 | Status | `StatusInstanceResponse` | `metadata` | `status-api.yaml` | Arbitrary metadata associated with this status instance |
-| Website | `PageContent` | `metadata` | `website-api.yaml` | Custom metadata for the page |
-| Website | `DownloadInfo` | `minimumRequirements` | `website-api.yaml` | Minimum system requirements for the client |
-| Website | `Analytics` | `otherTrackers` | `website-api.yaml` | Configuration for other analytics trackers |
 
 ---
 

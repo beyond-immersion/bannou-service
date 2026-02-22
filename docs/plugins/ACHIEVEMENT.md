@@ -177,7 +177,10 @@ Standard CRUD. Create checks for duplicates (409), maintains a set index per gam
 
 ### Bugs (Fix Immediately)
 
-1. **Dead code: `GetAchievementProgressKey` method is never called**
+1. **T29 violation: definition `metadata` reads `scoreType`/`milestoneType`/`leaderboardId`/`rankThreshold` by convention**: `AchievementServiceEvents` reads `scoreType`, `milestoneType`, `milestoneValue`, `milestoneName`, `leaderboardId`, and `rankThreshold` keys from definition metadata via `MetadataHelper.TryGetString()` for analytics and leaderboard event matching. Schema claims "No Bannou plugin reads specific keys." These should be typed fields on the achievement definition schema.
+   <!-- AUDIT:NEEDS_DESIGN:2026-02-22:https://github.com/beyond-immersion/bannou-service/issues/466 -->
+
+2. **Dead code: `GetAchievementProgressKey` method is never called**
    - The method at `AchievementService.cs:95` generates keys in format `{gameServiceId}:{achievementId}:{entityType}:{entityId}` but is never invoked anywhere in the codebase.
    - Impact: No runtime issue, but represents code bloat/confusion. Should be removed or used if the key pattern was intended for a different purpose.
 
@@ -201,4 +204,6 @@ Standard CRUD. Create checks for duplicates (409), maintains a set index per gam
 
 This section tracks active development work on items from the quirks/bugs lists above.
 
-*No active work tracking markers present.*
+### Active
+
+- **2026-02-22**: T29 violation — definition metadata reads 6 keys by convention (`scoreType`, `milestoneType`, `milestoneValue`, `milestoneName`, `leaderboardId`, `rankThreshold`). Needs typed fields on achievement definition schema. [#466](https://github.com/beyond-immersion/bannou-service/issues/466)

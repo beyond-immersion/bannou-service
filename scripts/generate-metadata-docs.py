@@ -299,6 +299,47 @@ def generate_markdown(properties_by_service: dict, service_layers: dict) -> str:
 
             lines.append("")
 
+    # Structural exceptions section (investigated and determined not T29-applicable)
+    lines.extend([
+        "## Structural Exceptions",
+        "",
+        "These properties use `additionalProperties: true` for structural reasons that are",
+        "fundamentally different from metadata bags. They are **not subject to T29** because",
+        "they are not data contracts between services -- they are the infrastructure primitives",
+        "that other services build on, or they represent genuinely polymorphic payloads whose",
+        "shape is defined by authored content rather than service convention.",
+        "",
+        "### Infrastructure Primitives",
+        "",
+        "These exist because the service's entire purpose is storing/forwarding arbitrary data:",
+        "",
+        "| Service | Property | Why Exempt |",
+        "|---------|----------|-----------|",
+        "| **State** (L0) | `SaveStateRequest.value`, `GetStateResponse.value`, `BulkSaveItem.value`, `BulkStateItem.value` | Key-value store. The entire purpose is to persist any JSON value. Not a metadata bag -- it IS the storage primitive. |",
+        "| **Messaging** (L0) | `PublishEventRequest.payload` | Generic pub/sub bus. Must accept any event shape for forwarding. Wrapped opaquely in `GenericMessageEnvelope`. |",
+        "| **Connect** (L1) | `InternalProxyRequest.body` | HTTP proxy forwarding body. Must accept any shape because it forwards arbitrary service request payloads. |",
+        "",
+        "### Polymorphic Response Data",
+        "",
+        "These vary by a typed discriminator field, not by cross-service convention:",
+        "",
+        "| Service | Property | Why Exempt |",
+        "|---------|----------|-----------|",
+        "| **Connect** (L1) | `GetEndpointMetaResponse.data` | Structure varies by `metaType` discriminator. Each meta type has a known shape. |",
+        "| **Common** | `ServiceErrorEvent.details` | Diagnostic context that varies per error type. No service reads other services' error details by key. |",
+        "",
+        "### Behavior-Authored Content",
+        "",
+        "These are free-form because the keys are defined by ABML behavior documents (authored",
+        "YAML content), not by any service schema. Different NPCs have different keys:",
+        "",
+        "| Service | Property | Why Exempt |",
+        "|---------|----------|-----------|",
+        "| **Behavior** (L4) | `GoapPlanRequest.worldState`, `ValidateGoapPlanRequest.worldState`, `CharacterContext.worldState` | GOAP world state keys (e.g., `hunger`, `gold`, `in_combat`) are defined per-NPC by behavior documents. The planner iterates them generically. |",
+        "| **Common** | `GoalState.goalParameters`, `MemoryUpdate.memoryValue` | Actor internal state populated by behavior execution. Keys are behavior-authored. |",
+        "",
+    ])
+
     # Non-compliant properties section
     if all_non_compliant:
         lines.extend([
