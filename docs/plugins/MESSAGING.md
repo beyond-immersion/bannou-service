@@ -114,7 +114,7 @@ This plugin does not consume external events (it IS the event infrastructure).
 
 | Property | Env Var | Default | Purpose |
 |----------|---------|---------|---------|
-| `EnablePublisherConfirms` | `MESSAGING_ENABLE_CONFIRMS` | `true` | Enable broker confirmation for at-least-once delivery |
+| `EnablePublisherConfirms` | `MESSAGING_ENABLE_PUBLISHER_CONFIRMS` | `true` | Enable broker confirmation for at-least-once delivery |
 
 When `EnablePublisherConfirms` is true, `BasicPublishAsync` waits for broker confirmation before returning (RabbitMQ.Client 7.x pattern). The timeout is managed internally by RabbitMQ.Client 7.x and is not configurable.
 
@@ -174,6 +174,12 @@ These settings apply to the **MessageRetryBuffer** (publish failures). After `Re
 | `SubscriptionRecoveryStartupDelaySeconds` | `MESSAGING_SUBSCRIPTION_RECOVERY_STARTUP_DELAY_SECONDS` | `2` | Delay before recovery on startup |
 | `ExternalSubscriptionTtlSeconds` | `MESSAGING_EXTERNAL_SUBSCRIPTION_TTL_SECONDS` | `86400` | External subscription persistence TTL (24h) |
 
+### Shutdown Settings
+
+| Property | Env Var | Default | Purpose |
+|----------|---------|---------|---------|
+| `ShutdownTimeoutSeconds` | `MESSAGING_SHUTDOWN_TIMEOUT_SECONDS` | `10` | Max seconds to wait for graceful subscription cleanup during shutdown |
+
 ---
 
 ## DI Services & Helpers
@@ -190,6 +196,7 @@ These settings apply to the **MessageRetryBuffer** (publish failures). After `Re
 | `NativeEventConsumerBackend` | HostedService | Bridges IEventConsumer fan-out to RabbitMQ |
 | `MessagingSubscriptionRecoveryService` | HostedService | Recovers external subscriptions on startup, refreshes TTL |
 | `DeadLetterConsumerService` | HostedService | Consumes dead-lettered messages, logs with structured data, publishes error events |
+| `MessagingUnhandledExceptionHandler` | Singleton | Publishes `ServiceErrorEvent` via IMessageBus for unhandled exceptions; AsyncLocal cycle prevention |
 | `MessagingService` | Singleton | HTTP API implementation (also registered as concrete for recovery service) |
 
 Service lifetime is **Singleton** (infrastructure must persist across requests).
@@ -201,7 +208,7 @@ Service lifetime is **Singleton** (infrastructure must persist across requests).
 | `GenericMessageEnvelope` | Wraps arbitrary JSON payloads for MassTransit compatibility; implements `IBannouEvent` |
 | `TappedMessageEnvelope` | Extended envelope with tap routing metadata for multi-stream forwarding |
 | `ExternalSubscriptionData` | Record type for persisting HTTP callback subscriptions |
-| `IProcessTerminator` | Interface for crash-fast behavior; `EnvironmentProcessTerminator` calls `Environment.Exit(1)` |
+| `IProcessTerminator` | Interface for crash-fast behavior; `DefaultProcessTerminator` calls `Environment.FailFast(string)` |
 
 ---
 

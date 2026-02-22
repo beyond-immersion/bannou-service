@@ -282,8 +282,10 @@ None. All 30 API endpoints are fully implemented with complete business logic, v
 ## Potential Extensions
 
 1. **Message edit support**: Add edit endpoint with version history tracking, edit timestamps, and `ChatMessageEditedEvent`/`ChatMessageEditedClientEvent` for real-time UI updates.
+<!-- AUDIT:NEEDS_DESIGN:2026-02-22:https://github.com/beyond-immersion/bannou-service/issues/450 -->
 
 2. **Threaded replies**: Add `replyToMessageId` to messages for conversation threading, with threaded history query support.
+<!-- AUDIT:NEEDS_DESIGN:2026-02-22:https://github.com/beyond-immersion/bannou-service/issues/451 -->
 
 3. **Message reactions**: Allow participants to add emoji reactions to messages, stored as a separate model linked by message ID.
 
