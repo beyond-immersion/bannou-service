@@ -1091,6 +1091,30 @@ public partial class PermissionService : IPermissionService, IPermissionRegistry
         });
     }
 
+    /// <summary>
+    /// Handles a session reconnection within the reconnection window.
+    /// Re-adds the session to active connections and recompiles permissions
+    /// from existing Redis state (preserved during the reconnection window).
+    /// </summary>
+    /// <param name="sessionId">The reconnected session ID.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    public async Task RecompileForReconnectionAsync(string sessionId, CancellationToken cancellationToken = default)
+    {
+        using var activity = _telemetryProvider.StartActivity("bannou.permission", "PermissionService.RecompileForReconnection");
+
+        _logger.LogDebug("Handling session reconnection: {SessionId}", sessionId);
+
+        // Re-add session to active connections (may have been removed during disconnect)
+        var cacheStore = _stateStoreFactory.GetCacheableStore<string>(StateStoreDefinitions.Permission);
+        await cacheStore.AddToSetAsync<string>(ACTIVE_CONNECTIONS_KEY, sessionId, cancellationToken: cancellationToken);
+
+        // Recompile from existing Redis state (preserved during reconnection window)
+        // skipActiveConnectionsCheck=true because we JUST re-added sessionId to activeConnections above
+        await RecompileSessionPermissionsAsync(sessionId, "session_reconnected", cancellationToken);
+
+        _logger.LogDebug("Reconnection recompilation complete for session {SessionId}", sessionId);
+    }
+
     #endregion
 
     #region Helper Methods

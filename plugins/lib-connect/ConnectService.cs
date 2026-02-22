@@ -971,16 +971,19 @@ public partial class ConnectService : IConnectService, IDisposable, IAsyncDispos
                         sessionId, connectionState.PeerGuid);
 
                     // Dispatch to DI listeners after broadcast event (reconnection path)
+                    var reconnectedSessionGuid = Guid.Parse(sessionId);
                     await DispatchSessionActivityListenersAsync(
-                        listener => listener.OnReconnectedAsync(Guid.Parse(sessionId), cancellationToken),
+                        listener => listener.OnReconnectedAsync(reconnectedSessionGuid, cancellationToken),
                         "OnReconnected", sessionId);
                 }
-                else
+                else if (accountId.HasValue)
                 {
                     // Dispatch to DI listeners after broadcast event (new connection path)
+                    // Guard: only dispatch when accountId is available (post-auth connections)
+                    var connectedSessionGuid = Guid.Parse(sessionId);
                     await DispatchSessionActivityListenersAsync(
                         listener => listener.OnConnectedAsync(
-                            Guid.Parse(sessionId), accountId ?? Guid.Empty,
+                            connectedSessionGuid, accountId.Value,
                             (IReadOnlyList<string>?)userRoles?.ToList(),
                             (IReadOnlyList<string>?)authorizations?.ToList(),
                             cancellationToken),
@@ -1018,8 +1021,9 @@ public partial class ConnectService : IConnectService, IDisposable, IAsyncDispos
                     (DateTimeOffset.UtcNow - connectionState.LastActivity).TotalSeconds >= _configuration.HeartbeatIntervalSeconds)
                 {
                     await _sessionManager.UpdateSessionHeartbeatAsync(sessionId, _instanceId);
+                    var heartbeatSessionGuid = Guid.Parse(sessionId);
                     await DispatchSessionActivityListenersAsync(
-                        listener => listener.OnHeartbeatAsync(Guid.Parse(sessionId), cancellationToken),
+                        listener => listener.OnHeartbeatAsync(heartbeatSessionGuid, cancellationToken),
                         "OnHeartbeat", sessionId);
                 }
 
@@ -1107,9 +1111,10 @@ public partial class ConnectService : IConnectService, IDisposable, IAsyncDispos
                     var reconnectionWindow = reconnectable
                         ? TimeSpan.FromSeconds(_configuration.ReconnectionWindowSeconds)
                         : (TimeSpan?)null;
+                    var disconnectedSessionGuid = Guid.Parse(sessionId);
                     await DispatchSessionActivityListenersAsync(
                         listener => listener.OnDisconnectedAsync(
-                            Guid.Parse(sessionId), reconnectable, reconnectionWindow, CancellationToken.None),
+                            disconnectedSessionGuid, reconnectable, reconnectionWindow, CancellationToken.None),
                         "OnDisconnected", sessionId);
                 }
                 catch (Exception ex)
@@ -3106,10 +3111,6 @@ public partial class ConnectService : IConnectService, IDisposable, IAsyncDispos
 
     #endregion
 
-    #region IDisposable / IAsyncDisposable
-
-    private bool _disposed;
-
     #region Session Activity Listener Dispatch
 
     /// <summary>
@@ -3122,6 +3123,9 @@ public partial class ConnectService : IConnectService, IDisposable, IAsyncDispos
         string sessionId)
     {
         if (_sessionActivityListeners.Count == 0) return;
+
+        using var activity = _telemetryProvider.StartActivity(
+            "bannou.connect", $"ConnectService.DispatchSessionActivity.{eventName}");
 
         foreach (var listener in _sessionActivityListeners)
         {
@@ -3139,6 +3143,10 @@ public partial class ConnectService : IConnectService, IDisposable, IAsyncDispos
     }
 
     #endregion
+
+    #region IDisposable / IAsyncDisposable
+
+    private bool _disposed;
 
     /// <summary>
     /// Asynchronously disposes the ConnectService, gracefully closing all WebSocket connections.

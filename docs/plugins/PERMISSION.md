@@ -21,7 +21,7 @@ Redis-backed RBAC permission system (L1 AppFoundation) for WebSocket services. M
 | lib-state (`IStateStoreFactory`) | Redis persistence for session states, permissions, matrix data, indexes; `ICacheableStateStore<string>` for atomic set operations on session/service tracking sets |
 | lib-state (`IDistributedLockProvider`) | Distributed locks for session state and role update operations (prevents lost updates from concurrent modifications) |
 | lib-messaging (`IMessageBus`) | Error event publishing |
-| lib-messaging (`IEventConsumer`) | 3 event subscriptions (session lifecycle) |
+| lib-messaging (`IEventConsumer`) | 1 event subscription (`session.updated` from Auth service) |
 | lib-messaging (`IClientEventPublisher`) | Push capability updates to WebSocket sessions |
 | lib-telemetry (`ITelemetryProvider`) | Trace spans on all async helper methods and event handlers (T30 compliance) |
 
@@ -74,8 +74,17 @@ No traditional topic-based event publications. Capability updates go directly to
 | Topic | Event Type | Handler |
 |-------|-----------|---------|
 | `session.updated` | `SessionUpdatedEvent` | Role/authorization changes from Auth service |
-| `session.connected` | `SessionConnectedEvent` | Adds to activeConnections, triggers initial capability delivery |
-| `session.disconnected` | `SessionDisconnectedEvent` | Removes from activeConnections |
+
+Session connected/disconnected events are now handled via `PermissionSessionActivityListener` (DI listener pattern, GH#392) instead of event subscriptions, since Connect and Permission are both L1 AppFoundation (always co-located).
+
+### DI Listener: PermissionSessionActivityListener
+
+| Callback | Trigger | Action |
+|----------|---------|--------|
+| `OnHeartbeatAsync` | Connect heartbeat (~30s) | O(1) Redis EXPIRE on session data keys (TTL refresh) |
+| `OnConnectedAsync` | New session connection | Delegates to `HandleSessionConnectedAsync` (session setup + initial capability delivery) |
+| `OnReconnectedAsync` | Session reconnection | Re-adds to `active_connections`, recompiles from preserved Redis state, refreshes TTL |
+| `OnDisconnectedAsync` | Session disconnect | Delegates to `HandleSessionDisconnectedAsync`; aligns Redis TTL to reconnection window when reconnectable |
 
 ---
 
@@ -85,7 +94,7 @@ No traditional topic-based event publications. Capability updates go directly to
 |----------|------|---------|-------|---------|-------------|
 | `MaxConcurrentRecompilations` | int | 50 | 1-500 | `PERMISSION_MAX_CONCURRENT_RECOMPILATIONS` | Bounds parallel session recompilations during service registration |
 | `PermissionCacheTtlSeconds` | int | 300 | 0-86400 | `PERMISSION_CACHE_TTL_SECONDS` | In-memory cache TTL in seconds. Cached capabilities older than this are refreshed from Redis on next access. 0 disables (cache never expires). Default 300 (5 min) bounds cross-instance staleness |
-| `SessionDataTtlSeconds` | int | 86400 | 0-604800 | `PERMISSION_SESSION_DATA_TTL_SECONDS` | Redis TTL for session data keys. Handles orphaned session cleanup. 0 disables. Default 86400 (24h) |
+| `SessionDataTtlSeconds` | int | 600 | 0-604800 | `PERMISSION_SESSION_DATA_TTL_SECONDS` | Redis TTL for session data keys. With heartbeat-driven TTL refresh (~30s via `ISessionActivityListener`), active sessions continuously extend their TTL. Dead sessions expire naturally when heartbeats stop. Default 600 (10 min, ~20 heartbeat intervals of headroom). 0 disables |
 | `RoleHierarchy` | string[] | `["anonymous", "user", "developer", "admin"]` | - | `PERMISSION_ROLE_HIERARCHY` | Ordered role hierarchy from lowest to highest privilege (comma-separated in env var) |
 | `SessionLockTimeoutSeconds` | int | 10 | 1-60 | `PERMISSION_SESSION_LOCK_TIMEOUT_SECONDS` | Distributed lock expiry for session state/role update operations. Prevents lost updates from concurrent modifications |
 
@@ -104,6 +113,7 @@ No traditional topic-based event publications. Capability updates go directly to
 | `ITelemetryProvider` | Singleton | Trace span creation for all async helper methods and event handlers |
 | `IDistributedLockProvider` | Singleton | Distributed locks for session state and role updates (prevents concurrent modification) |
 | `IPermissionRegistry` | Singleton (via plugin) | Push-based permission registration interface (backed by PermissionService singleton, registered in PermissionServicePlugin) |
+| `ISessionActivityListener` | Singleton (via plugin) | `PermissionSessionActivityListener` — receives session lifecycle events and heartbeats from Connect via DI listener dispatch. Handles TTL refresh, session connect/disconnect/reconnect delegation. Replaces `session.connected`/`session.disconnected` event subscriptions (GH#392) |
 
 Service lifetime is **Singleton** (shared across all requests).
 
@@ -240,10 +250,9 @@ None identified. Previous extensions were either implemented (Permission TTL →
 
 2. **ValidateApiAccess never uses cache**: Unlike `GetCapabilities` which uses the in-memory cache, `ValidateApiAccess` always reads from Redis. This ensures validation uses the latest compiled permissions at the cost of latency.
 
-3. **No cache invalidation on session disconnect**: When a session disconnects, it's removed from `active_connections` but the in-memory cache entry remains until TTL expiry or a new recompilation overwrites it. Non-reconnectable disconnects clear the cache entry immediately; reconnectable disconnects leave it (session may reconnect). Broader fix planned via `ISessionActivityListener` DI interface with heartbeat-driven TTL refresh. See [GH#392](https://github.com/beyond-immersion/bannou-service/issues/392).
+3. ~~**No cache invalidation on session disconnect**~~: **FIXED** (2026-02-22, GH#392) — Implemented `ISessionActivityListener` DI listener pattern. `PermissionSessionActivityListener` receives heartbeats from Connect (~30s) and refreshes Redis TTL on session data keys via O(1) EXPIRE. Active sessions continuously extend their TTL; dead sessions expire naturally when heartbeats stop. `SessionDataTtlSeconds` default reduced from 86400 (24h) to 600 (10 min). On disconnect with reconnection window, TTL is aligned to Connect's actual reconnection window duration instead of using the blanket default.
 
 4. **Cross-instance cache staleness is TTL-bounded**: In multi-node deployments, a recompilation on Node A invalidates Node A's local cache but Node B's cache retains stale data until TTL expiry. This is acceptable because: (a) `ValidateApiAccess` (the security-critical path) always reads Redis, never the cache; (b) Connect receives capabilities via event push, not `GetCapabilities`; (c) the default 300s TTL bounds maximum staleness. No event-based cross-node invalidation needed.
-<!-- AUDIT:NEEDS_DESIGN:2026-02-11:https://github.com/beyond-immersion/bannou-service/issues/392 -->
 
 5. ~~**GetRegisteredServices endpoint count is approximate**~~: **FIXED** (2026-02-11) - `GetRegisteredServicesAsync` now reads dynamically stored per-service state names from `service-states:{serviceId}` Redis keys instead of using a hardcoded array. States are saved during `RegisterServicePermissionsAsync` from the permission matrix keys. Previously used `["authenticated", "default", "lobby", "in_game"]` which included fake states and missed real ones (voice: `ringing`/`in_room`/`consent_pending`, matchmaking: `in_queue`/`match_pending`, chat: `in_room`).
 
@@ -274,3 +283,9 @@ None active. Previous considerations were either fixed (parallel recompilation v
   - **Code**: Moved `ServiceRegistrationInfo` internal class from `PermissionService.cs` to `PermissionServiceModels.cs`.
   - **Tests**: Updated 27 unit tests for new constructor signature and removed response properties. All passing.
   - **Config**: Changed `PermissionCacheTtlSeconds` default from 0 to 300 (5 minutes). Bounds cross-instance cache staleness in multi-node deployments. Previous default of 0 meant stale cache entries never expired unless explicitly invalidated by a local recompilation.
+- **2026-02-22**: GH#392 — Implemented `ISessionActivityListener` DI listener pattern for session lifecycle + heartbeat-driven TTL refresh:
+  - **New**: `PermissionSessionActivityListener` — thin DI listener receiving heartbeats, connect/disconnect/reconnect notifications from Connect. Handles O(1) Redis EXPIRE for TTL refresh, delegates session lifecycle to PermissionService methods.
+  - **New**: `RecompileForReconnectionAsync` on PermissionService — lightweight reconnection path that re-adds to `active_connections` and recompiles from preserved Redis state.
+  - **Removed**: `session.connected` and `session.disconnected` event subscriptions from `PermissionServiceEvents.cs` (replaced by DI listener since Connect and Permission are both L1, always co-located). `session.updated` subscription retained (from Auth, separate service).
+  - **Changed**: `SessionDataTtlSeconds` default from 86400 (24h) to 600 (10 min). With 30s heartbeats refreshing TTL, active sessions always stay alive; dead sessions expire in ~10 minutes.
+  - **Connect**: Added `IEnumerable<ISessionActivityListener>` injection + dispatch at 4 sites (heartbeat, connected, reconnected, disconnected).

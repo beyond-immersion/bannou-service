@@ -12,18 +12,13 @@ info:
     Edits without stating the applicable rule are FORBIDDEN.
   version: 1.0.0
   x-event-subscriptions:
-    # Session updates from Auth service (role/authorization changes)
+    # Session updates from Auth service (role/authorization changes).
+    # This is the only remaining event subscription. Session connected/disconnected
+    # are now handled via ISessionActivityListener DI listener pattern (GH#392)
+    # since Connect and Permission are both L1 AppFoundation (always co-located).
     - topic: session.updated
       event: SessionUpdatedEvent
       handler: HandleSessionUpdated
-    # Session connected - triggers initial capability delivery
-    - topic: session.connected
-      event: SessionConnectedEvent
-      handler: HandleSessionConnected
-    # Session disconnected - removes from activeConnections
-    - topic: session.disconnected
-      event: SessionDisconnectedEvent
-      handler: HandleSessionDisconnected
   x-event-publications:
     # Permission capability updates sent to Connect service
     - topic: permission.capability-update

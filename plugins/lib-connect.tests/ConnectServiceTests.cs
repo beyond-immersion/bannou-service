@@ -110,7 +110,7 @@ public class ConnectServiceTests
 
         // Act & Assert
         Assert.Throws<InvalidOperationException>(() =>
-            new ConnectService(_mockAuthClient.Object, _mockMeshClient.Object, _mockMessageBus.Object, _mockMessageSubscriber.Object, _mockAppMappingResolver.Object, _mockServiceScopeFactory.Object, configWithoutSalt, _mockLogger.Object, _mockLoggerFactory.Object, _mockEventConsumer.Object, _mockSessionManager.Object, _mockManifestBuilder.Object, _mockEntitySessionRegistry.Object, _interNodeBroadcast, _meshInstanceIdentifier, _mockTelemetryProvider.Object));
+            new ConnectService(_mockAuthClient.Object, _mockMeshClient.Object, _mockMessageBus.Object, _mockMessageSubscriber.Object, _mockAppMappingResolver.Object, _mockServiceScopeFactory.Object, configWithoutSalt, _mockLogger.Object, _mockLoggerFactory.Object, _mockEventConsumer.Object, _mockSessionManager.Object, _mockManifestBuilder.Object, _mockEntitySessionRegistry.Object, _interNodeBroadcast, _meshInstanceIdentifier, _mockTelemetryProvider.Object, Enumerable.Empty<ISessionActivityListener>()));
     }
 
     #endregion
@@ -536,7 +536,8 @@ public class ConnectServiceTests
             _mockEntitySessionRegistry.Object,
             _interNodeBroadcast,
             _meshInstanceIdentifier,
-            _mockTelemetryProvider.Object
+            _mockTelemetryProvider.Object,
+            Enumerable.Empty<ISessionActivityListener>()
         );
     }
 
@@ -621,7 +622,7 @@ public class ConnectServiceTests
                 _mockLogger.Object,
                 _mockLoggerFactory.Object,
                 _mockEventConsumer.Object,
-                _mockSessionManager.Object, _mockManifestBuilder.Object, _mockEntitySessionRegistry.Object, _interNodeBroadcast, _meshInstanceIdentifier, _mockTelemetryProvider.Object));
+                _mockSessionManager.Object, _mockManifestBuilder.Object, _mockEntitySessionRegistry.Object, _interNodeBroadcast, _meshInstanceIdentifier, _mockTelemetryProvider.Object, Enumerable.Empty<ISessionActivityListener>()));
 
         Assert.Contains("CONNECT_INTERNAL_SERVICE_TOKEN", exception.Message);
     }
@@ -654,7 +655,7 @@ public class ConnectServiceTests
                 _mockLogger.Object,
                 _mockLoggerFactory.Object,
                 _mockEventConsumer.Object,
-                _mockSessionManager.Object, _mockManifestBuilder.Object, _mockEntitySessionRegistry.Object, _interNodeBroadcast, _meshInstanceIdentifier, _mockTelemetryProvider.Object));
+                _mockSessionManager.Object, _mockManifestBuilder.Object, _mockEntitySessionRegistry.Object, _interNodeBroadcast, _meshInstanceIdentifier, _mockTelemetryProvider.Object, Enumerable.Empty<ISessionActivityListener>()));
 
         Assert.Null(exception);
     }
@@ -687,7 +688,7 @@ public class ConnectServiceTests
                 _mockLogger.Object,
                 _mockLoggerFactory.Object,
                 _mockEventConsumer.Object,
-                _mockSessionManager.Object, _mockManifestBuilder.Object, _mockEntitySessionRegistry.Object, _interNodeBroadcast, _meshInstanceIdentifier, _mockTelemetryProvider.Object));
+                _mockSessionManager.Object, _mockManifestBuilder.Object, _mockEntitySessionRegistry.Object, _interNodeBroadcast, _meshInstanceIdentifier, _mockTelemetryProvider.Object, Enumerable.Empty<ISessionActivityListener>()));
 
         Assert.Null(exception);
     }
@@ -719,7 +720,7 @@ public class ConnectServiceTests
                 _mockLogger.Object,
                 _mockLoggerFactory.Object,
                 _mockEventConsumer.Object,
-                _mockSessionManager.Object, _mockManifestBuilder.Object, _mockEntitySessionRegistry.Object, _interNodeBroadcast, _meshInstanceIdentifier, _mockTelemetryProvider.Object));
+                _mockSessionManager.Object, _mockManifestBuilder.Object, _mockEntitySessionRegistry.Object, _interNodeBroadcast, _meshInstanceIdentifier, _mockTelemetryProvider.Object, Enumerable.Empty<ISessionActivityListener>()));
 
         Assert.Null(exception);
     }
@@ -751,7 +752,7 @@ public class ConnectServiceTests
                 _mockLogger.Object,
                 _mockLoggerFactory.Object,
                 _mockEventConsumer.Object,
-                _mockSessionManager.Object, _mockManifestBuilder.Object, _mockEntitySessionRegistry.Object, _interNodeBroadcast, _meshInstanceIdentifier, _mockTelemetryProvider.Object));
+                _mockSessionManager.Object, _mockManifestBuilder.Object, _mockEntitySessionRegistry.Object, _interNodeBroadcast, _meshInstanceIdentifier, _mockTelemetryProvider.Object, Enumerable.Empty<ISessionActivityListener>()));
 
         Assert.Null(exception);
     }

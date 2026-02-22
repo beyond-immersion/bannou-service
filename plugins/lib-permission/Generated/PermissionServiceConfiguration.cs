@@ -68,11 +68,11 @@ public class PermissionServiceConfiguration : IServiceConfiguration
     public int PermissionCacheTtlSeconds { get; set; } = 300;
 
     /// <summary>
-    /// Redis TTL in seconds for session permission data keys (states and compiled permissions). Handles cleanup of orphaned data from sessions that disconnect without proper cleanup. 0 disables Redis TTL. Default 86400 (24 hours). Maximum 604800 (7 days).
+    /// Redis TTL in seconds for session permission data keys (states and compiled permissions). With heartbeat-driven TTL refresh (every 30s via ISessionActivityListener), active sessions continuously extend their TTL. Dead sessions expire naturally when heartbeats stop. Default 600 (10 minutes, ~20 heartbeat intervals of headroom). 0 disables Redis TTL. Maximum 604800 (7 days).
     /// Environment variable: PERMISSION_SESSION_DATA_TTL_SECONDS
     /// </summary>
     [ConfigRange(Minimum = 0, Maximum = 604800)]
-    public int SessionDataTtlSeconds { get; set; } = 86400;
+    public int SessionDataTtlSeconds { get; set; } = 600;
 
     /// <summary>
     /// Timeout in seconds for distributed locks during session state and role update operations. Prevents lost updates when concurrent requests modify the same session.
