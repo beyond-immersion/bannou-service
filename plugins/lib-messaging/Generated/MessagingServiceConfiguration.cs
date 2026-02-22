@@ -187,6 +187,19 @@ public class MessagingServiceConfiguration : IServiceConfiguration
     public DeadLetterOverflowBehavior DeadLetterOverflowBehavior { get; set; } = DeadLetterOverflowBehavior.DropHead;
 
     /// <summary>
+    /// Enable dead letter consumer background service for logging and monitoring
+    /// Environment variable: MESSAGING_DEAD_LETTER_CONSUMER_ENABLED
+    /// </summary>
+    public bool DeadLetterConsumerEnabled { get; set; } = true;
+
+    /// <summary>
+    /// Delay in seconds before dead letter consumer starts subscribing (allows other services to initialize)
+    /// Environment variable: MESSAGING_DEAD_LETTER_CONSUMER_STARTUP_DELAY_SECONDS
+    /// </summary>
+    [ConfigRange(Minimum = 1, Maximum = 60)]
+    public int DeadLetterConsumerStartupDelaySeconds { get; set; } = 5;
+
+    /// <summary>
     /// Maximum retry attempts before discarding message to dead-letter topic
     /// Environment variable: MESSAGING_RETRY_MAX_ATTEMPTS
     /// </summary>

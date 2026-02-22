@@ -210,7 +210,7 @@ Tenets are organized into categories based on when they're needed:
 | # | Name | Core Rule |
 |---|------|-----------|
 | **T3** | Event Consumer Fan-Out | Use IEventConsumer for multi-plugin event handling |
-| **T7** | Error Handling | Try-catch with ApiException vs Exception distinction; TryPublishErrorAsync |
+| **T7** | Error Handling | Try-catch with ApiException vs Exception distinction; TryPublishErrorAsync; instance identity from IMeshInstanceIdentifier only |
 | **T8** | Return Pattern | All methods return `(StatusCodes, TResponse?)` tuples |
 | **T9** | Multi-Instance Safety | No in-memory authoritative state; use distributed locks |
 | **T14** | Polymorphic Associations | Entity ID + Type columns; composite string keys |
@@ -270,6 +270,9 @@ Tenets are organized into categories based on when they're needed:
 | Missing event consumer registration | T3 | Add RegisterEventConsumers call |
 | Generic catch returning 500 | T7 | Catch ApiException specifically |
 | Emitting error events for user errors | T7 | Only emit for unexpected/internal failures |
+| Constructing `ServiceErrorEvent` directly | T7 | Use `TryPublishErrorAsync`; only `RabbitMQMessageBus` constructs the event |
+| Passing instance ID to `TryPublishErrorAsync` | T7 | Instance identity injected internally from `IMeshInstanceIdentifier` |
+| Using `Guid.NewGuid()` or fixed string for error event `ServiceId` | T7 | `ServiceId` comes from `IMeshInstanceIdentifier` (process-stable) |
 | Using Microsoft.AspNetCore.Http.StatusCodes | T8 | Use BeyondImmersion.BannouService.StatusCodes |
 | Plain Dictionary for cache | T9 | Use ConcurrentDictionary |
 | Per-instance salt/key generation | T9 | Use shared/deterministic values |

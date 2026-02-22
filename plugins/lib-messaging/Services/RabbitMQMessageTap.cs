@@ -6,11 +6,11 @@ using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.Logging;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
-using RmqExchangeType = RabbitMQ.Client.ExchangeType;
 using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Text;
 using System.Text.Json;
+using RmqExchangeType = RabbitMQ.Client.ExchangeType;
 
 namespace BeyondImmersion.BannouService.Messaging.Services;
 

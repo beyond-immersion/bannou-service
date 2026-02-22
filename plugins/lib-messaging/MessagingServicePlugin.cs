@@ -131,6 +131,12 @@ public class MessagingServicePlugin : StandardServicePlugin<IMessagingService>
         services.AddHostedService<MessagingSubscriptionRecoveryService>();
         Logger?.LogDebug("Registered MessagingSubscriptionRecoveryService for external subscription recovery");
 
+        // Register dead letter consumer for monitoring/logging
+        // Only registers for RabbitMQ mode (dead letters don't exist in in-memory mode)
+        // Enabled/disabled check happens inside ExecuteAsync (reads config at runtime)
+        services.AddHostedService<DeadLetterConsumerService>();
+        Logger?.LogDebug("Registered DeadLetterConsumerService for dead letter monitoring");
+
         Logger?.LogDebug("Messaging service dependencies configured");
     }
 }

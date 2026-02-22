@@ -86,8 +86,8 @@ catch (Exception ex)
 {
     _logger.LogError(ex, "Failed operation {Operation}", operationName);
     await _messageBus.TryPublishErrorAsync(
-        serviceId: _configuration.ServiceId ?? "unknown",
-        operation: operationName, errorType: ex.GetType().Name, message: ex.Message);
+        "my-service", operationName, ex.GetType().Name, ex.Message,
+        stack: ex.StackTrace);
     return (StatusCodes.InternalServerError, null);
 }
 ```
@@ -102,6 +102,43 @@ The `ApiException` catch is ONLY required for **inter-service calls** (generated
 
 **Emit for**: Unexpected exceptions, infrastructure failures, programming errors caught at runtime.
 **Do NOT emit for**: Validation (400), authentication (401), authorization (403), not found (404), conflicts (409).
+
+### Instance Identity in Error Events (MANDATORY)
+
+Every `ServiceErrorEvent` carries three identity fields that distinguish **which node** emitted the error in a distributed deployment:
+
+| Field | Source | What It Identifies |
+|-------|--------|--------------------|
+| `serviceId` | `IMeshInstanceIdentifier.InstanceId` | The unique node/process (e.g., "which of the 5 Character nodes") |
+| `serviceName` | Caller-provided string | The logical service (e.g., "character", "mesh", "messaging") |
+| `appId` | `IServiceConfiguration.EffectiveAppId` | The deployment identity (e.g., "bannou", "bannou-npc-pool-3") |
+
+**Callers MUST NOT provide instance identity.** The `TryPublishErrorAsync` method injects `serviceId` and `appId` internally from `IMeshInstanceIdentifier` and `IServiceConfiguration`. Callers provide only the logical `serviceName` and operational context:
+
+```csharp
+// CORRECT: Pass logical service name, let the bus handle instance identity
+await _messageBus.TryPublishErrorAsync(
+    "character",                    // serviceName: logical service
+    "DeleteCharacter",              // operation: what failed
+    ex.GetType().Name,              // errorType: exception class
+    ex.Message,                     // message: human-readable
+    dependency: "state",            // optional: external dependency involved
+    endpoint: "redis:character",    // optional: specific endpoint
+    stack: ex.StackTrace);          // optional: stack trace
+
+// FORBIDDEN: Never construct ServiceErrorEvent directly
+var errorEvent = new ServiceErrorEvent   // NO! Only RabbitMQMessageBus does this
+{
+    ServiceId = Guid.NewGuid(),          // NO! Instance ID comes from IMeshInstanceIdentifier
+    ServiceName = "character",
+    AppId = "bannou",                    // NO! AppId comes from IServiceConfiguration
+    // ...
+};
+```
+
+**Why this matters**: In a distributed deployment with multiple instances of the same service, `serviceId` (from `IMeshInstanceIdentifier`) is the only way to correlate errors to the specific node that produced them. Using `Guid.NewGuid()`, fixed strings, or configuration-based values would make error events useless for debugging multi-node issues.
+
+**`IMeshInstanceIdentifier` priority**: `MESH_INSTANCE_ID` env var > `--force-service-id` CLI > random GUID (stable for process lifetime). Registered as singleton by lib-mesh (L0).
 
 ### Error Granularity & Log Levels
 

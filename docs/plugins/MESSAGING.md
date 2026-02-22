@@ -141,6 +141,8 @@ When `EnablePublisherConfirms` is true, `BasicPublishAsync` waits for broker con
 | `DeadLetterMaxLength` | `MESSAGING_DEAD_LETTER_MAX_LENGTH` | `100000` | Max messages in DLX queue before oldest dropped |
 | `DeadLetterTtlMs` | `MESSAGING_DEAD_LETTER_TTL_MS` | `604800000` | TTL for DLX messages (7 days) |
 | `DeadLetterOverflowBehavior` | `MESSAGING_DEAD_LETTER_OVERFLOW_BEHAVIOR` | `"drop-head"` | Behavior when DLX exceeds max length |
+| `DeadLetterConsumerEnabled` | `MESSAGING_DEAD_LETTER_CONSUMER_ENABLED` | `true` | Enable dead letter consumer background service |
+| `DeadLetterConsumerStartupDelaySeconds` | `MESSAGING_DEAD_LETTER_CONSUMER_STARTUP_DELAY_SECONDS` | `5` | Delay before consumer starts subscribing |
 
 ### Poison Message Handling (Retry Buffer)
 
@@ -187,6 +189,7 @@ These settings apply to the **MessageRetryBuffer** (publish failures). After `Re
 | `MessageRetryBuffer` | Singleton | Transient publish failure recovery with crash-fast |
 | `NativeEventConsumerBackend` | HostedService | Bridges IEventConsumer fan-out to RabbitMQ |
 | `MessagingSubscriptionRecoveryService` | HostedService | Recovers external subscriptions on startup, refreshes TTL |
+| `DeadLetterConsumerService` | HostedService | Consumes dead-lettered messages, logs with structured data, publishes error events |
 | `MessagingService` | Singleton | HTTP API implementation (also registered as concrete for recovery service) |
 
 Service lifetime is **Singleton** (infrastructure must persist across requests).
@@ -245,17 +248,17 @@ Messaging Architecture
     │ TryPublishRawAsync()│    │ Dynamic subscriptions   │    │ Crash-fast if      │
     │ TryPublishErrorAsync│    │ Raw subscriptions       │    │ buffer exceeds     │
     └─────────────────────┘    └──────────┬─────────────┘    │ limits             │
-              ▲                           │                   └────────────────────┘
-              │                           ▼
-              │               ┌───────────────────────┐
-              │               │NativeEventConsumerBackend│
-              │               │ (IHostedService)        │
-              │               │                         │
-              │               │ Bridges RabbitMQ to     │
-              │               │ IEventConsumer fan-out  │
-              │               │ (per-plugin handlers)   │
-              │               └─────────────────────────┘
-              │
+              ▲                           │                   └───────┬────────────┘
+              │                           ▼                           │ (on exhaustion)
+              │               ┌───────────────────────┐               ▼
+              │               │NativeEventConsumerBackend│    ┌──────────────────────┐
+              │               │ (IHostedService)        │    │DeadLetterConsumer    │
+              │               │                         │    │Service (IHostedService)│
+              │               │ Bridges RabbitMQ to     │    │                      │
+              │               │ IEventConsumer fan-out  │    │ Reads DLX queue      │
+              │               │ (per-plugin handlers)   │    │ Logs + error events  │
+              │               └─────────────────────────┘    │ Acks after processing│
+              │                                              └──────────────────────┘
     ┌─────────┴─────────┐         ┌──────────────────────┐
     │ RabbitMQConnection │         │  RabbitMQMessageTap   │
     │ Manager            │         │  (IMessageTap)        │
@@ -280,7 +283,6 @@ None. All previously listed stubs have been resolved:
 ## Potential Extensions
 
 1. **Prometheus metrics**: Publish/subscribe rates, buffer depth, retry counts, channel pool utilization. Would come from a RabbitMQ sidecar exporter, not from lib-messaging code.
-2. **Dead-letter processing consumer**: Background service to process DLX queue and handle poison messages (alerting, logging, optional reprocessing for transient failures).
 
 ---
 
@@ -311,6 +313,8 @@ No bugs identified.
 7. **Subscriber requeue behavior**: When a handler throws `HandlerError`, messages are requeued once (if not already redelivered via RabbitMQ's `Redelivered` flag). This is a single retry only - no exponential backoff or retry counting. For multi-attempt retries with backoff, that logic is in the **MessageRetryBuffer** for publish failures (tracked via `x-retry-count` header).
 
 8. **DLX queue size limits**: Dead letter queue has configurable max length (default 100k messages) and TTL (default 7 days). When limits are exceeded, oldest messages are dropped (`drop-head` policy).
+
+9. **Dead letter consumer uses IChannelManager directly**: `DeadLetterConsumerService` bypasses `IMessageSubscriber` and creates its own consumer channel via `IChannelManager.CreateConsumerChannelAsync()`. This is necessary because `SubscribeDynamicRawAsync` only passes raw bytes to the handler — dead letter processing requires access to `BasicProperties.Headers` for metadata extraction (`x-original-topic`, `x-retry-count`, `x-death`, etc.). Uses a durable shared queue (`bannou-dlx-consumer`) so accumulated dead letters are consumed even after restarts, with RabbitMQ competing consumers for multi-instance safety.
 
 ### Design Considerations
 
@@ -363,6 +367,14 @@ This section tracks active development work on items from the quirks/bugs lists 
     - Resolved "ServiceId from global static": Replaced `Program.ServiceGUID` with `IMeshInstanceIdentifier` (new interface in bannou-service, registered by lib-mesh). `RabbitMQMessageBus.TryPublishErrorAsync()` now uses injected `_instanceId` instead of static global access. All generated clients and `IServiceNavigator` also expose `InstanceId` for consistent node identification across all services.
     - Resolved "No graceful drain on shutdown": Added `ShutdownTimeoutSeconds` config (`MESSAGING_SHUTDOWN_TIMEOUT_SECONDS`, default 10s). `RabbitMQMessageSubscriber.DisposeAsync` now wraps subscription cleanup in `WaitAsync(timeout)` to prevent indefinite blocking when channels hang.
     - All 177 unit tests passing, 0 warnings, 0 errors
+
+- **Dead Letter Consumer (2026-02-22)**:
+    - Implemented `DeadLetterConsumerService` as a BackgroundService that subscribes to the DLX exchange, logs dead letters with structured data, and publishes `service.error` events for downstream monitoring
+    - Added `DeadLetterConsumerEnabled` and `DeadLetterConsumerStartupDelaySeconds` configuration properties
+    - Uses `IChannelManager` directly (not `IMessageSubscriber`) because dead letter processing requires access to `BasicProperties.Headers` for metadata extraction
+    - Durable shared queue `bannou-dlx-consumer` with competing consumers for multi-instance safety
+    - Handles both explicit dead letter paths (from MessageRetryBuffer) and RabbitMQ automatic dead-lettering (nack'd messages)
+    - All 216 unit tests passing, 0 warnings, 0 errors
 
 ### Active
 

@@ -66,6 +66,12 @@ public class TenetComplianceTests
         ServiceConstructorValidator.ValidateServiceConstructor<NativeEventConsumerBackend>();
     }
 
+    [Fact]
+    public void DeadLetterConsumerService_HasValidConstructorPattern()
+    {
+        ServiceConstructorValidator.ValidateServiceConstructor<DeadLetterConsumerService>();
+    }
+
     #endregion
 
     #region Interface Implementation Tests
@@ -171,6 +177,13 @@ public class TenetComplianceTests
     {
         Assert.True(typeof(InMemoryMessageBus).IsSealed,
             "InMemoryMessageBus should be sealed to prevent inheritance.");
+    }
+
+    [Fact]
+    public void DeadLetterConsumerService_IsSealed()
+    {
+        Assert.True(typeof(DeadLetterConsumerService).IsSealed,
+            "DeadLetterConsumerService should be sealed to prevent inheritance.");
     }
 
     #endregion

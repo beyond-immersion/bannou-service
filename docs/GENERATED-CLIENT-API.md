@@ -1544,7 +1544,7 @@ Native service mesh plugin providing direct service-to-service invocation native
 | Method | Request | Response | Summary |
 |--------|---------|----------|---------|
 | `RegisterEndpointAsync` | `RegisterEndpointRequest` | `RegisterEndpointResponse` | Register a service endpoint |
-| `DeregisterendpointEventAsync` | `DeregisterEndpointRequest` | *(fire-and-forget)* | Deregister a service endpoint |
+| `DeregisterendpointAsync` | `DeregisterEndpointRequest` | `DeregisterEndpointResponse` | Deregister a service endpoint |
 | `HeartbeatAsync` | `HeartbeatRequest` | `HeartbeatResponse` | Update endpoint health and load |
 
 ### Routing

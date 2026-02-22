@@ -1424,6 +1424,57 @@ public sealed class ActorRunner : IActorRunner
     }
 
     /// <summary>
+    /// Loads the behavior document, extracts GOAP metadata, and builds the cognition pipeline.
+    /// Called eagerly from <see cref="StartAsync"/> for fail-fast initialization, and again
+    /// from <see cref="ExecuteBehaviorTickAsync"/> after hot-reload invalidation.
+    /// </summary>
+    /// <remarks>
+    /// Exceptions propagate to the caller. During <see cref="StartAsync"/>, this causes a
+    /// startup failure (Status = Error, exception re-thrown). During hot-reload in the behavior
+    /// loop, the caller catches and treats failures as transient (retry on next tick).
+    /// </remarks>
+    /// <param name="ct">Cancellation token.</param>
+    /// <exception cref="InvalidOperationException">
+    /// Thrown when the behavior document cannot be loaded (loader returns null) or the
+    /// specified cognition template is unresolvable (configuration error).
+    /// </exception>
+    private async Task InitializeBehaviorAsync(CancellationToken ct)
+    {
+        if (string.IsNullOrWhiteSpace(_template.BehaviorRef))
+        {
+            _logger.LogDebug("Actor {ActorId} has no behavior reference, running without behavior", ActorId);
+            return;
+        }
+
+        _behavior = await _behaviorLoader.GetDocumentAsync(_template.BehaviorRef, ct);
+
+        if (_behavior == null)
+        {
+            throw new InvalidOperationException(
+                $"Behavior loader returned null for '{_template.BehaviorRef}' for actor '{ActorId}'. " +
+                "Check that the behavior document exists and is accessible.");
+        }
+
+        _logger.LogInformation("Actor {ActorId} loaded behavior from {BehaviorRef}",
+            ActorId, _template.BehaviorRef);
+
+        // Extract and cache GOAP metadata from behavior document (one-time on load)
+        if (GoapMetadataConverter.HasGoapContent(_behavior))
+        {
+            (_goapGoals, _goapActions) = GoapMetadataConverter.ExtractAll(_behavior);
+            _logger.LogInformation(
+                "Actor {ActorId} extracted GOAP metadata: {GoalCount} goals, {ActionCount} actions",
+                ActorId, _goapGoals.Count, _goapActions.Count);
+        }
+
+        // Build cognition pipeline using three-tier resolution:
+        // 1. Actor template config (primary)
+        // 2. ABML metadata (override)
+        // 3. Category default mapping (fallback)
+        BuildCognitionPipeline();
+    }
+
+    /// <summary>
     /// Builds the cognition pipeline using three-tier template resolution.
     /// Resolution order: actor template config → ABML metadata → category default.
     /// </summary>

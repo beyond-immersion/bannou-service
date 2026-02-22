@@ -747,6 +747,7 @@ This document lists all configuration options defined in Bannou's configuration 
 | `MESH_HEALTH_CHECK_STARTUP_DELAY_SECONDS` | int | `10` | Delay in seconds before health check service starts probing ... |
 | `MESH_HEALTH_CHECK_TIMEOUT_SECONDS` | int | `5` | Timeout for health check requests |
 | `MESH_HEARTBEAT_INTERVAL_SECONDS` | int | `30` | Recommended interval between heartbeats |
+| `MESH_INSTANCE_ID` | string | **REQUIRED** | Explicit mesh node identity override. When set, this value i... |
 | `MESH_LOAD_BALANCING_STATE_MAX_APP_IDS` | int | `0` | Maximum number of app-ids to track in load balancing state (... |
 | `MESH_LOAD_THRESHOLD_PERCENT` | int | `80` | Load percentage above which an endpoint is considered high-l... |
 | `MESH_MAX_RETRIES` | int | `3` | Maximum retry attempts for failed service calls |
@@ -774,7 +775,7 @@ This document lists all configuration options defined in Bannou's configuration 
 | `MESSAGING_DEFAULT_AUTO_ACK` | bool | `false` | Default auto-acknowledge setting for subscriptions |
 | `MESSAGING_DEFAULT_EXCHANGE` | string | `bannou` | Default exchange name for publishing |
 | `MESSAGING_DEFAULT_PREFETCH_COUNT` | int | `10` | Default prefetch count for subscriptions |
-| `MESSAGING_ENABLE_CONFIRMS` | bool | `true` | Enable RabbitMQ publisher confirms for reliability. When ena... |
+| `MESSAGING_ENABLE_PUBLISHER_CONFIRMS` | bool | `true` | Enable RabbitMQ publisher confirms for reliability. When ena... |
 | `MESSAGING_ENABLE_PUBLISH_BATCHING` | bool | `false` | Enable batched publishing for high-throughput scenarios. Whe... |
 | `MESSAGING_EXTERNAL_SUBSCRIPTION_TTL_SECONDS` | int | `86400` | TTL in seconds for external HTTP callback subscriptions (def... |
 | `MESSAGING_MAX_CONCURRENT_CHANNEL_CREATION` | int | `50` | Maximum concurrent channel creation requests (backpressure s... |
@@ -795,6 +796,7 @@ This document lists all configuration options defined in Bannou's configuration 
 | `MESSAGING_RETRY_DELAY_MS` | int | `5000` | Base delay between retry attempts in milliseconds (doubles w... |
 | `MESSAGING_RETRY_MAX_ATTEMPTS` | int | `5` | Maximum retry attempts before discarding message to dead-let... |
 | `MESSAGING_RETRY_MAX_BACKOFF_MS` | int | `60000` | Maximum backoff delay between retries in milliseconds (caps ... |
+| `MESSAGING_SHUTDOWN_TIMEOUT_SECONDS` | int | `10` | Maximum seconds to wait for graceful subscription cleanup du... |
 | `MESSAGING_SUBSCRIPTION_RECOVERY_STARTUP_DELAY_SECONDS` | int | `2` | Delay in seconds before starting subscription recovery servi... |
 | `MESSAGING_SUBSCRIPTION_TTL_REFRESH_INTERVAL_HOURS` | int | `6` | Interval in hours between subscription TTL refresh operation... |
 | `MESSAGING_USE_INMEMORY` | bool | `false` | Use in-memory messaging instead of RabbitMQ. Messages are NO... |
@@ -1177,9 +1179,9 @@ Applied when... |
 
 ## Configuration Summary
 
-- **Total properties**: 890
-- **Required (no default)**: 52
-- **Optional (has default)**: 838
+- **Total properties**: 892
+- **Required (no default)**: 53
+- **Optional (has default)**: 839
 
 ## Environment Variable Naming Convention
 

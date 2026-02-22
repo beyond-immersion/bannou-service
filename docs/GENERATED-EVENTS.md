@@ -442,7 +442,6 @@ This document lists all events defined in Bannou's event schemas.
 |-------|------|--------------|-------------|
 | `MeshCircuitStateChangedEvent` | Custom | `mesh-circuit-state-changed` | Published when circuit breaker state changes for a... |
 | `MeshEndpointDegradedEvent` | Custom | `mesh-endpoint-degraded` | Published when an endpoint transitions to Degraded... |
-| `MeshEndpointDegradedEventReason` | Custom | `mesh-endpoint-degraded-event-reason` | Reason why endpoint was marked as degraded |
 | `MeshEndpointDeregisteredEvent` | Registration | `mesh-endpoint-deregistered` | Published when an endpoint is removed from the ser... |
 | `MeshEndpointHealthCheckFailedEvent` | Custom | `mesh-endpoint-health-check-failed` | Published when a health check probe fails (before ... |
 | `MeshEndpointRegisteredEvent` | Registration | `mesh-endpoint.registered` | Published when a new endpoint is registered in the... |

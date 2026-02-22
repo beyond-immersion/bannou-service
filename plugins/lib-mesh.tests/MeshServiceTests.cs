@@ -1,10 +1,10 @@
+using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Mesh;
 using BeyondImmersion.BannouService.Mesh.Services;
 using BeyondImmersion.BannouService.Messaging;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.TestUtilities;
-using BeyondImmersion.Bannou.Core;
 
 namespace BeyondImmersion.BannouService.Mesh.Tests;
 

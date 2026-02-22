@@ -142,6 +142,21 @@ x-service-configuration:
       description: Behavior when DLX queue exceeds max length (drop-head drops oldest, reject-publish blocks new messages)
       env: MESSAGING_DEAD_LETTER_OVERFLOW_BEHAVIOR
       default: "drop-head"
+
+    # Dead Letter Consumer Settings
+    DeadLetterConsumerEnabled:
+      type: boolean
+      description: Enable dead letter consumer background service for logging and monitoring
+      env: MESSAGING_DEAD_LETTER_CONSUMER_ENABLED
+      default: true
+    DeadLetterConsumerStartupDelaySeconds:
+      type: integer
+      description: Delay in seconds before dead letter consumer starts subscribing (allows other services to initialize)
+      env: MESSAGING_DEAD_LETTER_CONSUMER_STARTUP_DELAY_SECONDS
+      default: 5
+      minimum: 1
+      maximum: 60
+
     RetryMaxAttempts:
       type: integer
       description: Maximum retry attempts before discarding message to dead-letter topic
