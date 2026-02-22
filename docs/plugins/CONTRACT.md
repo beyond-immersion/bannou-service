@@ -448,10 +448,11 @@ Prebound API Batched Execution
 ## Potential Extensions
 
 1. ~~**Active expiration job**~~: **IMPLEMENTED** (2026-02-22) - `ContractExpirationService` replaces `ContractExpirationService`, combining contract-level effectiveUntil expiration with milestone deadline enforcement in a single pass. No new configuration needed — reuses existing `MilestoneDeadlineCheckIntervalSeconds` and `MilestoneDeadlineStartupDelaySeconds`.
-2. **Generic request/response mapping for custom clause types**: `RequestMapping` and `ResponseMapping` fields on `ClauseHandlerModel` are stored but unused by built-in clause execution. Currently, payload construction and response parsing are hardcoded per asset type in `QueryAssetBalanceAsync` and `ExecuteSingleClauseAsync`. These mappings would enable truly generic clause types where any service could register a clause type with arbitrary request/response shapes, removing the need for per-type hardcoded logic.
-3. **Clause type handler chaining**: Allow clause types with both validation AND execution handlers to validate before executing, with configurable failure behavior.
-4. **Template inheritance**: Allow templates to extend other templates, inheriting milestones, terms, and party roles with overrides.
-5. **Bulk contract operations**: Batch creation from a single template for multi-entity scenarios (e.g., guild-wide contracts).
+2. **Clause type handler chaining**: Allow clause types with both validation AND execution handlers to validate before executing, with configurable failure behavior. ([#458](https://github.com/beyond-immersion/bannou-service/issues/458))
+<!-- AUDIT:NEEDS_DESIGN:2026-02-22:https://github.com/beyond-immersion/bannou-service/issues/458 -->
+3. **Template inheritance**: Allow templates to extend other templates, inheriting milestones, terms, and party roles with overrides. ([#459](https://github.com/beyond-immersion/bannou-service/issues/459))
+<!-- AUDIT:NEEDS_DESIGN:2026-02-22:https://github.com/beyond-immersion/bannou-service/issues/459 -->
+4. ~~**Bulk contract operations**~~: **WON'T IMPLEMENT** (2026-02-22) - Investigation found zero current or planned consumers that need batch creation. All consumers create 1 contract at a time. Organization (strongest candidate) creates employment contracts one-per-hire; founding scenarios (10-30 contracts) take ~100-300ms sequential. Sovereignty re-chartering is a background worker problem. Caller-side loops are architecturally correct. ([#460](https://github.com/beyond-immersion/bannou-service/issues/460))
 
 ---
 
@@ -556,6 +557,7 @@ When a clause execution fails:
 ### Design Considerations (Requires Planning)
 
 1. **Per-milestone onApiFailure flag** ([#246](https://github.com/beyond-immersion/bannou-service/issues/246)): Currently prebound API failures are always non-blocking. Adding a per-milestone flag would require API schema changes (new field on MilestoneDefinition), model regeneration, and careful design of retry semantics. Requires design discussion before implementation.
+<!-- AUDIT:NEEDS_DESIGN:2026-02-22:https://github.com/beyond-immersion/bannou-service/issues/246 -->
 
 
 ---

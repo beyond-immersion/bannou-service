@@ -47,6 +47,7 @@ public partial class ResourceService : IResourceService
     private readonly ILogger<ResourceService> _logger;
     private readonly ResourceServiceConfiguration _configuration;
     private readonly IEnumerable<ISeededResourceProvider> _seededProviders;
+    private readonly ITelemetryProvider _telemetryProvider;
 
     // State stores - using constants from StateStoreDefinitions
     private readonly ICacheableStateStore<ResourceReferenceEntry> _refStore;
@@ -67,7 +68,8 @@ public partial class ResourceService : IResourceService
         ILogger<ResourceService> logger,
         ResourceServiceConfiguration configuration,
         IEventConsumer eventConsumer,
-        IEnumerable<ISeededResourceProvider> seededProviders)
+        IEnumerable<ISeededResourceProvider> seededProviders,
+        ITelemetryProvider telemetryProvider)
     {
         _messageBus = messageBus;
         _stateStoreFactory = stateStoreFactory;
@@ -76,6 +78,7 @@ public partial class ResourceService : IResourceService
         _logger = logger;
         _configuration = configuration;
         _seededProviders = seededProviders;
+        _telemetryProvider = telemetryProvider;
 
         // Get state stores
         _refStore = stateStoreFactory.GetCacheableStore<ResourceReferenceEntry>(
@@ -363,19 +366,64 @@ public partial class ResourceService : IResourceService
             .Select(c => c.SourceType)
             .ToHashSet();
 
-        // Handle dry run - return preview without executing
+        // Handle dry run - simulate full pre-check without executing callbacks
         if (body.DryRun == true)
         {
-            stopwatch.Stop();
             var hasRestrict = callbacks.Any(c => c.OnDeleteAction == OnDeleteAction.RESTRICT);
 
+            // Run the same pre-check that real execution does
+            var (dryCheckStatus, dryCheckResult) = await CheckReferencesAsync(
+                new CheckReferencesRequest
+                {
+                    ResourceType = body.ResourceType,
+                    ResourceId = body.ResourceId
+                },
+                cancellationToken);
+
+            string? dryAbortReason = null;
+            var drySuccess = true;
+
+            if (hasRestrict && dryCheckResult?.Sources?.Any(s => restrictedSourceTypes.Contains(s.SourceType)) == true)
+            {
+                dryAbortReason = "Would be blocked by RESTRICT policy (active references from restricted source types)";
+                drySuccess = false;
+            }
+            else if (dryCheckResult?.RefCount > 0)
+            {
+                dryAbortReason = $"Resource still has {dryCheckResult.RefCount} active reference(s)";
+                drySuccess = false;
+            }
+            else if (dryCheckResult?.IsCleanupEligible == false)
+            {
+                dryAbortReason = dryCheckResult.GracePeriodEndsAt.HasValue
+                    ? $"Grace period has not passed (ends at {dryCheckResult.GracePeriodEndsAt.Value:O})"
+                    : "Resource is not cleanup-eligible";
+                drySuccess = false;
+            }
+
+            // Check for unhandled references (sources without registered callbacks)
+            if (drySuccess && dryCheckResult?.Sources != null)
+            {
+                var handledSourceTypes = callbacks.Select(c => c.SourceType).ToHashSet();
+                var unhandledRefs = dryCheckResult.Sources
+                    .Where(s => !handledSourceTypes.Contains(s.SourceType))
+                    .ToList();
+                if (unhandledRefs.Count > 0)
+                {
+                    var unhandledTypes = string.Join(", ", unhandledRefs.Select(r => r.SourceType).Distinct());
+                    dryAbortReason = $"Unhandled references from source types without cleanup callbacks: {unhandledTypes}";
+                    drySuccess = false;
+                }
+            }
+
+            stopwatch.Stop();
             return (StatusCodes.OK, new ExecuteCleanupResponse
             {
                 ResourceType = body.ResourceType,
                 ResourceId = body.ResourceId,
-                Success = !hasRestrict,
+                Success = drySuccess,
                 DryRun = true,
-                AbortReason = hasRestrict ? "Would be blocked by RESTRICT policy" : null,
+                AbortReason = dryAbortReason,
                 CallbackResults = callbacks.Select(c => new CleanupCallbackResult
                 {
                     SourceType = c.SourceType,
@@ -1121,7 +1169,7 @@ public partial class ResourceService : IResourceService
                     ResourceType = body.ResourceType,
                     ResourceId = body.ResourceId,
                     GracePeriodSeconds = 0, // Skip grace period since we're archiving
-                    CleanupPolicy = CleanupPolicy.BEST_EFFORT
+                    CleanupPolicy = body.DeleteSourceDataPolicy ?? _configuration.DefaultCleanupPolicy
                 },
                 cancellationToken);
 
@@ -1341,9 +1389,10 @@ public partial class ResourceService : IResourceService
             }
         }
 
-        // Publish decompressed event if any callbacks succeeded
-        var anySuccess = callbackResults.Any(r => r.Success);
-        if (anySuccess)
+        // Publish decompressed event if any callbacks succeeded, with per-source-type results
+        var succeeded = callbackResults.Where(r => r.Success).Select(r => r.SourceType).ToList();
+        var failed = callbackResults.Where(r => !r.Success).Select(r => r.SourceType).ToList();
+        if (succeeded.Count > 0)
         {
             await _messageBus.TryPublishAsync(
                 "resource.decompressed",
@@ -1353,7 +1402,10 @@ public partial class ResourceService : IResourceService
                     Timestamp = DateTimeOffset.UtcNow,
                     ResourceType = body.ResourceType,
                     ResourceId = body.ResourceId,
-                    ArchiveId = archive.ArchiveId
+                    ArchiveId = archive.ArchiveId,
+                    EntriesCount = callbackResults.Count,
+                    SucceededSourceTypes = succeeded,
+                    FailedSourceTypes = failed
                 },
                 cancellationToken);
         }
@@ -1522,10 +1574,8 @@ public partial class ResourceService : IResourceService
         string resourceType,
         CancellationToken cancellationToken)
     {
-        // We need to enumerate callbacks for this resource type
-        // Since we can't use KEYS/SCAN, we need an index
-        // For now, we'll use a known set of source types from the callbacks we've registered
-        // This is a simplification - in production, we'd maintain an index
+        using var activity = _telemetryProvider.StartActivity(
+            "bannou.resource", "ResourceService.GetCleanupCallbacksAsync");
 
         // Get the callback index for this resource type
         var indexKey = $"callback-index:{resourceType}";
@@ -1579,6 +1629,9 @@ public partial class ResourceService : IResourceService
         string resourceType,
         CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity(
+            "bannou.resource", "ResourceService.GetCompressCallbacksAsync");
+
         var indexKey = BuildCompressIndexKey(resourceType);
         var cacheStore = _stateStoreFactory.GetCacheableStore<string>(StateStoreDefinitions.ResourceCompress);
         var sourceTypes = await cacheStore.GetSetAsync<string>(indexKey, cancellationToken);
@@ -1598,6 +1651,28 @@ public partial class ResourceService : IResourceService
     }
 
     /// <summary>
+    /// Maintains the cleanup callback index when defining cleanup callbacks.
+    /// Must be called after saving the callback definition.
+    /// </summary>
+    private async Task MaintainCallbackIndexAsync(
+        string resourceType,
+        string sourceType,
+        CancellationToken cancellationToken)
+    {
+        using var activity = _telemetryProvider.StartActivity(
+            "bannou.resource", "ResourceService.MaintainCallbackIndexAsync");
+
+        var cacheStore = _stateStoreFactory.GetCacheableStore<string>(StateStoreDefinitions.ResourceCleanup);
+
+        // Add to per-resource-type index
+        var indexKey = $"callback-index:{resourceType}";
+        await cacheStore.AddToSetAsync(indexKey, sourceType, cancellationToken: cancellationToken);
+
+        // Add to master resource type index (for listing all callbacks)
+        await cacheStore.AddToSetAsync(MasterResourceTypeIndexKey, resourceType, cancellationToken: cancellationToken);
+    }
+
+    /// <summary>
     /// Maintains the compression callback index when defining callbacks.
     /// </summary>
     private async Task MaintainCompressCallbackIndexAsync(
@@ -1605,6 +1680,9 @@ public partial class ResourceService : IResourceService
         string sourceType,
         CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity(
+            "bannou.resource", "ResourceService.MaintainCompressCallbackIndexAsync");
+
         var cacheStore = _stateStoreFactory.GetCacheableStore<string>(StateStoreDefinitions.ResourceCompress);
 
         // Add to per-resource-type index
@@ -1644,20 +1722,6 @@ public partial class ResourceService : IResourceService
             gzip.Write(bytes, 0, bytes.Length);
         }
         return Convert.ToBase64String(output.ToArray());
-    }
-
-    /// <summary>
-    /// Decompresses base64-encoded GZip data to JSON string.
-    /// </summary>
-    private static string DecompressJsonData(string base64CompressedData)
-    {
-        var compressedBytes = Convert.FromBase64String(base64CompressedData);
-        using var input = new MemoryStream(compressedBytes);
-        using var gzip = new System.IO.Compression.GZipStream(
-            input, System.IO.Compression.CompressionMode.Decompress);
-        using var output = new MemoryStream();
-        gzip.CopyTo(output);
-        return System.Text.Encoding.UTF8.GetString(output.ToArray());
     }
 
     /// <summary>

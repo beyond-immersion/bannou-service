@@ -1146,6 +1146,13 @@ components:
           type: boolean
           default: false
           description: If true, invoke cleanup callbacks after successful archival
+        deleteSourceDataPolicy:
+          $ref: '#/components/schemas/CleanupPolicy'
+          nullable: true
+          description: |
+            Cleanup policy for source data deletion after archival.
+            Only applies when deleteSourceData is true.
+            If not specified, uses the configured DefaultCleanupPolicy.
         compressionPolicy:
           $ref: '#/components/schemas/CompressionPolicy'
           nullable: true
@@ -1826,4 +1833,8 @@ components:
           additionalProperties:
             type: string
           nullable: true
-          description: Optional key-value metadata
+          description: |
+            Client-only key-value metadata provided by the seeded resource provider.
+            Used for client display hints and debugging context (e.g., source assembly,
+            file origin). NOT a cross-service data contract per FOUNDATION TENETS —
+            plugins MUST NOT read metadata keys from other providers by convention.

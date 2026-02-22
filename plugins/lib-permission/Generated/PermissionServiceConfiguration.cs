@@ -65,7 +65,7 @@ public class PermissionServiceConfiguration : IServiceConfiguration
     /// Environment variable: PERMISSION_CACHE_TTL_SECONDS
     /// </summary>
     [ConfigRange(Minimum = 0, Maximum = 86400)]
-    public int PermissionCacheTtlSeconds { get; set; } = 0;
+    public int PermissionCacheTtlSeconds { get; set; } = 300;
 
     /// <summary>
     /// Redis TTL in seconds for session permission data keys (states and compiled permissions). Handles cleanup of orphaned data from sessions that disconnect without proper cleanup. 0 disables Redis TTL. Default 86400 (24 hours). Maximum 604800 (7 days).
@@ -73,6 +73,13 @@ public class PermissionServiceConfiguration : IServiceConfiguration
     /// </summary>
     [ConfigRange(Minimum = 0, Maximum = 604800)]
     public int SessionDataTtlSeconds { get; set; } = 86400;
+
+    /// <summary>
+    /// Timeout in seconds for distributed locks during session state and role update operations. Prevents lost updates when concurrent requests modify the same session.
+    /// Environment variable: PERMISSION_SESSION_LOCK_TIMEOUT_SECONDS
+    /// </summary>
+    [ConfigRange(Minimum = 1, Maximum = 60)]
+    public int SessionLockTimeoutSeconds { get; set; } = 10;
 
     /// <summary>
     /// Ordered role hierarchy from lowest to highest privilege. Index determines priority for permission compilation (comma-separated in env var).

@@ -24,7 +24,7 @@ x-service-configuration:
     PermissionCacheTtlSeconds:
       type: integer
       env: PERMISSION_CACHE_TTL_SECONDS
-      default: 0
+      default: 300
       minimum: 0
       maximum: 86400
       description: In-memory permission cache TTL in seconds. Cached capabilities older than this are refreshed from Redis on next access. 0 disables TTL (cache never expires). Recommended non-zero value is 300 (5 minutes). Acts as a safety net against lost event-driven recompilation triggers.
@@ -35,10 +35,19 @@ x-service-configuration:
       minimum: 0
       maximum: 604800
       description: Redis TTL in seconds for session permission data keys (states and compiled permissions). Handles cleanup of orphaned data from sessions that disconnect without proper cleanup. 0 disables Redis TTL. Default 86400 (24 hours). Maximum 604800 (7 days).
+    SessionLockTimeoutSeconds:
+      type: integer
+      env: PERMISSION_SESSION_LOCK_TIMEOUT_SECONDS
+      default: 10
+      minimum: 1
+      maximum: 60
+      description: Timeout in seconds for distributed locks during session state and role update operations. Prevents lost updates when concurrent requests modify the same session.
     RoleHierarchy:
       type: array
       items:
         type: string
+        minLength: 1
+      minItems: 1
       default: ["anonymous", "user", "developer", "admin"]
       env: PERMISSION_ROLE_HIERARCHY
       description: Ordered role hierarchy from lowest to highest privilege. Index determines priority for permission compilation (comma-separated in env var).

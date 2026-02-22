@@ -42,6 +42,8 @@ public partial class PermissionService
     /// <param name="evt">The session updated event.</param>
     public async Task HandleSessionUpdatedAsync(SessionUpdatedEvent evt)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.permission", "PermissionService.HandleSessionUpdated");
+
         try
         {
             _logger.LogDebug("Processing session.updated event for SessionId: {SessionId}, Reason: {Reason}, Roles: [{Roles}], Authorizations: [{Authorizations}]",
@@ -50,9 +52,8 @@ public partial class PermissionService
                 string.Join(", ", evt.Roles ?? new List<string>()),
                 string.Join(", ", evt.Authorizations ?? new List<string>()));
 
-            // Determine the highest role from the roles array
-            // Priority: admin > developer > user
-            var role = DetermineHighestRoleFromEvent(evt.Roles);
+            // Determine the highest role from the roles array using configured hierarchy
+            var role = DetermineHighestPriorityRole(evt.Roles);
 
             // Update session role
             var roleUpdate = new SessionRoleUpdate
@@ -119,37 +120,6 @@ public partial class PermissionService
         }
     }
 
-    /// <summary>
-    /// Determines the highest priority role from a list of roles.
-    /// Priority: admin > developer > user > anonymous
-    /// </summary>
-    private static string DetermineHighestRoleFromEvent(IEnumerable<string>? roles)
-    {
-        if (roles == null || !roles.Any())
-        {
-            return "anonymous"; // No roles = unauthenticated (consistent with DetermineHighestPriorityRole)
-        }
-
-        // Check for highest priority roles first
-        if (roles.Contains("admin", StringComparer.OrdinalIgnoreCase))
-        {
-            return "admin";
-        }
-
-        if (roles.Contains("developer", StringComparer.OrdinalIgnoreCase))
-        {
-            return "developer";
-        }
-
-        if (roles.Contains("user", StringComparer.OrdinalIgnoreCase))
-        {
-            return "user";
-        }
-
-        // If no recognized role, return the first one or default to anonymous
-        return roles.FirstOrDefault() ?? "anonymous";
-    }
-
     #endregion
 
     #region Session Connected/Disconnected Handlers
@@ -161,6 +131,8 @@ public partial class PermissionService
     /// <param name="evt">The session connected event.</param>
     public async Task HandleSessionConnectedEventAsync(SessionConnectedEvent evt)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.permission", "PermissionService.HandleSessionConnectedEvent");
+
         try
         {
             _logger.LogDebug("Processing session.connected for SessionId: {SessionId}, AccountId: {AccountId}, Roles: {RoleCount}, Authorizations: {AuthCount}",
@@ -201,6 +173,8 @@ public partial class PermissionService
     /// <param name="evt">The session disconnected event.</param>
     public async Task HandleSessionDisconnectedEventAsync(SessionDisconnectedEvent evt)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.permission", "PermissionService.HandleSessionDisconnectedEvent");
+
         try
         {
             _logger.LogDebug("Processing session.disconnected for SessionId: {SessionId}, Reason: {Reason}, Reconnectable: {Reconnectable}",

@@ -19,9 +19,11 @@ Redis-backed RBAC permission system (L1 AppFoundation) for WebSocket services. M
 | Dependency | Usage |
 |------------|-------|
 | lib-state (`IStateStoreFactory`) | Redis persistence for session states, permissions, matrix data, indexes; `ICacheableStateStore<string>` for atomic set operations on session/service tracking sets |
+| lib-state (`IDistributedLockProvider`) | Distributed locks for session state and role update operations (prevents lost updates from concurrent modifications) |
 | lib-messaging (`IMessageBus`) | Error event publishing |
 | lib-messaging (`IEventConsumer`) | 3 event subscriptions (session lifecycle) |
 | lib-messaging (`IClientEventPublisher`) | Push capability updates to WebSocket sessions |
+| lib-telemetry (`ITelemetryProvider`) | Trace spans on all async helper methods and event handlers (T30 compliance) |
 
 ---
 
@@ -82,9 +84,10 @@ No traditional topic-based event publications. Capability updates go directly to
 | Property | Type | Default | Range | Env Var | Description |
 |----------|------|---------|-------|---------|-------------|
 | `MaxConcurrentRecompilations` | int | 50 | 1-500 | `PERMISSION_MAX_CONCURRENT_RECOMPILATIONS` | Bounds parallel session recompilations during service registration |
-| `PermissionCacheTtlSeconds` | int | 0 | 0-86400 | `PERMISSION_CACHE_TTL_SECONDS` | In-memory cache TTL in seconds. 0 disables (cache never expires). Recommended non-zero: 300 (5 min). Safety net against lost RabbitMQ events |
+| `PermissionCacheTtlSeconds` | int | 300 | 0-86400 | `PERMISSION_CACHE_TTL_SECONDS` | In-memory cache TTL in seconds. Cached capabilities older than this are refreshed from Redis on next access. 0 disables (cache never expires). Default 300 (5 min) bounds cross-instance staleness |
 | `SessionDataTtlSeconds` | int | 86400 | 0-604800 | `PERMISSION_SESSION_DATA_TTL_SECONDS` | Redis TTL for session data keys. Handles orphaned session cleanup. 0 disables. Default 86400 (24h) |
 | `RoleHierarchy` | string[] | `["anonymous", "user", "developer", "admin"]` | - | `PERMISSION_ROLE_HIERARCHY` | Ordered role hierarchy from lowest to highest privilege (comma-separated in env var) |
+| `SessionLockTimeoutSeconds` | int | 10 | 1-60 | `PERMISSION_SESSION_LOCK_TIMEOUT_SECONDS` | Distributed lock expiry for session state/role update operations. Prevents lost updates from concurrent modifications |
 
 ---
 
@@ -98,6 +101,8 @@ No traditional topic-based event publications. Capability updates go directly to
 | `IMessageBus` | Scoped (injected) | Error event publishing |
 | `IClientEventPublisher` | Scoped (injected) | Session-specific capability push |
 | `IEventConsumer` | Scoped (injected) | Event handler registration |
+| `ITelemetryProvider` | Singleton | Trace span creation for all async helper methods and event handlers |
+| `IDistributedLockProvider` | Singleton | Distributed locks for session state and role updates (prevents concurrent modification) |
 | `IPermissionRegistry` | Singleton (via plugin) | Push-based permission registration interface (backed by PermissionService singleton, registered in PermissionServicePlugin) |
 
 Service lifetime is **Singleton** (shared across all requests).
@@ -128,8 +133,8 @@ Service lifetime is **Singleton** (shared across all requests).
 
 ### Session Management (4 endpoints)
 
-- **UpdateSessionState** (`/permission/update-session-state`): Updates state for specific service in session's state map. Triggers recompilation using in-memory states (avoids read-after-write issues).
-- **UpdateSessionRole** (`/permission/update-session-role`): Updates role in session's state map. Triggers full recompilation across all services.
+- **UpdateSessionState** (`/permission/update-session-state`): Acquires distributed lock on session before updating state for specific service in session's state map. Triggers recompilation using in-memory states (avoids read-after-write issues). Lock timeout configurable via `SessionLockTimeoutSeconds`.
+- **UpdateSessionRole** (`/permission/update-session-role`): Acquires distributed lock on session before updating role in session's state map. Triggers full recompilation across all services. Lock timeout configurable via `SessionLockTimeoutSeconds`.
 - **ClearSessionState** (`/permission/clear-session-state`): Conditional or unconditional state removal. If `states` list provided, only clears if current state matches. If `serviceId` is null, clears ALL states.
 - **GetSessionInfo** (`/permission/get-session-info`): Returns full session picture: states map, role, compiled permissions, version. Uses `Task.WhenAll` for concurrent state/permission reads.
 
@@ -159,35 +164,46 @@ Permission Compilation Flow
 Session Permission Recompilation
 ==================================
 
-  RecompileSessionPermissionsAsync(sessionId, states, reason)
+  UpdateSessionStateAsync / UpdateSessionRoleAsync
        │
-       ├── role = states["role"] (default: "anonymous")
+       ├── Acquire distributed lock: session:{sessionId}
+       │    └── Lock timeout: SessionLockTimeoutSeconds (default: 10s)
        │
-       ├── For each registered service:
-       │    ├── Relevant states: ["default"] + session states
-       │    │
-       │    ├── For each relevant state:
-       │    │    ├── Walk ROLE_ORDER: anonymous, user, developer, admin
-       │    │    │    └── Load: permissions:{service}:{state}:{role}
-       │    │    │
-       │    │    └── For each endpoint:
-       │    │         Track maxRoleByEndpoint[endpoint] = highest role
-       │    │
-       │    └── Allow endpoints where session role >= max required role
+       ├── Read-modify-write session states under lock
        │
-       ├── Store compiled permissions with version increment
-       │
-       ├── Clear in-memory cache (ConcurrentDictionary)
-       │
-       └── PublishCapabilityUpdateAsync → IClientEventPublisher
-                                          └── SessionCapabilitiesEvent to WebSocket
+       └── RecompileSessionPermissionsAsync(sessionId, states, reason)
+            │
+            ├── role = states["role"] (default: "anonymous")
+            │
+            ├── For each registered service:
+            │    ├── Relevant states: ["default"] + session states
+            │    │
+            │    ├── For each relevant state:
+            │    │    ├── Walk hierarchy from _configuration.RoleHierarchy
+            │    │    │    └── Load: permissions:{service}:{state}:{role}
+            │    │    │
+            │    │    └── For each endpoint:
+            │    │         Track maxRoleByEndpoint[endpoint] = highest role
+            │    │
+            │    └── Allow endpoints where session role >= max required role
+            │
+            ├── Store compiled permissions with version increment
+            │
+            ├── Clear in-memory cache (ConcurrentDictionary)
+            │
+            └── PublishCapabilityUpdateAsync → IClientEventPublisher
+                                               └── SessionCapabilitiesEvent to WebSocket
 
 
-Role Priority Hierarchy
-=========================
+Role Priority Hierarchy (from _configuration.RoleHierarchy)
+===============================================================
 
-  ROLE_ORDER = ["anonymous", "user", "developer", "admin"]
-  Index:          0            1          2           3
+  Default: ["anonymous", "user", "developer", "admin"]
+  Index:       0            1          2           3
+
+  Configurable via PERMISSION_ROLE_HIERARCHY env var (comma-separated).
+  DetermineHighestPriorityRole walks the hierarchy from highest to lowest,
+  returning the first matching role from the session's role list.
 
   Session role priority >= endpoint required role → ALLOWED
 
@@ -214,7 +230,7 @@ None identified. Previous extensions were either implemented (Permission TTL →
 
 ### Bugs
 
-1. ~~**Inconsistent default role between connection and update paths**~~: **FIXED** (2026-02-11) - Unified all four default-role locations to return `"anonymous"` when roles are null/empty: `DetermineHighestRoleFromEvent` (two returns), `RecompileSessionPermissionsAsync` (`GetValueOrDefault`), and `GetSessionInfoAsync` (`GetValueOrDefault`). Sessions with no roles now consistently get anonymous-level permissions across all code paths.
+1. ~~**Inconsistent default role between connection and update paths**~~: **FIXED** (2026-02-11, updated 2026-02-22) - Unified all default-role locations to return `"anonymous"` when roles are null/empty. The static `DetermineHighestRoleFromEvent` method was removed and replaced with config-driven `DetermineHighestPriorityRole` which walks `_configuration.RoleHierarchy` from highest to lowest. Sessions with no roles now consistently get anonymous-level permissions across all code paths.
 
 2. ~~**Static ROLE_ORDER array**~~: **FIXED** (2026-02-11) - Replaced hardcoded `ROLE_ORDER` with `_configuration.RoleHierarchy` config property (default `["anonymous", "user", "developer", "admin"]`). Set via `PERMISSION_ROLE_HIERARCHY` env var as comma-separated string. T21 compliance fix.
 
@@ -224,10 +240,12 @@ None identified. Previous extensions were either implemented (Permission TTL →
 
 2. **ValidateApiAccess never uses cache**: Unlike `GetCapabilities` which uses the in-memory cache, `ValidateApiAccess` always reads from Redis. This ensures validation uses the latest compiled permissions at the cost of latency.
 
-3. **No cache invalidation on session disconnect**: When a session disconnects, it's removed from `active_connections` but the in-memory cache entry remains until the session is garbage-collected or a new recompilation overwrites it. Broader fix planned via `ISessionActivityListener` DI interface with heartbeat-driven TTL refresh. See [GH#392](https://github.com/beyond-immersion/bannou-service/issues/392).
+3. **No cache invalidation on session disconnect**: When a session disconnects, it's removed from `active_connections` but the in-memory cache entry remains until TTL expiry or a new recompilation overwrites it. Non-reconnectable disconnects clear the cache entry immediately; reconnectable disconnects leave it (session may reconnect). Broader fix planned via `ISessionActivityListener` DI interface with heartbeat-driven TTL refresh. See [GH#392](https://github.com/beyond-immersion/bannou-service/issues/392).
+
+4. **Cross-instance cache staleness is TTL-bounded**: In multi-node deployments, a recompilation on Node A invalidates Node A's local cache but Node B's cache retains stale data until TTL expiry. This is acceptable because: (a) `ValidateApiAccess` (the security-critical path) always reads Redis, never the cache; (b) Connect receives capabilities via event push, not `GetCapabilities`; (c) the default 300s TTL bounds maximum staleness. No event-based cross-node invalidation needed.
 <!-- AUDIT:NEEDS_DESIGN:2026-02-11:https://github.com/beyond-immersion/bannou-service/issues/392 -->
 
-4. ~~**GetRegisteredServices endpoint count is approximate**~~: **FIXED** (2026-02-11) - `GetRegisteredServicesAsync` now reads dynamically stored per-service state names from `service-states:{serviceId}` Redis keys instead of using a hardcoded array. States are saved during `RegisterServicePermissionsAsync` from the permission matrix keys. Previously used `["authenticated", "default", "lobby", "in_game"]` which included fake states and missed real ones (voice: `ringing`/`in_room`/`consent_pending`, matchmaking: `in_queue`/`match_pending`, chat: `in_room`).
+5. ~~**GetRegisteredServices endpoint count is approximate**~~: **FIXED** (2026-02-11) - `GetRegisteredServicesAsync` now reads dynamically stored per-service state names from `service-states:{serviceId}` Redis keys instead of using a hardcoded array. States are saved during `RegisterServicePermissionsAsync` from the permission matrix keys. Previously used `["authenticated", "default", "lobby", "in_game"]` which included fake states and missed real ones (voice: `ringing`/`in_room`/`consent_pending`, matchmaking: `in_queue`/`match_pending`, chat: `in_room`).
 
 ### Design Considerations
 
@@ -240,3 +258,19 @@ None active. Previous considerations were either fixed (parallel recompilation v
 ### Completed
 - **2026-02-11**: Fixed hardcoded states array in `GetRegisteredServicesAsync`. Now dynamically reads per-service states from Redis, stored during registration.
 - **2026-02-11**: Issue #389. Replaced hardcoded `ROLE_ORDER` with `RoleHierarchy` config property. T21 compliance fix.
+- **2026-02-22**: Production hardening audit. Schema, code, and documentation sweep:
+  - **Schema (NRT)**: Fixed 14 NRT violations across response schemas — added `required` arrays and `nullable: true` where needed.
+  - **Schema (T8)**: Removed filler properties from responses — `ServiceId` echo from RegistrationResponse, `SessionId` echoes from SessionUpdateResponse/CapabilityResponse/SessionInfo/ValidationResponse, `Message` from SessionUpdateResponse.
+  - **Schema (T5)**: Moved `CapabilityUpdateType` and `CapabilityUpdateReason` inline enums from events schema to API schema; events schema now uses `$ref`.
+  - **Schema (T5)**: Made `PermissionCapabilityUpdate` extend `BaseServiceEvent` via `allOf`.
+  - **Schema (T21)**: Removed dead `metadata` field from `SessionStateUpdate`.
+  - **Schema (validation)**: Added `minLength`, `minimum`, `minItems` validation keywords across schemas. Added `SessionLockTimeoutSeconds` config property.
+  - **Code (T9)**: Added distributed locks (`IDistributedLockProvider`) to `UpdateSessionStateAsync` and `UpdateSessionRoleAsync` to prevent lost updates from concurrent modifications.
+  - **Code (T21)**: Completed `RoleHierarchy` migration — removed static `DetermineHighestRoleFromEvent` from events partial, unified to config-driven `DetermineHighestPriorityRole`.
+  - **Code (T30)**: Added telemetry spans (`ITelemetryProvider.StartActivity`) to all async helper methods and event handlers.
+  - **Code (T7)**: Removed duplicate try-catch from `HandleSessionConnectedAsync`/`HandleSessionDisconnectedAsync` service methods (event handlers in `PermissionServiceEvents.cs` are the error boundary).
+  - **Code (T26)**: Fixed sentinel values — `DateTimeOffset.UtcNow.ToString("o")` for ISO 8601 timestamps.
+  - **Code (T13)**: Extracted magic string `"role"` to `SESSION_ROLE_KEY` constant.
+  - **Code**: Moved `ServiceRegistrationInfo` internal class from `PermissionService.cs` to `PermissionServiceModels.cs`.
+  - **Tests**: Updated 27 unit tests for new constructor signature and removed response properties. All passing.
+  - **Config**: Changed `PermissionCacheTtlSeconds` default from 0 to 300 (5 minutes). Bounds cross-instance cache staleness in multi-node deployments. Previous default of 0 meant stale cache entries never expired unless explicitly invalidated by a local recompilation.

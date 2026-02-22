@@ -6,6 +6,7 @@ using BeyondImmersion.BannouService.Resource;
 using BeyondImmersion.BannouService.ServiceClients;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State;
+using BeyondImmersion.BannouService.Telemetry;
 using Microsoft.Extensions.Logging;
 using Moq;
 using System.Reflection;
@@ -24,6 +25,7 @@ public class SeededResourceTests
     private readonly Mock<IDistributedLockProvider> _mockLockProvider;
     private readonly Mock<ILogger<ResourceService>> _mockLogger;
     private readonly Mock<IEventConsumer> _mockEventConsumer;
+    private readonly Mock<ITelemetryProvider> _mockTelemetryProvider;
     private readonly ResourceServiceConfiguration _configuration;
 
     // Mock stores (needed by constructor even if not used by seeded resource methods)
@@ -44,6 +46,7 @@ public class SeededResourceTests
         _mockLockProvider = new Mock<IDistributedLockProvider>();
         _mockLogger = new Mock<ILogger<ResourceService>>();
         _mockEventConsumer = new Mock<IEventConsumer>();
+        _mockTelemetryProvider = new Mock<ITelemetryProvider>();
 
         _mockRefStore = new Mock<ICacheableStateStore<ResourceReferenceEntry>>();
         _mockGraceStore = new Mock<IStateStore<GracePeriodRecord>>();
@@ -109,7 +112,8 @@ public class SeededResourceTests
             _mockLogger.Object,
             _configuration,
             _mockEventConsumer.Object,
-            seededProviders ?? Array.Empty<ISeededResourceProvider>());
+            seededProviders ?? Array.Empty<ISeededResourceProvider>(),
+            _mockTelemetryProvider.Object);
     }
 
     // =========================================================================

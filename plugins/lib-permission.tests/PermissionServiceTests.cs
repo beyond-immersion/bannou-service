@@ -32,6 +32,8 @@ public class PermissionServiceTests
     private readonly Mock<IStateStore<ServiceRegistrationInfo>> _mockRegistrationInfoStore;
     private readonly Mock<IMessageBus> _mockMessageBus;
     private readonly Mock<IClientEventPublisher> _mockClientEventPublisher;
+    private readonly Mock<ITelemetryProvider> _mockTelemetryProvider;
+    private readonly Mock<IDistributedLockProvider> _mockLockProvider;
     private readonly Mock<IEventConsumer> _mockEventConsumer;
 
     // State store constants (must match PermissionService)
@@ -57,7 +59,21 @@ public class PermissionServiceTests
         _mockRegistrationInfoStore = new Mock<IStateStore<ServiceRegistrationInfo>>();
         _mockMessageBus = new Mock<IMessageBus>();
         _mockClientEventPublisher = new Mock<IClientEventPublisher>();
+        _mockTelemetryProvider = new Mock<ITelemetryProvider>();
+        _mockLockProvider = new Mock<IDistributedLockProvider>();
         _mockEventConsumer = new Mock<IEventConsumer>();
+
+        // Setup lock provider to always succeed by default
+        var mockLockResponse = new Mock<ILockResponse>();
+        mockLockResponse.Setup(l => l.Success).Returns(true);
+        _mockLockProvider
+            .Setup(l => l.LockAsync(
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<int>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(mockLockResponse.Object);
 
         // Setup factory to return typed stores
         // Note: object setup must come FIRST (most general) to avoid Castle proxy matching issues
@@ -127,6 +143,8 @@ public class PermissionServiceTests
             _mockStateStoreFactory.Object,
             _mockMessageBus.Object,
             _mockClientEventPublisher.Object,
+            _mockTelemetryProvider.Object,
+            _mockLockProvider.Object,
             _mockEventConsumer.Object);
     }
 
@@ -199,7 +217,6 @@ public class PermissionServiceTests
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
         Assert.NotNull(response);
-        Assert.Equal("orchestrator", response.ServiceId);
 
         // Verify registered services list was updated atomically via AddToSetAsync
         _mockCacheableStore.Verify(s => s.AddToSetAsync<string>(
@@ -247,8 +264,7 @@ public class PermissionServiceTests
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
         Assert.NotNull(response);
-        Assert.Equal(sessionId, response.SessionId);
-        Assert.Contains("admin", response.Message);
+        Assert.True(response.PermissionsChanged);
 
         // Verify session was atomically added to activeSessions
         _mockCacheableStore.Verify(s => s.AddToSetAsync<string>(
@@ -734,7 +750,6 @@ public class PermissionServiceTests
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
         Assert.NotNull(response);
-        Assert.Equal(sessionId, response.SessionId);
         Assert.NotNull(response.Permissions);
         Assert.True(response.Permissions.ContainsKey("orchestrator"));
         Assert.Contains("/orchestrator/health", response.Permissions["orchestrator"]);
@@ -975,8 +990,7 @@ public class PermissionServiceTests
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
         Assert.NotNull(response);
-        Assert.Equal(sessionId, response.SessionId);
-        Assert.Contains("registered", response.Message);
+        Assert.True(response.PermissionsChanged);
 
         // Verify session was atomically added to activeConnections via AddToSetAsync
         _mockCacheableStore.Verify(s => s.AddToSetAsync<string>(
@@ -1229,7 +1243,7 @@ public class PermissionServiceTests
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
         Assert.NotNull(response);
-        Assert.Contains("reconnectable", response.Message);
+        Assert.False(response.PermissionsChanged);
 
         // Verify atomic remove from activeConnections via RemoveFromSetAsync
         _mockCacheableStore.Verify(s => s.RemoveFromSetAsync<string>(
@@ -1277,7 +1291,7 @@ public class PermissionServiceTests
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
         Assert.NotNull(response);
-        Assert.Contains("cleared", response.Message);
+        Assert.True(response.PermissionsChanged);
 
         // Verify atomic remove from both connections and sessions
         _mockCacheableStore.Verify(s => s.RemoveFromSetAsync<string>(

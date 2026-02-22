@@ -24,6 +24,7 @@
 
 using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.BannouService;
+using BeyondImmersion.BannouService.Permission;
 
 #pragma warning disable 108 // Disable "CS0108 '{derivedDto}.ToJson()' hides inherited member '{dtoBase}.ToJson()'. Use the new keyword if hiding was intended."
 #pragma warning disable 114 // Disable "CS0114 '{derivedDto}.RaisePropertyChanged(String)' hides inherited member 'dtoBase.RaisePropertyChanged(String)'. To make the current member override that implementation, add the override keyword. Otherwise add the new keyword."
@@ -51,8 +52,16 @@ using System = global::System;
 /// <br/>
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class PermissionCapabilityUpdate
+public partial class PermissionCapabilityUpdate : BaseServiceEvent
 {
+
+    /// <summary>
+    /// Fixed event type identifier
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public override string EventName { get; set; } = "permission.capability-update";
 
     /// <summary>
     /// Session ID that had capability changes
@@ -66,21 +75,21 @@ public partial class PermissionCapabilityUpdate
     /// New capability version number (increments on each update)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("version")]
+    [System.ComponentModel.DataAnnotations.Range(0, int.MaxValue)]
     public int Version { get; set; } = default!;
 
     /// <summary>
-    /// Type of update - full capabilities or delta changes
+    /// Type of update — full capabilities or delta changes
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("updateType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public PermissionCapabilityUpdateUpdateType UpdateType { get; set; } = default!;
+    public CapabilityUpdateType UpdateType { get; set; } = default!;
 
     /// <summary>
     /// Complete capability map (for full updates or initial connection).
     /// <br/>Key: service_id, Value: array of allowed endpoints.
-    /// <br/>Example: {"account": ["GET:/account", "PUT:/account/{id}"]}
     /// <br/>
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("fullCapabilities")]
@@ -119,46 +128,9 @@ public partial class PermissionCapabilityUpdate
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("reason")]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public PermissionCapabilityUpdateReason? Reason { get; set; } = default!;
+    public CapabilityUpdateReason? Reason { get; set; } = default!;
 
 }
-
-#pragma warning disable CS1591 // Enum members cannot have XML documentation
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum PermissionCapabilityUpdateUpdateType
-{
-
-    [System.Runtime.Serialization.EnumMember(Value = @"full")]
-    Full = 0,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"delta")]
-    Delta = 1,
-
-}
-#pragma warning restore CS1591
-
-#pragma warning disable CS1591 // Enum members cannot have XML documentation
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum PermissionCapabilityUpdateReason
-{
-
-    [System.Runtime.Serialization.EnumMember(Value = @"session_created")]
-    Session_created = 0,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"session_state_changed")]
-    Session_state_changed = 1,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"role_changed")]
-    Role_changed = 2,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"service_registered")]
-    Service_registered = 3,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"manual_refresh")]
-    Manual_refresh = 4,
-
-}
-#pragma warning restore CS1591
 
 
 

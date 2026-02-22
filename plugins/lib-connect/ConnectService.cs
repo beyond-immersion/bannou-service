@@ -46,6 +46,7 @@ public partial class ConnectService : IConnectService, IDisposable, IAsyncDispos
     private readonly IEntitySessionRegistry _entitySessionRegistry;
     private readonly InterNodeBroadcastManager _interNodeBroadcast;
     private readonly ITelemetryProvider _telemetryProvider;
+    private readonly IReadOnlyList<ISessionActivityListener> _sessionActivityListeners;
 
     // Client event subscriptions via lib-messaging (per-session raw byte subscriptions)
     private readonly IMessageSubscriber _messageSubscriber;
@@ -102,7 +103,8 @@ public partial class ConnectService : IConnectService, IDisposable, IAsyncDispos
         IEntitySessionRegistry entitySessionRegistry,
         InterNodeBroadcastManager interNodeBroadcast,
         IMeshInstanceIdentifier meshInstanceIdentifier,
-        ITelemetryProvider telemetryProvider)
+        ITelemetryProvider telemetryProvider,
+        IEnumerable<ISessionActivityListener> sessionActivityListeners)
     {
         _authClient = authClient;
         _meshClient = meshClient;
@@ -118,6 +120,14 @@ public partial class ConnectService : IConnectService, IDisposable, IAsyncDispos
         _entitySessionRegistry = entitySessionRegistry;
         _interNodeBroadcast = interNodeBroadcast;
         _telemetryProvider = telemetryProvider;
+        _sessionActivityListeners = sessionActivityListeners.ToList();
+
+        if (_sessionActivityListeners.Count > 0)
+        {
+            _logger.LogInformation("Connect service initialized with {Count} session activity listeners: {Listeners}",
+                _sessionActivityListeners.Count,
+                string.Join(", ", _sessionActivityListeners.Select(l => l.GetType().Name)));
+        }
 
         _connectionManager = new WebSocketConnectionManager(
             configuration.ConnectionShutdownTimeoutSeconds,
@@ -959,6 +969,22 @@ public partial class ConnectService : IConnectService, IDisposable, IAsyncDispos
                     await _messageBus.TryPublishAsync("session.reconnected", sessionReconnectedEvent, cancellationToken: cancellationToken);
                     _logger.LogInformation("Published session.reconnected event for session {SessionId} with new PeerGuid {PeerGuid} - services should re-publish shortcuts",
                         sessionId, connectionState.PeerGuid);
+
+                    // Dispatch to DI listeners after broadcast event (reconnection path)
+                    await DispatchSessionActivityListenersAsync(
+                        listener => listener.OnReconnectedAsync(Guid.Parse(sessionId), cancellationToken),
+                        "OnReconnected", sessionId);
+                }
+                else
+                {
+                    // Dispatch to DI listeners after broadcast event (new connection path)
+                    await DispatchSessionActivityListenersAsync(
+                        listener => listener.OnConnectedAsync(
+                            Guid.Parse(sessionId), accountId ?? Guid.Empty,
+                            (IReadOnlyList<string>?)userRoles?.ToList(),
+                            (IReadOnlyList<string>?)authorizations?.ToList(),
+                            cancellationToken),
+                        "OnConnected", sessionId);
                 }
             }
             catch (Exception ex)
@@ -992,6 +1018,9 @@ public partial class ConnectService : IConnectService, IDisposable, IAsyncDispos
                     (DateTimeOffset.UtcNow - connectionState.LastActivity).TotalSeconds >= _configuration.HeartbeatIntervalSeconds)
                 {
                     await _sessionManager.UpdateSessionHeartbeatAsync(sessionId, _instanceId);
+                    await DispatchSessionActivityListenersAsync(
+                        listener => listener.OnHeartbeatAsync(Guid.Parse(sessionId), cancellationToken),
+                        "OnHeartbeat", sessionId);
                 }
 
                 if (result.MessageType == WebSocketMessageType.Binary)
@@ -1072,6 +1101,16 @@ public partial class ConnectService : IConnectService, IDisposable, IAsyncDispos
 
                     // Clean up all entity session bindings for this session
                     await _entitySessionRegistry.UnregisterSessionAsync(sessionId);
+
+                    // Dispatch to DI listeners after broadcast event
+                    var reconnectable = !isForcedDisconnect;
+                    var reconnectionWindow = reconnectable
+                        ? TimeSpan.FromSeconds(_configuration.ReconnectionWindowSeconds)
+                        : (TimeSpan?)null;
+                    await DispatchSessionActivityListenersAsync(
+                        listener => listener.OnDisconnectedAsync(
+                            Guid.Parse(sessionId), reconnectable, reconnectionWindow, CancellationToken.None),
+                        "OnDisconnected", sessionId);
                 }
                 catch (Exception ex)
                 {
@@ -3070,6 +3109,36 @@ public partial class ConnectService : IConnectService, IDisposable, IAsyncDispos
     #region IDisposable / IAsyncDisposable
 
     private bool _disposed;
+
+    #region Session Activity Listener Dispatch
+
+    /// <summary>
+    /// Dispatches a session activity notification to all registered DI listeners.
+    /// Sequential iteration with per-listener try-catch; failures never affect Connect or other listeners.
+    /// </summary>
+    private async Task DispatchSessionActivityListenersAsync(
+        Func<ISessionActivityListener, Task> action,
+        string eventName,
+        string sessionId)
+    {
+        if (_sessionActivityListeners.Count == 0) return;
+
+        foreach (var listener in _sessionActivityListeners)
+        {
+            try
+            {
+                await action(listener);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex,
+                    "Session activity listener {ListenerType} failed during {EventName} for session {SessionId}",
+                    listener.GetType().Name, eventName, sessionId);
+            }
+        }
+    }
+
+    #endregion
 
     /// <summary>
     /// Asynchronously disposes the ConnectService, gracefully closing all WebSocket connections.

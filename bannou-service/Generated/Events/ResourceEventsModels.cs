@@ -302,8 +302,9 @@ public partial class ResourceCompressCallbackFailedEvent
 }
 
 /// <summary>
-/// Published when decompression completes successfully.
-/// <br/>Services can subscribe to perform post-decompression actions.
+/// Published when decompression completes with at least one successful callback.
+/// <br/>Includes per-source-type success/failure arrays so consumers can assess partial
+/// <br/>restoration state without querying the full API response.
 /// <br/>
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
@@ -349,6 +350,28 @@ public partial class ResourceDecompressedEvent
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public System.Guid ArchiveId { get; set; } = default!;
+
+    /// <summary>
+    /// Total number of decompression callbacks attempted
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("entriesCount")]
+    public int EntriesCount { get; set; } = default!;
+
+    /// <summary>
+    /// Source types whose decompression callbacks succeeded
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("succeededSourceTypes")]
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Collections.Generic.ICollection<string> SucceededSourceTypes { get; set; } = new System.Collections.ObjectModel.Collection<string>();
+
+    /// <summary>
+    /// Source types whose decompression callbacks failed (empty on full success)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("failedSourceTypes")]
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Collections.Generic.ICollection<string> FailedSourceTypes { get; set; } = new System.Collections.ObjectModel.Collection<string>();
 
 }
 
