@@ -37,6 +37,7 @@ public sealed class InterNodeBroadcastManager : IDisposable
 
     private readonly IStateStoreFactory _stateStoreFactory;
     private readonly ConnectServiceConfiguration _configuration;
+    private readonly ITelemetryProvider _telemetryProvider;
     private readonly ILogger<InterNodeBroadcastManager> _logger;
 
     /// <summary>
@@ -51,14 +52,24 @@ public sealed class InterNodeBroadcastManager : IDisposable
     /// </summary>
     public int ActiveConnectionCount => _nodeConnections.Count;
 
+    /// <summary>
+    /// Creates a new InterNodeBroadcastManager.
+    /// </summary>
+    /// <param name="stateStoreFactory">Factory for Redis state store access.</param>
+    /// <param name="configuration">Connect service configuration.</param>
+    /// <param name="meshInstanceIdentifier">Process-stable instance identity from lib-mesh.</param>
+    /// <param name="telemetryProvider">Telemetry provider for span instrumentation.</param>
+    /// <param name="logger">Logger instance.</param>
     public InterNodeBroadcastManager(
         IStateStoreFactory stateStoreFactory,
         ConnectServiceConfiguration configuration,
         IMeshInstanceIdentifier meshInstanceIdentifier,
+        ITelemetryProvider telemetryProvider,
         ILogger<InterNodeBroadcastManager> logger)
     {
         _stateStoreFactory = stateStoreFactory;
         _configuration = configuration;
+        _telemetryProvider = telemetryProvider;
         _logger = logger;
         _instanceId = meshInstanceIdentifier.InstanceId;
 
@@ -82,8 +93,11 @@ public sealed class InterNodeBroadcastManager : IDisposable
     /// Registers this instance in the broadcast registry, discovers and connects to compatible peers,
     /// and starts the maintenance timer. Call after DI is ready, before accepting client connections.
     /// </summary>
+    /// <param name="ct">Cancellation token.</param>
     public async Task InitializeAsync(CancellationToken ct)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.connect", "InterNodeBroadcastManager.InitializeAsync");
+
         if (!_isActive) return;
 
         var store = _stateStoreFactory.GetCacheableStore<string>(StateStoreDefinitions.Connect);
@@ -99,10 +113,13 @@ public sealed class InterNodeBroadcastManager : IDisposable
             BROADCAST_REGISTRY_KEY, cutoff, double.PositiveInfinity, cancellationToken: ct);
 
         var connectedCount = 0;
+        var peerCount = 0;
         foreach (var (member, _) in entries)
         {
             var peer = BannouJson.Deserialize<BroadcastRegistryEntry>(member);
             if (peer == null || peer.InstanceId == _instanceId) continue;
+
+            peerCount++;
             if (!IsCompatible(_broadcastMode, peer.BroadcastMode)) continue;
 
             if (await ConnectToPeerAsync(peer, ct))
@@ -112,7 +129,7 @@ public sealed class InterNodeBroadcastManager : IDisposable
         }
 
         _logger.LogInformation("Discovered {PeerCount} peers, connected to {ConnectedCount}",
-            entries.Count - 1, connectedCount);
+            peerCount, connectedCount);
 
         // Start maintenance timer (heartbeat + stale cleanup)
         _maintenanceTimer = new Timer(
@@ -126,8 +143,13 @@ public sealed class InterNodeBroadcastManager : IDisposable
     /// Handles an incoming WebSocket connection from another Connect instance.
     /// Called by the /connect/broadcast endpoint handler. Blocks until the connection closes.
     /// </summary>
+    /// <param name="webSocket">The accepted WebSocket connection.</param>
+    /// <param name="remoteInstanceId">Instance ID of the connecting peer.</param>
+    /// <param name="ct">Cancellation token.</param>
     public async Task HandleIncomingConnectionAsync(WebSocket webSocket, Guid remoteInstanceId, CancellationToken ct)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.connect", "InterNodeBroadcastManager.HandleIncomingConnectionAsync");
+
         if (!_isActive)
         {
             _logger.LogWarning("Rejecting incoming broadcast connection from {RemoteInstanceId}: broadcast not active",
@@ -153,6 +175,8 @@ public sealed class InterNodeBroadcastManager : IDisposable
     /// Relays a broadcast message to all connected inter-node peers. Fire-and-forget.
     /// Only sends if broadcast mode is Send or Both.
     /// </summary>
+    /// <param name="messageBytes">Raw binary message to relay.</param>
+    /// <param name="ct">Cancellation token.</param>
     public async Task RelayBroadcastAsync(byte[] messageBytes, CancellationToken ct)
     {
         if (_broadcastMode != BroadcastMode.Send && _broadcastMode != BroadcastMode.Both) return;
@@ -185,6 +209,9 @@ public sealed class InterNodeBroadcastManager : IDisposable
     /// Determines if two broadcast modes are compatible for establishing a connection.
     /// At least one side must send and the other must receive.
     /// </summary>
+    /// <param name="myMode">This instance's broadcast mode.</param>
+    /// <param name="peerMode">The peer instance's broadcast mode.</param>
+    /// <returns>True if the two modes are compatible for a broadcast connection.</returns>
     internal static bool IsCompatible(BroadcastMode myMode, BroadcastMode peerMode)
     {
         if (myMode == BroadcastMode.None || peerMode == BroadcastMode.None) return false;
@@ -195,6 +222,8 @@ public sealed class InterNodeBroadcastManager : IDisposable
 
     private async Task<bool> ConnectToPeerAsync(BroadcastRegistryEntry peer, CancellationToken ct)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.connect", "InterNodeBroadcastManager.ConnectToPeerAsync");
+
         try
         {
             var ws = new ClientWebSocket();
@@ -246,7 +275,10 @@ public sealed class InterNodeBroadcastManager : IDisposable
                 {
                     try
                     {
-                        await OnBroadcastReceived(buffer, result.Count);
+                        // Copy the received bytes before passing to callback — the buffer
+                        // is reused on the next ReceiveAsync iteration
+                        var messageCopy = buffer[..result.Count];
+                        await OnBroadcastReceived(messageCopy, result.Count);
                     }
                     catch (Exception ex)
                     {
@@ -278,6 +310,8 @@ public sealed class InterNodeBroadcastManager : IDisposable
     {
         _ = Task.Run(async () =>
         {
+            using var activity = _telemetryProvider.StartActivity("bannou.connect", "InterNodeBroadcastManager.MaintenanceCallback");
+
             try
             {
                 var store = _stateStoreFactory.GetCacheableStore<string>(StateStoreDefinitions.Connect);
@@ -307,6 +341,7 @@ public sealed class InterNodeBroadcastManager : IDisposable
         });
     }
 
+    /// <inheritdoc/>
     public void Dispose()
     {
         if (_disposed) return;
@@ -315,14 +350,18 @@ public sealed class InterNodeBroadcastManager : IDisposable
         _maintenanceTimer?.Dispose();
         _maintenanceTimer = null;
 
-        // Deregister from Redis
+        // Deregister from Redis (fire-and-forget to avoid .Wait() deadlock)
         if (_isActive)
         {
             try
             {
                 var store = _stateStoreFactory.GetCacheableStore<string>(StateStoreDefinitions.Connect);
-                store.SortedSetRemoveAsync(BROADCAST_REGISTRY_KEY, _registryMember)
-                    .Wait(TimeSpan.FromSeconds(5));
+                _ = store.SortedSetRemoveAsync(BROADCAST_REGISTRY_KEY, _registryMember)
+                    .ContinueWith(t =>
+                    {
+                        if (t.IsFaulted)
+                            _logger.LogDebug(t.Exception, "Error deregistering from broadcast registry during shutdown");
+                    }, TaskContinuationOptions.OnlyOnFaulted);
             }
             catch (Exception ex)
             {
@@ -337,8 +376,12 @@ public sealed class InterNodeBroadcastManager : IDisposable
             {
                 if (ws.State == WebSocketState.Open)
                 {
-                    ws.CloseAsync(WebSocketCloseStatus.NormalClosure, "Shutdown", CancellationToken.None)
-                        .Wait(TimeSpan.FromSeconds(3));
+                    _ = ws.CloseAsync(WebSocketCloseStatus.NormalClosure, "Shutdown", CancellationToken.None)
+                        .ContinueWith(t =>
+                        {
+                            if (t.IsFaulted)
+                                _logger.LogDebug(t.Exception, "Error closing broadcast connection to peer {PeerInstanceId}", instanceId);
+                        }, TaskContinuationOptions.OnlyOnFaulted);
                 }
                 ws.Dispose();
             }

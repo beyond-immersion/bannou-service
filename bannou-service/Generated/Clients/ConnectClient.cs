@@ -133,6 +133,27 @@ public partial interface IConnectClient
     /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
     System.Threading.Tasks.Task ConnectWebSocketPostAsync(Connection2 connection, Upgrade2 upgrade, string authorization, ConnectRequest? body = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
+    /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+    /// <summary>
+    /// Inter-node broadcast WebSocket endpoint
+    /// </summary>
+    /// <remarks>
+    /// Internal WebSocket endpoint for the multi-node broadcast mesh.
+    /// <br/>Other Connect instances connect here to relay broadcast messages.
+    /// <br/>Requires service-token authentication (same as Internal connection mode).
+    /// <br/>
+    /// <br/>**Not client-facing.** This endpoint is used exclusively for
+    /// <br/>inter-node communication between Connect instances in multi-instance
+    /// <br/>deployments. Requires `instanceId` query parameter identifying the
+    /// <br/>connecting peer.
+    /// </remarks>
+    /// <param name="instanceId">Instance ID of the connecting peer Connect node</param>
+    /// <param name="connection">Must be "Upgrade" to initiate WebSocket connection</param>
+    /// <param name="upgrade">Must be "websocket" to specify protocol upgrade</param>
+    /// <param name="x_Service_Token">Service token for authentication (required when InternalAuthMode is ServiceToken)</param>
+    /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+    System.Threading.Tasks.Task BroadcastWebSocketAsync(System.Guid instanceId, Connection3 connection, Upgrade3 upgrade, string? x_Service_Token = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
     /// <param name="body">The body parameter.</param>
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
@@ -741,6 +762,122 @@ public partial class ConnectClient : IConnectClient, BeyondImmersion.BannouServi
                     {
                         string responseText_ = ( response_.Content == null ) ? string.Empty : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
                         throw new BeyondImmersion.Bannou.Core.ApiException("Internal server error", status_, responseText_, headers_, null);
+                    }
+                    else
+
+                    if (status_ == 200 || status_ == 204)
+                    {
+
+                        return;
+                    }
+                    else
+                    {
+                        var responseData_ = response_.Content == null ? null : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
+                        throw new BeyondImmersion.Bannou.Core.ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
+                    }
+                }
+                finally
+                {
+                    if (disposeResponse_)
+                        response_.Dispose();
+                }
+            }
+            finally
+            {
+                // Clear headers after request (one-time use)
+                ClearHeaders();
+            }
+        }
+    }
+
+    /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+    /// <summary>
+    /// Inter-node broadcast WebSocket endpoint
+    /// </summary>
+    /// <remarks>
+    /// Internal WebSocket endpoint for the multi-node broadcast mesh.
+    /// <br/>Other Connect instances connect here to relay broadcast messages.
+    /// <br/>Requires service-token authentication (same as Internal connection mode).
+    /// <br/>
+    /// <br/>**Not client-facing.** This endpoint is used exclusively for
+    /// <br/>inter-node communication between Connect instances in multi-instance
+    /// <br/>deployments. Requires `instanceId` query parameter identifying the
+    /// <br/>connecting peer.
+    /// </remarks>
+    /// <param name="instanceId">Instance ID of the connecting peer Connect node</param>
+    /// <param name="connection">Must be "Upgrade" to initiate WebSocket connection</param>
+    /// <param name="upgrade">Must be "websocket" to specify protocol upgrade</param>
+    /// <param name="x_Service_Token">Service token for authentication (required when InternalAuthMode is ServiceToken)</param>
+    /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+    public virtual async System.Threading.Tasks.Task BroadcastWebSocketAsync(System.Guid instanceId, Connection3 connection, Upgrade3 upgrade, string? x_Service_Token = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    {
+        if (instanceId == null)
+            throw new System.ArgumentNullException("instanceId");
+
+        // Build method path (without base URL - mesh client handles endpoint resolution)
+        var urlBuilder_ = new System.Text.StringBuilder();
+        // Operation Path: "connect/broadcast"
+        urlBuilder_.Append("connect/broadcast");
+        urlBuilder_.Append('?');
+        urlBuilder_.Append(System.Uri.EscapeDataString("instanceId")).Append('=').Append(System.Uri.EscapeDataString(ConvertToString(instanceId, System.Globalization.CultureInfo.InvariantCulture))).Append('&');
+        urlBuilder_.Length--;
+
+        var methodPath_ = urlBuilder_.ToString().TrimStart('/');
+        var appId_ = _resolver.GetAppIdForService(ServiceName);
+
+        // Create HTTP request via mesh client
+        using (var request_ = _meshClient.CreateInvokeMethodRequest(
+            new System.Net.Http.HttpMethod("GET"),
+            appId_,
+            methodPath_))
+        {
+
+            if (connection == null)
+                throw new System.ArgumentNullException("connection");
+            request_.Headers.TryAddWithoutValidation("Connection", ConvertToString(connection, System.Globalization.CultureInfo.InvariantCulture));
+
+            if (upgrade == null)
+                throw new System.ArgumentNullException("upgrade");
+            request_.Headers.TryAddWithoutValidation("Upgrade", ConvertToString(upgrade, System.Globalization.CultureInfo.InvariantCulture));
+
+            if (x_Service_Token != null)
+                request_.Headers.TryAddWithoutValidation("X-Service-Token", ConvertToString(x_Service_Token, System.Globalization.CultureInfo.InvariantCulture));
+
+            // Apply custom headers
+            ApplyHeaders(request_);
+
+            try
+            {
+                var response_ = await _meshClient.InvokeMethodWithResponseAsync(request_, cancellationToken).ConfigureAwait(false);
+                var disposeResponse_ = true;
+                try
+                {
+                    var headers_ = new System.Collections.Generic.Dictionary<string, System.Collections.Generic.IEnumerable<string>>();
+                    foreach (var item_ in response_.Headers)
+                        headers_[item_.Key] = item_.Value;
+                    if (response_.Content != null && response_.Content.Headers != null)
+                    {
+                        foreach (var item_ in response_.Content.Headers)
+                            headers_[item_.Key] = item_.Value;
+                    }
+
+                    var status_ = (int)response_.StatusCode;
+                    if (status_ == 101)
+                    {
+                        string responseText_ = ( response_.Content == null ) ? string.Empty : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
+                        throw new BeyondImmersion.Bannou.Core.ApiException("WebSocket connection established for broadcast relay", status_, responseText_, headers_, null);
+                    }
+                    else
+                    if (status_ == 400)
+                    {
+                        string responseText_ = ( response_.Content == null ) ? string.Empty : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
+                        throw new BeyondImmersion.Bannou.Core.ApiException("Not a WebSocket request, or missing/invalid instanceId", status_, responseText_, headers_, null);
+                    }
+                    else
+                    if (status_ == 401)
+                    {
+                        string responseText_ = ( response_.Content == null ) ? string.Empty : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
+                        throw new BeyondImmersion.Bannou.Core.ApiException("Invalid or missing service token", status_, responseText_, headers_, null);
                     }
                     else
 

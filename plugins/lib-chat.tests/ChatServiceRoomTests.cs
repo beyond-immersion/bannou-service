@@ -434,7 +434,7 @@ public class ChatServiceRoomTests : ChatServiceTestBase
 
         // Verify archive event
         MockMessageBus.Verify(
-            m => m.TryPublishAsync("chat.room.archived", It.IsAny<object>(), It.IsAny<CancellationToken>()),
+            m => m.TryPublishAsync("chat-room.archived", It.IsAny<object>(), It.IsAny<CancellationToken>()),
             Times.Once);
     }
 

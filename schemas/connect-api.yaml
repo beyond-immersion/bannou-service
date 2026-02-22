@@ -237,6 +237,59 @@ paths:
         '500':
           description: Internal server error
 
+  /connect/broadcast:
+    get:
+      summary: Inter-node broadcast WebSocket endpoint
+      description: |
+        Internal WebSocket endpoint for the multi-node broadcast mesh.
+        Other Connect instances connect here to relay broadcast messages.
+        Requires service-token authentication (same as Internal connection mode).
+
+        **Not client-facing.** This endpoint is used exclusively for
+        inter-node communication between Connect instances in multi-instance
+        deployments. Requires `instanceId` query parameter identifying the
+        connecting peer.
+      operationId: BroadcastWebSocket
+      tags:
+      - Inter-Node Broadcast
+      x-permissions: []
+      x-controller-only: true
+      parameters:
+      - name: instanceId
+        in: query
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Instance ID of the connecting peer Connect node
+      - name: Connection
+        in: header
+        required: true
+        schema:
+          type: string
+          enum: ["Upgrade"]
+        description: Must be "Upgrade" to initiate WebSocket connection
+      - name: Upgrade
+        in: header
+        required: true
+        schema:
+          type: string
+          enum: ["websocket"]
+        description: Must be "websocket" to specify protocol upgrade
+      - name: X-Service-Token
+        in: header
+        required: false
+        schema:
+          type: string
+        description: Service token for authentication (required when InternalAuthMode is ServiceToken)
+      responses:
+        '101':
+          description: WebSocket connection established for broadcast relay
+        '400':
+          description: Not a WebSocket request, or missing/invalid instanceId
+        '401':
+          description: Invalid or missing service token
+
   /connect/get-endpoint-meta:
     post:
       summary: Permission-gated proxy for endpoint metadata

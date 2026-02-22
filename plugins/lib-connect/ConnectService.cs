@@ -92,7 +92,8 @@ public partial class ConnectService : IConnectService, IDisposable
         ISessionManager sessionManager,
         ICapabilityManifestBuilder manifestBuilder,
         IEntitySessionRegistry entitySessionRegistry,
-        InterNodeBroadcastManager interNodeBroadcast)
+        InterNodeBroadcastManager interNodeBroadcast,
+        IMeshInstanceIdentifier meshInstanceIdentifier)
     {
         _authClient = authClient;
         _meshClient = meshClient;
@@ -126,8 +127,9 @@ public partial class ConnectService : IConnectService, IDisposable
         }
         _serverSalt = configuration.ServerSalt;
 
-        // Generate unique instance ID for distributed deployment
-        _instanceId = Guid.NewGuid();
+        // Use process-stable instance ID from lib-mesh for distributed deployment
+        // per IMPLEMENTATION TENETS — consistent identity across broadcast mesh and session heartbeats
+        _instanceId = meshInstanceIdentifier.InstanceId;
 
         // Register event handlers via partial class (ConnectServiceEvents.cs)
         RegisterEventConsumers(eventConsumer);
@@ -724,6 +726,33 @@ public partial class ConnectService : IConnectService, IDisposable
     /// Gets the maximum allowed concurrent connections from configuration.
     /// </summary>
     public int MaxConcurrentConnections => _configuration.MaxConcurrentConnections;
+
+    /// <summary>
+    /// Validates a service token for broadcast WebSocket authentication.
+    /// Returns true if auth mode is not ServiceToken, or if the token matches.
+    /// </summary>
+    /// <param name="serviceToken">The X-Service-Token header value.</param>
+    /// <returns>True if the token is valid or not required.</returns>
+    public bool ValidateBroadcastServiceToken(string? serviceToken)
+    {
+        if (_internalAuthMode != InternalAuthMode.ServiceToken) return true;
+        return !string.IsNullOrEmpty(serviceToken) && serviceToken == _internalServiceToken;
+    }
+
+    /// <summary>
+    /// Handles an incoming broadcast WebSocket connection from a peer Connect instance.
+    /// Delegates to InterNodeBroadcastManager.
+    /// </summary>
+    /// <param name="webSocket">The accepted WebSocket connection.</param>
+    /// <param name="remoteInstanceId">Instance ID of the connecting peer.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    public async Task HandleBroadcastConnectionAsync(
+        System.Net.WebSockets.WebSocket webSocket,
+        Guid remoteInstanceId,
+        CancellationToken cancellationToken)
+    {
+        await _interNodeBroadcast.HandleIncomingConnectionAsync(webSocket, remoteInstanceId, cancellationToken);
+    }
 
     /// <summary>
     /// Handles WebSocket communication using the enhanced 31-byte binary protocol.
@@ -1860,43 +1889,9 @@ public partial class ConnectService : IConnectService, IDisposable
             TimeSpan.FromSeconds(_configuration.RpcCleanupIntervalSeconds),
             TimeSpan.FromSeconds(_configuration.RpcCleanupIntervalSeconds));
 
-        // Register inter-node broadcast WebSocket endpoint (internal infrastructure, not in OpenAPI schema)
-        webApp.Map("/connect/broadcast", async (HttpContext context) =>
-        {
-            if (!context.WebSockets.IsWebSocketRequest)
-            {
-                context.Response.StatusCode = 400;
-                await context.Response.WriteAsync("WebSocket upgrade required");
-                return;
-            }
-
-            // Validate internal auth (same as Internal connection mode)
-            if (_internalAuthMode == InternalAuthMode.ServiceToken)
-            {
-                var serviceToken = context.Request.Headers["X-Service-Token"].FirstOrDefault();
-                if (string.IsNullOrEmpty(serviceToken) || serviceToken != _internalServiceToken)
-                {
-                    _logger.LogWarning("Broadcast connection rejected: invalid or missing service token");
-                    context.Response.StatusCode = 401;
-                    await context.Response.WriteAsync("Invalid service token");
-                    return;
-                }
-            }
-
-            // Extract remote instance ID from query string
-            if (!Guid.TryParse(context.Request.Query["instanceId"], out var remoteInstanceId))
-            {
-                _logger.LogWarning("Broadcast connection rejected: missing or invalid instanceId query parameter");
-                context.Response.StatusCode = 400;
-                await context.Response.WriteAsync("Missing or invalid instanceId");
-                return;
-            }
-
-            var ws = await context.WebSockets.AcceptWebSocketAsync();
-            await _interNodeBroadcast.HandleIncomingConnectionAsync(ws, remoteInstanceId, context.RequestAborted);
-        });
-
         // Initialize inter-node broadcast mesh (register in Redis, discover peers, start heartbeat)
+        // Broadcast WebSocket endpoint is declared in connect-api.yaml with x-controller-only: true
+        // and handled by ConnectController.BroadcastWebSocket
         await _interNodeBroadcast.InitializeAsync(cancellationToken);
     }
 

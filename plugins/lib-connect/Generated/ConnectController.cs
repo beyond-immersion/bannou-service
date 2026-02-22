@@ -129,6 +129,31 @@ public interface IConnectController : BeyondImmersion.BannouService.Controllers.
     System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> ConnectWebSocketPostAsync(Connection2 connection, Upgrade2 upgrade, string authorization, ConnectRequest? body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
     /// <summary>
+    /// Inter-node broadcast WebSocket endpoint
+    /// </summary>
+
+    /// <remarks>
+    /// Internal WebSocket endpoint for the multi-node broadcast mesh.
+    /// <br/>Other Connect instances connect here to relay broadcast messages.
+    /// <br/>Requires service-token authentication (same as Internal connection mode).
+    /// <br/>
+    /// <br/>**Not client-facing.** This endpoint is used exclusively for
+    /// <br/>inter-node communication between Connect instances in multi-instance
+    /// <br/>deployments. Requires `instanceId` query parameter identifying the
+    /// <br/>connecting peer.
+    /// </remarks>
+
+    /// <param name="instanceId">Instance ID of the connecting peer Connect node</param>
+
+    /// <param name="connection">Must be "Upgrade" to initiate WebSocket connection</param>
+
+    /// <param name="upgrade">Must be "websocket" to specify protocol upgrade</param>
+
+    /// <param name="x_Service_Token">Service token for authentication (required when InternalAuthMode is ServiceToken)</param>
+
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> BroadcastWebSocketAsync(System.Guid instanceId, Connection3 connection, Upgrade3 upgrade, string? x_Service_Token, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
+    /// <summary>
     /// Permission-gated proxy for endpoint metadata
     /// </summary>
 
@@ -368,6 +393,27 @@ public abstract class ConnectControllerBase : Microsoft.AspNetCore.Mvc.Controlle
     [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("connect")]
 
     public abstract System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> ConnectWebSocketPost([Microsoft.AspNetCore.Mvc.FromHeader] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] Connection2 connection, [Microsoft.AspNetCore.Mvc.FromHeader] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] Upgrade2 upgrade, [Microsoft.AspNetCore.Mvc.FromHeader] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] string authorization, [Microsoft.AspNetCore.Mvc.FromBody] ConnectRequest? body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
+    /// <summary>
+    /// Inter-node broadcast WebSocket endpoint
+    /// </summary>
+    /// <remarks>
+    /// Internal WebSocket endpoint for the multi-node broadcast mesh.
+    /// <br/>Other Connect instances connect here to relay broadcast messages.
+    /// <br/>Requires service-token authentication (same as Internal connection mode).
+    /// <br/>
+    /// <br/>**Not client-facing.** This endpoint is used exclusively for
+    /// <br/>inter-node communication between Connect instances in multi-instance
+    /// <br/>deployments. Requires `instanceId` query parameter identifying the
+    /// <br/>connecting peer.
+    /// </remarks>
+    /// <param name="instanceId">Instance ID of the connecting peer Connect node</param>
+    /// <param name="connection">Must be "Upgrade" to initiate WebSocket connection</param>
+    /// <param name="upgrade">Must be "websocket" to specify protocol upgrade</param>
+    /// <param name="x_Service_Token">Service token for authentication (required when InternalAuthMode is ServiceToken)</param>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("connect/broadcast")]
+
+    public abstract System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> BroadcastWebSocket([Microsoft.AspNetCore.Mvc.FromQuery] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] System.Guid instanceId, [Microsoft.AspNetCore.Mvc.FromHeader] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] Connection3 connection, [Microsoft.AspNetCore.Mvc.FromHeader] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] Upgrade3 upgrade, [Microsoft.AspNetCore.Mvc.FromHeader(Name = "X-Service-Token")] string? x_Service_Token, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
     /// <summary>
     /// Permission-gated proxy for endpoint metadata

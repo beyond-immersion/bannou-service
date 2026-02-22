@@ -45,7 +45,7 @@ public class ChatServiceEventsAndAdminTests : ChatServiceTestBase
 
         // Default action is Archive: verify archive event
         MockMessageBus.Verify(
-            m => m.TryPublishAsync("chat.room.archived", It.IsAny<object>(), It.IsAny<CancellationToken>()),
+            m => m.TryPublishAsync("chat-room.archived", It.IsAny<object>(), It.IsAny<CancellationToken>()),
             Times.Once);
     }
 
@@ -72,7 +72,7 @@ public class ChatServiceEventsAndAdminTests : ChatServiceTestBase
 
         // Default action is Lock: verify lock event
         MockMessageBus.Verify(
-            m => m.TryPublishAsync("chat.room.locked", It.IsAny<object>(), It.IsAny<CancellationToken>()),
+            m => m.TryPublishAsync("chat-room.locked", It.IsAny<object>(), It.IsAny<CancellationToken>()),
             Times.Once);
 
         // Verify room saved with Locked status
@@ -143,7 +143,7 @@ public class ChatServiceEventsAndAdminTests : ChatServiceTestBase
         await service.HandleContractExpiredAsync(evt);
 
         MockMessageBus.Verify(
-            m => m.TryPublishAsync("chat.room.archived", It.IsAny<object>(), It.IsAny<CancellationToken>()),
+            m => m.TryPublishAsync("chat-room.archived", It.IsAny<object>(), It.IsAny<CancellationToken>()),
             Times.Once);
     }
 

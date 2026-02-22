@@ -315,25 +315,29 @@ gh issue list --search "Telemetry:" --state open
 
 **Layer**: L1 AppFoundation | **Deep Dive**: [CHAT.md](plugins/CHAT.md)
 
-### Production Readiness: 90%
+### Production Readiness: 97%
 
-All 28 API endpoints complete with no stubs and no bugs. Covers room type management, room lifecycle with contract governance, participant moderation (join/leave/kick/ban/mute with role hierarchy), message operations (send/batch/history/search/pin/delete) with dual storage (ephemeral Redis TTL and persistent MySQL), rate limiting via atomic Redis counters, idle room cleanup background worker, 14 service events, 10 client events, and 14 configuration properties. Four design considerations could impact production use: contract event room query limited to 100, silent batch message validation failures, O(N) participant counting in admin stats, and rate limit counters sharing stores with participant hashes.
+All 28 API endpoints complete with no stubs and no bugs. Covers room type management, room lifecycle with contract governance, participant moderation (join/leave/kick/ban/mute with role hierarchy), message operations (send/batch/history/search/pin/delete) with dual storage (ephemeral Redis TTL and persistent MySQL), rate limiting via atomic Redis counters, idle room cleanup background worker, typing indicators with sorted-set-backed expiry, 14 service events, 12 client events, and 14 configuration properties. Hardened with: telemetry spans on all async helpers and event handlers, distributed lock on room type registration, Regex timeout protection, schema validation keywords on all request fields, T16-compliant event topic naming, `required` string properties replacing `string.Empty` defaults, error event publication on startup failures, and ServiceHierarchyValidator test coverage. Remaining tracked items: contract event room query limited to 100 (#446), silent batch message validation failures (#445), missing ban expiry worker (#447), and missing message retention worker (#448).
 
-### Bug Count: 0
+### Bug Count: 1
 
-No known bugs.
+| # | Bug | Description | Issue |
+|---|-----|-------------|-------|
+| 1 | **Contract room query page limit** | `FindRoomsByContractIdAsync` hardcodes page size of 100; contracts governing 100+ rooms will have incomplete lifecycle actions. | [#446](https://github.com/beyond-immersion/bannou-service/issues/446) |
 
 ### Top 3 Bugs
 
-*(None)*
+| # | Bug | Description | Issue |
+|---|-----|-------------|-------|
+| 1 | **Contract room query page limit** | `FindRoomsByContractIdAsync` hardcodes page size of 100. | [#446](https://github.com/beyond-immersion/bannou-service/issues/446) |
 
 ### Top 3 Enhancements
 
 | # | Enhancement | Description | Issue |
 |---|-------------|-------------|-------|
-| 1 | **Message edit support** | Add edit endpoint with version history, timestamps, and real-time client events for UI updates. Core chat feature expected by users. | No issue |
-| 2 | **Threaded replies** | Add `replyToMessageId` for conversation threading with threaded history query support. Important for usability in busy rooms. | No issue |
-| 3 | **Room-level message retention worker** | Background service enforcing room type `RetentionDays` by periodically deleting old messages. Currently no mechanism to enforce retention policies. | No issue |
+| 1 | **Ban expiry background worker** | Background service to auto-expire time-limited bans. Currently ban records persist indefinitely regardless of `ExpiresAt`. | [#447](https://github.com/beyond-immersion/bannou-service/issues/447) |
+| 2 | **Message retention cleanup worker** | Background service enforcing room type `RetentionDays` by periodically deleting old persistent messages. | [#448](https://github.com/beyond-immersion/bannou-service/issues/448) |
+| 3 | **SendMessageBatch per-message error reporting** | Batch endpoint silently swallows per-message failures. Should return per-message status codes. | [#445](https://github.com/beyond-immersion/bannou-service/issues/445) |
 
 ### GH Issues
 

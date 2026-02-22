@@ -1,5 +1,6 @@
 using BeyondImmersion.BannouService.Connect;
 using BeyondImmersion.BannouService.Services;
+using BeyondImmersion.BannouService.State;
 
 namespace BeyondImmersion.BannouService.Connect.Tests;
 
@@ -44,6 +45,7 @@ public class InterNodeBroadcastManagerTests
             _mockStateStoreFactory.Object,
             config,
             meshIdentifier,
+            Mock.Of<ITelemetryProvider>(),
             _mockLogger.Object);
     }
 

@@ -10,7 +10,7 @@
 
 ## Overview
 
-WebSocket-first edge gateway (L1 AppFoundation) providing zero-copy binary message routing between game clients and backend services. Manages persistent connections with client-salted GUID generation for cross-session security, three connection modes (external, relayed, internal), session shortcuts for game-specific flows, reconnection windows, and per-session RabbitMQ subscriptions for server-to-client event delivery. Internet-facing (the primary client entry point alongside Auth). Registered as Singleton (unusual for Bannou) because it maintains in-memory connection state.
+WebSocket-first edge gateway (L1 AppFoundation) providing zero-copy binary message routing between game clients and backend services. Manages persistent connections with client-salted GUID generation for cross-session security, three connection modes (external, relayed, internal), session shortcuts for game-specific flows, reconnection windows, per-session RabbitMQ subscriptions for server-to-client event delivery, and multi-node broadcast relay via a WebSocket mesh between Connect instances. Internet-facing (the primary client entry point alongside Auth). Registered as Singleton (unusual for Bannou) because it maintains in-memory connection state.
 
 ---
 
@@ -30,6 +30,8 @@ WebSocket-first edge gateway (L1 AppFoundation) providing zero-copy binary messa
 | `IServiceScopeFactory` | Creates scoped DI containers for per-request ServiceNavigator resolution |
 | `ICapabilityManifestBuilder` | Builds capability manifest JSON from service mappings for client delivery |
 | `IEntitySessionRegistry` | Entity-to-session mapping for client event push routing; cleaned up on disconnect |
+| `InterNodeBroadcastManager` | WebSocket mesh for relaying broadcasts to peer Connect instances; uses Redis sorted set for instance discovery |
+| `IMeshInstanceIdentifier` | Process-stable instance identity for broadcast registry entries and peer identification |
 
 ---
 
@@ -58,6 +60,7 @@ WebSocket-first edge gateway (L1 AppFoundation) providing zero-copy binary messa
 | `account-sessions:{accountId:N}` | Redis Set of `string` | All active session IDs for an account (atomic SADD/SREM via `ICacheableStateStore<string>`) |
 | `entity-sessions:{entityType}:{entityId:N}` | Redis Set of `string` | Forward index: all session IDs interested in an entity (atomic SADD/SREM via `ICacheableStateStore<string>`) |
 | `session-entities:{sessionId}` | Redis Set of `string` | Reverse index: all entity bindings for a session, values are `"{entityType}:{entityId:N}"` (enables O(n) cleanup on disconnect) |
+| `broadcast-registry` | Redis Sorted Set of JSON `BroadcastRegistryEntry` | Inter-node broadcast mesh registry; members are JSON `{instanceId, internalUrl, broadcastMode}`, scores are Unix timestamps for heartbeat-based stale detection |
 
 ---
 
@@ -111,6 +114,10 @@ WebSocket-first edge gateway (L1 AppFoundation) providing zero-copy binary messa
 | `PendingMessageTimeoutSeconds` | `CONNECT_PENDING_MESSAGE_TIMEOUT_SECONDS` | `30` | Timeout for pending messages awaiting acknowledgment |
 | `ConnectionShutdownTimeoutSeconds` | `CONNECT_CONNECTION_SHUTDOWN_TIMEOUT_SECONDS` | `5` | WebSocket close timeout during shutdown |
 | `ReconnectionWindowExtensionMinutes` | `CONNECT_RECONNECTION_WINDOW_EXTENSION_MINUTES` | `1` | Extra minutes added to reconnection window state TTL |
+| `MultiNodeBroadcastMode` | `CONNECT_MULTI_NODE_BROADCAST_MODE` | `None` | Broadcast mesh mode: None (isolated), Send (relay outbound only), Receive (accept inbound only), Both (full mesh) |
+| `BroadcastInternalUrl` | `CONNECT_BROADCAST_INTERNAL_URL` | `null` | Internal WebSocket URL for peer connections (e.g., `ws://localhost:5012/connect/broadcast`). Null disables broadcast mesh regardless of mode |
+| `BroadcastHeartbeatIntervalSeconds` | `CONNECT_BROADCAST_HEARTBEAT_INTERVAL_SECONDS` | `30` | Interval between heartbeat refreshes and stale peer cleanup in the broadcast registry |
+| `BroadcastStaleThresholdSeconds` | `CONNECT_BROADCAST_STALE_THRESHOLD_SECONDS` | `90` | Time after which a peer's registry entry is considered stale and removed (should be > heartbeat interval) |
 
 ---
 
@@ -132,6 +139,7 @@ WebSocket-first edge gateway (L1 AppFoundation) providing zero-copy binary messa
 | `ISessionManager` (`BannouSessionManager`) | Singleton | Distributed session state management (Redis-backed) |
 | `ICapabilityManifestBuilder` (`CapabilityManifestBuilder`) | Singleton | Builds API lists and shortcut lists for capability manifests |
 | `IEntitySessionRegistry` (`EntitySessionRegistry`) | Singleton | Redis-backed dual-index entity-to-session mapping for client event push routing |
+| `InterNodeBroadcastManager` | Singleton | WebSocket mesh for relaying broadcasts to/from peer Connect instances; Redis sorted set for discovery, heartbeat timer for liveness |
 | `WebSocketConnectionManager` | Owned (internal) | In-memory WebSocket connection tracking, send operations, peer GUID registry |
 
 Service lifetime is **Singleton** (unique among Bannou services). This is required because the service maintains in-memory WebSocket connection state (`ConcurrentDictionary` of active connections, session mappings, pending RPCs) that must persist across HTTP requests.
@@ -383,6 +391,40 @@ Client Event Delivery Pipeline
   └──────────────────────────────────────────────────────────────────┘
 
 
+Multi-Node Broadcast Mesh
+============================
+
+  Instance A (Both)          Instance B (Both)          Instance C (Receive)
+  ┌──────────────────┐       ┌──────────────────┐       ┌──────────────────┐
+  │ Connect Service   │◄─ws─►│ Connect Service   │◄─ws──│ Connect Service   │
+  │ InterNodeBroadcast│       │ InterNodeBroadcast│       │ InterNodeBroadcast│
+  │ Manager           │       │ Manager           │       │ Manager           │
+  └──────────────────┘       └──────────────────┘       └──────────────────┘
+        │                          │                          │
+        ▼                          ▼                          ▼
+  broadcast-registry (Redis Sorted Set)
+  ┌──────────────────────────────────────────────────────┐
+  │ {instanceA, url, Both}  score: 1740000000            │
+  │ {instanceB, url, Both}  score: 1740000000            │
+  │ {instanceC, url, Recv}  score: 1740000000            │
+  └──────────────────────────────────────────────────────┘
+
+  Compatibility matrix (who connects to whom):
+  ┌──────────────────┬──────┬──────┬──────┬──────┐
+  │ My Mode \ Peer   │ None │ Send │ Recv │ Both │
+  ├──────────────────┼──────┼──────┼──────┼──────┤
+  │ None             │  ✗   │  ✗   │  ✗   │  ✗   │
+  │ Send             │  ✗   │  ✗   │  ✓   │  ✓   │
+  │ Receive          │  ✗   │  ✓   │  ✗   │  ✓   │
+  │ Both             │  ✗   │  ✓   │  ✓   │  ✓   │
+  └──────────────────┴──────┴──────┴──────┴──────┘
+
+  Broadcast relay flow:
+  Client ──broadcast──► Instance A ──relay──► Instance B ──deliver──► B's clients
+                              │
+                              └──────relay──► Instance C ──deliver──► C's clients
+
+
 Connection Mode Behavior Matrix
 ==================================
 
@@ -415,8 +457,7 @@ Connection Mode Behavior Matrix
 
 ## Potential Extensions
 
-1. **Multi-instance broadcast**: Current broadcast only reaches clients connected to the same Connect instance. Extend via RabbitMQ fanout exchange to broadcast across all Connect instances.
-<!-- AUDIT:NEEDS_DESIGN:2026-01-31:https://github.com/beyond-immersion/bannou-service/issues/181 -->
+1. ~~**Multi-instance broadcast**~~: **IMPLEMENTED** (2026-02-22) - Broadcasts now relay across Connect instances via a direct WebSocket mesh. Instances register in a Redis sorted set (`broadcast-registry`), discover compatible peers on startup, and maintain persistent WebSocket connections for fire-and-forget relay. Configurable via `BroadcastMode` (None/Send/Receive/Both). See [Issue #181](https://github.com/beyond-immersion/bannou-service/issues/181).
 
 ---
 
@@ -444,13 +485,21 @@ Connection Mode Behavior Matrix
 
 7. **ServerSalt shared requirement (enforced)**: All Connect instances MUST use the same `CONNECT_SERVER_SALT` value for distributed deployments. The constructor enforces this with a fail-fast check — startup aborts with `InvalidOperationException` if ServerSalt is null/empty. Different salts across instances would cause GUID validation failures and broken session shortcuts. All three GUID generation methods (`GenerateServiceGuid`, `GenerateClientGuid`, `GenerateSessionShortcutGuid`) also validate the salt parameter.
 
-8. **Non-deterministic instance ID**: `_instanceId` is generated as `Guid.NewGuid()` on each service start. This is intentional: it tracks the runtime process, not the physical machine. When a Connect instance restarts, the new process gets a new ID, correctly distinguishing it from the crashed instance. Old heartbeats expire via TTL (5 minutes), and Redis-persisted session state enables seamless takeover by the new instance.
+8. ~~**Non-deterministic instance ID**~~: **FIXED** (2026-02-22) - `_instanceId` now uses `IMeshInstanceIdentifier.InstanceId` (process-stable identity from lib-mesh) instead of `Guid.NewGuid()`. This ensures consistent instance identity between ConnectService session heartbeats and the InterNodeBroadcastManager's registry entries. The ID is still per-process (restarts get a new ID), but it is consistent within a single process lifecycle.
 
 9. **Disconnect event published before account index removal**: In the finally block, `session.disconnected` is published before `RemoveSessionFromAccountAsync` is called. This means consumers receiving the event could theoretically still see the session in `GetAccountSessions`. In practice this is safe: no consumer of `session.disconnected` calls `GetAccountSessions`, and heartbeat-based liveness filtering in `GetSessionsForAccountAsync` filters out disconnected sessions.
 
 10. **Internal mode minimal initialization**: Internal mode connections skip service mapping, capability manifest, RabbitMQ subscription, session state persistence, heartbeat tracking, and reconnection windows. They receive only a minimal response (sessionId + peerGuid) and enter a simplified binary-only message loop (`HandleInternalModeMessageLoopAsync`). This is intentional design for server-to-server WebSocket communication using specialized authentication (ServiceToken or NetworkTrust).
 
 11. **Subsume-safe disconnect**: When a new connection replaces an existing one for the same session (subsume), the old connection's finally block uses `RemoveConnectionIfMatch` (WebSocket reference equality) to detect the subsume. If subsumed, the entire disconnect path is skipped: no `session.disconnected` event, no account index removal, no RabbitMQ unsubscription, no reconnection window. This prevents state churn across all consumers (Permission, GameSession, Actor, Matchmaking) that would otherwise rebuild on a false disconnect/reconnect cycle.
+
+12. **Broadcast mesh is fire-and-forget**: `RelayBroadcastAsync` sends to all connected peers without waiting for delivery confirmation. If a peer WebSocket is in a broken state, the send fails silently (logged as warning) and the connection is removed from `_nodeConnections`. No message retry or guaranteed delivery — the same semantics as local broadcast delivery.
+
+13. **New instances establish connections, not old ones**: When a new Connect instance starts, it discovers existing peers from the Redis sorted set and initiates WebSocket connections to compatible peers. Existing instances never proactively connect to new instances — they accept incoming connections via the `/connect/broadcast` endpoint. This avoids the need for background workers or polling for new peers.
+
+14. **BroadcastInternalUrl null is a hard disable**: If `BroadcastInternalUrl` is null or empty, the broadcast manager is completely inactive regardless of `MultiNodeBroadcastMode`. No Redis registration, no peer discovery, no heartbeat timer. This allows nodes to be isolated without changing the mode enum.
+
+15. **Broadcast relay mode gating**: A node set to `Receive` will accept and deliver incoming broadcasts from peers but will NOT relay its own broadcasts outward (even if peers connect to it). Conversely, a `Send` node relays outward but discards any broadcasts received from peers. The WebSocket connection is bidirectional, but the `BroadcastMode` gates which direction each node actually uses.
 
 ### Design Considerations (Requires Planning)
 
@@ -465,7 +514,6 @@ Connection Mode Behavior Matrix
 This section tracks active development work on items from the quirks/bugs lists above. Items here are managed by the `/audit-plugin` workflow and should not be manually edited except to add new tracking markers.
 
 ### Pending Design Review
-- **Multi-instance broadcast** - [Issue #181](https://github.com/beyond-immersion/bannou-service/issues/181) - Requires design decisions on message deduplication, acknowledgment semantics, mode enforcement, and performance trade-offs (2026-01-31)
 - **Single-instance P2P limitation** - [Issue #346](https://github.com/beyond-immersion/bannou-service/issues/346) - Requires design decisions on cross-instance delivery mechanism, peer GUID stability, and Redis latency impact; no production consumers yet (2026-02-08)
 
 ### Closed (Not Planned)
@@ -477,4 +525,5 @@ This section tracks active development work on items from the quirks/bugs lists 
 
 ### Completed
 
+- **2026-02-22**: Issue [#181](https://github.com/beyond-immersion/bannou-service/issues/181) - Multi-node broadcast: WebSocket mesh between Connect instances via InterNodeBroadcastManager with Redis sorted set registry, BroadcastMode configuration (None/Send/Receive/Both), compatibility filtering, heartbeat-based liveness, and fire-and-forget relay semantics
 - **2026-02-17**: Issue [#426](https://github.com/beyond-immersion/bannou-service/issues/426) - Entity Session Registry: Redis-backed dual-index (entity→sessions, session→entities) mapping for client event push routing, with heartbeat-based stale session filtering and disconnect cleanup

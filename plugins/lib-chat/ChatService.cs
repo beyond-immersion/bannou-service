@@ -116,6 +116,16 @@ public partial class ChatService : IChatService
     {
         var typeKey = BuildRoomTypeKey(body.GameServiceId, body.Code);
 
+        // Distributed lock prevents TOCTOU race on uniqueness check
+        await using var lockResponse = await _lockProvider.LockAsync(
+            "chat", "register-room-type", typeKey,
+            _configuration.LockExpirySeconds, cancellationToken);
+        if (!lockResponse.Success)
+        {
+            _logger.LogWarning("Failed to acquire lock for room type registration: {Code}", body.Code);
+            return (StatusCodes.Conflict, null);
+        }
+
         // Check uniqueness
         var existing = await _roomTypeStore.GetAsync(typeKey, cancellationToken);
         if (existing != null)
@@ -666,7 +676,7 @@ public partial class ChatService : IChatService
         await _roomStore.SaveAsync(roomKey, model, cancellationToken: cancellationToken);
         await _roomCache.SaveAsync(roomKey, model, cancellationToken: cancellationToken);
 
-        await _messageBus.TryPublishAsync("chat.room.archived", new ChatRoomArchivedEvent
+        await _messageBus.TryPublishAsync("chat-room.archived", new ChatRoomArchivedEvent
         {
             EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,
@@ -765,7 +775,7 @@ public partial class ChatService : IChatService
         await SetParticipantPermissionStateAsync(callerSessionId.Value, cancellationToken);
 
         // Publish service event
-        await _messageBus.TryPublishAsync("chat.participant.joined", new ChatParticipantJoinedEvent
+        await _messageBus.TryPublishAsync("chat-participant.joined", new ChatParticipantJoinedEvent
         {
             EventId = Guid.NewGuid(),
             Timestamp = now,
@@ -861,7 +871,7 @@ public partial class ChatService : IChatService
 
         var remainingParticipants = await GetParticipantsAsync(body.RoomId, cancellationToken);
 
-        await _messageBus.TryPublishAsync("chat.participant.left", new ChatParticipantLeftEvent
+        await _messageBus.TryPublishAsync("chat-participant.left", new ChatParticipantLeftEvent
         {
             EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,
@@ -973,7 +983,7 @@ public partial class ChatService : IChatService
         await RevokeTypingShortcutsAsync(body.TargetSessionId, body.RoomId, cancellationToken);
         await ClearTypingStateAsync(body.TargetSessionId, body.RoomId, cancellationToken);
 
-        await _messageBus.TryPublishAsync("chat.participant.kicked", new ChatParticipantKickedEvent
+        await _messageBus.TryPublishAsync("chat-participant.kicked", new ChatParticipantKickedEvent
         {
             EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,
@@ -1060,7 +1070,7 @@ public partial class ChatService : IChatService
         await _roomStore.SaveAsync(roomKey, model, cancellationToken: cancellationToken);
         await _roomCache.SaveAsync(roomKey, model, cancellationToken: cancellationToken);
 
-        await _messageBus.TryPublishAsync("chat.participant.banned", new ChatParticipantBannedEvent
+        await _messageBus.TryPublishAsync("chat-participant.banned", new ChatParticipantBannedEvent
         {
             EventId = Guid.NewGuid(),
             Timestamp = now,
@@ -1150,7 +1160,7 @@ public partial class ChatService : IChatService
         target.MutedUntil = body.DurationMinutes.HasValue ? now.AddMinutes(body.DurationMinutes.Value) : null;
         await SaveParticipantAsync(body.RoomId, target, cancellationToken);
 
-        await _messageBus.TryPublishAsync("chat.participant.muted", new ChatParticipantMutedEvent
+        await _messageBus.TryPublishAsync("chat-participant.muted", new ChatParticipantMutedEvent
         {
             EventId = Guid.NewGuid(),
             Timestamp = now,
@@ -1293,7 +1303,7 @@ public partial class ChatService : IChatService
         await _roomCache.SaveAsync(roomKey, model, cancellationToken: cancellationToken);
 
         // Publish service event (no text/custom content for privacy)
-        await _messageBus.TryPublishAsync("chat.message.sent", new ChatMessageSentEvent
+        await _messageBus.TryPublishAsync("chat-message.sent", new ChatMessageSentEvent
         {
             EventId = Guid.NewGuid(),
             Timestamp = now,
@@ -1515,7 +1525,7 @@ public partial class ChatService : IChatService
         var snapshot = MapToMessageResponse(message, model.RoomTypeCode);
         await _messageStore.DeleteAsync(msgKey, cancellationToken);
 
-        await _messageBus.TryPublishAsync("chat.message.deleted", new ChatMessageDeletedEvent
+        await _messageBus.TryPublishAsync("chat-message.deleted", new ChatMessageDeletedEvent
         {
             EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,
@@ -1871,6 +1881,9 @@ public partial class ChatService : IChatService
     internal async Task ExecuteContractRoomActionAsync(
         ChatRoomModel room, ContractRoomAction action, ChatRoomLockReason lockReason, CancellationToken ct)
     {
+        using var activity = _telemetryProvider.StartActivity(
+            "bannou.chat", "ChatService.ExecuteContractRoomAction");
+
         var roomKey = $"{RoomKeyPrefix}{room.RoomId}";
 
         switch (action)
@@ -1880,7 +1893,7 @@ public partial class ChatService : IChatService
                 await _roomStore.SaveAsync(roomKey, room, cancellationToken: ct);
                 await _roomCache.SaveAsync(roomKey, room, cancellationToken: ct);
 
-                await _messageBus.TryPublishAsync("chat.room.locked", new ChatRoomLockedEvent
+                await _messageBus.TryPublishAsync("chat-room.locked", new ChatRoomLockedEvent
                 {
                     EventId = Guid.NewGuid(),
                     Timestamp = DateTimeOffset.UtcNow,
@@ -1911,7 +1924,7 @@ public partial class ChatService : IChatService
                     var contractArchiveId = compressResponse.ArchiveId ?? throw new InvalidOperationException(
                         $"Resource service returned null ArchiveId for room {room.RoomId}");
 
-                    await _messageBus.TryPublishAsync("chat.room.archived", new ChatRoomArchivedEvent
+                    await _messageBus.TryPublishAsync("chat-room.archived", new ChatRoomArchivedEvent
                     {
                         EventId = Guid.NewGuid(),
                         Timestamp = DateTimeOffset.UtcNow,
@@ -1979,6 +1992,9 @@ public partial class ChatService : IChatService
 
     private async Task<ChatRoomTypeModel?> FindRoomTypeByCodeAsync(string code, CancellationToken ct)
     {
+        using var activity = _telemetryProvider.StartActivity(
+            "bannou.chat", "ChatService.FindRoomTypeByCode");
+
         // Try to find by querying for the code (searches across all scopes)
         var conditions = new List<QueryCondition>
         {
@@ -1990,6 +2006,9 @@ public partial class ChatService : IChatService
 
     private async Task<ChatRoomModel?> GetRoomWithCacheAsync(Guid roomId, CancellationToken ct)
     {
+        using var activity = _telemetryProvider.StartActivity(
+            "bannou.chat", "ChatService.GetRoomWithCache");
+
         var roomKey = $"{RoomKeyPrefix}{roomId}";
 
         // Try cache first
@@ -2057,9 +2076,17 @@ public partial class ChatService : IChatService
                 }
                 if (!string.IsNullOrEmpty(roomType.ValidatorConfig?.AllowedPattern))
                 {
-                    if (!Regex.IsMatch(content.Text, roomType.ValidatorConfig.AllowedPattern))
+                    try
                     {
-                        return "Text does not match allowed pattern";
+                        if (!Regex.IsMatch(content.Text, roomType.ValidatorConfig.AllowedPattern,
+                            RegexOptions.None, TimeSpan.FromSeconds(1)))
+                        {
+                            return "Text does not match allowed pattern";
+                        }
+                    }
+                    catch (RegexMatchTimeoutException)
+                    {
+                        return $"Content validation failed (pattern timeout for room type {roomType.Code})";
                     }
                 }
                 break;
@@ -2130,6 +2157,9 @@ public partial class ChatService : IChatService
 
     private async Task SetParticipantPermissionStateAsync(Guid sessionId, CancellationToken ct)
     {
+        using var activity = _telemetryProvider.StartActivity(
+            "bannou.chat", "ChatService.SetParticipantPermissionState");
+
         try
         {
             await _permissionClient.UpdateSessionStateAsync(new SessionStateUpdate
@@ -2151,6 +2181,9 @@ public partial class ChatService : IChatService
 
     private async Task ClearParticipantPermissionStateAsync(Guid sessionId, CancellationToken ct)
     {
+        using var activity = _telemetryProvider.StartActivity(
+            "bannou.chat", "ChatService.ClearParticipantPermissionState");
+
         try
         {
             await _permissionClient.ClearSessionStateAsync(new ClearSessionStateRequest

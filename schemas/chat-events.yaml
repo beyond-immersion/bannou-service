@@ -19,7 +19,7 @@ info:
     - contract.terminated: Governing contract terminated early
     - contract.expired: Governing contract reached natural expiration
 
-    **Topic Naming**: Uses dot-separated format (chat.participant.joined).
+    **Topic Naming**: Uses {entity}.{action} format with hyphenated entity names (chat-participant.joined).
 
     **SCHEMA MODIFICATION GATE**: STOP. Before modifying this schema, you MUST:
     1. Read docs/reference/SCHEMA-RULES.md
@@ -64,38 +64,38 @@ info:
       description: Published when a room type is deleted
 
     # Participant events
-    - topic: chat.participant.joined
+    - topic: chat-participant.joined
       event: ChatParticipantJoinedEvent
       description: Published when a participant joins a chat room
-    - topic: chat.participant.left
+    - topic: chat-participant.left
       event: ChatParticipantLeftEvent
       description: Published when a participant leaves a chat room
-    - topic: chat.participant.kicked
+    - topic: chat-participant.kicked
       event: ChatParticipantKickedEvent
       description: Published when a participant is kicked from a chat room
-    - topic: chat.participant.banned
+    - topic: chat-participant.banned
       event: ChatParticipantBannedEvent
       description: Published when a participant is banned from a chat room
-    - topic: chat.participant.muted
+    - topic: chat-participant.muted
       event: ChatParticipantMutedEvent
       description: Published when a participant is muted in a chat room
-    - topic: chat.participant.unmuted
+    - topic: chat-participant.unmuted
       event: ChatParticipantUnmutedEvent
       description: Published when a participant is unmuted in a chat room
 
     # Message events
-    - topic: chat.message.sent
+    - topic: chat-message.sent
       event: ChatMessageSentEvent
       description: Published when a message is sent (metadata only, no text content for privacy)
-    - topic: chat.message.deleted
+    - topic: chat-message.deleted
       event: ChatMessageDeletedEvent
       description: Published when a message is deleted from a chat room
 
     # Room state events
-    - topic: chat.room.locked
+    - topic: chat-room.locked
       event: ChatRoomLockedEvent
       description: Published when a chat room is locked (contract-triggered or manual)
-    - topic: chat.room.archived
+    - topic: chat-room.archived
       event: ChatRoomArchivedEvent
       description: Published when a chat room is archived via Resource
 

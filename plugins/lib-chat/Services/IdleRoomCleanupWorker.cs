@@ -1,4 +1,5 @@
 using BeyondImmersion.BannouService.Events;
+using BeyondImmersion.BannouService.Providers;
 using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -27,6 +28,7 @@ public class IdleRoomCleanupWorker : BackgroundService
     private readonly IServiceProvider _serviceProvider;
     private readonly ILogger<IdleRoomCleanupWorker> _logger;
     private readonly ChatServiceConfiguration _configuration;
+    private readonly ITelemetryProvider _telemetryProvider;
 
     /// <summary>
     /// Interval between cleanup cycles, from configuration.
@@ -39,14 +41,17 @@ public class IdleRoomCleanupWorker : BackgroundService
     /// <param name="serviceProvider">Service provider for creating scopes to access scoped services.</param>
     /// <param name="logger">Logger for structured logging.</param>
     /// <param name="configuration">Service configuration with cleanup settings.</param>
+    /// <param name="telemetryProvider">Telemetry provider for span instrumentation.</param>
     public IdleRoomCleanupWorker(
         IServiceProvider serviceProvider,
         ILogger<IdleRoomCleanupWorker> logger,
-        ChatServiceConfiguration configuration)
+        ChatServiceConfiguration configuration,
+        ITelemetryProvider telemetryProvider)
     {
         _serviceProvider = serviceProvider;
         _logger = logger;
         _configuration = configuration;
+        _telemetryProvider = telemetryProvider;
     }
 
     /// <summary>
@@ -120,6 +125,9 @@ public class IdleRoomCleanupWorker : BackgroundService
     /// </summary>
     private async Task ProcessCleanupCycleAsync(CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity(
+            "bannou.chat", "IdleRoomCleanupWorker.ProcessCleanupCycle");
+
         _logger.LogDebug("Starting idle room cleanup cycle");
 
         using var scope = _serviceProvider.CreateScope();

@@ -1,4 +1,6 @@
+using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Plugins;
+using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
@@ -45,6 +47,7 @@ public class ChatServicePlugin : StandardServicePlugin<IChatService>
 
         using var scope = serviceProvider.CreateScope();
         var chatService = scope.ServiceProvider.GetRequiredService<IChatService>();
+        var messageBus = scope.ServiceProvider.GetRequiredService<IMessageBus>();
 
         var builtInTypes = new[]
         {
@@ -87,7 +90,11 @@ public class ChatServicePlugin : StandardServicePlugin<IChatService>
             }
             else
             {
-                Logger?.LogWarning("Failed to register built-in room type {Code}: {Status}", roomType.Code, status);
+                Logger?.LogError("Failed to register built-in room type {Code}: {Status}", roomType.Code, status);
+                await messageBus.TryPublishErrorAsync(
+                    "chat", "RegisterBuiltInRoomTypes", "StartupFailure",
+                    $"Failed to register built-in room type '{roomType.Code}': status {status}",
+                    severity: ServiceErrorEventSeverity.Error);
             }
         }
     }

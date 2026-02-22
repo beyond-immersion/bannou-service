@@ -244,22 +244,26 @@ public partial class RegisterRoomTypeRequest
     /// Unique room type code (e.g., "text", "guild_board", "trade_posting")
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("code")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(100, MinimumLength = 1)]
+    [System.ComponentModel.DataAnnotations.RegularExpression(@"^[a-z][a-z0-9_]*$")]
     public string Code { get; set; } = default!;
 
     /// <summary>
     /// Human-readable name for the room type
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("displayName")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(200, MinimumLength = 1)]
     public string DisplayName { get; set; } = default!;
 
     /// <summary>
     /// Optional description of the room type
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("description")]
+    [System.ComponentModel.DataAnnotations.StringLength(1000)]
     public string? Description { get; set; } = default!;
 
     /// <summary>
@@ -296,12 +300,14 @@ public partial class RegisterRoomTypeRequest
     /// Default participant limit (null uses service default)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("defaultMaxParticipants")]
+    [System.ComponentModel.DataAnnotations.Range(1, int.MaxValue)]
     public int? DefaultMaxParticipants { get; set; } = default!;
 
     /// <summary>
     /// Message retention in days (null uses service default)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("retentionDays")]
+    [System.ComponentModel.DataAnnotations.Range(1, int.MaxValue)]
     public int? RetentionDays { get; set; } = default!;
 
     /// <summary>
@@ -320,10 +326,11 @@ public partial class RegisterRoomTypeRequest
     /// Messages per minute per participant (null uses service default)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("rateLimitPerMinute")]
+    [System.ComponentModel.DataAnnotations.Range(1, int.MaxValue)]
     public int? RateLimitPerMinute { get; set; } = default!;
 
     /// <summary>
-    /// Arbitrary JSON metadata for client rendering hints
+    /// Client-only metadata stored as JSON string. No Bannou plugin reads specific keys from this field by convention.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("metadata")]
     public string? Metadata { get; set; } = default!;
@@ -384,12 +391,14 @@ public partial class ListRoomTypesRequest
     /// Page number (zero-based)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("page")]
+    [System.ComponentModel.DataAnnotations.Range(0, int.MaxValue)]
     public int Page { get; set; } = 0;
 
     /// <summary>
     /// Number of items per page
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("pageSize")]
+    [System.ComponentModel.DataAnnotations.Range(1, 100)]
     public int PageSize { get; set; } = 20;
 
 }
@@ -584,7 +593,7 @@ public partial class RoomTypeResponse
     public int? RateLimitPerMinute { get; set; } = default!;
 
     /// <summary>
-    /// Arbitrary JSON metadata
+    /// Client-only metadata stored as JSON string. No Bannou plugin reads specific keys from this field by convention.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("metadata")]
     public string? Metadata { get; set; } = default!;
@@ -660,8 +669,9 @@ public partial class CreateRoomRequest
     /// Room type code determining message format and validation
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("roomTypeCode")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(100, MinimumLength = 1)]
     public string RoomTypeCode { get; set; } = default!;
 
     /// <summary>
@@ -680,12 +690,14 @@ public partial class CreateRoomRequest
     /// Human-readable room name
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("displayName")]
+    [System.ComponentModel.DataAnnotations.StringLength(200)]
     public string? DisplayName { get; set; } = default!;
 
     /// <summary>
     /// Participant limit override (null uses type default)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("maxParticipants")]
+    [System.ComponentModel.DataAnnotations.Range(1, int.MaxValue)]
     public int? MaxParticipants { get; set; } = default!;
 
     /// <summary>
@@ -717,7 +729,7 @@ public partial class CreateRoomRequest
     public ContractRoomAction? ContractExpiredAction { get; set; } = default!;
 
     /// <summary>
-    /// Arbitrary JSON metadata for client rendering hints
+    /// Client-only metadata stored as JSON string. No Bannou plugin reads specific keys from this field by convention.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("metadata")]
     public string? Metadata { get; set; } = default!;
@@ -752,6 +764,7 @@ public partial class ListRoomsRequest
     /// Filter by room type code
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("roomTypeCode")]
+    [System.ComponentModel.DataAnnotations.StringLength(100)]
     public string? RoomTypeCode { get; set; } = default!;
 
     /// <summary>
@@ -771,12 +784,14 @@ public partial class ListRoomsRequest
     /// Page number (zero-based)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("page")]
+    [System.ComponentModel.DataAnnotations.Range(0, int.MaxValue)]
     public int Page { get; set; } = 0;
 
     /// <summary>
     /// Number of items per page
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("pageSize")]
+    [System.ComponentModel.DataAnnotations.Range(1, 100)]
     public int PageSize { get; set; } = 20;
 
 }
@@ -800,16 +815,18 @@ public partial class UpdateRoomRequest
     /// Updated room name
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("displayName")]
+    [System.ComponentModel.DataAnnotations.StringLength(200)]
     public string? DisplayName { get; set; } = default!;
 
     /// <summary>
     /// Updated participant limit
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("maxParticipants")]
+    [System.ComponentModel.DataAnnotations.Range(1, int.MaxValue)]
     public int? MaxParticipants { get; set; } = default!;
 
     /// <summary>
-    /// Updated JSON metadata
+    /// Client-only metadata stored as JSON string. No Bannou plugin reads specific keys from this field by convention.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("metadata")]
     public string? Metadata { get; set; } = default!;
@@ -927,7 +944,7 @@ public partial class ChatRoomResponse
     public System.DateTimeOffset CreatedAt { get; set; } = default!;
 
     /// <summary>
-    /// Arbitrary JSON metadata
+    /// Client-only metadata stored as JSON string. No Bannou plugin reads specific keys from this field by convention.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("metadata")]
     public string? Metadata { get; set; } = default!;
@@ -1000,6 +1017,7 @@ public partial class JoinRoomRequest
     /// Human-readable display name
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("displayName")]
+    [System.ComponentModel.DataAnnotations.StringLength(200)]
     public string? DisplayName { get; set; } = default!;
 
     /// <summary>
@@ -1186,12 +1204,14 @@ public partial class BanParticipantRequest
     /// Optional reason for the ban
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("reason")]
+    [System.ComponentModel.DataAnnotations.StringLength(500)]
     public string? Reason { get; set; } = default!;
 
     /// <summary>
     /// Ban duration in minutes (null for permanent)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("durationMinutes")]
+    [System.ComponentModel.DataAnnotations.Range(1, int.MaxValue)]
     public int? DurationMinutes { get; set; } = default!;
 
 }
@@ -1248,6 +1268,7 @@ public partial class MuteParticipantRequest
     /// Mute duration in minutes (null for permanent)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("durationMinutes")]
+    [System.ComponentModel.DataAnnotations.Range(1, int.MaxValue)]
     public int? DurationMinutes { get; set; } = default!;
 
 }
@@ -1514,6 +1535,7 @@ public partial class MessageHistoryRequest
     /// Maximum number of messages to return
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("limit")]
+    [System.ComponentModel.DataAnnotations.Range(1, 200)]
     public int Limit { get; set; } = 50;
 
 }
@@ -1641,14 +1663,16 @@ public partial class SearchMessagesRequest
     /// Full-text search query string
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("query")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(500, MinimumLength = 1)]
     public string Query { get; set; } = default!;
 
     /// <summary>
     /// Maximum number of results to return
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("limit")]
+    [System.ComponentModel.DataAnnotations.Range(1, 100)]
     public int Limit { get; set; } = 20;
 
 }
@@ -1687,6 +1711,7 @@ public partial class AdminListRoomsRequest
     /// Filter by room type
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("roomTypeCode")]
+    [System.ComponentModel.DataAnnotations.StringLength(100)]
     public string? RoomTypeCode { get; set; } = default!;
 
     /// <summary>
@@ -1700,12 +1725,14 @@ public partial class AdminListRoomsRequest
     /// Page number (zero-based)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("page")]
+    [System.ComponentModel.DataAnnotations.Range(0, int.MaxValue)]
     public int Page { get; set; } = 0;
 
     /// <summary>
     /// Number of items per page
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("pageSize")]
+    [System.ComponentModel.DataAnnotations.Range(1, 200)]
     public int PageSize { get; set; } = 50;
 
 }

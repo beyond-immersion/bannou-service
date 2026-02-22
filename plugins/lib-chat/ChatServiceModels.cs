@@ -34,12 +34,12 @@ internal class ChatRoomTypeModel
     /// <summary>
     /// Unique room type code (e.g., "text", "guild_board").
     /// </summary>
-    public string Code { get; set; } = string.Empty;
+    public required string Code { get; set; }
 
     /// <summary>
     /// Human-readable name for the room type.
     /// </summary>
-    public string DisplayName { get; set; } = string.Empty;
+    public required string DisplayName { get; set; }
 
     /// <summary>
     /// Optional description of the room type.
@@ -157,7 +157,7 @@ internal class ChatRoomModel
     /// <summary>
     /// Room type code determining message format and validation.
     /// </summary>
-    public string RoomTypeCode { get; set; } = string.Empty;
+    public required string RoomTypeCode { get; set; }
 
     /// <summary>
     /// Connect session ID for companion rooms.
