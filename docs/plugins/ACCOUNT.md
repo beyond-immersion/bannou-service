@@ -84,7 +84,8 @@ This plugin does not consume external events. The events schema explicitly decla
 | `AccountServiceConfiguration` | Typed access to configuration properties above |
 | `IStateStoreFactory` | Creates typed state store instances for reading/writing account data |
 | `IMessageBus` | Publishes lifecycle and error events to RabbitMQ |
-| `IDistributedLockProvider` | Distributed locks for email uniqueness during account creation |
+| `IDistributedLockProvider` | Distributed locks for email uniqueness during account creation and email change |
+| `ITelemetryProvider` | Telemetry span instrumentation for helper methods (auth method fetch, event publishing, provider-filtered listing) |
 | `AccountPermissionRegistration` | Generated class that registers the service's permission matrix via `IPermissionRegistry` on startup |
 
 ## API Endpoints (Implementation Notes)
@@ -157,8 +158,7 @@ On Delete: email-index removed (if exists),             │
 
 - **Account merge**: No mechanism exists to merge two accounts (e.g., when a user registers with email then later tries to register with the same OAuth provider under a different email). The data model supports multiple auth methods per account, but there's no merge workflow.
 <!-- AUDIT:NEEDS_DESIGN:2026-01-30:https://github.com/beyond-immersion/bannou-service/issues/137 -->
-- ~~**Audit trail**: Per-account audit storage was rejected (Issue #138 closed -- wrong architectural direction). Account mutations already publish typed lifecycle events per FOUNDATION TENETS. If queryable audit history is needed for compliance, a dedicated cross-service event consumer is the correct pattern.~~
-- ~~**Email change**: There is no endpoint for changing an account's email address.~~: **FIXED** (2026-02-08) - Added `/account/email/update` endpoint with distributed lock, atomic index swap, and IsVerified reset. See Issue #139.
+
 ## Known Quirks & Caveats
 
 ### Bugs (Fix Immediately)

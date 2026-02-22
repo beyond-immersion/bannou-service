@@ -162,6 +162,13 @@ public class ChatServiceConfiguration : IServiceConfiguration
     public int IdleRoomCleanupStartupDelaySeconds { get; set; } = 30;
 
     /// <summary>
+    /// Distributed lock expiry for idle room cleanup batch cycle
+    /// Environment variable: CHAT_IDLE_ROOM_CLEANUP_LOCK_EXPIRY_SECONDS
+    /// </summary>
+    [ConfigRange(Minimum = 30, Maximum = 600)]
+    public int IdleRoomCleanupLockExpirySeconds { get; set; } = 120;
+
+    /// <summary>
     /// How often the background worker checks for expired bans
     /// Environment variable: CHAT_BAN_EXPIRY_INTERVAL_MINUTES
     /// </summary>

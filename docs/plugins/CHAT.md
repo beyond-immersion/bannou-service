@@ -158,6 +158,7 @@ The Chat service (L1 AppFoundation) provides universal typed message channel pri
 | `MessageHistoryPageSize` | `CHAT_MESSAGE_HISTORY_PAGE_SIZE` | 50 | Default page size for message history queries |
 | `LockExpirySeconds` | `CHAT_LOCK_EXPIRY_SECONDS` | 15 | Distributed lock expiry timeout |
 | `IdleRoomCleanupStartupDelaySeconds` | `CHAT_IDLE_ROOM_CLEANUP_STARTUP_DELAY_SECONDS` | 30 | Initial delay before first cleanup cycle |
+| `IdleRoomCleanupLockExpirySeconds` | `CHAT_IDLE_ROOM_CLEANUP_LOCK_EXPIRY_SECONDS` | 120 | Distributed lock expiry for idle room cleanup batch cycle |
 | `TypingTimeoutSeconds` | `CHAT_TYPING_TIMEOUT_SECONDS` | 5 | Seconds of inactivity before typing indicator auto-expires |
 | `TypingWorkerIntervalMilliseconds` | `CHAT_TYPING_WORKER_INTERVAL_MILLISECONDS` | 1000 | How often the typing expiry worker checks for stale typing entries |
 | `TypingWorkerBatchSize` | `CHAT_TYPING_WORKER_BATCH_SIZE` | 100 | Maximum expired entries processed per worker cycle |
@@ -182,7 +183,7 @@ The Chat service (L1 AppFoundation) provides universal typed message channel pri
 | `IEntitySessionRegistry` | Room-level entity session management and typing event fan-out |
 | `IDistributedLockProvider` | Distributed locks for room type, room, and participant mutations |
 | `ILogger<ChatService>` | Structured logging |
-| `ChatServiceConfiguration` | Typed configuration access (26 properties) |
+| `ChatServiceConfiguration` | Typed configuration access (27 properties) |
 | `IEventConsumer` | Event consumer registration for 4 contract lifecycle events |
 | `IContractClient` | Contract instance validation on room creation |
 | `IResourceClient` | Room archival via `ExecuteCompressAsync` |
@@ -350,3 +351,4 @@ None. All 30 API endpoints are fully implemented with complete business logic, v
 - **2026-02-22**: Issue #446 - Paginated `FindRoomsByContractIdAsync` with configurable batch size and safety cap
 - **2026-02-22**: Issue #447 - Added `BanExpiryWorker` background service for periodic expired ban cleanup
 - **2026-02-22**: Issue #448 - Added `MessageRetentionWorker` background service for periodic expired persistent message cleanup
+- **2026-02-22**: Fixed `IdleRoomCleanupWorker` T9 violation - added distributed lock for multi-instance safety

@@ -134,6 +134,14 @@ x-service-configuration:
       maximum: 300
       description: Initial delay before the idle room cleanup worker begins its first cycle
 
+    IdleRoomCleanupLockExpirySeconds:
+      type: integer
+      env: CHAT_IDLE_ROOM_CLEANUP_LOCK_EXPIRY_SECONDS
+      default: 120
+      minimum: 30
+      maximum: 600
+      description: Distributed lock expiry for idle room cleanup batch cycle
+
     BanExpiryIntervalMinutes:
       type: integer
       env: CHAT_BAN_EXPIRY_INTERVAL_MINUTES
