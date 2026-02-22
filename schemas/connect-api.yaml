@@ -391,7 +391,6 @@ components:
       - method
       - path
       - data
-      - generatedAt
       - schemaVersion
       properties:
         metaType:
@@ -415,10 +414,6 @@ components:
             objects, full-schema returns all three combined). Uses additionalProperties because
             this proxies opaque JSON from internal meta endpoints whose schemas are defined by
             each service's controller (client-opaque pass-through per FOUNDATION TENETS).
-        generatedAt:
-          type: string
-          format: date-time
-          description: When this response was generated (UTC)
         schemaVersion:
           type: string
           description: Schema version (assembly version) for cache invalidation
@@ -443,7 +438,6 @@ components:
       required:
       - accountId
       - sessionIds
-      - retrievedAt
       properties:
         accountId:
           type: string
@@ -455,13 +449,6 @@ components:
             type: string
             format: uuid
           description: List of active WebSocket session IDs for this account
-        count:
-          type: integer
-          description: Number of active sessions
-        retrievedAt:
-          type: string
-          format: date-time
-          description: When this session list was retrieved
 
     GetClientCapabilitiesRequest:
       type: object
@@ -491,7 +478,6 @@ components:
       - sessionId
       - capabilities
       - version
-      - generatedAt
       properties:
         sessionId:
           type: string
@@ -514,10 +500,6 @@ components:
         version:
           type: integer
           description: Capability manifest version (increments on changes)
-        generatedAt:
-          type: string
-          format: date-time
-          description: When this capability manifest was generated
         expiresAt:
           type: string
           format: date-time

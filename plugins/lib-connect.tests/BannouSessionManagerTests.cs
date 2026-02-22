@@ -17,6 +17,7 @@ public class BannouSessionManagerTests
     private readonly Mock<IStateStoreFactory> _mockStateStoreFactory;
     private readonly Mock<IMessageBus> _mockMessageBus;
     private readonly Mock<ILogger<BannouSessionManager>> _mockLogger;
+    private readonly Mock<ITelemetryProvider> _mockTelemetryProvider;
     private readonly ConnectServiceConfiguration _configuration;
     private readonly BannouSessionManager _sessionManager;
 
@@ -30,6 +31,7 @@ public class BannouSessionManagerTests
         _mockStateStoreFactory = new Mock<IStateStoreFactory>();
         _mockMessageBus = new Mock<IMessageBus>();
         _mockLogger = new Mock<ILogger<BannouSessionManager>>();
+        _mockTelemetryProvider = new Mock<ITelemetryProvider>();
         _configuration = new ConnectServiceConfiguration();
 
         // Set up type-specific stores
@@ -69,7 +71,8 @@ public class BannouSessionManagerTests
             _mockStateStoreFactory.Object,
             _mockMessageBus.Object,
             _configuration,
-            _mockLogger.Object);
+            _mockLogger.Object,
+            _mockTelemetryProvider.Object);
     }
 
     #region Constructor Tests
@@ -595,7 +598,8 @@ public class BannouSessionManagerTests
             mockStateStoreFactory.Object,
             _mockMessageBus.Object,
             customConfig,
-            _mockLogger.Object);
+            _mockLogger.Object,
+            _mockTelemetryProvider.Object);
 
         var sessionId = Guid.NewGuid().ToString();
         var stateData = new ConnectionStateData { SessionId = Guid.Parse(sessionId) };
@@ -645,7 +649,8 @@ public class BannouSessionManagerTests
             mockStateStoreFactory.Object,
             _mockMessageBus.Object,
             customConfig,
-            _mockLogger.Object);
+            _mockLogger.Object,
+            _mockTelemetryProvider.Object);
 
         var sessionId = Guid.NewGuid().ToString();
         var instanceId = Guid.NewGuid();

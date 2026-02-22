@@ -473,9 +473,9 @@ public class ConnectionState
 public class PendingMessageInfo
 {
     /// <summary>
-    /// Name of the service the message was sent to.
+    /// Name of the service the message was sent to. Null if unknown.
     /// </summary>
-    public string ServiceName { get; set; } = string.Empty;
+    public string? ServiceName { get; set; }
 
     /// <summary>
     /// When the message was sent.
@@ -500,14 +500,14 @@ public class PendingRPCInfo
     public Guid ClientSessionId { get; set; }
 
     /// <summary>
-    /// Name of the service that initiated the RPC.
+    /// Name of the service that initiated the RPC. Null if unknown.
     /// </summary>
-    public string ServiceName { get; set; } = string.Empty;
+    public string? ServiceName { get; set; }
 
     /// <summary>
-    /// RabbitMQ channel where the response should be published.
+    /// RabbitMQ channel where the response should be published. Null if not specified.
     /// </summary>
-    public string ResponseChannel { get; set; } = string.Empty;
+    public string? ResponseChannel { get; set; }
 
     /// <summary>
     /// Service GUID used for the RPC (for correlation).

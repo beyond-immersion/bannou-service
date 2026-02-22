@@ -164,8 +164,11 @@ public static class MessageRouter
         string? errorMessage = null)
     {
         // Error responses have empty payloads - the response code in the header tells the story
-        // The errorMessage parameter is kept for logging/debugging but not sent over the wire
-        _ = errorMessage; // Suppress unused parameter warning
+        // Attach errorMessage to ambient telemetry span for debugging (dependency-free via Activity.Current)
+        if (errorMessage != null)
+        {
+            System.Diagnostics.Activity.Current?.SetTag("error.message", errorMessage);
+        }
 
         return BinaryMessage.CreateResponse(originalMessage, errorCode);
     }
@@ -220,17 +223,34 @@ public static class MessageRouter
 /// </summary>
 public class MessageRouteInfo
 {
+    /// <summary>The parsed binary message to route.</summary>
     public BinaryMessage Message { get; set; }
+
+    /// <summary>Whether the routing information was successfully resolved.</summary>
     public bool IsValid { get; set; }
+
+    /// <summary>Error code to send if routing failed.</summary>
     public ResponseCodes ErrorCode { get; set; }
+
+    /// <summary>Human-readable error description when routing fails.</summary>
     public string? ErrorMessage { get; set; }
 
+    /// <summary>How the message should be routed (Service, Client, Broadcast, etc.).</summary>
     public RouteType RouteType { get; set; }
+
+    /// <summary>Target type identifier for client routing (e.g., entity type).</summary>
     public string? TargetType { get; set; }
+
+    /// <summary>Target ID for client routing (e.g., entity ID).</summary>
     public string? TargetId { get; set; }
+
+    /// <summary>Resolved service name for service routing.</summary>
     public string? ServiceName { get; set; }
 
+    /// <summary>Message channel for sequential processing.</summary>
     public ushort Channel { get; set; }
+
+    /// <summary>Whether the sender expects a response message.</summary>
     public bool RequiresResponse { get; set; }
 
     #region Session Shortcut Properties

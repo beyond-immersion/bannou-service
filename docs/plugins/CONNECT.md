@@ -135,6 +135,7 @@ WebSocket-first edge gateway (L1 AppFoundation) providing zero-copy binary messa
 | `IServiceAppMappingResolver` | Singleton | Dynamic app-id resolution for distributed routing |
 | `IServiceScopeFactory` | Singleton | Creates scoped DI containers for ServiceNavigator |
 | `ConnectServiceConfiguration` | Singleton | All configuration properties (29 total) |
+| `ITelemetryProvider` | Singleton | Distributed tracing span instrumentation for all async helper methods |
 | `ILogger<ConnectService>` | Singleton | Structured logging |
 | `ILoggerFactory` | Singleton | Logger creation for child components |
 | `IEventConsumer` | Singleton | Event consumer registration for pub/sub handlers |
@@ -472,7 +473,7 @@ No outstanding extensions. Multi-instance broadcast was implemented (2026-02-22)
 
 1. **Orphaned configuration: `CompanionRoomMode`**: Defined in `connect-configuration.yaml` and generated into `ConnectServiceConfiguration`, but `_configuration.CompanionRoomMode` is never referenced anywhere in service code. T21 violation — dead config should be wired up in service or removed from schema.
 
-2. **Orphaned configuration: `MaxChannelNumber`**: Defined in `connect-configuration.yaml` and generated into `ConnectServiceConfiguration`, but `_configuration.MaxChannelNumber` is never referenced anywhere in service code. T21 violation — dead config should be wired up in service or removed from schema.
+2. ~~**Orphaned configuration: `MaxChannelNumber`**~~: **FIXED** (2026-02-22) - Wired `_configuration.MaxChannelNumber` into `MessageRouter.AnalyzeMessage()` call, replacing the hardcoded `1000` default.
 
 ### Intentional Quirks
 
@@ -515,6 +516,9 @@ No outstanding extensions. Multi-instance broadcast was implemented (2026-02-22)
 ## Work Tracking
 
 This section tracks active development work on items from the quirks/bugs lists above. Items here are managed by the `/audit-plugin` workflow and should not be manually edited except to add new tracking markers.
+
+### Completed
+- **2026-02-22**: L3 hardening audit — Schema: consolidated connect-shortcuts.yaml into standard files, extracted ConnectionMode/InternalAuthMode/BroadcastMode/CompanionRoomMode enums to connect-api.yaml, added format:uuid to all UUID fields, added validation constraints to all config integers, extracted inline HTTP method enum, fixed additionalProperties:true T29 descriptions. Code: fixed T9 thread safety (ConcurrentDictionary/ConcurrentQueue in ConnectionState), fixed T26 Guid.Empty sentinels, fixed T5 anonymous objects (typed event/protocol payloads), wired MaxChannelNumber config (T21), fixed T7 bare catch blocks in NetworkByteOrder, fixed T23 .Wait() in WebSocketConnectionManager.Dispose, fixed T24 IDisposable/IAsyncDisposable + ClientWebSocket leak, deduplicated capability manifest construction (removed dead code), added T30 telemetry spans to ConnectService/BannouSessionManager/EntitySessionRegistry/ConnectServiceEvents, added XML docs to MessageRouteInfo/WebSocketConnection properties.
 
 ### Pending Design Review
 - **Single-instance P2P limitation** - [Issue #346](https://github.com/beyond-immersion/bannou-service/issues/346) - Requires design decisions on cross-instance delivery mechanism, peer GUID stability, and Redis latency impact; no production consumers yet (2026-02-08)

@@ -565,6 +565,7 @@ public partial class ContractService : IContractService
             ContractId = contractId,
             TemplateId = body.TemplateId,
             TemplateCode = template.Code,
+            TemplateName = template.Name,
             Status = ContractStatus.Draft,
             Parties = parties,
             Terms = mergedTerms,
@@ -717,6 +718,7 @@ public partial class ContractService : IContractService
                 {
                     await RemoveFromListAsync($"{STATUS_INDEX_PREFIX}proposed", body.ContractId.ToString(), cancellationToken);
                     await AddToListAsync($"{STATUS_INDEX_PREFIX}expired", body.ContractId.ToString(), cancellationToken);
+                    await PublishContractExpiredEventAsync(model, cancellationToken);
                 }
 
                 return (StatusCodes.BadRequest, null);
@@ -764,6 +766,9 @@ public partial class ContractService : IContractService
                     model.Status = ContractStatus.Active;
                     model.Milestones[0].Status = MilestoneStatus.Active;
                     model.Milestones[0].ActivatedAt = DateTimeOffset.UtcNow;
+
+                    // Initialize payment schedule tracking for active contracts
+                    InitializePaymentSchedule(model);
                 }
                 else
                 {
@@ -1010,9 +1015,74 @@ public partial class ContractService : IContractService
             return (StatusCodes.NotFound, null);
         }
 
+        // Lazy activation enforcement: check if pending contract has reached its effectiveFrom date
+        if (model.Status == ContractStatus.Pending && model.EffectiveFrom.HasValue
+            && model.EffectiveFrom.Value <= DateTimeOffset.UtcNow)
+        {
+            _logger.LogInformation(
+                "Contract {ContractId} has reached effectiveFrom {EffectiveFrom}, transitioning from Pending to Active",
+                body.ContractId, model.EffectiveFrom);
+
+            if (model.Milestones?.Count > 0)
+            {
+                model.Status = ContractStatus.Active;
+                model.Milestones[0].Status = MilestoneStatus.Active;
+                model.Milestones[0].ActivatedAt = DateTimeOffset.UtcNow;
+
+                // Initialize payment schedule tracking for newly activated contracts
+                InitializePaymentSchedule(model);
+            }
+            else
+            {
+                // No milestones means contract is immediately fulfilled
+                model.Status = ContractStatus.Fulfilled;
+            }
+
+            model.UpdatedAt = DateTimeOffset.UtcNow;
+            var activatedEtag = await store.TrySaveAsync(instanceKey, model, etag ?? string.Empty, cancellationToken);
+            if (activatedEtag != null)
+            {
+                await RemoveFromListAsync($"{STATUS_INDEX_PREFIX}pending", body.ContractId.ToString(), cancellationToken);
+
+                if (model.Status == ContractStatus.Fulfilled)
+                {
+                    await AddToListAsync($"{STATUS_INDEX_PREFIX}fulfilled", body.ContractId.ToString(), cancellationToken);
+                    await PublishContractActivatedEventAsync(model, cancellationToken);
+                    await PublishContractFulfilledEventAsync(model, cancellationToken);
+                }
+                else
+                {
+                    await AddToListAsync($"{STATUS_INDEX_PREFIX}active", body.ContractId.ToString(), cancellationToken);
+                    await PublishContractActivatedEventAsync(model, cancellationToken);
+                }
+
+                // Update etag for subsequent operations in this method
+                etag = activatedEtag;
+            }
+        }
+
+        // Lazy expiration enforcement: check if contract has passed its effectiveUntil date
+        if (model.Status == ContractStatus.Active && model.EffectiveUntil.HasValue
+            && model.EffectiveUntil.Value <= DateTimeOffset.UtcNow)
+        {
+            _logger.LogInformation(
+                "Contract {ContractId} has passed effectiveUntil {EffectiveUntil}, transitioning to Expired",
+                body.ContractId, model.EffectiveUntil);
+
+            model.Status = ContractStatus.Expired;
+            model.UpdatedAt = DateTimeOffset.UtcNow;
+            var expiredEtag = await store.TrySaveAsync(instanceKey, model, etag ?? string.Empty, cancellationToken);
+            if (expiredEtag != null)
+            {
+                await RemoveFromListAsync($"{STATUS_INDEX_PREFIX}active", body.ContractId.ToString(), cancellationToken);
+                await AddToListAsync($"{STATUS_INDEX_PREFIX}expired", body.ContractId.ToString(), cancellationToken);
+                await PublishContractExpiredEventAsync(model, cancellationToken);
+            }
+        }
+
         // Lazy deadline enforcement: check all active milestones for overdue status
         var anyProcessed = false;
-        if (model.Milestones != null)
+        if (model.Status == ContractStatus.Active && model.Milestones != null)
         {
             foreach (var milestone in model.Milestones)
             {
@@ -1639,7 +1709,7 @@ public partial class ContractService : IContractService
                 {
                     ContractId = contract.ContractId,
                     TemplateCode = contract.TemplateCode,
-                    TemplateName = null, // Would need to load template
+                    TemplateName = contract.TemplateName,
                     Status = contract.Status,
                     Role = party.Role,
                     EffectiveUntil = contract.EffectiveUntil
@@ -1705,7 +1775,7 @@ public partial class ContractService : IContractService
             {
                 ContractId = c.ContractId,
                 TemplateCode = c.TemplateCode,
-                TemplateName = null,
+                TemplateName = c.TemplateName,
                 Status = c.Status,
                 Role = party?.Role,
                 EffectiveUntil = c.EffectiveUntil
@@ -2741,6 +2811,125 @@ public partial class ContractService : IContractService
             Reason = reason,
             WasBreachRelated = wasBreachRelated
         });
+    }
+
+    /// <summary>
+    /// Publishes a contract expired event when a contract reaches its effectiveUntil date
+    /// or its consent window expires.
+    /// </summary>
+    private async Task PublishContractExpiredEventAsync(ContractInstanceModel model, CancellationToken ct)
+    {
+        using var activity = _telemetryProvider.StartActivity(
+            "bannou.contract", "ContractService.PublishContractExpiredEventAsync");
+
+        await _messageBus.TryPublishAsync("contract.expired", new ContractExpiredEvent
+        {
+            EventId = Guid.NewGuid(),
+            Timestamp = DateTimeOffset.UtcNow,
+            ContractId = model.ContractId,
+            TemplateCode = model.TemplateCode,
+            EffectiveUntil = model.EffectiveUntil ?? DateTimeOffset.UtcNow
+        });
+    }
+
+    /// <summary>
+    /// Publishes a payment due event for a contract with recurring or one-time payment terms.
+    /// </summary>
+    internal async Task PublishPaymentDueEventAsync(ContractInstanceModel model, int paymentNumber, CancellationToken ct)
+    {
+        using var activity = _telemetryProvider.StartActivity(
+            "bannou.contract", "ContractService.PublishPaymentDueEventAsync");
+
+        var parties = model.Parties?.Select(p => new PartyInfo
+        {
+            EntityId = p.EntityId,
+            EntityType = p.EntityType,
+            Role = p.Role
+        }).ToList();
+
+        await _messageBus.TryPublishAsync("contract.payment.due", new ContractPaymentDueEvent
+        {
+            EventId = Guid.NewGuid(),
+            Timestamp = DateTimeOffset.UtcNow,
+            ContractId = model.ContractId,
+            TemplateCode = model.TemplateCode,
+            PaymentSchedule = model.Terms?.PaymentSchedule ?? PaymentSchedule.OneTime,
+            PaymentFrequency = model.Terms?.PaymentFrequency,
+            PaymentNumber = paymentNumber,
+            Parties = parties
+        });
+    }
+
+    #endregion
+
+    #region Payment Schedule
+
+    /// <summary>
+    /// Initializes payment schedule tracking when a contract becomes active.
+    /// Sets NextPaymentDue based on the payment schedule type in the contract terms.
+    /// </summary>
+    private void InitializePaymentSchedule(ContractInstanceModel model)
+    {
+        var schedule = model.Terms?.PaymentSchedule;
+        if (schedule == null || schedule == PaymentSchedule.MilestoneBased)
+        {
+            // milestone_based payments are handled by existing prebound APIs, no background tracking
+            return;
+        }
+
+        // For one_time and recurring: first payment is due at activation
+        model.NextPaymentDue = model.EffectiveFrom ?? DateTimeOffset.UtcNow;
+        model.PaymentsDuePublished = 0;
+    }
+
+    /// <summary>
+    /// Checks if a payment is due for an active contract and publishes the event.
+    /// Advances NextPaymentDue for recurring schedules or clears it for one-time.
+    /// Returns true if the model was modified and needs to be saved.
+    /// </summary>
+    internal bool CheckAndAdvancePaymentSchedule(ContractInstanceModel model, DateTimeOffset now)
+    {
+        if (model.NextPaymentDue == null || model.NextPaymentDue > now)
+        {
+            return false;
+        }
+
+        var schedule = model.Terms?.PaymentSchedule;
+        model.PaymentsDuePublished++;
+        model.LastPaymentAt = now;
+
+        if (schedule == PaymentSchedule.Recurring)
+        {
+            // Advance to next payment period
+            var frequency = ParseIsoDuration(model.Terms?.PaymentFrequency);
+            if (frequency != null)
+            {
+                // Advance from the previous due date (not from now) to prevent drift
+                model.NextPaymentDue = model.NextPaymentDue.Value.Add(frequency.Value);
+
+                // If we've fallen behind multiple periods, catch up to the next future due date
+                while (model.NextPaymentDue <= now)
+                {
+                    model.NextPaymentDue = model.NextPaymentDue.Value.Add(frequency.Value);
+                    // Only count one payment due event per check cycle to avoid spam
+                }
+            }
+            else
+            {
+                // Recurring with no frequency is invalid configuration; clear to prevent infinite loop
+                _logger.LogWarning(
+                    "Contract {ContractId} has recurring payment schedule but no valid PaymentFrequency, disabling payment tracking",
+                    model.ContractId);
+                model.NextPaymentDue = null;
+            }
+        }
+        else
+        {
+            // one_time: clear after first publication
+            model.NextPaymentDue = null;
+        }
+
+        return true;
     }
 
     #endregion

@@ -93,7 +93,7 @@ public readonly struct BinaryMessage
         Flags = flags;
         Channel = channel;
         SequenceNumber = sequenceNumber;
-        ServiceGuid = Guid.Empty; // Not used in responses
+        ServiceGuid = Guid.Empty; // Wire protocol: response messages don't carry routing GUIDs
         MessageId = messageId;
         ResponseCode = responseCode;
         Payload = payload;

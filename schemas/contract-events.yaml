@@ -72,6 +72,9 @@ info:
     - topic: contract.expired
       event: ContractExpiredEvent
       description: Published when contract reaches natural expiration
+    - topic: contract.payment.due
+      event: ContractPaymentDueEvent
+      description: Published when a recurring or one-time payment is due on an active contract
 
     # Prebound API execution events (observability)
     - topic: contract.prebound-api.executed
@@ -561,6 +564,50 @@ components:
           type: string
           format: date-time
           description: When contract was set to expire
+
+    ContractPaymentDueEvent:
+      type: object
+      description: Event published when a contract payment is due based on payment schedule terms
+      additionalProperties: false
+      required:
+      - eventId
+      - timestamp
+      - contractId
+      - templateCode
+      - paymentSchedule
+      - paymentNumber
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique event identifier
+        timestamp:
+          type: string
+          format: date-time
+          description: When the event occurred
+        contractId:
+          type: string
+          format: uuid
+          description: Contract instance ID
+        templateCode:
+          type: string
+          description: Template code
+        paymentSchedule:
+          $ref: 'contract-api.yaml#/components/schemas/PaymentSchedule'
+          description: Payment schedule type (one_time or recurring)
+        paymentFrequency:
+          type: string
+          nullable: true
+          description: Recurring payment frequency (ISO 8601 duration, null for one-time)
+        paymentNumber:
+          type: integer
+          description: Sequential payment number (1-indexed)
+        parties:
+          type: array
+          items:
+            $ref: '#/components/schemas/PartyInfo'
+          nullable: true
+          description: Contract parties
 
     # =========================================================================
     # Prebound API Execution Events

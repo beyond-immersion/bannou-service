@@ -104,10 +104,8 @@ public partial class ContractService
 
         var response = new LockContractResponse
         {
-            Locked = true,
             ContractId = body.ContractInstanceId,
-            GuardianId = body.GuardianId,
-            LockedAt = now
+            GuardianId = body.GuardianId
         };
 
         // Cache for idempotency
@@ -186,7 +184,6 @@ public partial class ContractService
 
         var response = new UnlockContractResponse
         {
-            Unlocked = true,
             ContractId = body.ContractInstanceId
         };
 
@@ -282,7 +279,6 @@ public partial class ContractService
 
         var response = new TransferContractPartyResponse
         {
-            Transferred = true,
             ContractId = body.ContractInstanceId,
             Role = role,
             FromEntityId = body.FromEntityId,
@@ -362,7 +358,6 @@ public partial class ContractService
         _logger.LogInformation("Registered clause type: {TypeCode}", body.TypeCode);
         return (StatusCodes.OK, new RegisterClauseTypeResponse
         {
-            Registered = true,
             TypeCode = body.TypeCode
         });
     }
@@ -576,7 +571,6 @@ public partial class ContractService
 
         return (StatusCodes.OK, new SetTemplateValuesResponse
         {
-            Updated = true,
             ContractId = body.ContractInstanceId,
             ValueCount = model.TemplateValues.Count
         });
@@ -946,7 +940,6 @@ public partial class ContractService
 
             return (StatusCodes.OK, new ExecuteContractResponse
             {
-                Executed = true,
                 AlreadyExecuted = true,
                 ContractId = body.ContractInstanceId,
                 Distributions = model.ExecutionDistributions?.Select(d => new ClauseDistributionResult
@@ -957,8 +950,7 @@ public partial class ContractService
                     Amount = d.Amount,
                     Succeeded = d.Succeeded,
                     FailureReason = d.FailureReason
-                }).ToList(),
-                ExecutedAt = model.ExecutedAt
+                }).ToList()
             });
         }
 
@@ -1008,7 +1000,6 @@ public partial class ContractService
 
         var response = new ExecuteContractResponse
         {
-            Executed = true,
             AlreadyExecuted = false,
             ContractId = body.ContractInstanceId,
             Distributions = distributions.Select(d => new ClauseDistributionResult
@@ -1019,8 +1010,7 @@ public partial class ContractService
                 Amount = d.Amount,
                 Succeeded = d.Succeeded,
                 FailureReason = d.FailureReason
-            }).ToList(),
-            ExecutedAt = now
+            }).ToList()
         };
 
         // Cache for idempotency

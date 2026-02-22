@@ -160,9 +160,16 @@ public class SessionHeartbeat
 /// </summary>
 public class WebSocketConnection
 {
+    /// <summary>Unique session identifier for this connection.</summary>
     public string SessionId { get; }
+
+    /// <summary>The underlying WebSocket instance.</summary>
     public WebSocket WebSocket { get; }
+
+    /// <summary>Protocol-level state for this connection (mappings, pending messages, shortcuts).</summary>
     public ConnectionState ConnectionState { get; }
+
+    /// <summary>When this connection was established.</summary>
     public DateTimeOffset CreatedAt { get; }
 
     /// <summary>

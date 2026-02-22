@@ -18,6 +18,7 @@ public class EntitySessionRegistryTests
     private readonly Mock<IMessageBus> _mockMessageBus;
     private readonly Mock<IClientEventPublisher> _mockClientEventPublisher;
     private readonly Mock<ILogger<EntitySessionRegistry>> _mockLogger;
+    private readonly Mock<ITelemetryProvider> _mockTelemetryProvider;
     private readonly ConnectServiceConfiguration _configuration;
     private readonly EntitySessionRegistry _registry;
 
@@ -31,6 +32,7 @@ public class EntitySessionRegistryTests
         _mockMessageBus = new Mock<IMessageBus>();
         _mockClientEventPublisher = new Mock<IClientEventPublisher>();
         _mockLogger = new Mock<ILogger<EntitySessionRegistry>>();
+        _mockTelemetryProvider = new Mock<ITelemetryProvider>();
         _configuration = new ConnectServiceConfiguration();
 
         _mockCacheStore = new Mock<ICacheableStateStore<string>>();
@@ -74,6 +76,7 @@ public class EntitySessionRegistryTests
             _mockMessageBus.Object,
             _mockClientEventPublisher.Object,
             _configuration,
+            _mockTelemetryProvider.Object,
             _mockLogger.Object);
     }
 

@@ -28,10 +28,10 @@ namespace BeyondImmersion.BannouService.Connect;
 /// <summary>
 /// WebSocket-first edge gateway service providing zero-copy message routing.
 /// Uses Permission service for dynamic API discovery and capability management.
-/// Implements IDisposable to enable graceful shutdown with WebSocket close frames.
+/// Implements IAsyncDisposable/IDisposable to enable graceful shutdown with WebSocket close frames.
 /// </summary>
 [BannouService("connect", typeof(IConnectService), lifetime: ServiceLifetime.Singleton, layer: ServiceLayer.AppFoundation)]
-public partial class ConnectService : IConnectService, IDisposable
+public partial class ConnectService : IConnectService, IDisposable, IAsyncDisposable
 {
     private readonly IAuthClient _authClient;
     private readonly IMeshInvocationClient _meshClient;
@@ -45,6 +45,7 @@ public partial class ConnectService : IConnectService, IDisposable
     private readonly ICapabilityManifestBuilder _manifestBuilder;
     private readonly IEntitySessionRegistry _entitySessionRegistry;
     private readonly InterNodeBroadcastManager _interNodeBroadcast;
+    private readonly ITelemetryProvider _telemetryProvider;
 
     // Client event subscriptions via lib-messaging (per-session raw byte subscriptions)
     private readonly IMessageSubscriber _messageSubscriber;
@@ -66,6 +67,13 @@ public partial class ConnectService : IConnectService, IDisposable
     /// Defined in provisioning/rabbitmq/definitions.json.
     /// </summary>
     private const string CLIENT_EVENTS_EXCHANGE = "bannou-client-events";
+
+    /// <summary>
+    /// Wire protocol constant: ServiceGuid value for system/control messages (capability manifests,
+    /// client events, disconnect notifications). Not an absence sentinel — this is a defined protocol
+    /// value meaning "this message is from the Connect system, not routed to a backend service".
+    /// </summary>
+    private static readonly Guid SystemServiceGuid = Guid.Empty;
 
     // Reconnection window now comes from configuration (ReconnectionWindowSeconds)
     // During this time after disconnect, session state is preserved and client can reconnect
@@ -93,7 +101,8 @@ public partial class ConnectService : IConnectService, IDisposable
         ICapabilityManifestBuilder manifestBuilder,
         IEntitySessionRegistry entitySessionRegistry,
         InterNodeBroadcastManager interNodeBroadcast,
-        IMeshInstanceIdentifier meshInstanceIdentifier)
+        IMeshInstanceIdentifier meshInstanceIdentifier,
+        ITelemetryProvider telemetryProvider)
     {
         _authClient = authClient;
         _meshClient = meshClient;
@@ -108,6 +117,7 @@ public partial class ConnectService : IConnectService, IDisposable
         _manifestBuilder = manifestBuilder;
         _entitySessionRegistry = entitySessionRegistry;
         _interNodeBroadcast = interNodeBroadcast;
+        _telemetryProvider = telemetryProvider;
 
         _connectionManager = new WebSocketConnectionManager(
             configuration.ConnectionShutdownTimeoutSeconds,
@@ -339,7 +349,8 @@ public partial class ConnectService : IConnectService, IDisposable
             .WithAuthorization(token)
             .ValidateTokenAsync(cancellationToken);
 
-        if (validationResponse == null || !validationResponse.Valid || validationResponse.SessionKey == Guid.Empty)
+        // SessionKey is non-nullable Guid in generated type; Guid.Empty indicates validation failure
+        if (validationResponse == null || validationResponse.SessionKey == Guid.Empty)
         {
             _logger.LogWarning("GetEndpointMeta: JWT validation failed");
             return (StatusCodes.Unauthorized, null);
@@ -448,7 +459,6 @@ public partial class ConnectService : IConnectService, IDisposable
             Method = metaResponse.Method,
             Path = metaResponse.Path,
             Data = metaResponse.Data,
-            GeneratedAt = metaResponse.GeneratedAt,
             SchemaVersion = metaResponse.SchemaVersion
         };
 
@@ -511,8 +521,7 @@ public partial class ConnectService : IConnectService, IDisposable
             SessionId = body.SessionId,
             Capabilities = capabilities,
             Shortcuts = shortcuts.Count > 0 ? shortcuts : null,
-            Version = 1,
-            GeneratedAt = DateTimeOffset.UtcNow
+            Version = 1
         };
 
         _logger.LogInformation("Returning {CapabilityCount} capabilities and {ShortcutCount} shortcuts for session {SessionId}",
@@ -536,9 +545,7 @@ public partial class ConnectService : IConnectService, IDisposable
         var response = new GetAccountSessionsResponse
         {
             AccountId = body.AccountId,
-            SessionIds = sessions.Select(s => Guid.TryParse(s, out var g) ? g : Guid.Empty).Where(g => g != Guid.Empty).ToList(),
-            Count = sessions.Count,
-            RetrievedAt = DateTimeOffset.UtcNow
+            SessionIds = sessions.Where(s => Guid.TryParse(s, out _)).Select(s => Guid.Parse(s)).ToList()
         };
 
         _logger.LogInformation("Returning {Count} sessions for account {AccountId}",
@@ -559,6 +566,7 @@ public partial class ConnectService : IConnectService, IDisposable
         string? serviceTokenHeader,
         CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.connect", "ConnectService.ValidateJWTAndExtractSessionAsync");
         // Internal mode authentication - bypass JWT validation
         if (_connectionMode == ConnectionMode.Internal)
         {
@@ -623,15 +631,14 @@ public partial class ConnectService : IConnectService, IDisposable
                 return (null, null, null, null, false);
             }
 
-            _logger.LogDebug("Token validation result - Valid: {Valid}, SessionKey: {SessionKey}, AccountId: {AccountId}, RolesCount: {RolesCount}, AuthorizationsCount: {AuthorizationsCount}",
-                validationResponse.Valid,
+            _logger.LogDebug("Token validation result - SessionKey: {SessionKey}, AccountId: {AccountId}, RolesCount: {RolesCount}, AuthorizationsCount: {AuthorizationsCount}",
                 validationResponse.SessionKey,
                 validationResponse.AccountId,
                 validationResponse.Roles?.Count ?? 0,
                 validationResponse.Authorizations?.Count ?? 0);
 
-            // Defensive: guard against corrupt Redis data (SessionKey should always be populated on valid sessions)
-            if (validationResponse.Valid && validationResponse.SessionKey != Guid.Empty)
+            // Defensive: SessionKey is non-nullable Guid; Guid.Empty guards against corrupt Redis data
+            if (validationResponse.SessionKey != Guid.Empty)
             {
                 _logger.LogDebug("JWT validated successfully, SessionKey: {SessionKey}", validationResponse.SessionKey);
                 // Return session key, account ID, roles, and authorizations for capability initialization
@@ -640,8 +647,8 @@ public partial class ConnectService : IConnectService, IDisposable
             }
             else
             {
-                _logger.LogWarning("JWT validation failed, Valid: {Valid}, SessionKey: {SessionKey}",
-                    validationResponse.Valid, validationResponse.SessionKey);
+                _logger.LogWarning("JWT validation returned empty SessionKey for AccountId: {AccountId}",
+                    validationResponse.AccountId);
             }
         }
         // Handle "Reconnect <token>" format for session reconnection
@@ -751,6 +758,7 @@ public partial class ConnectService : IConnectService, IDisposable
         Guid remoteInstanceId,
         CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.connect", "ConnectService.HandleBroadcastConnectionAsync");
         await _interNodeBroadcast.HandleIncomingConnectionAsync(webSocket, remoteInstanceId, cancellationToken);
     }
 
@@ -767,6 +775,7 @@ public partial class ConnectService : IConnectService, IDisposable
         bool isReconnection,
         CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.connect", "ConnectService.HandleWebSocketCommunicationAsync");
         await HandleWebSocketCommunicationCoreAsync(
             webSocket,
             sessionId,
@@ -786,6 +795,7 @@ public partial class ConnectService : IConnectService, IDisposable
         bool isReconnection,
         CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.connect", "ConnectService.HandleWebSocketCommunicationCoreAsync");
         // Note: Connection limit check is performed in ConnectController.HandleWebSocketConnectionAsync
         // BEFORE accepting the WebSocket upgrade, allowing proper 503 response instead of accepting
         // then immediately closing. A secondary check is retained here as defense-in-depth for
@@ -905,6 +915,9 @@ public partial class ConnectService : IConnectService, IDisposable
                     EventId = Guid.NewGuid(),
                     Timestamp = DateTimeOffset.UtcNow,
                     SessionId = Guid.Parse(sessionId),
+                    // Schema constraint: AccountId is required (non-nullable Guid) on SessionConnectedEvent.
+                    // Guid.Empty used when no account is associated (pre-auth connection).
+                    // TODO: Make accountId nullable in common-events.yaml to eliminate sentinel.
                     AccountId = accountId ?? Guid.Empty,
                     Roles = userRoles?.ToList(),
                     Authorizations = authorizations?.ToList(),
@@ -916,7 +929,7 @@ public partial class ConnectService : IConnectService, IDisposable
                     sessionId, connectionState.PeerGuid);
 
                 // Add to account session index for distributed lookup
-                if (accountId.HasValue && accountId.Value != Guid.Empty)
+                if (accountId.HasValue)
                 {
                     await _sessionManager.AddSessionToAccountAsync(accountId.Value, sessionId);
                 }
@@ -931,6 +944,8 @@ public partial class ConnectService : IConnectService, IDisposable
                         EventId = Guid.NewGuid(),
                         Timestamp = DateTimeOffset.UtcNow,
                         SessionId = Guid.Parse(sessionId),
+                        // Schema constraint: AccountId is required (non-nullable Guid) on SessionReconnectedEvent.
+                        // Guid.Empty used when no account is associated. See TODO on SessionConnectedEvent above.
                         AccountId = accountId ?? Guid.Empty,
                         Roles = userRoles?.ToList(),
                         Authorizations = authorizations?.ToList(),
@@ -1041,7 +1056,7 @@ public partial class ConnectService : IConnectService, IDisposable
                         EventId = Guid.NewGuid(),
                         Timestamp = DateTimeOffset.UtcNow,
                         SessionId = Guid.Parse(sessionId),
-                        AccountId = accountId ?? Guid.Empty,
+                        AccountId = accountId,
                         Reconnectable = !isForcedDisconnect,
                         Reason = isForcedDisconnect ? "forced_disconnect" : "graceful_disconnect"
                     };
@@ -1050,7 +1065,7 @@ public partial class ConnectService : IConnectService, IDisposable
                         sessionId, !isForcedDisconnect);
 
                     // Remove from account session index
-                    if (accountId.HasValue && accountId.Value != Guid.Empty)
+                    if (accountId.HasValue)
                     {
                         await _sessionManager.RemoveSessionFromAccountAsync(accountId.Value, sessionId);
                     }
@@ -1171,6 +1186,7 @@ public partial class ConnectService : IConnectService, IDisposable
         int messageLength,
         CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.connect", "ConnectService.HandleBinaryMessageAsync");
         BinaryMessage? parsedMessage = null;
         try
         {
@@ -1341,6 +1357,7 @@ public partial class ConnectService : IConnectService, IDisposable
         ConnectionState connectionState,
         CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.connect", "ConnectService.RouteToServiceAsync");
         try
         {
             // Validate service name early - format: "servicename:METHOD:/path"
@@ -1515,6 +1532,7 @@ public partial class ConnectService : IConnectService, IDisposable
         ConnectionState connectionState,
         CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.connect", "ConnectService.HandleMetaRequestAsync");
         // ServiceName must be validated by caller before invoking this method
         if (routeInfo.ServiceName == null)
         {
@@ -1593,12 +1611,14 @@ public partial class ConnectService : IConnectService, IDisposable
         string sessionId,
         CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.connect", "ConnectService.RouteToClientAsync");
         try
         {
             // For peer-to-peer routing, the ServiceGuid in the message header is the target peer's GUID
             var targetPeerGuid = message.ServiceGuid;
 
-            if (targetPeerGuid == Guid.Empty)
+            // Wire protocol: SystemServiceGuid (Guid.Empty) means no target peer was specified in the header
+            if (targetPeerGuid == SystemServiceGuid)
             {
                 var errorResponse = MessageRouter.CreateErrorResponse(
                     message, ResponseCodes.ClientNotFound, "Target peer GUID not specified");
@@ -1674,6 +1694,7 @@ public partial class ConnectService : IConnectService, IDisposable
         string senderSessionId,
         CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.connect", "ConnectService.RouteToBroadcastAsync");
         try
         {
             // Get all active session IDs except sender
@@ -1728,6 +1749,7 @@ public partial class ConnectService : IConnectService, IDisposable
         ConnectionState connectionState,
         CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.connect", "ConnectService.HandleInternalModeMessageLoopAsync");
         var buffer = new byte[_configuration.BufferSize];
 
         try
@@ -1784,6 +1806,7 @@ public partial class ConnectService : IConnectService, IDisposable
         string textMessage,
         CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.connect", "ConnectService.HandleTextMessageFallbackAsync");
         try
         {
             _logger.LogWarning(
@@ -1823,6 +1846,7 @@ public partial class ConnectService : IConnectService, IDisposable
     /// </summary>
     public async Task OnStartAsync(WebApplication webApp, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.connect", "ConnectService.OnStartAsync");
         _logger.LogInformation("Registering Connect service RabbitMQ event handlers");
 
         // Register auth event handler (subscribes via MassTransit, not mesh Topics)
@@ -1867,6 +1891,7 @@ public partial class ConnectService : IConnectService, IDisposable
     /// </summary>
     internal async Task ProcessAuthEventAsync(AuthEvent eventData)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.connect", "ConnectService.ProcessAuthEventAsync");
         try
         {
             _logger.LogInformation("Processing auth event {EventType} for session {SessionId}",
@@ -1923,6 +1948,7 @@ public partial class ConnectService : IConnectService, IDisposable
     /// </summary>
     internal async Task ProcessClientMessageEventAsync(ClientMessageEvent eventData)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.connect", "ConnectService.ProcessClientMessageEventAsync");
         var clientId = eventData.ClientId.ToString();
         try
         {
@@ -1972,6 +1998,7 @@ public partial class ConnectService : IConnectService, IDisposable
     /// </summary>
     internal async Task ProcessClientRPCEventAsync(ClientRPCEvent eventData)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.connect", "ConnectService.ProcessClientRPCEventAsync");
         var clientId = eventData.ClientId.ToString();
         try
         {
@@ -2008,7 +2035,7 @@ public partial class ConnectService : IConnectService, IDisposable
                     var pendingRPC = new PendingRPCInfo
                     {
                         ClientSessionId = eventData.ClientId,
-                        ServiceName = eventData.ServiceName ?? "unknown",
+                        ServiceName = eventData.ServiceName,
                         ResponseChannel = eventData.ResponseChannel,
                         ServiceGuid = eventData.ServiceGuid,
                         SentAt = now,
@@ -2047,6 +2074,7 @@ public partial class ConnectService : IConnectService, IDisposable
         string sessionId,
         CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.connect", "ConnectService.ForwardRPCResponseAsync");
         _logger.LogDebug(
             "Forwarding RPC response from session {SessionId} to service {ServiceName} via channel {ResponseChannel}",
             sessionId, pendingRPC.ServiceName, pendingRPC.ResponseChannel);
@@ -2056,7 +2084,7 @@ public partial class ConnectService : IConnectService, IDisposable
             // Create typed response event
             var responseEvent = new ClientRPCResponseEvent
             {
-                ClientId = Guid.TryParse(sessionId, out var clientGuid) ? clientGuid : Guid.Empty,
+                ClientId = Guid.Parse(sessionId),
                 ServiceName = pendingRPC.ServiceName,
                 ServiceGuid = pendingRPC.ServiceGuid,
                 MessageId = (long)response.MessageId,
@@ -2064,6 +2092,12 @@ public partial class ConnectService : IConnectService, IDisposable
                 ResponseCode = response.ResponseCode,
                 Timestamp = DateTimeOffset.UtcNow
             };
+
+            if (string.IsNullOrEmpty(pendingRPC.ResponseChannel))
+            {
+                _logger.LogWarning("Cannot forward RPC response - ResponseChannel is missing for message {MessageId}", response.MessageId);
+                return;
+            }
 
             await _messageBus.TryPublishAsync(
                 pendingRPC.ResponseChannel,
@@ -2129,6 +2163,7 @@ public partial class ConnectService : IConnectService, IDisposable
     /// </remarks>
     private async Task HandleClientEventAsync(string sessionId, byte[] eventPayload)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.connect", "ConnectService.HandleClientEventAsync");
         // Check if this is an internal event that should be handled locally, not forwarded to client
         if (await TryHandleInternalEventAsync(sessionId, eventPayload))
         {
@@ -2168,7 +2203,7 @@ public partial class ConnectService : IConnectService, IDisposable
             flags: MessageFlags.Event, // Server-initiated event, no response expected
             channel: 0, // Event channel
             sequenceNumber: 0, // Events don't need sequence numbers
-            serviceGuid: Guid.Empty, // System event
+            serviceGuid: SystemServiceGuid, // Wire protocol: system/control message
             messageId: GuidGenerator.GenerateMessageId(),
             payload: clientPayload
         );
@@ -2204,6 +2239,7 @@ public partial class ConnectService : IConnectService, IDisposable
     /// </remarks>
     private async Task<bool> TryHandleInternalEventAsync(string sessionId, byte[] eventPayload)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.connect", "ConnectService.TryHandleInternalEventAsync");
         try
         {
             // Try to parse just the event_name field to determine event type
@@ -2324,6 +2360,7 @@ public partial class ConnectService : IConnectService, IDisposable
     /// </summary>
     internal async Task<bool> SendMessageAsync(string sessionId, BinaryMessage message, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.connect", "ConnectService.SendMessageAsync");
         try
         {
             return await _connectionManager.SendMessageAsync(sessionId, message, cancellationToken);
@@ -2342,6 +2379,7 @@ public partial class ConnectService : IConnectService, IDisposable
     /// </summary>
     internal async Task DisconnectAsync(string sessionId, string reason)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.connect", "ConnectService.DisconnectAsync");
         try
         {
             var connection = _connectionManager.GetConnection(sessionId);
@@ -2377,6 +2415,7 @@ public partial class ConnectService : IConnectService, IDisposable
     /// </summary>
     private async Task<bool> ValidateSessionAsync(string sessionId)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.connect", "ConnectService.ValidateSessionAsync");
         await Task.CompletedTask; // Satisfy async requirement for sync method
         try
         {
@@ -2403,6 +2442,7 @@ public partial class ConnectService : IConnectService, IDisposable
         ICollection<string>? authorizations = null,
         CancellationToken cancellationToken = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.connect", "ConnectService.InitializeSessionCapabilitiesAsync");
         await Task.CompletedTask; // Satisfy async requirement for sync method
         // Capabilities are delivered via event-driven flow:
         // 1. Connect publishes session.connected with roles/authorizations
@@ -2423,83 +2463,53 @@ public partial class ConnectService : IConnectService, IDisposable
     /// Sends the capability manifest to the client after WebSocket connection is established.
     /// This tells the client what APIs they can access and provides their client-salted GUIDs.
     /// </summary>
-    private async Task SendCapabilityManifestAsync(
+    /// <summary>
+    /// Serializes a capability manifest and sends it as a binary event message to the client.
+    /// Shared by all manifest-sending code paths to avoid duplication.
+    /// </summary>
+    private async Task SerializeAndSendManifestAsync(
         string sessionId,
-        ConnectionState connectionState,
+        CapabilityManifestEvent manifest,
         CancellationToken cancellationToken)
     {
-        try
+        using var activity = _telemetryProvider.StartActivity("bannou.connect", "ConnectService.SerializeAndSendManifestAsync");
+        var manifestJson = BannouJson.Serialize(manifest);
+        var manifestBytes = Encoding.UTF8.GetBytes(manifestJson);
+
+        var capabilityMessage = new BinaryMessage(
+            flags: MessageFlags.Event,
+            channel: 0,
+            sequenceNumber: 0,
+            serviceGuid: SystemServiceGuid,
+            messageId: GuidGenerator.GenerateMessageId(),
+            payload: manifestBytes
+        );
+
+        await _connectionManager.SendMessageAsync(sessionId, capabilityMessage, cancellationToken);
+    }
+
+    /// <summary>
+    /// Builds ClientCapabilityEntry items from active shortcuts, filtering out expired ones.
+    /// </summary>
+    private List<ClientCapabilityEntry> BuildShortcutCapabilityEntries(ConnectionState connectionState)
+    {
+        var entries = new List<ClientCapabilityEntry>();
+        var shortcutEntries = _manifestBuilder.BuildShortcutList(
+            connectionState.GetAllShortcuts(),
+            expiredGuid => connectionState.RemoveShortcut(expiredGuid));
+
+        foreach (var shortcut in shortcutEntries)
         {
-            // Build the capability manifest with available APIs and their GUIDs
-            // Uses helper for parsing and filtering logic
-            var apiEntries = _manifestBuilder.BuildApiList(connectionState.ServiceMappings);
-            var shortcutEntries = _manifestBuilder.BuildShortcutList(
-                connectionState.GetAllShortcuts(),
-                expiredGuid => connectionState.RemoveShortcut(expiredGuid));
-
-            // Transform to WebSocket JSON format using generated types
-            var availableApis = new List<ClientCapabilityEntry>();
-
-            foreach (var api in apiEntries)
+            entries.Add(new ClientCapabilityEntry
             {
-                availableApis.Add(new ClientCapabilityEntry
-                {
-                    ServiceId = api.ServiceGuid,
-                    Endpoint = api.Path,
-                    Service = api.ServiceName,
-                    Description = api.Description
-                });
-            }
-
-            // Add shortcuts to availableAPIs - they look identical to regular endpoints from client perspective
-            foreach (var shortcut in shortcutEntries)
-            {
-                // Shortcuts use new schema format with "shortcut" as service
-                availableApis.Add(new ClientCapabilityEntry
-                {
-                    ServiceId = shortcut.RouteGuid,
-                    Endpoint = shortcut.Name ?? shortcut.RouteGuid.ToString(),
-                    Service = "shortcut",
-                    Description = shortcut.Description ?? $"Shortcut to {shortcut.Name}"
-                });
-            }
-
-            var capabilityManifest = new CapabilityManifestEvent
-            {
-                SessionId = Guid.Parse(sessionId),
-                AvailableApis = availableApis,
-                Version = 1,
-                PeerGuid = connectionState.PeerGuid
-            };
-
-            var manifestJson = BannouJson.Serialize(capabilityManifest);
-            var manifestBytes = Encoding.UTF8.GetBytes(manifestJson);
-
-            // Create a binary message as an Event (no response expected)
-            var capabilityMessage = new BinaryMessage(
-                flags: MessageFlags.Event, // Server-initiated event, no response expected
-                channel: 0, // Control channel for system messages
-                sequenceNumber: 0,
-                serviceGuid: Guid.Empty, // System message
-                messageId: GuidGenerator.GenerateMessageId(),
-                payload: manifestBytes
-            );
-
-            _logger.LogInformation(
-                "Sending capability manifest to session {SessionId} with {ApiCount} available APIs (including shortcuts)",
-                sessionId, availableApis.Count);
-
-            // Route through connection manager for compression support
-            await _connectionManager.SendMessageAsync(sessionId, capabilityMessage, cancellationToken);
-
-            _logger.LogDebug("Capability manifest sent successfully to session {SessionId}", sessionId);
+                ServiceId = shortcut.RouteGuid,
+                Endpoint = shortcut.Name ?? shortcut.RouteGuid.ToString(),
+                Service = "shortcut",
+                Description = shortcut.Description ?? $"Shortcut to {shortcut.Name}"
+            });
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Failed to send capability manifest to session {SessionId}", sessionId);
-            await PublishErrorEventAsync("SendCapabilityManifest", ex.GetType().Name, ex.Message, details: new { SessionId = sessionId });
-            // Don't throw - capability manifest is informational, connection can continue
-        }
+
+        return entries;
     }
 
     /// <summary>
@@ -2509,6 +2519,7 @@ public partial class ConnectService : IConnectService, IDisposable
     /// </summary>
     private async Task ProcessCapabilitiesAsync(string sessionId, Dictionary<string, List<string>> permissions, string reason, CancellationToken cancellationToken = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.connect", "ConnectService.ProcessCapabilitiesAsync");
         try
         {
             var connection = _connectionManager.GetConnection(sessionId);
@@ -2569,25 +2580,8 @@ public partial class ConnectService : IConnectService, IDisposable
                 });
             }
 
-            // Add shortcuts to availableAPIs - they look identical to regular endpoints from client perspective
-            foreach (var shortcut in connectionState.GetAllShortcuts())
-            {
-                // Skip expired shortcuts
-                if (shortcut.IsExpired)
-                {
-                    connectionState.RemoveShortcut(shortcut.RouteGuid);
-                    continue;
-                }
-
-                // Shortcuts use new schema format with "shortcut" as service
-                availableApis.Add(new ClientCapabilityEntry
-                {
-                    ServiceId = shortcut.RouteGuid,
-                    Endpoint = shortcut.Name ?? shortcut.RouteGuid.ToString(),
-                    Service = "shortcut",
-                    Description = shortcut.Description ?? $"Shortcut to {shortcut.Name}"
-                });
-            }
+            // Add shortcuts (filtered for expiry)
+            availableApis.AddRange(BuildShortcutCapabilityEntries(connectionState));
 
             // Build typed manifest with conditional peerGuid inclusion
             // External mode: No peerGuid (clients cannot route to each other)
@@ -2600,19 +2594,7 @@ public partial class ConnectService : IConnectService, IDisposable
                 PeerGuid = _connectionMode != ConnectionMode.External ? connectionState.PeerGuid : null
             };
 
-            var manifestJson = BannouJson.Serialize(capabilityManifest);
-            var manifestBytes = Encoding.UTF8.GetBytes(manifestJson);
-
-            var capabilityMessage = new BinaryMessage(
-                flags: MessageFlags.Event,
-                channel: 0,
-                sequenceNumber: 0,
-                serviceGuid: Guid.Empty,
-                messageId: GuidGenerator.GenerateMessageId(),
-                payload: manifestBytes
-            );
-
-            await _connectionManager.SendMessageAsync(sessionId, capabilityMessage, cancellationToken);
+            await SerializeAndSendManifestAsync(sessionId, capabilityManifest, cancellationToken);
 
             _logger.LogInformation(
                 "Processed capabilities for session {SessionId}: {ApiCount} APIs (including shortcuts) (reason: {Reason})",
@@ -2632,6 +2614,7 @@ public partial class ConnectService : IConnectService, IDisposable
     /// </summary>
     public async Task DisconnectSessionAsync(string sessionId, string reason, CancellationToken cancellationToken = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.connect", "ConnectService.DisconnectSessionAsync");
         WebSocketConnection? connection = null;
         connection = _connectionManager.GetConnection(sessionId);
         if (connection == null)
@@ -2683,6 +2666,7 @@ public partial class ConnectService : IConnectService, IDisposable
     /// </summary>
     private async Task HandleShortcutPublishedAsync(string sessionId, JsonElement root)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.connect", "ConnectService.HandleShortcutPublishedAsync");
         try
         {
             var connection = _connectionManager.GetConnection(sessionId);
@@ -2880,6 +2864,7 @@ public partial class ConnectService : IConnectService, IDisposable
     /// </summary>
     private async Task HandleShortcutRevokedAsync(string sessionId, JsonElement root)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.connect", "ConnectService.HandleShortcutRevokedAsync");
         try
         {
             var connection = _connectionManager.GetConnection(sessionId);
@@ -2957,6 +2942,7 @@ public partial class ConnectService : IConnectService, IDisposable
         ConnectionState connectionState,
         CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.connect", "ConnectService.SendCapabilityManifestWithShortcutsAsync");
         try
         {
             // Check if ServiceMappings is populated - if empty, initial capabilities haven't arrived yet
@@ -2970,13 +2956,8 @@ public partial class ConnectService : IConnectService, IDisposable
                 return;
             }
 
-            // Build the capability manifest with available APIs using helper
+            // Build API entries from service mappings + shortcuts
             var apiEntries = _manifestBuilder.BuildApiList(connectionState.ServiceMappings);
-            var shortcutEntries = _manifestBuilder.BuildShortcutList(
-                connectionState.GetAllShortcuts(),
-                expiredGuid => connectionState.RemoveShortcut(expiredGuid));
-
-            // Transform to WebSocket JSON format using generated ClientCapabilityEntry
             var availableApis = new List<ClientCapabilityEntry>();
 
             foreach (var api in apiEntries)
@@ -2990,45 +2971,21 @@ public partial class ConnectService : IConnectService, IDisposable
                 });
             }
 
-            // Add shortcuts to availableAPIs - they look identical to regular endpoints from client perspective
-            foreach (var shortcut in shortcutEntries)
-            {
-                // Shortcuts use new schema format with "shortcut" as service
-                availableApis.Add(new ClientCapabilityEntry
-                {
-                    ServiceId = shortcut.RouteGuid,
-                    Endpoint = shortcut.Name ?? shortcut.RouteGuid.ToString(),
-                    Service = "shortcut",
-                    Description = shortcut.Description ?? $"Shortcut to {shortcut.Name}"
-                });
-            }
+            availableApis.AddRange(BuildShortcutCapabilityEntries(connectionState));
 
             var capabilityManifest = new CapabilityManifestEvent
             {
                 SessionId = Guid.Parse(sessionId),
                 AvailableApis = availableApis,
                 Version = 1,
-                PeerGuid = connectionState.PeerGuid
+                PeerGuid = _connectionMode != ConnectionMode.External ? connectionState.PeerGuid : null
             };
 
-            var manifestJson = BannouJson.Serialize(capabilityManifest);
-            var manifestBytes = Encoding.UTF8.GetBytes(manifestJson);
-
-            var capabilityMessage = new BinaryMessage(
-                flags: MessageFlags.Event,
-                channel: 0,
-                sequenceNumber: 0,
-                serviceGuid: Guid.Empty,
-                messageId: GuidGenerator.GenerateMessageId(),
-                payload: manifestBytes
-            );
+            await SerializeAndSendManifestAsync(sessionId, capabilityManifest, cancellationToken);
 
             _logger.LogInformation(
                 "Sending capability manifest to session {SessionId} with {ApiCount} APIs (including shortcuts)",
                 sessionId, availableApis.Count);
-
-            // Route through connection manager for compression support
-            await _connectionManager.SendMessageAsync(sessionId, capabilityMessage, cancellationToken);
         }
         catch (Exception ex)
         {
@@ -3110,34 +3067,45 @@ public partial class ConnectService : IConnectService, IDisposable
 
     #endregion
 
-    #region IDisposable
+    #region IDisposable / IAsyncDisposable
 
     private bool _disposed;
 
     /// <summary>
-    /// Disposes the ConnectService, gracefully closing all WebSocket connections.
-    /// Called by the DI container during application shutdown.
+    /// Asynchronously disposes the ConnectService, gracefully closing all WebSocket connections.
+    /// Preferred by the DI container during application shutdown over the synchronous Dispose.
     /// </summary>
-    public void Dispose()
+    public async ValueTask DisposeAsync()
     {
-        if (_disposed)
-        {
-            return;
-        }
-
+        if (_disposed) return;
         _disposed = true;
 
         _logger.LogInformation("ConnectService shutting down - closing all WebSocket connections");
 
-        // Dispose the pending RPC cleanup timer
         _pendingRPCCleanupTimer?.Dispose();
         _pendingRPCCleanupTimer = null;
 
-        // Dispose the inter-node broadcast manager (deregisters from Redis, closes mesh connections)
         _interNodeBroadcast.Dispose();
 
-        // Dispose the connection manager, which gracefully closes all WebSocket connections
-        // with "Server shutdown" close frames and waits up to ConnectionShutdownTimeoutSeconds
+        await _connectionManager.DisposeAsync();
+
+        _logger.LogInformation("ConnectService shutdown complete");
+    }
+
+    /// <summary>
+    /// Synchronous fallback disposal. The DI container prefers DisposeAsync when available.
+    /// </summary>
+    public void Dispose()
+    {
+        if (_disposed) return;
+        _disposed = true;
+
+        _logger.LogInformation("ConnectService shutting down - closing all WebSocket connections");
+
+        _pendingRPCCleanupTimer?.Dispose();
+        _pendingRPCCleanupTimer = null;
+
+        _interNodeBroadcast.Dispose();
         _connectionManager.Dispose();
 
         _logger.LogInformation("ConnectService shutdown complete");

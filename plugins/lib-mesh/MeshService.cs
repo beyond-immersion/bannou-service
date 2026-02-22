@@ -92,7 +92,6 @@ public partial class MeshService : IMeshService
 
         var response = new GetEndpointsResponse
         {
-            AppId = body.AppId,
             Endpoints = endpoints,
             HealthyCount = endpoints.Count(e => e.Status == EndpointStatus.Healthy),
             TotalCount = endpoints.Count
@@ -224,10 +223,7 @@ public partial class MeshService : IMeshService
             DeregistrationReason.Graceful,
             cancellationToken);
 
-        return (StatusCodes.OK, new DeregisterEndpointResponse
-        {
-            Message = $"Endpoint {body.InstanceId} deregistered from app-id '{endpoint.AppId}'"
-        });
+        return (StatusCodes.OK, new DeregisterEndpointResponse());
     }
 
     /// <summary>

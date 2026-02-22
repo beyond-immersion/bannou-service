@@ -211,7 +211,7 @@ Tenets are organized into categories based on when they're needed:
 |---|------|-----------|
 | **T3** | Event Consumer Fan-Out | Use IEventConsumer for multi-plugin event handling |
 | **T7** | Error Handling | Generated controller provides catch-all boundary (do not duplicate in service methods); ApiException catch only for inter-service calls; service try-catch only for specific recovery logic; TryPublishErrorAsync; instance identity from IMeshInstanceIdentifier only |
-| **T8** | Return Pattern | All methods return `(StatusCodes, TResponse?)` tuples |
+| **T8** | Return Pattern | All methods return `(StatusCodes, TResponse?)` tuples; null payload for errors; no filler properties in success responses |
 | **T9** | Multi-Instance Safety | No in-memory authoritative state; use distributed locks |
 | **T14** | Polymorphic Associations | Entity ID + Type columns; composite string keys |
 | **T17** | Client Event Schema Pattern | Use IClientEventPublisher for WebSocket push; not IMessageBus |
@@ -275,6 +275,11 @@ Tenets are organized into categories based on when they're needed:
 | Passing instance ID to `TryPublishErrorAsync` | T7 | Instance identity injected internally from `IMeshInstanceIdentifier` |
 | Using `Guid.NewGuid()` or fixed string for error event `ServiceId` | T7 | `ServiceId` comes from `IMeshInstanceIdentifier` (process-stable) |
 | Using Microsoft.AspNetCore.Http.StatusCodes | T8 | Use BeyondImmersion.BannouService.StatusCodes |
+| Success boolean in response (`locked: true`, `deleted: true`) | T8 | Remove from schema; 200 OK already confirms success |
+| Confirmation message string in response | T8 | Remove from schema; status code communicates result |
+| Action timestamp in response (`executedAt`, `registeredAt`) | T8 | Remove unless it represents stored entity state |
+| Request field echoed back in response | T8 | Remove from schema; caller already knows what they sent |
+| Observability metrics in non-diagnostics response | T8 | Remove or move to dedicated diagnostics endpoint |
 | Plain Dictionary for cache | T9 | Use ConcurrentDictionary |
 | Per-instance salt/key generation | T9 | Use shared/deterministic values |
 | Wrong exchange for client events | T17 | Use IClientEventPublisher, not IMessageBus |

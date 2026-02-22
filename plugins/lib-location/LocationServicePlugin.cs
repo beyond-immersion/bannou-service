@@ -86,14 +86,7 @@ public class LocationServicePlugin : StandardServicePlugin<ILocationService>
                 }
             }, cancellationToken);
 
-            if (response.Registered)
-            {
-                Logger?.LogInformation("Territory clause type handler registered successfully with Contract service");
-            }
-            else
-            {
-                Logger?.LogDebug("Territory clause type already registered with Contract service");
-            }
+            Logger?.LogInformation("Territory clause type handler registered successfully with Contract service: {TypeCode}", response.TypeCode);
         }
         catch (ApiException ex) when (ex.StatusCode == 409)
         {

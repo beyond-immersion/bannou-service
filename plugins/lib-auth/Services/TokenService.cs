@@ -273,7 +273,6 @@ public class TokenService : ITokenService
                 // key used in account-sessions index and published in SessionInvalidatedEvent
                 return (StatusCodes.OK, new ValidateTokenResponse
                 {
-                    Valid = true,
                     AccountId = sessionData.AccountId,
                     SessionKey = Guid.Parse(sessionKey),
                     Roles = sessionData.Roles,

@@ -124,6 +124,7 @@ internal class ContractInstanceModel
     public Guid ContractId { get; set; }
     public Guid TemplateId { get; set; }
     public string TemplateCode { get; set; } = string.Empty;
+    public string? TemplateName { get; set; }
     public ContractStatus Status { get; set; } = ContractStatus.Draft;
     public List<ContractPartyModel>? Parties { get; set; }
     public ContractTermsModel? Terms { get; set; }
@@ -152,6 +153,11 @@ internal class ContractInstanceModel
     public DateTimeOffset? ExecutedAt { get; set; }
     public string? ExecutionIdempotencyKey { get; set; }
     public List<DistributionRecordModel>? ExecutionDistributions { get; set; }
+
+    // Payment schedule tracking
+    public DateTimeOffset? NextPaymentDue { get; set; }
+    public DateTimeOffset? LastPaymentAt { get; set; }
+    public int PaymentsDuePublished { get; set; }
 }
 
 /// <summary>

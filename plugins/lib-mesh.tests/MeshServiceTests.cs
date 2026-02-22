@@ -91,7 +91,6 @@ public class MeshServiceTests
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
         Assert.NotNull(response);
-        Assert.Equal("bannou", response.AppId);
         Assert.Equal(2, response.TotalCount);
         Assert.Equal(2, response.HealthyCount);
     }
@@ -336,7 +335,7 @@ public class MeshServiceTests
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
         Assert.NotNull(response);
-        Assert.Contains("bannou", response.Message);
+        // HTTP 200 confirms deregistration; response is an empty object
     }
 
     [Fact]

@@ -69,7 +69,6 @@ public partial class TelemetryService : ITelemetryService
 
         var response = new TelemetryHealthResponse
         {
-            Healthy = true, // Service is running, so it's healthy
             TracingEnabled = _configuration.TracingEnabled,
             MetricsEnabled = _configuration.MetricsEnabled,
             OtlpEndpoint = (_configuration.TracingEnabled || _configuration.MetricsEnabled)

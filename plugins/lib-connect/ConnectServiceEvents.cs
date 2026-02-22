@@ -42,6 +42,7 @@ public partial class ConnectService
     /// <param name="evt">The session invalidated event.</param>
     public async Task HandleSessionInvalidatedAsync(SessionInvalidatedEvent evt)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.connect", "ConnectService.HandleSessionInvalidatedAsync");
         var sessionIds = evt.SessionIds?.Select(id => id.ToString()).ToList() ?? new List<string>();
         var reason = evt.Reason.ToString();
         var disconnectClients = evt.DisconnectClients;
@@ -73,6 +74,7 @@ public partial class ConnectService
     /// <param name="evt">The service error event.</param>
     public async Task HandleServiceErrorAsync(ServiceErrorEvent evt)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.connect", "ConnectService.HandleServiceErrorAsync");
         var adminCount = _connectionManager.GetAdminConnectionCount();
         if (adminCount == 0)
         {

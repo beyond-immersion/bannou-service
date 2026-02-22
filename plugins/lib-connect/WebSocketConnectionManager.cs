@@ -9,8 +9,9 @@ namespace BeyondImmersion.BannouService.Connect;
 /// Manages WebSocket connections and their associated state.
 /// Handles connection lifecycle, message queuing, and cleanup.
 /// </summary>
-public class WebSocketConnectionManager
+public class WebSocketConnectionManager : IDisposable, IAsyncDisposable
 {
+    private bool _disposed;
     private readonly ConcurrentDictionary<string, WebSocketConnection> _connections;
     private readonly ConcurrentDictionary<Guid, string> _peerGuidToSessionId;
     private readonly Timer _cleanupTimer;
@@ -366,27 +367,71 @@ public class WebSocketConnectionManager
         }
     }
 
-    public void Dispose()
+    /// <inheritdoc/>
+    public async ValueTask DisposeAsync()
     {
+        if (_disposed) return;
+        _disposed = true;
+
         _cleanupTimer?.Dispose();
 
-        // Close all connections
-        Parallel.ForEach(_connections.Values, connection =>
+        // Close all connections concurrently with per-connection timeout
+        var closeTasks = _connections.Values.Select(async connection =>
         {
             try
             {
                 if (connection.WebSocket.State == WebSocketState.Open)
                 {
-                    connection.WebSocket.CloseAsync(WebSocketCloseStatus.NormalClosure,
-                        "Server shutdown", CancellationToken.None).Wait(TimeSpan.FromSeconds(_connectionShutdownTimeoutSeconds));
+                    using var cts = new CancellationTokenSource(
+                        TimeSpan.FromSeconds(_connectionShutdownTimeoutSeconds));
+                    await connection.WebSocket.CloseAsync(
+                        WebSocketCloseStatus.NormalClosure,
+                        "Server shutdown",
+                        cts.Token);
+                }
+            }
+            catch (OperationCanceledException)
+            {
+                // Close timed out — expected during shutdown
+            }
+            catch (Exception ex)
+            {
+                _logger?.LogDebug(ex, "Error closing WebSocket connection during shutdown");
+            }
+        });
+
+        await Task.WhenAll(closeTasks);
+
+        _connections.Clear();
+        _peerGuidToSessionId.Clear();
+    }
+
+    /// <inheritdoc/>
+    public void Dispose()
+    {
+        if (_disposed) return;
+        _disposed = true;
+
+        _cleanupTimer?.Dispose();
+
+        // Synchronous fallback: fire-and-forget close frames, then dispose immediately
+        foreach (var connection in _connections.Values)
+        {
+            try
+            {
+                if (connection.WebSocket.State == WebSocketState.Open)
+                {
+                    _ = connection.WebSocket.CloseAsync(
+                        WebSocketCloseStatus.NormalClosure,
+                        "Server shutdown",
+                        CancellationToken.None);
                 }
             }
             catch (Exception ex)
             {
-                // Log cleanup errors during shutdown - expected during connection teardown
                 _logger?.LogDebug(ex, "Error closing WebSocket connection during shutdown");
             }
-        });
+        }
 
         _connections.Clear();
         _peerGuidToSessionId.Clear();

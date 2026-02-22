@@ -541,7 +541,7 @@ public partial class AuthService : IAuthService
 
         // Validate JWT and extract session key
         var (validateStatus, validateResponse) = await ValidateTokenAsync(jwt, cancellationToken);
-        if (validateStatus != StatusCodes.OK || validateResponse == null || !validateResponse.Valid)
+        if (validateStatus != StatusCodes.OK || validateResponse == null)
         {
             _logger.LogWarning("Invalid JWT token provided for logout");
             return StatusCodes.Unauthorized;
@@ -908,7 +908,7 @@ public partial class AuthService : IAuthService
 
         // Validate JWT and get account information
         var (validateStatus, validateResponse) = await ValidateTokenAsync(jwt, cancellationToken);
-        if (validateStatus != StatusCodes.OK || validateResponse == null || !validateResponse.Valid)
+        if (validateStatus != StatusCodes.OK || validateResponse == null)
         {
             _logger.LogWarning("Invalid JWT token provided for get sessions");
             return (StatusCodes.Unauthorized, null);
@@ -1018,27 +1018,23 @@ public partial class AuthService : IAuthService
             return (StatusCodes.OK, new RevocationListResponse
             {
                 RevokedTokens = new List<RevokedTokenEntry>(),
-                RevokedAccounts = new List<RevokedAccountEntry>(),
-                FailedPushCount = 0,
-                TotalTokenCount = null
+                RevokedAccounts = new List<RevokedAccountEntry>()
             });
         }
 
-        var (tokens, accounts, failedCount, totalTokenCount) = await _edgeRevocationService.GetRevocationListAsync(
+        var (tokens, accounts, _, _) = await _edgeRevocationService.GetRevocationListAsync(
             body.IncludeTokens,
             body.IncludeAccounts,
             body.Limit,
             cancellationToken);
 
-        _logger.LogInformation("Returning revocation list: {TokenCount} tokens, {AccountCount} accounts, {FailedCount} failed pushes",
-            tokens.Count, accounts.Count, failedCount);
+        _logger.LogInformation("Returning revocation list: {TokenCount} tokens, {AccountCount} accounts",
+            tokens.Count, accounts.Count);
 
         return (StatusCodes.OK, new RevocationListResponse
         {
             RevokedTokens = tokens,
-            RevokedAccounts = accounts,
-            FailedPushCount = failedCount,
-            TotalTokenCount = totalTokenCount
+            RevokedAccounts = accounts
         });
     }
 

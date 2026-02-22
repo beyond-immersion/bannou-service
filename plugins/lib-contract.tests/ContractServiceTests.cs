@@ -2321,7 +2321,6 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
         // Assert
         Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(response);
-        Assert.True(response.Locked);
         Assert.Equal(contractId, response.ContractId);
         Assert.Equal(guardianId, response.GuardianId);
     }
@@ -2442,7 +2441,6 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
         // Assert
         Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(response);
-        Assert.True(response.Unlocked);
     }
 
     [Fact]
@@ -2529,7 +2527,6 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
         // Assert
         Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(response);
-        Assert.True(response.Transferred);
         Assert.Equal(toEntityId, response.ToEntityId);
         Assert.Equal("employer", response.Role);
     }
@@ -2611,7 +2608,6 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
         // Assert
         Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(response);
-        Assert.True(response.Registered);
         Assert.Equal("custom_fee", response.TypeCode);
     }
 
@@ -2732,7 +2728,6 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
         // Assert
         Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(response);
-        Assert.True(response.Updated);
         Assert.Equal(3, response.ValueCount);
     }
 
@@ -3007,9 +3002,7 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
         // Assert
         Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(response);
-        Assert.True(response.Executed);
         Assert.True(response.AlreadyExecuted);
-        Assert.Equal(executedAt, response.ExecutedAt);
     }
 
     [Fact]
@@ -3053,9 +3046,7 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
         // Assert
         Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(response);
-        Assert.True(response.Executed);
         Assert.False(response.AlreadyExecuted);
-        Assert.NotNull(response.ExecutedAt);
     }
 
     [Fact]
@@ -3515,7 +3506,6 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
         // Assert
         Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(response);
-        Assert.True(response.Executed);
         Assert.NotNull(response.Distributions);
         Assert.Single(response.Distributions);
         Assert.Equal("currency", response.Distributions.First().AssetType);
@@ -3612,7 +3602,6 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
         // Assert
         Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(response);
-        Assert.True(response.Executed);
         Assert.NotNull(response.Distributions);
         Assert.Single(response.Distributions);
         Assert.Equal("item", response.Distributions.First().AssetType);
@@ -3709,12 +3698,411 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
         // Assert
         Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(response);
-        Assert.True(response.Executed);
         Assert.NotNull(response.Distributions);
         Assert.Single(response.Distributions);
         Assert.Equal("currency", response.Distributions.First().AssetType);
         Assert.Equal("fee", response.Distributions.First().ClauseType);
         Assert.True(response.Distributions.First().Succeeded);
+    }
+
+    #endregion
+
+    #region Payment Schedule Tests
+
+    [Fact]
+    public void InitializePaymentSchedule_OneTime_SetsNextPaymentDue()
+    {
+        // Arrange
+        var service = CreateService();
+        var model = CreateTestInstanceModel(Guid.NewGuid());
+        model.Status = ContractStatus.Active;
+        model.EffectiveFrom = DateTimeOffset.UtcNow;
+        model.Terms = new ContractTermsModel
+        {
+            PaymentSchedule = PaymentSchedule.OneTime
+        };
+        model.Milestones = new List<MilestoneInstanceModel>
+        {
+            new() { Code = "m1", Name = "M1", Status = MilestoneStatus.Active, Sequence = 1, Required = true }
+        };
+
+        // Act - use reflection to call private method, or test via consent flow
+        // Since InitializePaymentSchedule is private, test through CheckAndAdvancePaymentSchedule
+        // which is internal and accessible via InternalsVisibleTo
+        model.NextPaymentDue = model.EffectiveFrom;
+        model.PaymentsDuePublished = 0;
+        var now = DateTimeOffset.UtcNow.AddMinutes(5);
+        var modified = service.CheckAndAdvancePaymentSchedule(model, now);
+
+        // Assert
+        Assert.True(modified);
+        Assert.Null(model.NextPaymentDue); // One-time clears after first publish
+        Assert.Equal(1, model.PaymentsDuePublished);
+        Assert.Equal(now, model.LastPaymentAt);
+    }
+
+    [Fact]
+    public void CheckAndAdvancePaymentSchedule_Recurring_AdvancesNextPaymentDue()
+    {
+        // Arrange
+        var service = CreateService();
+        var effectiveFrom = DateTimeOffset.UtcNow.AddDays(-10);
+        var model = CreateTestInstanceModel(Guid.NewGuid());
+        model.Status = ContractStatus.Active;
+        model.EffectiveFrom = effectiveFrom;
+        model.Terms = new ContractTermsModel
+        {
+            PaymentSchedule = PaymentSchedule.Recurring,
+            PaymentFrequency = "P7D" // Weekly
+        };
+        model.NextPaymentDue = effectiveFrom; // First payment was due at activation
+        model.PaymentsDuePublished = 0;
+
+        // Act - first payment due (now is 10 days after effectiveFrom)
+        var now = DateTimeOffset.UtcNow;
+        var modified = service.CheckAndAdvancePaymentSchedule(model, now);
+
+        // Assert
+        Assert.True(modified);
+        Assert.Equal(1, model.PaymentsDuePublished);
+        Assert.NotNull(model.NextPaymentDue);
+        // Should advance past now: effectiveFrom + 7d = -3d (still past), +14d = +4d (future)
+        Assert.True(model.NextPaymentDue > now);
+    }
+
+    [Fact]
+    public void CheckAndAdvancePaymentSchedule_NotDueYet_ReturnsFalse()
+    {
+        // Arrange
+        var service = CreateService();
+        var model = CreateTestInstanceModel(Guid.NewGuid());
+        model.Status = ContractStatus.Active;
+        model.Terms = new ContractTermsModel
+        {
+            PaymentSchedule = PaymentSchedule.Recurring,
+            PaymentFrequency = "P7D"
+        };
+        model.NextPaymentDue = DateTimeOffset.UtcNow.AddDays(3); // 3 days in the future
+        model.PaymentsDuePublished = 0;
+
+        // Act
+        var modified = service.CheckAndAdvancePaymentSchedule(model, DateTimeOffset.UtcNow);
+
+        // Assert
+        Assert.False(modified);
+        Assert.Equal(0, model.PaymentsDuePublished);
+    }
+
+    [Fact]
+    public void CheckAndAdvancePaymentSchedule_NullNextPaymentDue_ReturnsFalse()
+    {
+        // Arrange
+        var service = CreateService();
+        var model = CreateTestInstanceModel(Guid.NewGuid());
+        model.Status = ContractStatus.Active;
+        model.NextPaymentDue = null; // No payment tracking (milestone-based or none)
+
+        // Act
+        var modified = service.CheckAndAdvancePaymentSchedule(model, DateTimeOffset.UtcNow);
+
+        // Assert
+        Assert.False(modified);
+    }
+
+    [Fact]
+    public void CheckAndAdvancePaymentSchedule_MilestoneBased_NoTracking()
+    {
+        // Arrange
+        var service = CreateService();
+        var model = CreateTestInstanceModel(Guid.NewGuid());
+        model.Status = ContractStatus.Active;
+        model.Terms = new ContractTermsModel
+        {
+            PaymentSchedule = PaymentSchedule.MilestoneBased
+        };
+        model.NextPaymentDue = null; // milestone_based never sets NextPaymentDue
+
+        // Act
+        var modified = service.CheckAndAdvancePaymentSchedule(model, DateTimeOffset.UtcNow);
+
+        // Assert
+        Assert.False(modified);
+        Assert.Null(model.NextPaymentDue);
+    }
+
+    [Fact]
+    public void CheckAndAdvancePaymentSchedule_RecurringNoFrequency_ClearsNextPaymentDue()
+    {
+        // Arrange
+        var service = CreateService();
+        var model = CreateTestInstanceModel(Guid.NewGuid());
+        model.Status = ContractStatus.Active;
+        model.Terms = new ContractTermsModel
+        {
+            PaymentSchedule = PaymentSchedule.Recurring,
+            PaymentFrequency = null // Invalid: recurring with no frequency
+        };
+        model.NextPaymentDue = DateTimeOffset.UtcNow.AddMinutes(-1);
+        model.PaymentsDuePublished = 0;
+
+        // Act
+        var modified = service.CheckAndAdvancePaymentSchedule(model, DateTimeOffset.UtcNow);
+
+        // Assert
+        Assert.True(modified);
+        Assert.Null(model.NextPaymentDue); // Cleared to prevent infinite loop
+        Assert.Equal(1, model.PaymentsDuePublished);
+    }
+
+    [Fact]
+    public void CheckAndAdvancePaymentSchedule_RecurringMultiplePeriodsBehind_CatchesUp()
+    {
+        // Arrange
+        var service = CreateService();
+        var effectiveFrom = DateTimeOffset.UtcNow.AddDays(-30);
+        var model = CreateTestInstanceModel(Guid.NewGuid());
+        model.Status = ContractStatus.Active;
+        model.EffectiveFrom = effectiveFrom;
+        model.Terms = new ContractTermsModel
+        {
+            PaymentSchedule = PaymentSchedule.Recurring,
+            PaymentFrequency = "P7D" // Weekly
+        };
+        model.NextPaymentDue = effectiveFrom; // 30 days behind (4+ periods)
+        model.PaymentsDuePublished = 0;
+
+        // Act - one check cycle
+        var now = DateTimeOffset.UtcNow;
+        var modified = service.CheckAndAdvancePaymentSchedule(model, now);
+
+        // Assert
+        Assert.True(modified);
+        Assert.Equal(1, model.PaymentsDuePublished); // Only one event per cycle
+        Assert.NotNull(model.NextPaymentDue);
+        Assert.True(model.NextPaymentDue > now); // Caught up to future
+    }
+
+    [Fact]
+    public async Task PublishPaymentDueEventAsync_PublishesCorrectTopic()
+    {
+        // Arrange
+        var service = CreateService();
+        var contractId = Guid.NewGuid();
+        var model = CreateTestInstanceModel(contractId);
+        model.Status = ContractStatus.Active;
+        model.TemplateCode = "rental_agreement";
+        model.Terms = new ContractTermsModel
+        {
+            PaymentSchedule = PaymentSchedule.Recurring,
+            PaymentFrequency = "P1M"
+        };
+        model.Parties = new List<ContractPartyModel>
+        {
+            new() { EntityId = Guid.NewGuid(), EntityType = EntityType.Character, Role = "landlord", ConsentStatus = ConsentStatus.Consented },
+            new() { EntityId = Guid.NewGuid(), EntityType = EntityType.Character, Role = "tenant", ConsentStatus = ConsentStatus.Consented }
+        };
+
+        ContractPaymentDueEvent? publishedEvent = null;
+        _mockMessageBus
+            .Setup(m => m.TryPublishAsync(
+                "contract.payment.due",
+                It.IsAny<ContractPaymentDueEvent>(),
+                It.IsAny<PublishOptions?>(),
+                It.IsAny<Guid?>(),
+                It.IsAny<CancellationToken>()))
+            .Callback<string, ContractPaymentDueEvent, PublishOptions?, Guid?, CancellationToken>(
+                (_, evt, _, _, _) => publishedEvent = evt)
+            .ReturnsAsync(true);
+
+        // Act
+        await service.PublishPaymentDueEventAsync(model, 3, CancellationToken.None);
+
+        // Assert
+        Assert.NotNull(publishedEvent);
+        Assert.Equal(contractId, publishedEvent.ContractId);
+        Assert.Equal("rental_agreement", publishedEvent.TemplateCode);
+        Assert.Equal(PaymentSchedule.Recurring, publishedEvent.PaymentSchedule);
+        Assert.Equal("P1M", publishedEvent.PaymentFrequency);
+        Assert.Equal(3, publishedEvent.PaymentNumber);
+        Assert.NotNull(publishedEvent.Parties);
+        Assert.Equal(2, publishedEvent.Parties.Count);
+    }
+
+    #endregion
+
+    #region Pending to Active Transition Tests
+
+    [Fact]
+    public async Task GetContractInstanceStatusAsync_PendingContractReachedEffectiveFrom_TransitionsToActive()
+    {
+        // Arrange
+        var service = CreateService();
+        var contractId = Guid.NewGuid();
+        var instance = CreateTestInstanceModel(contractId);
+        instance.Status = ContractStatus.Pending;
+        instance.EffectiveFrom = DateTimeOffset.UtcNow.AddMinutes(-5); // 5 minutes ago
+        instance.Milestones = new List<MilestoneInstanceModel>
+        {
+            new() { Code = "m1", Name = "First", Status = MilestoneStatus.Pending, Required = true, Sequence = 1 }
+        };
+        instance.Parties = new List<ContractPartyModel>
+        {
+            new() { EntityId = Guid.NewGuid(), EntityType = EntityType.Character, Role = "employer", ConsentStatus = ConsentStatus.Consented },
+            new() { EntityId = Guid.NewGuid(), EntityType = EntityType.Character, Role = "employee", ConsentStatus = ConsentStatus.Consented }
+        };
+
+        _mockInstanceStore
+            .Setup(s => s.GetWithETagAsync($"instance:{contractId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((instance, "etag-0"));
+        _mockInstanceStore
+            .Setup(s => s.TrySaveAsync(It.IsAny<string>(), It.IsAny<ContractInstanceModel>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag-1");
+
+        var request = new GetContractInstanceStatusRequest { ContractId = contractId };
+
+        // Act
+        var (status, response) = await service.GetContractInstanceStatusAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Equal(ContractStatus.Active, response.Status);
+
+        // Verify the activated event was published
+        _mockMessageBus.Verify(
+            m => m.TryPublishAsync(
+                "contract.activated",
+                It.IsAny<ContractActivatedEvent>(),
+                It.IsAny<PublishOptions?>(),
+                It.IsAny<Guid?>(),
+                It.IsAny<CancellationToken>()),
+            Times.Once);
+
+        // Verify index updates (remove from pending, add to active)
+        _mockListStore.Verify(
+            s => s.SaveAsync(It.Is<string>(k => k == "status-idx:active"), It.IsAny<List<string>>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()),
+            Times.AtLeastOnce);
+    }
+
+    [Fact]
+    public async Task GetContractInstanceStatusAsync_PendingContractNotYetEffective_StaysPending()
+    {
+        // Arrange
+        var service = CreateService();
+        var contractId = Guid.NewGuid();
+        var instance = CreateTestInstanceModel(contractId);
+        instance.Status = ContractStatus.Pending;
+        instance.EffectiveFrom = DateTimeOffset.UtcNow.AddDays(7); // 7 days in the future
+
+        _mockInstanceStore
+            .Setup(s => s.GetWithETagAsync($"instance:{contractId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((instance, "etag-0"));
+
+        var request = new GetContractInstanceStatusRequest { ContractId = contractId };
+
+        // Act
+        var (status, response) = await service.GetContractInstanceStatusAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Equal(ContractStatus.Pending, response.Status);
+
+        // Verify no activation event published
+        _mockMessageBus.Verify(
+            m => m.TryPublishAsync(
+                "contract.activated",
+                It.IsAny<ContractActivatedEvent>(),
+                It.IsAny<PublishOptions?>(),
+                It.IsAny<Guid?>(),
+                It.IsAny<CancellationToken>()),
+            Times.Never);
+    }
+
+    [Fact]
+    public async Task GetContractInstanceStatusAsync_PendingNoMilestones_TransitionsToFulfilled()
+    {
+        // Arrange
+        var service = CreateService();
+        var contractId = Guid.NewGuid();
+        var instance = CreateTestInstanceModel(contractId);
+        instance.Status = ContractStatus.Pending;
+        instance.EffectiveFrom = DateTimeOffset.UtcNow.AddMinutes(-1);
+        instance.Milestones = null; // No milestones
+
+        _mockInstanceStore
+            .Setup(s => s.GetWithETagAsync($"instance:{contractId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((instance, "etag-0"));
+        _mockInstanceStore
+            .Setup(s => s.TrySaveAsync(It.IsAny<string>(), It.IsAny<ContractInstanceModel>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag-1");
+
+        var request = new GetContractInstanceStatusRequest { ContractId = contractId };
+
+        // Act
+        var (status, response) = await service.GetContractInstanceStatusAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Equal(ContractStatus.Fulfilled, response.Status);
+
+        // Verify both activated and fulfilled events published
+        _mockMessageBus.Verify(
+            m => m.TryPublishAsync(
+                "contract.activated",
+                It.IsAny<ContractActivatedEvent>(),
+                It.IsAny<PublishOptions?>(),
+                It.IsAny<Guid?>(),
+                It.IsAny<CancellationToken>()),
+            Times.Once);
+        _mockMessageBus.Verify(
+            m => m.TryPublishAsync(
+                "contract.fulfilled",
+                It.IsAny<ContractFulfilledEvent>(),
+                It.IsAny<PublishOptions?>(),
+                It.IsAny<Guid?>(),
+                It.IsAny<CancellationToken>()),
+            Times.Once);
+    }
+
+    [Fact]
+    public async Task GetContractInstanceStatusAsync_PendingWithPaymentTerms_InitializesPaymentSchedule()
+    {
+        // Arrange
+        var service = CreateService();
+        var contractId = Guid.NewGuid();
+        var instance = CreateTestInstanceModel(contractId);
+        instance.Status = ContractStatus.Pending;
+        instance.EffectiveFrom = DateTimeOffset.UtcNow.AddMinutes(-1);
+        instance.Terms = new ContractTermsModel
+        {
+            PaymentSchedule = PaymentSchedule.Recurring,
+            PaymentFrequency = "P7D"
+        };
+        instance.Milestones = new List<MilestoneInstanceModel>
+        {
+            new() { Code = "m1", Name = "First", Status = MilestoneStatus.Pending, Required = true, Sequence = 1 }
+        };
+
+        ContractInstanceModel? savedModel = null;
+        _mockInstanceStore
+            .Setup(s => s.GetWithETagAsync($"instance:{contractId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((instance, "etag-0"));
+        _mockInstanceStore
+            .Setup(s => s.TrySaveAsync(It.IsAny<string>(), It.IsAny<ContractInstanceModel>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Callback<string, ContractInstanceModel, string, CancellationToken>((_, m, _, _) => savedModel = m)
+            .ReturnsAsync("etag-1");
+
+        var request = new GetContractInstanceStatusRequest { ContractId = contractId };
+
+        // Act
+        await service.GetContractInstanceStatusAsync(request);
+
+        // Assert
+        Assert.NotNull(savedModel);
+        Assert.NotNull(savedModel.NextPaymentDue);
+        Assert.Equal(0, savedModel.PaymentsDuePublished);
     }
 
     #endregion

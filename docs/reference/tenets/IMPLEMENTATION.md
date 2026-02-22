@@ -215,6 +215,59 @@ return (StatusCodes.BadRequest, new CompileResponse { Success = false, Errors = 
 return (StatusCodes.BadRequest, null);
 ```
 
+### No Filler Properties in Success Responses (ABSOLUTE)
+
+The same principle applies to success responses: **every property in a response type MUST provide information the caller cannot derive from the status code alone.** A 200 OK already communicates "the operation succeeded." Properties that merely restate this fact are filler — they exist because someone assumed a response object needed fields in it, not because the caller needs the data.
+
+**Filler properties are FORBIDDEN in response schemas.** If removing a property would leave the caller with exactly the same information (because the status code already communicated it), that property should not exist.
+
+#### Filler Patterns (FORBIDDEN)
+
+| Pattern | Example | Why It's Filler |
+|---------|---------|-----------------|
+| **Success boolean** | `locked: true`, `deleted: true`, `executed: true` | 200 OK already says the operation succeeded |
+| **Confirmation message** | `message: "Registration complete"` | Human-readable restatement of 200 OK |
+| **Action timestamp** | `registeredAt`, `recompiledAt`, `executedAt` | Confirms "yes, this happened just now" — obvious from receiving 200 OK |
+| **Request echo** | `appId` echoed back from the request | Caller already knows what they sent |
+| **Healthy boolean** | `healthy: true` on a health endpoint | If the service answered 200, it's healthy |
+| **Observability metrics** | `failedPushCount`, `totalTokenCount` | Internal operational metrics, not caller-actionable data |
+
+#### What IS Meaningful (REQUIRED to keep)
+
+| Pattern | Example | Why It's Meaningful |
+|---------|---------|---------------------|
+| **Resource ID** | `contractId` on a create response | Caller needs this to reference the resource |
+| **Computed state** | `healthyCount`, `totalCount` on a list | Derived values caller couldn't compute from request |
+| **Entity timestamps** | `createdAt` on a GET response | Part of the entity's stored state, not a confirmation |
+| **Changed state** | `newPhase`, `capabilities` | Side effects the caller needs to know about |
+| **Operational data** | `nextHeartbeatSeconds`, `ttlSeconds` | Caller needs this to schedule future actions |
+| **Cache/version info** | `version`, `etag` | Caller needs this for cache invalidation or optimistic concurrency |
+
+#### The Litmus Test
+
+> **"If I deleted this property from the response, would the caller lose any information they didn't already have from the status code and their own request?"**
+
+- **YES** → Property is meaningful. Keep it.
+- **NO** → Property is filler. Remove it from the schema.
+
+#### When a Response Would Be Empty
+
+If removing all filler leaves a response with zero properties, the response type should still exist in the schema (NSwag requires it), but it should be an empty object with a description explaining that the status code is the response:
+
+```yaml
+LockContractResponse:
+  type: object
+  description: Empty response. HTTP 200 confirms the lock succeeded.
+  properties: {}
+```
+
+```csharp
+// Implementation returns the empty response type
+return (StatusCodes.OK, new LockContractResponse());
+```
+
+This is cleaner than inventing filler fields to make the response "look" like it has content.
+
 ---
 
 ## Tenet 9: Multi-Instance Safety (MANDATORY)
@@ -661,6 +714,11 @@ Services that need to create spans must have access to `ITelemetryProvider`. Thi
 | Generic catch returning 500 | T7 | Catch ApiException specifically |
 | Emitting error events for user errors | T7 | Only emit for unexpected/internal failures |
 | Using Microsoft.AspNetCore.Http.StatusCodes | T8 | Use BeyondImmersion.BannouService.StatusCodes |
+| Success boolean in response (`locked: true`, `deleted: true`) | T8 | Remove from schema; 200 OK already confirms success |
+| Confirmation message string in response | T8 | Remove from schema; status code communicates result |
+| Action timestamp in response (`executedAt`, `registeredAt`) | T8 | Remove from schema unless it represents stored entity state |
+| Request field echoed in response | T8 | Remove from schema; caller already knows what they sent |
+| Observability metrics in response (`failedPushCount`) | T8 | Remove or move to a dedicated diagnostics endpoint |
 | Plain Dictionary for cache | T9 | Use ConcurrentDictionary |
 | Per-instance salt/key generation | T9 | Use shared/deterministic values |
 | Wrong exchange for client events | T17 | Use IClientEventPublisher, not IMessageBus |

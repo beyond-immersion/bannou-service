@@ -343,29 +343,10 @@ components:
         admin: ["ListGameSessions", "GetGameSession", "CreateGameSession"]
 
     RegistrationResponse:
-      description: Response from registering or updating a service permission matrix
+      description: Empty response. HTTP 200 confirms the registration succeeded.
       type: object
       additionalProperties: false
-      required:
-      - serviceId
-      - affectedSessions
-      properties:
-        serviceId:
-          type: string
-          description: Service ID that was registered
-        message:
-          type: string
-          description: Success or error message
-        registered:
-          type: boolean
-          description: Whether registration was successful
-        affectedSessions:
-          type: integer
-          description: Number of sessions that had permissions recompiled
-        recompiledAt:
-          type: string
-          format: date-time
-          description: Timestamp when permissions were recompiled
+      properties: {}
 
     # Session Management Models
     SessionStateUpdate:

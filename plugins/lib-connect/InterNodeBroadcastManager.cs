@@ -198,9 +198,10 @@ public sealed class InterNodeBroadcastManager : IDisposable
                     _nodeConnections.TryRemove(instanceId, out _);
                 }
             }
-            catch (Exception)
+            catch (Exception ex)
             {
                 _nodeConnections.TryRemove(instanceId, out _);
+                _logger.LogDebug(ex, "Error relaying broadcast to peer {PeerInstanceId}", instanceId);
             }
         }
     }
@@ -224,9 +225,10 @@ public sealed class InterNodeBroadcastManager : IDisposable
     {
         using var activity = _telemetryProvider.StartActivity("bannou.connect", "InterNodeBroadcastManager.ConnectToPeerAsync");
 
+        ClientWebSocket? ws = null;
         try
         {
-            var ws = new ClientWebSocket();
+            ws = new ClientWebSocket();
 
             // Same auth as Internal mode
             if (!string.IsNullOrEmpty(_configuration.InternalServiceToken))
@@ -238,9 +240,13 @@ public sealed class InterNodeBroadcastManager : IDisposable
             await ws.ConnectAsync(uri, ct);
 
             _nodeConnections.TryAdd(peer.InstanceId, ws);
+            ws = null; // Ownership transferred to _nodeConnections
 
-            // Start background read loop for this connection
-            _ = Task.Run(async () => await ReadLoopAsync(ws, peer.InstanceId), CancellationToken.None);
+            // Start background read loop for this connection (use the stored reference)
+            if (_nodeConnections.TryGetValue(peer.InstanceId, out var storedWs))
+            {
+                _ = Task.Run(async () => await ReadLoopAsync(storedWs, peer.InstanceId), CancellationToken.None);
+            }
 
             _logger.LogInformation("Connected to broadcast peer {PeerInstanceId} at {PeerUrl}",
                 peer.InstanceId, peer.InternalUrl);
@@ -251,6 +257,10 @@ public sealed class InterNodeBroadcastManager : IDisposable
             _logger.LogWarning(ex, "Failed to connect to broadcast peer {PeerInstanceId} at {PeerUrl}",
                 peer.InstanceId, peer.InternalUrl);
             return false;
+        }
+        finally
+        {
+            ws?.Dispose(); // Disposes only if ownership was NOT transferred
         }
     }
 

@@ -135,7 +135,7 @@ public static class NetworkByteOrder
             var result = ReadUInt32(testBuffer);
             return result == 0x12345678;
         }
-        catch
+        catch (Exception)
         {
             return false;
         }
@@ -178,7 +178,7 @@ public static class NetworkByteOrder
                     readUInt64 == 0x123456789ABCDEF0 &&
                     readGuid == testGuid;
         }
-        catch
+        catch (Exception)
         {
             return false;
         }

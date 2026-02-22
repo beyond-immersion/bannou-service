@@ -945,9 +945,6 @@ public class ContractTestHandler : BaseHttpTestHandler
                 GuardianType = "escrow"
             });
 
-            if (!lockResponse.Locked)
-                return TestResult.Failed("Lock response indicates not locked");
-
             if (lockResponse.ContractId != activeContract.ContractId)
                 return TestResult.Failed("Lock response contract ID mismatch");
 
@@ -961,9 +958,6 @@ public class ContractTestHandler : BaseHttpTestHandler
                 GuardianId = guardianId,
                 GuardianType = "escrow"
             });
-
-            if (!unlockResponse.Unlocked)
-                return TestResult.Failed("Unlock response indicates not unlocked");
 
             return TestResult.Successful(
                 $"Guardian lock/unlock lifecycle: contract {activeContract.ContractId}, " +
@@ -1030,9 +1024,6 @@ public class ContractTestHandler : BaseHttpTestHandler
                 GuardianId = guardianId,
                 GuardianType = "escrow"
             });
-
-            if (!transferResponse.Transferred)
-                return TestResult.Failed("Transfer response indicates not transferred");
 
             // Verify the contract now shows the new worker
             var updatedContract = await contractClient.GetContractInstanceAsync(new GetContractInstanceRequest
@@ -1111,9 +1102,6 @@ public class ContractTestHandler : BaseHttpTestHandler
                 }
             });
 
-            if (!registerResponse.Registered)
-                return TestResult.Failed("RegisterClauseType returned not registered");
-
             if (registerResponse.TypeCode != typeCode)
                 return TestResult.Failed($"Type code mismatch: expected {typeCode}, got {registerResponse.TypeCode}");
 
@@ -1170,9 +1158,6 @@ public class ContractTestHandler : BaseHttpTestHandler
                 }
             });
 
-            if (!response.Updated)
-                return TestResult.Failed("SetTemplateValues returned not updated");
-
             if (response.ContractId != activeContract.ContractId)
                 return TestResult.Failed("Contract ID mismatch in response");
 
@@ -1188,9 +1173,6 @@ public class ContractTestHandler : BaseHttpTestHandler
                     ["FeeWalletId"] = Guid.NewGuid().ToString()
                 }
             });
-
-            if (!response2.Updated)
-                return TestResult.Failed("Second SetTemplateValues returned not updated");
 
             if (response2.ValueCount != 5)
                 return TestResult.Failed($"Expected 5 total values after merge, got {response2.ValueCount}");
@@ -1359,9 +1341,6 @@ public class ContractTestHandler : BaseHttpTestHandler
                 ContractInstanceId = activeContract.ContractId,
                 IdempotencyKey = idempotencyKey
             });
-
-            if (!executeResponse.Executed)
-                return TestResult.Failed("ExecuteContract returned not executed");
 
             if (executeResponse.AlreadyExecuted)
                 return TestResult.Failed("First execution should not be flagged as already executed");
