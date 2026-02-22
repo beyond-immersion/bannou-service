@@ -45,7 +45,7 @@ This is **NOT** a code investigation tool. It reports the state depicted in each
 | [State](#state-status) | L0 | 95% | 0 | Rock-solid foundation. No stubs, no bugs. Only migration tooling remains. |
 | [Messaging](#messaging-status) | L0 | 97% | 0 | L3-hardened. Dead letter consumer, IMeshInstanceIdentifier, shutdown timeout. 216 tests, 0 warnings. |
 | [Mesh](#mesh-status) | L0 | 97% | 0 | L3-hardened. IMeshInstanceIdentifier canonical identity, dead fields removed, no extensions remaining. |
-| [Telemetry](#telemetry-status) | L0 | 93% | 0 | Feature-complete observability. OpenTelemetry + Prometheus. Only speculative extensions remain. |
+| [Telemetry](#telemetry-status) | L0 | 97% | 0 | L3-hardened. Self-instrumentation, schema fixes, null safety. 58 tests, 0 warnings. Only speculative extensions remain. |
 | [Account](#account-status) | L1 | 92% | 0 | Production-ready. Only post-launch extensions remain. |
 | [Auth](#auth-status) | L1 | 88% | 0 | Core complete with MFA. Remaining items are downstream integration. |
 | [Chat](#chat-status) | L1 | 90% | 0 | All 28 endpoints complete. Dual storage, rate limiting, moderation. Design considerations remain. |
@@ -285,9 +285,9 @@ gh issue list --search "Auth:" --state open
 
 **Layer**: L0 Infrastructure (Optional) | **Deep Dive**: [TELEMETRY.md](plugins/TELEMETRY.md)
 
-### Production Readiness: 93%
+### Production Readiness: 97%
 
-Feature-complete for its current scope: OpenTelemetry tracing and Prometheus metrics with full instrumentation decorators for all three infrastructure libs (state, messaging, mesh). No stubs, no bugs, no design considerations. All 8 configuration properties are wired. The only gaps are speculative extensions (Jaeger exporter, custom business operation spans, histogram bucket tuning) that are nice-to-haves rather than production blockers.
+L3-hardened. Feature-complete OpenTelemetry tracing and Prometheus metrics with full instrumentation decorators for all infrastructure libs (state, messaging, mesh, telemetry). Schema issues fixed (events file, NRT annotations, OtlpProtocol enum typed). Null-forgiving operators eliminated. T23/T30 compliant (async pattern, self-instrumentation spans). 58 tests, 0 warnings. Only speculative extensions remain (managed exporters, Grafana dashboards, tail-based sampling).
 
 ### Bug Count: 0
 
@@ -301,9 +301,9 @@ No known bugs.
 
 | # | Enhancement | Description | Issue |
 |---|-------------|-------------|-------|
-| 1 | **Custom business operation instrumentation** | Expose methods for services to create custom spans for business logic tracing beyond infrastructure operations (state/messaging/mesh). Currently only infrastructure-level tracing is supported. | No issue |
-| 2 | **Jaeger exporter option** | Add configuration to export directly to Jaeger format in addition to OTLP, for environments that use Jaeger natively. | No issue |
-| 3 | **Metric aggregation views** | Add custom histogram bucket boundaries optimized for Bannou's typical latency distributions (e.g., state store ops, mesh invocations). | No issue |
+| 1 | **Managed platform exporters** | Datadog, Azure Application Insights, AWS X-Ray, Elastic APM exporters beyond base OTLP. | [#183](https://github.com/beyond-immersion/bannou-service/issues/183) |
+| 2 | **Enhanced Grafana dashboards + SLO alerting** | Per-service dashboards, SLO alerting rules, error monitoring, automated provisioning. | [#185](https://github.com/beyond-immersion/bannou-service/issues/185) |
+| 3 | **OTEL Collector tail-based sampling** | Retain 100% of error/high-latency traces while reducing sampling for normal operations. | [#186](https://github.com/beyond-immersion/bannou-service/issues/186) |
 
 ### GH Issues
 

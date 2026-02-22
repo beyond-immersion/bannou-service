@@ -114,6 +114,7 @@ components:
         - serviceName
         - serviceNamespace
         - deploymentEnvironment
+        - otlpEndpoint
         - otlpProtocol
       properties:
         tracingEnabled:
@@ -128,7 +129,7 @@ components:
           description: Current trace sampling ratio (0.0-1.0)
         serviceName:
           type: string
-          description: Service name used for telemetry identification
+          description: Service name used for telemetry identification (resolved from config or effective app-id)
         serviceNamespace:
           type: string
           description: Service namespace for telemetry grouping
@@ -137,8 +138,13 @@ components:
           description: Current deployment environment
         otlpEndpoint:
           type: string
-          nullable: true
-          description: Configured OTLP endpoint
+          description: Configured OTLP endpoint (always set, defaults to http://localhost:4317)
         otlpProtocol:
-          type: string
-          description: OTLP transport protocol (grpc or http)
+          $ref: '#/components/schemas/OtlpProtocol'
+
+    OtlpProtocol:
+      type: string
+      enum:
+        - grpc
+        - http
+      description: OTLP transport protocol

@@ -768,6 +768,8 @@ This document lists all configuration options defined in Bannou's configuration 
 | `MESSAGING_CONNECTION_MAX_BACKOFF_MS` | int | `60000` | Maximum backoff delay for connection retries in milliseconds |
 | `MESSAGING_CONNECTION_RETRY_COUNT` | int | `5` | Number of connection retry attempts |
 | `MESSAGING_CONNECTION_RETRY_DELAY_MS` | int | `1000` | Delay between connection retry attempts in milliseconds |
+| `MESSAGING_DEAD_LETTER_CONSUMER_ENABLED` | bool | `true` | Enable dead letter consumer background service for logging a... |
+| `MESSAGING_DEAD_LETTER_CONSUMER_STARTUP_DELAY_SECONDS` | int | `5` | Delay in seconds before dead letter consumer starts subscrib... |
 | `MESSAGING_DEAD_LETTER_EXCHANGE` | string | `bannou-dlx` | Dead letter exchange name for failed messages |
 | `MESSAGING_DEAD_LETTER_MAX_LENGTH` | int | `100000` | Maximum messages in dead letter queue before oldest dropped |
 | `MESSAGING_DEAD_LETTER_OVERFLOW_BEHAVIOR` | string | `drop-head` | Behavior when DLX queue exceeds max length (drop-head drops ... |
@@ -1179,9 +1181,9 @@ Applied when... |
 
 ## Configuration Summary
 
-- **Total properties**: 892
+- **Total properties**: 894
 - **Required (no default)**: 53
-- **Optional (has default)**: 839
+- **Optional (has default)**: 841
 
 ## Environment Variable Naming Convention
 

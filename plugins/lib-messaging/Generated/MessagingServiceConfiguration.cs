@@ -96,7 +96,7 @@ public class MessagingServiceConfiguration : IServiceConfiguration
     /// Environment variable: MESSAGING_DEFAULT_EXCHANGE
     /// </summary>
     [ConfigStringLength(MinLength = 1)]
-    public string DefaultExchange { get; set; } = "bannou";
+    public string DefaultExchange { get; set; } = AppConstants.DEFAULT_APP_NAME;
 
     /// <summary>
     /// Enable RabbitMQ publisher confirms for reliability. When enabled, BasicPublishAsync waits for broker confirmation (RabbitMQ.Client 7.x pattern).

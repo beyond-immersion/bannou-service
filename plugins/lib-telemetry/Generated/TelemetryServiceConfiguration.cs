@@ -32,18 +32,6 @@ using BeyondImmersion.BannouService.Configuration;
 
 namespace BeyondImmersion.BannouService.Telemetry;
 
-
-#pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
-/// <summary>
-/// OTLP transport protocol
-/// </summary>
-public enum OtlpProtocol
-{
-    Grpc,
-    Http,
-}
-#pragma warning restore CS1591
-
 /// <summary>
 /// Configuration class for Telemetry service.
 /// Properties are automatically bound from environment variables.

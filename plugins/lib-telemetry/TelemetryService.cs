@@ -31,6 +31,7 @@ public partial class TelemetryService : ITelemetryService
     private readonly ILogger<TelemetryService> _logger;
     private readonly TelemetryServiceConfiguration _configuration;
     private readonly AppConfiguration _appConfiguration;
+    private readonly ITelemetryProvider _telemetryProvider;
 
     /// <summary>
     /// Creates a new TelemetryService instance.
@@ -38,14 +39,17 @@ public partial class TelemetryService : ITelemetryService
     /// <param name="logger">Logger instance.</param>
     /// <param name="configuration">Telemetry service configuration.</param>
     /// <param name="appConfiguration">Application configuration for effective app-id.</param>
+    /// <param name="telemetryProvider">Telemetry provider for span instrumentation.</param>
     public TelemetryService(
         ILogger<TelemetryService> logger,
         TelemetryServiceConfiguration configuration,
-        AppConfiguration appConfiguration)
+        AppConfiguration appConfiguration,
+        ITelemetryProvider telemetryProvider)
     {
         _logger = logger;
         _configuration = configuration;
         _appConfiguration = appConfiguration;
+        _telemetryProvider = telemetryProvider;
     }
 
     /// <summary>
@@ -54,10 +58,13 @@ public partial class TelemetryService : ITelemetryService
     /// <param name="body">Health request (empty object).</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>Health status response.</returns>
-    public Task<(StatusCodes, TelemetryHealthResponse?)> HealthAsync(
+    public async Task<(StatusCodes, TelemetryHealthResponse?)> HealthAsync(
         TelemetryHealthRequest body,
         CancellationToken cancellationToken = default)
     {
+        using var activity = _telemetryProvider.StartActivity(
+            TelemetryComponents.Telemetry, "health");
+
         _logger.LogDebug("Health check requested");
 
         var response = new TelemetryHealthResponse
@@ -70,7 +77,8 @@ public partial class TelemetryService : ITelemetryService
                 : null
         };
 
-        return Task.FromResult<(StatusCodes, TelemetryHealthResponse?)>((StatusCodes.OK, response));
+        await Task.CompletedTask;
+        return (StatusCodes.OK, response);
     }
 
     /// <summary>
@@ -79,10 +87,13 @@ public partial class TelemetryService : ITelemetryService
     /// <param name="body">Status request (empty object).</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>Status response with configuration details.</returns>
-    public Task<(StatusCodes, TelemetryStatusResponse?)> StatusAsync(
+    public async Task<(StatusCodes, TelemetryStatusResponse?)> StatusAsync(
         TelemetryStatusRequest body,
         CancellationToken cancellationToken = default)
     {
+        using var activity = _telemetryProvider.StartActivity(
+            TelemetryComponents.Telemetry, "status");
+
         _logger.LogDebug("Status requested");
 
         // Use configured service name, or fall back to effective app-id
@@ -99,9 +110,10 @@ public partial class TelemetryService : ITelemetryService
             ServiceNamespace = _configuration.ServiceNamespace,
             DeploymentEnvironment = _configuration.DeploymentEnvironment,
             OtlpEndpoint = _configuration.OtlpEndpoint,
-            OtlpProtocol = _configuration.OtlpProtocol.ToString().ToLowerInvariant()
+            OtlpProtocol = _configuration.OtlpProtocol
         };
 
-        return Task.FromResult<(StatusCodes, TelemetryStatusResponse?)>((StatusCodes.OK, response));
+        await Task.CompletedTask;
+        return (StatusCodes.OK, response);
     }
 }
