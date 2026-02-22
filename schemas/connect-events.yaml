@@ -36,5 +36,7 @@ info:
 
 paths: {}  # Events don't have HTTP paths
 
-components:
-  schemas: {}  # Events are defined in common-events.yaml
+# Note: ShortcutPublishedEvent and ShortcutRevokedEvent are defined in connect-api.yaml
+# as component schemas. They are consumed via per-session dynamic subscriptions
+# (not static x-event-subscriptions), and must live in the API schema to avoid
+# the event generation pipeline's blanket EventName override post-processing.

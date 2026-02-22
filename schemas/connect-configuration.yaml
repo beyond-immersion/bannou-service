@@ -18,16 +18,22 @@ x-service-configuration:
       type: integer
       description: Maximum number of concurrent WebSocket connections
       default: 10000
+      minimum: 1
+      maximum: 1000000
       env: CONNECT_MAX_CONCURRENT_CONNECTIONS
     HeartbeatIntervalSeconds:
       type: integer
-      description: Interval between heartbeat messages
+      description: Interval between heartbeat messages in seconds
       default: 30
+      minimum: 1
+      maximum: 300
       env: CONNECT_HEARTBEAT_INTERVAL_SECONDS
     BufferSize:
       type: integer
       description: Size of message buffers in bytes
       default: 65536
+      minimum: 1024
+      maximum: 1048576
       env: CONNECT_BUFFER_SIZE
     EnableClientToClientRouting:
       type: boolean
@@ -38,11 +44,15 @@ x-service-configuration:
       type: integer
       description: Rate limit for messages per minute per client
       default: 1000
+      minimum: 1
+      maximum: 100000
       env: CONNECT_MAX_MESSAGES_PER_MINUTE
     RateLimitWindowMinutes:
       type: integer
       description: Rate limit window in minutes
       default: 1
+      minimum: 1
+      maximum: 60
       env: CONNECT_RATE_LIMIT_WINDOW_MINUTES
     # NOTE: JWT validation is delegated to Auth service via HTTP, no local secret needed
     ServerSalt:
@@ -52,21 +62,19 @@ x-service-configuration:
       default: "bannou-dev-connect-salt-change-in-production"
 
     ConnectionMode:
-      type: string
-      enum: ["external", "relayed", "internal"]
-      description: "Connection mode: external (default, no broadcast), relayed (broadcast allowed), internal (minimal response, broadcast allowed)"
-      default: "external"
+      $ref: 'connect-api.yaml#/components/schemas/ConnectionMode'
+      description: "Connection mode: External (default, no broadcast), Relayed (broadcast allowed), Internal (minimal response, broadcast allowed)"
+      default: External
       env: CONNECT_CONNECTION_MODE
     InternalAuthMode:
-      type: string
-      enum: ["service-token", "network-trust"]
-      description: "Auth mode for internal connections: service-token (validate X-Service-Token) or network-trust (no auth)"
-      default: "service-token"
+      $ref: 'connect-api.yaml#/components/schemas/InternalAuthMode'
+      description: "Auth mode for internal connections: ServiceToken (validate X-Service-Token) or NetworkTrust (no auth)"
+      default: ServiceToken
       env: CONNECT_INTERNAL_AUTH_MODE
     InternalServiceToken:
       type: string
       nullable: true
-      description: "Secret for X-Service-Token validation when InternalAuthMode is service-token"
+      description: "Secret for X-Service-Token validation when InternalAuthMode is ServiceToken"
       env: CONNECT_INTERNAL_SERVICE_TOKEN
       example: "your-internal-service-token-secret"
 
@@ -75,60 +83,89 @@ x-service-configuration:
       type: integer
       env: CONNECT_SESSION_TTL_SECONDS
       default: 86400
+      minimum: 60
+      maximum: 604800
       description: Session time-to-live in seconds (default 24 hours)
 
     HeartbeatTtlSeconds:
       type: integer
       env: CONNECT_HEARTBEAT_TTL_SECONDS
       default: 300
+      minimum: 10
+      maximum: 3600
       description: Heartbeat data TTL in Redis in seconds (default 5 minutes)
 
     ReconnectionWindowSeconds:
       type: integer
       env: CONNECT_RECONNECTION_WINDOW_SECONDS
       default: 300
+      minimum: 10
+      maximum: 3600
       description: Window for client reconnection after disconnect in seconds (default 5 minutes)
 
     # === WebSocket Connection Management (Tier 2) ===
+    MaxChannelNumber:
+      type: integer
+      env: CONNECT_MAX_CHANNEL_NUMBER
+      default: 1000
+      minimum: 1
+      maximum: 65535
+      description: Maximum allowed channel number in WebSocket binary messages. Messages with channel numbers above this limit are rejected as invalid.
+
     RpcCleanupIntervalSeconds:
       type: integer
       env: CONNECT_RPC_CLEANUP_INTERVAL_SECONDS
       default: 30
+      minimum: 1
+      maximum: 300
       description: Interval in seconds between pending RPC cleanup runs
 
     DefaultRpcTimeoutSeconds:
       type: integer
       env: CONNECT_DEFAULT_RPC_TIMEOUT_SECONDS
       default: 30
+      minimum: 1
+      maximum: 300
       description: Default timeout in seconds for RPC calls when not specified
 
     ConnectionCleanupIntervalSeconds:
       type: integer
       env: CONNECT_CONNECTION_CLEANUP_INTERVAL_SECONDS
       default: 30
+      minimum: 1
+      maximum: 300
       description: Interval in seconds between connection cleanup runs
 
     InactiveConnectionTimeoutMinutes:
       type: integer
       env: CONNECT_INACTIVE_CONNECTION_TIMEOUT_MINUTES
       default: 30
+      minimum: 1
+      maximum: 1440
       description: Timeout in minutes after which inactive connections are cleaned up
 
     PendingMessageTimeoutSeconds:
       type: integer
       env: CONNECT_PENDING_MESSAGE_TIMEOUT_SECONDS
       default: 30
+      minimum: 1
+      maximum: 300
       description: Timeout in seconds for pending messages awaiting acknowledgment
 
     ConnectionShutdownTimeoutSeconds:
       type: integer
       env: CONNECT_CONNECTION_SHUTDOWN_TIMEOUT_SECONDS
       default: 5
+      minimum: 1
+      maximum: 60
       description: Timeout in seconds when waiting for connection closure during shutdown
+
     ReconnectionWindowExtensionMinutes:
       type: integer
       env: CONNECT_RECONNECTION_WINDOW_EXTENSION_MINUTES
       default: 1
+      minimum: 1
+      maximum: 60
       description: Additional minutes added to reconnection window on each extension
 
     CompanionRoomMode:

@@ -14,7 +14,7 @@ public static class MessageRouter
     /// Analyzes a message and determines routing information.
     /// Checks session shortcuts FIRST, then falls back to service/client routing.
     /// </summary>
-    public static MessageRouteInfo AnalyzeMessage(BinaryMessage message, ConnectionState connectionState)
+    public static MessageRouteInfo AnalyzeMessage(BinaryMessage message, ConnectionState connectionState, int maxChannelNumber = 1000)
     {
         var routeInfo = new MessageRouteInfo
         {
@@ -140,7 +140,7 @@ public static class MessageRouter
         }
 
         // Validate channel
-        if (message.Channel > 1000) // Arbitrary reasonable limit
+        if (message.Channel > maxChannelNumber)
         {
             routeInfo.IsValid = false;
             routeInfo.ErrorCode = ResponseCodes.InvalidRequestChannel;

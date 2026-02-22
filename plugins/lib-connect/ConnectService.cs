@@ -223,11 +223,11 @@ public partial class ConnectService : IConnectService, IDisposable
         // Create HTTP request
         var httpMethod = body.Method switch
         {
-            InternalProxyRequestMethod.GET => HttpMethod.Get,
-            InternalProxyRequestMethod.POST => HttpMethod.Post,
-            InternalProxyRequestMethod.PUT => HttpMethod.Put,
-            InternalProxyRequestMethod.DELETE => HttpMethod.Delete,
-            InternalProxyRequestMethod.PATCH => HttpMethod.Patch,
+            HttpMethodType.GET => HttpMethod.Get,
+            HttpMethodType.POST => HttpMethod.Post,
+            HttpMethodType.PUT => HttpMethod.Put,
+            HttpMethodType.DELETE => HttpMethod.Delete,
+            HttpMethodType.PATCH => HttpMethod.Patch,
             _ => HttpMethod.Get
         };
 
@@ -238,8 +238,8 @@ public partial class ConnectService : IConnectService, IDisposable
             // Route through Bannou service invocation
             HttpResponseMessage httpResponse;
 
-            if (body.Method == InternalProxyRequestMethod.GET ||
-                body.Method == InternalProxyRequestMethod.DELETE)
+            if (body.Method == HttpMethodType.GET ||
+                body.Method == HttpMethodType.DELETE)
             {
                 // For GET/DELETE, no body
                 var request = _meshClient.CreateInvokeMethodRequest(httpMethod, appId, endpoint);
@@ -489,7 +489,7 @@ public partial class ConnectService : IConnectService, IDisposable
             Guid = api.ServiceGuid,
             Service = api.ServiceName,
             Endpoint = api.Path,
-            Method = ClientCapabilityMethod.POST
+            Method = HttpMethodType.POST
         }).ToList();
 
         // Build shortcuts using helper, removing expired/invalid ones
@@ -536,7 +536,7 @@ public partial class ConnectService : IConnectService, IDisposable
         var response = new GetAccountSessionsResponse
         {
             AccountId = body.AccountId,
-            SessionIds = sessions.ToList(),
+            SessionIds = sessions.Select(s => Guid.TryParse(s, out var g) ? g : Guid.Empty).Where(g => g != Guid.Empty).ToList(),
             Count = sessions.Count,
             RetrievedAt = DateTimeOffset.UtcNow
         };
@@ -1198,7 +1198,7 @@ public partial class ConnectService : IConnectService, IDisposable
             }
 
             // Analyze message for routing
-            var routeInfo = MessageRouter.AnalyzeMessage(message, connectionState);
+            var routeInfo = MessageRouter.AnalyzeMessage(message, connectionState, _configuration.MaxChannelNumber);
 
             // META REQUEST INTERCEPTION: Check before validation/routing
             // When Meta flag is set, route to companion meta endpoints instead of executing the endpoint
@@ -1966,13 +1966,14 @@ public partial class ConnectService : IConnectService, IDisposable
     /// </summary>
     internal async Task<object> ProcessClientMessageEventAsync(ClientMessageEvent eventData)
     {
+        var clientId = eventData.ClientId.ToString();
         try
         {
             _logger.LogDebug("Received client message event for {ClientId} from service {ServiceName}",
-                eventData.ClientId, eventData.ServiceName);
+                clientId, eventData.ServiceName);
 
             // Find target client connection
-            if (HasConnection(eventData.ClientId))
+            if (HasConnection(clientId))
             {
                 // Create binary message from event data
                 var message = BinaryMessage.FromBinary(
@@ -1985,29 +1986,29 @@ public partial class ConnectService : IConnectService, IDisposable
                 );
 
                 // Send to client
-                var sent = await SendMessageAsync(eventData.ClientId, message, CancellationToken.None);
+                var sent = await SendMessageAsync(clientId, message, CancellationToken.None);
 
                 if (sent)
                 {
-                    _logger.LogDebug("Forwarded event message to client {ClientId}", eventData.ClientId);
-                    return new { status = "delivered", clientId = eventData.ClientId };
+                    _logger.LogDebug("Forwarded event message to client {ClientId}", clientId);
+                    return new { status = "delivered", clientId };
                 }
                 else
                 {
-                    _logger.LogWarning("Failed to deliver message to client {ClientId} - connection issue", eventData.ClientId);
-                    return new { error = "delivery_failed", clientId = eventData.ClientId };
+                    _logger.LogWarning("Failed to deliver message to client {ClientId} - connection issue", clientId);
+                    return new { error = "delivery_failed", clientId };
                 }
             }
             else
             {
-                _logger.LogDebug("Target client {ClientId} not connected to this instance", eventData.ClientId);
-                return new { error = "client_not_found", clientId = eventData.ClientId };
+                _logger.LogDebug("Target client {ClientId} not connected to this instance", clientId);
+                return new { error = "client_not_found", clientId };
             }
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to process client message event for {ClientId}", eventData.ClientId);
-            await PublishErrorEventAsync("ProcessClientMessage", ex.GetType().Name, ex.Message, details: new { ClientId = eventData.ClientId, ServiceName = eventData.ServiceName });
+            _logger.LogError(ex, "Failed to process client message event for {ClientId}", clientId);
+            await PublishErrorEventAsync("ProcessClientMessage", ex.GetType().Name, ex.Message, details: new { ClientId = clientId, ServiceName = eventData.ServiceName });
             throw;
         }
     }
@@ -2017,13 +2018,14 @@ public partial class ConnectService : IConnectService, IDisposable
     /// </summary>
     internal async Task<object> ProcessClientRPCEventAsync(ClientRPCEvent eventData)
     {
+        var clientId = eventData.ClientId.ToString();
         try
         {
             _logger.LogDebug("Received client RPC event for {ClientId} from service {ServiceName}",
-                eventData.ClientId, eventData.ServiceName);
+                clientId, eventData.ServiceName);
 
             // Find target client connection
-            if (HasConnection(eventData.ClientId))
+            if (HasConnection(clientId))
             {
                 // Create binary message for RPC call
                 var message = BinaryMessage.FromBinary(
@@ -2036,7 +2038,7 @@ public partial class ConnectService : IConnectService, IDisposable
                 );
 
                 // Send to client
-                var sent = await SendMessageAsync(eventData.ClientId, message, CancellationToken.None);
+                var sent = await SendMessageAsync(clientId, message, CancellationToken.None);
 
                 if (sent)
                 {
@@ -2051,7 +2053,7 @@ public partial class ConnectService : IConnectService, IDisposable
 
                     var pendingRPC = new PendingRPCInfo
                     {
-                        ClientSessionId = Guid.Parse(eventData.ClientId),
+                        ClientSessionId = eventData.ClientId,
                         ServiceName = eventData.ServiceName ?? "unknown",
                         ResponseChannel = eventData.ResponseChannel,
                         ServiceGuid = eventData.ServiceGuid,
@@ -2062,26 +2064,26 @@ public partial class ConnectService : IConnectService, IDisposable
                     _pendingRPCs[(ulong)eventData.MessageId] = pendingRPC;
 
                     _logger.LogDebug("Sent RPC message {MessageId} to client {ClientId}, awaiting response for channel {ResponseChannel}",
-                        eventData.MessageId, eventData.ClientId, eventData.ResponseChannel);
+                        eventData.MessageId, clientId, eventData.ResponseChannel);
 
-                    return new { status = "sent", clientId = eventData.ClientId, messageId = eventData.MessageId };
+                    return new { status = "sent", clientId, messageId = eventData.MessageId };
                 }
                 else
                 {
-                    _logger.LogWarning("Failed to send RPC to client {ClientId} - connection issue", eventData.ClientId);
-                    return new { error = "delivery_failed", clientId = eventData.ClientId };
+                    _logger.LogWarning("Failed to send RPC to client {ClientId} - connection issue", clientId);
+                    return new { error = "delivery_failed", clientId };
                 }
             }
             else
             {
-                _logger.LogDebug("Target client {ClientId} not connected to this instance", eventData.ClientId);
-                return new { error = "client_not_found", clientId = eventData.ClientId };
+                _logger.LogDebug("Target client {ClientId} not connected to this instance", clientId);
+                return new { error = "client_not_found", clientId };
             }
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to process client RPC event for {ClientId}", eventData.ClientId);
-            await PublishErrorEventAsync("ProcessClientRPC", ex.GetType().Name, ex.Message, details: new { ClientId = eventData.ClientId, ServiceName = eventData.ServiceName });
+            _logger.LogError(ex, "Failed to process client RPC event for {ClientId}", clientId);
+            await PublishErrorEventAsync("ProcessClientRPC", ex.GetType().Name, ex.Message, details: new { ClientId = clientId, ServiceName = eventData.ServiceName });
             throw;
         }
     }
@@ -2104,7 +2106,7 @@ public partial class ConnectService : IConnectService, IDisposable
             // Create typed response event
             var responseEvent = new ClientRPCResponseEvent
             {
-                ClientId = sessionId,
+                ClientId = Guid.TryParse(sessionId, out var clientGuid) ? clientGuid : Guid.Empty,
                 ServiceName = pendingRPC.ServiceName,
                 ServiceGuid = pendingRPC.ServiceGuid,
                 MessageId = (long)response.MessageId,

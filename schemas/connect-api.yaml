@@ -410,7 +410,12 @@ components:
         data:
           type: object
           additionalProperties: true
-          description: Metadata payload whose structure varies by metaType (endpoint-info returns summary/tags/operationId, request-schema and response-schema return JSON Schema objects, full-schema returns all three combined)
+          description: |
+            Metadata payload whose structure varies by metaType (endpoint-info returns
+            summary/tags/operationId, request-schema and response-schema return JSON Schema
+            objects, full-schema returns all three combined). Uses additionalProperties because
+            this proxies opaque JSON from internal meta endpoints whose schemas are defined by
+            each service's controller (client-opaque pass-through per FOUNDATION TENETS).
         generatedAt:
           type: string
           format: date-time
@@ -449,6 +454,7 @@ components:
           type: array
           items:
             type: string
+            format: uuid
           description: List of active WebSocket session IDs for this account
         count:
           type: integer
@@ -540,8 +546,7 @@ components:
           type: string
           description: API endpoint path (e.g., "/account/create")
         method:
-          type: string
-          enum: [GET, POST, PUT, DELETE, PATCH]
+          $ref: '#/components/schemas/HttpMethodType'
           description: HTTP method for this endpoint
         description:
           type: string
@@ -626,8 +631,7 @@ components:
           type: string
           description: Target API endpoint path (e.g., "/account/{id}")
         method:
-          type: string
-          enum: [GET, POST, PUT, DELETE, PATCH]
+          $ref: '#/components/schemas/HttpMethodType'
           description: HTTP method for the target endpoint
         headers:
           type: object
@@ -639,7 +643,11 @@ components:
           type: object
           additionalProperties: true
           nullable: true
-          description: Request body to forward to target service (null for no body)
+          description: |
+            Request body to forward to target service (null for no body). Uses
+            additionalProperties because this proxies arbitrary JSON payloads to any
+            target service — the structure is defined by each target service's schema,
+            not by Connect (client-opaque pass-through per FOUNDATION TENETS).
         pathParameters:
           type: object
           additionalProperties:
@@ -898,6 +906,7 @@ components:
           description: When the auth event occurred
         userId:
           type: string
+          format: uuid
           # NRT: Optional string MUST be nullable (Rule 2)
           nullable: true
           description: User ID associated with the session (optional for some events)
@@ -906,7 +915,12 @@ components:
           additionalProperties: true
           # NRT: Optional object MUST be nullable (Rule 2)
           nullable: true
-          description: Additional event metadata (device info, location, etc.)
+          description: |
+            Additional auth event metadata (device info, location, etc.). Uses
+            additionalProperties because the metadata content is determined by the
+            Auth service's event payload and varies by auth provider — Connect
+            treats it as opaque context for logging (client-opaque pass-through
+            per FOUNDATION TENETS).
 
     AuthEventType:
       type: string
@@ -934,6 +948,7 @@ components:
       properties:
         clientId:
           type: string
+          format: uuid
           description: Target client session ID
         serviceName:
           type: string
@@ -982,6 +997,7 @@ components:
       properties:
         clientId:
           type: string
+          format: uuid
           description: Target client session ID
         serviceName:
           type: string
@@ -1036,6 +1052,7 @@ components:
       properties:
         clientId:
           type: string
+          format: uuid
           description: Client session ID that sent the response
         serviceName:
           type: string
@@ -1069,6 +1086,31 @@ components:
 
     # NOTE: MessageFlags already defined above in Binary Protocol Schemas section
 
+    HttpMethodType:
+      type: string
+      description: HTTP method for endpoint invocation
+      enum:
+        - GET
+        - POST
+        - PUT
+        - DELETE
+        - PATCH
+
+    ConnectionMode:
+      type: string
+      description: WebSocket connection mode controlling broadcast and response behavior
+      enum:
+        - External
+        - Relayed
+        - Internal
+
+    InternalAuthMode:
+      type: string
+      description: Authentication mode for internal WebSocket connections
+      enum:
+        - ServiceToken
+        - NetworkTrust
+
     BroadcastMode:
       type: string
       description: Broadcast directionality mode for multi-node Connect deployments
@@ -1086,6 +1128,10 @@ components:
         - AutoJoinLazy
         - AutoJoin
         - Manual
+
+    # Note: SessionShortcut, SessionShortcutMetadata, ShortcutPublishedEvent, and ShortcutRevokedEvent
+    # are defined in common-client-events.yaml (they are client event types extending BaseClientEvent).
+    # The formerly orphaned connect-shortcuts.yaml was a dead design document, not the source of truth.
 
   securitySchemes:
     BearerAuth:

@@ -3,6 +3,7 @@
 > **Plugin**: lib-chat
 > **Schema**: schemas/chat-api.yaml
 > **Version**: 1.0.0
+> **Layer**: AppFoundation
 > **State Store**: chat-rooms (MySQL), chat-rooms-cache (Redis), chat-messages (MySQL), chat-messages-ephemeral (Redis), chat-participants (Redis), chat-room-types (MySQL), chat-bans (MySQL)
 
 ---
@@ -288,8 +289,7 @@ None. All 30 API endpoints are fully implemented with complete business logic, v
 <!-- AUDIT:NEEDS_DESIGN:2026-02-22:https://github.com/beyond-immersion/bannou-service/issues/451 -->
 
 3. **Message reactions**: Allow participants to add emoji reactions to messages, stored as a separate model linked by message ID.
-
-4. **Lexicon room type for NPC communication**: A custom `lexicon` room type where messages are structured as Lexicon entry combinations rather than free text. NPCs would communicate in the same ontological building blocks they think in, with discovery-level validation gating vocabulary per character. Location-scoped social rooms would enable ambient social perception for NPC cognition. See [CHARACTER-COMMUNICATION.md](../guides/CHARACTER-COMMUNICATION.md) for the full architectural design.
+<!-- AUDIT:NEEDS_DESIGN:2026-02-22:https://github.com/beyond-immersion/bannou-service/issues/452 -->
 
 ---
 
@@ -332,8 +332,10 @@ None. All 30 API endpoints are fully implemented with complete business logic, v
 ### Design Considerations (Requires Planning)
 
 1. **AdminGetStats has O(N) participant counting**: Queries up to 1000 rooms, then performs individual `HashCount` calls for each room to sum total participants. Could become slow with many active rooms. Consider maintaining a running total or using a dedicated counter.
+<!-- AUDIT:NEEDS_DESIGN:2026-02-22:https://github.com/beyond-immersion/bannou-service/issues/455 -->
 
 2. **Rate limit counters and typing sorted set share store with participant hashes**: Rate limit keys (`rate:{roomId}:{sessionId}`) and the typing sorted set (`typing:active`) use the same `chat-participants` Redis store as participant hashes. While key prefixes prevent collision, the store mixes three different data patterns (hashes, atomic counters, sorted set).
+<!-- AUDIT:NEEDS_DESIGN:2026-02-22:https://github.com/beyond-immersion/bannou-service/issues/456 -->
 
 ---
 

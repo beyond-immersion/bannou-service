@@ -1184,6 +1184,9 @@ flows:
 
 10. **Procedural trait generation for procedurally generated entities**: When the Procedural service (planned) generates a new creature or item, it could generate Lexicon traits based on the procedural parameters. A larger creature gets `large_size`. A bioluminescent creature gets `light_emitting`. This ensures procedural content is immediately reasoned about by NPCs via category matching.
 
+11. **Lexicon room type for NPC communication**: A custom `lexicon` room type registered with lib-chat where messages are structured as Lexicon entry combinations rather than free text. NPCs would communicate in the same ontological building blocks they think in, with discovery-level validation gating vocabulary per character. Location-scoped social rooms would enable ambient social perception for NPC cognition. See [CHARACTER-COMMUNICATION.md](../../guides/CHARACTER-COMMUNICATION.md) for the full architectural design.
+<!-- AUDIT:NEEDS_DESIGN:2026-02-22:https://github.com/beyond-immersion/bannou-service/issues/454 -->
+
 ---
 
 ## Why Not Extend Existing Services?

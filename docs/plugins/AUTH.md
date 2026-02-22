@@ -3,6 +3,7 @@
 > **Plugin**: lib-auth
 > **Schema**: schemas/auth-api.yaml
 > **Version**: 4.0.0
+> **Layer**: AppFoundation
 > **State Store**: auth-statestore (Redis)
 
 ## Overview

@@ -10,7 +10,7 @@
 
 ## Overview
 
-The State service (L0 Infrastructure) provides all Bannou services with unified access to Redis and MySQL backends through a repository-pattern API. Operates in a dual role: as the `IStateStoreFactory` infrastructure library used by every service for state persistence, and as an HTTP API for debugging and administration. Supports three backends (Redis for ephemeral/session data, MySQL for durable/queryable data, InMemory for testing) with optimistic concurrency via ETags, TTL support, and specialized interfaces for cache operations, LINQ queries, JSON path queries, and full-text search. See the Interface Hierarchy section for the full interface tree and backend support matrix.
+The State service (L0 Infrastructure) provides all Bannou services with unified access to Redis and MySQL backends through a repository-pattern API. Operates in a dual role: as the `IStateStoreFactory` infrastructure library used by every service for state persistence, and as an HTTP API for debugging and administration. Supports four backends (Redis for ephemeral/session data, MySQL for durable/queryable data, SQLite for self-hosted durable storage, InMemory for testing) with optimistic concurrency via ETags, TTL support, and specialized interfaces for cache operations, LINQ queries, JSON path queries, and full-text search. See the Interface Hierarchy section for the full interface tree and backend support matrix.
 
 ---
 
@@ -53,6 +53,7 @@ All services depend on state infrastructure. The HTTP API (`IStateClient`) is us
 |---------|-------|----------|
 | Redis | ~70 | Sessions, caches, ephemeral state, leaderboards, locks, indexes |
 | MySQL | ~37 | Durable entity data, queryable records, archives |
+| SQLite | 0 (runtime alternative) | Self-hosted/embedded deployments with `UseSqlite=true`. MySQL-configured stores use SQLite files; Redis-configured stores use in-memory. |
 | Memory | 0 (runtime only) | Testing with `UseInMemory=true` |
 
 ### Key Structure (Redis)
@@ -96,7 +97,9 @@ This plugin does not consume external events.
 
 | Property | Env Var | Default | Purpose |
 |----------|---------|---------|---------|
-| `UseInMemory` | `STATE_USE_INMEMORY` | `false` | Use in-memory stores for testing |
+| `UseInMemory` | `STATE_USE_INMEMORY` | `false` | Use in-memory stores for testing. Mutually exclusive with `UseSqlite`. |
+| `UseSqlite` | `STATE_USE_SQLITE` | `false` | Use SQLite file storage instead of MySQL for SQL-backed stores. Redis-configured stores use in-memory. Mutually exclusive with `UseInMemory`. |
+| `SqliteDataPath` | `STATE_SQLITE_DATA_PATH` | `"./data/state"` | Directory path for SQLite database files. Each MySQL-configured store gets its own `.db` file. |
 | `RedisConnectionString` | `STATE_REDIS_CONNECTION_STRING` | `"bannou-redis:6379"` | Redis host:port |
 | `MySqlConnectionString` | `STATE_MYSQL_CONNECTION_STRING` | `"server=bannou-mysql;..."` | Full MySQL connection string |
 | `ConnectionTimeoutSeconds` | `STATE_CONNECTION_TIMEOUT_SECONDS` | `60` | Database connection timeout |
@@ -152,6 +155,7 @@ When infrastructure errors occur (Redis connection failures, timeouts, etc.), th
 | `RedisStateStore<T>` | Redis | `ICacheableStateStore<T>` | String ops, sets, sorted sets, counters, hashes, TTL |
 | `RedisSearchStateStore<T>` | Redis | `ICacheableStateStore<T>`, `ISearchableStateStore<T>` | JSON storage, FT search, sets, sorted sets, counters, hashes |
 | `MySqlStateStore<T>` | MySQL | `IQueryableStateStore<T>`, `IJsonQueryableStateStore<T>` | EF Core, JSON path queries (no sets/sorted sets/counters/hashes) |
+| `SqliteStateStore<T>` | SQLite | `IQueryableStateStore<T>`, `IJsonQueryableStateStore<T>` | EF Core + SQLite, per-operation DbContext for thread-safety, SHA256-based ETags |
 | `InMemoryStateStore<T>` | Memory | `ICacheableStateStore<T>` | Static shared stores, sets, sorted sets, counters, hashes, TTL via lazy cleanup |
 
 ---
@@ -173,6 +177,10 @@ Boolean response indicates deletion success. Returns false if key not found. Del
 ### Query (`/state/query`)
 
 Routes to MySQL for conditions-based queries (JSON path expressions) or Redis Search if enabled. Returns BadRequest if Redis search not supported for the store. MySQL uses `JSON_EXTRACT`, `JSON_UNQUOTE`, and `JSON_CONTAINS_PATH` functions. Supports operators: equals, notEquals, greaterThan, lessThan, contains, startsWith, endsWith, in, exists, notExists, fullText.
+
+### Bulk Save (`/state/bulk-save`)
+
+Saves multiple key-value pairs in a single operation. Returns per-key ETags. Passes options (including TTL) through to the underlying store's `SaveBulkAsync`.
 
 ### Bulk Get (`/state/bulk-get`)
 
@@ -220,9 +228,10 @@ State Store Architecture (Interface Hierarchy)
          │                 └── RedisSearchStateStore<T>  (Cacheable + FT search)
          │
          └── IQueryableStateStore<T>  ◄── LINQ queries
-                  │                        (MySQL only)
+                  │                        (MySQL, SQLite)
                   └── IJsonQueryableStateStore<T>
-                           └── MySqlStateStore<T>
+                           ├── MySqlStateStore<T>
+                           └── SqliteStateStore<T>
 
     IRedisOperations  ◄────────────── Lua scripts, transactions
          └── RedisOperations            (Redis only, null if InMemory)
@@ -230,17 +239,17 @@ State Store Architecture (Interface Hierarchy)
   Backend Layout:
   ===============
 
-    ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-    │ RedisStateStore │    │RedisSearchStore │    │  MySqlStateStore│
-    │ + ICacheable    │    │ + ICacheable    │    │ + IQueryable    │
-    │ (Sets+ZSets+    │    │ + ISearchable   │    │ + IJsonQueryable│
-    │  Counters+Hash) │    │ (full support)  │    │                 │
-    └────────┬────────┘    └────────┬────────┘    └────────┬────────┘
-             │                      │                      │
-    ┌────────▼────────┐    ┌────────▼────────┐    ┌────────▼────────┐
-    │     Redis       │    │   Redis + FT    │    │      MySQL      │
-    │  (String/Sets)  │    │   (JSON/Index)  │    │   (StateEntry)  │
-    └─────────────────┘    └─────────────────┘    └─────────────────┘
+    ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
+    │ RedisStateStore │    │RedisSearchStore │    │  MySqlStateStore│    │SqliteStateStore │
+    │ + ICacheable    │    │ + ICacheable    │    │ + IQueryable    │    │ + IQueryable    │
+    │ (Sets+ZSets+    │    │ + ISearchable   │    │ + IJsonQueryable│    │ + IJsonQueryable│
+    │  Counters+Hash) │    │ (full support)  │    │                 │    │ (file-backed)   │
+    └────────┬────────┘    └────────┬────────┘    └────────┬────────┘    └────────┬────────┘
+             │                      │                      │                      │
+    ┌────────▼────────┐    ┌────────▼────────┐    ┌────────▼────────┐    ┌────────▼────────┐
+    │     Redis       │    │   Redis + FT    │    │      MySQL      │    │     SQLite      │
+    │  (String/Sets)  │    │   (JSON/Index)  │    │   (StateEntry)  │    │  (per-store .db)│
+    └─────────────────┘    └─────────────────┘    └─────────────────┘    └─────────────────┘
 ```
 
 ---
@@ -255,8 +264,6 @@ None.
 
 1. **Store migration tooling**: Move data between Redis and MySQL backends without downtime.
    <!-- AUDIT:NEEDS_DESIGN:2026-01-31:https://github.com/beyond-immersion/bannou-service/issues/190 -->
-2. **~~SQLite backend~~**: Already implemented via `UseSqlite` configuration. Provides file-based SQL storage for self-hosted/embedded deployments without MySQL. Redis-configured stores fall back to in-memory when SQLite mode is active.
-   <!-- AUDIT:DONE:2026-02-22:https://github.com/beyond-immersion/bannou-service/issues/442 -->
 
 ---
 
@@ -266,27 +273,27 @@ None.
 IStateStore<T>                    - Core CRUD (all backends)
 ├── ICacheableStateStore<T>       - Sets, Sorted Sets, Counters, Hashes (Redis + InMemory)
 │   └── ISearchableStateStore<T>  - Full-text search (extends Cacheable)
-├── IQueryableStateStore<T>       - LINQ queries (MySQL only)
-│   └── IJsonQueryableStateStore<T> - JSON path queries (MySQL only)
+├── IQueryableStateStore<T>       - LINQ queries (MySQL + SQLite)
+│   └── IJsonQueryableStateStore<T> - JSON path queries (MySQL + SQLite)
 
 IRedisOperations                  - Low-level Redis access (Lua scripts, transactions)
 ```
 
-**Key Design**: `ISearchableStateStore<T>` extends `ICacheableStateStore<T>` because all searchable stores are Redis-based and therefore support all cacheable operations (sets, sorted sets, counters, hashes). This ensures proper telemetry instrumentation for all operations when using searchable stores.
+**Key Design**: `ISearchableStateStore<T>` extends `ICacheableStateStore<T>` because all searchable stores are Redis-based and therefore support all cacheable operations (sets, sorted sets, counters, hashes). This ensures proper telemetry instrumentation for all operations when using searchable stores. `SqliteStateStore<T>` implements the same `IJsonQueryableStateStore<T>` interface as `MySqlStateStore<T>`, providing a drop-in replacement for self-hosted deployments without MySQL infrastructure.
 
 **Backend Support Matrix**:
 
-| Interface | Redis | MySQL | InMemory | RedisSearch |
-|-----------|:-----:|:-----:|:--------:|:-----------:|
-| `IStateStore<T>` | ✅ | ✅ | ✅ | ✅ |
-| `ICacheableStateStore<T>` (Sets) | ✅ | ❌ | ✅ | ✅ |
-| `ICacheableStateStore<T>` (Sorted Sets) | ✅ | ❌ | ✅ | ✅ |
-| `ICacheableStateStore<T>` (Counters) | ✅ | ❌ | ✅ | ✅ |
-| `ICacheableStateStore<T>` (Hashes) | ✅ | ❌ | ✅ | ✅ |
-| `IQueryableStateStore<T>` | ❌ | ✅ | ❌ | ❌ |
-| `IJsonQueryableStateStore<T>` | ❌ | ✅ | ❌ | ❌ |
-| `ISearchableStateStore<T>` | ❌ | ❌ | ❌ | ✅ |
-| `IRedisOperations` | ✅ | ❌ | ❌ | ❌ |
+| Interface | Redis | MySQL | SQLite | InMemory | RedisSearch |
+|-----------|:-----:|:-----:|:------:|:--------:|:-----------:|
+| `IStateStore<T>` | ✅ | ✅ | ✅ | ✅ | ✅ |
+| `ICacheableStateStore<T>` (Sets) | ✅ | ❌ | ❌ | ✅ | ✅ |
+| `ICacheableStateStore<T>` (Sorted Sets) | ✅ | ❌ | ❌ | ✅ | ✅ |
+| `ICacheableStateStore<T>` (Counters) | ✅ | ❌ | ❌ | ✅ | ✅ |
+| `ICacheableStateStore<T>` (Hashes) | ✅ | ❌ | ❌ | ✅ | ✅ |
+| `IQueryableStateStore<T>` | ❌ | ✅ | ✅ | ❌ | ❌ |
+| `IJsonQueryableStateStore<T>` | ❌ | ✅ | ✅ | ❌ | ❌ |
+| `ISearchableStateStore<T>` | ❌ | ❌ | ❌ | ❌ | ✅ |
+| `IRedisOperations` | ✅ | ❌ | ❌ | ❌ | ❌ |
 
 ---
 
@@ -300,19 +307,17 @@ None currently identified.
 
 1. **Sync-over-async in GetStore()**: `StateStoreFactory.GetStore<T>()` calls `.GetAwaiter().GetResult()` if initialization hasn't completed. This supports services that call GetStore in constructors but can deadlock in async contexts. A warning is logged when this occurs. Prefer `GetStoreAsync<T>()` or call `InitializeAsync()` at startup.
 
-2. **ETag format inconsistency**: Redis uses a `long` version counter as ETag (incremented on each save). MySQL uses `SHA256(json)[0:12]` (base64). Same logical concept, different formats across backends. Services should treat ETags as opaque strings.
+2. **ETag format inconsistency**: Redis uses a `long` version counter as ETag (incremented on each save). MySQL and SQLite use `SHA256(key:json)[0:12]` (base64). Same logical concept, different formats across backends. Services should treat ETags as opaque strings.
 
 3. **Shared static stores in InMemory mode**: `InMemoryStateStore` uses static `ConcurrentDictionary` instances keyed by store name. `GetStore<TypeA>("store")` and `GetStore<TypeB>("store")` see the same underlying data (serialized as JSON). Enables cross-type access but can cause test pollution if not cleared between tests.
 
 4. **MySQL JSON query operators**: `Contains` and `FullText` both use `LIKE %value%`. These are simplified implementations, not true full-text search on MySQL.
 
-5. ~~**TrySaveAsync empty ETag semantics differ by backend**~~: **FIXED** (2026-02-07) - InMemoryStateStore now matches Redis/MySQL semantics: empty ETag means "create new entry if it doesn't exist" with atomic conflict detection via `TryAdd`.
+5. **RedisSearchStateStore falls back to string storage**: The `GetAsync` and `GetWithETagAsync` methods catch `WRONGTYPE` errors and fall back to `StringGet` for backwards compatibility with keys stored as strings before search was enabled.
 
-6. **RedisSearchStateStore falls back to string storage**: The `GetAsync` and `GetWithETagAsync` methods catch `WRONGTYPE` errors and fall back to `StringGet` for backwards compatibility with keys stored as strings before search was enabled.
+6. **No state change events**: The State service intentionally does not publish lifecycle events (StateChanged, StoreMigration, StoreHealth) for state mutations. This was a deliberate design decision because publishing events for every save/delete operation would be prohibitively expensive given the high operation volume across all services. Error events are still published via `TryPublishErrorAsync` for operational visibility. See `schemas/state-events.yaml` for documentation of this decision.
 
-7. **No state change events**: The State service intentionally does not publish lifecycle events (StateChanged, StoreMigration, StoreHealth) for state mutations. This was a deliberate design decision because publishing events for every save/delete operation would be prohibitively expensive given the high operation volume across all services. Error events are still published via `TryPublishErrorAsync` for operational visibility. See `schemas/state-events.yaml` for documentation of this decision.
-
-8. **No store-level access control**: Any service can access any store via `IStateStoreFactory.GetStore<T>(anyName)`. This is intentional - enforcement was considered and rejected for these reasons:
+7. **No store-level access control**: Any service can access any store via `IStateStoreFactory.GetStore<T>(anyName)`. This is intentional - enforcement was considered and rejected for these reasons:
    - All services are in the same trust boundary (same codebase, same deployment)
    - Adding access control would require ambient context or passed parameters to identify the "current service" at call time
    - Significant performance overhead for every state store access
@@ -320,9 +325,9 @@ None currently identified.
    - The generated `StateStoreDefinitions` constants guide correct usage via convention
    - This is internal infrastructure, not an external API requiring authorization
 
-9. **Asymmetric connection retry between MySQL and Redis**: MySQL initialization retries up to `ConnectionRetryCount` times with configurable delay. Redis initialization does not retry. This is intentional: StackExchange.Redis has built-in auto-reconnect functionality that handles connection failures and reconnection automatically. EF Core/MySQL does not have this capability, so explicit retry logic is required for MySQL only.
+8. **Asymmetric connection retry between MySQL and Redis**: MySQL initialization retries up to `ConnectionRetryCount` times with configurable delay. Redis initialization does not retry. This is intentional: StackExchange.Redis has built-in auto-reconnect functionality that handles connection failures and reconnection automatically. EF Core/MySQL does not have this capability, so explicit retry logic is required for MySQL only.
 
-10. **MySQL expression translator limitations**: `QueryAsync` and `QueryPagedAsync` attempt to translate LINQ expressions to SQL-level `JSON_EXTRACT` queries. Supported patterns include:
+9. **MySQL expression translator limitations**: `QueryAsync` and `QueryPagedAsync` attempt to translate LINQ expressions to SQL-level `JSON_EXTRACT` queries. Supported patterns include:
     - Simple comparisons: `x.Field == value`, `x.Field != value`, `x.Field > value`
     - Null comparisons: `x.Field == null`, `x.Field != null`
     - String operations: `x.Field.Contains("s")`, `x.Field.StartsWith("s")`, `x.Field.EndsWith("s")`
@@ -331,7 +336,7 @@ None currently identified.
 
     Unsupported patterns fall back to in-memory filtering with a configurable limit (`InMemoryFallbackLimit`, default 10000). Exceeding this limit throws `InvalidOperationException` to prevent OOM. Use `JsonQueryAsync` with explicit `QueryCondition` objects for complex queries on large datasets.
 
-11. **MySQL stores reject TTL requests**: Passing `StateOptions.Ttl` to `SaveAsync` or `SaveBulkAsync` on a MySQL store throws `InvalidOperationException`. This is by design: MySQL stores are for durable/queryable data that should not auto-expire. For ephemeral data requiring TTL, use a Redis-backed store instead. This enforces the architectural separation between Redis (ephemeral/session) and MySQL (durable/queryable) data.
+10. **MySQL stores reject TTL requests**: Passing `StateOptions.Ttl` to `SaveAsync` or `SaveBulkAsync` on a MySQL store throws `InvalidOperationException`. This is by design: MySQL stores are for durable/queryable data that should not auto-expire. For ephemeral data requiring TTL, use a Redis-backed store instead. This enforces the architectural separation between Redis (ephemeral/session) and MySQL (durable/queryable) data.
 
 ### Design Considerations (Requires Planning)
 

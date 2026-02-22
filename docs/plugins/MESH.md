@@ -4,7 +4,7 @@
 > **Schema**: schemas/mesh-api.yaml
 > **Version**: 1.0.0
 > **Layer**: Infrastructure
-> **State Stores**: mesh-endpoints, mesh-appid-index, mesh-global-index (all Redis), + raw Redis for circuit breaker (`mesh:cb:{appId}`)
+> **State Store**: mesh-endpoints, mesh-appid-index, mesh-global-index, mesh-circuit-breaker (all Redis)
 
 ---
 
@@ -38,20 +38,20 @@ Native service mesh (L0 Infrastructure) providing direct in-process service-to-s
 
 ## State Storage
 
-**Stores**: 3 Redis stores (via lib-state `IStateStoreFactory`) + 1 raw Redis pattern (via `IRedisOperations`)
+**Stores**: 4 Redis stores (3 via `IStateStoreFactory`, 1 via `IRedisOperations` Lua scripts)
 
 | Store | Key Pattern | Data Type | Purpose |
 |-------|-------------|-----------|---------|
 | `mesh-endpoints` | `{instanceId}` (GUID string) | `MeshEndpoint` | Individual endpoint registration with health/load metadata |
 | `mesh-appid-index` | `{appId}` (set of instance IDs) | `Set<string>` | App-ID to instance-ID mapping for routing queries |
 | `mesh-global-index` | `_index` (set of instance IDs) | `Set<string>` | Global endpoint index for discovery (avoids KEYS/SCAN) |
-| *(raw Redis)* | `mesh:cb:{appId}` (hash) | Hash: failures, state, openedAt | Distributed circuit breaker state (via `IRedisOperations`, not state store factory) |
+| `mesh-circuit-breaker` | `mesh:cb:{appId}` (hash) | Hash: failures, state, openedAt | Distributed circuit breaker state (key prefix from state-stores.yaml; operations via `IRedisOperations` Lua scripts, not state store factory) |
 
 **Key Patterns**:
 - Endpoint data keyed by instance ID (GUID)
 - App-ID index lists all instance IDs for a given app-id (with TTL refresh on heartbeat)
 - Global index (`_index` key) tracks all known instance IDs (no TTL - cleaned lazily on access)
-- Circuit breaker uses raw Redis via `IRedisOperations` with Lua scripts for atomic state transitions (no TTL - cleared on success)
+- Circuit breaker key prefix sourced from `StateStoreDefinitions.MeshCircuitBreaker` (schema-first), operations via `IRedisOperations` Lua scripts for atomic state transitions (no TTL - cleared on success)
 
 ---
 
@@ -81,6 +81,7 @@ Native service mesh (L0 Infrastructure) providing direct in-process service-to-s
 
 | Property | Env Var | Default | Purpose |
 |----------|---------|---------|---------|
+| `InstanceId` | `MESH_INSTANCE_ID` | `null` | Explicit mesh node identity override. Falls back to `--force-service-id` CLI, then random GUID |
 | `UseLocalRouting` | `MESH_USE_LOCAL_ROUTING` | `false` | Bypass Redis, route all calls to local instance (testing only) |
 | `EndpointHost` | `MESH_ENDPOINT_HOST` | `null` | Hostname for endpoint registration (defaults to app-id) |
 | `EndpointPort` | `MESH_ENDPOINT_PORT` | `80` | Port for endpoint registration |
@@ -119,12 +120,14 @@ Native service mesh (L0 Infrastructure) providing direct in-process service-to-s
 | Service | Lifetime | Role |
 |---------|----------|------|
 | `ILogger<MeshService>` | Scoped | Structured logging |
-| `MeshServiceConfiguration` | Singleton | All 27 config properties above |
+| `MeshServiceConfiguration` | Singleton | All 31 config properties above |
 | `IMessageBus` | Scoped | Event publishing and error events |
 | `IMessageSubscriber` | Scoped | Circuit state change subscription in MeshInvocationClient |
 | `IEventConsumer` | Scoped | Heartbeat and mapping event subscription (via generated code) |
 | `IMeshStateManager` | Singleton | Redis state via lib-state (3 stores + raw Redis) |
 | `IServiceAppMappingResolver` | Singleton | Shared service→app-id routing (used by all generated clients) |
+| `ITelemetryProvider` | Singleton | Distributed tracing and metrics instrumentation (`NullTelemetryProvider` when telemetry disabled) |
+| `IMeshInstanceIdentifier` | Singleton | Canonical mesh node identity (priority: `MESH_INSTANCE_ID` env > `--force-service-id` CLI > random GUID) |
 | `MeshInvocationClient` | Singleton | HTTP invocation with distributed circuit breaker, retries, caching |
 | `DistributedCircuitBreaker` | Internal (via MeshInvocationClient) | Redis-backed circuit breaker with local cache + event sync |
 | `MeshHealthCheckService` | Hosted (BackgroundService) | Active endpoint health probing |
@@ -143,7 +146,7 @@ Service lifetime is **Scoped** (per-request) for MeshService itself. Infrastruct
 
 ### Registration (3 endpoints)
 
-- **Register** (`/mesh/register`): Announces instance availability. Generates instance ID if not provided. Stores with configurable TTL. Publishes `mesh.endpoint.registered`.
+- **Register** (`/mesh/register`): Announces instance availability. Instance ID is required in request. Stores with configurable TTL. Publishes `mesh.endpoint.registered`.
 - **Deregister** (`/mesh/deregister`): Graceful shutdown removal. Looks up endpoint first (for app-id), removes from store, publishes `mesh.endpoint.deregistered` with reason=Graceful.
 - **Heartbeat** (`/mesh/heartbeat`): Refreshes TTL and updates metrics (status, load%, connections, issues). Issues are stored on the endpoint and visible in endpoint queries. Returns `NextHeartbeatSeconds` and `TtlSeconds` for client scheduling.
 
@@ -248,11 +251,11 @@ Event-Driven Auto-Registration
 
 ### Bugs (Fix Immediately)
 
-1. ~~**No request-level timeout**~~: **FIXED** (2026-02-07) - Added `RequestTimeoutSeconds` configuration (default 30s) for per-request timeout. See [#324](https://github.com/beyond-immersion/bannou-service/issues/324).
+*No bugs identified.*
 
 ### Intentional Quirks (Documented Behavior)
 
-*No quirks - the service operates as expected for a distributed service mesh.*
+1. **`InvokeRawAsync` bypasses circuit breaker**: The raw API invocation path (`InvokeRawAsync`) intentionally skips circuit breaker checks and does not record success/failure to the breaker. This is by design because raw API execution targets services that may be optional or disabled — failures against absent services should not trip the circuit.
 
 ### Operational Notes
 
@@ -278,16 +281,4 @@ These are standard behaviors worth understanding for operations and debugging:
 
 This section tracks active development work on items from the quirks/bugs lists above. Items here are managed by the `/audit-plugin` workflow.
 
-### Completed
-
-- **2026-02-07**: Closed [#161](https://github.com/beyond-immersion/bannou-service/issues/161) - removed `metadata` field from `RegisterEndpointRequest` schema.
-- **2026-02-07**: Closed [#219](https://github.com/beyond-immersion/bannou-service/issues/219) - distributed circuit breaker implementation complete.
-- **2026-02-07**: Closed [#323](https://github.com/beyond-immersion/bannou-service/issues/323) - degradation events implemented (health check failures + endpoint degraded).
-- **2026-02-07**: Closed [#322](https://github.com/beyond-immersion/bannou-service/issues/322) - all production readiness items complete, including event topic fix (`bannou.service-heartbeat`).
-- **2026-02-07**: Closed [#324](https://github.com/beyond-immersion/bannou-service/issues/324) - Added `RequestTimeoutSeconds` configuration (default 30s) for per-request timeout.
-- **2026-02-08**: Closed [#162](https://github.com/beyond-immersion/bannou-service/issues/162) - LocalMeshStateManager minimal by design; testing uses mocked interfaces (unit) and real Redis (integration).
-- **2026-02-08**: Closed [#144](https://github.com/beyond-immersion/bannou-service/issues/144) - ABML `service_call` contradicts established architecture; forbidden at compiler and runtime. Purpose-built actions and Variable Providers are the correct patterns.
-- **2026-02-08**: Closed [#260](https://github.com/beyond-immersion/bannou-service/issues/260) - ServiceNavigator.RawApi uses IMeshInvocationClient instead of direct HttpClient.
-- **2026-02-21**: L3 hardening pass — schema NRT/validation fixes, enum consolidation to `-api.yaml`, T23/T26/T30/T7 code fixes, BuildServiceProvider anti-pattern removed, test updates. 0 warnings, 55 tests passing.
-- **2026-02-22**: Removed dead `lastUpdateTime` field from `MeshHealthResponse` (always returned `DateTimeOffset.UtcNow` — useless, just "when you called the endpoint"). Fixed `alternates` schema from `nullable: true` to non-nullable (code always returns a list, never null — schema was lying). 0 warnings, 55 tests passing.
-- **2026-02-22**: Created `IMeshInstanceIdentifier` interface and `DefaultMeshInstanceIdentifier` implementation in bannou-service for canonical mesh node identity. Registered in lib-mesh DI with priority chain: `MESH_INSTANCE_ID` env > `--force-service-id` CLI > random Guid. Added `InstanceId` property to `IMeshInvocationClient`, `IServiceNavigator`, all generated clients (NSwag template), and generated `ServiceNavigator`. Replaced all `Program.ServiceGUID` usages across LocalMeshStateManager, ServiceHeartbeatManager, ServiceHealthMonitor, and RabbitMQMessageBus. 0 warnings, 55 tests passing.
+*No active work items. All previous items completed — see git history for details.*

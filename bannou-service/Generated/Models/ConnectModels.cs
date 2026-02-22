@@ -102,7 +102,12 @@ public partial class GetEndpointMetaResponse
     public string Path { get; set; } = default!;
 
     /// <summary>
-    /// Metadata payload whose structure varies by metaType (endpoint-info returns summary/tags/operationId, request-schema and response-schema return JSON Schema objects, full-schema returns all three combined)
+    /// Metadata payload whose structure varies by metaType (endpoint-info returns
+    /// <br/>summary/tags/operationId, request-schema and response-schema return JSON Schema
+    /// <br/>objects, full-schema returns all three combined). Uses additionalProperties because
+    /// <br/>this proxies opaque JSON from internal meta endpoints whose schemas are defined by
+    /// <br/>each service's controller (client-opaque pass-through per FOUNDATION TENETS).
+    /// <br/>
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("data")]
     [System.ComponentModel.DataAnnotations.Required]
@@ -165,7 +170,7 @@ public partial class GetAccountSessionsResponse
     [System.Text.Json.Serialization.JsonPropertyName("sessionIds")]
     [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
-    public System.Collections.Generic.ICollection<string> SessionIds { get; set; } = new System.Collections.ObjectModel.Collection<string>();
+    public System.Collections.Generic.ICollection<System.Guid> SessionIds { get; set; } = new System.Collections.ObjectModel.Collection<System.Guid>();
 
     /// <summary>
     /// Number of active sessions
@@ -304,7 +309,7 @@ public partial class ClientCapability
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public ClientCapabilityMethod Method { get; set; } = default!;
+    public HttpMethodType Method { get; set; } = default!;
 
     /// <summary>
     /// Human-readable description of this capability
@@ -434,7 +439,7 @@ public partial class InternalProxyRequest
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public InternalProxyRequestMethod Method { get; set; } = default!;
+    public HttpMethodType Method { get; set; } = default!;
 
     /// <summary>
     /// Additional headers to forward to the service (null if none)
@@ -443,7 +448,11 @@ public partial class InternalProxyRequest
     public System.Collections.Generic.IDictionary<string, string>? Headers { get; set; } = default!;
 
     /// <summary>
-    /// Request body to forward to target service (null for no body)
+    /// Request body to forward to target service (null for no body). Uses
+    /// <br/>additionalProperties because this proxies arbitrary JSON payloads to any
+    /// <br/>target service — the structure is defined by each target service's schema,
+    /// <br/>not by Connect (client-opaque pass-through per FOUNDATION TENETS).
+    /// <br/>
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("body")]
     public object? Body { get; set; } = default!;
@@ -735,10 +744,15 @@ public partial class AuthEvent
     /// User ID associated with the session (optional for some events)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("userId")]
-    public string? UserId { get; set; } = default!;
+    public System.Guid? UserId { get; set; } = default!;
 
     /// <summary>
-    /// Additional event metadata (device info, location, etc.)
+    /// Additional auth event metadata (device info, location, etc.). Uses
+    /// <br/>additionalProperties because the metadata content is determined by the
+    /// <br/>Auth service's event payload and varies by auth provider — Connect
+    /// <br/>treats it as opaque context for logging (client-opaque pass-through
+    /// <br/>per FOUNDATION TENETS).
+    /// <br/>
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("metadata")]
     public object? Metadata { get; set; } = default!;
@@ -783,7 +797,7 @@ public partial class ClientMessageEvent
     [System.Text.Json.Serialization.JsonPropertyName("clientId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string ClientId { get; set; } = default!;
+    public System.Guid ClientId { get; set; } = default!;
 
     /// <summary>
     /// Name of the service sending the message
@@ -849,7 +863,7 @@ public partial class ClientRPCEvent
     [System.Text.Json.Serialization.JsonPropertyName("clientId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string ClientId { get; set; } = default!;
+    public System.Guid ClientId { get; set; } = default!;
 
     /// <summary>
     /// Name of the service making the RPC call
@@ -929,7 +943,7 @@ public partial class ClientRPCResponseEvent
     [System.Text.Json.Serialization.JsonPropertyName("clientId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string ClientId { get; set; } = default!;
+    public System.Guid ClientId { get; set; } = default!;
 
     /// <summary>
     /// Name of the service that initiated the RPC
@@ -970,6 +984,69 @@ public partial class ClientRPCResponseEvent
     public System.DateTimeOffset? Timestamp { get; set; } = default!;
 
 }
+
+/// <summary>
+/// HTTP method for endpoint invocation
+/// </summary>
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public enum HttpMethodType
+{
+
+    [System.Runtime.Serialization.EnumMember(Value = @"GET")]
+    GET = 0,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"POST")]
+    POST = 1,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"PUT")]
+    PUT = 2,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"DELETE")]
+    DELETE = 3,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"PATCH")]
+    PATCH = 4,
+
+}
+#pragma warning restore CS1591
+
+/// <summary>
+/// WebSocket connection mode controlling broadcast and response behavior
+/// </summary>
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public enum ConnectionMode
+{
+
+    [System.Runtime.Serialization.EnumMember(Value = @"External")]
+    External = 0,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"Relayed")]
+    Relayed = 1,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"Internal")]
+    Internal = 2,
+
+}
+#pragma warning restore CS1591
+
+/// <summary>
+/// Authentication mode for internal WebSocket connections
+/// </summary>
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public enum InternalAuthMode
+{
+
+    [System.Runtime.Serialization.EnumMember(Value = @"ServiceToken")]
+    ServiceToken = 0,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"NetworkTrust")]
+    NetworkTrust = 1,
+
+}
+#pragma warning restore CS1591
 
 /// <summary>
 /// Broadcast directionality mode for multi-node Connect deployments
@@ -1079,52 +1156,6 @@ public enum Upgrade3
 
     [System.Runtime.Serialization.EnumMember(Value = @"websocket")]
     Websocket = 0,
-
-}
-#pragma warning restore CS1591
-
-#pragma warning disable CS1591 // Enum members cannot have XML documentation
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum ClientCapabilityMethod
-{
-
-    [System.Runtime.Serialization.EnumMember(Value = @"GET")]
-    GET = 0,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"POST")]
-    POST = 1,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"PUT")]
-    PUT = 2,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"DELETE")]
-    DELETE = 3,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"PATCH")]
-    PATCH = 4,
-
-}
-#pragma warning restore CS1591
-
-#pragma warning disable CS1591 // Enum members cannot have XML documentation
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum InternalProxyRequestMethod
-{
-
-    [System.Runtime.Serialization.EnumMember(Value = @"GET")]
-    GET = 0,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"POST")]
-    POST = 1,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"PUT")]
-    PUT = 2,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"DELETE")]
-    DELETE = 3,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"PATCH")]
-    PATCH = 4,
 
 }
 #pragma warning restore CS1591

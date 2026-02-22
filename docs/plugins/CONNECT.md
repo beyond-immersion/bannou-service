@@ -3,8 +3,7 @@
 > **Plugin**: lib-connect
 > **Schema**: schemas/connect-api.yaml
 > **Version**: 2.0.0
-> **Layer**: AppFoundation
-> **State Stores**: connect-statestore (Redis)
+> **State Store**: connect-statestore (Redis)
 
 ---
 
@@ -26,7 +25,6 @@ WebSocket-first edge gateway (L1 AppFoundation) providing zero-copy binary messa
 | Permission service (via events) | Receives `SessionCapabilitiesEvent` containing permissions; no direct API call |
 | Auth service (via events) | Receives `session.invalidated` events to force-disconnect sessions |
 | `IServiceAppMappingResolver` | Dynamic app-id resolution for distributed service routing |
-| ~~`IHttpClientFactory`~~ | REMOVED - was dead code; `CreateClient` never called in service code |
 | `IServiceScopeFactory` | Creates scoped DI containers for per-request ServiceNavigator resolution |
 | `ICapabilityManifestBuilder` | Builds capability manifest JSON from service mappings for client delivery |
 | `IEntitySessionRegistry` | Entity-to-session mapping for client event push routing; cleaned up on disconnect |
@@ -114,7 +112,12 @@ WebSocket-first edge gateway (L1 AppFoundation) providing zero-copy binary messa
 | `PendingMessageTimeoutSeconds` | `CONNECT_PENDING_MESSAGE_TIMEOUT_SECONDS` | `30` | Timeout for pending messages awaiting acknowledgment |
 | `ConnectionShutdownTimeoutSeconds` | `CONNECT_CONNECTION_SHUTDOWN_TIMEOUT_SECONDS` | `5` | WebSocket close timeout during shutdown |
 | `ReconnectionWindowExtensionMinutes` | `CONNECT_RECONNECTION_WINDOW_EXTENSION_MINUTES` | `1` | Extra minutes added to reconnection window state TTL |
-| `MultiNodeBroadcastMode` | `CONNECT_MULTI_NODE_BROADCAST_MODE` | `None` | Broadcast mesh mode: None (isolated), Send (relay outbound only), Receive (accept inbound only), Both (full mesh) |
+| `MaxChannelNumber` | `CONNECT_MAX_CHANNEL_NUMBER` | `1000` | Maximum allowed channel number in WebSocket binary messages (rejected if exceeded) |
+| `CompanionRoomMode` | `CONNECT_COMPANION_ROOM_MODE` | `Disabled` | How Connect manages companion chat rooms (Disabled, AutoJoinLazy, AutoJoin, Manual) |
+| `CompressionEnabled` | `CONNECT_COMPRESSION_ENABLED` | `false` | Enable Brotli compression for outbound WebSocket payloads above the size threshold |
+| `CompressionThresholdBytes` | `CONNECT_COMPRESSION_THRESHOLD_BYTES` | `1024` | Minimum payload size in bytes before compression is applied |
+| `CompressionQuality` | `CONNECT_COMPRESSION_QUALITY` | `1` | Brotli compression quality level (0=none, 1=fastest, 11=best ratio) |
+| `MultiNodeBroadcastMode` | `CONNECT_MULTINODE_BROADCAST_MODE` | `None` | Broadcast mesh mode: None (isolated), Send (relay outbound only), Receive (accept inbound only), Both (full mesh) |
 | `BroadcastInternalUrl` | `CONNECT_BROADCAST_INTERNAL_URL` | `null` | Internal WebSocket URL for peer connections (e.g., `ws://localhost:5012/connect/broadcast`). Null disables broadcast mesh regardless of mode |
 | `BroadcastHeartbeatIntervalSeconds` | `CONNECT_BROADCAST_HEARTBEAT_INTERVAL_SECONDS` | `30` | Interval between heartbeat refreshes and stale peer cleanup in the broadcast registry |
 | `BroadcastStaleThresholdSeconds` | `CONNECT_BROADCAST_STALE_THRESHOLD_SECONDS` | `90` | Time after which a peer's registry entry is considered stale and removed (should be > heartbeat interval) |
@@ -129,10 +132,9 @@ WebSocket-first edge gateway (L1 AppFoundation) providing zero-copy binary messa
 | `IMeshInvocationClient` | Singleton | HTTP request creation and service invocation |
 | `IMessageBus` | Scoped | Event publishing (session lifecycle, error, permission recompile) |
 | `IMessageSubscriber` | Singleton | Per-session dynamic RabbitMQ subscription management |
-| ~~`IHttpClientFactory`~~ | ~~Singleton~~ | REMOVED - was dead code; all HTTP routing uses `IMeshInvocationClient` |
 | `IServiceAppMappingResolver` | Singleton | Dynamic app-id resolution for distributed routing |
 | `IServiceScopeFactory` | Singleton | Creates scoped DI containers for ServiceNavigator |
-| `ConnectServiceConfiguration` | Singleton | All configuration properties (21 + ForceServiceId) |
+| `ConnectServiceConfiguration` | Singleton | All configuration properties (29 total) |
 | `ILogger<ConnectService>` | Singleton | Structured logging |
 | `ILoggerFactory` | Singleton | Logger creation for child components |
 | `IEventConsumer` | Singleton | Event consumer registration for pub/sub handlers |
@@ -140,6 +142,7 @@ WebSocket-first edge gateway (L1 AppFoundation) providing zero-copy binary messa
 | `ICapabilityManifestBuilder` (`CapabilityManifestBuilder`) | Singleton | Builds API lists and shortcut lists for capability manifests |
 | `IEntitySessionRegistry` (`EntitySessionRegistry`) | Singleton | Redis-backed dual-index entity-to-session mapping for client event push routing |
 | `InterNodeBroadcastManager` | Singleton | WebSocket mesh for relaying broadcasts to/from peer Connect instances; Redis sorted set for discovery, heartbeat timer for liveness |
+| `IMeshInstanceIdentifier` | Singleton | Process-stable instance identity for session heartbeats and broadcast registry |
 | `WebSocketConnectionManager` | Owned (internal) | In-memory WebSocket connection tracking, send operations, peer GUID registry |
 
 Service lifetime is **Singleton** (unique among Bannou services). This is required because the service maintains in-memory WebSocket connection state (`ConcurrentDictionary` of active connections, session mappings, pending RPCs) that must persist across HTTP requests.
@@ -164,6 +167,14 @@ Service lifetime is **Singleton** (unique among Bannou services). This is requir
 ### Internal Proxy (1 endpoint)
 
 - **ProxyInternalRequest** (`POST /internal/proxy`): Stateless HTTP proxy for internal service-to-service calls through Connect. Validates session has access via connection state capability mappings (`ConnectionState.ServiceMappings`, populated by Permission service). Returns `NotFound` if session not connected, `Forbidden` if endpoint not in capability manifest. Resolves app-id via `IServiceAppMappingResolver`. Builds HTTP request with path/query parameters. Routes through `IMeshInvocationClient`. Supports GET/POST/PUT/DELETE/PATCH. Returns raw response body and status code.
+
+### Inter-Node Broadcast (1 endpoint)
+
+- **BroadcastWebSocket** (`GET /connect/broadcast`): Internal WebSocket endpoint for the multi-node broadcast mesh. Other Connect instances connect here to relay broadcast messages. Requires `instanceId` query parameter and service-token authentication (same as Internal connection mode). Not client-facing — used exclusively for inter-node communication. `x-controller-only: true`.
+
+### Meta Proxy (1 endpoint)
+
+- **GetEndpointMeta** (`POST /connect/get-endpoint-meta`): Permission-gated proxy for endpoint metadata. Accepts a full meta endpoint path (e.g., `/account/get/meta/info`), validates the caller's JWT, looks up their active WebSocket session via the JWT's sessionKey, checks the session's capability mappings for the underlying endpoint, and proxies the internal meta GET request if authorized. Returns the meta endpoint response directly.
 
 ---
 
@@ -445,19 +456,13 @@ Connection Mode Behavior Matrix
 
 ## Stubs & Unimplemented Features
 
-1. ~~**Encrypted flag (0x02)**~~: **RESOLVED** (2026-02-08) - Closed as not planned ([#171](https://github.com/beyond-immersion/bannou-service/issues/171)). Implementing encryption at the protocol layer violates zero-copy routing. TLS handles transport encryption; E2E encryption is a client SDK concern.
-
-2. ~~**Compressed flag (0x04)**~~: **RESOLVED** (2026-02-08) - Closed as not planned ([#172](https://github.com/beyond-immersion/bannou-service/issues/172)). Implementing compression at the protocol layer violates zero-copy routing. WSS permessage-deflate handles transport compression.
-
-3. ~~**Heartbeat sending**~~: **RESOLVED** (2026-02-08) - Closed as completed ([#175](https://github.com/beyond-immersion/bannou-service/issues/175)). Already handled by `KeepAliveInterval` (30s RFC 6455 pings) configured in Program.cs. `HeartbeatIntervalSeconds` correctly controls Redis liveness tracking only.
-
-4. ~~**HighPriority flag (0x08)**~~: **RESOLVED** (2026-02-08) - Closed as not planned ([#178](https://github.com/beyond-immersion/bannou-service/issues/178)). Dead code with no queue, no consumers, no use case. Speculative flag that was never needed.
+No outstanding stubs. All previously-tracked items (encrypted flag, compressed flag, heartbeat sending, high-priority flag) were resolved and removed.
 
 ---
 
 ## Potential Extensions
 
-1. ~~**Multi-instance broadcast**~~: **IMPLEMENTED** (2026-02-22) - Broadcasts now relay across Connect instances via a direct WebSocket mesh. Instances register in a Redis sorted set (`broadcast-registry`), discover compatible peers on startup, and maintain persistent WebSocket connections for fire-and-forget relay. Configurable via `BroadcastMode` (None/Send/Receive/Both). See [Issue #181](https://github.com/beyond-immersion/bannou-service/issues/181).
+No outstanding extensions. Multi-instance broadcast was implemented (2026-02-22) via `InterNodeBroadcastManager`.
 
 ---
 
@@ -465,9 +470,9 @@ Connection Mode Behavior Matrix
 
 ### Bugs (Fix Immediately)
 
-1. ~~**Admin error forwarding broken for non-reconnected sessions**~~: FIXED - Added `connectionState.UserRoles = userRoles` after `ConnectionState` creation in `HandleWebSocketCommunicationAsync`.
+1. **Orphaned configuration: `CompanionRoomMode`**: Defined in `connect-configuration.yaml` and generated into `ConnectServiceConfiguration`, but `_configuration.CompanionRoomMode` is never referenced anywhere in service code. T21 violation — dead config should be wired up in service or removed from schema.
 
-2. ~~**`IHttpClientFactory` injected but `CreateClient` never called**~~: FIXED - Removed dead `_httpClientFactory` field, constructor parameter, `HttpClientName` constant, static header fields, named client registration from plugin, and `HttpClientTimeoutSeconds` config property from schema.
+2. **Orphaned configuration: `MaxChannelNumber`**: Defined in `connect-configuration.yaml` and generated into `ConnectServiceConfiguration`, but `_configuration.MaxChannelNumber` is never referenced anywhere in service code. T21 violation — dead config should be wired up in service or removed from schema.
 
 ### Intentional Quirks
 
@@ -485,21 +490,19 @@ Connection Mode Behavior Matrix
 
 7. **ServerSalt shared requirement (enforced)**: All Connect instances MUST use the same `CONNECT_SERVER_SALT` value for distributed deployments. The constructor enforces this with a fail-fast check — startup aborts with `InvalidOperationException` if ServerSalt is null/empty. Different salts across instances would cause GUID validation failures and broken session shortcuts. All three GUID generation methods (`GenerateServiceGuid`, `GenerateClientGuid`, `GenerateSessionShortcutGuid`) also validate the salt parameter.
 
-8. ~~**Non-deterministic instance ID**~~: **FIXED** (2026-02-22) - `_instanceId` now uses `IMeshInstanceIdentifier.InstanceId` (process-stable identity from lib-mesh) instead of `Guid.NewGuid()`. This ensures consistent instance identity between ConnectService session heartbeats and the InterNodeBroadcastManager's registry entries. The ID is still per-process (restarts get a new ID), but it is consistent within a single process lifecycle.
+8. **Disconnect event published before account index removal**: In the finally block, `session.disconnected` is published before `RemoveSessionFromAccountAsync` is called. This means consumers receiving the event could theoretically still see the session in `GetAccountSessions`. In practice this is safe: no consumer of `session.disconnected` calls `GetAccountSessions`, and heartbeat-based liveness filtering in `GetSessionsForAccountAsync` filters out disconnected sessions.
 
-9. **Disconnect event published before account index removal**: In the finally block, `session.disconnected` is published before `RemoveSessionFromAccountAsync` is called. This means consumers receiving the event could theoretically still see the session in `GetAccountSessions`. In practice this is safe: no consumer of `session.disconnected` calls `GetAccountSessions`, and heartbeat-based liveness filtering in `GetSessionsForAccountAsync` filters out disconnected sessions.
+9. **Internal mode minimal initialization**: Internal mode connections skip service mapping, capability manifest, RabbitMQ subscription, session state persistence, heartbeat tracking, and reconnection windows. They receive only a minimal response (sessionId + peerGuid) and enter a simplified binary-only message loop (`HandleInternalModeMessageLoopAsync`). This is intentional design for server-to-server WebSocket communication using specialized authentication (ServiceToken or NetworkTrust).
 
-10. **Internal mode minimal initialization**: Internal mode connections skip service mapping, capability manifest, RabbitMQ subscription, session state persistence, heartbeat tracking, and reconnection windows. They receive only a minimal response (sessionId + peerGuid) and enter a simplified binary-only message loop (`HandleInternalModeMessageLoopAsync`). This is intentional design for server-to-server WebSocket communication using specialized authentication (ServiceToken or NetworkTrust).
+10. **Subsume-safe disconnect**: When a new connection replaces an existing one for the same session (subsume), the old connection's finally block uses `RemoveConnectionIfMatch` (WebSocket reference equality) to detect the subsume. If subsumed, the entire disconnect path is skipped: no `session.disconnected` event, no account index removal, no RabbitMQ unsubscription, no reconnection window. This prevents state churn across all consumers (Permission, GameSession, Actor, Matchmaking) that would otherwise rebuild on a false disconnect/reconnect cycle.
 
-11. **Subsume-safe disconnect**: When a new connection replaces an existing one for the same session (subsume), the old connection's finally block uses `RemoveConnectionIfMatch` (WebSocket reference equality) to detect the subsume. If subsumed, the entire disconnect path is skipped: no `session.disconnected` event, no account index removal, no RabbitMQ unsubscription, no reconnection window. This prevents state churn across all consumers (Permission, GameSession, Actor, Matchmaking) that would otherwise rebuild on a false disconnect/reconnect cycle.
+11. **Broadcast mesh is fire-and-forget**: `RelayBroadcastAsync` sends to all connected peers without waiting for delivery confirmation. If a peer WebSocket is in a broken state, the send fails silently (logged as warning) and the connection is removed from `_nodeConnections`. No message retry or guaranteed delivery — the same semantics as local broadcast delivery.
 
-12. **Broadcast mesh is fire-and-forget**: `RelayBroadcastAsync` sends to all connected peers without waiting for delivery confirmation. If a peer WebSocket is in a broken state, the send fails silently (logged as warning) and the connection is removed from `_nodeConnections`. No message retry or guaranteed delivery — the same semantics as local broadcast delivery.
+12. **New instances establish connections, not old ones**: When a new Connect instance starts, it discovers existing peers from the Redis sorted set and initiates WebSocket connections to compatible peers. Existing instances never proactively connect to new instances — they accept incoming connections via the `/connect/broadcast` endpoint. This avoids the need for background workers or polling for new peers.
 
-13. **New instances establish connections, not old ones**: When a new Connect instance starts, it discovers existing peers from the Redis sorted set and initiates WebSocket connections to compatible peers. Existing instances never proactively connect to new instances — they accept incoming connections via the `/connect/broadcast` endpoint. This avoids the need for background workers or polling for new peers.
+13. **BroadcastInternalUrl null is a hard disable**: If `BroadcastInternalUrl` is null or empty, the broadcast manager is completely inactive regardless of `MultiNodeBroadcastMode`. No Redis registration, no peer discovery, no heartbeat timer. This allows nodes to be isolated without changing the mode enum.
 
-14. **BroadcastInternalUrl null is a hard disable**: If `BroadcastInternalUrl` is null or empty, the broadcast manager is completely inactive regardless of `MultiNodeBroadcastMode`. No Redis registration, no peer discovery, no heartbeat timer. This allows nodes to be isolated without changing the mode enum.
-
-15. **Broadcast relay mode gating**: A node set to `Receive` will accept and deliver incoming broadcasts from peers but will NOT relay its own broadcasts outward (even if peers connect to it). Conversely, a `Send` node relays outward but discards any broadcasts received from peers. The WebSocket connection is bidirectional, but the `BroadcastMode` gates which direction each node actually uses.
+14. **Broadcast relay mode gating**: A node set to `Receive` will accept and deliver incoming broadcasts from peers but will NOT relay its own broadcasts outward (even if peers connect to it). Conversely, a `Send` node relays outward but discards any broadcasts received from peers. The WebSocket connection is bidirectional, but the `BroadcastMode` gates which direction each node actually uses.
 
 ### Design Considerations (Requires Planning)
 
@@ -516,14 +519,3 @@ This section tracks active development work on items from the quirks/bugs lists 
 ### Pending Design Review
 - **Single-instance P2P limitation** - [Issue #346](https://github.com/beyond-immersion/bannou-service/issues/346) - Requires design decisions on cross-instance delivery mechanism, peer GUID stability, and Redis latency impact; no production consumers yet (2026-02-08)
 
-### Closed (Not Planned)
-- **Encrypted flag (0x02)** - [Issue #171](https://github.com/beyond-immersion/bannou-service/issues/171) - CLOSED: violates zero-copy routing; TLS handles transport; E2E encryption is client SDK concern (2026-02-08)
-- **Compressed flag (0x04)** - [Issue #172](https://github.com/beyond-immersion/bannou-service/issues/172) - CLOSED: violates zero-copy routing; WSS has permessage-deflate for transport compression (2026-02-08)
-- **Heartbeat sending** - [Issue #175](https://github.com/beyond-immersion/bannou-service/issues/175) - CLOSED: already handled by KeepAliveInterval (30s RFC 6455 pings) configured in Program.cs (2026-02-08)
-- **HighPriority flag (0x08)** - [Issue #178](https://github.com/beyond-immersion/bannou-service/issues/178) - CLOSED: dead code with no queue, no consumers, no use case; speculative flag (2026-02-08)
-- **Trace context propagation** - [Issue #184](https://github.com/beyond-immersion/bannou-service/issues/184) - CLOSED: SessionID already serves as correlation key; returned via CapabilityManifestEvent, propagated through mesh via X-Bannou-Session-Id header; no protocol change needed (2026-02-09)
-
-### Completed
-
-- **2026-02-22**: Issue [#181](https://github.com/beyond-immersion/bannou-service/issues/181) - Multi-node broadcast: WebSocket mesh between Connect instances via InterNodeBroadcastManager with Redis sorted set registry, BroadcastMode configuration (None/Send/Receive/Both), compatibility filtering, heartbeat-based liveness, and fire-and-forget relay semantics
-- **2026-02-17**: Issue [#426](https://github.com/beyond-immersion/bannou-service/issues/426) - Entity Session Registry: Redis-backed dual-index (entity→sessions, session→entities) mapping for client event push routing, with heartbeat-based stale session filtering and disconnect cleanup

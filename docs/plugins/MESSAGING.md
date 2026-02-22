@@ -289,7 +289,8 @@ None. All previously listed stubs have been resolved:
 
 ## Potential Extensions
 
-1. **Prometheus metrics**: Publish/subscribe rates, buffer depth, retry counts, channel pool utilization. Would come from a RabbitMQ sidecar exporter, not from lib-messaging code.
+1. **Observable gauge metrics for buffer depth, retry counts, and channel pool utilization**: Publish/subscribe rate counters and duration histograms are already implemented via `ITelemetryProvider.RecordCounter/RecordHistogram` in `RabbitMQMessageBus` and `RabbitMQMessageSubscriber`. Three application-level gauge metrics remain unimplemented: retry buffer depth (from `IRetryBuffer.BufferCount`), per-attempt retry counts (from `MessageRetryBuffer` retry loop), and channel pool utilization (from `IChannelManager.TotalActiveChannels`/`PooledChannelCount`). These are in-process values that no sidecar exporter can observe — they require `ObservableGauge` support in `ITelemetryProvider`, which currently only exposes `RecordCounter` and `RecordHistogram`.
+<!-- AUDIT:NEEDS_DESIGN:2026-02-22:https://github.com/beyond-immersion/bannou-service/issues/453 -->
 
 ---
 
@@ -323,13 +324,11 @@ No bugs identified.
 
 9. **Dead letter consumer uses IChannelManager directly**: `DeadLetterConsumerService` bypasses `IMessageSubscriber` and creates its own consumer channel via `IChannelManager.CreateConsumerChannelAsync()`. This is necessary because `SubscribeDynamicRawAsync` only passes raw bytes to the handler — dead letter processing requires access to `BasicProperties.Headers` for metadata extraction (`x-original-topic`, `x-retry-count`, `x-death`, etc.). Uses a durable shared queue (`bannou-dlx-consumer`) so accumulated dead letters are consumed even after restarts, with RabbitMQ competing consumers for multi-instance safety.
 
-### Design Considerations
+10. **In-memory mode limitations**: `InMemoryMessageBus` delivers asynchronously via a discarded task (`_ = DeliverToSubscribersAsync(...)`, fire-and-forget). Subscriptions use `ImmutableList<Func<object, ...>>` for lock-free concurrent access but are not fully representative of RabbitMQ semantics (no queue persistence, no dead-letter, no prefetch). `InMemoryMessageTap` works in-process only and simulates exchanges by combining exchange+routing key as destination topic.
 
-1. **In-memory mode limitations**: `InMemoryMessageBus` delivers asynchronously via a discarded task (`_ = DeliverToSubscribersAsync(...)`, fire-and-forget). Subscriptions use `ImmutableList<Func<object, ...>>` for lock-free concurrent access but are not fully representative of RabbitMQ semantics (no queue persistence, no dead-letter, no prefetch). `InMemoryMessageTap` works in-process only and simulates exchanges by combining exchange+routing key as destination topic.
+11. **Tap auto-creates destination exchanges**: `RabbitMQMessageTap.CreateTapAsync()` has a `CreateExchangeIfNotExists` flag on `TapDestination` (default `true`) that creates the destination exchange if it doesn't exist. This follows the "exchanges as implicit infrastructure" pattern (similar to RabbitMQ's own queue auto-creation) but could mask typos in exchange names — a mistyped exchange will be silently created rather than erroring.
 
-2. **Tap creates exchange if not exists**: `RabbitMQMessageTap.CreateTapAsync()` has a `CreateExchangeIfNotExists` flag on `TapDestination` that creates the destination exchange if it doesn't exist. This is intentional (exchanges are auto-created as needed) but could mask typos in exchange names.
-
-3. **Publisher confirms add latency**: When `EnablePublisherConfirms` is true (default), each `BasicPublishAsync` waits for broker confirmation. This adds ~1-5ms latency per publish. Fully configurable via `MESSAGING_ENABLE_PUBLISHER_CONFIRMS` and mitigated by `MESSAGING_ENABLE_PUBLISH_BATCHING`.
+12. **Publisher confirms add latency**: When `EnablePublisherConfirms` is true (default), each `BasicPublishAsync` waits for broker confirmation before returning. This adds ~1-5ms latency per publish but provides at-least-once delivery guarantees. Fully configurable via `MESSAGING_ENABLE_PUBLISHER_CONFIRMS` and mitigated by `MESSAGING_ENABLE_PUBLISH_BATCHING` for high-throughput scenarios.
 
 ---
 
@@ -382,6 +381,15 @@ This section tracks active development work on items from the quirks/bugs lists 
     - Durable shared queue `bannou-dlx-consumer` with competing consumers for multi-instance safety
     - Handles both explicit dead letter paths (from MessageRetryBuffer) and RabbitMQ automatic dead-lettering (nack'd messages)
     - All 216 unit tests passing, 0 warnings, 0 errors
+
+- **Audit (2026-02-22)**:
+    - Corrected Potential Extensions #1: "Prometheus metrics" description was factually inaccurate — publish/subscribe rate counters and duration histograms already implemented via `ITelemetryProvider.RecordCounter/RecordHistogram`. Updated to accurately describe remaining gap (ObservableGauge metrics for buffer depth, retry counts, channel pool utilization). Created [Issue #453](https://github.com/beyond-immersion/bannou-service/issues/453) for ITelemetryProvider interface design decision.
+    - Reclassified Design Considerations #1 (In-memory mode limitations) to Intentional Quirks #10 after code review of `InMemoryMessageBus.cs` confirmed fire-and-forget is intentional
+
+- **Audit (2026-02-22)**:
+    - Reclassified Design Considerations #1 (Tap creates exchange if not exists) to Intentional Quirks #11 — code review confirmed `CreateExchangeIfNotExists` default `true` is deliberate "exchanges as implicit infrastructure" pattern; typo masking is an acknowledged tradeoff, not a design question
+    - Reclassified Design Considerations #2 (Publisher confirms add latency) to Intentional Quirks #12 — fully configurable via `MESSAGING_ENABLE_PUBLISHER_CONFIRMS` with batching mitigation; this is a documented performance tradeoff, not an open design question
+    - Removed Design Considerations section (all items resolved to Intentional Quirks)
 
 ### Active
 

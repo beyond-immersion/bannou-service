@@ -1524,19 +1524,8 @@ public partial class GameSessionService : IGameSessionService
             var connectResponse = await _connectClient.GetAccountSessionsAsync(
                 new GetAccountSessionsRequest { AccountId = accountId });
 
-            // Convert string session IDs to Guids
-            connectedSessionsForAccount = new List<Guid>();
-            foreach (var sessionIdStr in connectResponse.SessionIds)
-            {
-                if (Guid.TryParse(sessionIdStr, out var sessionGuid))
-                {
-                    connectedSessionsForAccount.Add(sessionGuid);
-                }
-                else
-                {
-                    _logger.LogWarning("Invalid session ID format from Connect service: {SessionId}", sessionIdStr);
-                }
-            }
+            // SessionIds are already Guids from the generated model
+            connectedSessionsForAccount = connectResponse.SessionIds.ToList();
         }
         catch (ApiException ex)
         {
