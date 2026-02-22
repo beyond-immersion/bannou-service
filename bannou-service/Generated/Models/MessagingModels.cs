@@ -25,6 +25,21 @@
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Messaging;
 
+#pragma warning disable 108 // Disable "CS0108 '{derivedDto}.ToJson()' hides inherited member '{dtoBase}.ToJson()'. Use the new keyword if hiding was intended."
+#pragma warning disable 114 // Disable "CS0114 '{derivedDto}.RaisePropertyChanged(String)' hides inherited member 'dtoBase.RaisePropertyChanged(String)'. To make the current member override that implementation, add the override keyword. Otherwise add the new keyword."
+#pragma warning disable 472 // Disable "CS0472 The result of the expression is always 'false' since a value of type 'Int32' is never equal to 'null' of type 'Int32?'
+#pragma warning disable 612 // Disable "CS0612 '...' is obsolete"
+#pragma warning disable 649 // Disable "CS0649 Field is never assigned to, and will always have its default value null"
+#pragma warning disable 1573 // Disable "CS1573 Parameter '...' has no matching param tag in the XML comment for ...
+#pragma warning disable 1591 // Disable "CS1591 Missing XML comment for publicly visible type or member ..."
+#pragma warning disable 8073 // Disable "CS8073 The result of the expression is always 'false' since a value of type 'T' is never equal to 'null' of type 'T?'"
+#pragma warning disable 3016 // Disable "CS3016 Arrays as attribute arguments is not CLS-compliant"
+#pragma warning disable 8600 // Disable "CS8600 Converting null literal or possible null value to non-nullable type"
+#pragma warning disable 8602 // Disable "CS8602 Dereference of a possibly null reference"
+#pragma warning disable 8603 // Disable "CS8603 Possible null reference return"
+#pragma warning disable 8604 // Disable "CS8604 Possible null reference argument for parameter"
+#pragma warning disable 8625 // Disable "CS8625 Cannot convert null literal to non-nullable reference type"
+#pragma warning disable 8765 // Disable "CS8765 Nullability of type of parameter doesn't match overridden member (possibly because of nullability attributes)."
 
 namespace BeyondImmersion.BannouService.Messaging;
 
@@ -41,12 +56,12 @@ public partial class PublishEventRequest
     /// Topic/routing key for the event
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("topic")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
     public string Topic { get; set; } = default!;
 
     /// <summary>
-    /// Event payload (any JSON)
+    /// Arbitrary event payload (any valid JSON object). Wrapped opaquely in GenericMessageEnvelope for RabbitMQ routing. No Bannou plugin reads specific keys from this field by convention.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("payload")]
     [System.ComponentModel.DataAnnotations.Required]
@@ -72,7 +87,8 @@ public partial class PublishOptions
     /// Exchange name for routing
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("exchange")]
-    public string Exchange { get; set; } = AppConstants.DEFAULT_APP_NAME;
+    [System.ComponentModel.DataAnnotations.StringLength(int.MaxValue, MinimumLength = 1)]
+    public string Exchange { get; set; } = "bannou";
 
     /// <summary>
     /// Routing key for direct/topic exchanges (required for topic exchanges, ignored for fanout)
@@ -85,7 +101,7 @@ public partial class PublishOptions
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("exchangeType")]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public PublishOptionsExchangeType? ExchangeType { get; set; } = BeyondImmersion.BannouService.Messaging.PublishOptionsExchangeType.Topic;
+    public ExchangeType? ExchangeType { get; set; } = BeyondImmersion.BannouService.Messaging.ExchangeType.Topic;
 
     /// <summary>
     /// Whether the message should be persisted to disk
@@ -148,7 +164,7 @@ public partial class CreateSubscriptionRequest
     /// Topic pattern to subscribe to for receiving events
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("topic")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
     public string Topic { get; set; } = default!;
 
@@ -156,7 +172,7 @@ public partial class CreateSubscriptionRequest
     /// HTTP endpoint to receive events
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("callbackUrl")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
     public System.Uri CallbackUrl { get; set; } = default!;
 
@@ -197,6 +213,7 @@ public partial class SubscriptionOptions
     /// Number of messages to prefetch
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("prefetchCount")]
+    [System.ComponentModel.DataAnnotations.Range(1, 10000)]
     public int PrefetchCount { get; set; } = 10;
 
     /// <summary>
@@ -268,12 +285,6 @@ public partial class ListTopicsRequest
     [System.Text.Json.Serialization.JsonPropertyName("exchangeFilter")]
     public string? ExchangeFilter { get; set; } = default!;
 
-    /// <summary>
-    /// Include topics with no messages
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("includeEmpty")]
-    public bool IncludeEmpty { get; set; } = true;
-
 }
 
 /// <summary>
@@ -309,12 +320,6 @@ public partial class TopicInfo
     public string Name { get; set; } = default!;
 
     /// <summary>
-    /// Number of messages currently in the topic queue
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("messageCount")]
-    public int MessageCount { get; set; } = default!;
-
-    /// <summary>
     /// Number of active consumers subscribed to this topic
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("consumerCount")]
@@ -322,9 +327,12 @@ public partial class TopicInfo
 
 }
 
+/// <summary>
+/// RabbitMQ exchange type determining how messages are routed
+/// </summary>
 #pragma warning disable CS1591 // Enum members cannot have XML documentation
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum PublishOptionsExchangeType
+public enum ExchangeType
 {
 
     [System.Runtime.Serialization.EnumMember(Value = @"fanout")]
@@ -335,6 +343,23 @@ public enum PublishOptionsExchangeType
 
     [System.Runtime.Serialization.EnumMember(Value = @"topic")]
     Topic = 2,
+
+}
+#pragma warning restore CS1591
+
+/// <summary>
+/// Behavior when DLX queue exceeds max length (drop-head drops oldest, reject-publish blocks new messages)
+/// </summary>
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public enum DeadLetterOverflowBehavior
+{
+
+    [System.Runtime.Serialization.EnumMember(Value = @"drop-head")]
+    DropHead = 0,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"reject-publish")]
+    RejectPublish = 1,
 
 }
 #pragma warning restore CS1591

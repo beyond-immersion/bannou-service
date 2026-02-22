@@ -1,6 +1,7 @@
 #nullable enable
 
 using BeyondImmersion.Bannou.Core;
+using BeyondImmersion.BannouService.Services;
 using System.Text.Json.Serialization;
 
 namespace BeyondImmersion.BannouService.Messaging.Services;
@@ -67,7 +68,7 @@ public class TappedMessageEnvelope : GenericMessageEnvelope
     /// The exchange type used for the destination.
     /// </summary>
     [JsonPropertyName("destinationExchangeType")]
-    public string DestinationExchangeType { get; set; } = "fanout";
+    public TapExchangeType DestinationExchangeType { get; set; } = TapExchangeType.Fanout;
 
     /// <summary>
     /// When the tap was created.
@@ -106,7 +107,7 @@ public class TappedMessageEnvelope : GenericMessageEnvelope
         string sourceExchange,
         string destinationExchange,
         string destinationRoutingKey,
-        string destinationExchangeType,
+        TapExchangeType destinationExchangeType,
         DateTimeOffset tapCreatedAt)
     {
         // Copy base envelope fields from IBannouEvent
@@ -148,7 +149,7 @@ public class TappedMessageEnvelope : GenericMessageEnvelope
         string sourceExchange,
         string destinationExchange,
         string destinationRoutingKey,
-        string destinationExchangeType,
+        TapExchangeType destinationExchangeType,
         DateTimeOffset tapCreatedAt)
         where TEvent : class
     {

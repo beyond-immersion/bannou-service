@@ -1,4 +1,4 @@
-openapi: 3.0.0
+openapi: 3.0.3
 info:
   title: Bannou Messaging Service API
   description: |
@@ -80,7 +80,9 @@ paths:
               $ref: '#/components/schemas/RemoveSubscriptionRequest'
       responses:
         '200':
-          description: Subscription removed
+          description: Subscription removed successfully
+        '404':
+          description: Subscription not found or no longer active
 
   /messaging/list-topics:
     post:
@@ -115,10 +117,15 @@ components:
       properties:
         topic:
           type: string
+          minLength: 1
           description: Topic/routing key for the event
         payload:
           type: object
-          description: Event payload (any JSON)
+          additionalProperties: true
+          description: >-
+            Arbitrary event payload (any valid JSON object). Wrapped opaquely in
+            GenericMessageEnvelope for RabbitMQ routing. No Bannou plugin reads
+            specific keys from this field by convention.
         options:
           $ref: '#/components/schemas/PublishOptions'
           nullable: true
@@ -132,14 +139,14 @@ components:
         exchange:
           type: string
           default: bannou
+          minLength: 1
           description: Exchange name for routing
         routingKey:
           type: string
           nullable: true
           description: Routing key for direct/topic exchanges (required for topic exchanges, ignored for fanout)
         exchangeType:
-          type: string
-          enum: [fanout, direct, topic]
+          $ref: '#/components/schemas/ExchangeType'
           default: topic
           nullable: true
           description: Exchange type - determines how messages are routed (topic routes by routing key pattern)
@@ -193,10 +200,12 @@ components:
       properties:
         topic:
           type: string
+          minLength: 1
           description: Topic pattern to subscribe to for receiving events
         callbackUrl:
           type: string
           format: uri
+          minLength: 1
           description: HTTP endpoint to receive events
         options:
           $ref: '#/components/schemas/SubscriptionOptions'
@@ -223,6 +232,8 @@ components:
         prefetchCount:
           type: integer
           default: 10
+          minimum: 1
+          maximum: 10000
           description: Number of messages to prefetch
         useDeadLetter:
           type: boolean
@@ -270,10 +281,6 @@ components:
           type: string
           nullable: true  # NRT: Optional string MUST be nullable (Rule 2)
           description: Filter topics by exchange name prefix
-        includeEmpty:
-          type: boolean
-          default: true  # NRT: Value type with default is fine (Rule 3)
-          description: Include topics with no messages
 
     ListTopicsResponse:
       description: Response containing a list of available messaging topics
@@ -294,15 +301,21 @@ components:
       additionalProperties: false
       required:  # NRT: Response properties server always sets (Rule 4)
       - name
-      - messageCount
       - consumerCount
       properties:
         name:
           type: string
           description: Name of the topic/exchange
-        messageCount:
-          type: integer
-          description: Number of messages currently in the topic queue
         consumerCount:
           type: integer
           description: Number of active consumers subscribed to this topic
+
+    ExchangeType:
+      type: string
+      description: RabbitMQ exchange type determining how messages are routed
+      enum: [fanout, direct, topic]
+
+    DeadLetterOverflowBehavior:
+      type: string
+      description: Behavior when DLX queue exceeds max length (drop-head drops oldest, reject-publish blocks new messages)
+      enum: [drop-head, reject-publish]

@@ -452,7 +452,6 @@ public partial class MeshService : IMeshService
                 UniqueAppIds = endpoints.Select(e => e.AppId).Distinct().Count()
             },
             RedisConnected = isHealthy,
-            LastUpdateTime = DateTimeOffset.UtcNow,
             Uptime = uptimeString
         };
 

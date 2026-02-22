@@ -640,8 +640,7 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/MeshEndpoint'
-          nullable: true
-          description: Alternative endpoints if primary fails (null if none)
+          description: Alternative endpoints if primary fails (empty array if none)
 
     GetMappingsRequest:
       type: object
@@ -706,11 +705,6 @@ components:
         redisConnected:
           type: boolean
           description: Whether Redis connection is healthy
-        lastUpdateTime:
-          type: string
-          format: date-time
-          nullable: true
-          description: Timestamp of the last health status update (null if never updated)
         uptime:
           type: string
           nullable: true

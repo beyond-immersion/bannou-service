@@ -624,10 +624,10 @@ public partial class GetRouteResponse
     public MeshEndpoint Endpoint { get; set; } = new MeshEndpoint();
 
     /// <summary>
-    /// Alternative endpoints if primary fails (null if none)
+    /// Alternative endpoints if primary fails (empty array if none)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("alternates")]
-    public System.Collections.Generic.ICollection<MeshEndpoint>? Alternates { get; set; } = default!;
+    public System.Collections.Generic.ICollection<MeshEndpoint> Alternates { get; set; } = default!;
 
 }
 
@@ -719,12 +719,6 @@ public partial class MeshHealthResponse
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("redisConnected")]
     public bool RedisConnected { get; set; } = default!;
-
-    /// <summary>
-    /// Timestamp of the last health status update (null if never updated)
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("lastUpdateTime")]
-    public System.DateTimeOffset? LastUpdateTime { get; set; } = default!;
 
     /// <summary>
     /// Mesh service uptime (e.g., "2d 5h 30m"). Null if unavailable.

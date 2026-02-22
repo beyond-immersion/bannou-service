@@ -188,8 +188,9 @@ public class Program
                 var channelManager = sp.GetRequiredService<IChannelManager>();
                 var msgConfig = sp.GetRequiredService<MessagingServiceConfiguration>();
                 var logger = sp.GetRequiredService<ILogger<MessageRetryBuffer>>();
+                var telemetryProvider = sp.GetRequiredService<ITelemetryProvider>();
                 // IMessageBus explicitly null - breaks circular dependency
-                return new MessageRetryBuffer(channelManager, msgConfig, logger);
+                return new MessageRetryBuffer(channelManager, msgConfig, logger, telemetryProvider);
             });
             serviceCollection.AddSingleton<IRetryBuffer>(sp => sp.GetRequiredService<MessageRetryBuffer>());
 

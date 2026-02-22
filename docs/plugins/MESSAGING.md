@@ -218,7 +218,7 @@ Removes subscription from in-memory tracking and persistent state store. Dispose
 
 ### List Topics (`/messaging/list-topics`)
 
-Returns topics from active subscriptions only. MessageCount always 0 (would require RabbitMQ management API). Only sees topics with active subscriptions on current node. Filters by exchangeFilter prefix. Counts consumers per topic from active subscriptions.
+Returns topics from active HTTP callback subscriptions on the current node. Returns topic name and consumer count per topic. Filters by exchangeFilter prefix.
 
 ---
 
@@ -271,17 +271,16 @@ Messaging Architecture
 
 ## Stubs & Unimplemented Features
 
-1. **Lifecycle events**: MessagePublished, SubscriptionCreated/Removed were planned but never implemented.
-2. **ListTopics MessageCount**: Always returns 0 (would require RabbitMQ Management HTTP API).
-3. **Prometheus metrics**: Publish/subscribe rates, buffer depth, retry counts not yet exposed.
+None. All previously listed stubs have been resolved:
+- **Lifecycle events**: Correctly rejected — messaging IS the event infrastructure; self-referential events would be circular and noisy. Observability is handled by T30 telemetry spans on all async methods.
+- **ListTopics MessageCount**: Removed from schema — "topic message count" is not a coherent RabbitMQ concept (topics are routing keys, not queues). The field always returned 0, which is actively misleading. Queue depth monitoring belongs in RabbitMQ Management API or Prometheus exporters.
 
 ---
 
 ## Potential Extensions
 
-1. **RabbitMQ Management API integration**: Enable accurate message counts and queue depth monitoring.
-2. **Prometheus metrics**: Publish/subscribe rates, buffer depth, retry counts.
-3. **Dead-letter processing consumer**: Background service to process DLX queue and handle poison messages (alerting, logging, reprocessing).
+1. **Prometheus metrics**: Publish/subscribe rates, buffer depth, retry counts, channel pool utilization. Would come from a RabbitMQ sidecar exporter, not from lib-messaging code.
+2. **Dead-letter processing consumer**: Background service to process DLX queue and handle poison messages (alerting, logging, optional reprocessing for transient failures).
 
 ---
 
@@ -315,7 +314,7 @@ No bugs identified.
 
 ### Design Considerations (Requires Planning)
 
-1. **In-memory mode limitations**: `InMemoryMessageBus` delivers asynchronously via a discarded task (`_ = DeliverToSubscribersAsync(...)`, fire-and-forget). Subscriptions use `List<Func<object, ...>>` which is not fully representative of RabbitMQ semantics (no queue persistence, no dead-letter, no prefetch). `InMemoryMessageTap` works in-process only and simulates exchanges by combining exchange+routing key as destination topic.
+1. **In-memory mode limitations**: `InMemoryMessageBus` delivers asynchronously via a discarded task (`_ = DeliverToSubscribersAsync(...)`, fire-and-forget). Subscriptions use `ImmutableList<Func<object, ...>>` for lock-free concurrent access but are not fully representative of RabbitMQ semantics (no queue persistence, no dead-letter, no prefetch). `InMemoryMessageTap` works in-process only and simulates exchanges by combining exchange+routing key as destination topic.
 
 2. **No graceful drain on shutdown**: `DisposeAsync` iterates subscriptions without timeout. A hung subscription disposal could hang the entire shutdown process.
 
@@ -351,6 +350,18 @@ This section tracks active development work on items from the quirks/bugs lists 
     - Fixed T7 violation: Added error event publishing (`TryPublishErrorAsync`) when poison messages are discarded
     - Fixed T21 violation: Removed dead config `PublisherConfirmTimeoutSeconds` (RabbitMQ.Client 7.x manages timeout internally)
     - Added unit tests for poison message discard scenario
+
+- **L3 Hardening Audit (2026-02-21)**:
+    - Fixed T10 violations: Removed `[Messaging]` bracket-prefix from all log messages across RabbitMQMessageBus, RabbitMQMessageSubscriber, RabbitMQConnectionManager, MessageRetryBuffer, RabbitMQMessageTap, NativeEventConsumerBackend
+    - Fixed T25 violations: Changed `TappedMessageEnvelope.DestinationExchangeType` from `string` to `TapExchangeType` enum; updated all construction sites and tests
+    - Fixed T9 violation: Replaced `List<Func<...>>` + `lock (_subscriptionLock)` in InMemoryMessageBus with lock-free `ImmutableList<Func<...>>` via `ConcurrentDictionary.AddOrUpdate` pattern
+    - Fixed T30 violations: Added telemetry spans to 15+ async methods across RabbitMQMessageBus (TryPublishRawAsync, TryPublishErrorAsync, PublishBatchAsync), RabbitMQMessageSubscriber (SubscribeAsync, SubscribeDynamicAsync, SubscribeDynamicRawAsync, UnsubscribeAsync, RemoveDynamicSubscriptionAsync), NativeEventConsumerBackend (StartAsync), RabbitMQMessageTap (CreateTapAsync, ForwardRawMessageAsync, RemoveTapAsync), RabbitMQConnectionManager (InitializeAsync, GetChannelAsync, CreateConsumerChannelAsync), MessageRetryBuffer (ProcessBufferedMessagesInternalAsync)
+    - Injected `ITelemetryProvider` into RabbitMQMessageTap, RabbitMQConnectionManager, MessageRetryBuffer (previously lacked telemetry)
+    - Fixed CA2000 dispose warnings in RabbitMQMessageTap.RemoveTapAsync and RabbitMQMessageSubscriber.RemoveDynamicSubscriptionAsync with dedicated local variable pattern
+    - Schema fixes: Added NRT compliance (`nullable: true`), validation constraints (`minLength`, `maxLength`, `minimum`, `maximum`, `pattern`), consolidated `ExchangeType` and `OverflowBehavior` enums from configuration to API schema, fixed env var naming (`MESSAGING_RABBITMQ_VHOST` → `MESSAGING_RABBITMQ_VIRTUAL_HOST`), added `description` to all schema properties
+    - Removed `messageCount` field from TopicInfo schema (always returned 0, actively misleading) and `includeEmpty` filter (referenced removed field)
+    - Removed lifecycle events from stubs list (correctly rejected — self-referential events for infrastructure are circular and noisy)
+    - All 177 unit tests passing, 0 warnings, 0 errors
 
 ### Active
 

@@ -2,6 +2,7 @@
 
 using BeyondImmersion.BannouService.Messaging;
 using BeyondImmersion.BannouService.Messaging.Services;
+using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.TestUtilities;
 using Microsoft.Extensions.Logging;
 using Moq;
@@ -19,11 +20,13 @@ namespace BeyondImmersion.BannouService.Messaging.Tests;
 public class RabbitMQConnectionManagerTests : IAsyncDisposable
 {
     private readonly Mock<ILogger<RabbitMQConnectionManager>> _mockLogger;
+    private readonly Mock<ITelemetryProvider> _mockTelemetryProvider;
     private RabbitMQConnectionManager? _manager;
 
     public RabbitMQConnectionManagerTests()
     {
         _mockLogger = new Mock<ILogger<RabbitMQConnectionManager>>();
+        _mockTelemetryProvider = new Mock<ITelemetryProvider>();
     }
 
     public async ValueTask DisposeAsync()
@@ -58,7 +61,7 @@ public class RabbitMQConnectionManagerTests : IAsyncDisposable
     private RabbitMQConnectionManager CreateManager(MessagingServiceConfiguration? config = null)
     {
         config ??= CreateConfig();
-        _manager = new RabbitMQConnectionManager(_mockLogger.Object, config);
+        _manager = new RabbitMQConnectionManager(_mockLogger.Object, config, _mockTelemetryProvider.Object);
         return _manager;
     }
 

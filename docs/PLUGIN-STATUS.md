@@ -43,8 +43,8 @@ This is **NOT** a code investigation tool. It reports the state depicted in each
 | Plugin | Layer | Score | Bugs | Summary |
 |--------|-------|-------|------|---------|
 | [State](#state-status) | L0 | 95% | 0 | Rock-solid foundation. No stubs, no bugs. Only migration tooling remains. |
-| [Messaging](#messaging-status) | L0 | 82% | 0 | Core pub/sub excellent. Stubs (lifecycle events, metrics) and design debt remain. |
-| [Mesh](#mesh-status) | L0 | 97% | 0 | L3-hardened. Schema NRT/validation, T23/T26/T30/T7 code fixes, BuildServiceProvider removed. |
+| [Messaging](#messaging-status) | L0 | 93% | 0 | L3-hardened. 0 stubs, 0 bugs. Schema NRT/validation, dead fields removed, T9/T10/T25/T30 code fixes. |
+| [Mesh](#mesh-status) | L0 | 97% | 0 | L3-hardened. Dead fields removed, schema nullability corrected, T23/T26/T30/T7 code fixes. |
 | [Telemetry](#telemetry-status) | L0 | 93% | 0 | Feature-complete observability. OpenTelemetry + Prometheus. Only speculative extensions remain. |
 | [Account](#account-status) | L1 | 92% | 0 | Production-ready. Only post-launch extensions remain. |
 | [Auth](#auth-status) | L1 | 88% | 0 | Core complete with MFA. Remaining items are downstream integration. |
@@ -157,11 +157,11 @@ gh issue list --search "State:" --state open
 
 **Layer**: L0 Infrastructure | **Deep Dive**: [MESSAGING.md](plugins/MESSAGING.md)
 
-### Production Readiness: 82%
+### Production Readiness: 93%
 
-Core pub/sub infrastructure is robust: RabbitMQ channel pooling (100 default, 1000 max), publisher confirms for at-least-once delivery, aggressive retry buffer with crash-fast philosophy (500k message / 10 minute threshold), backpressure at 80% buffer fill, dead-letter exchange with configurable limits, poison message handling with retry counting, HTTP callback subscriptions with recovery, event consumer fan-out bridge (`NativeEventConsumerBackend`), in-memory mode for testing. 30+ configuration properties all wired. No bugs.
+Core pub/sub infrastructure is robust: RabbitMQ channel pooling (100 default, 1000 max), publisher confirms for at-least-once delivery, aggressive retry buffer with crash-fast philosophy (500k message / 10 minute threshold), backpressure at 80% buffer fill, dead-letter exchange with configurable limits, poison message handling with retry counting, HTTP callback subscriptions with recovery, event consumer fan-out bridge (`NativeEventConsumerBackend`), in-memory mode for testing. 30+ configuration properties all wired. 0 stubs, 0 bugs. L3-hardened (2026-02-21): schema NRT compliance, validation constraints, enum consolidation to `-api.yaml`, removed dead `messageCount` field from ListTopics (always returned 0), removed aspirational lifecycle events from stubs (correctly rejected), T9 lock-free `ImmutableList` pattern in InMemoryMessageBus, T10 log prefix removal, T25 string→enum for TapExchangeType, T30 telemetry spans across all helper classes (15+ methods, ITelemetryProvider injected into 3 previously uninstrumented classes), CA2000 dispose pattern fixes. 0 warnings, 177 tests passing.
 
-However, 3 stubs remain (lifecycle events never implemented, `ListTopics` message count always 0, no Prometheus metrics), and 5 design considerations need attention (in-memory mode limitations, no graceful drain on shutdown, ServiceId from global static, tap exchange auto-creation, publisher confirms latency tradeoff).
+4 design considerations remain (no graceful drain on shutdown, ServiceId from global static, tap exchange auto-creation, publisher confirms latency tradeoff). 2 extensions identified (Prometheus metrics, dead-letter processing consumer).
 
 ### Bug Count: 0
 
@@ -175,9 +175,9 @@ No known bugs.
 
 | # | Enhancement | Description | Issue |
 |---|-------------|-------------|-------|
-| 1 | **Prometheus metrics** | Publish/subscribe rates, retry buffer depth, channel pool utilization, and retry counts are not exposed as metrics. Critical for operating the messaging infrastructure at scale (100k+ NPC agents generating events). Listed as both a stub and an extension. | No issue |
+| 1 | **Prometheus metrics** | Publish/subscribe rates, retry buffer depth, channel pool utilization, and retry counts are not exposed as metrics. Would come from a RabbitMQ sidecar exporter, not from lib-messaging code. | No issue |
 | 2 | **Dead-letter processing consumer** | No background service to process the DLX queue. Poison messages land in dead-letter and sit there. Need: alerting, logging, optional reprocessing for transient failures that exceeded retry attempts. | No issue |
-| 3 | **No graceful drain on shutdown** | `DisposeAsync` iterates subscriptions without timeout. A hung subscription disposal could hang the entire shutdown process. Needs a timeout-bounded drain with forced cleanup. | No issue |
+| 3 | **Graceful drain on shutdown** | `DisposeAsync` iterates subscriptions without timeout. A hung subscription disposal could hang the entire shutdown process. Needs a timeout-bounded drain with forced cleanup. | No issue |
 
 ### GH Issues
 
@@ -193,7 +193,7 @@ gh issue list --search "Messaging:" --state open
 
 ### Production Readiness: 97%
 
-Feature-complete service mesh: YARP-based HTTP routing, Redis-backed service discovery with TTL health tracking, 5 load balancing algorithms (RoundRobin, LeastConnections, Weighted, WeightedRoundRobin, Random), distributed per-appId circuit breaker with Lua-backed atomic state transitions and cross-instance sync via RabbitMQ, retry with exponential backoff, proactive health checking with automatic deregistration, degradation detection, event-driven auto-registration from Orchestrator heartbeats, endpoint caching. 27 configuration properties all wired. No stubs, no bugs, no design considerations. All production readiness issues closed. L3-hardened (2026-02-21): schema NRT compliance, validation constraints, enum consolidation to `-api.yaml`, T23 async patterns, T26 sentinel value removal, T30 telemetry spans across all helper classes, T7 error event publishing, BuildServiceProvider anti-pattern removed. 0 warnings, 55 tests passing. Only one speculative extension remains.
+Feature-complete service mesh: YARP-based HTTP routing, Redis-backed service discovery with TTL health tracking, 5 load balancing algorithms (RoundRobin, LeastConnections, Weighted, WeightedRoundRobin, Random), distributed per-appId circuit breaker with Lua-backed atomic state transitions and cross-instance sync via RabbitMQ, retry with exponential backoff, proactive health checking with automatic deregistration, degradation detection, event-driven auto-registration from Orchestrator heartbeats, endpoint caching. 27 configuration properties all wired. No stubs, no bugs, no design considerations. All production readiness issues closed. L3-hardened (2026-02-21): schema NRT compliance, validation constraints, enum consolidation to `-api.yaml`, T23 async patterns, T26 sentinel value removal, T30 telemetry spans across all helper classes, T7 error event publishing, BuildServiceProvider anti-pattern removed. Dead field cleanup (2026-02-22): removed `lastUpdateTime` (always returned current time — useless), fixed `alternates` nullability (code always returns list, schema lied about nullable). 0 warnings, 55 tests passing.
 
 ### Bug Count: 0
 

@@ -19,6 +19,7 @@ public class MessageRetryBufferTests : IAsyncDisposable
 {
     private readonly Mock<IChannelManager> _mockChannelManager;
     private readonly Mock<ILogger<MessageRetryBuffer>> _mockLogger;
+    private readonly Mock<ITelemetryProvider> _mockTelemetryProvider;
     private readonly Mock<IProcessTerminator> _mockProcessTerminator;
     private readonly Mock<IMessageBus> _mockMessageBus;
     private MessageRetryBuffer? _buffer;
@@ -27,6 +28,7 @@ public class MessageRetryBufferTests : IAsyncDisposable
     {
         _mockChannelManager = new Mock<IChannelManager>();
         _mockLogger = new Mock<ILogger<MessageRetryBuffer>>();
+        _mockTelemetryProvider = new Mock<ITelemetryProvider>();
         _mockProcessTerminator = new Mock<IProcessTerminator>();
         _mockMessageBus = new Mock<IMessageBus>();
 
@@ -73,6 +75,7 @@ public class MessageRetryBufferTests : IAsyncDisposable
             _mockChannelManager.Object,
             config,
             _mockLogger.Object,
+            _mockTelemetryProvider.Object,
             _mockProcessTerminator.Object,
             includeMessageBus ? _mockMessageBus.Object : null);
         return _buffer;
@@ -111,6 +114,7 @@ public class MessageRetryBufferTests : IAsyncDisposable
             _mockChannelManager.Object,
             CreateConfig(),
             _mockLogger.Object,
+            _mockTelemetryProvider.Object,
             processTerminator: null);
 
         // Assert

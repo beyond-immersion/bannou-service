@@ -75,7 +75,8 @@ public class MessagingServicePlugin : StandardServicePlugin<IMessagingService>
             var channelManager = sp.GetRequiredService<IChannelManager>();
             var msgConfig = sp.GetRequiredService<MessagingServiceConfiguration>();
             var logger = sp.GetRequiredService<ILogger<MessageRetryBuffer>>();
-            return new MessageRetryBuffer(channelManager, msgConfig, logger);
+            var telemetryProvider = sp.GetRequiredService<ITelemetryProvider>();
+            return new MessageRetryBuffer(channelManager, msgConfig, logger, telemetryProvider);
         });
         services.AddSingleton<IRetryBuffer>(sp => sp.GetRequiredService<MessageRetryBuffer>());
 
