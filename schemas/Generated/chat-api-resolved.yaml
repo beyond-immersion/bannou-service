@@ -682,6 +682,49 @@ paths:
               schema:
                 $ref: '#/components/schemas/AdminCleanupResponse'
 
+  # ==========================================================================
+  # Typing Indicators
+  # ==========================================================================
+
+  /chat/typing:
+    post:
+      operationId: Typing
+      summary: Signal typing activity
+      description: >
+        Records that the caller is actively typing in the specified room.
+        Automatically expires after TypingTimeoutSeconds if not refreshed.
+        Accessed via session shortcut published on room join.
+        The shortcut's BoundPayload pre-populates roomId and sessionId.
+      x-permissions: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TypingRequest'
+      responses:
+        '200':
+          description: Typing state recorded
+
+  /chat/end-typing:
+    post:
+      operationId: EndTyping
+      summary: Signal typing stopped
+      description: >
+        Immediately clears the caller's typing state in the specified room.
+        Accessed via session shortcut published on room join.
+        The shortcut's BoundPayload pre-populates roomId and sessionId.
+      x-permissions: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EndTypingRequest'
+      responses:
+        '200':
+          description: Typing state cleared
+
 components:
   schemas:
     # ==========================================================================
@@ -1876,6 +1919,44 @@ components:
         deletedRooms:
           type: integer
           description: Number of rooms deleted
+
+    # ==========================================================================
+    # Typing Indicator Requests
+    # ==========================================================================
+
+    TypingRequest:
+      type: object
+      additionalProperties: false
+      description: Request to signal typing activity in a chat room. Pre-populated via session shortcut BoundPayload.
+      required:
+      - roomId
+      - sessionId
+      properties:
+        roomId:
+          type: string
+          format: uuid
+          description: Room the typing activity applies to
+        sessionId:
+          type: string
+          format: uuid
+          description: WebSocket session ID of the typing participant
+
+    EndTypingRequest:
+      type: object
+      additionalProperties: false
+      description: Request to signal typing stopped in a chat room. Pre-populated via session shortcut BoundPayload.
+      required:
+      - roomId
+      - sessionId
+      properties:
+        roomId:
+          type: string
+          format: uuid
+          description: Room to clear typing state for
+        sessionId:
+          type: string
+          format: uuid
+          description: WebSocket session ID of the participant
     SentimentCategory:
       type: string
       description: >

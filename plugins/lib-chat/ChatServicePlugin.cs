@@ -18,6 +18,7 @@ public class ChatServicePlugin : StandardServicePlugin<IChatService>
         Logger?.LogDebug("Configuring service dependencies");
 
         services.AddHostedService<IdleRoomCleanupWorker>();
+        services.AddHostedService<TypingExpiryWorker>();
 
         Logger?.LogDebug("Service dependencies configured");
     }

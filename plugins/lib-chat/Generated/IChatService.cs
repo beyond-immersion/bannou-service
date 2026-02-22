@@ -169,4 +169,14 @@ public partial interface IChatService : IBannouService
         /// </summary>
         Task<(StatusCodes, AdminCleanupResponse?)> AdminForceCleanupAsync(AdminForceCleanupRequest body, CancellationToken cancellationToken = default(CancellationToken));
 
+        /// <summary>
+        /// Typing operation
+        /// </summary>
+        Task<StatusCodes> TypingAsync(TypingRequest body, CancellationToken cancellationToken = default(CancellationToken));
+
+        /// <summary>
+        /// EndTyping operation
+        /// </summary>
+        Task<StatusCodes> EndTypingAsync(EndTypingRequest body, CancellationToken cancellationToken = default(CancellationToken));
+
 }

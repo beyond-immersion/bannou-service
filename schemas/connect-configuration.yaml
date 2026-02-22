@@ -160,5 +160,34 @@ x-service-configuration:
       maximum: 11
       description: Brotli compression quality level (0=no compression, 1=fastest, 11=best ratio). Quality 1 recommended for real-time traffic.
 
+    # === Multi-Node Broadcast ===
+    MultiNodeBroadcastMode:
+      $ref: 'connect-api.yaml#/components/schemas/BroadcastMode'
+      env: CONNECT_MULTINODE_BROADCAST_MODE
+      default: None
+      description: Multi-node broadcast directionality (None disables broadcast relay entirely, requires BroadcastInternalUrl to be set)
+
+    BroadcastInternalUrl:
+      type: string
+      nullable: true
+      env: CONNECT_BROADCAST_INTERNAL_URL
+      description: WebSocket URL where this instance accepts inter-node broadcast connections (null disables broadcast regardless of mode)
+
+    BroadcastHeartbeatIntervalSeconds:
+      type: integer
+      env: CONNECT_BROADCAST_HEARTBEAT_INTERVAL_SECONDS
+      default: 30
+      minimum: 5
+      maximum: 300
+      description: Interval in seconds between broadcast registry heartbeat refreshes
+
+    BroadcastStaleThresholdSeconds:
+      type: integer
+      env: CONNECT_BROADCAST_STALE_THRESHOLD_SECONDS
+      default: 90
+      minimum: 15
+      maximum: 600
+      description: Threshold in seconds after which a broadcast registry entry is considered stale and removed
+
 # Note: Event subscriptions are handled via MassTransit consumers in ConnectEventsController.cs
 # Topics subscribed: session.invalidated, permission.capabilities-updated

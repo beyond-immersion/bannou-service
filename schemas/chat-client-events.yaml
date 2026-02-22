@@ -463,3 +463,70 @@ components:
           type: string
           nullable: true
           description: Optional reason for deletion (e.g., contract action, idle cleanup, manual)
+
+    # ============================================
+    # Typing Indicator Events
+    # ============================================
+
+    ChatTypingStartedClientEvent:
+      allOf:
+        - $ref: 'common-client-events.yaml#/components/schemas/BaseClientEvent'
+      type: object
+      additionalProperties: false
+      x-client-event: true
+      description: |
+        Sent to room participants when someone starts typing.
+        Only published on initial typing -- heartbeat refreshes are silent.
+      required:
+        - eventName
+        - eventId
+        - timestamp
+        - roomId
+        - participantSessionId
+      properties:
+        eventName:
+          type: string
+          default: "chat.typing_started"
+          description: Fixed event type identifier
+        roomId:
+          type: string
+          format: uuid
+          description: Room where typing is occurring
+        participantSessionId:
+          type: string
+          format: uuid
+          description: Connect session ID of the typing participant
+        displayName:
+          type: string
+          nullable: true
+          description: Display name of the typing participant
+
+    ChatTypingStoppedClientEvent:
+      allOf:
+        - $ref: 'common-client-events.yaml#/components/schemas/BaseClientEvent'
+      type: object
+      additionalProperties: false
+      x-client-event: true
+      description: |
+        Sent to room participants when someone stops typing.
+        Fired on explicit end-typing, server-side timeout expiry,
+        message send, or room departure.
+      required:
+        - eventName
+        - eventId
+        - timestamp
+        - roomId
+        - participantSessionId
+      properties:
+        eventName:
+          type: string
+          default: "chat.typing_stopped"
+          description: Fixed event type identifier
+        roomId:
+          type: string
+          format: uuid
+          description: Room where typing stopped
+        participantSessionId:
+          type: string
+          format: uuid
+          description: Connect session ID of the participant who stopped typing

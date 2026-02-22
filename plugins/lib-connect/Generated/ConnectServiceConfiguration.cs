@@ -224,4 +224,30 @@ public class ConnectServiceConfiguration : IServiceConfiguration
     [ConfigRange(Minimum = 0, Maximum = 11)]
     public int CompressionQuality { get; set; } = 1;
 
+    /// <summary>
+    /// Multi-node broadcast directionality (None disables broadcast relay entirely, requires BroadcastInternalUrl to be set)
+    /// Environment variable: CONNECT_MULTINODE_BROADCAST_MODE
+    /// </summary>
+    public BroadcastMode MultiNodeBroadcastMode { get; set; } = BroadcastMode.None;
+
+    /// <summary>
+    /// WebSocket URL where this instance accepts inter-node broadcast connections (null disables broadcast regardless of mode)
+    /// Environment variable: CONNECT_BROADCAST_INTERNAL_URL
+    /// </summary>
+    public string? BroadcastInternalUrl { get; set; }
+
+    /// <summary>
+    /// Interval in seconds between broadcast registry heartbeat refreshes
+    /// Environment variable: CONNECT_BROADCAST_HEARTBEAT_INTERVAL_SECONDS
+    /// </summary>
+    [ConfigRange(Minimum = 5, Maximum = 300)]
+    public int BroadcastHeartbeatIntervalSeconds { get; set; } = 30;
+
+    /// <summary>
+    /// Threshold in seconds after which a broadcast registry entry is considered stale and removed
+    /// Environment variable: CONNECT_BROADCAST_STALE_THRESHOLD_SECONDS
+    /// </summary>
+    [ConfigRange(Minimum = 15, Maximum = 600)]
+    public int BroadcastStaleThresholdSeconds { get; set; } = 90;
+
 }

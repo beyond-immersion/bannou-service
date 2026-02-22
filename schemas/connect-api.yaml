@@ -1016,6 +1016,15 @@ components:
 
     # NOTE: MessageFlags already defined above in Binary Protocol Schemas section
 
+    BroadcastMode:
+      type: string
+      description: Broadcast directionality mode for multi-node Connect deployments
+      enum:
+        - None
+        - Send
+        - Receive
+        - Both
+
     CompanionRoomMode:
       type: string
       description: How Connect manages companion chat rooms for WebSocket sessions

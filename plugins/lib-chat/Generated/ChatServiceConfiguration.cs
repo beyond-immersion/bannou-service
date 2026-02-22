@@ -147,4 +147,31 @@ public class ChatServiceConfiguration : IServiceConfiguration
     [ConfigRange(Minimum = 5, Maximum = 300)]
     public int IdleRoomCleanupStartupDelaySeconds { get; set; } = 30;
 
+    /// <summary>
+    /// Seconds of inactivity before typing indicator auto-expires
+    /// Environment variable: CHAT_TYPING_TIMEOUT_SECONDS
+    /// </summary>
+    [ConfigRange(Minimum = 2, Maximum = 30)]
+    public int TypingTimeoutSeconds { get; set; } = 5;
+
+    /// <summary>
+    /// How often the typing expiry worker checks for stale typing entries
+    /// Environment variable: CHAT_TYPING_WORKER_INTERVAL_MILLISECONDS
+    /// </summary>
+    [ConfigRange(Minimum = 250, Maximum = 5000)]
+    public int TypingWorkerIntervalMilliseconds { get; set; } = 1000;
+
+    /// <summary>
+    /// Maximum expired entries processed per worker cycle
+    /// Environment variable: CHAT_TYPING_WORKER_BATCH_SIZE
+    /// </summary>
+    [ConfigRange(Minimum = 10, Maximum = 1000)]
+    public int TypingWorkerBatchSize { get; set; } = 100;
+
+    /// <summary>
+    /// Server salt for session shortcut GUID generation per IMPLEMENTATION TENETS
+    /// Environment variable: CHAT_SERVER_SALT
+    /// </summary>
+    public string ServerSalt { get; set; } = "bannou-dev-chat-salt-change-in-production";
+
 }

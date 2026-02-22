@@ -117,3 +117,33 @@ x-service-configuration:
       minimum: 5
       maximum: 300
       description: Initial delay before the idle room cleanup worker begins its first cycle
+
+    TypingTimeoutSeconds:
+      type: integer
+      env: CHAT_TYPING_TIMEOUT_SECONDS
+      default: 5
+      minimum: 2
+      maximum: 30
+      description: Seconds of inactivity before typing indicator auto-expires
+
+    TypingWorkerIntervalMilliseconds:
+      type: integer
+      env: CHAT_TYPING_WORKER_INTERVAL_MILLISECONDS
+      default: 1000
+      minimum: 250
+      maximum: 5000
+      description: How often the typing expiry worker checks for stale typing entries
+
+    TypingWorkerBatchSize:
+      type: integer
+      env: CHAT_TYPING_WORKER_BATCH_SIZE
+      default: 100
+      minimum: 10
+      maximum: 1000
+      description: Maximum expired entries processed per worker cycle
+
+    ServerSalt:
+      type: string
+      env: CHAT_SERVER_SALT
+      default: "bannou-dev-chat-salt-change-in-production"
+      description: Server salt for session shortcut GUID generation per IMPLEMENTATION TENETS

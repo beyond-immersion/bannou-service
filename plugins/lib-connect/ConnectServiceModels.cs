@@ -212,3 +212,12 @@ public class WebSocketConnection
         CreatedAt = DateTimeOffset.UtcNow;
     }
 }
+
+/// <summary>
+/// Registry entry for a Connect instance in the broadcast sorted set.
+/// Serialized as JSON for the sorted set member; score is the heartbeat Unix timestamp.
+/// </summary>
+internal record BroadcastRegistryEntry(
+    Guid InstanceId,
+    string InternalUrl,
+    BroadcastMode BroadcastMode);

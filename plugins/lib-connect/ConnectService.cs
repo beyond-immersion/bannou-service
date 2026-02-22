@@ -44,6 +44,7 @@ public partial class ConnectService : IConnectService, IDisposable
     private readonly ConnectServiceConfiguration _configuration;
     private readonly ICapabilityManifestBuilder _manifestBuilder;
     private readonly IEntitySessionRegistry _entitySessionRegistry;
+    private readonly InterNodeBroadcastManager _interNodeBroadcast;
 
     // Client event subscriptions via lib-messaging (per-session raw byte subscriptions)
     private readonly IMessageSubscriber _messageSubscriber;
@@ -90,7 +91,8 @@ public partial class ConnectService : IConnectService, IDisposable
         IEventConsumer eventConsumer,
         ISessionManager sessionManager,
         ICapabilityManifestBuilder manifestBuilder,
-        IEntitySessionRegistry entitySessionRegistry)
+        IEntitySessionRegistry entitySessionRegistry,
+        InterNodeBroadcastManager interNodeBroadcast)
     {
         _authClient = authClient;
         _meshClient = meshClient;
@@ -104,6 +106,7 @@ public partial class ConnectService : IConnectService, IDisposable
         _sessionManager = sessionManager;
         _manifestBuilder = manifestBuilder;
         _entitySessionRegistry = entitySessionRegistry;
+        _interNodeBroadcast = interNodeBroadcast;
 
         _connectionManager = new WebSocketConnectionManager(
             configuration.ConnectionShutdownTimeoutSeconds,
@@ -128,6 +131,13 @@ public partial class ConnectService : IConnectService, IDisposable
 
         // Register event handlers via partial class (ConnectServiceEvents.cs)
         RegisterEventConsumers(eventConsumer);
+
+        // Wire up inter-node broadcast receive: parse binary message and deliver to local clients
+        _interNodeBroadcast.OnBroadcastReceived = async (buffer, length) =>
+        {
+            var message = BinaryMessage.Parse(buffer, length);
+            await _connectionManager.BroadcastMessageAsync(message);
+        };
 
         // Connection mode configuration
         _connectionMode = configuration.ConnectionMode;
@@ -1683,10 +1693,13 @@ public partial class ConnectService : IConnectService, IDisposable
             var results = await Task.WhenAll(tasks);
             var successCount = results.Count(r => r);
 
-            _logger.LogInformation("Broadcast from {SessionId} sent to {SuccessCount}/{TotalCount} peers",
+            _logger.LogInformation("Broadcast from {SessionId} sent to {SuccessCount}/{TotalCount} local peers",
                 senderSessionId, successCount, allSessionIds.Count);
 
-            // If sender expects response, send acknowledgment
+            // Relay to other Connect instances via inter-node broadcast (fire-and-forget)
+            _ = _interNodeBroadcast.RelayBroadcastAsync(message.ToByteArray(), cancellationToken);
+
+            // If sender expects response, send acknowledgment (local count only)
             if (message.ExpectsResponse)
             {
                 var ackPayload = new
@@ -3146,6 +3159,9 @@ public partial class ConnectService : IConnectService, IDisposable
         // Dispose the pending RPC cleanup timer
         _pendingRPCCleanupTimer?.Dispose();
         _pendingRPCCleanupTimer = null;
+
+        // Dispose the inter-node broadcast manager (deregisters from Redis, closes mesh connections)
+        _interNodeBroadcast.Dispose();
 
         // Dispose the connection manager, which gracefully closes all WebSocket connections
         // with "Server shutdown" close frames and waits up to ConnectionShutdownTimeoutSeconds
