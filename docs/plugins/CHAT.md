@@ -324,7 +324,7 @@ None. All 30 API endpoints are fully implemented with complete business logic, v
 
 1. **Contract event room query limited to 100**: `FindRoomsByContractIdAsync` queries with `limit: 100`. If a contract governs more than 100 rooms, only the first 100 receive the contract action. Should implement pagination for large contracts.
 
-2. **SendMessageBatch silently skips validation failures**: Invalid messages in a batch are skipped without reporting which entries failed. The response only contains `MessageCount` of successfully sent messages. Callers cannot distinguish between "all sent" and "some failed validation".
+2. ~~**SendMessageBatch silently skips validation failures**~~: **FIXED** (2026-02-22) - Batch response now includes per-message failure tracking via `failed` array with index and error details. Storage failures are also caught per-item and reported.
 
 3. **AdminGetStats has O(N) participant counting**: Queries up to 1000 rooms, then performs individual `HashCount` calls for each room to sum total participants. Could become slow with many active rooms. Consider maintaining a running total or using a dedicated counter.
 

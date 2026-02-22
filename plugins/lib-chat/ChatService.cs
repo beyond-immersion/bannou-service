@@ -1368,61 +1368,76 @@ public partial class ChatService : IChatService
         var sessionIds = participants.Select(p => p.SessionId.ToString()).ToList();
         var now = DateTimeOffset.UtcNow;
         var messageCount = 0;
+        var failed = new List<BatchMessageFailure>();
+        var messages = body.Messages.ToList();
 
-        foreach (var entry in body.Messages)
+        for (var i = 0; i < messages.Count; i++)
         {
+            var entry = messages[i];
+
             var validationError = ValidateMessageContent(entry.Content, roomType);
             if (validationError != null)
             {
+                failed.Add(new BatchMessageFailure { Index = i, Error = validationError });
                 continue;
             }
 
-            var messageId = Guid.NewGuid();
-            var message = new ChatMessageModel
+            try
             {
-                MessageId = messageId,
-                RoomId = body.RoomId,
-                SenderType = entry.SenderType,
-                SenderId = entry.SenderId,
-                DisplayName = entry.DisplayName,
-                Timestamp = now,
-                MessageFormat = roomType.MessageFormat,
-                TextContent = entry.Content.Text,
-                SentimentCategory = entry.Content.SentimentCategory,
-                SentimentIntensity = entry.Content.SentimentIntensity,
-                EmojiCode = entry.Content.EmojiCode,
-                EmojiSetId = entry.Content.EmojiSetId,
-                CustomPayload = entry.Content.CustomPayload,
-            };
+                var messageId = Guid.NewGuid();
+                var message = new ChatMessageModel
+                {
+                    MessageId = messageId,
+                    RoomId = body.RoomId,
+                    SenderType = entry.SenderType,
+                    SenderId = entry.SenderId,
+                    DisplayName = entry.DisplayName,
+                    Timestamp = now,
+                    MessageFormat = roomType.MessageFormat,
+                    TextContent = entry.Content.Text,
+                    SentimentCategory = entry.Content.SentimentCategory,
+                    SentimentIntensity = entry.Content.SentimentIntensity,
+                    EmojiCode = entry.Content.EmojiCode,
+                    EmojiSetId = entry.Content.EmojiSetId,
+                    CustomPayload = entry.Content.CustomPayload,
+                };
 
-            if (roomType.PersistenceMode == PersistenceMode.Persistent)
-            {
-                await _messageStore.SaveAsync($"{body.RoomId}:{messageId}", message, cancellationToken: cancellationToken);
+                if (roomType.PersistenceMode == PersistenceMode.Persistent)
+                {
+                    await _messageStore.SaveAsync($"{body.RoomId}:{messageId}", message,
+                        cancellationToken: cancellationToken);
+                }
+                else
+                {
+                    var ttlSeconds = _configuration.EphemeralMessageTtlMinutes * 60;
+                    await _messageBuffer.SaveAsync($"{body.RoomId}:{messageId}", message,
+                        new StateOptions { Ttl = ttlSeconds }, cancellationToken);
+                }
+
+                await _clientEventPublisher.PublishToSessionsAsync(sessionIds, new ChatMessageReceivedEvent
+                {
+                    RoomId = body.RoomId,
+                    MessageId = messageId,
+                    SenderType = message.SenderType,
+                    SenderId = message.SenderId,
+                    DisplayName = message.DisplayName,
+                    MessageFormat = roomType.MessageFormat,
+                    TextContent = message.TextContent,
+                    SentimentCategory = message.SentimentCategory,
+                    SentimentIntensity = message.SentimentIntensity,
+                    EmojiCode = message.EmojiCode,
+                    EmojiSetId = message.EmojiSetId,
+                    CustomPayload = message.CustomPayload,
+                }, cancellationToken);
+
+                messageCount++;
             }
-            else
+            catch (Exception ex)
             {
-                var ttlSeconds = _configuration.EphemeralMessageTtlMinutes * 60;
-                await _messageBuffer.SaveAsync($"{body.RoomId}:{messageId}", message,
-                    new StateOptions { Ttl = ttlSeconds }, cancellationToken);
+                _logger.LogError(ex, "Failed to send batch message at index {Index} in room {RoomId}",
+                    i, body.RoomId);
+                failed.Add(new BatchMessageFailure { Index = i, Error = ex.Message });
             }
-
-            await _clientEventPublisher.PublishToSessionsAsync(sessionIds, new ChatMessageReceivedEvent
-            {
-                RoomId = body.RoomId,
-                MessageId = messageId,
-                SenderType = message.SenderType,
-                SenderId = message.SenderId,
-                DisplayName = message.DisplayName,
-                MessageFormat = roomType.MessageFormat,
-                TextContent = message.TextContent,
-                SentimentCategory = message.SentimentCategory,
-                SentimentIntensity = message.SentimentIntensity,
-                EmojiCode = message.EmojiCode,
-                EmojiSetId = message.EmojiSetId,
-                CustomPayload = message.CustomPayload,
-            }, cancellationToken);
-
-            messageCount++;
         }
 
         // Update room activity
@@ -1431,7 +1446,11 @@ public partial class ChatService : IChatService
         await _roomStore.SaveAsync(roomKey, model, cancellationToken: cancellationToken);
         await _roomCache.SaveAsync(roomKey, model, cancellationToken: cancellationToken);
 
-        return (StatusCodes.OK, new SendMessageBatchResponse { MessageCount = messageCount });
+        return (StatusCodes.OK, new SendMessageBatchResponse
+        {
+            MessageCount = messageCount,
+            Failed = failed,
+        });
     }
 
     /// <inheritdoc />

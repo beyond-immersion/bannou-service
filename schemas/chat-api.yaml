@@ -1662,13 +1662,34 @@ components:
     SendMessageBatchResponse:
       type: object
       additionalProperties: false
-      description: Result of a batch message send operation
+      description: Result of a batch message send operation with per-message failure tracking
       required:
         - messageCount
+        - failed
       properties:
         messageCount:
           type: integer
-          description: Number of messages sent
+          description: Number of messages successfully sent
+        failed:
+          type: array
+          items:
+            $ref: '#/components/schemas/BatchMessageFailure'
+          description: Details of messages that failed to send (empty array when all succeeded)
+
+    BatchMessageFailure:
+      type: object
+      additionalProperties: false
+      description: Details of a single message that failed in a batch send operation
+      required:
+        - index
+        - error
+      properties:
+        index:
+          type: integer
+          description: Zero-based index of the failed message in the request messages array
+        error:
+          type: string
+          description: Human-readable error reason
 
     ChatMessageResponse:
       type: object

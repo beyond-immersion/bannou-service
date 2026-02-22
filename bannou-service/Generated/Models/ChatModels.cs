@@ -1425,17 +1425,48 @@ public partial class BatchMessageEntry
 }
 
 /// <summary>
-/// Result of a batch message send operation
+/// Result of a batch message send operation with per-message failure tracking
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class SendMessageBatchResponse
 {
 
     /// <summary>
-    /// Number of messages sent
+    /// Number of messages successfully sent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("messageCount")]
     public int MessageCount { get; set; } = default!;
+
+    /// <summary>
+    /// Details of messages that failed to send (empty array when all succeeded)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("failed")]
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Collections.Generic.ICollection<BatchMessageFailure> Failed { get; set; } = new System.Collections.ObjectModel.Collection<BatchMessageFailure>();
+
+}
+
+/// <summary>
+/// Details of a single message that failed in a batch send operation
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class BatchMessageFailure
+{
+
+    /// <summary>
+    /// Zero-based index of the failed message in the request messages array
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("index")]
+    public int Index { get; set; } = default!;
+
+    /// <summary>
+    /// Human-readable error reason
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("error")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string Error { get; set; } = default!;
 
 }
 
