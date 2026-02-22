@@ -22,6 +22,16 @@ paths: {}
 x-service-configuration:
   properties:
     # =========================================================================
+    # Node Identity
+    # =========================================================================
+    InstanceId:
+      type: string
+      format: uuid
+      description: "Explicit mesh node identity override. When set, this value is used as the mesh instance ID instead of generating a random one. Useful for stable node identities in orchestrated deployments. Falls back to --force-service-id CLI argument, then random GUID."
+      env: MESH_INSTANCE_ID
+      nullable: true
+
+    # =========================================================================
     # Local Mode (for testing/minimal infrastructure)
     # =========================================================================
     UseLocalRouting:

@@ -586,6 +586,29 @@ public sealed class RabbitMQMessageSubscriber : IMessageSubscriber, IAsyncDispos
     /// <inheritdoc/>
     public async ValueTask DisposeAsync()
     {
+        var timeout = TimeSpan.FromSeconds(_configuration.ShutdownTimeoutSeconds);
+
+        try
+        {
+            await CleanupSubscriptionsAsync().WaitAsync(timeout);
+        }
+        catch (TimeoutException)
+        {
+            _logger.LogWarning(
+                "Subscription cleanup did not complete within {TimeoutSeconds}s, forcing shutdown",
+                _configuration.ShutdownTimeoutSeconds);
+        }
+
+        _staticSubscriptions.Clear();
+        _dynamicSubscriptions.Clear();
+        _logger.LogInformation("RabbitMQMessageSubscriber disposed");
+    }
+
+    /// <summary>
+    /// Cleans up all active subscriptions by cancelling consumers and closing channels.
+    /// </summary>
+    private async Task CleanupSubscriptionsAsync()
+    {
         // Clean up all static subscriptions
         foreach (var (topic, subscription) in _staticSubscriptions)
         {
@@ -599,7 +622,6 @@ public sealed class RabbitMQMessageSubscriber : IMessageSubscriber, IAsyncDispos
                 _logger.LogError(ex, "Error stopping subscription for topic '{Topic}'", topic);
             }
         }
-        _staticSubscriptions.Clear();
 
         // Clean up all dynamic subscriptions
         foreach (var (id, subscription) in _dynamicSubscriptions)
@@ -614,9 +636,6 @@ public sealed class RabbitMQMessageSubscriber : IMessageSubscriber, IAsyncDispos
                 _logger.LogError(ex, "Error stopping dynamic subscription {SubscriptionId}", id);
             }
         }
-        _dynamicSubscriptions.Clear();
-
-        _logger.LogInformation("RabbitMQMessageSubscriber disposed");
     }
 
     private string BuildQueueName(string topic, SubscriptionOptions options)

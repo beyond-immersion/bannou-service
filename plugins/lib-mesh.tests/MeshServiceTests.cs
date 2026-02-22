@@ -1061,7 +1061,8 @@ public class MeshInvocationClientTests : IDisposable
             _mockMessageSubscriber.Object,
             new MeshServiceConfiguration(),
             _mockLogger.Object,
-            _telemetryProvider);
+            _telemetryProvider,
+            new DefaultMeshInstanceIdentifier());
         return _client;
     }
 

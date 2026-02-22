@@ -225,6 +225,14 @@ public partial class CharacterHistoryClient : ICharacterHistoryClient, BeyondImm
     public string ServiceName => _serviceName;
 
     /// <summary>
+    /// The unique identity of this node in the mesh network.
+    /// Stable for the lifetime of the process. Used for mesh registration,
+    /// heartbeat identification, and error event sourcing.
+    /// Sourced from <see cref="BeyondImmersion.BannouService.Services.IMeshInvocationClient"/> via the mesh infrastructure.
+    /// </summary>
+    public System.Guid InstanceId => _meshClient.InstanceId;
+
+    /// <summary>
     /// Initializes a new instance of the <see cref="CharacterHistoryClient"/> class.
     /// </summary>
     /// <param name="meshClient">The mesh invocation client for service-to-service communication.</param>
@@ -1519,7 +1527,7 @@ public partial class CharacterHistoryClient : ICharacterHistoryClient, BeyondImm
                 var field = System.Reflection.IntrospectionExtensions.GetTypeInfo(value.GetType()).GetDeclaredField(name);
                 if (field != null)
                 {
-                    var attribute = System.Reflection.CustomAttributeExtensions.GetCustomAttribute(field, typeof(System.Runtime.Serialization.EnumMemberAttribute))
+                    var attribute = System.Reflection.CustomAttributeExtensions.GetCustomAttribute(field, typeof(System.Runtime.Serialization.EnumMemberAttribute)) 
                         as System.Runtime.Serialization.EnumMemberAttribute;
                     if (attribute != null)
                     {
@@ -1531,7 +1539,7 @@ public partial class CharacterHistoryClient : ICharacterHistoryClient, BeyondImm
                 return converted == null ? string.Empty : converted;
             }
         }
-        else if (value is bool)
+        else if (value is bool) 
         {
             return System.Convert.ToString((bool)value, cultureInfo).ToLowerInvariant();
         }

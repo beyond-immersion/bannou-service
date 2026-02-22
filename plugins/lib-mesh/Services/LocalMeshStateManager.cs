@@ -1,6 +1,7 @@
 #nullable enable
 
 using BeyondImmersion.BannouService.Mesh;
+using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.Logging;
 
 namespace BeyondImmersion.BannouService.Mesh.Services;
@@ -20,17 +21,18 @@ public sealed class LocalMeshStateManager : IMeshStateManager
     /// </summary>
     /// <param name="config">Mesh service configuration (unused but required for DI consistency).</param>
     /// <param name="logger">Logger instance.</param>
+    /// <param name="instanceIdentifier">Node identity provider for this mesh instance.</param>
     public LocalMeshStateManager(
         MeshServiceConfiguration config,
-        ILogger<LocalMeshStateManager> logger)
+        ILogger<LocalMeshStateManager> logger,
+        IMeshInstanceIdentifier instanceIdentifier)
     {
         _logger = logger;
 
         // Create a local endpoint representing this instance
-        // Use the shared Program.ServiceGUID for consistent identification
         _localEndpoint = new MeshEndpoint
         {
-            InstanceId = Program.ServiceGUID,
+            InstanceId = instanceIdentifier.InstanceId,
             AppId = AppConstants.DEFAULT_APP_NAME,
             Host = "localhost",
             Port = 80,

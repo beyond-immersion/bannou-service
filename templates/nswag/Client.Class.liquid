@@ -24,6 +24,14 @@
     /// </summary>
     public string ServiceName => _serviceName;
 
+    /// <summary>
+    /// The unique identity of this node in the mesh network.
+    /// Stable for the lifetime of the process. Used for mesh registration,
+    /// heartbeat identification, and error event sourcing.
+    /// Sourced from <see cref="BeyondImmersion.BannouService.Services.IMeshInvocationClient"/> via the mesh infrastructure.
+    /// </summary>
+    public System.Guid InstanceId => _meshClient.InstanceId;
+
 {% assign constructorParameters = "BeyondImmersion.BannouService.Services.IMeshInvocationClient meshClient, BeyondImmersion.BannouService.Services.IServiceAppMappingResolver resolver, Microsoft.Extensions.Logging.ILogger<" | append: Class | append: ">? logger = null" -%}
     /// <summary>
     /// Initializes a new instance of the <see cref="{{ Class }}"/> class.

@@ -312,17 +312,13 @@ No bugs identified.
 
 8. **DLX queue size limits**: Dead letter queue has configurable max length (default 100k messages) and TTL (default 7 days). When limits are exceeded, oldest messages are dropped (`drop-head` policy).
 
-### Design Considerations (Requires Planning)
+### Design Considerations
 
 1. **In-memory mode limitations**: `InMemoryMessageBus` delivers asynchronously via a discarded task (`_ = DeliverToSubscribersAsync(...)`, fire-and-forget). Subscriptions use `ImmutableList<Func<object, ...>>` for lock-free concurrent access but are not fully representative of RabbitMQ semantics (no queue persistence, no dead-letter, no prefetch). `InMemoryMessageTap` works in-process only and simulates exchanges by combining exchange+routing key as destination topic.
 
-2. **No graceful drain on shutdown**: `DisposeAsync` iterates subscriptions without timeout. A hung subscription disposal could hang the entire shutdown process.
+2. **Tap creates exchange if not exists**: `RabbitMQMessageTap.CreateTapAsync()` has a `CreateExchangeIfNotExists` flag on `TapDestination` that creates the destination exchange if it doesn't exist. This is intentional (exchanges are auto-created as needed) but could mask typos in exchange names.
 
-3. **ServiceId from global static**: `RabbitMQMessageBus.TryPublishErrorAsync()` accesses `Program.ServiceGUID` directly (global variable) rather than injecting it via configuration.
-
-4. **Tap creates exchange if not exists**: `RabbitMQMessageTap.CreateTapAsync()` has a `CreateExchangeIfNotExists` flag on `TapDestination` that creates the destination exchange if it doesn't exist. This is powerful but could mask configuration errors where a typo in exchange name silently creates a new exchange instead of failing.
-
-5. **Publisher confirms add latency**: When `EnablePublisherConfirms` is true (default), each `BasicPublishAsync` waits for broker confirmation. This adds ~1-5ms latency per publish. For high-throughput scenarios, consider enabling batching via `EnablePublishBatching`.
+3. **Publisher confirms add latency**: When `EnablePublisherConfirms` is true (default), each `BasicPublishAsync` waits for broker confirmation. This adds ~1-5ms latency per publish. Fully configurable via `MESSAGING_ENABLE_PUBLISHER_CONFIRMS` and mitigated by `MESSAGING_ENABLE_PUBLISH_BATCHING`.
 
 ---
 
@@ -361,6 +357,11 @@ This section tracks active development work on items from the quirks/bugs lists 
     - Schema fixes: Added NRT compliance (`nullable: true`), validation constraints (`minLength`, `maxLength`, `minimum`, `maximum`, `pattern`), consolidated `ExchangeType` and `OverflowBehavior` enums from configuration to API schema, fixed env var naming (`MESSAGING_RABBITMQ_VHOST` → `MESSAGING_RABBITMQ_VIRTUAL_HOST`), added `description` to all schema properties
     - Removed `messageCount` field from TopicInfo schema (always returned 0, actively misleading) and `includeEmpty` filter (referenced removed field)
     - Removed lifecycle events from stubs list (correctly rejected — self-referential events for infrastructure are circular and noisy)
+    - All 177 unit tests passing, 0 warnings, 0 errors
+
+- **Design Consideration Resolution (2026-02-22)**:
+    - Resolved "ServiceId from global static": Replaced `Program.ServiceGUID` with `IMeshInstanceIdentifier` (new interface in bannou-service, registered by lib-mesh). `RabbitMQMessageBus.TryPublishErrorAsync()` now uses injected `_instanceId` instead of static global access. All generated clients and `IServiceNavigator` also expose `InstanceId` for consistent node identification across all services.
+    - Resolved "No graceful drain on shutdown": Added `ShutdownTimeoutSeconds` config (`MESSAGING_SHUTDOWN_TIMEOUT_SECONDS`, default 10s). `RabbitMQMessageSubscriber.DisposeAsync` now wraps subscription cleanup in `WaitAsync(timeout)` to prevent indefinite blocking when channels hang.
     - All 177 unit tests passing, 0 warnings, 0 errors
 
 ### Active

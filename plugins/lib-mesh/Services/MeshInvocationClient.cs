@@ -34,6 +34,9 @@ public sealed class MeshInvocationClient : IMeshInvocationClient, IDisposable
     // Round-robin counter for load balancing across multiple endpoints
     private int _roundRobinCounter;
 
+    /// <inheritdoc/>
+    public Guid InstanceId { get; }
+
     /// <summary>
     /// Creates a new MeshInvocationClient.
     /// </summary>
@@ -44,6 +47,7 @@ public sealed class MeshInvocationClient : IMeshInvocationClient, IDisposable
     /// <param name="configuration">Mesh service configuration.</param>
     /// <param name="logger">Logger instance.</param>
     /// <param name="telemetryProvider">Telemetry provider for instrumentation (NullTelemetryProvider when telemetry disabled).</param>
+    /// <param name="instanceIdentifier">Node identity provider for this mesh instance.</param>
     public MeshInvocationClient(
         IMeshStateManager stateManager,
         IStateStoreFactory stateStoreFactory,
@@ -51,12 +55,14 @@ public sealed class MeshInvocationClient : IMeshInvocationClient, IDisposable
         IMessageSubscriber messageSubscriber,
         MeshServiceConfiguration configuration,
         ILogger<MeshInvocationClient> logger,
-        ITelemetryProvider telemetryProvider)
+        ITelemetryProvider telemetryProvider,
+        IMeshInstanceIdentifier instanceIdentifier)
     {
         _stateManager = stateManager;
         _configuration = configuration;
         _logger = logger;
         _telemetryProvider = telemetryProvider;
+        InstanceId = instanceIdentifier.InstanceId;
 
         if (_telemetryProvider.TracingEnabled || _telemetryProvider.MetricsEnabled)
         {

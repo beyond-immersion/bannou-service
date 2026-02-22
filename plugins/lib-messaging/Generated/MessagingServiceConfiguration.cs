@@ -276,6 +276,13 @@ public class MessagingServiceConfiguration : IServiceConfiguration
     public int CallbackRetryDelayMs { get; set; } = 1000;
 
     /// <summary>
+    /// Maximum seconds to wait for graceful subscription cleanup during shutdown. Prevents indefinite blocking when channels hang.
+    /// Environment variable: MESSAGING_SHUTDOWN_TIMEOUT_SECONDS
+    /// </summary>
+    [ConfigRange(Minimum = 1, Maximum = 60)]
+    public int ShutdownTimeoutSeconds { get; set; } = 10;
+
+    /// <summary>
     /// Interval in hours between subscription TTL refresh operations
     /// Environment variable: MESSAGING_SUBSCRIPTION_TTL_REFRESH_INTERVAL_HOURS
     /// </summary>

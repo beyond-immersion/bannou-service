@@ -32,6 +32,7 @@ public partial class MeshController
             "properties": {
                 "appId": {
                     "type": "string",
+                    "minLength": 1,
                     "description": "App-id to get endpoints for"
                 },
                 "includeUnhealthy": {
@@ -61,7 +62,9 @@ public partial class MeshController
             "additionalProperties": false,
             "required": [
                 "appId",
-                "endpoints"
+                "endpoints",
+                "healthyCount",
+                "totalCount"
             ],
             "properties": {
                 "appId": {
@@ -104,10 +107,12 @@ public partial class MeshController
                 },
                 "appId": {
                     "type": "string",
+                    "minLength": 1,
                     "description": "Bannou app-id (e.g., \"bannou\", \"bannou-npc-01\")"
                 },
                 "host": {
                     "type": "string",
+                    "minLength": 1,
                     "description": "Hostname or IP address"
                 },
                 "port": {
@@ -143,17 +148,20 @@ public partial class MeshController
                     "items": {
                         "type": "string"
                     },
-                    "description": "List of service names hosted on this endpoint (without lib- prefix, e.g., 'account', 'auth')"
+                    "nullable": true,
+                    "description": "List of service names hosted on this endpoint (without lib- prefix, e.g., 'account', 'auth'). Null if not provided."
                 },
                 "lastSeen": {
                     "type": "string",
                     "format": "date-time",
-                    "description": "Last heartbeat timestamp"
+                    "nullable": true,
+                    "description": "Last heartbeat timestamp (null if never seen)"
                 },
                 "registeredAt": {
                     "type": "string",
                     "format": "date-time",
-                    "description": "When endpoint was first registered"
+                    "nullable": true,
+                    "description": "When endpoint was first registered (null if unknown)"
                 },
                 "issues": {
                     "type": "array",
@@ -317,10 +325,12 @@ public partial class MeshController
                 },
                 "appId": {
                     "type": "string",
+                    "minLength": 1,
                     "description": "Bannou app-id (e.g., \"bannou\", \"bannou-npc-01\")"
                 },
                 "host": {
                     "type": "string",
+                    "minLength": 1,
                     "description": "Hostname or IP address"
                 },
                 "port": {
@@ -356,17 +366,20 @@ public partial class MeshController
                     "items": {
                         "type": "string"
                     },
-                    "description": "List of service names hosted on this endpoint (without lib- prefix, e.g., 'account', 'auth')"
+                    "nullable": true,
+                    "description": "List of service names hosted on this endpoint (without lib- prefix, e.g., 'account', 'auth'). Null if not provided."
                 },
                 "lastSeen": {
                     "type": "string",
                     "format": "date-time",
-                    "description": "Last heartbeat timestamp"
+                    "nullable": true,
+                    "description": "Last heartbeat timestamp (null if never seen)"
                 },
                 "registeredAt": {
                     "type": "string",
                     "format": "date-time",
-                    "description": "When endpoint was first registered"
+                    "nullable": true,
+                    "description": "When endpoint was first registered (null if unknown)"
                 },
                 "issues": {
                     "type": "array",
@@ -392,6 +405,13 @@ public partial class MeshController
             "type": "object",
             "description": "Summary statistics for endpoints",
             "additionalProperties": false,
+            "required": [
+                "totalEndpoints",
+                "healthyCount",
+                "degradedCount",
+                "unavailableCount",
+                "uniqueAppIds"
+            ],
             "properties": {
                 "totalEndpoints": {
                     "type": "integer",
@@ -498,10 +518,12 @@ public partial class MeshController
                 },
                 "appId": {
                     "type": "string",
+                    "minLength": 1,
                     "description": "App-id for this instance"
                 },
                 "host": {
                     "type": "string",
+                    "minLength": 1,
                     "description": "Hostname or IP address to register"
                 },
                 "port": {
@@ -541,7 +563,8 @@ public partial class MeshController
             "description": "Response after registering endpoint",
             "additionalProperties": false,
             "required": [
-                "endpoint"
+                "endpoint",
+                "ttlSeconds"
             ],
             "properties": {
                 "endpoint": {
@@ -573,10 +596,12 @@ public partial class MeshController
                 },
                 "appId": {
                     "type": "string",
+                    "minLength": 1,
                     "description": "Bannou app-id (e.g., \"bannou\", \"bannou-npc-01\")"
                 },
                 "host": {
                     "type": "string",
+                    "minLength": 1,
                     "description": "Hostname or IP address"
                 },
                 "port": {
@@ -612,17 +637,20 @@ public partial class MeshController
                     "items": {
                         "type": "string"
                     },
-                    "description": "List of service names hosted on this endpoint (without lib- prefix, e.g., 'account', 'auth')"
+                    "nullable": true,
+                    "description": "List of service names hosted on this endpoint (without lib- prefix, e.g., 'account', 'auth'). Null if not provided."
                 },
                 "lastSeen": {
                     "type": "string",
                     "format": "date-time",
-                    "description": "Last heartbeat timestamp"
+                    "nullable": true,
+                    "description": "Last heartbeat timestamp (null if never seen)"
                 },
                 "registeredAt": {
                     "type": "string",
                     "format": "date-time",
-                    "description": "When endpoint was first registered"
+                    "nullable": true,
+                    "description": "When endpoint was first registered (null if unknown)"
                 },
                 "issues": {
                     "type": "array",
@@ -729,7 +757,26 @@ public partial class MeshController
 """;
 
     private static readonly string _DeregisterEndpoint_ResponseSchema = """
-{}
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/DeregisterEndpointResponse",
+    "$defs": {
+        "DeregisterEndpointResponse": {
+            "type": "object",
+            "description": "Response after deregistering an endpoint",
+            "additionalProperties": false,
+            "required": [
+                "message"
+            ],
+            "properties": {
+                "message": {
+                    "type": "string",
+                    "description": "Confirmation message describing the deregistration result"
+                }
+            }
+        }
+    }
+}
 """;
 
     private static readonly string _DeregisterEndpoint_Info = """
@@ -862,6 +909,10 @@ public partial class MeshController
             "type": "object",
             "description": "Response after heartbeat processed",
             "additionalProperties": false,
+            "required": [
+                "nextHeartbeatSeconds",
+                "ttlSeconds"
+            ],
             "properties": {
                 "nextHeartbeatSeconds": {
                     "type": "integer",
@@ -948,6 +999,7 @@ public partial class MeshController
             "properties": {
                 "appId": {
                     "type": "string",
+                    "minLength": 1,
                     "description": "Target app-id to route to"
                 },
                 "serviceName": {
@@ -1003,7 +1055,7 @@ public partial class MeshController
                     "items": {
                         "$ref": "#/$defs/MeshEndpoint"
                     },
-                    "description": "Alternative endpoints if primary fails"
+                    "description": "Alternative endpoints if primary fails (empty array if none)"
                 }
             }
         },
@@ -1026,10 +1078,12 @@ public partial class MeshController
                 },
                 "appId": {
                     "type": "string",
+                    "minLength": 1,
                     "description": "Bannou app-id (e.g., \"bannou\", \"bannou-npc-01\")"
                 },
                 "host": {
                     "type": "string",
+                    "minLength": 1,
                     "description": "Hostname or IP address"
                 },
                 "port": {
@@ -1065,17 +1119,20 @@ public partial class MeshController
                     "items": {
                         "type": "string"
                     },
-                    "description": "List of service names hosted on this endpoint (without lib- prefix, e.g., 'account', 'auth')"
+                    "nullable": true,
+                    "description": "List of service names hosted on this endpoint (without lib- prefix, e.g., 'account', 'auth'). Null if not provided."
                 },
                 "lastSeen": {
                     "type": "string",
                     "format": "date-time",
-                    "description": "Last heartbeat timestamp"
+                    "nullable": true,
+                    "description": "Last heartbeat timestamp (null if never seen)"
                 },
                 "registeredAt": {
                     "type": "string",
                     "format": "date-time",
-                    "description": "When endpoint was first registered"
+                    "nullable": true,
+                    "description": "When endpoint was first registered (null if unknown)"
                 },
                 "issues": {
                     "type": "array",
@@ -1303,7 +1360,8 @@ public partial class MeshController
             "additionalProperties": false,
             "required": [
                 "status",
-                "summary"
+                "summary",
+                "redisConnected"
             ],
             "properties": {
                 "status": {
@@ -1318,21 +1376,18 @@ public partial class MeshController
                     "type": "boolean",
                     "description": "Whether Redis connection is healthy"
                 },
-                "lastUpdateTime": {
-                    "type": "string",
-                    "format": "date-time",
-                    "description": "Timestamp of the last health status update"
-                },
                 "uptime": {
                     "type": "string",
-                    "description": "Mesh service uptime (e.g., \"2d 5h 30m\")"
+                    "nullable": true,
+                    "description": "Mesh service uptime (e.g., \"2d 5h 30m\"). Null if unavailable."
                 },
                 "endpoints": {
                     "type": "array",
                     "items": {
                         "$ref": "#/$defs/MeshEndpoint"
                     },
-                    "description": "Full endpoint list (only if includeEndpoints=true)"
+                    "nullable": true,
+                    "description": "Full endpoint list (null unless includeEndpoints=true)"
                 }
             }
         },
@@ -1350,6 +1405,13 @@ public partial class MeshController
             "type": "object",
             "description": "Summary statistics for endpoints",
             "additionalProperties": false,
+            "required": [
+                "totalEndpoints",
+                "healthyCount",
+                "degradedCount",
+                "unavailableCount",
+                "uniqueAppIds"
+            ],
             "properties": {
                 "totalEndpoints": {
                     "type": "integer",
@@ -1392,10 +1454,12 @@ public partial class MeshController
                 },
                 "appId": {
                     "type": "string",
+                    "minLength": 1,
                     "description": "Bannou app-id (e.g., \"bannou\", \"bannou-npc-01\")"
                 },
                 "host": {
                     "type": "string",
+                    "minLength": 1,
                     "description": "Hostname or IP address"
                 },
                 "port": {
@@ -1431,17 +1495,20 @@ public partial class MeshController
                     "items": {
                         "type": "string"
                     },
-                    "description": "List of service names hosted on this endpoint (without lib- prefix, e.g., 'account', 'auth')"
+                    "nullable": true,
+                    "description": "List of service names hosted on this endpoint (without lib- prefix, e.g., 'account', 'auth'). Null if not provided."
                 },
                 "lastSeen": {
                     "type": "string",
                     "format": "date-time",
-                    "description": "Last heartbeat timestamp"
+                    "nullable": true,
+                    "description": "Last heartbeat timestamp (null if never seen)"
                 },
                 "registeredAt": {
                     "type": "string",
                     "format": "date-time",
-                    "description": "When endpoint was first registered"
+                    "nullable": true,
+                    "description": "When endpoint was first registered (null if unknown)"
                 },
                 "issues": {
                     "type": "array",

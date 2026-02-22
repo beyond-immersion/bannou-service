@@ -10,6 +10,13 @@ namespace BeyondImmersion.BannouService.Services;
 public interface IMeshInvocationClient
 {
     /// <summary>
+    /// The unique identity of this node in the mesh network.
+    /// Stable for the lifetime of the process. Used for mesh registration,
+    /// heartbeat identification, and error event sourcing.
+    /// </summary>
+    Guid InstanceId { get; }
+
+    /// <summary>
     /// Invoke a method on a remote service and deserialize the response.
     /// </summary>
     /// <typeparam name="TRequest">Request body type.</typeparam>

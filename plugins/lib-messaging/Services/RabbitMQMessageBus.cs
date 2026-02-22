@@ -51,6 +51,7 @@ public sealed class RabbitMQMessageBus : IMessageBus, IAsyncDisposable
     private readonly MessagingServiceConfiguration _messagingConfiguration;
     private readonly ILogger<RabbitMQMessageBus> _logger;
     private readonly ITelemetryProvider _telemetryProvider;
+    private readonly Guid _instanceId;
 
     // Track declared exchanges to avoid redeclaring (ConcurrentDictionary for lock-free access)
     private readonly ConcurrentDictionary<string, byte> _declaredExchanges = new();
@@ -75,13 +76,15 @@ public sealed class RabbitMQMessageBus : IMessageBus, IAsyncDisposable
     /// <param name="messagingConfiguration">Messaging service configuration.</param>
     /// <param name="logger">Logger instance.</param>
     /// <param name="telemetryProvider">Telemetry provider for instrumentation (NullTelemetryProvider when telemetry disabled).</param>
+    /// <param name="instanceIdentifier">Node identity provider for this mesh instance.</param>
     public RabbitMQMessageBus(
         IChannelManager channelManager,
         IRetryBuffer retryBuffer,
         AppConfiguration appConfiguration,
         MessagingServiceConfiguration messagingConfiguration,
         ILogger<RabbitMQMessageBus> logger,
-        ITelemetryProvider telemetryProvider)
+        ITelemetryProvider telemetryProvider,
+        IMeshInstanceIdentifier instanceIdentifier)
     {
         _channelManager = channelManager;
         _retryBuffer = retryBuffer;
@@ -89,6 +92,7 @@ public sealed class RabbitMQMessageBus : IMessageBus, IAsyncDisposable
         _messagingConfiguration = messagingConfiguration;
         _logger = logger;
         _telemetryProvider = telemetryProvider;
+        _instanceId = instanceIdentifier.InstanceId;
 
         if (_telemetryProvider.TracingEnabled || _telemetryProvider.MetricsEnabled)
         {
@@ -506,7 +510,7 @@ public sealed class RabbitMQMessageBus : IMessageBus, IAsyncDisposable
             {
                 EventId = Guid.NewGuid(),
                 Timestamp = DateTimeOffset.UtcNow,
-                ServiceId = Program.ServiceGUID,
+                ServiceId = _instanceId,
                 ServiceName = serviceName,
                 AppId = _appConfiguration.EffectiveAppId,
                 Operation = operation,

@@ -91,8 +91,9 @@ public class MessagingServicePlugin : StandardServicePlugin<IMessagingService>
             var logger = sp.GetRequiredService<ILogger<RabbitMQMessageBus>>();
             // NullTelemetryProvider is registered by default; lib-telemetry overrides it when enabled
             var telemetryProvider = sp.GetRequiredService<ITelemetryProvider>();
+            var instanceIdentifier = sp.GetRequiredService<IMeshInstanceIdentifier>();
 
-            return new RabbitMQMessageBus(channelManager, retryBuffer, appConfig, msgConfig, logger, telemetryProvider);
+            return new RabbitMQMessageBus(channelManager, retryBuffer, appConfig, msgConfig, logger, telemetryProvider, instanceIdentifier);
         });
 
         // Use factory registration to pass telemetry provider and message bus

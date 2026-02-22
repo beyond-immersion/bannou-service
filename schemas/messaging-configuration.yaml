@@ -236,6 +236,15 @@ x-service-configuration:
       minimum: 100
       maximum: 30000
 
+    # Shutdown Settings
+    ShutdownTimeoutSeconds:
+      type: integer
+      description: Maximum seconds to wait for graceful subscription cleanup during shutdown. Prevents indefinite blocking when channels hang.
+      env: MESSAGING_SHUTDOWN_TIMEOUT_SECONDS
+      default: 10
+      minimum: 1
+      maximum: 60
+
     # Note: Telemetry (metrics/tracing) is controlled centrally via lib-telemetry configuration.
     # When lib-telemetry is enabled, it automatically instruments messaging operations via ITelemetryProvider.
     # When disabled or not loaded, instrumentation is skipped entirely (zero overhead).

@@ -695,7 +695,8 @@ public class ServiceHealthMonitorTests
             _appConfiguration,
             _mockStateManager.Object,
             _mockEventManager.Object,
-            _mockControlPlaneProvider.Object);
+            _mockControlPlaneProvider.Object,
+            new DefaultMeshInstanceIdentifier());
     }
 
     [Fact]
@@ -885,7 +886,8 @@ public class ServiceHealthMonitorRoutingProtectionTests
             _appConfiguration,
             _mockStateManager.Object,
             _mockEventManager.Object,
-            _mockControlPlaneProvider.Object);
+            _mockControlPlaneProvider.Object,
+            new DefaultMeshInstanceIdentifier());
     }
 
     [Fact]

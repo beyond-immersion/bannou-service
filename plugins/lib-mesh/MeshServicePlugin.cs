@@ -23,6 +23,21 @@ public class MeshServicePlugin : StandardServicePlugin<IMeshService>
     {
         Logger?.LogDebug("Configuring mesh service dependencies");
 
+        // Register IMeshInstanceIdentifier - the canonical source of this node's identity.
+        // Priority: MESH_INSTANCE_ID env var > --force-service-id CLI > random GUID.
+        services.AddSingleton<IMeshInstanceIdentifier>(sp =>
+        {
+            var meshConfig = sp.GetRequiredService<MeshServiceConfiguration>();
+            if (!string.IsNullOrEmpty(meshConfig.InstanceId)
+                && Guid.TryParse(meshConfig.InstanceId, out var configuredId))
+            {
+                return new DefaultMeshInstanceIdentifier(configuredId);
+            }
+
+            var appConfig = sp.GetRequiredService<IServiceConfiguration>();
+            return new DefaultMeshInstanceIdentifier(appConfig.ForceServiceId);
+        });
+
         // Register IMeshStateManager via factory delegate that checks config at resolution time.
         // Avoids BuildServiceProvider anti-pattern - config is resolved when the singleton is
         // first requested, not during ConfigureServices. Follows established Actor/Asset plugin pattern.
@@ -36,7 +51,8 @@ public class MeshServicePlugin : StandardServicePlugin<IMeshService>
 
                 return new LocalMeshStateManager(
                     config,
-                    sp.GetRequiredService<ILogger<LocalMeshStateManager>>());
+                    sp.GetRequiredService<ILogger<LocalMeshStateManager>>(),
+                    sp.GetRequiredService<IMeshInstanceIdentifier>());
             }
 
             return new MeshStateManager(
@@ -63,6 +79,7 @@ public class MeshServicePlugin : StandardServicePlugin<IMeshService>
             var configuration = sp.GetRequiredService<MeshServiceConfiguration>();
             var logger = sp.GetRequiredService<ILogger<MeshInvocationClient>>();
             var telemetryProvider = sp.GetRequiredService<ITelemetryProvider>();
+            var instanceIdentifier = sp.GetRequiredService<IMeshInstanceIdentifier>();
 
             return new MeshInvocationClient(
                 stateManager,
@@ -71,7 +88,8 @@ public class MeshServicePlugin : StandardServicePlugin<IMeshService>
                 messageSubscriber,
                 configuration,
                 logger,
-                telemetryProvider);
+                telemetryProvider,
+                instanceIdentifier);
         });
 
         Logger?.LogDebug("Service dependencies configured");
@@ -120,9 +138,9 @@ public class MeshServicePlugin : StandardServicePlugin<IMeshService>
         var endpointHost = meshConfig.EndpointHost ?? appConfig.EffectiveAppId;
         var endpointPort = meshConfig.EndpointPort > 0 ? meshConfig.EndpointPort : 80;
 
-        // Use the shared Program.ServiceGUID for consistent instance identification
-        // This ensures mesh endpoint and heartbeat use the same instance ID
-        var instanceId = Program.ServiceGUID;
+        // Use the registered IMeshInstanceIdentifier for consistent instance identification
+        var instanceIdentifier = serviceProvider.GetRequiredService<IMeshInstanceIdentifier>();
+        var instanceId = instanceIdentifier.InstanceId;
 
         var endpoint = new MeshEndpoint
         {

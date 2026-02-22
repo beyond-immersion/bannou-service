@@ -232,8 +232,15 @@ def generate_implementation(clients: List[ClientInfo]) -> str:
     lines.append("    }")
     lines.append("")
 
-    # Generate context properties and methods
+    # Generate node identity and context properties
     lines.extend([
+        "    // ═══════════════════════════════════════════════════════════════════════════",
+        "    // Node Identity",
+        "    // ═══════════════════════════════════════════════════════════════════════════",
+        "",
+        "    /// <inheritdoc />",
+        "    public Guid InstanceId => _meshInvocationClient.InstanceId;",
+        "",
         "    // ═══════════════════════════════════════════════════════════════════════════",
         "    // Context Methods",
         "    // ═══════════════════════════════════════════════════════════════════════════",
