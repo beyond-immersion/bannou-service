@@ -225,6 +225,28 @@ public sealed class ActorRunner : IActorRunner
         _logger.LogInformation("Starting actor {ActorId} (template: {TemplateId}, category: {Category})",
             ActorId, TemplateId, Category);
 
+        // Eagerly initialize behavior and cognition pipeline (fail-fast on config errors).
+        // Configuration errors (missing behavior document, unresolvable cognition template)
+        // are detected here instead of in the background loop, making them deterministic
+        // and preventing Error → Running → Error oscillation.
+        try
+        {
+            await InitializeBehaviorAsync(cancellationToken);
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            Status = ActorStatus.Error;
+            _logger.LogError(ex, "Actor {ActorId} failed to initialize behavior during startup", ActorId);
+            await _messageBus.TryPublishErrorAsync(
+                "actor",
+                "InitializeBehavior",
+                ex.GetType().Name,
+                ex.Message,
+                details: new { ActorId, TemplateId, BehaviorRef = _template.BehaviorRef },
+                stack: ex.StackTrace);
+            throw;
+        }
+
         // Create cancellation token for the loop
         _loopCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
 
@@ -831,7 +853,11 @@ public sealed class ActorRunner : IActorRunner
     /// <param name="ct">Cancellation token.</param>
     private async Task ExecuteBehaviorTickAsync(CognitionResult? cognitionResult, CancellationToken ct)
     {
-        // 1. Lazy-load behavior document on first tick
+        // 1. Re-initialize behavior after hot-reload invalidation.
+        // Initial load happens eagerly in StartAsync. This path only triggers when
+        // InvalidateCachedBehavior() sets _behavior = null for hot-reload.
+        // Failures here are transient (new behavior may still be deploying), so we
+        // catch and skip rather than crashing the loop.
         if (_behavior == null)
         {
             if (string.IsNullOrWhiteSpace(_template.BehaviorRef))
@@ -842,49 +868,25 @@ public sealed class ActorRunner : IActorRunner
 
             try
             {
-                _behavior = await _behaviorLoader.GetDocumentAsync(_template.BehaviorRef, ct);
-                _logger.LogInformation("Actor {ActorId} loaded behavior from {BehaviorRef}",
-                    ActorId, _template.BehaviorRef);
+                await InitializeBehaviorAsync(ct);
             }
-            catch (Exception ex)
+            catch (Exception ex) when (ex is not OperationCanceledException)
             {
-                _logger.LogError(ex, "Actor {ActorId} failed to load behavior from {BehaviorRef}",
-                    ActorId, _template.BehaviorRef);
-                await _messageBus.TryPublishErrorAsync(
-                    "actor",
-                    "LoadBehavior",
-                    ex.GetType().Name,
-                    ex.Message,
-                    details: new { ActorId, BehaviorRef = _template.BehaviorRef },
-                    stack: ex.StackTrace);
-                return;
-            }
-
-            // Verify behavior was loaded (loader might return null without throwing)
-            if (_behavior == null)
-            {
-                _logger.LogWarning("Actor {ActorId} behavior loader returned null for {BehaviorRef}",
+                _logger.LogWarning(ex,
+                    "Actor {ActorId} failed to re-initialize behavior after hot-reload from {BehaviorRef}, will retry next tick",
                     ActorId, _template.BehaviorRef);
                 return;
             }
-
-            // Extract and cache GOAP metadata from behavior document (one-time on load)
-            if (GoapMetadataConverter.HasGoapContent(_behavior))
-            {
-                (_goapGoals, _goapActions) = GoapMetadataConverter.ExtractAll(_behavior);
-                _logger.LogInformation(
-                    "Actor {ActorId} extracted GOAP metadata: {GoalCount} goals, {ActionCount} actions",
-                    ActorId, _goapGoals.Count, _goapActions.Count);
-            }
-
-            // Build cognition pipeline using three-tier resolution (per IMPLEMENTATION TENETS):
-            // 1. Actor template config (primary)
-            // 2. ABML metadata (override)
-            // 3. Category default mapping (fallback)
-            BuildCognitionPipeline();
         }
 
-        // 2. Create scope with current actor state
+        // 2. Guard: behavior must be loaded by this point (either from StartAsync or hot-reload above)
+        if (_behavior == null)
+        {
+            _logger.LogDebug("Actor {ActorId} has no loaded behavior, skipping tick", ActorId);
+            return;
+        }
+
+        // 3. Create scope with current actor state
         var scope = await CreateExecutionScopeAsync(ct);
 
         // Inject cognition results into scope for behavior access
@@ -895,7 +897,7 @@ public sealed class ActorRunner : IActorRunner
             scope.SetValue("_cognition_affected_goals", cognitionResult.AffectedGoals);
         }
 
-        // 3. Resolve start flow: on_tick (primary) → main (fallback)
+        // 4. Resolve start flow: on_tick (primary) → main (fallback)
         var startFlow = _behavior.Flows.ContainsKey("on_tick") ? "on_tick" : "main";
         var result = await _executor.ExecuteAsync(_behavior, startFlow, scope, ct);
 

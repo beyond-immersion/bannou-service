@@ -472,50 +472,23 @@ public class ActorRunnerCognitionTests
         // Arrange: template specifies a cognition template ID, but builder returns null (not found)
         var template = CreateTestTemplate(cognitionTemplateId: "nonexistent-template");
 
-        // Use a long ErrorRetryDelayMs so the Error state is held long enough to observe
-        // deterministically (the runner oscillates Error -> delay -> Running -> retry)
-        var config = CreateTestConfig();
-        config.ErrorRetryDelayMs = 30_000;
-
         var (runner, builderMock, _) = CreateRunnerWithCognition(
             template: template,
-            builderReturnsNull: true,
-            config: config);
+            builderReturnsNull: true);
 
-        // Act: start runner — the first tick should fail during initialization.
-        // Use a long-lived CTS for the runner so the loop's error retry path doesn't
-        // see a cancelled token. The loop catch block skips setting Error status when
-        // ct.IsCancellationRequested is true (it treats cancellation as shutdown, not error).
-        using var runnerCts = new CancellationTokenSource(TimeSpan.FromSeconds(30));
+        // Act & Assert: StartAsync now eagerly initializes behavior + cognition pipeline.
+        // An unresolvable cognition template is a configuration error detected at startup,
+        // not a transient error discovered in the background loop. StartAsync throws
+        // synchronously — no polling, no race condition, fully deterministic.
+        using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(10));
 
-        // Task.Run moves the background loop off xUnit's MaxConcurrencySyncContext onto
-        // the ThreadPool. Without this, the loop's Task.Yield() (in ProcessPerceptionsAsync)
-        // posts its continuation to xUnit's SC, which has only N worker threads (N = CPU cores).
-        // On GitHub Actions (2 cores), the test's async polling and the background loop both
-        // compete for 2 SC worker threads, causing starvation and the loop never reaching Error.
-        // Task.Run ensures the loop runs on ThreadPool threads where Task.Yield() posts to the
-        // ThreadPool scheduler instead, avoiding the SC bottleneck entirely.
-        await Task.Run(() => runner.StartAsync(runnerCts.Token));
+        await Assert.ThrowsAsync<InvalidOperationException>(() => runner.StartAsync(cts.Token));
 
-        // Wait for the runner to transition to Error state.
-        // await Task.Delay polling correctly releases the xUnit worker thread between polls,
-        // and since the background loop is on the ThreadPool (via Task.Run above), there's
-        // no SC contention.
-        var deadline = DateTime.UtcNow + TimeSpan.FromSeconds(10);
-        while (runner.Status != ActorStatus.Error && DateTime.UtcNow < deadline)
-        {
-            await Task.Delay(10);
-        }
-
-        // Assert: runner entered error state because template was specified but unresolvable
-        // Check BEFORE StopAsync, which unconditionally sets Status = Stopped
+        // Assert: runner is in error state (set before re-throw in StartAsync)
         Assert.Equal(ActorStatus.Error, runner.Status);
 
         // Assert: builder was called with the specified template ID
         builderMock.Verify(b => b.Build("nonexistent-template", It.IsAny<CognitionOverrides?>()), Times.Once);
-
-        // Clean up
-        await runner.StopAsync(cancellationToken: runnerCts.Token);
     }
 
     #endregion

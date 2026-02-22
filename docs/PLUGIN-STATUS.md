@@ -1,6 +1,6 @@
 # Plugin Production Readiness Status
 
-> **Last Updated**: 2026-02-14
+> **Last Updated**: 2026-02-22
 > **Scope**: All Bannou service plugins
 
 ---
@@ -43,8 +43,8 @@ This is **NOT** a code investigation tool. It reports the state depicted in each
 | Plugin | Layer | Score | Bugs | Summary |
 |--------|-------|-------|------|---------|
 | [State](#state-status) | L0 | 95% | 0 | Rock-solid foundation. No stubs, no bugs. Only migration tooling remains. |
-| [Messaging](#messaging-status) | L0 | 95% | 0 | L3-hardened. 0 stubs, 0 bugs. Shutdown timeout, IMeshInstanceIdentifier, dead fields removed. |
-| [Mesh](#mesh-status) | L0 | 97% | 0 | L3-hardened. IMeshInstanceIdentifier canonical identity, dead fields removed, T23/T26/T30/T7 code fixes. |
+| [Messaging](#messaging-status) | L0 | 97% | 0 | L3-hardened. Dead letter consumer, IMeshInstanceIdentifier, shutdown timeout. 216 tests, 0 warnings. |
+| [Mesh](#mesh-status) | L0 | 97% | 0 | L3-hardened. IMeshInstanceIdentifier canonical identity, dead fields removed, no extensions remaining. |
 | [Telemetry](#telemetry-status) | L0 | 93% | 0 | Feature-complete observability. OpenTelemetry + Prometheus. Only speculative extensions remain. |
 | [Account](#account-status) | L1 | 92% | 0 | Production-ready. Only post-launch extensions remain. |
 | [Auth](#auth-status) | L1 | 88% | 0 | Core complete with MFA. Remaining items are downstream integration. |
@@ -157,9 +157,9 @@ gh issue list --search "State:" --state open
 
 **Layer**: L0 Infrastructure | **Deep Dive**: [MESSAGING.md](plugins/MESSAGING.md)
 
-### Production Readiness: 95%
+### Production Readiness: 97%
 
-Core pub/sub infrastructure is robust: RabbitMQ channel pooling (100 default, 1000 max), publisher confirms for at-least-once delivery, aggressive retry buffer with crash-fast philosophy (500k message / 10 minute threshold), backpressure at 80% buffer fill, dead-letter exchange with configurable limits, poison message handling with retry counting, HTTP callback subscriptions with recovery, event consumer fan-out bridge (`NativeEventConsumerBackend`), in-memory mode for testing. 30+ configuration properties all wired. 0 stubs, 0 bugs. L3-hardened (2026-02-21): schema NRT compliance, validation constraints, enum consolidation, dead field removal, T9/T10/T25/T30 code fixes. Design considerations resolved (2026-02-22): `Program.ServiceGUID` replaced with `IMeshInstanceIdentifier` injection, shutdown timeout added (`ShutdownTimeoutSeconds`, default 10s wraps subscription cleanup in bounded wait). 3 informational design notes remain (in-memory mode limitations, tap exchange auto-creation, publisher confirms latency). 2 extensions identified (Prometheus metrics, dead-letter processing consumer). 0 warnings, 177 tests passing.
+Core pub/sub infrastructure is robust: RabbitMQ channel pooling (100 default, 1000 max), publisher confirms for at-least-once delivery, aggressive retry buffer with crash-fast philosophy (500k message / 10 minute threshold), backpressure at 80% buffer fill, dead-letter exchange with configurable limits, poison message handling with retry counting, HTTP callback subscriptions with recovery, event consumer fan-out bridge (`NativeEventConsumerBackend`), in-memory mode for testing, dead letter consumer with structured logging and error event publishing. 30+ configuration properties all wired. 0 stubs, 0 bugs. L3-hardened (2026-02-21): schema NRT compliance, validation constraints, enum consolidation, dead field removal, T9/T10/T25/T30 code fixes. Design considerations resolved (2026-02-22): `Program.ServiceGUID` replaced with `IMeshInstanceIdentifier` injection, shutdown timeout added (`ShutdownTimeoutSeconds`, default 10s). Dead letter consumer implemented (2026-02-22): `DeadLetterConsumerService` subscribes to DLX exchange, logs dead letters with metadata extraction, publishes `service.error` events, uses durable shared queue with competing consumers for multi-instance safety. 3 informational design notes remain (in-memory mode limitations, tap exchange auto-creation, publisher confirms latency). 1 extension identified (Prometheus metrics). 0 warnings, 216 tests passing.
 
 ### Bug Count: 0
 
@@ -174,7 +174,8 @@ No known bugs.
 | # | Enhancement | Description | Issue |
 |---|-------------|-------------|-------|
 | 1 | **Prometheus metrics** | Publish/subscribe rates, retry buffer depth, channel pool utilization, and retry counts are not exposed as metrics. Would come from a RabbitMQ sidecar exporter, not from lib-messaging code. | No issue |
-| 2 | **Dead-letter processing consumer** | No background service to process the DLX queue. Poison messages land in dead-letter and sit there. Need: alerting, logging, optional reprocessing for transient failures that exceeded retry attempts. | No issue |
+| 2 | *(No further enhancements identified)* | | |
+| 3 | | | |
 
 ### GH Issues
 
@@ -190,7 +191,7 @@ gh issue list --search "Messaging:" --state open
 
 ### Production Readiness: 97%
 
-Feature-complete service mesh: YARP-based HTTP routing, Redis-backed service discovery with TTL health tracking, 5 load balancing algorithms (RoundRobin, LeastConnections, Weighted, WeightedRoundRobin, Random), distributed per-appId circuit breaker with Lua-backed atomic state transitions and cross-instance sync via RabbitMQ, retry with exponential backoff, proactive health checking with automatic deregistration, degradation detection, event-driven auto-registration from Orchestrator heartbeats, endpoint caching. 27 configuration properties all wired. No stubs, no bugs, no design considerations. All production readiness issues closed. L3-hardened (2026-02-21): schema NRT compliance, validation constraints, enum consolidation to `-api.yaml`, T23 async patterns, T26 sentinel value removal, T30 telemetry spans across all helper classes, T7 error event publishing, BuildServiceProvider anti-pattern removed. Dead field cleanup (2026-02-22): removed `lastUpdateTime` (always returned current time — useless), fixed `alternates` nullability (code always returns list, schema lied about nullable). 0 warnings, 55 tests passing.
+Feature-complete service mesh: YARP-based HTTP routing, Redis-backed service discovery with TTL health tracking, 5 load balancing algorithms (RoundRobin, LeastConnections, Weighted, WeightedRoundRobin, Random), distributed per-appId circuit breaker with Lua-backed atomic state transitions and cross-instance sync via RabbitMQ, retry with exponential backoff, proactive health checking with automatic deregistration, degradation detection, event-driven auto-registration from Orchestrator heartbeats, endpoint caching, canonical `IMeshInstanceIdentifier` for node identity. 27 configuration properties all wired. No stubs, no bugs, no design considerations, no extensions remaining. All production readiness issues closed. L3-hardened (2026-02-21): schema NRT compliance, validation constraints, enum consolidation to `-api.yaml`, T23 async patterns, T26 sentinel value removal, T30 telemetry spans across all helper classes, T7 error event publishing, BuildServiceProvider anti-pattern removed. Dead field cleanup (2026-02-22): removed `lastUpdateTime` (always returned current time — useless), fixed `alternates` nullability (code always returns list, schema lied about nullable). `IMeshInstanceIdentifier` (2026-02-22): canonical mesh node identity with priority chain (env > CLI > random), `InstanceId` exposed on all generated clients and `IServiceNavigator`, replaced all `Program.ServiceGUID` usages. Graceful draining deemed unnecessary (Orchestrator's two-level routing handles managed deployments). 0 warnings, 55 tests passing.
 
 ### Bug Count: 0
 
@@ -204,8 +205,8 @@ No known bugs.
 
 | # | Enhancement | Description | Issue |
 |---|-------------|-------------|-------|
-| 1 | **Graceful draining** | Endpoint status `ShuttingDown` could actively drain connections before full deregistration. Currently deregistration is immediate -- in-flight requests to that endpoint may fail. | No issue |
-| 2 | *(No further enhancements identified)* | | |
+| 1 | *(No enhancements identified)* | Graceful draining previously listed here was deemed unnecessary: Orchestrator's two-level routing model handles managed deployments by changing app-id mappings before stopping old nodes. | |
+| 2 | | | |
 | 3 | | | |
 
 ### GH Issues
