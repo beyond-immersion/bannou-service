@@ -427,6 +427,9 @@ public partial class ContractService
     /// </summary>
     private async Task EnsureBuiltInClauseTypesAsync(CancellationToken ct)
     {
+        using var activity = _telemetryProvider.StartActivity(
+            "bannou.contract", "ContractService.EnsureBuiltInClauseTypesAsync");
+
         var allTypeCodes = await _stateStoreFactory.GetStore<List<string>>(StateStoreDefinitions.Contract)
             .GetAsync(ALL_CLAUSE_TYPES_KEY, ct) ?? new List<string>();
 
@@ -639,6 +642,9 @@ public partial class ContractService
         ContractTemplateModel template,
         CancellationToken ct)
     {
+        using var activity = _telemetryProvider.StartActivity(
+            "bannou.contract", "ContractService.CheckAssetRequirementClausesAsync");
+
         var results = new List<PartyAssetRequirementStatus>();
 
         if (contract.Parties == null)
@@ -748,6 +754,9 @@ public partial class ContractService
         ContractInstanceModel contract,
         CancellationToken ct)
     {
+        using var activity = _telemetryProvider.StartActivity(
+            "bannou.contract", "ContractService.QueryAssetBalanceAsync");
+
         try
         {
             // Build context with contract data and template values
@@ -841,6 +850,9 @@ public partial class ContractService
     private async Task<double?> QueryWalletBalanceAsync(
         string walletId, string currencyCode, ContractInstanceModel contract, CancellationToken ct)
     {
+        using var activity = _telemetryProvider.StartActivity(
+            "bannou.contract", "ContractService.QueryWalletBalanceAsync");
+
         try
         {
             var context = BuildContractContext(contract);
@@ -1035,6 +1047,9 @@ public partial class ContractService
         ContractInstanceModel contract,
         CancellationToken ct)
     {
+        using var activity = _telemetryProvider.StartActivity(
+            "bannou.contract", "ContractService.ExecuteContractClausesAsync");
+
         var distributions = new List<DistributionRecordModel>();
 
         // Ensure built-in clause types are registered before execution
@@ -1108,6 +1123,9 @@ public partial class ContractService
         Dictionary<string, object?> context,
         CancellationToken ct)
     {
+        using var activity = _telemetryProvider.StartActivity(
+            "bannou.contract", "ContractService.ExecuteSingleClauseAsync");
+
         try
         {
             // Load the clause type to get its execution handler
@@ -1595,40 +1613,26 @@ public partial class ContractService
     private async Task PublishContractLockedEventAsync(
         ContractInstanceModel model, Guid guardianId, string guardianType, CancellationToken ct)
     {
-        // Parse guardian type from string (API models use string per existing schema)
-        if (!Enum.TryParse<EntityType>(guardianType, ignoreCase: true, out var parsedGuardianType))
-        {
-            _logger.LogWarning("Invalid guardian type '{GuardianType}' when publishing contract locked event for {ContractId}", guardianType, model.ContractId);
-            return;
-        }
-
         await _messageBus.TryPublishAsync("contract.locked", new ContractLockedEvent
         {
             EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,
             ContractId = model.ContractId,
             GuardianId = guardianId,
-            GuardianType = parsedGuardianType
+            GuardianType = guardianType
         });
     }
 
     private async Task PublishContractUnlockedEventAsync(
         ContractInstanceModel model, Guid? guardianId, string? guardianType, CancellationToken ct)
     {
-        // Parse guardian type from string if present (API models use string per existing schema)
-        EntityType? parsedGuardianType = null;
-        if (guardianType != null && Enum.TryParse<EntityType>(guardianType, ignoreCase: true, out var parsed))
-        {
-            parsedGuardianType = parsed;
-        }
-
         await _messageBus.TryPublishAsync("contract.unlocked", new ContractUnlockedEvent
         {
             EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,
             ContractId = model.ContractId,
             PreviousGuardianId = guardianId,
-            PreviousGuardianType = parsedGuardianType
+            PreviousGuardianType = guardianType
         });
     }
 

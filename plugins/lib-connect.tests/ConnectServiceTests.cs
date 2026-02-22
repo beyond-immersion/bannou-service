@@ -458,30 +458,22 @@ public class ConnectServiceTests
         {
             SessionId = sessionId,
             EventType = AuthEventType.Login,
-            UserId = "user-123",
+            UserId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow
         };
 
-        // Act
-        var result = await service.ProcessAuthEventAsync(eventData);
-
-        // Assert
-        Assert.NotNull(result);
-        var resultJson = BannouJson.Serialize(result);
-        var resultDict = BannouJson.Deserialize<Dictionary<string, object>>(resultJson);
-        Assert.NotNull(resultDict);
-        Assert.Equal("processed", resultDict["status"].ToString());
-        Assert.Equal(sessionId.ToString(), resultDict["sessionId"].ToString());
+        // Act - method returns void; verifies no exception thrown
+        await service.ProcessAuthEventAsync(eventData);
     }
 
     [Fact]
-    public async Task ProcessClientMessageEventAsync_WhenClientNotConnected_ReturnsError()
+    public async Task ProcessClientMessageEventAsync_WhenClientNotConnected_LogsDebug()
     {
         // Arrange
         using var service = CreateConnectService();
         var eventData = new ClientMessageEvent
         {
-            ClientId = "client-789",
+            ClientId = Guid.NewGuid(),
             ServiceName = "TestService",
             ServiceGuid = Guid.NewGuid(),
             MessageId = 12345,
@@ -490,27 +482,19 @@ public class ConnectServiceTests
             Flags = 0
         };
 
-        // Act - no connection mocked, so client won't be found
-        var result = await service.ProcessClientMessageEventAsync(eventData);
-
-        // Assert - expects error since no WebSocket connection exists in unit test
+        // Act - no connection mocked, so client won't be found; method logs debug and returns
         // Actual message delivery is tested via edge-tester WebSocket integration tests
-        Assert.NotNull(result);
-        var resultJson = BannouJson.Serialize(result);
-        var resultDict = BannouJson.Deserialize<Dictionary<string, object>>(resultJson);
-        Assert.NotNull(resultDict);
-        Assert.Equal("client_not_found", resultDict["error"].ToString());
-        Assert.Equal("client-789", resultDict["clientId"].ToString());
+        await service.ProcessClientMessageEventAsync(eventData);
     }
 
     [Fact]
-    public async Task ProcessClientRPCEventAsync_WhenClientNotConnected_ReturnsError()
+    public async Task ProcessClientRPCEventAsync_WhenClientNotConnected_LogsDebug()
     {
         // Arrange
         using var service = CreateConnectService();
         var eventData = new ClientRPCEvent
         {
-            ClientId = "client-rpc-999",
+            ClientId = Guid.NewGuid(),
             ServiceName = "RPCService",
             ServiceGuid = Guid.NewGuid(),
             MessageId = 67890,
@@ -519,17 +503,9 @@ public class ConnectServiceTests
             Flags = 0
         };
 
-        // Act - no connection mocked, so client won't be found
-        var result = await service.ProcessClientRPCEventAsync(eventData);
-
-        // Assert - expects error since no WebSocket connection exists in unit test
+        // Act - no connection mocked, so client won't be found; method logs debug and returns
         // Actual RPC delivery is tested via edge-tester WebSocket integration tests
-        Assert.NotNull(result);
-        var resultJson = BannouJson.Serialize(result);
-        var resultDict = BannouJson.Deserialize<Dictionary<string, object>>(resultJson);
-        Assert.NotNull(resultDict);
-        Assert.Equal("client_not_found", resultDict["error"].ToString());
-        Assert.Equal("client-rpc-999", resultDict["clientId"].ToString());
+        await service.ProcessClientRPCEventAsync(eventData);
     }
 
     // NOTE: HasConnection and SendMessageAsync tests were removed because they used reflection

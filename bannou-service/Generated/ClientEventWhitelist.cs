@@ -43,6 +43,8 @@ public static class ClientEventWhitelist
         "chat.participant_unmuted",
         "chat.room_deleted",
         "chat.room_locked",
+        "chat.typing_started",
+        "chat.typing_stopped",
         "connect.capability_manifest",
         "connect.disconnect_notification",
         "game_session.action_result",

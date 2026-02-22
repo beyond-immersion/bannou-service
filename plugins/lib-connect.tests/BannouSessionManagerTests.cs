@@ -65,11 +65,6 @@ public class BannouSessionManagerTests
             .Setup(f => f.GetStore<string>(It.IsAny<string>()))
             .Returns(_mockStringStore.Object);
 
-        // Default message bus behavior
-        _mockMessageBus
-            .Setup(m => m.TryPublishAsync(It.IsAny<string>(), It.IsAny<SessionEvent>(), It.IsAny<PublishOptions?>(), It.IsAny<Guid?>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(true);
-
         _sessionManager = new BannouSessionManager(
             _mockStateStoreFactory.Object,
             _mockMessageBus.Object,
@@ -556,69 +551,6 @@ public class BannouSessionManagerTests
 
         // Act & Assert - should not throw
         var exception = await Record.ExceptionAsync(() => _sessionManager.RemoveSessionAsync(sessionId));
-        Assert.Null(exception);
-    }
-
-    #endregion
-
-    #region PublishSessionEventAsync Tests
-
-    [Fact]
-    public async Task PublishSessionEventAsync_WithValidParameters_ShouldPublishEvent()
-    {
-        // Arrange
-        var eventType = "connected";
-        var sessionId = Guid.NewGuid().ToString();
-        var eventData = new { reason = "new connection" };
-
-        SessionEvent? capturedEvent = null;
-        _mockMessageBus
-            .Setup(m => m.TryPublishAsync(It.IsAny<string>(), It.IsAny<SessionEvent>(), It.IsAny<PublishOptions?>(), It.IsAny<Guid?>(), It.IsAny<CancellationToken>()))
-            .Callback<string, SessionEvent, PublishOptions?, Guid?, CancellationToken>((t, e, o, g, ct) => capturedEvent = e)
-            .ReturnsAsync(true);
-
-        // Act
-        await _sessionManager.PublishSessionEventAsync(eventType, sessionId, eventData);
-
-        // Assert
-        Assert.NotNull(capturedEvent);
-        Assert.Equal(eventType, capturedEvent.EventType);
-        Assert.Equal(Guid.Parse(sessionId), capturedEvent.SessionId);
-        Assert.NotNull(capturedEvent.Data);
-    }
-
-    [Fact]
-    public async Task PublishSessionEventAsync_WithNullEventData_ShouldPublishEvent()
-    {
-        // Arrange
-        var eventType = "disconnected";
-        var sessionId = Guid.NewGuid().ToString();
-
-        // Act
-        await _sessionManager.PublishSessionEventAsync(eventType, sessionId);
-
-        // Assert
-        _mockMessageBus.Verify(m => m.TryPublishAsync(
-            It.IsAny<string>(),
-            It.IsAny<SessionEvent>(),
-            It.IsAny<PublishOptions?>(),
-            It.IsAny<Guid?>(),
-            It.IsAny<CancellationToken>()), Times.Once);
-    }
-
-    [Fact]
-    public async Task PublishSessionEventAsync_WhenMessageBusThrows_ShouldNotPropagateException()
-    {
-        // Arrange
-        var eventType = "error";
-        var sessionId = Guid.NewGuid().ToString();
-
-        _mockMessageBus
-            .Setup(m => m.TryPublishAsync(It.IsAny<string>(), It.IsAny<SessionEvent>(), It.IsAny<PublishOptions?>(), It.IsAny<Guid?>(), It.IsAny<CancellationToken>()))
-            .ThrowsAsync(new InvalidOperationException("Publish failed"));
-
-        // Act & Assert - should not throw
-        var exception = await Record.ExceptionAsync(() => _sessionManager.PublishSessionEventAsync(eventType, sessionId));
         Assert.Null(exception);
     }
 

@@ -24287,6 +24287,7 @@
           "roomTypeCode": {
             "type": "string",
             "nullable": true,
+            "maxLength": 100,
             "description": "Filter by room type"
           },
           "status": {
@@ -24301,11 +24302,14 @@
           "page": {
             "type": "integer",
             "default": 0,
+            "minimum": 0,
             "description": "Page number (zero-based)"
           },
           "pageSize": {
             "type": "integer",
             "default": 50,
+            "minimum": 1,
+            "maximum": 200,
             "description": "Number of items per page"
           }
         }
@@ -25923,11 +25927,13 @@
           "reason": {
             "type": "string",
             "nullable": true,
+            "maxLength": 500,
             "description": "Optional reason for the ban"
           },
           "durationMinutes": {
             "type": "integer",
             "nullable": true,
+            "minimum": 1,
             "description": "Ban duration in minutes (null for permanent)"
           }
         }
@@ -26230,6 +26236,25 @@
             "type": "string",
             "nullable": true,
             "description": "Sender display name"
+          }
+        }
+      },
+      "BatchMessageFailure": {
+        "type": "object",
+        "additionalProperties": false,
+        "description": "Details of a single message that failed in a batch send operation",
+        "required": [
+          "index",
+          "error"
+        ],
+        "properties": {
+          "index": {
+            "type": "integer",
+            "description": "Zero-based index of the failed message in the request messages array"
+          },
+          "error": {
+            "type": "string",
+            "description": "Human-readable error reason"
           }
         }
       },
@@ -27049,8 +27074,6 @@
         "required": [
           "breachId",
           "contractId",
-          "breachingEntityId",
-          "breachingEntityType",
           "breachType",
           "status",
           "detectedAt"
@@ -27069,11 +27092,17 @@
           "breachingEntityId": {
             "type": "string",
             "format": "uuid",
-            "description": "Entity that breached"
+            "nullable": true,
+            "description": "Entity that breached (null for system-initiated breaches such as deadline enforcement)"
           },
           "breachingEntityType": {
-            "$ref": "#/components/schemas/EntityType",
-            "description": "Type of breaching entity"
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/EntityType"
+              }
+            ],
+            "nullable": true,
+            "description": "Type of breaching entity (null for system-initiated breaches)"
           },
           "breachType": {
             "$ref": "#/components/schemas/BreachType",
@@ -28906,7 +28935,7 @@
           "metadata": {
             "type": "string",
             "nullable": true,
-            "description": "Arbitrary JSON metadata"
+            "description": "Client-only metadata stored as JSON string. No Bannou plugin reads specific keys from this field by convention."
           }
         }
       },
@@ -29381,7 +29410,7 @@
       },
       "ClauseDistributionResult": {
         "type": "object",
-        "description": "Outcome of a single clause distribution during contract execution.\nUsed in ContractExecutedEvent to provide per-clause success/failure details.\nDeliberately excludes wallet/container IDs - consumers tracking these should\ncorrelate via clauseId to their own records.\n",
+        "description": "Per-clause distribution outcome during contract execution; excludes wallet/container IDs so consumers correlate via clauseId",
         "additionalProperties": false,
         "required": [
           "clauseId",
@@ -29402,7 +29431,7 @@
           },
           "assetType": {
             "type": "string",
-            "description": "Descriptive type of asset involved (e.g., \"currency\", \"item\").\nProvides human-readable context for what was transferred.\n"
+            "description": "Descriptive type of asset involved (e.g. \"currency\", \"item\") providing human-readable context"
           },
           "amount": {
             "type": "number",
@@ -29918,14 +29947,7 @@
             "description": "API endpoint path (e.g., \"/account/create\")"
           },
           "method": {
-            "type": "string",
-            "enum": [
-              "GET",
-              "POST",
-              "PUT",
-              "DELETE",
-              "PATCH"
-            ],
+            "$ref": "#/components/schemas/HttpMethodType",
             "description": "HTTP method for this endpoint"
           },
           "description": {
@@ -31905,6 +31927,7 @@
         "required": [
           "contractId",
           "templateId",
+          "templateCode",
           "status",
           "parties",
           "createdAt"
@@ -32182,8 +32205,7 @@
         "required": [
           "contractId",
           "templateCode",
-          "status",
-          "role"
+          "status"
         ],
         "properties": {
           "contractId": {
@@ -32206,7 +32228,8 @@
           },
           "role": {
             "type": "string",
-            "description": "Entity's role in contract"
+            "nullable": true,
+            "description": "Entity's role in contract (null if party record not found due to data inconsistency)"
           },
           "effectiveUntil": {
             "type": "string",
@@ -32228,6 +32251,7 @@
           "maxParties",
           "partyRoles",
           "defaultEnforcementMode",
+          "transferable",
           "isActive",
           "createdAt"
         ],
@@ -32372,9 +32396,13 @@
             "description": "Whether this contract has a time commitment clause"
           },
           "timeCommitmentType": {
-            "type": "string",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/TimeCommitmentType"
+              }
+            ],
             "nullable": true,
-            "description": "Type of time commitment (exclusive or partial)"
+            "description": "Type of time commitment for scheduling constraints"
           },
           "clauses": {
             "type": "array",
@@ -34379,6 +34407,8 @@
         "properties": {
           "roomTypeCode": {
             "type": "string",
+            "minLength": 1,
+            "maxLength": 100,
             "description": "Room type code determining message format and validation"
           },
           "sessionId": {
@@ -34396,11 +34426,13 @@
           "displayName": {
             "type": "string",
             "nullable": true,
+            "maxLength": 200,
             "description": "Human-readable room name"
           },
           "maxParticipants": {
             "type": "integer",
             "nullable": true,
+            "minimum": 1,
             "description": "Participant limit override (null uses type default)"
           },
           "contractFulfilledAction": {
@@ -34442,7 +34474,7 @@
           "metadata": {
             "type": "string",
             "nullable": true,
-            "description": "Arbitrary JSON metadata for client rendering hints"
+            "description": "Client-only metadata stored as JSON string. No Bannou plugin reads specific keys from this field by convention."
           }
         }
       },
@@ -39337,7 +39369,8 @@
         "additionalProperties": false,
         "required": [
           "executed",
-          "alreadyExecuted"
+          "alreadyExecuted",
+          "contractId"
         ],
         "properties": {
           "executed": {
@@ -45482,6 +45515,17 @@
           "expired"
         ]
       },
+      "HttpMethodType": {
+        "type": "string",
+        "description": "HTTP method for endpoint invocation",
+        "enum": [
+          "GET",
+          "POST",
+          "PUT",
+          "DELETE",
+          "PATCH"
+        ]
+      },
       "InitializeRealmClockRequest": {
         "type": "object",
         "additionalProperties": false,
@@ -46313,6 +46357,7 @@
           "displayName": {
             "type": "string",
             "nullable": true,
+            "maxLength": 200,
             "description": "Human-readable display name"
           },
           "role": {
@@ -49366,11 +49411,14 @@
           "page": {
             "type": "integer",
             "default": 0,
+            "minimum": 0,
             "description": "Page number (zero-based)"
           },
           "pageSize": {
             "type": "integer",
             "default": 20,
+            "minimum": 1,
+            "maximum": 100,
             "description": "Number of items per page"
           }
         }
@@ -49415,6 +49463,7 @@
           "roomTypeCode": {
             "type": "string",
             "nullable": true,
+            "maxLength": 100,
             "description": "Filter by room type code"
           },
           "sessionId": {
@@ -49435,11 +49484,14 @@
           "page": {
             "type": "integer",
             "default": 0,
+            "minimum": 0,
             "description": "Page number (zero-based)"
           },
           "pageSize": {
             "type": "integer",
             "default": 20,
+            "minimum": 1,
+            "maximum": 100,
             "description": "Number of items per page"
           }
         }
@@ -50803,7 +50855,9 @@
         "additionalProperties": false,
         "required": [
           "locked",
-          "contractId"
+          "contractId",
+          "guardianId",
+          "lockedAt"
         ],
         "properties": {
           "locked": {
@@ -51332,6 +51386,8 @@
           "limit": {
             "type": "integer",
             "default": 50,
+            "minimum": 1,
+            "maximum": 200,
             "description": "Maximum number of messages to return"
           }
         }
@@ -52261,6 +52317,7 @@
           "durationMinutes": {
             "type": "integer",
             "nullable": true,
+            "minimum": 1,
             "description": "Mute duration in minutes (null for permanent)"
           }
         }
@@ -53277,6 +53334,7 @@
         "properties": {
           "role": {
             "type": "string",
+            "minLength": 1,
             "maxLength": 64,
             "description": "Role identifier (employer, employee, buyer, seller, etc.)"
           },
@@ -54144,11 +54202,10 @@
             "description": "Human-readable description"
           },
           "executionMode": {
-            "type": "string",
-            "enum": [
-              "sync",
-              "async",
-              "fire_and_forget"
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PreboundApiExecutionMode"
+              }
             ],
             "default": "sync",
             "description": "How to execute the API call"
@@ -54159,6 +54216,15 @@
             "description": "Optional validation rules for the response"
           }
         }
+      },
+      "PreboundApiExecutionMode": {
+        "type": "string",
+        "description": "How to execute a prebound API call",
+        "enum": [
+          "sync",
+          "async",
+          "fire_and_forget"
+        ]
       },
       "PredictedMutation": {
         "type": "object",
@@ -57185,15 +57251,21 @@
         "properties": {
           "code": {
             "type": "string",
+            "minLength": 1,
+            "maxLength": 100,
+            "pattern": "^[a-z][a-z0-9_]*$",
             "description": "Unique room type code (e.g., \"text\", \"guild_board\", \"trade_posting\")"
           },
           "displayName": {
             "type": "string",
+            "minLength": 1,
+            "maxLength": 200,
             "description": "Human-readable name for the room type"
           },
           "description": {
             "type": "string",
             "nullable": true,
+            "maxLength": 1000,
             "description": "Optional description of the room type"
           },
           "gameServiceId": {
@@ -57222,11 +57294,13 @@
           "defaultMaxParticipants": {
             "type": "integer",
             "nullable": true,
+            "minimum": 1,
             "description": "Default participant limit (null uses service default)"
           },
           "retentionDays": {
             "type": "integer",
             "nullable": true,
+            "minimum": 1,
             "description": "Message retention in days (null uses service default)"
           },
           "defaultContractTemplateId": {
@@ -57242,12 +57316,13 @@
           "rateLimitPerMinute": {
             "type": "integer",
             "nullable": true,
+            "minimum": 1,
             "description": "Messages per minute per participant (null uses service default)"
           },
           "metadata": {
             "type": "string",
             "nullable": true,
-            "description": "Arbitrary JSON metadata for client rendering hints"
+            "description": "Client-only metadata stored as JSON string. No Bannou plugin reads specific keys from this field by convention."
           }
         }
       },
@@ -58818,7 +58893,7 @@
       },
       "ResponseValidation": {
         "type": "object",
-        "description": "Validation rules for API responses with three-outcome model.\nUsed by lib-contract to validate clause conditions without\nunderstanding the specific API semantics.\n",
+        "description": "Validation rules for API responses with three-outcome model (success, permanent failure, transient failure)",
         "additionalProperties": false,
         "properties": {
           "successConditions": {
@@ -58826,21 +58901,21 @@
             "items": {
               "$ref": "#/components/schemas/ValidationCondition"
             },
-            "description": "Conditions that must ALL pass for success.\nIf any fail, checks permanent failure conditions.\n"
+            "description": "Conditions that must ALL pass for success; if any fail, checks permanent failure conditions"
           },
           "permanentFailureConditions": {
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/ValidationCondition"
             },
-            "description": "Conditions that indicate permanent failure (clause violated).\nChecked when success conditions fail.\n"
+            "description": "Conditions that indicate permanent failure (clause violated); checked when success conditions fail"
           },
           "transientFailureStatusCodes": {
             "type": "array",
             "items": {
               "type": "integer"
             },
-            "description": "HTTP status codes that indicate transient failure (retry later).\nDefault: [408, 429, 502, 503, 504]\n"
+            "description": "HTTP status codes indicating transient failure for retry (default 408, 429, 502, 503, 504)"
           }
         }
       },
@@ -59036,7 +59111,7 @@
           "metadata": {
             "type": "string",
             "nullable": true,
-            "description": "Arbitrary JSON metadata"
+            "description": "Client-only metadata stored as JSON string. No Bannou plugin reads specific keys from this field by convention."
           },
           "status": {
             "$ref": "#/components/schemas/RoomTypeStatus",
@@ -60588,11 +60663,15 @@
           },
           "query": {
             "type": "string",
+            "minLength": 1,
+            "maxLength": 500,
             "description": "Full-text search query string"
           },
           "limit": {
             "type": "integer",
             "default": 20,
+            "minimum": 1,
+            "maximum": 100,
             "description": "Maximum number of results to return"
           }
         }
@@ -61302,14 +61381,22 @@
       "SendMessageBatchResponse": {
         "type": "object",
         "additionalProperties": false,
-        "description": "Result of a batch message send operation",
+        "description": "Result of a batch message send operation with per-message failure tracking",
         "required": [
-          "messageCount"
+          "messageCount",
+          "failed"
         ],
         "properties": {
           "messageCount": {
             "type": "integer",
-            "description": "Number of messages sent"
+            "description": "Number of messages successfully sent"
+          },
+          "failed": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BatchMessageFailure"
+            },
+            "description": "Details of messages that failed to send (empty array when all succeeded)"
           }
         }
       },
@@ -61668,7 +61755,7 @@
             "additionalProperties": {
               "type": "string"
             },
-            "description": "Key-value pairs for template substitution.\nKeys should follow pattern: EscrowId, PartyA_EscrowWalletId, etc.\n"
+            "description": "Key-value pairs for template substitution (keys follow pattern EscrowId, PartyA_EscrowWalletId, etc.)"
           }
         }
       },
@@ -61678,7 +61765,8 @@
         "additionalProperties": false,
         "required": [
           "updated",
-          "contractId"
+          "contractId",
+          "valueCount"
         ],
         "properties": {
           "updated": {
@@ -63916,6 +64004,14 @@
           "expired"
         ]
       },
+      "TimeCommitmentType": {
+        "type": "string",
+        "description": "Type of time commitment for scheduling constraints",
+        "enum": [
+          "exclusive",
+          "partial"
+        ]
+      },
       "TimeRatioChangeReason": {
         "type": "string",
         "description": "Why the time ratio was changed",
@@ -64156,7 +64252,10 @@
         "additionalProperties": false,
         "required": [
           "transferred",
-          "contractId"
+          "contractId",
+          "role",
+          "fromEntityId",
+          "toEntityId"
         ],
         "properties": {
           "transferred": {
@@ -66346,17 +66445,19 @@
           "displayName": {
             "type": "string",
             "nullable": true,
+            "maxLength": 200,
             "description": "Updated room name"
           },
           "maxParticipants": {
             "type": "integer",
             "nullable": true,
+            "minimum": 1,
             "description": "Updated participant limit"
           },
           "metadata": {
             "type": "string",
             "nullable": true,
-            "description": "Updated JSON metadata"
+            "description": "Client-only metadata stored as JSON string. No Bannou plugin reads specific keys from this field by convention."
           }
         }
       },
@@ -67441,12 +67542,12 @@
           "jsonPath": {
             "type": "string",
             "nullable": true,
-            "description": "JsonPath expression to extract value from response.\nRequired for jsonPathEquals, jsonPathExists, jsonPathNotExists.\nExample: \"$.balance\", \"$.items[0].status\"\n"
+            "description": "JsonPath expression to extract value from response (required for jsonPathEquals/Exists/NotExists, e.g. \"$.balance\")"
           },
           "expectedValue": {
             "type": "string",
             "nullable": true,
-            "description": "Expected value for comparison conditions.\nType coercion applied: \"true\"/\"false\" for booleans, numeric strings for numbers.\n"
+            "description": "Expected value for comparison conditions with type coercion (\"true\"/\"false\" for booleans, numeric strings for numbers)"
           },
           "operator": {
             "$ref": "#/components/schemas/ComparisonOperator",

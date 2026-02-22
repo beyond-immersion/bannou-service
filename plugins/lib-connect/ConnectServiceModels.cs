@@ -156,40 +156,6 @@ public class SessionHeartbeat
 }
 
 /// <summary>
-/// Event published when session state changes.
-/// </summary>
-public class SessionEvent
-{
-    /// <summary>
-    /// Type of session event (e.g., "connected", "disconnected", "reconnected").
-    /// </summary>
-    public string EventType { get; set; } = string.Empty;
-
-    /// <summary>
-    /// The session ID this event is for.
-    /// </summary>
-    public Guid SessionId { get; set; }
-
-    // Store as Unix epoch timestamp (long) to avoid System.Text.Json DateTimeOffset serialization issues
-    public long TimestampUnix { get; set; }
-
-    /// <summary>
-    /// When this event occurred.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonIgnore]
-    public DateTimeOffset Timestamp
-    {
-        get => DateTimeOffset.FromUnixTimeSeconds(TimestampUnix);
-        set => TimestampUnix = value.ToUnixTimeSeconds();
-    }
-
-    /// <summary>
-    /// Additional event-specific data.
-    /// </summary>
-    public object? Data { get; set; }
-}
-
-/// <summary>
 /// Represents a WebSocket connection with its associated state.
 /// </summary>
 public class WebSocketConnection
@@ -221,3 +187,42 @@ internal record BroadcastRegistryEntry(
     Guid InstanceId,
     string InternalUrl,
     BroadcastMode BroadcastMode);
+
+/// <summary>
+/// Response sent to internal mode WebSocket clients on connection establishment.
+/// Contains minimal information needed for peer-to-peer routing.
+/// </summary>
+public class InternalModeResponse
+{
+    /// <summary>
+    /// Session ID assigned to this connection.
+    /// </summary>
+    public string SessionId { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Peer GUID for routing messages to this connection.
+    /// </summary>
+    public string PeerGuid { get; set; } = string.Empty;
+}
+
+/// <summary>
+/// Acknowledgment payload for successful peer-to-peer message delivery.
+/// Sent as response when the sender expects a delivery confirmation.
+/// </summary>
+public class PeerAckPayload
+{
+    /// <summary>
+    /// Delivery status (e.g., "delivered").
+    /// </summary>
+    public string Status { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Target peer GUID that received the message.
+    /// </summary>
+    public string TargetPeerGuid { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Original message ID for correlation.
+    /// </summary>
+    public ulong OriginalMessageId { get; set; }
+}

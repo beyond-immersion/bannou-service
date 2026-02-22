@@ -810,10 +810,10 @@ public partial class ConnectService : IConnectService, IDisposable
             _connectionManager.AddConnection(sessionId, webSocket, connectionState);
 
             // Send minimal response with sessionId and peerGuid
-            var internalResponse = new
+            var internalResponse = new InternalModeResponse
             {
-                sessionId = sessionId,
-                peerGuid = connectionState.PeerGuid.ToString()
+                SessionId = sessionId,
+                PeerGuid = connectionState.PeerGuid.ToString()
             };
             var responseJson = BannouJson.Serialize(internalResponse);
             var responseBytes = Encoding.UTF8.GetBytes(responseJson);
@@ -1075,7 +1075,6 @@ public partial class ConnectService : IConnectService, IDisposable
                     }
 
                     await _sessionManager.RemoveSessionAsync(sessionId);
-                    await _sessionManager.PublishSessionEventAsync("disconnect", sessionId, new { instanceId = _instanceId, reconnectable = false });
                     _logger.LogInformation("Session {SessionId} force disconnected - no reconnection allowed", sessionId);
                 }
                 else
@@ -1103,14 +1102,6 @@ public partial class ConnectService : IConnectService, IDisposable
                         reconnectionToken,
                         reconnectionWindow,
                         userRoles);
-
-                    // Publish disconnect event with reconnection info
-                    await _sessionManager.PublishSessionEventAsync("disconnect", sessionId, new
-                    {
-                        instanceId = _instanceId,
-                        reconnectable = true,
-                        reconnectionExpiresAt = connectionState.ReconnectionExpiresAt
-                    });
 
                     _logger.LogInformation("Session {SessionId} disconnected - reconnection window active until {ExpiresAt}",
                         sessionId, connectionState.ReconnectionExpiresAt);
@@ -1645,11 +1636,11 @@ public partial class ConnectService : IConnectService, IDisposable
             else if (message.ExpectsResponse)
             {
                 // For peer-to-peer, send acknowledgment that the message was delivered
-                var ackPayload = new
+                var ackPayload = new PeerAckPayload
                 {
-                    status = "delivered",
-                    targetPeerGuid = targetPeerGuid.ToString(),
-                    originalMessageId = message.MessageId
+                    Status = "delivered",
+                    TargetPeerGuid = targetPeerGuid.ToString(),
+                    OriginalMessageId = message.MessageId
                 };
 
                 var ackMessage = BinaryMessage.CreateResponse(
@@ -1696,22 +1687,6 @@ public partial class ConnectService : IConnectService, IDisposable
             if (allSessionIds.Count == 0)
             {
                 _logger.LogDebug("No other peers to broadcast to from session {SessionId}", senderSessionId);
-
-                // If sender expects response, send acknowledgment with zero recipients
-                if (message.ExpectsResponse)
-                {
-                    var ackPayload = new
-                    {
-                        status = "broadcast_complete",
-                        recipientCount = 0,
-                        originalMessageId = message.MessageId
-                    };
-
-                    var ackMessage = BinaryMessage.CreateResponse(
-                        message, ResponseCodes.OK, Encoding.UTF8.GetBytes(BannouJson.Serialize(ackPayload)));
-
-                    await _connectionManager.SendMessageAsync(senderSessionId, ackMessage, cancellationToken);
-                }
                 return;
             }
 
@@ -1727,22 +1702,6 @@ public partial class ConnectService : IConnectService, IDisposable
 
             // Relay to other Connect instances via inter-node broadcast (fire-and-forget)
             _ = _interNodeBroadcast.RelayBroadcastAsync(message.ToByteArray(), cancellationToken);
-
-            // If sender expects response, send acknowledgment (local count only)
-            if (message.ExpectsResponse)
-            {
-                var ackPayload = new
-                {
-                    status = "broadcast_complete",
-                    recipientCount = successCount,
-                    originalMessageId = message.MessageId
-                };
-
-                var ackMessage = BinaryMessage.CreateResponse(
-                    message, ResponseCodes.OK, Encoding.UTF8.GetBytes(BannouJson.Serialize(ackPayload)));
-
-                await _connectionManager.SendMessageAsync(senderSessionId, ackMessage, cancellationToken);
-            }
         }
         catch (Exception ex)
         {
@@ -1906,7 +1865,7 @@ public partial class ConnectService : IConnectService, IDisposable
     /// Processes authentication events (login/logout) from Auth service.
     /// Updates session capabilities when authentication state changes.
     /// </summary>
-    internal async Task<object> ProcessAuthEventAsync(AuthEvent eventData)
+    internal async Task ProcessAuthEventAsync(AuthEvent eventData)
     {
         try
         {
@@ -1949,8 +1908,6 @@ public partial class ConnectService : IConnectService, IDisposable
             {
                 _logger.LogDebug("Session {SessionId} not connected to this instance, skipping auth event", eventData.SessionId);
             }
-
-            return new { status = "processed", sessionId = eventData.SessionId, eventType = eventData.EventType };
         }
         catch (Exception ex)
         {
@@ -1964,7 +1921,7 @@ public partial class ConnectService : IConnectService, IDisposable
     /// Processes client message events for server-to-client push messaging.
     /// Allows services to send messages directly to connected WebSocket clients.
     /// </summary>
-    internal async Task<object> ProcessClientMessageEventAsync(ClientMessageEvent eventData)
+    internal async Task ProcessClientMessageEventAsync(ClientMessageEvent eventData)
     {
         var clientId = eventData.ClientId.ToString();
         try
@@ -1991,18 +1948,15 @@ public partial class ConnectService : IConnectService, IDisposable
                 if (sent)
                 {
                     _logger.LogDebug("Forwarded event message to client {ClientId}", clientId);
-                    return new { status = "delivered", clientId };
                 }
                 else
                 {
                     _logger.LogWarning("Failed to deliver message to client {ClientId} - connection issue", clientId);
-                    return new { error = "delivery_failed", clientId };
                 }
             }
             else
             {
                 _logger.LogDebug("Target client {ClientId} not connected to this instance", clientId);
-                return new { error = "client_not_found", clientId };
             }
         }
         catch (Exception ex)
@@ -2016,7 +1970,7 @@ public partial class ConnectService : IConnectService, IDisposable
     /// <summary>
     /// Processes bidirectional RPC events where services call clients and expect responses.
     /// </summary>
-    internal async Task<object> ProcessClientRPCEventAsync(ClientRPCEvent eventData)
+    internal async Task ProcessClientRPCEventAsync(ClientRPCEvent eventData)
     {
         var clientId = eventData.ClientId.ToString();
         try
@@ -2065,19 +2019,15 @@ public partial class ConnectService : IConnectService, IDisposable
 
                     _logger.LogDebug("Sent RPC message {MessageId} to client {ClientId}, awaiting response for channel {ResponseChannel}",
                         eventData.MessageId, clientId, eventData.ResponseChannel);
-
-                    return new { status = "sent", clientId, messageId = eventData.MessageId };
                 }
                 else
                 {
                     _logger.LogWarning("Failed to send RPC to client {ClientId} - connection issue", clientId);
-                    return new { error = "delivery_failed", clientId };
                 }
             }
             else
             {
                 _logger.LogDebug("Target client {ClientId} not connected to this instance", clientId);
-                return new { error = "client_not_found", clientId };
             }
         }
         catch (Exception ex)
@@ -2487,17 +2437,17 @@ public partial class ConnectService : IConnectService, IDisposable
                 connectionState.GetAllShortcuts(),
                 expiredGuid => connectionState.RemoveShortcut(expiredGuid));
 
-            // Transform to WebSocket JSON format using new ClientCapabilityEntry schema
-            var availableApis = new List<object>();
+            // Transform to WebSocket JSON format using generated types
+            var availableApis = new List<ClientCapabilityEntry>();
 
             foreach (var api in apiEntries)
             {
-                availableApis.Add(new
+                availableApis.Add(new ClientCapabilityEntry
                 {
-                    serviceId = api.ServiceGuid.ToString(),
-                    endpoint = api.Path,
-                    service = api.ServiceName,
-                    description = api.Description
+                    ServiceId = api.ServiceGuid,
+                    Endpoint = api.Path,
+                    Service = api.ServiceName,
+                    Description = api.Description
                 });
             }
 
@@ -2505,23 +2455,21 @@ public partial class ConnectService : IConnectService, IDisposable
             foreach (var shortcut in shortcutEntries)
             {
                 // Shortcuts use new schema format with "shortcut" as service
-                availableApis.Add(new
+                availableApis.Add(new ClientCapabilityEntry
                 {
-                    serviceId = shortcut.RouteGuid.ToString(),
-                    endpoint = shortcut.Name,
-                    service = "shortcut",
-                    description = shortcut.Description ?? $"Shortcut to {shortcut.Name}"
+                    ServiceId = shortcut.RouteGuid,
+                    Endpoint = shortcut.Name ?? shortcut.RouteGuid.ToString(),
+                    Service = "shortcut",
+                    Description = shortcut.Description ?? $"Shortcut to {shortcut.Name}"
                 });
             }
 
-            var capabilityManifest = new
+            var capabilityManifest = new CapabilityManifestEvent
             {
-                eventName = "connect.capability_manifest",
-                sessionId = sessionId,
-                availableApis = availableApis,
-                version = 1,
-                timestamp = DateTimeOffset.UtcNow,
-                peerGuid = connectionState.PeerGuid.ToString()
+                SessionId = Guid.Parse(sessionId),
+                AvailableApis = availableApis,
+                Version = 1,
+                PeerGuid = connectionState.PeerGuid
             };
 
             var manifestJson = BannouJson.Serialize(capabilityManifest);
@@ -2593,8 +2541,8 @@ public partial class ConnectService : IConnectService, IDisposable
 
             // Build and send updated capability manifest
             // INTERNAL format: "serviceName:/path" - used for server-side routing
-            // CLIENT format matches new ClientCapabilityEntry schema
-            var availableApis = new List<object>();
+            // CLIENT format matches generated ClientCapabilityEntry
+            var availableApis = new List<ClientCapabilityEntry>();
             foreach (var mapping in newMappings)
             {
                 // Parse the internal endpoint key format: "serviceName:/path"
@@ -2613,11 +2561,11 @@ public partial class ConnectService : IConnectService, IDisposable
                     continue;
                 }
 
-                availableApis.Add(new
+                availableApis.Add(new ClientCapabilityEntry
                 {
-                    serviceId = guid.ToString(),
-                    endpoint = path,
-                    service = serviceName
+                    ServiceId = guid,
+                    Endpoint = path,
+                    Service = serviceName
                 });
             }
 
@@ -2632,33 +2580,25 @@ public partial class ConnectService : IConnectService, IDisposable
                 }
 
                 // Shortcuts use new schema format with "shortcut" as service
-                availableApis.Add(new
+                availableApis.Add(new ClientCapabilityEntry
                 {
-                    serviceId = shortcut.RouteGuid.ToString(),
-                    endpoint = shortcut.Name ?? shortcut.RouteGuid.ToString(),
-                    service = "shortcut",
-                    description = shortcut.Description ?? $"Shortcut to {shortcut.Name}"
+                    ServiceId = shortcut.RouteGuid,
+                    Endpoint = shortcut.Name ?? shortcut.RouteGuid.ToString(),
+                    Service = "shortcut",
+                    Description = shortcut.Description ?? $"Shortcut to {shortcut.Name}"
                 });
             }
 
-            // Build manifest as dictionary for conditional peerGuid inclusion
+            // Build typed manifest with conditional peerGuid inclusion
             // External mode: No peerGuid (clients cannot route to each other)
             // Relayed/Internal mode: Include peerGuid (enables peer-to-peer routing)
-            var capabilityManifest = new Dictionary<string, object>
+            var capabilityManifest = new CapabilityManifestEvent
             {
-                ["eventName"] = "connect.capability_manifest",
-                ["sessionId"] = sessionId,
-                ["availableApis"] = availableApis,
-                ["version"] = 1,
-                ["timestamp"] = DateTimeOffset.UtcNow,
-                ["reason"] = reason
+                SessionId = Guid.Parse(sessionId),
+                AvailableApis = availableApis,
+                Reason = reason,
+                PeerGuid = _connectionMode != ConnectionMode.External ? connectionState.PeerGuid : null
             };
-
-            // Include peerGuid only in relayed/internal modes where peer routing is supported
-            if (_connectionMode != ConnectionMode.External)
-            {
-                capabilityManifest["peerGuid"] = connectionState.PeerGuid.ToString();
-            }
 
             var manifestJson = BannouJson.Serialize(capabilityManifest);
             var manifestBytes = Encoding.UTF8.GetBytes(manifestJson);
@@ -3036,17 +2976,17 @@ public partial class ConnectService : IConnectService, IDisposable
                 connectionState.GetAllShortcuts(),
                 expiredGuid => connectionState.RemoveShortcut(expiredGuid));
 
-            // Transform to WebSocket JSON format using new ClientCapabilityEntry schema
-            var availableApis = new List<object>();
+            // Transform to WebSocket JSON format using generated ClientCapabilityEntry
+            var availableApis = new List<ClientCapabilityEntry>();
 
             foreach (var api in apiEntries)
             {
-                availableApis.Add(new
+                availableApis.Add(new ClientCapabilityEntry
                 {
-                    serviceId = api.ServiceGuid.ToString(),
-                    endpoint = api.Path,
-                    service = api.ServiceName,
-                    description = api.Description
+                    ServiceId = api.ServiceGuid,
+                    Endpoint = api.Path,
+                    Service = api.ServiceName,
+                    Description = api.Description
                 });
             }
 
@@ -3054,23 +2994,21 @@ public partial class ConnectService : IConnectService, IDisposable
             foreach (var shortcut in shortcutEntries)
             {
                 // Shortcuts use new schema format with "shortcut" as service
-                availableApis.Add(new
+                availableApis.Add(new ClientCapabilityEntry
                 {
-                    serviceId = shortcut.RouteGuid.ToString(),
-                    endpoint = shortcut.Name,
-                    service = "shortcut",
-                    description = shortcut.Description ?? $"Shortcut to {shortcut.Name}"
+                    ServiceId = shortcut.RouteGuid,
+                    Endpoint = shortcut.Name ?? shortcut.RouteGuid.ToString(),
+                    Service = "shortcut",
+                    Description = shortcut.Description ?? $"Shortcut to {shortcut.Name}"
                 });
             }
 
-            var capabilityManifest = new
+            var capabilityManifest = new CapabilityManifestEvent
             {
-                eventName = "connect.capability_manifest",
-                sessionId = sessionId,
-                availableApis = availableApis,
-                version = 1,
-                timestamp = DateTimeOffset.UtcNow,
-                peerGuid = connectionState.PeerGuid.ToString()
+                SessionId = Guid.Parse(sessionId),
+                AvailableApis = availableApis,
+                Version = 1,
+                PeerGuid = connectionState.PeerGuid
             };
 
             var manifestJson = BannouJson.Serialize(capabilityManifest);

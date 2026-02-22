@@ -8,11 +8,7 @@ using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using System.Runtime.CompilerServices;
 using System.Text.Json;
-
-[assembly: InternalsVisibleTo("lib-contract.tests")]
-[assembly: InternalsVisibleTo("DynamicProxyGenAssembly2")]
 
 namespace BeyondImmersion.BannouService.Contract;
 
@@ -36,6 +32,7 @@ public partial class ContractService : IContractService
     private readonly IDistributedLockProvider _lockProvider;
     private readonly ILogger<ContractService> _logger;
     private readonly ContractServiceConfiguration _configuration;
+    private readonly ITelemetryProvider _telemetryProvider;
 
     // State store key prefixes
     private const string TEMPLATE_PREFIX = "template:";
@@ -110,7 +107,8 @@ public partial class ContractService : IContractService
         IDistributedLockProvider lockProvider,
         ILogger<ContractService> logger,
         ContractServiceConfiguration configuration,
-        IEventConsumer eventConsumer)
+        IEventConsumer eventConsumer,
+        ITelemetryProvider telemetryProvider)
     {
         _messageBus = messageBus;
         _navigator = navigator;
@@ -118,6 +116,7 @@ public partial class ContractService : IContractService
         _lockProvider = lockProvider;
         _logger = logger;
         _configuration = configuration;
+        _telemetryProvider = telemetryProvider;
 
         // Register event handlers via partial class if needed
         ((IBannouService)this).RegisterEventConsumers(eventConsumer);
@@ -211,9 +210,7 @@ public partial class ContractService : IContractService
                 OnComplete = m.OnComplete?.Select(MapPreboundApiToModel).ToList(),
                 OnExpire = m.OnExpire?.Select(MapPreboundApiToModel).ToList()
             }).ToList(),
-            DefaultEnforcementMode = body.DefaultEnforcementMode != default
-                ? body.DefaultEnforcementMode
-                : _configuration.DefaultEnforcementMode,
+            DefaultEnforcementMode = body.DefaultEnforcementMode ?? _configuration.DefaultEnforcementMode,
             Transferable = body.Transferable,
             GameMetadata = body.GameMetadata,
             IsActive = true,
@@ -1599,10 +1596,10 @@ public partial class ContractService : IContractService
                     case ConstraintType.TimeCommitment:
                         if (contract.Terms.TimeCommitment == true)
                         {
-                            var timeCommitmentType = contract.Terms.TimeCommitmentType ?? "partial";
+                            var timeCommitmentType = contract.Terms.TimeCommitmentType ?? TimeCommitmentType.Partial;
 
                             // Only exclusive commitments can conflict
-                            if (timeCommitmentType == "exclusive")
+                            if (timeCommitmentType == TimeCommitmentType.Exclusive)
                             {
                                 // Check against all other active exclusive contracts
                                 foreach (var otherContract in activeContracts)
@@ -1613,8 +1610,8 @@ public partial class ContractService : IContractService
                                     if (otherContract.Terms?.TimeCommitment != true)
                                         continue;
 
-                                    var otherTimeCommitmentType = otherContract.Terms.TimeCommitmentType ?? "partial";
-                                    if (otherTimeCommitmentType != "exclusive")
+                                    var otherTimeCommitmentType = otherContract.Terms.TimeCommitmentType ?? TimeCommitmentType.Partial;
+                                    if (otherTimeCommitmentType != TimeCommitmentType.Exclusive)
                                         continue;
 
                                     // Check date range overlap: thisFrom <= otherUntil && thisUntil >= otherFrom
@@ -1710,7 +1707,7 @@ public partial class ContractService : IContractService
                 TemplateCode = c.TemplateCode,
                 TemplateName = null,
                 Status = c.Status,
-                Role = party?.Role ?? "unknown",
+                Role = party?.Role,
                 EffectiveUntil = c.EffectiveUntil
             };
         }).ToList();
@@ -1875,6 +1872,8 @@ public partial class ContractService : IContractService
         string trigger,
         CancellationToken ct)
     {
+        using var activity = _telemetryProvider.StartActivity(
+            "bannou.contract", "ContractService.ExecutePreboundApisBatchedAsync");
         var executed = 0;
         var batchSize = _configuration.PreboundApiBatchSize;
 
@@ -1895,6 +1894,8 @@ public partial class ContractService : IContractService
         string trigger,
         CancellationToken ct)
     {
+        using var activity = _telemetryProvider.StartActivity(
+            "bannou.contract", "ContractService.ExecutePreboundApiAsync");
         using var timeoutCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
         timeoutCts.CancelAfter(_configuration.PreboundApiTimeoutMs);
         var effectiveCt = timeoutCts.Token;
@@ -1961,7 +1962,9 @@ public partial class ContractService : IContractService
                         ServiceName = api.ServiceName,
                         Endpoint = api.Endpoint,
                         StatusCode = result.Result.StatusCode,
-                        ValidationOutcome = validationResult.Outcome.ToString(),
+                        ValidationOutcome = validationResult.Outcome == Utilities.ValidationOutcome.PermanentFailure
+                            ? ValidationOutcome.PermanentFailure
+                            : ValidationOutcome.TransientFailure,
                         FailureReason = validationResult.FailureReason
                     });
                     return;
@@ -2097,19 +2100,6 @@ public partial class ContractService : IContractService
         };
     }
 
-    private async Task EmitErrorAsync(string operation, string endpoint, Exception ex)
-    {
-        await _messageBus.TryPublishErrorAsync(
-            "contract",
-            operation,
-            "unexpected_exception",
-            ex.Message,
-            dependency: null,
-            endpoint: endpoint,
-            details: null,
-            stack: ex.StackTrace);
-    }
-
     /// <summary>
     /// Processes an overdue milestone with lazy deadline enforcement.
     /// Returns true if the milestone was processed (and contract may have been modified).
@@ -2119,6 +2109,9 @@ public partial class ContractService : IContractService
         MilestoneInstanceModel milestone,
         CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity(
+            "bannou.contract", "ContractService.ProcessOverdueMilestoneAsync");
+
         // Only process active milestones with deadlines
         if (milestone.Status != MilestoneStatus.Active || !milestone.ActivatedAt.HasValue)
             return false;
@@ -2216,6 +2209,9 @@ public partial class ContractService : IContractService
         string description,
         CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity(
+            "bannou.contract", "ContractService.ReportBreachInternalAsync");
+
         var breachId = Guid.NewGuid();
         var now = DateTimeOffset.UtcNow;
 
@@ -2223,8 +2219,8 @@ public partial class ContractService : IContractService
         {
             BreachId = breachId,
             ContractId = contract.ContractId,
-            BreachingEntityId = Guid.Empty, // System-initiated
-            BreachingEntityType = EntityType.Account, // Placeholder for system
+            BreachingEntityId = null, // System-initiated breach has no specific entity
+            BreachingEntityType = null, // System-initiated breach has no specific entity
             BreachType = breachType,
             BreachedTermOrMilestone = breachedMilestoneCode,
             Description = description,
@@ -2260,6 +2256,9 @@ public partial class ContractService : IContractService
         ContractInstanceModel contract,
         CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity(
+            "bannou.contract", "ContractService.CheckBreachThresholdAsync");
+
         var threshold = contract.Terms?.BreachThreshold ?? 0;
         if (threshold <= 0) return;
 
@@ -2293,6 +2292,9 @@ public partial class ContractService : IContractService
         int threshold,
         CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity(
+            "bannou.contract", "ContractService.TerminateContractDueToBreachThresholdAsync");
+
         var reason = $"Breach threshold exceeded ({breachCount}/{threshold})";
         var previousStatus = contract.Status;
 
@@ -2318,8 +2320,8 @@ public partial class ContractService : IContractService
         // Publish termination event (system-initiated, breach-related)
         await PublishContractTerminatedEventAsync(
             contract,
-            terminatedById: Guid.Empty,
-            terminatedByType: EntityType.Account, // System placeholder
+            terminatedById: null, // System-initiated termination has no specific entity
+            terminatedByType: null,
             reason: reason,
             wasBreachRelated: true,
             cancellationToken);
@@ -2726,7 +2728,7 @@ public partial class ContractService : IContractService
     }
 
     private async Task PublishContractTerminatedEventAsync(
-        ContractInstanceModel model, Guid terminatedById, EntityType terminatedByType,
+        ContractInstanceModel model, Guid? terminatedById, EntityType? terminatedByType,
         string? reason, bool wasBreachRelated, CancellationToken ct)
     {
         await _messageBus.TryPublishAsync("contract.terminated", new ContractTerminatedEvent

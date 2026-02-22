@@ -260,7 +260,6 @@ paths:
         required: true
         schema:
           type: string
-          format: uuid
         description: Instance ID of the connecting peer Connect node
       - name: Connection
         in: header

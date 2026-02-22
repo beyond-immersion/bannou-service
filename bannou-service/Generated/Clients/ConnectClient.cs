@@ -26,21 +26,6 @@ using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.ServiceClients;
 using BeyondImmersion.BannouService.Connect;
 
-#pragma warning disable 108 // Disable "CS0108 '{derivedDto}.ToJson()' hides inherited member '{dtoBase}.ToJson()'. Use the new keyword if hiding was intended."
-#pragma warning disable 114 // Disable "CS0114 '{derivedDto}.RaisePropertyChanged(String)' hides inherited member 'dtoBase.RaisePropertyChanged(String)'. To make the current member override that implementation, add the override keyword. Otherwise add the new keyword."
-#pragma warning disable 472 // Disable "CS0472 The result of the expression is always 'false' since a value of type 'Int32' is never equal to 'null' of type 'Int32?'
-#pragma warning disable 612 // Disable "CS0612 '...' is obsolete"
-#pragma warning disable 649 // Disable "CS0649 Field is never assigned to, and will always have its default value null"
-#pragma warning disable 1573 // Disable "CS1573 Parameter '...' has no matching param tag in the XML comment for ...
-#pragma warning disable 1591 // Disable "CS1591 Missing XML comment for publicly visible type or member ..."
-#pragma warning disable 8073 // Disable "CS8073 The result of the expression is always 'false' since a value of type 'T' is never equal to 'null' of type 'T?'"
-#pragma warning disable 3016 // Disable "CS3016 Arrays as attribute arguments is not CLS-compliant"
-#pragma warning disable 8600 // Disable "CS8600 Converting null literal or possible null value to non-nullable type"
-#pragma warning disable 8602 // Disable "CS8602 Dereference of a possibly null reference"
-#pragma warning disable 8603 // Disable "CS8603 Possible null reference return"
-#pragma warning disable 8604 // Disable "CS8604 Possible null reference argument for parameter"
-#pragma warning disable 8625 // Disable "CS8625 Cannot convert null literal to non-nullable reference type"
-#pragma warning disable 8765 // Disable "CS8765 Nullability of type of parameter doesn't match overridden member (possibly because of nullability attributes)."
 
 namespace BeyondImmersion.BannouService.Connect;
 
@@ -152,7 +137,7 @@ public partial interface IConnectClient
     /// <param name="upgrade">Must be "websocket" to specify protocol upgrade</param>
     /// <param name="x_Service_Token">Service token for authentication (required when InternalAuthMode is ServiceToken)</param>
     /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
-    System.Threading.Tasks.Task BroadcastWebSocketAsync(System.Guid instanceId, Connection3 connection, Upgrade3 upgrade, string? x_Service_Token = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task BroadcastWebSocketAsync(string instanceId, Connection3 connection, Upgrade3 upgrade, string? x_Service_Token = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
     /// <param name="body">The body parameter.</param>
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
@@ -593,12 +578,8 @@ public partial class ConnectClient : IConnectClient, BeyondImmersion.BannouServi
             methodPath_))
         {
 
-            if (connection == null)
-                throw new System.ArgumentNullException("connection");
             request_.Headers.TryAddWithoutValidation("Connection", ConvertToString(connection, System.Globalization.CultureInfo.InvariantCulture));
 
-            if (upgrade == null)
-                throw new System.ArgumentNullException("upgrade");
             request_.Headers.TryAddWithoutValidation("Upgrade", ConvertToString(upgrade, System.Globalization.CultureInfo.InvariantCulture));
 
             if (authorization == null)
@@ -705,12 +686,8 @@ public partial class ConnectClient : IConnectClient, BeyondImmersion.BannouServi
             methodPath_))
         {
 
-            if (connection == null)
-                throw new System.ArgumentNullException("connection");
             request_.Headers.TryAddWithoutValidation("Connection", ConvertToString(connection, System.Globalization.CultureInfo.InvariantCulture));
 
-            if (upgrade == null)
-                throw new System.ArgumentNullException("upgrade");
             request_.Headers.TryAddWithoutValidation("Upgrade", ConvertToString(upgrade, System.Globalization.CultureInfo.InvariantCulture));
 
             if (authorization == null)
@@ -809,7 +786,7 @@ public partial class ConnectClient : IConnectClient, BeyondImmersion.BannouServi
     /// <param name="upgrade">Must be "websocket" to specify protocol upgrade</param>
     /// <param name="x_Service_Token">Service token for authentication (required when InternalAuthMode is ServiceToken)</param>
     /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
-    public virtual async System.Threading.Tasks.Task BroadcastWebSocketAsync(System.Guid instanceId, Connection3 connection, Upgrade3 upgrade, string? x_Service_Token = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    public virtual async System.Threading.Tasks.Task BroadcastWebSocketAsync(string instanceId, Connection3 connection, Upgrade3 upgrade, string? x_Service_Token = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
         if (instanceId == null)
             throw new System.ArgumentNullException("instanceId");
@@ -832,12 +809,8 @@ public partial class ConnectClient : IConnectClient, BeyondImmersion.BannouServi
             methodPath_))
         {
 
-            if (connection == null)
-                throw new System.ArgumentNullException("connection");
             request_.Headers.TryAddWithoutValidation("Connection", ConvertToString(connection, System.Globalization.CultureInfo.InvariantCulture));
 
-            if (upgrade == null)
-                throw new System.ArgumentNullException("upgrade");
             request_.Headers.TryAddWithoutValidation("Upgrade", ConvertToString(upgrade, System.Globalization.CultureInfo.InvariantCulture));
 
             if (x_Service_Token != null)
@@ -1255,7 +1228,7 @@ public partial class ConnectClient : IConnectClient, BeyondImmersion.BannouServi
                 var field = System.Reflection.IntrospectionExtensions.GetTypeInfo(value.GetType()).GetDeclaredField(name);
                 if (field != null)
                 {
-                    var attribute = System.Reflection.CustomAttributeExtensions.GetCustomAttribute(field, typeof(System.Runtime.Serialization.EnumMemberAttribute)) 
+                    var attribute = System.Reflection.CustomAttributeExtensions.GetCustomAttribute(field, typeof(System.Runtime.Serialization.EnumMemberAttribute))
                         as System.Runtime.Serialization.EnumMemberAttribute;
                     if (attribute != null)
                     {
@@ -1267,7 +1240,7 @@ public partial class ConnectClient : IConnectClient, BeyondImmersion.BannouServi
                 return converted == null ? string.Empty : converted;
             }
         }
-        else if (value is bool) 
+        else if (value is bool)
         {
             return System.Convert.ToString((bool)value, cultureInfo).ToLowerInvariant();
         }

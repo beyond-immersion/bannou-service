@@ -28,6 +28,8 @@ This document lists all typed events available for subscription in the Bannou Cl
 | `ChatParticipantUnmutedClientEvent` | `chat.participant_unmuted` | Sent to all room participants when someone is unmuted. |
 | `ChatRoomDeletedClientEvent` | `chat.room_deleted` | Sent to room participants when the room is being deleted. |
 | `ChatRoomLockedClientEvent` | `chat.room_locked` | Sent to room participants when the room is locked. |
+| `ChatTypingStartedClientEvent` | `chat.typing_started` | Sent to room participants when someone starts typing. |
+| `ChatTypingStoppedClientEvent` | `chat.typing_stopped` | Sent to room participants when someone stops typing. |
 | `CapabilityManifestEvent` | `connect.capability_manifest` | Sent to client when their available API capabilities change. |
 | `DisconnectNotificationEvent` | `connect.disconnect_notification` | Sent to client before WebSocket connection is closed. |
 | `GameActionResultEvent` | `game_session.action_result` | Sent to relevant players when a game action produces results... |
@@ -401,6 +403,33 @@ Sent to room participants when the room is locked.
 |----------|-------------|
 | `reason` | Reason the room was locked |
 | `roomId` | Room that was locked |
+
+### `ChatTypingStartedClientEvent`
+
+**Event Name**: `chat.typing_started`
+
+Sent to room participants when someone starts typing.
+
+**Properties**:
+
+| Property | Description |
+|----------|-------------|
+| `displayName` | Display name of the typing participant |
+| `participantSessionId` | Connect session ID of the typing participant |
+| `roomId` | Room where typing is occurring |
+
+### `ChatTypingStoppedClientEvent`
+
+**Event Name**: `chat.typing_stopped`
+
+Sent to room participants when someone stops typing.
+
+**Properties**:
+
+| Property | Description |
+|----------|-------------|
+| `participantSessionId` | Connect session ID of the participant who stopped  |
+| `roomId` | Room where typing stopped |
 
 ---
 
@@ -878,7 +907,7 @@ Published on period-changed boundaries, ratio changes, admin clock
 
 ## Summary
 
-- **Total event types**: 46
+- **Total event types**: 48
 - **Services with events**: 7
 
 ---

@@ -180,6 +180,8 @@ This document lists all events defined in Bannou's event schemas.
 | `ChatParticipantUnmutedClientEvent` | Custom | `chat-participant-unmuted-client` | Sent to all room participants when someone is unmu... |
 | `ChatRoomDeletedClientEvent` | Lifecycle (Deleted) | `chat-room.deleted-client` | Sent to room participants when the room is being d... |
 | `ChatRoomLockedClientEvent` | Custom | `chat-room-locked-client` | Sent to room participants when the room is locked. |
+| `ChatTypingStartedClientEvent` | Custom | `chat-typing-started-client` | Sent to room participants when someone starts typi... |
+| `ChatTypingStoppedClientEvent` | Custom | `chat-typing-stopped-client` | Sent to room participants when someone stops typin... |
 
 ### Collection
 

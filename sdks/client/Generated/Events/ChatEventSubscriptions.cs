@@ -143,4 +143,26 @@ public sealed class ChatEventSubscriptions
     {
         return _client.OnEvent<ChatRoomLockedClientEvent>(handler);
     }
+
+    /// <summary>
+    /// Subscribe to <see cref="ChatTypingStartedClientEvent"/> events.
+    /// Sent to room participants when someone starts typing.
+    /// </summary>
+    /// <param name="handler">Handler invoked when the event is received.</param>
+    /// <returns>Subscription handle. Dispose to unsubscribe.</returns>
+    public IEventSubscription OnChatTypingStartedClient(Action<ChatTypingStartedClientEvent> handler)
+    {
+        return _client.OnEvent<ChatTypingStartedClientEvent>(handler);
+    }
+
+    /// <summary>
+    /// Subscribe to <see cref="ChatTypingStoppedClientEvent"/> events.
+    /// Sent to room participants when someone stops typing.
+    /// </summary>
+    /// <param name="handler">Handler invoked when the event is received.</param>
+    /// <returns>Subscription handle. Dispose to unsubscribe.</returns>
+    public IEventSubscription OnChatTypingStoppedClient(Action<ChatTypingStoppedClientEvent> handler)
+    {
+        return _client.OnEvent<ChatTypingStoppedClientEvent>(handler);
+    }
 }

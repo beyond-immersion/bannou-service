@@ -184,8 +184,10 @@ None currently identified.
 <!-- AUDIT:NEEDS_DESIGN:2026-02-22:https://github.com/beyond-immersion/bannou-service/issues/183 -->
 
 2. **Enhanced Grafana dashboards with SLO alerting** ([#185](https://github.com/beyond-immersion/bannou-service/issues/185)): Per-service dashboards, SLO alerting rules (availability, latency, error rate, saturation), error monitoring dashboards, and automated dashboard provisioning.
+<!-- AUDIT:NEEDS_DESIGN:2026-02-22:https://github.com/beyond-immersion/bannou-service/issues/185 -->
 
 3. **Metric aggregation views**: Add custom histogram bucket boundaries optimized for Bannou's typical latency distributions.
+<!-- AUDIT:NEEDS_DESIGN:2026-02-22:https://github.com/beyond-immersion/bannou-service/issues/457 -->
 
 ---
 
@@ -221,3 +223,4 @@ None currently identified.
 |-------|--------|-------------|
 | [#183](https://github.com/beyond-immersion/bannou-service/issues/183) | Open | Managed platform telemetry exporters (Datadog, Azure, AWS, Elastic) |
 | [#185](https://github.com/beyond-immersion/bannou-service/issues/185) | Open | Enhanced Grafana dashboards with per-service views and SLO alerting |
+| [#457](https://github.com/beyond-immersion/bannou-service/issues/457) | Open | Custom histogram bucket boundaries for Bannou latency profiles |

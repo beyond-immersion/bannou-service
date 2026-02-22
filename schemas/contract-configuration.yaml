@@ -22,36 +22,50 @@ x-service-configuration:
     defaultConsentTimeoutDays:
       type: integer
       env: CONTRACT_DEFAULT_CONSENT_TIMEOUT_DAYS
+      minimum: 1
+      maximum: 365
       default: 7
       description: Default number of days for parties to consent before proposal expires
     maxPartiesPerContract:
       type: integer
       env: CONTRACT_MAX_PARTIES_PER_CONTRACT
+      minimum: 2
+      maximum: 100
       default: 20
       description: Maximum number of parties allowed in a single contract
     maxMilestonesPerTemplate:
       type: integer
       env: CONTRACT_MAX_MILESTONES_PER_TEMPLATE
+      minimum: 1
+      maximum: 500
       default: 50
       description: Maximum number of milestones allowed in a template
     maxPreboundApisPerMilestone:
       type: integer
       env: CONTRACT_MAX_PREBOUND_APIS_PER_MILESTONE
+      minimum: 1
+      maximum: 50
       default: 10
       description: Maximum number of prebound APIs per milestone
     maxActiveContractsPerEntity:
       type: integer
       env: CONTRACT_MAX_ACTIVE_CONTRACTS_PER_ENTITY
+      minimum: 0
+      maximum: 10000
       default: 100
       description: Maximum active contracts per entity (0 for unlimited)
     preboundApiBatchSize:
       type: integer
       env: CONTRACT_PREBOUND_API_BATCH_SIZE
+      minimum: 1
+      maximum: 50
       default: 10
       description: Number of prebound APIs to execute in parallel
     preboundApiTimeoutMs:
       type: integer
       env: CONTRACT_PREBOUND_API_TIMEOUT_MS
+      minimum: 1000
+      maximum: 300000
       default: 30000
       description: Timeout for individual prebound API calls in milliseconds
 
@@ -59,12 +73,16 @@ x-service-configuration:
     contractLockTimeoutSeconds:
       type: integer
       env: CONTRACT_LOCK_TIMEOUT_SECONDS
+      minimum: 5
+      maximum: 600
       default: 60
       description: Lock timeout in seconds for contract-level distributed locks
 
     indexLockTimeoutSeconds:
       type: integer
       env: CONTRACT_INDEX_LOCK_TIMEOUT_SECONDS
+      minimum: 1
+      maximum: 120
       default: 15
       description: Lock timeout in seconds for index update distributed locks
 
@@ -83,6 +101,8 @@ x-service-configuration:
     idempotencyTtlSeconds:
       type: integer
       env: CONTRACT_IDEMPOTENCY_TTL_SECONDS
+      minimum: 60
+      maximum: 604800
       default: 86400
       description: TTL in seconds for idempotency key storage (default 24 hours)
 
@@ -90,12 +110,16 @@ x-service-configuration:
     milestoneDeadlineCheckIntervalSeconds:
       type: integer
       env: CONTRACT_MILESTONE_DEADLINE_CHECK_INTERVAL_SECONDS
+      minimum: 10
+      maximum: 3600
       default: 300
       description: Interval between milestone deadline checks in seconds (default 5 minutes)
 
     milestoneDeadlineStartupDelaySeconds:
       type: integer
       env: CONTRACT_MILESTONE_DEADLINE_STARTUP_DELAY_SECONDS
+      minimum: 0
+      maximum: 300
       default: 30
       description: Startup delay before first milestone deadline check in seconds
 

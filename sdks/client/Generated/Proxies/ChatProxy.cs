@@ -529,4 +529,36 @@ public sealed class ChatProxy
         return _client.InvokeAsync<AdminForceCleanupRequest, AdminCleanupResponse>(
             "/chat/admin/cleanup", request, channel, timeout, cancellationToken);
     }
+
+    /// <summary>
+    /// Signal typing activity
+    /// </summary>
+    /// <param name="request">The request payload.</param>
+    /// <param name="channel">Message channel for ordering (default 0).</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Task that completes when the event is sent.</returns>
+    public Task TypingEventAsync(
+        TypingRequest request,
+        ushort channel = 0,
+        CancellationToken cancellationToken = default)
+    {
+        return _client.SendEventAsync<TypingRequest>(
+            "/chat/typing", request, channel, cancellationToken);
+    }
+
+    /// <summary>
+    /// Signal typing stopped
+    /// </summary>
+    /// <param name="request">The request payload.</param>
+    /// <param name="channel">Message channel for ordering (default 0).</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Task that completes when the event is sent.</returns>
+    public Task EndTypingEventAsync(
+        EndTypingRequest request,
+        ushort channel = 0,
+        CancellationToken cancellationToken = default)
+    {
+        return _client.SendEventAsync<EndTypingRequest>(
+            "/chat/end-typing", request, channel, cancellationToken);
+    }
 }

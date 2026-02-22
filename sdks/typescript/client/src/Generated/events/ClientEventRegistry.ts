@@ -152,6 +152,14 @@ export const eventRegistry = new Map<string, EventMetadata>([
     { eventName: 'chat.room_locked', typeName: 'ChatRoomLockedClientEvent', service: 'chat' },
   ],
   [
+    'chat.typing_started',
+    { eventName: 'chat.typing_started', typeName: 'ChatTypingStartedClientEvent', service: 'chat' },
+  ],
+  [
+    'chat.typing_stopped',
+    { eventName: 'chat.typing_stopped', typeName: 'ChatTypingStoppedClientEvent', service: 'chat' },
+  ],
+  [
     'connect.capability_manifest',
     {
       eventName: 'connect.capability_manifest',

@@ -103,9 +103,9 @@ Machine-readable personality traits and combat preferences (L4 GameFeatures) for
 
 ## Chat {#chat}
 
-**Version**: 1.0.0 | **Schema**: `schemas/chat-api.yaml` | **Endpoints**: 28 | **Deep Dive**: [docs/plugins/CHAT.md](plugins/CHAT.md)
+**Version**: 1.0.0 | **Schema**: `schemas/chat-api.yaml` | **Endpoints**: 30 | **Deep Dive**: [docs/plugins/CHAT.md](plugins/CHAT.md)
 
-The Chat service (L1 AppFoundation) provides universal typed message channel primitives for real-time communication. Room types determine valid message formats (text, sentiment, emoji, custom-validated payloads), with rooms optionally governed by Contract instances for lifecycle management. Supports ephemeral (Redis TTL) and persistent (MySQL) message storage, participant moderation (kick/ban/mute), rate limiting via atomic Redis counters, and automatic idle room cleanup. Three built-in room types (text, sentiment, emoji) are registered on startup. Internal-only, never internet-facing.
+The Chat service (L1 AppFoundation) provides universal typed message channel primitives for real-time communication. Room types determine valid message formats (text, sentiment, emoji, custom-validated payloads), with rooms optionally governed by Contract instances for lifecycle management. Supports ephemeral (Redis TTL) and persistent (MySQL) message storage, participant moderation (kick/ban/mute), rate limiting via atomic Redis counters, typing indicators via Redis sorted set with server-side expiry, and automatic idle room cleanup. Three built-in room types (text, sentiment, emoji) are registered on startup. Internal-only, never internet-facing.
 
 ## Collection {#collection}
 
@@ -115,15 +115,15 @@ The Collection service (L2 GameFoundation) manages universal content unlock and 
 
 ## Connect {#connect}
 
-**Version**: 2.0.0 | **Schema**: `schemas/connect-api.yaml` | **Endpoints**: 6 | **Deep Dive**: [docs/plugins/CONNECT.md](plugins/CONNECT.md)
+**Version**: 2.0.0 | **Schema**: `schemas/connect-api.yaml` | **Endpoints**: 7 | **Deep Dive**: [docs/plugins/CONNECT.md](plugins/CONNECT.md)
 
-WebSocket-first edge gateway (L1 AppFoundation) providing zero-copy binary message routing between game clients and backend services. Manages persistent connections with client-salted GUID generation for cross-session security, three connection modes (external, relayed, internal), session shortcuts for game-specific flows, reconnection windows, and per-session RabbitMQ subscriptions for server-to-client event delivery. Internet-facing (the primary client entry point alongside Auth). Registered as Singleton (unusual for Bannou) because it maintains in-memory connection state.
+WebSocket-first edge gateway (L1 AppFoundation) providing zero-copy binary message routing between game clients and backend services. Manages persistent connections with client-salted GUID generation for cross-session security, three connection modes (external, relayed, internal), session shortcuts for game-specific flows, reconnection windows, per-session RabbitMQ subscriptions for server-to-client event delivery, and multi-node broadcast relay via a WebSocket mesh between Connect instances. Internet-facing (the primary client entry point alongside Auth). Registered as Singleton (unusual for Bannou) because it maintains in-memory connection state.
 
 ## Contract {#contract}
 
 **Version**: 1.0.0 | **Schema**: `schemas/contract-api.yaml` | **Endpoints**: 30 | **Deep Dive**: [docs/plugins/CONTRACT.md](plugins/CONTRACT.md)
 
-Binding agreement management (L1 AppFoundation) between entities with milestone-based progression, consent flows, and prebound API execution on state transitions. Contracts are reactive: external systems report condition fulfillment via API calls; contracts store state, emit events, and execute callbacks. Templates define structure (party roles, milestones, terms, enforcement mode); instances track consent, sequential progression, and breach handling. Used as infrastructure by lib-quest (quest objectives map to contract milestones) and lib-escrow (asset-backed contracts via guardian locking). Has a known L1-to-L2 hierarchy violation: depends on lib-location for territory constraint checking.
+Binding agreement management (L1 AppFoundation) between entities with milestone-based progression, consent flows, and prebound API execution on state transitions. Contracts are reactive: external systems report condition fulfillment via API calls; contracts store state, emit events, and execute callbacks. Templates define structure (party roles, milestones, terms, enforcement mode); instances track consent, sequential progression, and breach handling. Used as infrastructure by lib-quest (quest objectives map to contract milestones) and lib-escrow (asset-backed contracts via guardian locking).
 
 ## Craft {#craft}
 
@@ -387,7 +387,7 @@ Realm-scoped species management (L2 GameFoundation) for the Arcadia game world. 
 
 **Version**: 1.0.0 | **Schema**: `schemas/state-api.yaml` | **Endpoints**: 9 | **Deep Dive**: [docs/plugins/STATE.md](plugins/STATE.md)
 
-The State service (L0 Infrastructure) provides all Bannou services with unified access to Redis and MySQL backends through a repository-pattern API. Operates in a dual role: as the `IStateStoreFactory` infrastructure library used by every service for state persistence, and as an HTTP API for debugging and administration. Supports three backends (Redis for ephemeral/session data, MySQL for durable/queryable data, InMemory for testing) with optimistic concurrency via ETags, TTL support, and specialized interfaces for cache operations, LINQ queries, JSON path queries, and full-text search. See the Interface Hierarchy section for the full interface tree and backend support matrix.
+The State service (L0 Infrastructure) provides all Bannou services with unified access to Redis and MySQL backends through a repository-pattern API. Operates in a dual role: as the `IStateStoreFactory` infrastructure library used by every service for state persistence, and as an HTTP API for debugging and administration. Supports four backends (Redis for ephemeral/session data, MySQL for durable/queryable data, SQLite for self-hosted durable storage, InMemory for testing) with optimistic concurrency via ETags, TTL support, and specialized interfaces for cache operations, LINQ queries, JSON path queries, and full-text search. See the Interface Hierarchy section for the full interface tree and backend support matrix.
 
 ## Status {#status}
 
@@ -458,7 +458,7 @@ Per-realm game time authority, calendar system, and temporal event broadcasting 
 ## Summary
 
 - **Total services**: 75
-- **Total endpoints**: 852
+- **Total endpoints**: 855
 
 ---
 

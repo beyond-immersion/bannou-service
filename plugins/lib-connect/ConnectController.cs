@@ -41,7 +41,7 @@ public partial class ConnectController : ConnectControllerBase
     /// Handles inter-node broadcast WebSocket connections from peer Connect instances.
     /// </summary>
     public override async Task<IActionResult> BroadcastWebSocket(
-        [Microsoft.AspNetCore.Mvc.FromQuery][Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] System.Guid instanceId,
+        [Microsoft.AspNetCore.Mvc.FromQuery][Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] string instanceId,
         [Microsoft.AspNetCore.Mvc.FromHeader][Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] Connection3 connection,
         [Microsoft.AspNetCore.Mvc.FromHeader][Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] Upgrade3 upgrade,
         [Microsoft.AspNetCore.Mvc.FromHeader(Name = "X-Service-Token")] string? x_Service_Token,
@@ -50,6 +50,11 @@ public partial class ConnectController : ConnectControllerBase
         if (!HttpContext.WebSockets.IsWebSocketRequest)
         {
             return BadRequest("WebSocket upgrade required");
+        }
+
+        if (!System.Guid.TryParse(instanceId, out var parsedInstanceId))
+        {
+            return BadRequest("Invalid instanceId: must be a valid UUID");
         }
 
         var connectService = _connectService as ConnectService;
@@ -66,7 +71,7 @@ public partial class ConnectController : ConnectControllerBase
         }
 
         var ws = await HttpContext.WebSockets.AcceptWebSocketAsync();
-        await connectService.HandleBroadcastConnectionAsync(ws, instanceId, cancellationToken);
+        await connectService.HandleBroadcastConnectionAsync(ws, parsedInstanceId, cancellationToken);
         return new EmptyResult();
     }
 

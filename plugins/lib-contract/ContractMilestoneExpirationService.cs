@@ -114,6 +114,10 @@ public class ContractMilestoneExpirationService : BackgroundService
         _logger.LogDebug("Checking for overdue milestones");
 
         using var scope = _serviceProvider.CreateScope();
+        var telemetryProvider = scope.ServiceProvider.GetRequiredService<ITelemetryProvider>();
+        using var activity = telemetryProvider.StartActivity(
+            "bannou.contract", "ContractMilestoneExpirationService.CheckOverdueMilestonesAsync");
+
         var stateStoreFactory = scope.ServiceProvider.GetRequiredService<IStateStoreFactory>();
         var lockProvider = scope.ServiceProvider.GetRequiredService<IDistributedLockProvider>();
         var contractService = scope.ServiceProvider.GetRequiredService<IContractService>();

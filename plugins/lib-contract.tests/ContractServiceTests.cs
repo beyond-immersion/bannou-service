@@ -37,6 +37,7 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
     private readonly Mock<IDistributedLockProvider> _mockLockProvider;
     private readonly Mock<ILogger<ContractService>> _mockLogger;
     private readonly Mock<IEventConsumer> _mockEventConsumer;
+    private readonly Mock<ITelemetryProvider> _mockTelemetryProvider;
 
     private const string STATE_STORE = "contract-statestore";
 
@@ -58,6 +59,7 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
         _mockLockProvider = new Mock<IDistributedLockProvider>();
         _mockLogger = new Mock<ILogger<ContractService>>();
         _mockEventConsumer = new Mock<IEventConsumer>();
+        _mockTelemetryProvider = new Mock<ITelemetryProvider>();
 
         // Setup factory to return typed stores
         _mockStateStoreFactory.Setup(f => f.GetStore<ContractTemplateModel>(STATE_STORE)).Returns(_mockTemplateStore.Object);
@@ -97,7 +99,8 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
             _mockLockProvider.Object,
             _mockLogger.Object,
             Configuration,
-            _mockEventConsumer.Object);
+            _mockEventConsumer.Object,
+            _mockTelemetryProvider.Object);
     }
 
     #region Constructor Tests

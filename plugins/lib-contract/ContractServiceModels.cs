@@ -82,7 +82,7 @@ internal class ContractTermsModel
     public bool? Exclusivity { get; set; }
     public bool? NonCompete { get; set; }
     public bool? TimeCommitment { get; set; }
-    public string? TimeCommitmentType { get; set; }
+    public TimeCommitmentType? TimeCommitmentType { get; set; }
     public List<ContractClauseDefinition>? Clauses { get; set; }
     public Dictionary<string, object>? CustomTerms { get; set; }
 }
@@ -202,8 +202,8 @@ internal class BreachModel
 {
     public Guid BreachId { get; set; }
     public Guid ContractId { get; set; }
-    public Guid BreachingEntityId { get; set; }
-    public EntityType BreachingEntityType { get; set; }
+    public Guid? BreachingEntityId { get; set; }
+    public EntityType? BreachingEntityType { get; set; }
     public BreachType BreachType { get; set; }
     public string? BreachedTermOrMilestone { get; set; }
     public string? Description { get; set; }

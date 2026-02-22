@@ -16205,6 +16205,7 @@ components:
         roomTypeCode:
           type: string
           nullable: true
+          maxLength: 100
           description: Filter by room type
         status:
           allOf:
@@ -16214,10 +16215,13 @@ components:
         page:
           type: integer
           default: 0
+          minimum: 0
           description: Page number (zero-based)
         pageSize:
           type: integer
           default: 50
+          minimum: 1
+          maximum: 200
           description: Number of items per page
     AdminStatsResponse:
       type: object
@@ -17531,10 +17535,12 @@ components:
         reason:
           type: string
           nullable: true
+          maxLength: 500
           description: Optional reason for the ban
         durationMinutes:
           type: integer
           nullable: true
+          minimum: 1
           description: Ban duration in minutes (null for permanent)
     BatchBalanceResult:
       type: object
@@ -17764,6 +17770,22 @@ components:
           type: string
           nullable: true
           description: Sender display name
+    BatchMessageFailure:
+      type: object
+      additionalProperties: false
+      description: Details of a single message that failed in a batch send 
+        operation
+      required:
+      - index
+      - error
+      properties:
+        index:
+          type: integer
+          description: Zero-based index of the failed message in the request 
+            messages array
+        error:
+          type: string
+          description: Human-readable error reason
     BehaviorTreeData:
       type: object
       additionalProperties: false
@@ -18423,8 +18445,6 @@ components:
       required:
       - breachId
       - contractId
-      - breachingEntityId
-      - breachingEntityType
       - breachType
       - status
       - detectedAt
@@ -18440,10 +18460,15 @@ components:
         breachingEntityId:
           type: string
           format: uuid
-          description: Entity that breached
+          nullable: true
+          description: Entity that breached (null for system-initiated breaches 
+            such as deadline enforcement)
         breachingEntityType:
-          $ref: '#/components/schemas/EntityType'
-          description: Type of breaching entity
+          allOf:
+          - $ref: '#/components/schemas/EntityType'
+          nullable: true
+          description: Type of breaching entity (null for system-initiated 
+            breaches)
         breachType:
           $ref: '#/components/schemas/BreachType'
           description: Type of breach
@@ -19918,7 +19943,8 @@ components:
         metadata:
           type: string
           nullable: true
-          description: Arbitrary JSON metadata
+          description: Client-only metadata stored as JSON string. No Bannou 
+            plugin reads specific keys from this field by convention.
     ChatRoomStatus:
       type: string
       description: Current state of a chat room
@@ -20285,11 +20311,8 @@ components:
       - both
     ClauseDistributionResult:
       type: object
-      description: |
-        Outcome of a single clause distribution during contract execution.
-        Used in ContractExecutedEvent to provide per-clause success/failure details.
-        Deliberately excludes wallet/container IDs - consumers tracking these should
-        correlate via clauseId to their own records.
+      description: Per-clause distribution outcome during contract execution; 
+        excludes wallet/container IDs so consumers correlate via clauseId
       additionalProperties: false
       required:
       - clauseId
@@ -20308,9 +20331,8 @@ components:
             fee)
         assetType:
           type: string
-          description: |
-            Descriptive type of asset involved (e.g., "currency", "item").
-            Provides human-readable context for what was transferred.
+          description: Descriptive type of asset involved (e.g. "currency", 
+            "item") providing human-readable context
         amount:
           type: number
           description: Quantity transferred (currency amount, item count, etc.)
@@ -20719,13 +20741,7 @@ components:
           type: string
           description: API endpoint path (e.g., "/account/create")
         method:
-          type: string
-          enum:
-          - GET
-          - POST
-          - PUT
-          - DELETE
-          - PATCH
+          $ref: '#/components/schemas/HttpMethodType'
           description: HTTP method for this endpoint
         description:
           type: string
@@ -22373,6 +22389,7 @@ components:
       required:
       - contractId
       - templateId
+      - templateCode
       - status
       - parties
       - createdAt
@@ -22596,7 +22613,6 @@ components:
       - contractId
       - templateCode
       - status
-      - role
       properties:
         contractId:
           type: string
@@ -22614,7 +22630,9 @@ components:
           description: Current status
         role:
           type: string
-          description: Entity's role in contract
+          nullable: true
+          description: Entity's role in contract (null if party record not found
+            due to data inconsistency)
         effectiveUntil:
           type: string
           format: date-time
@@ -22632,6 +22650,7 @@ components:
       - maxParties
       - partyRoles
       - defaultEnforcementMode
+      - transferable
       - isActive
       - createdAt
       properties:
@@ -22747,9 +22766,10 @@ components:
           nullable: true
           description: Whether this contract has a time commitment clause
         timeCommitmentType:
-          type: string
+          allOf:
+          - $ref: '#/components/schemas/TimeCommitmentType'
           nullable: true
-          description: Type of time commitment (exclusive or partial)
+          description: Type of time commitment for scheduling constraints
         clauses:
           type: array
           nullable: true
@@ -24425,6 +24445,8 @@ components:
       properties:
         roomTypeCode:
           type: string
+          minLength: 1
+          maxLength: 100
           description: Room type code determining message format and validation
         sessionId:
           type: string
@@ -24439,10 +24461,12 @@ components:
         displayName:
           type: string
           nullable: true
+          maxLength: 200
           description: Human-readable room name
         maxParticipants:
           type: integer
           nullable: true
+          minimum: 1
           description: Participant limit override (null uses type default)
         contractFulfilledAction:
           allOf:
@@ -24471,7 +24495,8 @@ components:
         metadata:
           type: string
           nullable: true
-          description: Arbitrary JSON metadata for client rendering hints
+          description: Client-only metadata stored as JSON string. No Bannou 
+            plugin reads specific keys from this field by convention.
     CreateScenarioDefinitionRequest:
       type: object
       additionalProperties: false
@@ -28439,6 +28464,7 @@ components:
       required:
       - executed
       - alreadyExecuted
+      - contractId
       properties:
         executed:
           type: boolean
@@ -33289,6 +33315,15 @@ components:
       - captured
       - released
       - expired
+    HttpMethodType:
+      type: string
+      description: HTTP method for endpoint invocation
+      enum:
+      - GET
+      - POST
+      - PUT
+      - DELETE
+      - PATCH
     InitializeRealmClockRequest:
       type: object
       additionalProperties: false
@@ -33972,6 +34007,7 @@ components:
         displayName:
           type: string
           nullable: true
+          maxLength: 200
           description: Human-readable display name
         role:
           allOf:
@@ -36333,10 +36369,13 @@ components:
         page:
           type: integer
           default: 0
+          minimum: 0
           description: Page number (zero-based)
         pageSize:
           type: integer
           default: 20
+          minimum: 1
+          maximum: 100
           description: Number of items per page
     ListRoomTypesResponse:
       type: object
@@ -36370,6 +36409,7 @@ components:
         roomTypeCode:
           type: string
           nullable: true
+          maxLength: 100
           description: Filter by room type code
         sessionId:
           type: string
@@ -36384,10 +36424,13 @@ components:
         page:
           type: integer
           default: 0
+          minimum: 0
           description: Page number (zero-based)
         pageSize:
           type: integer
           default: 20
+          minimum: 1
+          maximum: 100
           description: Number of items per page
     ListRoomsResponse:
       type: object
@@ -37439,6 +37482,8 @@ components:
       required:
       - locked
       - contractId
+      - guardianId
+      - lockedAt
       properties:
         locked:
           type: boolean
@@ -37872,6 +37917,8 @@ components:
         limit:
           type: integer
           default: 50
+          minimum: 1
+          maximum: 200
           description: Maximum number of messages to return
     MessageHistoryResponse:
       type: object
@@ -38623,6 +38670,7 @@ components:
         durationMinutes:
           type: integer
           nullable: true
+          minimum: 1
           description: Mute duration in minutes (null for permanent)
     NarrativeEffect:
       type: object
@@ -39434,6 +39482,7 @@ components:
       properties:
         role:
           type: string
+          minLength: 1
           maxLength: 64
           description: Role identifier (employer, employee, buyer, seller, etc.)
         minCount:
@@ -40137,17 +40186,21 @@ components:
           nullable: true
           description: Human-readable description
         executionMode:
-          type: string
-          enum:
-          - sync
-          - async
-          - fire_and_forget
+          allOf:
+          - $ref: '#/components/schemas/PreboundApiExecutionMode'
           default: sync
           description: How to execute the API call
         responseValidation:
           $ref: '#/components/schemas/ResponseValidation'
           nullable: true
           description: Optional validation rules for the response
+    PreboundApiExecutionMode:
+      type: string
+      description: How to execute a prebound API call
+      enum:
+      - sync
+      - async
+      - fire_and_forget
     PredictedMutation:
       type: object
       additionalProperties: false
@@ -42543,14 +42596,20 @@ components:
       properties:
         code:
           type: string
+          minLength: 1
+          maxLength: 100
+          pattern: '^[a-z][a-z0-9_]*$'
           description: Unique room type code (e.g., "text", "guild_board", 
             "trade_posting")
         displayName:
           type: string
+          minLength: 1
+          maxLength: 200
           description: Human-readable name for the room type
         description:
           type: string
           nullable: true
+          maxLength: 1000
           description: Optional description of the room type
         gameServiceId:
           type: string
@@ -42571,10 +42630,12 @@ components:
         defaultMaxParticipants:
           type: integer
           nullable: true
+          minimum: 1
           description: Default participant limit (null uses service default)
         retentionDays:
           type: integer
           nullable: true
+          minimum: 1
           description: Message retention in days (null uses service default)
         defaultContractTemplateId:
           type: string
@@ -42587,12 +42648,14 @@ components:
         rateLimitPerMinute:
           type: integer
           nullable: true
+          minimum: 1
           description: Messages per minute per participant (null uses service 
             default)
         metadata:
           type: string
           nullable: true
-          description: Arbitrary JSON metadata for client rendering hints
+          description: Client-only metadata stored as JSON string. No Bannou 
+            plugin reads specific keys from this field by convention.
     RegisterSchemaRequest:
       type: object
       description: Request to register a new save data schema with optional 
@@ -43869,33 +43932,28 @@ components:
           description: When this snapshot will expire
     ResponseValidation:
       type: object
-      description: |
-        Validation rules for API responses with three-outcome model.
-        Used by lib-contract to validate clause conditions without
-        understanding the specific API semantics.
+      description: Validation rules for API responses with three-outcome model 
+        (success, permanent failure, transient failure)
       additionalProperties: false
       properties:
         successConditions:
           type: array
           items:
             $ref: '#/components/schemas/ValidationCondition'
-          description: |
-            Conditions that must ALL pass for success.
-            If any fail, checks permanent failure conditions.
+          description: Conditions that must ALL pass for success; if any fail, 
+            checks permanent failure conditions
         permanentFailureConditions:
           type: array
           items:
             $ref: '#/components/schemas/ValidationCondition'
-          description: |
-            Conditions that indicate permanent failure (clause violated).
-            Checked when success conditions fail.
+          description: Conditions that indicate permanent failure (clause 
+            violated); checked when success conditions fail
         transientFailureStatusCodes:
           type: array
           items:
             type: integer
-          description: |
-            HTTP status codes that indicate transient failure (retry later).
-            Default: [408, 429, 502, 503, 504]
+          description: HTTP status codes indicating transient failure for retry 
+            (default 408, 429, 502, 503, 504)
     RestoreBundleRequest:
       type: object
       additionalProperties: false
@@ -44046,7 +44104,8 @@ components:
         metadata:
           type: string
           nullable: true
-          description: Arbitrary JSON metadata
+          description: Client-only metadata stored as JSON string. No Bannou 
+            plugin reads specific keys from this field by convention.
         status:
           $ref: '#/components/schemas/RoomTypeStatus'
           description: Current lifecycle status of the room type
@@ -45316,10 +45375,14 @@ components:
           description: Room ID to search in (must be a persistent room)
         query:
           type: string
+          minLength: 1
+          maxLength: 500
           description: Full-text search query string
         limit:
           type: integer
           default: 20
+          minimum: 1
+          maximum: 100
           description: Maximum number of results to return
     SearchMessagesResponse:
       type: object
@@ -45879,13 +45942,21 @@ components:
     SendMessageBatchResponse:
       type: object
       additionalProperties: false
-      description: Result of a batch message send operation
+      description: Result of a batch message send operation with per-message 
+        failure tracking
       required:
       - messageCount
+      - failed
       properties:
         messageCount:
           type: integer
-          description: Number of messages sent
+          description: Number of messages successfully sent
+        failed:
+          type: array
+          items:
+            $ref: '#/components/schemas/BatchMessageFailure'
+          description: Details of messages that failed to send (empty array when
+            all succeeded)
     SendMessageContent:
       type: object
       additionalProperties: false
@@ -46177,9 +46248,8 @@ components:
           type: object
           additionalProperties:
             type: string
-          description: |
-            Key-value pairs for template substitution.
-            Keys should follow pattern: EscrowId, PartyA_EscrowWalletId, etc.
+          description: Key-value pairs for template substitution (keys follow 
+            pattern EscrowId, PartyA_EscrowWalletId, etc.)
     SetTemplateValuesResponse:
       type: object
       description: Response from setting template values
@@ -46187,6 +46257,7 @@ components:
       required:
       - updated
       - contractId
+      - valueCount
       properties:
         updated:
           type: boolean
@@ -48000,6 +48071,12 @@ components:
       - match_accepted
       - cancelled
       - expired
+    TimeCommitmentType:
+      type: string
+      description: Type of time commitment for scheduling constraints
+      enum:
+      - exclusive
+      - partial
     TimeRatioChangeReason:
       type: string
       description: Why the time ratio was changed
@@ -48198,6 +48275,9 @@ components:
       required:
       - transferred
       - contractId
+      - role
+      - fromEntityId
+      - toEntityId
       properties:
         transferred:
           type: boolean
@@ -49935,15 +50015,18 @@ components:
         displayName:
           type: string
           nullable: true
+          maxLength: 200
           description: Updated room name
         maxParticipants:
           type: integer
           nullable: true
+          minimum: 1
           description: Updated participant limit
         metadata:
           type: string
           nullable: true
-          description: Updated JSON metadata
+          description: Client-only metadata stored as JSON string. No Bannou 
+            plugin reads specific keys from this field by convention.
     UpdateRoomTypeRequest:
       type: object
       additionalProperties: false
@@ -50817,16 +50900,13 @@ components:
         jsonPath:
           type: string
           nullable: true
-          description: |
-            JsonPath expression to extract value from response.
-            Required for jsonPathEquals, jsonPathExists, jsonPathNotExists.
-            Example: "$.balance", "$.items[0].status"
+          description: JsonPath expression to extract value from response 
+            (required for jsonPathEquals/Exists/NotExists, e.g. "$.balance")
         expectedValue:
           type: string
           nullable: true
-          description: |
-            Expected value for comparison conditions.
-            Type coercion applied: "true"/"false" for booleans, numeric strings for numbers.
+          description: Expected value for comparison conditions with type 
+            coercion ("true"/"false" for booleans, numeric strings for numbers)
         operator:
           $ref: '#/components/schemas/ComparisonOperator'
           nullable: true

@@ -345,6 +345,11 @@ This document lists all configuration options defined in Bannou's configuration 
 
 | Environment Variable | Type | Default | Description |
 |---------------------|------|---------|-------------|
+| `CHAT_BAN_EXPIRY_BATCH_SIZE` | int | `1000` | Maximum expired ban records processed per worker cycle |
+| `CHAT_BAN_EXPIRY_INTERVAL_MINUTES` | int | `60` | How often the background worker checks for expired bans |
+| `CHAT_BAN_EXPIRY_LOCK_EXPIRY_SECONDS` | int | `120` | Distributed lock expiry for ban expiry batch cycle |
+| `CHAT_BAN_EXPIRY_STARTUP_DELAY_SECONDS` | int | `30` | Initial delay before the ban expiry worker begins its first ... |
+| `CHAT_CONTRACT_ROOM_QUERY_BATCH_SIZE` | int | `100` | Page size for paginated contract-room queries during contrac... |
 | `CHAT_DEFAULT_CONTRACT_BREACH_ACTION` | string | `Lock` | Default action when a breach is detected on governing contra... |
 | `CHAT_DEFAULT_CONTRACT_EXPIRED_ACTION` | string | `Archive` | Default action when governing contract expires naturally |
 | `CHAT_DEFAULT_CONTRACT_FULFILLED_ACTION` | string | `Archive` | Default action when governing contract is fulfilled |
@@ -353,12 +358,22 @@ This document lists all configuration options defined in Bannou's configuration 
 | `CHAT_DEFAULT_RATE_LIMIT_PER_MINUTE` | int | `60` | Default messages per minute per participant when room type d... |
 | `CHAT_EPHEMERAL_MESSAGE_TTL_MINUTES` | int | `60` | TTL for messages in ephemeral (Redis) rooms |
 | `CHAT_IDLE_ROOM_CLEANUP_INTERVAL_MINUTES` | int | `60` | How often the background worker checks for idle rooms |
+| `CHAT_IDLE_ROOM_CLEANUP_LOCK_EXPIRY_SECONDS` | int | `120` | Distributed lock expiry for idle room cleanup batch cycle |
 | `CHAT_IDLE_ROOM_CLEANUP_STARTUP_DELAY_SECONDS` | int | `30` | Initial delay before the idle room cleanup worker begins its... |
 | `CHAT_IDLE_ROOM_TIMEOUT_MINUTES` | int | `1440` | Minutes of inactivity before a room is eligible for auto-cle... |
 | `CHAT_LOCK_EXPIRY_SECONDS` | int | `15` | Distributed lock expiry for chat room and participant mutati... |
+| `CHAT_MAX_CONTRACT_ROOM_QUERY_RESULTS` | int | `1000` | Safety cap on total rooms processed per contract lifecycle e... |
 | `CHAT_MAX_PINNED_MESSAGES_PER_ROOM` | int | `10` | Maximum pinned messages per room |
 | `CHAT_MAX_ROOM_TYPES_PER_GAME_SERVICE` | int | `50` | Maximum custom room types per game service |
 | `CHAT_MESSAGE_HISTORY_PAGE_SIZE` | int | `50` | Default page size for message history queries |
+| `CHAT_MESSAGE_RETENTION_BATCH_SIZE` | int | `500` | Maximum expired messages to delete per room per cleanup cycl... |
+| `CHAT_MESSAGE_RETENTION_CLEANUP_INTERVAL_MINUTES` | int | `360` | How often the background worker checks for expired persisten... |
+| `CHAT_MESSAGE_RETENTION_LOCK_EXPIRY_SECONDS` | int | `300` | Distributed lock expiry for message retention cleanup cycle |
+| `CHAT_MESSAGE_RETENTION_STARTUP_DELAY_SECONDS` | int | `60` | Initial delay before the message retention cleanup worker be... |
+| `CHAT_SERVER_SALT` | string | `bannou-dev-chat-salt-change-in-production` | Server salt for session shortcut GUID generation per IMPLEME... |
+| `CHAT_TYPING_TIMEOUT_SECONDS` | int | `5` | Seconds of inactivity before typing indicator auto-expires |
+| `CHAT_TYPING_WORKER_BATCH_SIZE` | int | `100` | Maximum expired entries processed per worker cycle |
+| `CHAT_TYPING_WORKER_INTERVAL_MILLISECONDS` | int | `1000` | How often the typing expiry worker checks for stale typing e... |
 
 ### Collection
 
@@ -375,23 +390,28 @@ This document lists all configuration options defined in Bannou's configuration 
 
 | Environment Variable | Type | Default | Description |
 |---------------------|------|---------|-------------|
+| `CONNECT_BROADCAST_HEARTBEAT_INTERVAL_SECONDS` | int | `30` | Interval in seconds between broadcast registry heartbeat ref... |
+| `CONNECT_BROADCAST_INTERNAL_URL` | string | **REQUIRED** | WebSocket URL where this instance accepts inter-node broadca... |
+| `CONNECT_BROADCAST_STALE_THRESHOLD_SECONDS` | int | `90` | Threshold in seconds after which a broadcast registry entry ... |
 | `CONNECT_BUFFER_SIZE` | int | `65536` | Size of message buffers in bytes |
 | `CONNECT_COMPANION_ROOM_MODE` | string | `Disabled` | How Connect manages companion chat rooms (Disabled, AutoJoin... |
 | `CONNECT_COMPRESSION_ENABLED` | bool | `false` | Enable Brotli compression for outbound WebSocket payloads ab... |
 | `CONNECT_COMPRESSION_QUALITY` | int | `1` | Brotli compression quality level (0=no compression, 1=fastes... |
 | `CONNECT_COMPRESSION_THRESHOLD_BYTES` | int | `1024` | Minimum payload size in bytes before compression is applied ... |
 | `CONNECT_CONNECTION_CLEANUP_INTERVAL_SECONDS` | int | `30` | Interval in seconds between connection cleanup runs |
-| `CONNECT_CONNECTION_MODE` | string | `external` | Connection mode: external (default, no broadcast), relayed (... |
+| `CONNECT_CONNECTION_MODE` | string | `External` | Connection mode: External (default, no broadcast), Relayed (... |
 | `CONNECT_CONNECTION_SHUTDOWN_TIMEOUT_SECONDS` | int | `5` | Timeout in seconds when waiting for connection closure durin... |
 | `CONNECT_DEFAULT_RPC_TIMEOUT_SECONDS` | int | `30` | Default timeout in seconds for RPC calls when not specified |
 | `CONNECT_ENABLE_CLIENT_TO_CLIENT_ROUTING` | bool | `true` | Enable routing messages between WebSocket clients |
-| `CONNECT_HEARTBEAT_INTERVAL_SECONDS` | int | `30` | Interval between heartbeat messages |
+| `CONNECT_HEARTBEAT_INTERVAL_SECONDS` | int | `30` | Interval between heartbeat messages in seconds |
 | `CONNECT_HEARTBEAT_TTL_SECONDS` | int | `300` | Heartbeat data TTL in Redis in seconds (default 5 minutes) |
 | `CONNECT_INACTIVE_CONNECTION_TIMEOUT_MINUTES` | int | `30` | Timeout in minutes after which inactive connections are clea... |
-| `CONNECT_INTERNAL_AUTH_MODE` | string | `service-token` | Auth mode for internal connections: service-token (validate ... |
+| `CONNECT_INTERNAL_AUTH_MODE` | string | `ServiceToken` | Auth mode for internal connections: ServiceToken (validate X... |
 | `CONNECT_INTERNAL_SERVICE_TOKEN` | string | **REQUIRED** | Secret for X-Service-Token validation when InternalAuthMode ... |
+| `CONNECT_MAX_CHANNEL_NUMBER` | int | `1000` | Maximum allowed channel number in WebSocket binary messages.... |
 | `CONNECT_MAX_CONCURRENT_CONNECTIONS` | int | `10000` | Maximum number of concurrent WebSocket connections |
 | `CONNECT_MAX_MESSAGES_PER_MINUTE` | int | `1000` | Rate limit for messages per minute per client |
+| `CONNECT_MULTINODE_BROADCAST_MODE` | string | `None` | Multi-node broadcast directionality (None disables broadcast... |
 | `CONNECT_PENDING_MESSAGE_TIMEOUT_SECONDS` | int | `30` | Timeout in seconds for pending messages awaiting acknowledgm... |
 | `CONNECT_RATE_LIMIT_WINDOW_MINUTES` | int | `1` | Rate limit window in minutes |
 | `CONNECT_RECONNECTION_WINDOW_EXTENSION_MINUTES` | int | `1` | Additional minutes added to reconnection window on each exte... |
@@ -1181,9 +1201,9 @@ Applied when... |
 
 ## Configuration Summary
 
-- **Total properties**: 894
-- **Required (no default)**: 53
-- **Optional (has default)**: 841
+- **Total properties**: 914
+- **Required (no default)**: 54
+- **Optional (has default)**: 860
 
 ## Environment Variable Naming Convention
 

@@ -50,7 +50,7 @@ This is **NOT** a code investigation tool. It reports the state depicted in each
 | [Auth](#auth-status) | L1 | 95% | 0 | L3-hardened. Schema NRT, telemetry spans, atomic session indexing, email propagation. 168 tests, 0 warnings. |
 | [Chat](#chat-status) | L1 | 90% | 0 | All 28 endpoints complete. Dual storage, rate limiting, moderation. Design considerations remain. |
 | [Connect](#connect-status) | L1 | 92% | 0 | Production-ready gateway. Zero-copy routing, reconnection, shortcuts. Multi-instance broadcast pending. |
-| [Contract](#contract-status) | L1 | 82% | 0 | Full FSM + consent flows. 4 stubs remain (expiration job, payment schedules). L1→L2 violation. |
+| [Contract](#contract-status) | L1 | 92% | 0 | L3-hardened. Hierarchy violation removed, schema NRT/T25/T26/T29 fixed, telemetry spans added. 4 stubs remain (expiration job, payment schedules). |
 | [Permission](#permission-status) | L1 | 93% | 0 | Feature-complete RBAC. Real-time capability push. Only session cache invalidation remains. |
 | [Resource](#resource-status) | L1 | 93% | 0 | Feature-complete lifecycle management. Reference tracking, cleanup, compression all done. |
 | [Actor](#actor-status) | L2 | 65% | 0 | Solid core architecture. Auto-scale stubbed, many production features TODO. |
@@ -383,9 +383,9 @@ gh issue list --search "Connect:" --state open
 
 **Layer**: L1 AppFoundation | **Deep Dive**: [CONTRACT.md](plugins/CONTRACT.md)
 
-### Production Readiness: 82%
+### Production Readiness: 92%
 
-Comprehensive feature set: template CRUD, instance lifecycle with full state machine (Draft through Fulfilled/Terminated/Expired), consent flows, milestone progression with deadline enforcement (hybrid lazy + background), breach handling with cure periods, guardian custody for escrow integration, clause type system with execution pipeline, prebound API batching, and idempotent operations. However, 4 stubs remain (TemplateName always null in summaries, clause handler request/response mappings unused, no active expiration job for effectiveUntil, no payment schedule enforcement), plus a known L1-to-L2 hierarchy violation with lib-location. These stubs and the hierarchy violation prevent a higher score.
+L3-hardened. Comprehensive feature set: template CRUD, instance lifecycle with full state machine (Draft through Fulfilled/Terminated/Expired), consent flows, milestone progression with deadline enforcement (hybrid lazy + background), breach handling with cure periods, guardian custody for escrow integration, clause type system with execution pipeline, prebound API batching, and idempotent operations. L1-to-L2 hierarchy violation (ILocationClient) removed, schema NRT/T25/T26/T29 compliance fixed, telemetry spans added to all async helpers. 4 stubs remain (TemplateName always null in summaries, clause handler request/response mappings unused, no active expiration job for effectiveUntil, no payment schedule enforcement) that prevent a higher score.
 
 ### Bug Count: 0
 
@@ -400,8 +400,7 @@ No known bugs.
 | # | Enhancement | Description | Issue |
 |---|-------------|-------------|-------|
 | 1 | **Active expiration job** | Background service to scan Active contracts for `effectiveUntil < now` and transition to Expired. Currently expiration only occurs lazily on consent timeout, meaning contracts past their end date remain Active until someone touches them. | No issue |
-| 2 | **L1-to-L2 hierarchy violation remediation** | Contract depends on `ILocationClient` (L2) for territory constraint checking, violating the service hierarchy. Recommended fix: invert so location provides its own validation definition to Contract via DI interface. | No issue |
-| 3 | **Per-milestone onApiFailure flag** | Currently prebound API failures are always non-blocking. Adding per-milestone configuration for whether failure should block milestone completion would require schema changes. | [#246](https://github.com/beyond-immersion/bannou-service/issues/246) |
+| 2 | **Per-milestone onApiFailure flag** | Currently prebound API failures are always non-blocking. Adding per-milestone configuration for whether failure should block milestone completion would require schema changes. | [#246](https://github.com/beyond-immersion/bannou-service/issues/246) |
 
 ### GH Issues
 

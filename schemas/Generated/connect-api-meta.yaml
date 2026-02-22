@@ -80,22 +80,25 @@ paths:
         \      \"targetService\": {\n                    \"type\": \"string\",\n                    \"description\": \"Target
         service name (e.g., \\\"account\\\", \\\"auth\\\", \\\"behavior\\\")\"\n                },\n                \"targetEndpoint\"\
         : {\n                    \"type\": \"string\",\n                    \"description\": \"Target API endpoint path (e.g.,
-        \\\"/account/{id}\\\")\"\n                },\n                \"method\": {\n                    \"type\": \"string\"\
-        ,\n                    \"enum\": [\n                        \"GET\",\n                        \"POST\",\n        \
-        \                \"PUT\",\n                        \"DELETE\",\n                        \"PATCH\"\n              \
-        \      ],\n                    \"description\": \"HTTP method for the target endpoint\"\n                },\n    \
-        \            \"headers\": {\n                    \"type\": \"object\",\n                    \"additionalProperties\"\
-        : {\n                        \"type\": \"string\"\n                    },\n                    \"nullable\": true,\n\
-        \                    \"description\": \"Additional headers to forward to the service (null if none)\"\n          \
-        \      },\n                \"body\": {\n                    \"type\": \"object\",\n                    \"additionalProperties\"\
+        \\\"/account/{id}\\\")\"\n                },\n                \"method\": {\n                    \"$ref\": \"#/$defs/HttpMethodType\"\
+        ,\n                    \"description\": \"HTTP method for the target endpoint\"\n                },\n            \
+        \    \"headers\": {\n                    \"type\": \"object\",\n                    \"additionalProperties\": {\n\
+        \                        \"type\": \"string\"\n                    },\n                    \"nullable\": true,\n \
+        \                   \"description\": \"Additional headers to forward to the service (null if none)\"\n           \
+        \     },\n                \"body\": {\n                    \"type\": \"object\",\n                    \"additionalProperties\"\
         : true,\n                    \"nullable\": true,\n                    \"description\": \"Request body to forward to
-        target service (null for no body)\"\n                },\n                \"pathParameters\": {\n                 \
-        \   \"type\": \"object\",\n                    \"additionalProperties\": {\n                        \"type\": \"string\"\
-        \n                    },\n                    \"nullable\": true,\n                    \"description\": \"Path parameters
-        for the endpoint (null if none)\"\n                },\n                \"queryParameters\": {\n                  \
-        \  \"type\": \"object\",\n                    \"additionalProperties\": {\n                        \"type\": \"string\"\
-        \n                    },\n                    \"nullable\": true,\n                    \"description\": \"Query string
-        parameters for the endpoint (null if none)\"\n                }\n            }\n        }\n    }\n}"
+        target service (null for no body). Uses\\nadditionalProperties because this proxies arbitrary JSON payloads to any\\
+        ntarget service \\u2014 the structure is defined by each target service's schema,\\nnot by Connect (client-opaque
+        pass-through per FOUNDATION TENETS).\\n\"\n                },\n                \"pathParameters\": {\n           \
+        \         \"type\": \"object\",\n                    \"additionalProperties\": {\n                        \"type\"\
+        : \"string\"\n                    },\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Path parameters for the endpoint (null if none)\"\n                },\n                \"queryParameters\": {\n\
+        \                    \"type\": \"object\",\n                    \"additionalProperties\": {\n                    \
+        \    \"type\": \"string\"\n                    },\n                    \"nullable\": true,\n                    \"\
+        description\": \"Query string parameters for the endpoint (null if none)\"\n                }\n            }\n   \
+        \     },\n        \"HttpMethodType\": {\n            \"type\": \"string\",\n            \"description\": \"HTTP method
+        for endpoint invocation\",\n            \"enum\": [\n                \"GET\",\n                \"POST\",\n       \
+        \         \"PUT\",\n                \"DELETE\",\n                \"PATCH\"\n            ]\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/InternalProxyResponse\"\
         ,\n    \"$defs\": {\n        \"InternalProxyResponse\": {\n            \"description\": \"Response from a proxied
         API call containing the target service's response data\",\n            \"type\": \"object\",\n            \"additionalProperties\"\
@@ -198,18 +201,19 @@ paths:
         \                  \"description\": \"Service name (e.g., \\\"account\\\", \\\"auth\\\")\"\n                },\n \
         \               \"endpoint\": {\n                    \"type\": \"string\",\n                    \"description\": \"\
         API endpoint path (e.g., \\\"/account/create\\\")\"\n                },\n                \"method\": {\n         \
-        \           \"type\": \"string\",\n                    \"enum\": [\n                        \"GET\",\n           \
-        \             \"POST\",\n                        \"PUT\",\n                        \"DELETE\",\n                 \
-        \       \"PATCH\"\n                    ],\n                    \"description\": \"HTTP method for this endpoint\"\n\
-        \                },\n                \"description\": {\n                    \"type\": \"string\",\n             \
-        \       \"description\": \"Human-readable description of this capability\",\n                    \"nullable\": true\n\
+        \           \"$ref\": \"#/$defs/HttpMethodType\",\n                    \"description\": \"HTTP method for this endpoint\"\
+        \n                },\n                \"description\": {\n                    \"type\": \"string\",\n            \
+        \        \"description\": \"Human-readable description of this capability\",\n                    \"nullable\": true\n\
         \                },\n                \"channel\": {\n                    \"type\": \"integer\",\n                \
         \    \"format\": \"uint16\",\n                    \"description\": \"Preferred WebSocket channel for this capability\"\
-        ,\n                    \"default\": 0\n                }\n            }\n        },\n        \"ClientShortcut\": {\n\
-        \            \"type\": \"object\",\n            \"description\": \"Session shortcut information sent to clients in
-        the capability manifest.\\nShortcuts appear as invocable capabilities but Connect injects a pre-bound\\npayload when
-        the shortcut GUID is used, replacing any client-provided payload.\\n\",\n            \"additionalProperties\": false,\n\
-        \            \"required\": [\n                \"guid\",\n                \"targetService\",\n                \"targetEndpoint\"\
+        ,\n                    \"default\": 0\n                }\n            }\n        },\n        \"HttpMethodType\": {\n\
+        \            \"type\": \"string\",\n            \"description\": \"HTTP method for endpoint invocation\",\n      \
+        \      \"enum\": [\n                \"GET\",\n                \"POST\",\n                \"PUT\",\n              \
+        \  \"DELETE\",\n                \"PATCH\"\n            ]\n        },\n        \"ClientShortcut\": {\n            \"\
+        type\": \"object\",\n            \"description\": \"Session shortcut information sent to clients in the capability
+        manifest.\\nShortcuts appear as invocable capabilities but Connect injects a pre-bound\\npayload when the shortcut
+        GUID is used, replacing any client-provided payload.\\n\",\n            \"additionalProperties\": false,\n       \
+        \     \"required\": [\n                \"guid\",\n                \"targetService\",\n                \"targetEndpoint\"\
         ,\n                \"name\"\n            ],\n            \"properties\": {\n                \"guid\": {\n        \
         \            \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
         : \"GUID to use in WebSocket message header when invoking this shortcut.\\nUses UUID version 7 bits to distinguish
@@ -385,6 +389,67 @@ paths:
         \"Alternative POST method for establishing WebSocket connections.\\nFunctionally identical to the GET method but supports
         clients that\\nrequire POST for WebSocket upgrades.\\n\",\n    \"tags\": [\n        \"WebSocket Connection\"\n   \
         \ ],\n    \"deprecated\": false,\n    \"operationId\": \"ConnectWebSocketPost\"\n}"
+  /connect/broadcast:
+    get:
+      summary: Inter-node broadcast WebSocket endpoint
+      description: |
+        Internal WebSocket endpoint for the multi-node broadcast mesh.
+        Other Connect instances connect here to relay broadcast messages.
+        Requires service-token authentication (same as Internal connection mode).
+
+        **Not client-facing.** This endpoint is used exclusively for
+        inter-node communication between Connect instances in multi-instance
+        deployments. Requires `instanceId` query parameter identifying the
+        connecting peer.
+      operationId: BroadcastWebSocket
+      tags:
+      - Inter-Node Broadcast
+      x-permissions: []
+      x-controller-only: true
+      parameters:
+      - name: instanceId
+        in: query
+        required: true
+        schema:
+          type: string
+        description: Instance ID of the connecting peer Connect node
+      - name: Connection
+        in: header
+        required: true
+        schema:
+          type: string
+          enum:
+          - "Upgrade"
+        description: Must be "Upgrade" to initiate WebSocket connection
+      - name: Upgrade
+        in: header
+        required: true
+        schema:
+          type: string
+          enum:
+          - "websocket"
+        description: Must be "websocket" to specify protocol upgrade
+      - name: X-Service-Token
+        in: header
+        required: false
+        schema:
+          type: string
+        description: Service token for authentication (required when InternalAuthMode is ServiceToken)
+      responses:
+        '101':
+          description: WebSocket connection established for broadcast relay
+        '400':
+          description: Not a WebSocket request, or missing/invalid instanceId
+        '401':
+          description: Invalid or missing service token
+      x-request-schema-json: '{}'
+      x-response-schema-json: '{}'
+      x-endpoint-info-json: "{\n    \"summary\": \"Inter-node broadcast WebSocket endpoint\",\n    \"description\": \"Internal
+        WebSocket endpoint for the multi-node broadcast mesh.\\nOther Connect instances connect here to relay broadcast messages.\\
+        nRequires service-token authentication (same as Internal connection mode).\\n\\n**Not client-facing.** This endpoint
+        is used exclusively for\\ninter-node communication between Connect instances in multi-instance\\ndeployments. Requires
+        `instanceId` query parameter identifying the\\nconnecting peer.\\n\",\n    \"tags\": [\n        \"Inter-Node Broadcast\"\
+        \n    ],\n    \"deprecated\": false,\n    \"operationId\": \"BroadcastWebSocket\"\n}"
   /connect/get-endpoint-meta:
     post:
       summary: Permission-gated proxy for endpoint metadata
@@ -443,12 +508,14 @@ paths:
         \                \"path\": {\n                    \"type\": \"string\",\n                    \"description\": \"Endpoint
         path (e.g., \\\"/account/get\\\")\"\n                },\n                \"data\": {\n                    \"type\"\
         : \"object\",\n                    \"additionalProperties\": true,\n                    \"description\": \"Metadata
-        payload whose structure varies by metaType (endpoint-info returns summary/tags/operationId, request-schema and response-schema
-        return JSON Schema objects, full-schema returns all three combined)\"\n                },\n                \"generatedAt\"\
-        : {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                 \
-        \   \"description\": \"When this response was generated (UTC)\"\n                },\n                \"schemaVersion\"\
-        : {\n                    \"type\": \"string\",\n                    \"description\": \"Schema version (assembly version)
-        for cache invalidation\"\n                }\n            }\n        }\n    }\n}"
+        payload whose structure varies by metaType (endpoint-info returns\\nsummary/tags/operationId, request-schema and response-schema
+        return JSON Schema\\nobjects, full-schema returns all three combined). Uses additionalProperties because\\nthis proxies
+        opaque JSON from internal meta endpoints whose schemas are defined by\\neach service's controller (client-opaque pass-through
+        per FOUNDATION TENETS).\\n\"\n                },\n                \"generatedAt\": {\n                    \"type\"\
+        : \"string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"When this response
+        was generated (UTC)\"\n                },\n                \"schemaVersion\": {\n                    \"type\": \"\
+        string\",\n                    \"description\": \"Schema version (assembly version) for cache invalidation\"\n   \
+        \             }\n            }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Permission-gated proxy for endpoint metadata\",\n    \"description\": \"\
         Accepts a full meta endpoint path (e.g., \\\"/account/get/meta/info\\\"),\\nvalidates the caller's JWT, looks up their
         active WebSocket session\\nvia the JWT's sessionKey, checks the session's capability mappings\\nfor the underlying
@@ -510,12 +577,13 @@ paths:
         \       \"retrievedAt\"\n            ],\n            \"properties\": {\n                \"accountId\": {\n       \
         \             \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
         : \"Account ID the sessions belong to\"\n                },\n                \"sessionIds\": {\n                 \
-        \   \"type\": \"array\",\n                    \"items\": {\n                        \"type\": \"string\"\n       \
-        \             },\n                    \"description\": \"List of active WebSocket session IDs for this account\"\n\
-        \                },\n                \"count\": {\n                    \"type\": \"integer\",\n                  \
-        \  \"description\": \"Number of active sessions\"\n                },\n                \"retrievedAt\": {\n      \
-        \              \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
-        : \"When this session list was retrieved\"\n                }\n            }\n        }\n    }\n}"
+        \   \"type\": \"array\",\n                    \"items\": {\n                        \"type\": \"string\",\n      \
+        \                  \"format\": \"uuid\"\n                    },\n                    \"description\": \"List of active
+        WebSocket session IDs for this account\"\n                },\n                \"count\": {\n                    \"\
+        type\": \"integer\",\n                    \"description\": \"Number of active sessions\"\n                },\n   \
+        \             \"retrievedAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\"\
+        ,\n                    \"description\": \"When this session list was retrieved\"\n                }\n            }\n\
+        \        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Get all active WebSocket sessions for an account\",\n    \"description\"\
         : \"Returns all active WebSocket session IDs for a specified account.\\nThis is an internal endpoint used by services
         that need to know which\\nsessions are currently connected for a given account.\\n\\n**Use Cases:**\\n- GameSessionService
@@ -565,9 +633,12 @@ components:
         data:
           type: object
           additionalProperties: true
-          description: Metadata payload whose structure varies by metaType (endpoint-info returns 
-            summary/tags/operationId, request-schema and response-schema return JSON Schema objects, full-schema returns
-            all three combined)
+          description: |
+            Metadata payload whose structure varies by metaType (endpoint-info returns
+            summary/tags/operationId, request-schema and response-schema return JSON Schema
+            objects, full-schema returns all three combined). Uses additionalProperties because
+            this proxies opaque JSON from internal meta endpoints whose schemas are defined by
+            each service's controller (client-opaque pass-through per FOUNDATION TENETS).
         generatedAt:
           type: string
           format: date-time
@@ -603,6 +674,7 @@ components:
           type: array
           items:
             type: string
+            format: uuid
           description: List of active WebSocket session IDs for this account
         count:
           type: integer
@@ -691,13 +763,7 @@ components:
           type: string
           description: API endpoint path (e.g., "/account/create")
         method:
-          type: string
-          enum:
-          - GET
-          - POST
-          - PUT
-          - DELETE
-          - PATCH
+          $ref: '#/components/schemas/HttpMethodType'
           description: HTTP method for this endpoint
         description:
           type: string
@@ -780,13 +846,7 @@ components:
           type: string
           description: Target API endpoint path (e.g., "/account/{id}")
         method:
-          type: string
-          enum:
-          - GET
-          - POST
-          - PUT
-          - DELETE
-          - PATCH
+          $ref: '#/components/schemas/HttpMethodType'
           description: HTTP method for the target endpoint
         headers:
           type: object
@@ -798,7 +858,11 @@ components:
           type: object
           additionalProperties: true
           nullable: true
-          description: Request body to forward to target service (null for no body)
+          description: |
+            Request body to forward to target service (null for no body). Uses
+            additionalProperties because this proxies arbitrary JSON payloads to any
+            target service — the structure is defined by each target service's schema,
+            not by Connect (client-opaque pass-through per FOUNDATION TENETS).
         pathParameters:
           type: object
           additionalProperties:
@@ -1041,13 +1105,19 @@ components:
           description: When the auth event occurred
         userId:
           type: string
+          format: uuid
           nullable: true
           description: User ID associated with the session (optional for some events)
         metadata:
           type: object
           additionalProperties: true
           nullable: true
-          description: Additional event metadata (device info, location, etc.)
+          description: |
+            Additional auth event metadata (device info, location, etc.). Uses
+            additionalProperties because the metadata content is determined by the
+            Auth service's event payload and varies by auth provider — Connect
+            treats it as opaque context for logging (client-opaque pass-through
+            per FOUNDATION TENETS).
     AuthEventType:
       type: string
       enum:
@@ -1070,6 +1140,7 @@ components:
       properties:
         clientId:
           type: string
+          format: uuid
           description: Target client session ID
         serviceName:
           type: string
@@ -1115,6 +1186,7 @@ components:
       properties:
         clientId:
           type: string
+          format: uuid
           description: Target client session ID
         serviceName:
           type: string
@@ -1166,6 +1238,7 @@ components:
       properties:
         clientId:
           type: string
+          format: uuid
           description: Client session ID that sent the response
         serviceName:
           type: string
@@ -1193,6 +1266,36 @@ components:
           format: date-time
           nullable: true
           description: When the response was received
+    HttpMethodType:
+      type: string
+      description: HTTP method for endpoint invocation
+      enum:
+      - GET
+      - POST
+      - PUT
+      - DELETE
+      - PATCH
+    ConnectionMode:
+      type: string
+      description: WebSocket connection mode controlling broadcast and response behavior
+      enum:
+      - External
+      - Relayed
+      - Internal
+    InternalAuthMode:
+      type: string
+      description: Authentication mode for internal WebSocket connections
+      enum:
+      - ServiceToken
+      - NetworkTrust
+    BroadcastMode:
+      type: string
+      description: Broadcast directionality mode for multi-node Connect deployments
+      enum:
+      - None
+      - Send
+      - Receive
+      - Both
     CompanionRoomMode:
       type: string
       description: How Connect manages companion chat rooms for WebSocket sessions

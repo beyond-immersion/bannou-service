@@ -13,6 +13,7 @@ namespace BeyondImmersion.BannouService.Connect.Protocol;
 public class ConnectionState
 {
     private readonly object _mappingsLock = new object();
+    private readonly object _rateLimitLock = new object();
 
     /// <summary>
     /// Unique session ID for this connection
@@ -40,14 +41,16 @@ public class ConnectionState
     public Dictionary<Guid, string> GuidMappings { get; }
 
     /// <summary>
-    /// Per-channel sequence numbers for message ordering
+    /// Per-channel sequence numbers for message ordering.
+    /// Thread-safe for concurrent WebSocket message processing.
     /// </summary>
-    public Dictionary<ushort, uint> ChannelSequences { get; }
+    public ConcurrentDictionary<ushort, uint> ChannelSequences { get; }
 
     /// <summary>
-    /// Pending messages awaiting responses (Message ID -> Request Info)
+    /// Pending messages awaiting responses (Message ID -> Request Info).
+    /// Thread-safe for concurrent message send/receive operations.
     /// </summary>
-    public Dictionary<ulong, PendingMessageInfo> PendingMessages { get; }
+    public ConcurrentDictionary<ulong, PendingMessageInfo> PendingMessages { get; }
 
     /// <summary>
     /// Timestamps of all incoming messages for rate limiting.
@@ -130,8 +133,8 @@ public class ConnectionState
         LastActivity = ConnectedAt;
         ServiceMappings = new Dictionary<string, Guid>();
         GuidMappings = new Dictionary<Guid, string>();
-        ChannelSequences = new Dictionary<ushort, uint>();
-        PendingMessages = new Dictionary<ulong, PendingMessageInfo>();
+        ChannelSequences = new ConcurrentDictionary<ushort, uint>();
+        PendingMessages = new ConcurrentDictionary<ulong, PendingMessageInfo>();
         RateLimitTimestamps = new Queue<DateTimeOffset>();
         SessionShortcuts = new ConcurrentDictionary<Guid, SessionShortcutData>();
         ShortcutsByService = new ConcurrentDictionary<string, HashSet<Guid>>();
@@ -205,18 +208,12 @@ public class ConnectionState
     }
 
     /// <summary>
-    /// Gets the next sequence number for a channel.
+    /// Gets the next sequence number for a channel (thread-safe).
+    /// Uses atomic AddOrUpdate to prevent lost increments under concurrent access.
     /// </summary>
     public uint GetNextSequenceNumber(ushort channel)
     {
-        if (!ChannelSequences.TryGetValue(channel, out var current))
-        {
-            current = 0;
-        }
-
-        current++;
-        ChannelSequences[channel] = current;
-        return current;
+        return ChannelSequences.AddOrUpdate(channel, 1, (_, current) => current + 1);
     }
 
     /// <summary>
@@ -237,16 +234,11 @@ public class ConnectionState
     }
 
     /// <summary>
-    /// Removes a pending message (when response received).
+    /// Removes a pending message (when response received, thread-safe).
     /// </summary>
     public PendingMessageInfo? RemovePendingMessage(ulong messageId)
     {
-        if (PendingMessages.TryGetValue(messageId, out var info))
-        {
-            PendingMessages.Remove(messageId);
-            return info;
-        }
-        return null;
+        return PendingMessages.TryRemove(messageId, out var info) ? info : null;
     }
 
     /// <summary>
@@ -279,30 +271,37 @@ public class ConnectionState
     #region Rate Limiting
 
     /// <summary>
-    /// Records an incoming message timestamp for rate limiting.
+    /// Records an incoming message timestamp for rate limiting (thread-safe).
     /// Call this for every incoming message regardless of type or flags.
     /// </summary>
     public void RecordMessageForRateLimit()
     {
-        RateLimitTimestamps.Enqueue(DateTimeOffset.UtcNow);
+        lock (_rateLimitLock)
+        {
+            RateLimitTimestamps.Enqueue(DateTimeOffset.UtcNow);
+        }
     }
 
     /// <summary>
-    /// Counts messages within the specified window and removes expired entries.
+    /// Counts messages within the specified window and removes expired entries (thread-safe).
+    /// Uses lock because the sliding window pattern requires atomic peek+dequeue operations.
     /// </summary>
     /// <param name="windowMinutes">Sliding window duration in minutes</param>
     /// <returns>Number of messages within the window</returns>
     public int GetMessageCountInWindow(int windowMinutes)
     {
-        var windowStart = DateTimeOffset.UtcNow.AddMinutes(-windowMinutes);
-
-        // Remove expired entries from front of queue
-        while (RateLimitTimestamps.Count > 0 && RateLimitTimestamps.Peek() < windowStart)
+        lock (_rateLimitLock)
         {
-            RateLimitTimestamps.Dequeue();
-        }
+            var windowStart = DateTimeOffset.UtcNow.AddMinutes(-windowMinutes);
 
-        return RateLimitTimestamps.Count;
+            // Remove expired entries from front of queue
+            while (RateLimitTimestamps.Count > 0 && RateLimitTimestamps.Peek() < windowStart)
+            {
+                RateLimitTimestamps.Dequeue();
+            }
+
+            return RateLimitTimestamps.Count;
+        }
     }
 
     #endregion

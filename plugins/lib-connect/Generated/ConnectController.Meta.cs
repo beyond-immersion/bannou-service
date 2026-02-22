@@ -47,14 +47,7 @@ public partial class ConnectController
                     "description": "Target API endpoint path (e.g., \"/account/{id}\")"
                 },
                 "method": {
-                    "type": "string",
-                    "enum": [
-                        "GET",
-                        "POST",
-                        "PUT",
-                        "DELETE",
-                        "PATCH"
-                    ],
+                    "$ref": "#/$defs/HttpMethodType",
                     "description": "HTTP method for the target endpoint"
                 },
                 "headers": {
@@ -69,7 +62,7 @@ public partial class ConnectController
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Request body to forward to target service (null for no body)"
+                    "description": "Request body to forward to target service (null for no body). Uses\nadditionalProperties because this proxies arbitrary JSON payloads to any\ ntarget service \u2014 the structure is defined by each target service's schema,\nnot by Connect (client-opaque pass-through per FOUNDATION TENETS).\n"
                 },
                 "pathParameters": {
                     "type": "object",
@@ -88,6 +81,17 @@ public partial class ConnectController
                     "description": "Query string parameters for the endpoint (null if none)"
                 }
             }
+        },
+        "HttpMethodType": {
+            "type": "string",
+            "description": "HTTP method for endpoint invocation",
+            "enum": [
+                "GET",
+                "POST",
+                "PUT",
+                "DELETE",
+                "PATCH"
+            ]
         }
     }
 }
@@ -309,14 +313,7 @@ public partial class ConnectController
                     "description": "API endpoint path (e.g., \"/account/create\")"
                 },
                 "method": {
-                    "type": "string",
-                    "enum": [
-                        "GET",
-                        "POST",
-                        "PUT",
-                        "DELETE",
-                        "PATCH"
-                    ],
+                    "$ref": "#/$defs/HttpMethodType",
                     "description": "HTTP method for this endpoint"
                 },
                 "description": {
@@ -331,6 +328,17 @@ public partial class ConnectController
                     "default": 0
                 }
             }
+        },
+        "HttpMethodType": {
+            "type": "string",
+            "description": "HTTP method for endpoint invocation",
+            "enum": [
+                "GET",
+                "POST",
+                "PUT",
+                "DELETE",
+                "PATCH"
+            ]
         },
         "ClientShortcut": {
             "type": "object",
@@ -588,6 +596,70 @@ public partial class ConnectController
 
     #endregion
 
+    #region Meta Endpoints for BroadcastWebSocket
+
+    private static readonly string _BroadcastWebSocket_RequestSchema = """
+{}
+""";
+
+    private static readonly string _BroadcastWebSocket_ResponseSchema = """
+{}
+""";
+
+    private static readonly string _BroadcastWebSocket_Info = """
+{
+    "summary": "Inter-node broadcast WebSocket endpoint",
+    "description": "Internal WebSocket endpoint for the multi-node broadcast mesh.\nOther Connect instances connect here to relay broadcast messages.\ nRequires service-token authentication (same as Internal connection mode).\n\n**Not client-facing.** This endpoint is used exclusively for\ninter-node communication between Connect instances in multi-instance\ndeployments. Requires `instanceId` query parameter identifying the\nconnecting peer.\n",
+    "tags": [
+        "Inter-Node Broadcast"
+    ],
+    "deprecated": false,
+    "operationId": "BroadcastWebSocket"
+}
+""";
+
+    /// <summary>Returns endpoint information for BroadcastWebSocket</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/connect/broadcast/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> BroadcastWebSocket_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Connect",
+            "GET",
+            "/connect/broadcast",
+            _BroadcastWebSocket_Info));
+
+    /// <summary>Returns request schema for BroadcastWebSocket</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/connect/broadcast/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> BroadcastWebSocket_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Connect",
+            "GET",
+            "/connect/broadcast",
+            "request-schema",
+            _BroadcastWebSocket_RequestSchema));
+
+    /// <summary>Returns response schema for BroadcastWebSocket</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/connect/broadcast/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> BroadcastWebSocket_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Connect",
+            "GET",
+            "/connect/broadcast",
+            "response-schema",
+            _BroadcastWebSocket_ResponseSchema));
+
+    /// <summary>Returns full schema for BroadcastWebSocket</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/connect/broadcast/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> BroadcastWebSocket_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Connect",
+            "GET",
+            "/connect/broadcast",
+            _BroadcastWebSocket_Info,
+            _BroadcastWebSocket_RequestSchema,
+            _BroadcastWebSocket_ResponseSchema));
+
+    #endregion
+
     #region Meta Endpoints for GetEndpointMeta
 
     private static readonly string _GetEndpointMeta_RequestSchema = """
@@ -651,7 +723,7 @@ public partial class ConnectController
                 "data": {
                     "type": "object",
                     "additionalProperties": true,
-                    "description": "Metadata payload whose structure varies by metaType (endpoint-info returns summary/tags/operationId, request-schema and response-schema return JSON Schema objects, full-schema returns all three combined)"
+                    "description": "Metadata payload whose structure varies by metaType (endpoint-info returns\nsummary/tags/operationId, request-schema and response-schema return JSON Schema\nobjects, full-schema returns all three combined). Uses additionalProperties because\nthis proxies opaque JSON from internal meta endpoints whose schemas are defined by\neach service's controller (client-opaque pass-through per FOUNDATION TENETS).\n"
                 },
                 "generatedAt": {
                     "type": "string",
@@ -771,7 +843,8 @@ public partial class ConnectController
                 "sessionIds": {
                     "type": "array",
                     "items": {
-                        "type": "string"
+                        "type": "string",
+                        "format": "uuid"
                     },
                     "description": "List of active WebSocket session IDs for this account"
                 },

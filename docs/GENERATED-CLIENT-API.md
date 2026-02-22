@@ -20,7 +20,7 @@ This document lists all typed proxy methods available in the Bannou Client SDK.
 | [Bannou Character Encounter Service API](#character-encounter) | `client.CharacterEncounter` | 21 | Character encounter tracking service for memorable interacti... |
 | [Bannou Character History Service API](#character-history) | `client.CharacterHistory` | 12 | Historical event participation and backstory management for ... |
 | [Bannou Character Personality Service API](#character-personality) | `client.CharacterPersonality` | 12 | Machine-readable personality traits for NPC behavior decisio... |
-| [Chat Service API](#chat) | `client.Chat` | 28 | Typed message channel service (L1 AppFoundation) providing u... |
+| [Chat Service API](#chat) | `client.Chat` | 30 | Typed message channel service (L1 AppFoundation) providing u... |
 | [Collection Service API](#collection) | `client.Collection` | 20 | Universal content unlock and archive system for collectible ... |
 | [Bannou Connect API](#connect) | `client.Connect` | 5 | Real-time communication and WebSocket connection management ... |
 | [Contract Service API](#contract) | `client.Contract` | 30 | Binding agreements between entities with milestone-based pro... |
@@ -591,6 +591,8 @@ Typed message channel service (L1 AppFoundation) providing universal communicati
 | `AdminlistroomsAsync` | `AdminListRoomsRequest` | `ListRoomsResponse` | List all rooms system-wide |
 | `AdmingetstatsAsync` | `AdminGetStatsRequest` | `AdminStatsResponse` | Room and message statistics |
 | `AdminforcecleanupAsync` | `AdminForceCleanupRequest` | `AdminCleanupResponse` | Force cleanup of idle rooms |
+| `TypingEventAsync` | `TypingRequest` | *(fire-and-forget)* | Signal typing activity |
+| `EndtypingEventAsync` | `EndTypingRequest` | *(fire-and-forget)* | Signal typing stopped |
 
 ---
 
@@ -2445,7 +2447,7 @@ Per-realm game time authority, calendar system, and temporal event broadcasting.
 ## Summary
 
 - **Total services**: 54
-- **Total methods**: 846
+- **Total methods**: 848
 
 ---
 

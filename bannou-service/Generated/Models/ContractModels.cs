@@ -336,6 +336,60 @@ public enum TermsMergeMode
 #pragma warning restore CS1591
 
 /// <summary>
+/// How to execute a prebound API call
+/// </summary>
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public enum PreboundApiExecutionMode
+{
+
+    [System.Runtime.Serialization.EnumMember(Value = @"sync")]
+    Sync = 0,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"async")]
+    Async = 1,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"fire_and_forget")]
+    FireAndForget = 2,
+
+}
+#pragma warning restore CS1591
+
+/// <summary>
+/// Outcome of prebound API response validation
+/// </summary>
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public enum ValidationOutcome
+{
+
+    [System.Runtime.Serialization.EnumMember(Value = @"permanent_failure")]
+    PermanentFailure = 0,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"transient_failure")]
+    TransientFailure = 1,
+
+}
+#pragma warning restore CS1591
+
+/// <summary>
+/// Type of time commitment for scheduling constraints
+/// </summary>
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public enum TimeCommitmentType
+{
+
+    [System.Runtime.Serialization.EnumMember(Value = @"exclusive")]
+    Exclusive = 0,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"partial")]
+    Partial = 1,
+
+}
+#pragma warning restore CS1591
+
+/// <summary>
 /// Request to create a new contract template
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
@@ -346,9 +400,9 @@ public partial class CreateContractTemplateRequest
     /// Unique code for this template (lowercase, underscores)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("code")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
-    [System.ComponentModel.DataAnnotations.StringLength(64)]
+    [System.ComponentModel.DataAnnotations.StringLength(64, MinimumLength = 1)]
     [System.ComponentModel.DataAnnotations.RegularExpression(@"^[a-z0-9_]+$")]
     public string Code { get; set; } = default!;
 
@@ -356,9 +410,9 @@ public partial class CreateContractTemplateRequest
     /// Human-readable template name
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("name")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
-    [System.ComponentModel.DataAnnotations.StringLength(200)]
+    [System.ComponentModel.DataAnnotations.StringLength(200, MinimumLength = 1)]
     public string Name { get; set; } = default!;
 
     /// <summary>
@@ -410,11 +464,11 @@ public partial class CreateContractTemplateRequest
     public System.Collections.Generic.ICollection<MilestoneDefinition>? Milestones { get; set; } = default!;
 
     /// <summary>
-    /// Default enforcement mode for instances
+    /// Default enforcement mode for instances (uses service default if not specified)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("defaultEnforcementMode")]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public EnforcementMode DefaultEnforcementMode { get; set; } = default!;
+    public EnforcementMode? DefaultEnforcementMode { get; set; } = default!;
 
     /// <summary>
     /// Whether contracts can be transferred to other parties
@@ -955,6 +1009,8 @@ public partial class ContractInstanceResponse
     /// Source template code
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("templateCode")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string TemplateCode { get; set; } = default!;
 
     /// <summary>
@@ -1142,9 +1198,9 @@ public partial class PartyRoleDefinition
     /// Role identifier (employer, employee, buyer, seller, etc.)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("role")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
-    [System.ComponentModel.DataAnnotations.StringLength(64)]
+    [System.ComponentModel.DataAnnotations.StringLength(64, MinimumLength = 1)]
     public string Role { get; set; } = default!;
 
     /// <summary>
@@ -1358,10 +1414,11 @@ public partial class ContractTerms
     public bool? TimeCommitment { get; set; } = default!;
 
     /// <summary>
-    /// Type of time commitment (exclusive or partial)
+    /// Type of time commitment for scheduling constraints
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("timeCommitmentType")]
-    public string? TimeCommitmentType { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public TimeCommitmentType? TimeCommitmentType { get; set; } = default!;
 
     /// <summary>
     /// Clause definitions for contract execution (fees, distributions, asset requirements)
@@ -1914,21 +1971,17 @@ public partial class BreachResponse
     public System.Guid ContractId { get; set; } = default!;
 
     /// <summary>
-    /// Entity that breached
+    /// Entity that breached (null for system-initiated breaches such as deadline enforcement)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("breachingEntityId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid BreachingEntityId { get; set; } = default!;
+    public System.Guid? BreachingEntityId { get; set; } = default!;
 
     /// <summary>
-    /// Type of breaching entity
+    /// Type of breaching entity (null for system-initiated breaches)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("breachingEntityType")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public EntityType BreachingEntityType { get; set; } = default!;
+    public EntityType? BreachingEntityType { get; set; } = default!;
 
     /// <summary>
     /// Type of breach
@@ -2259,12 +2312,10 @@ public partial class ContractSummary
     public ContractStatus Status { get; set; } = default!;
 
     /// <summary>
-    /// Entity's role in contract
+    /// Entity's role in contract (null if party record not found due to data inconsistency)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("role")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public string Role { get; set; } = default!;
+    public string? Role { get; set; } = default!;
 
     /// <summary>
     /// When contract expires
@@ -2327,35 +2378,26 @@ public partial class PreboundApi
 }
 
 /// <summary>
-/// Validation rules for API responses with three-outcome model.
-/// <br/>Used by lib-contract to validate clause conditions without
-/// <br/>understanding the specific API semantics.
-/// <br/>
+/// Validation rules for API responses with three-outcome model (success, permanent failure, transient failure)
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class ResponseValidation
 {
 
     /// <summary>
-    /// Conditions that must ALL pass for success.
-    /// <br/>If any fail, checks permanent failure conditions.
-    /// <br/>
+    /// Conditions that must ALL pass for success; if any fail, checks permanent failure conditions
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("successConditions")]
     public System.Collections.Generic.ICollection<ValidationCondition> SuccessConditions { get; set; } = default!;
 
     /// <summary>
-    /// Conditions that indicate permanent failure (clause violated).
-    /// <br/>Checked when success conditions fail.
-    /// <br/>
+    /// Conditions that indicate permanent failure (clause violated); checked when success conditions fail
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("permanentFailureConditions")]
     public System.Collections.Generic.ICollection<ValidationCondition> PermanentFailureConditions { get; set; } = default!;
 
     /// <summary>
-    /// HTTP status codes that indicate transient failure (retry later).
-    /// <br/>Default: [408, 429, 502, 503, 504]
-    /// <br/>
+    /// HTTP status codes indicating transient failure for retry (default 408, 429, 502, 503, 504)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("transientFailureStatusCodes")]
     public System.Collections.Generic.ICollection<int> TransientFailureStatusCodes { get; set; } = default!;
@@ -2379,18 +2421,13 @@ public partial class ValidationCondition
     public ValidationConditionType Type { get; set; } = default!;
 
     /// <summary>
-    /// JsonPath expression to extract value from response.
-    /// <br/>Required for jsonPathEquals, jsonPathExists, jsonPathNotExists.
-    /// <br/>Example: "$.balance", "$.items[0].status"
-    /// <br/>
+    /// JsonPath expression to extract value from response (required for jsonPathEquals/Exists/NotExists, e.g. "$.balance")
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("jsonPath")]
     public string? JsonPath { get; set; } = default!;
 
     /// <summary>
-    /// Expected value for comparison conditions.
-    /// <br/>Type coercion applied: "true"/"false" for booleans, numeric strings for numbers.
-    /// <br/>
+    /// Expected value for comparison conditions with type coercion ("true"/"false" for booleans, numeric strings for numbers)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("expectedValue")]
     public string? ExpectedValue { get; set; } = default!;
@@ -2540,12 +2577,16 @@ public partial class LockContractResponse
     /// Guardian entity ID
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("guardianId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.Guid GuardianId { get; set; } = default!;
 
     /// <summary>
     /// When the contract was locked
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("lockedAt")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.DateTimeOffset LockedAt { get; set; } = default!;
 
 }
@@ -2714,18 +2755,24 @@ public partial class TransferContractPartyResponse
     /// Role that was transferred
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("role")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string Role { get; set; } = default!;
 
     /// <summary>
     /// Previous party entity ID
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("fromEntityId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.Guid FromEntityId { get; set; } = default!;
 
     /// <summary>
     /// New party entity ID
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("toEntityId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.Guid ToEntityId { get; set; } = default!;
 
 }
@@ -2966,9 +3013,7 @@ public partial class SetTemplateValuesRequest
     public System.Guid ContractInstanceId { get; set; } = default!;
 
     /// <summary>
-    /// Key-value pairs for template substitution.
-    /// <br/>Keys should follow pattern: EscrowId, PartyA_EscrowWalletId, etc.
-    /// <br/>
+    /// Key-value pairs for template substitution (keys follow pattern EscrowId, PartyA_EscrowWalletId, etc.)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("templateValues")]
     [System.ComponentModel.DataAnnotations.Required]
@@ -3176,11 +3221,7 @@ public partial class ExecuteContractRequest
 }
 
 /// <summary>
-/// Outcome of a single clause distribution during contract execution.
-/// <br/>Used in ContractExecutedEvent to provide per-clause success/failure details.
-/// <br/>Deliberately excludes wallet/container IDs - consumers tracking these should
-/// <br/>correlate via clauseId to their own records.
-/// <br/>
+/// Per-clause distribution outcome during contract execution; excludes wallet/container IDs so consumers correlate via clauseId
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class ClauseDistributionResult
@@ -3203,9 +3244,7 @@ public partial class ClauseDistributionResult
     public string ClauseType { get; set; } = default!;
 
     /// <summary>
-    /// Descriptive type of asset involved (e.g., "currency", "item").
-    /// <br/>Provides human-readable context for what was transferred.
-    /// <br/>
+    /// Descriptive type of asset involved (e.g. "currency", "item") providing human-readable context
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("assetType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
@@ -3255,6 +3294,8 @@ public partial class ExecuteContractResponse
     /// Contract instance ID
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("contractId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.Guid ContractId { get; set; } = default!;
 
     /// <summary>
@@ -3270,23 +3311,6 @@ public partial class ExecuteContractResponse
     public System.DateTimeOffset? ExecutedAt { get; set; } = default!;
 
 }
-
-#pragma warning disable CS1591 // Enum members cannot have XML documentation
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum PreboundApiExecutionMode
-{
-
-    [System.Runtime.Serialization.EnumMember(Value = @"sync")]
-    Sync = 0,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"async")]
-    Async = 1,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"fire_and_forget")]
-    FireAndForget = 2,
-
-}
-#pragma warning restore CS1591
 
 
 

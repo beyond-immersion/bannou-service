@@ -3,14 +3,13 @@
 > **Plugin**: lib-contract
 > **Schema**: schemas/contract-api.yaml
 > **Version**: 1.0.0
-> **Layer**: AppFoundation
-> **State Stores**: contract-statestore (Redis)
+> **State Store**: contract-statestore (Redis)
 
 ---
 
 ## Overview
 
-Binding agreement management (L1 AppFoundation) between entities with milestone-based progression, consent flows, and prebound API execution on state transitions. Contracts are reactive: external systems report condition fulfillment via API calls; contracts store state, emit events, and execute callbacks. Templates define structure (party roles, milestones, terms, enforcement mode); instances track consent, sequential progression, and breach handling. Used as infrastructure by lib-quest (quest objectives map to contract milestones) and lib-escrow (asset-backed contracts via guardian locking). Has a known L1-to-L2 hierarchy violation: depends on lib-location for territory constraint checking.
+Binding agreement management (L1 AppFoundation) between entities with milestone-based progression, consent flows, and prebound API execution on state transitions. Contracts are reactive: external systems report condition fulfillment via API calls; contracts store state, emit events, and execute callbacks. Templates define structure (party roles, milestones, terms, enforcement mode); instances track consent, sequential progression, and breach handling. Used as infrastructure by lib-quest (quest objectives map to contract milestones) and lib-escrow (asset-backed contracts via guardian locking).
 
 ---
 
@@ -23,9 +22,7 @@ Binding agreement management (L1 AppFoundation) between entities with milestone-
 | lib-messaging (`IMessageBus`) | Publishing contract lifecycle events, prebound API execution events, error events |
 | lib-mesh (`IServiceNavigator`) | Executing prebound APIs (milestone callbacks, clause validation, clause execution) |
 | lib-mesh (`IEventConsumer`) | Event consumer registration (reserved for future event subscriptions) |
-| lib-location (`ILocationClient`) | Territory constraint checking via location hierarchy ancestry queries |
-
-> **⚠️ SERVICE HIERARCHY VIOLATION**: Contract (L1 App Foundation) depends on Location (L2 Game Foundation). This violates the service hierarchy - L1 services cannot depend on L2. The dependency exists for territory constraint checking (`CheckContractConstraint` with `Territory` constraint type). **Remediation options**: (A) Remove location validation entirely, (B) Move territory clause logic to an L4 "ContractExtensions" service that subscribes to contract events, or (C) invert things so that location provides its own validation defition to the contract service (recommended).
+| `ITelemetryProvider` | Distributed tracing span instrumentation for async helper methods |
 
 ---
 
@@ -134,7 +131,7 @@ This plugin does not consume external events. The events schema explicitly decla
 | `IMessageBus` | Scoped | Event publishing and error events |
 | `IServiceNavigator` | Scoped | Prebound API execution (milestone callbacks, clause execution) |
 | `IEventConsumer` | Scoped | Event consumer registration (unused in v1) |
-| `ILocationClient` | Scoped | Territory constraint checking via ancestry queries |
+| `ITelemetryProvider` | Singleton | Distributed tracing span instrumentation for async helper methods |
 | `ContractMilestoneExpirationService` | Singleton (BackgroundService) | Periodic milestone deadline enforcement |
 
 Service lifetime is **Scoped** (per-request). Background service `ContractMilestoneExpirationService` runs continuously. Partial classes split into:
@@ -185,8 +182,7 @@ Service lifetime is **Scoped** (per-request). Background service `ContractMilest
 - **CheckContractConstraint** (`/contract/check-constraint`): Loads entity's active contracts. Checks typed constraint properties on ContractTerms based on ConstraintType:
   - **Exclusivity**: checks `Terms.Exclusivity` boolean
   - **Non_compete**: checks `Terms.NonCompete` boolean
-  - **Territory**: validates location hierarchy overlap with exclusive/inclusive modes via `ILocationClient.GetLocationAncestorsAsync`. Custom terms `territoryLocationIds`, `territoryMode`, and proposedAction `locationId` drive the constraint logic.
-  - **Time_commitment**: detects conflicting exclusive time commitments across active contracts by checking date range overlaps for contracts with `Terms.TimeCommitment == true` and `Terms.TimeCommitmentType == "exclusive"`.
+  - **Time_commitment**: detects conflicting exclusive time commitments across active contracts by checking date range overlaps for contracts with `Terms.TimeCommitment == true` and `Terms.TimeCommitmentType == TimeCommitmentType.Exclusive`.
   Returns allowed=true with no conflicts, or allowed=false with conflicting contract summaries and reason.
 - **QueryActiveContracts** (`/contract/query-active`): Loads entity's contracts, filters to Active status only. Optional templateCodes filter with wildcard prefix matching (TrimEnd('*') + StartsWith). Returns contract summaries with roles.
 
@@ -559,7 +555,6 @@ When a clause execution fails:
 
 1. **Per-milestone onApiFailure flag** ([#246](https://github.com/beyond-immersion/bannou-service/issues/246)): Currently prebound API failures are always non-blocking. Adding a per-milestone flag would require API schema changes (new field on MilestoneDefinition), model regeneration, and careful design of retry semantics. Requires design discussion before implementation.
 
-2. ~~**Cursor-based pagination** ([#247](https://github.com/beyond-immersion/bannou-service/issues/247))~~: **IMPLEMENTED**. `ListContractTemplates` and `QueryContractInstances` now use cursor-based pagination with opaque cursor tokens. Cursors encode offset for forward compatibility. State store has Redis Search enabled for future filtered queries at scale. Configuration property `DefaultPageSize` controls default page size (20).
 
 ---
 
@@ -573,10 +568,10 @@ This section tracks active development work using AUDIT markers.
 
 ### Completed
 
-- **2026-02-01**: Quirks analysis and issue creation. Created issues #241-#247. Reorganized documentation with new sections for Duration Format Reference, Milestone Deadline Architecture, and Partial Execution & Reconciliation.
+- **2026-02-22**: Full L3 audit. Removed ILocationClient/territory constraint (hierarchy violation). Fixed schema NRT, multi-line descriptions, inline enums→named types, config validation bounds, T29 descriptions, event schema indentation. Fixed T25 (TimeCommitmentType→enum, GuardianType event types to string, ValidationOutcome→enum ref). Fixed T26 (nullable breach/terminated entity fields, nullable ContractSummary.role). Added ITelemetryProvider to all critical async helpers + background service. Removed dead EmitErrorAsync, duplicate InternalsVisibleTo. Closed #247 (cursor-based pagination verified implemented).
+- **2026-02-01**: Quirks analysis and issue creation. Created issues #241-#247.
 - **2026-02-01**: Issue #218 - Added per-clause distribution details to `ContractExecutedEvent`.
 - **2026-02-01**: Issue #217 - Moved 6 escrow integration events from inline definitions to schema.
-- **2026-02-01**: Implemented territory constraint checking via `ILocationClient`.
 - **2026-02-01**: Implemented time commitment constraint checking.
 - **2026-02-01**: Implemented milestone deadline computation and enforcement with `ContractMilestoneExpirationService`.
 - **2026-02-01**: Implemented breach threshold enforcement.

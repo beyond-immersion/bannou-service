@@ -16,8 +16,6 @@ public class BannouSessionManager : ISessionManager
     private readonly ConnectServiceConfiguration _configuration;
     private readonly ILogger<BannouSessionManager> _logger;
 
-    private const string SESSION_EVENTS_TOPIC = "connect.session-events";
-
     // Key prefixes - MUST be unique across all services to avoid key collisions
     // (mesh prefixes keys with app-id, not component name, so all components share key namespace)
     private const string SESSION_KEY_PREFIX = "ws-session:";
@@ -380,45 +378,6 @@ public class BannouSessionManager : ISessionManager
                 details: $"sessionId={sessionId}",
                 stack: ex.StackTrace);
             // Don't throw - cleanup failures shouldn't break main functionality
-        }
-    }
-
-    #endregion
-
-    #region Session Events
-
-    /// <inheritdoc />
-    public async Task PublishSessionEventAsync(string eventType, string sessionId, object? eventData = null)
-    {
-        try
-        {
-            var sessionEvent = new SessionEvent
-            {
-                EventType = eventType,
-                SessionId = Guid.Parse(sessionId),
-                Timestamp = DateTimeOffset.UtcNow,
-                Data = eventData
-            };
-
-            await _messageBus.TryPublishAsync(SESSION_EVENTS_TOPIC, sessionEvent);
-
-            _logger.LogDebug("Published session event {EventType} for session {SessionId}",
-                eventType, sessionId);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Failed to publish session event {EventType} for {SessionId}",
-                eventType, sessionId);
-            await _messageBus.TryPublishErrorAsync(
-                "connect",
-                "PublishSessionEvent",
-                "event_publishing_failed",
-                ex.Message,
-                dependency: "messaging",
-                endpoint: null,
-                details: $"eventType={eventType},sessionId={sessionId}",
-                stack: ex.StackTrace);
-            // Don't throw - event publishing failures shouldn't break main functionality
         }
     }
 

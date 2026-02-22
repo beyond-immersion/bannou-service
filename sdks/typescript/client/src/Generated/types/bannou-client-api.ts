@@ -13625,6 +13625,13 @@ export interface components {
       /** @description Sender display name */
       displayName?: string | null;
     };
+    /** @description Details of a single message that failed in a batch send operation */
+    BatchMessageFailure: {
+      /** @description Zero-based index of the failed message in the request messages array */
+      index: number;
+      /** @description Human-readable error reason */
+      error: string;
+    };
     /** @description Compiled behavior tree data with bytecode or download reference */
     BehaviorTreeData: {
       /** @description Base64-encoded compiled bytecode for the behavior tree */
@@ -14107,11 +14114,11 @@ export interface components {
       contractId: string;
       /**
        * Format: uuid
-       * @description Entity that breached
+       * @description Entity that breached (null for system-initiated breaches such as deadline enforcement)
        */
-      breachingEntityId: string;
-      /** @description Type of breaching entity */
-      breachingEntityType: components['schemas']['EntityType'];
+      breachingEntityId?: string | null;
+      /** @description Type of breaching entity (null for system-initiated breaches) */
+      breachingEntityType?: components['schemas']['EntityType'] | null;
       /** @description Type of breach */
       breachType: components['schemas']['BreachType'];
       /** @description What was breached */
@@ -15107,7 +15114,7 @@ export interface components {
        * @description When the room was created
        */
       createdAt: string;
-      /** @description Arbitrary JSON metadata */
+      /** @description Client-only metadata stored as JSON string. No Bannou plugin reads specific keys from this field by convention. */
       metadata?: string | null;
     };
     /**
@@ -15336,12 +15343,7 @@ export interface components {
      * @enum {string}
      */
     ClauseCategory: 'validation' | 'execution' | 'both';
-    /**
-     * @description Outcome of a single clause distribution during contract execution.
-     *     Used in ContractExecutedEvent to provide per-clause success/failure details.
-     *     Deliberately excludes wallet/container IDs - consumers tracking these should
-     *     correlate via clauseId to their own records.
-     */
+    /** @description Per-clause distribution outcome during contract execution; excludes wallet/container IDs so consumers correlate via clauseId */
     ClauseDistributionResult: {
       /**
        * Format: uuid
@@ -15350,10 +15352,7 @@ export interface components {
       clauseId: string;
       /** @description Type of clause (e.g., currency_transfer, item_transfer, fee) */
       clauseType: string;
-      /**
-       * @description Descriptive type of asset involved (e.g., "currency", "item").
-       *     Provides human-readable context for what was transferred.
-       */
+      /** @description Descriptive type of asset involved (e.g. "currency", "item") providing human-readable context */
       assetType: string;
       /** @description Quantity transferred (currency amount, item count, etc.) */
       amount: number;
@@ -15589,11 +15588,8 @@ export interface components {
       service: string;
       /** @description API endpoint path (e.g., "/account/create") */
       endpoint: string;
-      /**
-       * @description HTTP method for this endpoint
-       * @enum {string}
-       */
-      method: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH';
+      /** @description HTTP method for this endpoint */
+      method: components['schemas']['HttpMethodType'];
       /** @description Human-readable description of this capability */
       description?: string | null;
       /**
@@ -16637,7 +16633,7 @@ export interface components {
        */
       templateId: string;
       /** @description Source template code */
-      templateCode?: string;
+      templateCode: string;
       /** @description Current contract status */
       status: components['schemas']['ContractStatus'];
       /** @description Contract parties */
@@ -16789,8 +16785,8 @@ export interface components {
       templateName?: string | null;
       /** @description Current status */
       status: components['schemas']['ContractStatus'];
-      /** @description Entity's role in contract */
-      role: string;
+      /** @description Entity's role in contract (null if party record not found due to data inconsistency) */
+      role?: string | null;
       /**
        * Format: date-time
        * @description When contract expires
@@ -16828,7 +16824,7 @@ export interface components {
       /** @description Default enforcement mode */
       defaultEnforcementMode: components['schemas']['EnforcementMode'];
       /** @description Whether contracts can be transferred */
-      transferable?: boolean;
+      transferable: boolean;
       /** @description Client-only game metadata. No Bannou plugin reads specific keys from this field by convention. */
       gameMetadata?: {
         [key: string]: unknown;
@@ -16868,8 +16864,8 @@ export interface components {
       nonCompete?: boolean | null;
       /** @description Whether this contract has a time commitment clause */
       timeCommitment?: boolean | null;
-      /** @description Type of time commitment (exclusive or partial) */
-      timeCommitmentType?: string | null;
+      /** @description Type of time commitment for scheduling constraints */
+      timeCommitmentType?: components['schemas']['TimeCommitmentType'] | null;
       /** @description Clause definitions for contract execution (fees, distributions, asset requirements) */
       clauses?: components['schemas']['ContractClauseDefinition'][] | null;
       /** @description Client-only custom terms. No Bannou plugin reads specific keys from this field by convention. */
@@ -17945,7 +17941,7 @@ export interface components {
       contractTerminatedAction?: components['schemas']['ContractRoomAction'] | null;
       /** @description Action when governing contract expires (null uses service default) */
       contractExpiredAction?: components['schemas']['ContractRoomAction'] | null;
-      /** @description Arbitrary JSON metadata for client rendering hints */
+      /** @description Client-only metadata stored as JSON string. No Bannou plugin reads specific keys from this field by convention. */
       metadata?: string | null;
     };
     /** @description Request to create a scenario definition */
@@ -20602,7 +20598,7 @@ export interface components {
        * Format: uuid
        * @description Contract instance ID
        */
-      contractId?: string;
+      contractId: string;
       /** @description Per-clause distribution outcomes with success/failure details */
       distributions?: components['schemas']['ClauseDistributionResult'][] | null;
       /**
@@ -23910,6 +23906,11 @@ export interface components {
      * @enum {string}
      */
     HoldStatus: 'active' | 'captured' | 'released' | 'expired';
+    /**
+     * @description HTTP method for endpoint invocation
+     * @enum {string}
+     */
+    HttpMethodType: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH';
     /** @description Request to initialize a clock for a realm */
     InitializeRealmClockRequest: {
       /**
@@ -26634,12 +26635,12 @@ export interface components {
        * Format: uuid
        * @description Guardian entity ID
        */
-      guardianId?: string;
+      guardianId: string;
       /**
        * Format: date-time
        * @description When the contract was locked
        */
-      lockedAt?: string;
+      lockedAt: string;
     };
     /** @description Request to authenticate a user with email and password credentials */
     LoginRequest: {
@@ -28356,12 +28357,16 @@ export interface components {
       /**
        * @description How to execute the API call
        * @default sync
-       * @enum {string}
        */
-      executionMode: 'sync' | 'async' | 'fire_and_forget';
+      executionMode: components['schemas']['PreboundApiExecutionMode'];
       /** @description Optional validation rules for the response */
       responseValidation?: components['schemas']['ResponseValidation'];
     };
+    /**
+     * @description How to execute a prebound API call
+     * @enum {string}
+     */
+    PreboundApiExecutionMode: 'sync' | 'async' | 'fire_and_forget';
     /** @description Mutation that would be applied */
     PredictedMutation: {
       /** @description Type of mutation */
@@ -29916,7 +29921,7 @@ export interface components {
       allowAnonymousSenders: boolean;
       /** @description Messages per minute per participant (null uses service default) */
       rateLimitPerMinute?: number | null;
-      /** @description Arbitrary JSON metadata for client rendering hints */
+      /** @description Client-only metadata stored as JSON string. No Bannou plugin reads specific keys from this field by convention. */
       metadata?: string | null;
     };
     /** @description Request to register a new save data schema with optional migration rules */
@@ -30742,26 +30747,13 @@ export interface components {
        */
       expiresAt: string;
     };
-    /**
-     * @description Validation rules for API responses with three-outcome model.
-     *     Used by lib-contract to validate clause conditions without
-     *     understanding the specific API semantics.
-     */
+    /** @description Validation rules for API responses with three-outcome model (success, permanent failure, transient failure) */
     ResponseValidation: {
-      /**
-       * @description Conditions that must ALL pass for success.
-       *     If any fail, checks permanent failure conditions.
-       */
+      /** @description Conditions that must ALL pass for success; if any fail, checks permanent failure conditions */
       successConditions?: components['schemas']['ValidationCondition'][];
-      /**
-       * @description Conditions that indicate permanent failure (clause violated).
-       *     Checked when success conditions fail.
-       */
+      /** @description Conditions that indicate permanent failure (clause violated); checked when success conditions fail */
       permanentFailureConditions?: components['schemas']['ValidationCondition'][];
-      /**
-       * @description HTTP status codes that indicate transient failure (retry later).
-       *     Default: [408, 429, 502, 503, 504]
-       */
+      /** @description HTTP status codes indicating transient failure for retry (default 408, 429, 502, 503, 504) */
       transientFailureStatusCodes?: number[];
     };
     /** @description Request to restore a soft-deleted bundle */
@@ -30845,7 +30837,7 @@ export interface components {
       allowAnonymousSenders: boolean;
       /** @description Messages per minute limit */
       rateLimitPerMinute?: number | null;
-      /** @description Arbitrary JSON metadata */
+      /** @description Client-only metadata stored as JSON string. No Bannou plugin reads specific keys from this field by convention. */
       metadata?: string | null;
       /** @description Current lifecycle status of the room type */
       status: components['schemas']['RoomTypeStatus'];
@@ -32032,10 +32024,12 @@ export interface components {
       /** @description Messages to send atomically */
       messages: components['schemas']['BatchMessageEntry'][];
     };
-    /** @description Result of a batch message send operation */
+    /** @description Result of a batch message send operation with per-message failure tracking */
     SendMessageBatchResponse: {
-      /** @description Number of messages sent */
+      /** @description Number of messages successfully sent */
       messageCount: number;
+      /** @description Details of messages that failed to send (empty array when all succeeded) */
+      failed: components['schemas']['BatchMessageFailure'][];
     };
     /** @description Message content discriminated by the room message format. Exactly one content field group must be set, matching the room type format. */
     SendMessageContent: {
@@ -32214,10 +32208,7 @@ export interface components {
        * @description Contract instance ID
        */
       contractInstanceId: string;
-      /**
-       * @description Key-value pairs for template substitution.
-       *     Keys should follow pattern: EscrowId, PartyA_EscrowWalletId, etc.
-       */
+      /** @description Key-value pairs for template substitution (keys follow pattern EscrowId, PartyA_EscrowWalletId, etc.) */
       templateValues: {
         [key: string]: string;
       };
@@ -32232,7 +32223,7 @@ export interface components {
        */
       contractId: string;
       /** @description Number of template values set */
-      valueCount?: number;
+      valueCount: number;
     };
     /** @description Request to change the time ratio for a realm */
     SetTimeRatioRequest: {
@@ -33384,6 +33375,11 @@ export interface components {
      */
     TicketStatus: 'searching' | 'match_found' | 'match_accepted' | 'cancelled' | 'expired';
     /**
+     * @description Type of time commitment for scheduling constraints
+     * @enum {string}
+     */
+    TimeCommitmentType: 'exclusive' | 'partial';
+    /**
      * @description Why the time ratio was changed
      * @enum {string}
      */
@@ -33527,17 +33523,17 @@ export interface components {
        */
       contractId: string;
       /** @description Role that was transferred */
-      role?: string;
+      role: string;
       /**
        * Format: uuid
        * @description Previous party entity ID
        */
-      fromEntityId?: string;
+      fromEntityId: string;
       /**
        * Format: uuid
        * @description New party entity ID
        */
-      toEntityId?: string;
+      toEntityId: string;
     };
     /** @description Request to transfer currency between wallets */
     TransferCurrencyRequest: {
@@ -34578,7 +34574,7 @@ export interface components {
       displayName?: string | null;
       /** @description Updated participant limit */
       maxParticipants?: number | null;
-      /** @description Updated JSON metadata */
+      /** @description Client-only metadata stored as JSON string. No Bannou plugin reads specific keys from this field by convention. */
       metadata?: string | null;
     };
     /** @description Request to update room type properties (null fields left unchanged) */
@@ -35081,16 +35077,9 @@ export interface components {
     ValidationCondition: {
       /** @description The type of validation condition to check */
       type: components['schemas']['ValidationConditionType'];
-      /**
-       * @description JsonPath expression to extract value from response.
-       *     Required for jsonPathEquals, jsonPathExists, jsonPathNotExists.
-       *     Example: "$.balance", "$.items[0].status"
-       */
+      /** @description JsonPath expression to extract value from response (required for jsonPathEquals/Exists/NotExists, e.g. "$.balance") */
       jsonPath?: string | null;
-      /**
-       * @description Expected value for comparison conditions.
-       *     Type coercion applied: "true"/"false" for booleans, numeric strings for numbers.
-       */
+      /** @description Expected value for comparison conditions with type coercion ("true"/"false" for booleans, numeric strings for numbers) */
       expectedValue?: string | null;
       /** @description Comparison operator for numeric comparisons */
       operator?: components['schemas']['ComparisonOperator'];
