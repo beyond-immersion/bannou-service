@@ -46,7 +46,7 @@ This is **NOT** a code investigation tool. It reports the state depicted in each
 | [Messaging](#messaging-status) | L0 | 97% | 0 | L3-hardened. Dead letter consumer, IMeshInstanceIdentifier, shutdown timeout. 216 tests, 0 warnings. |
 | [Mesh](#mesh-status) | L0 | 97% | 0 | L3-hardened. IMeshInstanceIdentifier canonical identity, dead fields removed, no extensions remaining. |
 | [Telemetry](#telemetry-status) | L0 | 98% | 0 | L3-hardened. Self-instrumentation, schema fixes, null safety, tail-based sampling. 58 tests, 0 warnings. Only speculative extensions remain. |
-| [Account](#account-status) | L1 | 92% | 0 | Production-ready. Only post-launch extensions remain. |
+| [Account](#account-status) | L1 | 95% | 0 | L3-hardened. Schema NRT, telemetry spans, lock safety, null coercion fixes. 111 tests, 0 warnings. |
 | [Auth](#auth-status) | L1 | 88% | 0 | Core complete with MFA. Remaining items are downstream integration. |
 | [Chat](#chat-status) | L1 | 90% | 0 | All 28 endpoints complete. Dual storage, rate limiting, moderation. Design considerations remain. |
 | [Connect](#connect-status) | L1 | 92% | 0 | Production-ready gateway. Zero-copy routing, reconnection, shortcuts. Multi-instance broadcast pending. |
@@ -221,9 +221,9 @@ gh issue list --search "Mesh:" --state open
 
 **Layer**: L1 AppFoundation | **Deep Dive**: [ACCOUNT.md](plugins/ACCOUNT.md)
 
-### Production Readiness: 92%
+### Production Readiness: 95%
 
-All CRUD operations complete with optimistic concurrency. OAuth/Steam account support with nullable email. Server-side paginated listing via MySQL JSON queries. Email change with distributed locking. Bulk operations (batch-get, count, bulk role update). Production hardening pass completed (distributed locks, ETag concurrency, stale index detection). No stubs, no bugs, no design considerations remaining. The only open items are post-launch extensions (account merge, audit trail).
+L3-hardened. All CRUD operations complete with optimistic concurrency. OAuth/Steam account support with nullable email. Server-side paginated listing via MySQL JSON queries. Email change with distributed locking. Bulk operations (batch-get, count, bulk role update). Production hardening pass completed: schema NRT compliance (authMethods required, metadata descriptions, validation constraints), telemetry span instrumentation on all async helpers, `await using` lock disposal, null coercion fix in metadata conversion, state store constructor caching, log level audit. 111 unit tests covering all 18 endpoints, 0 warnings. Only post-launch extension remains (account merge).
 
 ### Bug Count: 0
 
@@ -238,8 +238,7 @@ No known bugs.
 | # | Enhancement | Description | Issue |
 |---|-------------|-------------|-------|
 | 1 | **Account merge workflow** | No mechanism to merge two accounts (e.g., email registration + OAuth under different email). Data model supports multiple auth methods, but no merge orchestration exists. Complex cross-service operation (40+ services reference accounts). Post-launch compliance feature. | [#137](https://github.com/beyond-immersion/bannou-service/issues/137) |
-| 2 | **Per-account audit trail** | Account mutations publish events but don't maintain a per-account change history. Deep dive notes zero Account-side code changes needed -- this is purely a consumer-side feature (likely Analytics L4 or dedicated audit service). | #138 (closed) |
-| 3 | *(No further enhancements identified)* | | |
+| 2 | *(No further enhancements identified)* | | |
 
 ### GH Issues
 

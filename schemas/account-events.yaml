@@ -42,8 +42,9 @@ x-lifecycle:
           $ref: 'account-api.yaml#/components/schemas/AuthMethodInfo'
       createdAt: { type: string, format: date-time, required: true, description: "Timestamp when the account was created" }
       updatedAt: { type: string, format: date-time, nullable: true, description: "Timestamp when the account was last updated" }  # NRT: Optional property MUST be nullable
-      metadata: { type: object, additionalProperties: true, nullable: true, description: "Additional metadata associated with the account" }  # NRT: Optional object MUST be nullable
-    sensitive: [passwordHash]
+      mfaEnabled: { type: boolean, description: "Whether multi-factor authentication is enabled for the account" }
+      metadata: { type: object, additionalProperties: true, nullable: true, description: "Client-only metadata. No Bannou plugin reads specific keys from this field by convention." }  # NRT: Optional object MUST be nullable
+    sensitive: [passwordHash, mfaSecret, mfaRecoveryCodes]
 
 paths: {}  # Events don't have HTTP paths
 

@@ -210,7 +210,7 @@ Tenets are organized into categories based on when they're needed:
 | # | Name | Core Rule |
 |---|------|-----------|
 | **T3** | Event Consumer Fan-Out | Use IEventConsumer for multi-plugin event handling |
-| **T7** | Error Handling | Try-catch with ApiException vs Exception distinction; TryPublishErrorAsync; instance identity from IMeshInstanceIdentifier only |
+| **T7** | Error Handling | Generated controller provides catch-all boundary (do not duplicate in service methods); ApiException catch only for inter-service calls; service try-catch only for specific recovery logic; TryPublishErrorAsync; instance identity from IMeshInstanceIdentifier only |
 | **T8** | Return Pattern | All methods return `(StatusCodes, TResponse?)` tuples |
 | **T9** | Multi-Instance Safety | No in-memory authoritative state; use distributed locks |
 | **T14** | Polymorphic Associations | Entity ID + Type columns; composite string keys |
@@ -268,7 +268,8 @@ Tenets are organized into categories based on when they're needed:
 | Missing x-permissions on endpoint | T13 | Add to schema (even if empty array) |
 | GPL library in NuGet package | T18 | Use MIT/BSD alternative |
 | Missing event consumer registration | T3 | Add RegisterEventConsumers call |
-| Generic catch returning 500 | T7 | Catch ApiException specifically |
+| Adding top-level try-catch to service endpoint methods | T7 | Generated controller already provides catch-all boundary with logging, error events, and 500 response; do not duplicate |
+| Generic catch returning 500 in service method | T7 | Let it propagate to the generated controller; only catch for specific recovery logic or inter-service `ApiException` |
 | Emitting error events for user errors | T7 | Only emit for unexpected/internal failures |
 | Constructing `ServiceErrorEvent` directly | T7 | Use `TryPublishErrorAsync`; only `RabbitMQMessageBus` constructs the event |
 | Passing instance ID to `TryPublishErrorAsync` | T7 | Instance identity injected internally from `IMeshInstanceIdentifier` |

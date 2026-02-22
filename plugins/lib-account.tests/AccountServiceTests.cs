@@ -26,6 +26,7 @@ public class AccountServiceTests
     private readonly Mock<IMessageBus> _mockMessageBus;
     private readonly Mock<IDistributedLockProvider> _mockLockProvider;
     private readonly Mock<ILockResponse> _mockLockResponse;
+    private readonly Mock<ITelemetryProvider> _mockTelemetryProvider;
 
     private const string ACCOUNT_STATE_STORE = "account-statestore";
 
@@ -41,6 +42,7 @@ public class AccountServiceTests
         _mockMessageBus = new Mock<IMessageBus>();
         _mockLockProvider = new Mock<IDistributedLockProvider>();
         _mockLockResponse = new Mock<ILockResponse>();
+        _mockTelemetryProvider = new Mock<ITelemetryProvider>();
 
         // Default lock behavior: always succeeds
         _mockLockResponse.Setup(r => r.Success).Returns(true);
@@ -148,7 +150,8 @@ public class AccountServiceTests
             configuration,
             _mockStateStoreFactory.Object,
             _mockMessageBus.Object,
-            _mockLockProvider.Object);
+            _mockLockProvider.Object,
+            _mockTelemetryProvider.Object);
     }
 
     [Fact]
@@ -575,7 +578,8 @@ public class AccountServiceTests
             _configuration,
             _mockStateStoreFactory.Object,
             _mockMessageBus.Object,
-            _mockLockProvider.Object);
+            _mockLockProvider.Object,
+            _mockTelemetryProvider.Object);
 
         // Mock empty JSON query result
         _mockJsonQueryableStore
@@ -606,7 +610,8 @@ public class AccountServiceTests
             _configuration,
             _mockStateStoreFactory.Object,
             _mockMessageBus.Object,
-            _mockLockProvider.Object);
+            _mockLockProvider.Object,
+            _mockTelemetryProvider.Object);
 
         // Mock empty JSON query result
         _mockJsonQueryableStore
@@ -637,7 +642,8 @@ public class AccountServiceTests
             _configuration,
             _mockStateStoreFactory.Object,
             _mockMessageBus.Object,
-            _mockLockProvider.Object);
+            _mockLockProvider.Object,
+            _mockTelemetryProvider.Object);
 
         // Mock empty JSON query result
         _mockJsonQueryableStore
@@ -668,7 +674,8 @@ public class AccountServiceTests
             _configuration,
             _mockStateStoreFactory.Object,
             _mockMessageBus.Object,
-            _mockLockProvider.Object);
+            _mockLockProvider.Object,
+            _mockTelemetryProvider.Object);
 
         // Mock empty JSON query result
         _mockJsonQueryableStore
@@ -703,7 +710,8 @@ public class AccountServiceTests
             _configuration,
             _mockStateStoreFactory.Object,
             _mockMessageBus.Object,
-            _mockLockProvider.Object);
+            _mockLockProvider.Object,
+            _mockTelemetryProvider.Object);
 
         var request = new CreateAccountRequest
         {
@@ -750,7 +758,8 @@ public class AccountServiceTests
             _configuration,
             _mockStateStoreFactory.Object,
             _mockMessageBus.Object,
-            _mockLockProvider.Object);
+            _mockLockProvider.Object,
+            _mockTelemetryProvider.Object);
 
         var request = new CreateAccountRequest
         {
@@ -796,7 +805,8 @@ public class AccountServiceTests
             _configuration,
             _mockStateStoreFactory.Object,
             _mockMessageBus.Object,
-            _mockLockProvider.Object);
+            _mockLockProvider.Object,
+            _mockTelemetryProvider.Object);
 
         var request = new CreateAccountRequest
         {
@@ -842,7 +852,8 @@ public class AccountServiceTests
             _configuration,
             _mockStateStoreFactory.Object,
             _mockMessageBus.Object,
-            _mockLockProvider.Object);
+            _mockLockProvider.Object,
+            _mockTelemetryProvider.Object);
 
         // Mock email index lookup
         _mockStringStore
@@ -893,7 +904,8 @@ public class AccountServiceTests
             _configuration,
             _mockStateStoreFactory.Object,
             _mockMessageBus.Object,
-            _mockLockProvider.Object);
+            _mockLockProvider.Object,
+            _mockTelemetryProvider.Object);
 
         // Mock email index lookup
         _mockStringStore
@@ -947,7 +959,8 @@ public class AccountServiceTests
             _configuration,
             _mockStateStoreFactory.Object,
             _mockMessageBus.Object,
-            _mockLockProvider.Object);
+            _mockLockProvider.Object,
+            _mockTelemetryProvider.Object);
 
         var request = new CreateAccountRequest
         {
@@ -1691,6 +1704,2633 @@ public class AccountServiceTests
                 It.IsAny<string>(),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync("etag-1");
+    }
+
+    #endregion
+
+    #region GetAccount Tests
+
+    [Fact]
+    public async Task GetAccountAsync_Success_ReturnsAccountWithAuthMethods()
+    {
+        // Arrange
+        var service = CreateServiceWithConfiguration();
+        var accountId = Guid.NewGuid();
+        var account = new AccountModel
+        {
+            AccountId = accountId,
+            Email = "user@test.local",
+            DisplayName = "Test User",
+            IsVerified = true,
+            Roles = new List<string> { "user" },
+            MfaEnabled = true,
+            MfaSecret = "secret",
+            MfaRecoveryCodes = new List<string> { "code1", "code2" },
+            CreatedAt = DateTimeOffset.UtcNow,
+            UpdatedAt = DateTimeOffset.UtcNow
+        };
+
+        _mockAccountStore
+            .Setup(s => s.GetAsync($"account-{accountId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(account);
+
+        var authMethods = new List<AuthMethodInfo>
+        {
+            new AuthMethodInfo
+            {
+                MethodId = Guid.NewGuid(),
+                Provider = AuthProvider.Discord,
+                ExternalId = "discord-123",
+                LinkedAt = DateTimeOffset.UtcNow
+            }
+        };
+
+        _mockAuthMethodsStore
+            .Setup(s => s.GetAsync($"auth-methods-{accountId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(authMethods);
+
+        // Act
+        var (status, response) = await service.GetAccountAsync(new GetAccountRequest { AccountId = accountId });
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Equal(accountId, response.AccountId);
+        Assert.Equal("user@test.local", response.Email);
+        Assert.Equal("Test User", response.DisplayName);
+        Assert.True(response.EmailVerified);
+        Assert.True(response.MfaEnabled);
+        Assert.Equal("secret", response.MfaSecret);
+        Assert.NotNull(response.MfaRecoveryCodes);
+        Assert.Equal(2, response.MfaRecoveryCodes.Count);
+        Assert.Single(response.AuthMethods);
+        Assert.Equal(AuthProvider.Discord, response.AuthMethods.First().Provider);
+    }
+
+    [Fact]
+    public async Task GetAccountAsync_NotFound_ReturnsNotFound()
+    {
+        // Arrange
+        var service = CreateServiceWithConfiguration();
+        var accountId = Guid.NewGuid();
+
+        _mockAccountStore
+            .Setup(s => s.GetAsync($"account-{accountId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((AccountModel?)null);
+
+        // Act
+        var (status, response) = await service.GetAccountAsync(new GetAccountRequest { AccountId = accountId });
+
+        // Assert
+        Assert.Equal(StatusCodes.NotFound, status);
+        Assert.Null(response);
+    }
+
+    [Fact]
+    public async Task GetAccountAsync_SoftDeleted_ReturnsNotFound()
+    {
+        // Arrange
+        var service = CreateServiceWithConfiguration();
+        var accountId = Guid.NewGuid();
+        var account = new AccountModel
+        {
+            AccountId = accountId,
+            Email = "deleted@test.local",
+            Roles = new List<string> { "user" },
+            CreatedAt = DateTimeOffset.UtcNow,
+            UpdatedAt = DateTimeOffset.UtcNow,
+            DeletedAt = DateTimeOffset.UtcNow
+        };
+
+        _mockAccountStore
+            .Setup(s => s.GetAsync($"account-{accountId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(account);
+
+        // Act
+        var (status, response) = await service.GetAccountAsync(new GetAccountRequest { AccountId = accountId });
+
+        // Assert
+        Assert.Equal(StatusCodes.NotFound, status);
+        Assert.Null(response);
+    }
+
+    #endregion
+
+    #region UpdateAccount Tests
+
+    [Fact]
+    public async Task UpdateAccountAsync_Success_UpdatesDisplayName()
+    {
+        // Arrange
+        var service = CreateServiceWithConfiguration();
+        var accountId = Guid.NewGuid();
+        var account = new AccountModel
+        {
+            AccountId = accountId,
+            Email = "user@test.local",
+            DisplayName = "Old Name",
+            Roles = new List<string> { "user" },
+            CreatedAt = DateTimeOffset.UtcNow,
+            UpdatedAt = DateTimeOffset.UtcNow
+        };
+
+        _mockAccountStore
+            .Setup(s => s.GetWithETagAsync($"account-{accountId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((account, "etag-0"));
+
+        _mockAccountStore
+            .Setup(s => s.TrySaveAsync(
+                $"account-{accountId}",
+                It.IsAny<AccountModel>(),
+                "etag-0",
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag-1");
+
+        _mockAuthMethodsStore
+            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<AuthMethodInfo>());
+
+        var request = new UpdateAccountRequest
+        {
+            AccountId = accountId,
+            DisplayName = "New Name"
+        };
+
+        // Act
+        var (status, response) = await service.UpdateAccountAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Equal("New Name", response.DisplayName);
+
+        // Verify event published with displayName changed
+        _mockMessageBus.Verify(m => m.TryPublishAsync(
+            "account.updated",
+            It.Is<AccountUpdatedEvent>(e => e.ChangedFields.Contains("displayName")),
+            It.IsAny<PublishOptions?>(),
+            It.IsAny<Guid?>(),
+            It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task UpdateAccountAsync_UpdatesRoles_WithAutoAnonymousManagement()
+    {
+        // Arrange
+        var service = CreateServiceWithConfiguration();
+        var accountId = Guid.NewGuid();
+        var account = new AccountModel
+        {
+            AccountId = accountId,
+            Email = "user@test.local",
+            Roles = new List<string> { "user" },
+            CreatedAt = DateTimeOffset.UtcNow,
+            UpdatedAt = DateTimeOffset.UtcNow
+        };
+
+        _mockAccountStore
+            .Setup(s => s.GetWithETagAsync($"account-{accountId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((account, "etag-0"));
+
+        AccountModel? savedAccount = null;
+        _mockAccountStore
+            .Setup(s => s.TrySaveAsync(
+                $"account-{accountId}",
+                It.IsAny<AccountModel>(),
+                "etag-0",
+                It.IsAny<CancellationToken>()))
+            .Callback<string, AccountModel, string, CancellationToken>(
+                (key, model, etag, ct) => savedAccount = model)
+            .ReturnsAsync("etag-1");
+
+        _mockAuthMethodsStore
+            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<AuthMethodInfo>());
+
+        // Send roles with "anonymous" plus "admin" -- auto-manage should remove anonymous
+        var request = new UpdateAccountRequest
+        {
+            AccountId = accountId,
+            Roles = new List<string> { "anonymous", "admin" }
+        };
+
+        // Act
+        var (status, response) = await service.UpdateAccountAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(savedAccount);
+        Assert.Contains("admin", savedAccount.Roles);
+        Assert.DoesNotContain("anonymous", savedAccount.Roles);
+    }
+
+    [Fact]
+    public async Task UpdateAccountAsync_NotFound_ReturnsNotFound()
+    {
+        // Arrange
+        var service = CreateServiceWithConfiguration();
+        var accountId = Guid.NewGuid();
+
+        _mockAccountStore
+            .Setup(s => s.GetWithETagAsync($"account-{accountId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(((AccountModel?)null, (string?)null));
+
+        // Act
+        var (status, response) = await service.UpdateAccountAsync(new UpdateAccountRequest
+        {
+            AccountId = accountId,
+            DisplayName = "New Name"
+        });
+
+        // Assert
+        Assert.Equal(StatusCodes.NotFound, status);
+        Assert.Null(response);
+    }
+
+    [Fact]
+    public async Task UpdateAccountAsync_SoftDeleted_ReturnsNotFound()
+    {
+        // Arrange
+        var service = CreateServiceWithConfiguration();
+        var accountId = Guid.NewGuid();
+        var account = new AccountModel
+        {
+            AccountId = accountId,
+            Email = "deleted@test.local",
+            Roles = new List<string> { "user" },
+            CreatedAt = DateTimeOffset.UtcNow,
+            UpdatedAt = DateTimeOffset.UtcNow,
+            DeletedAt = DateTimeOffset.UtcNow
+        };
+
+        _mockAccountStore
+            .Setup(s => s.GetWithETagAsync($"account-{accountId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((account, "etag-0"));
+
+        // Act
+        var (status, response) = await service.UpdateAccountAsync(new UpdateAccountRequest
+        {
+            AccountId = accountId,
+            DisplayName = "New Name"
+        });
+
+        // Assert
+        Assert.Equal(StatusCodes.NotFound, status);
+        Assert.Null(response);
+    }
+
+    [Fact]
+    public async Task UpdateAccountAsync_ConcurrentModification_ReturnsConflict()
+    {
+        // Arrange
+        var service = CreateServiceWithConfiguration();
+        var accountId = Guid.NewGuid();
+        var account = new AccountModel
+        {
+            AccountId = accountId,
+            Email = "user@test.local",
+            DisplayName = "Old Name",
+            Roles = new List<string> { "user" },
+            CreatedAt = DateTimeOffset.UtcNow,
+            UpdatedAt = DateTimeOffset.UtcNow
+        };
+
+        _mockAccountStore
+            .Setup(s => s.GetWithETagAsync($"account-{accountId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((account, "etag-0"));
+
+        // TrySaveAsync returns null to simulate ETag conflict
+        _mockAccountStore
+            .Setup(s => s.TrySaveAsync(
+                $"account-{accountId}",
+                It.IsAny<AccountModel>(),
+                "etag-0",
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync((string?)null);
+
+        // Act
+        var (status, response) = await service.UpdateAccountAsync(new UpdateAccountRequest
+        {
+            AccountId = accountId,
+            DisplayName = "New Name"
+        });
+
+        // Assert
+        Assert.Equal(StatusCodes.Conflict, status);
+        Assert.Null(response);
+    }
+
+    [Fact]
+    public async Task UpdateAccountAsync_NoChanges_DoesNotPublishEvent()
+    {
+        // Arrange
+        var service = CreateServiceWithConfiguration();
+        var accountId = Guid.NewGuid();
+        var account = new AccountModel
+        {
+            AccountId = accountId,
+            Email = "user@test.local",
+            DisplayName = "Same Name",
+            Roles = new List<string> { "user" },
+            CreatedAt = DateTimeOffset.UtcNow,
+            UpdatedAt = DateTimeOffset.UtcNow
+        };
+
+        _mockAccountStore
+            .Setup(s => s.GetWithETagAsync($"account-{accountId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((account, "etag-0"));
+
+        // Still needs to save (UpdatedAt changes) but no event should be published
+        _mockAccountStore
+            .Setup(s => s.TrySaveAsync(
+                $"account-{accountId}",
+                It.IsAny<AccountModel>(),
+                "etag-0",
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag-1");
+
+        _mockAuthMethodsStore
+            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<AuthMethodInfo>());
+
+        // Act - update with same display name
+        var (status, response) = await service.UpdateAccountAsync(new UpdateAccountRequest
+        {
+            AccountId = accountId,
+            DisplayName = "Same Name"
+        });
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        _mockMessageBus.Verify(m => m.TryPublishAsync(
+            "account.updated",
+            It.IsAny<AccountUpdatedEvent>(),
+            It.IsAny<PublishOptions?>(),
+            It.IsAny<Guid?>(),
+            It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task UpdateAccountAsync_UpdatesMetadata_PublishesEvent()
+    {
+        // Arrange
+        var service = CreateServiceWithConfiguration();
+        var accountId = Guid.NewGuid();
+        var account = new AccountModel
+        {
+            AccountId = accountId,
+            Email = "user@test.local",
+            Roles = new List<string> { "user" },
+            Metadata = new Dictionary<string, object> { { "key1", "oldValue" } },
+            CreatedAt = DateTimeOffset.UtcNow,
+            UpdatedAt = DateTimeOffset.UtcNow
+        };
+
+        _mockAccountStore
+            .Setup(s => s.GetWithETagAsync($"account-{accountId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((account, "etag-0"));
+
+        _mockAccountStore
+            .Setup(s => s.TrySaveAsync(
+                $"account-{accountId}",
+                It.IsAny<AccountModel>(),
+                "etag-0",
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag-1");
+
+        _mockAuthMethodsStore
+            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<AuthMethodInfo>());
+
+        // New metadata as a dictionary (not JsonElement)
+        var newMetadata = new Dictionary<string, object> { { "key1", "newValue" } };
+        var request = new UpdateAccountRequest
+        {
+            AccountId = accountId,
+            Metadata = newMetadata
+        };
+
+        // Act
+        var (status, response) = await service.UpdateAccountAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+
+        _mockMessageBus.Verify(m => m.TryPublishAsync(
+            "account.updated",
+            It.Is<AccountUpdatedEvent>(e => e.ChangedFields.Contains("metadata")),
+            It.IsAny<PublishOptions?>(),
+            It.IsAny<Guid?>(),
+            It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    #endregion
+
+    #region DeleteAccount Tests
+
+    [Fact]
+    public async Task DeleteAccountAsync_Success_SoftDeletesAndPublishesEvent()
+    {
+        // Arrange
+        var service = CreateServiceWithConfiguration();
+        var accountId = Guid.NewGuid();
+        var account = new AccountModel
+        {
+            AccountId = accountId,
+            Email = "user@test.local",
+            Roles = new List<string> { "user" },
+            CreatedAt = DateTimeOffset.UtcNow,
+            UpdatedAt = DateTimeOffset.UtcNow
+        };
+
+        _mockAccountStore
+            .Setup(s => s.GetWithETagAsync($"account-{accountId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((account, "etag-0"));
+
+        AccountModel? savedAccount = null;
+        _mockAccountStore
+            .Setup(s => s.TrySaveAsync(
+                $"account-{accountId}",
+                It.IsAny<AccountModel>(),
+                "etag-0",
+                It.IsAny<CancellationToken>()))
+            .Callback<string, AccountModel, string, CancellationToken>(
+                (key, model, etag, ct) => savedAccount = model)
+            .ReturnsAsync("etag-1");
+
+        _mockAuthMethodsStore
+            .Setup(s => s.GetAsync($"auth-methods-{accountId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<AuthMethodInfo>
+            {
+                new AuthMethodInfo
+                {
+                    MethodId = Guid.NewGuid(),
+                    Provider = AuthProvider.Discord,
+                    ExternalId = "ext-123",
+                    LinkedAt = DateTimeOffset.UtcNow
+                }
+            });
+
+        // Act
+        var status = await service.DeleteAccountAsync(new DeleteAccountRequest { AccountId = accountId });
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+
+        // Verify soft delete was applied
+        Assert.NotNull(savedAccount);
+        Assert.NotNull(savedAccount.DeletedAt);
+
+        // Verify email index removed
+        _mockStringStore.Verify(s => s.DeleteAsync(
+            "email-index-user@test.local",
+            It.IsAny<CancellationToken>()), Times.Once);
+
+        // Verify provider index removed
+        _mockStringStore.Verify(s => s.DeleteAsync(
+            "provider-index-Discord:ext-123",
+            It.IsAny<CancellationToken>()), Times.Once);
+
+        // Verify auth methods deleted
+        _mockAuthMethodsStore.Verify(s => s.DeleteAsync(
+            $"auth-methods-{accountId}",
+            It.IsAny<CancellationToken>()), Times.Once);
+
+        // Verify deleted event published
+        _mockMessageBus.Verify(m => m.TryPublishAsync(
+            "account.deleted",
+            It.IsAny<AccountDeletedEvent>(),
+            It.IsAny<PublishOptions?>(),
+            It.IsAny<Guid?>(),
+            It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task DeleteAccountAsync_NotFound_ReturnsNotFound()
+    {
+        // Arrange
+        var service = CreateServiceWithConfiguration();
+        var accountId = Guid.NewGuid();
+
+        _mockAccountStore
+            .Setup(s => s.GetWithETagAsync($"account-{accountId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(((AccountModel?)null, (string?)null));
+
+        // Act
+        var status = await service.DeleteAccountAsync(new DeleteAccountRequest { AccountId = accountId });
+
+        // Assert
+        Assert.Equal(StatusCodes.NotFound, status);
+    }
+
+    [Fact]
+    public async Task DeleteAccountAsync_ConcurrentModification_ReturnsConflict()
+    {
+        // Arrange
+        var service = CreateServiceWithConfiguration();
+        var accountId = Guid.NewGuid();
+        var account = new AccountModel
+        {
+            AccountId = accountId,
+            Email = "user@test.local",
+            Roles = new List<string> { "user" },
+            CreatedAt = DateTimeOffset.UtcNow,
+            UpdatedAt = DateTimeOffset.UtcNow
+        };
+
+        _mockAccountStore
+            .Setup(s => s.GetWithETagAsync($"account-{accountId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((account, "etag-0"));
+
+        _mockAccountStore
+            .Setup(s => s.TrySaveAsync(
+                $"account-{accountId}",
+                It.IsAny<AccountModel>(),
+                "etag-0",
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync((string?)null);
+
+        // Act
+        var status = await service.DeleteAccountAsync(new DeleteAccountRequest { AccountId = accountId });
+
+        // Assert
+        Assert.Equal(StatusCodes.Conflict, status);
+    }
+
+    [Fact]
+    public async Task DeleteAccountAsync_NoEmail_SkipsEmailIndexDeletion()
+    {
+        // Arrange
+        var service = CreateServiceWithConfiguration();
+        var accountId = Guid.NewGuid();
+        var account = new AccountModel
+        {
+            AccountId = accountId,
+            Email = null, // No email (OAuth/Steam)
+            Roles = new List<string> { "user" },
+            CreatedAt = DateTimeOffset.UtcNow,
+            UpdatedAt = DateTimeOffset.UtcNow
+        };
+
+        _mockAccountStore
+            .Setup(s => s.GetWithETagAsync($"account-{accountId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((account, "etag-0"));
+
+        _mockAccountStore
+            .Setup(s => s.TrySaveAsync(
+                $"account-{accountId}",
+                It.IsAny<AccountModel>(),
+                "etag-0",
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag-1");
+
+        _mockAuthMethodsStore
+            .Setup(s => s.GetAsync($"auth-methods-{accountId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((List<AuthMethodInfo>?)null);
+
+        // Act
+        var status = await service.DeleteAccountAsync(new DeleteAccountRequest { AccountId = accountId });
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+
+        // Verify email index delete was NOT called
+        _mockStringStore.Verify(s => s.DeleteAsync(
+            It.Is<string>(k => k.StartsWith("email-index-")),
+            It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task DeleteAccountAsync_NoAuthMethods_SkipsProviderCleanup()
+    {
+        // Arrange
+        var service = CreateServiceWithConfiguration();
+        var accountId = Guid.NewGuid();
+        var account = new AccountModel
+        {
+            AccountId = accountId,
+            Email = "user@test.local",
+            Roles = new List<string> { "user" },
+            CreatedAt = DateTimeOffset.UtcNow,
+            UpdatedAt = DateTimeOffset.UtcNow
+        };
+
+        _mockAccountStore
+            .Setup(s => s.GetWithETagAsync($"account-{accountId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((account, "etag-0"));
+
+        _mockAccountStore
+            .Setup(s => s.TrySaveAsync(
+                $"account-{accountId}",
+                It.IsAny<AccountModel>(),
+                "etag-0",
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag-1");
+
+        _mockAuthMethodsStore
+            .Setup(s => s.GetAsync($"auth-methods-{accountId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((List<AuthMethodInfo>?)null);
+
+        // Act
+        var status = await service.DeleteAccountAsync(new DeleteAccountRequest { AccountId = accountId });
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+
+        // Verify no provider index deletions
+        _mockStringStore.Verify(s => s.DeleteAsync(
+            It.Is<string>(k => k.StartsWith("provider-index-")),
+            It.IsAny<CancellationToken>()), Times.Never);
+
+        // Verify auth methods store was NOT asked to delete (nothing to delete)
+        _mockAuthMethodsStore.Verify(s => s.DeleteAsync(
+            It.IsAny<string>(),
+            It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    #endregion
+
+    #region GetAccountByEmail Tests
+
+    [Fact]
+    public async Task GetAccountByEmailAsync_Success_ReturnsAccount()
+    {
+        // Arrange
+        var service = CreateServiceWithConfiguration();
+        var accountId = Guid.NewGuid();
+
+        _mockStringStore
+            .Setup(s => s.GetAsync("email-index-user@test.local", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(accountId.ToString());
+
+        var account = new AccountModel
+        {
+            AccountId = accountId,
+            Email = "user@test.local",
+            DisplayName = "Test User",
+            PasswordHash = "hashed-pw",
+            IsVerified = true,
+            Roles = new List<string> { "user" },
+            CreatedAt = DateTimeOffset.UtcNow,
+            UpdatedAt = DateTimeOffset.UtcNow
+        };
+
+        _mockAccountStore
+            .Setup(s => s.GetAsync($"account-{accountId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(account);
+
+        _mockAuthMethodsStore
+            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<AuthMethodInfo>());
+
+        // Act
+        var (status, response) = await service.GetAccountByEmailAsync(
+            new GetAccountByEmailRequest { Email = "User@Test.Local" }); // Test case insensitivity
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Equal(accountId, response.AccountId);
+        Assert.Equal("hashed-pw", response.PasswordHash); // Email lookup includes password hash
+    }
+
+    [Fact]
+    public async Task GetAccountByEmailAsync_NoIndex_ReturnsNotFound()
+    {
+        // Arrange
+        var service = CreateServiceWithConfiguration();
+
+        _mockStringStore
+            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((string?)null);
+
+        // Act
+        var (status, response) = await service.GetAccountByEmailAsync(
+            new GetAccountByEmailRequest { Email = "unknown@test.local" });
+
+        // Assert
+        Assert.Equal(StatusCodes.NotFound, status);
+        Assert.Null(response);
+    }
+
+    [Fact]
+    public async Task GetAccountByEmailAsync_IndexExistsButAccountMissing_ReturnsNotFound()
+    {
+        // Arrange
+        var service = CreateServiceWithConfiguration();
+        var accountId = Guid.NewGuid();
+
+        _mockStringStore
+            .Setup(s => s.GetAsync("email-index-orphan@test.local", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(accountId.ToString());
+
+        _mockAccountStore
+            .Setup(s => s.GetAsync($"account-{accountId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((AccountModel?)null);
+
+        // Act
+        var (status, response) = await service.GetAccountByEmailAsync(
+            new GetAccountByEmailRequest { Email = "orphan@test.local" });
+
+        // Assert
+        Assert.Equal(StatusCodes.NotFound, status);
+        Assert.Null(response);
+    }
+
+    [Fact]
+    public async Task GetAccountByEmailAsync_AccountSoftDeleted_ReturnsNotFound()
+    {
+        // Arrange
+        var service = CreateServiceWithConfiguration();
+        var accountId = Guid.NewGuid();
+
+        _mockStringStore
+            .Setup(s => s.GetAsync("email-index-deleted@test.local", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(accountId.ToString());
+
+        var account = new AccountModel
+        {
+            AccountId = accountId,
+            Email = "deleted@test.local",
+            Roles = new List<string> { "user" },
+            CreatedAt = DateTimeOffset.UtcNow,
+            UpdatedAt = DateTimeOffset.UtcNow,
+            DeletedAt = DateTimeOffset.UtcNow
+        };
+
+        _mockAccountStore
+            .Setup(s => s.GetAsync($"account-{accountId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(account);
+
+        // Act
+        var (status, response) = await service.GetAccountByEmailAsync(
+            new GetAccountByEmailRequest { Email = "deleted@test.local" });
+
+        // Assert
+        Assert.Equal(StatusCodes.NotFound, status);
+        Assert.Null(response);
+    }
+
+    #endregion
+
+    #region GetAccountByProvider Tests
+
+    [Fact]
+    public async Task GetAccountByProviderAsync_Success_ReturnsAccount()
+    {
+        // Arrange
+        var service = CreateServiceWithConfiguration();
+        var accountId = Guid.NewGuid();
+
+        _mockStringStore
+            .Setup(s => s.GetAsync("provider-index-Discord:discord-123", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(accountId.ToString());
+
+        var account = new AccountModel
+        {
+            AccountId = accountId,
+            Email = "user@test.local",
+            Roles = new List<string> { "user" },
+            CreatedAt = DateTimeOffset.UtcNow,
+            UpdatedAt = DateTimeOffset.UtcNow
+        };
+
+        _mockAccountStore
+            .Setup(s => s.GetAsync($"account-{accountId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(account);
+
+        _mockAuthMethodsStore
+            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<AuthMethodInfo>());
+
+        // Act
+        var (status, response) = await service.GetAccountByProviderAsync(
+            new GetAccountByProviderRequest { Provider = OAuthProvider.Discord, ExternalId = "discord-123" });
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Equal(accountId, response.AccountId);
+    }
+
+    [Fact]
+    public async Task GetAccountByProviderAsync_NoIndex_ReturnsNotFound()
+    {
+        // Arrange
+        var service = CreateServiceWithConfiguration();
+
+        _mockStringStore
+            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((string?)null);
+
+        // Act
+        var (status, response) = await service.GetAccountByProviderAsync(
+            new GetAccountByProviderRequest { Provider = OAuthProvider.Google, ExternalId = "unknown" });
+
+        // Assert
+        Assert.Equal(StatusCodes.NotFound, status);
+        Assert.Null(response);
+    }
+
+    [Fact]
+    public async Task GetAccountByProviderAsync_IndexExistsButAccountMissing_ReturnsNotFound()
+    {
+        // Arrange
+        var service = CreateServiceWithConfiguration();
+        var accountId = Guid.NewGuid();
+
+        _mockStringStore
+            .Setup(s => s.GetAsync("provider-index-Steam:steam-999", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(accountId.ToString());
+
+        _mockAccountStore
+            .Setup(s => s.GetAsync($"account-{accountId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((AccountModel?)null);
+
+        // Act
+        var (status, response) = await service.GetAccountByProviderAsync(
+            new GetAccountByProviderRequest { Provider = OAuthProvider.Steam, ExternalId = "steam-999" });
+
+        // Assert
+        Assert.Equal(StatusCodes.NotFound, status);
+        Assert.Null(response);
+    }
+
+    [Fact]
+    public async Task GetAccountByProviderAsync_AccountSoftDeleted_ReturnsNotFound()
+    {
+        // Arrange
+        var service = CreateServiceWithConfiguration();
+        var accountId = Guid.NewGuid();
+
+        _mockStringStore
+            .Setup(s => s.GetAsync("provider-index-Twitch:twitch-456", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(accountId.ToString());
+
+        var account = new AccountModel
+        {
+            AccountId = accountId,
+            Roles = new List<string> { "user" },
+            CreatedAt = DateTimeOffset.UtcNow,
+            UpdatedAt = DateTimeOffset.UtcNow,
+            DeletedAt = DateTimeOffset.UtcNow
+        };
+
+        _mockAccountStore
+            .Setup(s => s.GetAsync($"account-{accountId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(account);
+
+        // Act
+        var (status, response) = await service.GetAccountByProviderAsync(
+            new GetAccountByProviderRequest { Provider = OAuthProvider.Twitch, ExternalId = "twitch-456" });
+
+        // Assert
+        Assert.Equal(StatusCodes.NotFound, status);
+        Assert.Null(response);
+    }
+
+    #endregion
+
+    #region GetAuthMethods Tests
+
+    [Fact]
+    public async Task GetAuthMethodsAsync_Success_ReturnsAuthMethods()
+    {
+        // Arrange
+        var service = CreateServiceWithConfiguration();
+        var accountId = Guid.NewGuid();
+        var account = new AccountModel
+        {
+            AccountId = accountId,
+            Roles = new List<string> { "user" },
+            CreatedAt = DateTimeOffset.UtcNow,
+            UpdatedAt = DateTimeOffset.UtcNow
+        };
+
+        _mockAccountStore
+            .Setup(s => s.GetAsync($"account-{accountId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(account);
+
+        var authMethods = new List<AuthMethodInfo>
+        {
+            new AuthMethodInfo
+            {
+                MethodId = Guid.NewGuid(),
+                Provider = AuthProvider.Discord,
+                ExternalId = "disc-1",
+                LinkedAt = DateTimeOffset.UtcNow
+            },
+            new AuthMethodInfo
+            {
+                MethodId = Guid.NewGuid(),
+                Provider = AuthProvider.Google,
+                ExternalId = "goog-2",
+                LinkedAt = DateTimeOffset.UtcNow
+            }
+        };
+
+        _mockAuthMethodsStore
+            .Setup(s => s.GetAsync($"auth-methods-{accountId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(authMethods);
+
+        // Act
+        var (status, response) = await service.GetAuthMethodsAsync(
+            new GetAuthMethodsRequest { AccountId = accountId });
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Equal(2, response.AuthMethods.Count);
+    }
+
+    [Fact]
+    public async Task GetAuthMethodsAsync_AccountNotFound_ReturnsNotFound()
+    {
+        // Arrange
+        var service = CreateServiceWithConfiguration();
+        var accountId = Guid.NewGuid();
+
+        _mockAccountStore
+            .Setup(s => s.GetAsync($"account-{accountId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((AccountModel?)null);
+
+        // Act
+        var (status, response) = await service.GetAuthMethodsAsync(
+            new GetAuthMethodsRequest { AccountId = accountId });
+
+        // Assert
+        Assert.Equal(StatusCodes.NotFound, status);
+        Assert.Null(response);
+    }
+
+    [Fact]
+    public async Task GetAuthMethodsAsync_AccountSoftDeleted_ReturnsNotFound()
+    {
+        // Arrange
+        var service = CreateServiceWithConfiguration();
+        var accountId = Guid.NewGuid();
+        var account = new AccountModel
+        {
+            AccountId = accountId,
+            Roles = new List<string> { "user" },
+            CreatedAt = DateTimeOffset.UtcNow,
+            UpdatedAt = DateTimeOffset.UtcNow,
+            DeletedAt = DateTimeOffset.UtcNow
+        };
+
+        _mockAccountStore
+            .Setup(s => s.GetAsync($"account-{accountId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(account);
+
+        // Act
+        var (status, response) = await service.GetAuthMethodsAsync(
+            new GetAuthMethodsRequest { AccountId = accountId });
+
+        // Assert
+        Assert.Equal(StatusCodes.NotFound, status);
+        Assert.Null(response);
+    }
+
+    [Fact]
+    public async Task GetAuthMethodsAsync_NoMethodsStored_ReturnsEmptyList()
+    {
+        // Arrange
+        var service = CreateServiceWithConfiguration();
+        var accountId = Guid.NewGuid();
+        var account = new AccountModel
+        {
+            AccountId = accountId,
+            Roles = new List<string> { "user" },
+            CreatedAt = DateTimeOffset.UtcNow,
+            UpdatedAt = DateTimeOffset.UtcNow
+        };
+
+        _mockAccountStore
+            .Setup(s => s.GetAsync($"account-{accountId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(account);
+
+        _mockAuthMethodsStore
+            .Setup(s => s.GetAsync($"auth-methods-{accountId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((List<AuthMethodInfo>?)null);
+
+        // Act
+        var (status, response) = await service.GetAuthMethodsAsync(
+            new GetAuthMethodsRequest { AccountId = accountId });
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Empty(response.AuthMethods);
+    }
+
+    #endregion
+
+    #region AddAuthMethod Tests
+
+    [Fact]
+    public async Task AddAuthMethodAsync_Success_CreatesMethodAndIndex()
+    {
+        // Arrange
+        var service = CreateServiceWithConfiguration();
+        var accountId = Guid.NewGuid();
+        var account = new AccountModel
+        {
+            AccountId = accountId,
+            Email = "user@test.local",
+            Roles = new List<string> { "user" },
+            CreatedAt = DateTimeOffset.UtcNow,
+            UpdatedAt = DateTimeOffset.UtcNow
+        };
+
+        _mockAccountStore
+            .Setup(s => s.GetAsync($"account-{accountId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(account);
+
+        _mockAuthMethodsStore
+            .Setup(s => s.GetWithETagAsync($"auth-methods-{accountId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((new List<AuthMethodInfo>(), "etag-0"));
+
+        _mockAuthMethodsStore
+            .Setup(s => s.TrySaveAsync(
+                $"auth-methods-{accountId}",
+                It.IsAny<List<AuthMethodInfo>>(),
+                "etag-0",
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag-1");
+
+        // No existing provider index
+        _mockStringStore
+            .Setup(s => s.GetAsync("provider-index-Discord:disc-external-1", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((string?)null);
+
+        var request = new AddAuthMethodRequest
+        {
+            AccountId = accountId,
+            Provider = OAuthProvider.Discord,
+            ExternalId = "disc-external-1"
+        };
+
+        // Act
+        var (status, response) = await service.AddAuthMethodAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Equal(OAuthProvider.Discord, response.Provider);
+        Assert.Equal("disc-external-1", response.ExternalId);
+        Assert.NotEqual(Guid.Empty, response.MethodId);
+
+        // Verify provider index created
+        _mockStringStore.Verify(s => s.SaveAsync(
+            "provider-index-Discord:disc-external-1",
+            accountId.ToString(),
+            It.IsAny<StateOptions?>(),
+            It.IsAny<CancellationToken>()), Times.Once);
+
+        // Verify event published
+        _mockMessageBus.Verify(m => m.TryPublishAsync(
+            "account.updated",
+            It.IsAny<AccountUpdatedEvent>(),
+            It.IsAny<PublishOptions?>(),
+            It.IsAny<Guid?>(),
+            It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task AddAuthMethodAsync_AccountNotFound_ReturnsNotFound()
+    {
+        // Arrange
+        var service = CreateServiceWithConfiguration();
+        var accountId = Guid.NewGuid();
+
+        _mockAccountStore
+            .Setup(s => s.GetAsync($"account-{accountId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((AccountModel?)null);
+
+        // Act
+        var (status, response) = await service.AddAuthMethodAsync(new AddAuthMethodRequest
+        {
+            AccountId = accountId,
+            Provider = OAuthProvider.Discord,
+            ExternalId = "ext-1"
+        });
+
+        // Assert
+        Assert.Equal(StatusCodes.NotFound, status);
+        Assert.Null(response);
+    }
+
+    [Fact]
+    public async Task AddAuthMethodAsync_AccountSoftDeleted_ReturnsNotFound()
+    {
+        // Arrange
+        var service = CreateServiceWithConfiguration();
+        var accountId = Guid.NewGuid();
+
+        _mockAccountStore
+            .Setup(s => s.GetAsync($"account-{accountId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new AccountModel
+            {
+                AccountId = accountId,
+                Roles = new List<string> { "user" },
+                CreatedAt = DateTimeOffset.UtcNow,
+                UpdatedAt = DateTimeOffset.UtcNow,
+                DeletedAt = DateTimeOffset.UtcNow
+            });
+
+        // Act
+        var (status, response) = await service.AddAuthMethodAsync(new AddAuthMethodRequest
+        {
+            AccountId = accountId,
+            Provider = OAuthProvider.Discord,
+            ExternalId = "ext-1"
+        });
+
+        // Assert
+        Assert.Equal(StatusCodes.NotFound, status);
+        Assert.Null(response);
+    }
+
+    [Fact]
+    public async Task AddAuthMethodAsync_EmptyExternalId_ReturnsBadRequest()
+    {
+        // Arrange
+        var service = CreateServiceWithConfiguration();
+        var accountId = Guid.NewGuid();
+
+        _mockAccountStore
+            .Setup(s => s.GetAsync($"account-{accountId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new AccountModel
+            {
+                AccountId = accountId,
+                Roles = new List<string> { "user" },
+                CreatedAt = DateTimeOffset.UtcNow,
+                UpdatedAt = DateTimeOffset.UtcNow
+            });
+
+        _mockAuthMethodsStore
+            .Setup(s => s.GetWithETagAsync($"auth-methods-{accountId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((new List<AuthMethodInfo>(), "etag-0"));
+
+        // Act
+        var (status, response) = await service.AddAuthMethodAsync(new AddAuthMethodRequest
+        {
+            AccountId = accountId,
+            Provider = OAuthProvider.Google,
+            ExternalId = ""
+        });
+
+        // Assert
+        Assert.Equal(StatusCodes.BadRequest, status);
+        Assert.Null(response);
+    }
+
+    [Fact]
+    public async Task AddAuthMethodAsync_DuplicateOnSameAccount_ReturnsConflict()
+    {
+        // Arrange
+        var service = CreateServiceWithConfiguration();
+        var accountId = Guid.NewGuid();
+
+        _mockAccountStore
+            .Setup(s => s.GetAsync($"account-{accountId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new AccountModel
+            {
+                AccountId = accountId,
+                Roles = new List<string> { "user" },
+                CreatedAt = DateTimeOffset.UtcNow,
+                UpdatedAt = DateTimeOffset.UtcNow
+            });
+
+        // Already has this provider+externalId
+        _mockAuthMethodsStore
+            .Setup(s => s.GetWithETagAsync($"auth-methods-{accountId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((new List<AuthMethodInfo>
+            {
+                new AuthMethodInfo
+                {
+                    MethodId = Guid.NewGuid(),
+                    Provider = AuthProvider.Discord,
+                    ExternalId = "disc-123",
+                    LinkedAt = DateTimeOffset.UtcNow
+                }
+            }, "etag-0"));
+
+        // Act
+        var (status, response) = await service.AddAuthMethodAsync(new AddAuthMethodRequest
+        {
+            AccountId = accountId,
+            Provider = OAuthProvider.Discord,
+            ExternalId = "disc-123"
+        });
+
+        // Assert
+        Assert.Equal(StatusCodes.Conflict, status);
+        Assert.Null(response);
+    }
+
+    [Fact]
+    public async Task AddAuthMethodAsync_OwnedByAnotherActiveAccount_ReturnsConflict()
+    {
+        // Arrange
+        var service = CreateServiceWithConfiguration();
+        var accountId = Guid.NewGuid();
+        var otherAccountId = Guid.NewGuid();
+
+        _mockAccountStore
+            .Setup(s => s.GetAsync($"account-{accountId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new AccountModel
+            {
+                AccountId = accountId,
+                Roles = new List<string> { "user" },
+                CreatedAt = DateTimeOffset.UtcNow,
+                UpdatedAt = DateTimeOffset.UtcNow
+            });
+
+        _mockAuthMethodsStore
+            .Setup(s => s.GetWithETagAsync($"auth-methods-{accountId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((new List<AuthMethodInfo>(), "etag-0"));
+
+        // Provider index points to another account
+        _mockStringStore
+            .Setup(s => s.GetAsync("provider-index-Google:goog-456", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(otherAccountId.ToString());
+
+        // Other account is active (not deleted)
+        _mockAccountStore
+            .Setup(s => s.GetAsync($"account-{otherAccountId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new AccountModel
+            {
+                AccountId = otherAccountId,
+                Roles = new List<string> { "user" },
+                CreatedAt = DateTimeOffset.UtcNow,
+                UpdatedAt = DateTimeOffset.UtcNow
+            });
+
+        // Act
+        var (status, response) = await service.AddAuthMethodAsync(new AddAuthMethodRequest
+        {
+            AccountId = accountId,
+            Provider = OAuthProvider.Google,
+            ExternalId = "goog-456"
+        });
+
+        // Assert
+        Assert.Equal(StatusCodes.Conflict, status);
+        Assert.Null(response);
+    }
+
+    [Fact]
+    public async Task AddAuthMethodAsync_OrphanedIndexFromDeletedAccount_OverwritesSuccessfully()
+    {
+        // Arrange
+        var service = CreateServiceWithConfiguration();
+        var accountId = Guid.NewGuid();
+        var deletedAccountId = Guid.NewGuid();
+
+        _mockAccountStore
+            .Setup(s => s.GetAsync($"account-{accountId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new AccountModel
+            {
+                AccountId = accountId,
+                Email = "user@test.local",
+                Roles = new List<string> { "user" },
+                CreatedAt = DateTimeOffset.UtcNow,
+                UpdatedAt = DateTimeOffset.UtcNow
+            });
+
+        _mockAuthMethodsStore
+            .Setup(s => s.GetWithETagAsync($"auth-methods-{accountId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((new List<AuthMethodInfo>(), "etag-0"));
+
+        _mockAuthMethodsStore
+            .Setup(s => s.TrySaveAsync(
+                $"auth-methods-{accountId}",
+                It.IsAny<List<AuthMethodInfo>>(),
+                "etag-0",
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag-1");
+
+        // Provider index points to a deleted account
+        _mockStringStore
+            .Setup(s => s.GetAsync("provider-index-Steam:steam-orphan", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(deletedAccountId.ToString());
+
+        _mockAccountStore
+            .Setup(s => s.GetAsync($"account-{deletedAccountId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new AccountModel
+            {
+                AccountId = deletedAccountId,
+                Roles = new List<string> { "user" },
+                CreatedAt = DateTimeOffset.UtcNow,
+                UpdatedAt = DateTimeOffset.UtcNow,
+                DeletedAt = DateTimeOffset.UtcNow // Deleted
+            });
+
+        // Act
+        var (status, response) = await service.AddAuthMethodAsync(new AddAuthMethodRequest
+        {
+            AccountId = accountId,
+            Provider = OAuthProvider.Steam,
+            ExternalId = "steam-orphan"
+        });
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Equal(OAuthProvider.Steam, response.Provider);
+    }
+
+    [Fact]
+    public async Task AddAuthMethodAsync_ConcurrentModification_ReturnsConflict()
+    {
+        // Arrange
+        var service = CreateServiceWithConfiguration();
+        var accountId = Guid.NewGuid();
+
+        _mockAccountStore
+            .Setup(s => s.GetAsync($"account-{accountId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new AccountModel
+            {
+                AccountId = accountId,
+                Roles = new List<string> { "user" },
+                CreatedAt = DateTimeOffset.UtcNow,
+                UpdatedAt = DateTimeOffset.UtcNow
+            });
+
+        _mockAuthMethodsStore
+            .Setup(s => s.GetWithETagAsync($"auth-methods-{accountId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((new List<AuthMethodInfo>(), "etag-0"));
+
+        // No existing provider index
+        _mockStringStore
+            .Setup(s => s.GetAsync("provider-index-Discord:disc-new", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((string?)null);
+
+        // TrySaveAsync returns null (conflict)
+        _mockAuthMethodsStore
+            .Setup(s => s.TrySaveAsync(
+                $"auth-methods-{accountId}",
+                It.IsAny<List<AuthMethodInfo>>(),
+                "etag-0",
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync((string?)null);
+
+        // Act
+        var (status, response) = await service.AddAuthMethodAsync(new AddAuthMethodRequest
+        {
+            AccountId = accountId,
+            Provider = OAuthProvider.Discord,
+            ExternalId = "disc-new"
+        });
+
+        // Assert
+        Assert.Equal(StatusCodes.Conflict, status);
+        Assert.Null(response);
+    }
+
+    #endregion
+
+    #region RemoveAuthMethod Tests
+
+    [Fact]
+    public async Task RemoveAuthMethodAsync_Success_RemovesMethodAndIndex()
+    {
+        // Arrange
+        var service = CreateServiceWithConfiguration();
+        var accountId = Guid.NewGuid();
+        var methodId = Guid.NewGuid();
+
+        var account = new AccountModel
+        {
+            AccountId = accountId,
+            PasswordHash = "has-password", // Has password so removing last method is safe
+            Roles = new List<string> { "user" },
+            CreatedAt = DateTimeOffset.UtcNow,
+            UpdatedAt = DateTimeOffset.UtcNow
+        };
+
+        _mockAccountStore
+            .Setup(s => s.GetAsync($"account-{accountId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(account);
+
+        _mockAuthMethodsStore
+            .Setup(s => s.GetWithETagAsync($"auth-methods-{accountId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((new List<AuthMethodInfo>
+            {
+                new AuthMethodInfo
+                {
+                    MethodId = methodId,
+                    Provider = AuthProvider.Discord,
+                    ExternalId = "disc-rm-1",
+                    LinkedAt = DateTimeOffset.UtcNow
+                }
+            }, "etag-0"));
+
+        _mockAuthMethodsStore
+            .Setup(s => s.TrySaveAsync(
+                $"auth-methods-{accountId}",
+                It.IsAny<List<AuthMethodInfo>>(),
+                "etag-0",
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag-1");
+
+        // Act
+        var status = await service.RemoveAuthMethodAsync(new RemoveAuthMethodRequest
+        {
+            AccountId = accountId,
+            MethodId = methodId
+        });
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+
+        // Verify provider index removed
+        _mockStringStore.Verify(s => s.DeleteAsync(
+            "provider-index-Discord:disc-rm-1",
+            It.IsAny<CancellationToken>()), Times.Once);
+
+        // Verify event published
+        _mockMessageBus.Verify(m => m.TryPublishAsync(
+            "account.updated",
+            It.IsAny<AccountUpdatedEvent>(),
+            It.IsAny<PublishOptions?>(),
+            It.IsAny<Guid?>(),
+            It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task RemoveAuthMethodAsync_AccountNotFound_ReturnsNotFound()
+    {
+        // Arrange
+        var service = CreateServiceWithConfiguration();
+        var accountId = Guid.NewGuid();
+
+        _mockAccountStore
+            .Setup(s => s.GetAsync($"account-{accountId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((AccountModel?)null);
+
+        // Act
+        var status = await service.RemoveAuthMethodAsync(new RemoveAuthMethodRequest
+        {
+            AccountId = accountId,
+            MethodId = Guid.NewGuid()
+        });
+
+        // Assert
+        Assert.Equal(StatusCodes.NotFound, status);
+    }
+
+    [Fact]
+    public async Task RemoveAuthMethodAsync_AccountSoftDeleted_ReturnsNotFound()
+    {
+        // Arrange
+        var service = CreateServiceWithConfiguration();
+        var accountId = Guid.NewGuid();
+
+        _mockAccountStore
+            .Setup(s => s.GetAsync($"account-{accountId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new AccountModel
+            {
+                AccountId = accountId,
+                Roles = new List<string> { "user" },
+                CreatedAt = DateTimeOffset.UtcNow,
+                UpdatedAt = DateTimeOffset.UtcNow,
+                DeletedAt = DateTimeOffset.UtcNow
+            });
+
+        // Act
+        var status = await service.RemoveAuthMethodAsync(new RemoveAuthMethodRequest
+        {
+            AccountId = accountId,
+            MethodId = Guid.NewGuid()
+        });
+
+        // Assert
+        Assert.Equal(StatusCodes.NotFound, status);
+    }
+
+    [Fact]
+    public async Task RemoveAuthMethodAsync_MethodIdNotFound_ReturnsNotFound()
+    {
+        // Arrange
+        var service = CreateServiceWithConfiguration();
+        var accountId = Guid.NewGuid();
+
+        _mockAccountStore
+            .Setup(s => s.GetAsync($"account-{accountId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new AccountModel
+            {
+                AccountId = accountId,
+                Roles = new List<string> { "user" },
+                CreatedAt = DateTimeOffset.UtcNow,
+                UpdatedAt = DateTimeOffset.UtcNow
+            });
+
+        _mockAuthMethodsStore
+            .Setup(s => s.GetWithETagAsync($"auth-methods-{accountId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((new List<AuthMethodInfo>(), "etag-0"));
+
+        // Act
+        var status = await service.RemoveAuthMethodAsync(new RemoveAuthMethodRequest
+        {
+            AccountId = accountId,
+            MethodId = Guid.NewGuid() // Non-existent method
+        });
+
+        // Assert
+        Assert.Equal(StatusCodes.NotFound, status);
+    }
+
+    [Fact]
+    public async Task RemoveAuthMethodAsync_WouldOrphanAccount_ReturnsBadRequest()
+    {
+        // Arrange
+        var service = CreateServiceWithConfiguration();
+        var accountId = Guid.NewGuid();
+        var methodId = Guid.NewGuid();
+
+        // Account has no password
+        var account = new AccountModel
+        {
+            AccountId = accountId,
+            PasswordHash = null, // No password
+            Roles = new List<string> { "user" },
+            CreatedAt = DateTimeOffset.UtcNow,
+            UpdatedAt = DateTimeOffset.UtcNow
+        };
+
+        _mockAccountStore
+            .Setup(s => s.GetAsync($"account-{accountId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(account);
+
+        // Only has one auth method -- removing it would orphan account
+        _mockAuthMethodsStore
+            .Setup(s => s.GetWithETagAsync($"auth-methods-{accountId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((new List<AuthMethodInfo>
+            {
+                new AuthMethodInfo
+                {
+                    MethodId = methodId,
+                    Provider = AuthProvider.Discord,
+                    ExternalId = "disc-last",
+                    LinkedAt = DateTimeOffset.UtcNow
+                }
+            }, "etag-0"));
+
+        // Act
+        var status = await service.RemoveAuthMethodAsync(new RemoveAuthMethodRequest
+        {
+            AccountId = accountId,
+            MethodId = methodId
+        });
+
+        // Assert
+        Assert.Equal(StatusCodes.BadRequest, status);
+    }
+
+    [Fact]
+    public async Task RemoveAuthMethodAsync_HasPasswordAndLastMethod_Succeeds()
+    {
+        // Arrange
+        var service = CreateServiceWithConfiguration();
+        var accountId = Guid.NewGuid();
+        var methodId = Guid.NewGuid();
+
+        // Account HAS a password, so removing last OAuth method is fine
+        var account = new AccountModel
+        {
+            AccountId = accountId,
+            PasswordHash = "has-password",
+            Roles = new List<string> { "user" },
+            CreatedAt = DateTimeOffset.UtcNow,
+            UpdatedAt = DateTimeOffset.UtcNow
+        };
+
+        _mockAccountStore
+            .Setup(s => s.GetAsync($"account-{accountId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(account);
+
+        _mockAuthMethodsStore
+            .Setup(s => s.GetWithETagAsync($"auth-methods-{accountId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((new List<AuthMethodInfo>
+            {
+                new AuthMethodInfo
+                {
+                    MethodId = methodId,
+                    Provider = AuthProvider.Google,
+                    ExternalId = "goog-last",
+                    LinkedAt = DateTimeOffset.UtcNow
+                }
+            }, "etag-0"));
+
+        _mockAuthMethodsStore
+            .Setup(s => s.TrySaveAsync(
+                $"auth-methods-{accountId}",
+                It.IsAny<List<AuthMethodInfo>>(),
+                "etag-0",
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag-1");
+
+        // Act
+        var status = await service.RemoveAuthMethodAsync(new RemoveAuthMethodRequest
+        {
+            AccountId = accountId,
+            MethodId = methodId
+        });
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+    }
+
+    [Fact]
+    public async Task RemoveAuthMethodAsync_ConcurrentModification_ReturnsConflict()
+    {
+        // Arrange
+        var service = CreateServiceWithConfiguration();
+        var accountId = Guid.NewGuid();
+        var methodId = Guid.NewGuid();
+
+        _mockAccountStore
+            .Setup(s => s.GetAsync($"account-{accountId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new AccountModel
+            {
+                AccountId = accountId,
+                PasswordHash = "has-password",
+                Roles = new List<string> { "user" },
+                CreatedAt = DateTimeOffset.UtcNow,
+                UpdatedAt = DateTimeOffset.UtcNow
+            });
+
+        _mockAuthMethodsStore
+            .Setup(s => s.GetWithETagAsync($"auth-methods-{accountId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((new List<AuthMethodInfo>
+            {
+                new AuthMethodInfo
+                {
+                    MethodId = methodId,
+                    Provider = AuthProvider.Discord,
+                    ExternalId = "disc-confl",
+                    LinkedAt = DateTimeOffset.UtcNow
+                }
+            }, "etag-0"));
+
+        _mockAuthMethodsStore
+            .Setup(s => s.TrySaveAsync(
+                $"auth-methods-{accountId}",
+                It.IsAny<List<AuthMethodInfo>>(),
+                "etag-0",
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync((string?)null); // Conflict
+
+        // Act
+        var status = await service.RemoveAuthMethodAsync(new RemoveAuthMethodRequest
+        {
+            AccountId = accountId,
+            MethodId = methodId
+        });
+
+        // Assert
+        Assert.Equal(StatusCodes.Conflict, status);
+    }
+
+    #endregion
+
+    #region UpdateProfile Tests
+
+    [Fact]
+    public async Task UpdateProfileAsync_Success_UpdatesDisplayName()
+    {
+        // Arrange
+        var service = CreateServiceWithConfiguration();
+        var accountId = Guid.NewGuid();
+        var account = new AccountModel
+        {
+            AccountId = accountId,
+            Email = "user@test.local",
+            DisplayName = "Old Display",
+            Roles = new List<string> { "user" },
+            CreatedAt = DateTimeOffset.UtcNow,
+            UpdatedAt = DateTimeOffset.UtcNow
+        };
+
+        _mockAccountStore
+            .Setup(s => s.GetWithETagAsync($"account-{accountId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((account, "etag-0"));
+
+        _mockAccountStore
+            .Setup(s => s.TrySaveAsync(
+                $"account-{accountId}",
+                It.IsAny<AccountModel>(),
+                "etag-0",
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag-1");
+
+        _mockAuthMethodsStore
+            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<AuthMethodInfo>());
+
+        // Act
+        var (status, response) = await service.UpdateProfileAsync(new UpdateProfileRequest
+        {
+            AccountId = accountId,
+            DisplayName = "New Display"
+        });
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Equal("New Display", response.DisplayName);
+
+        _mockMessageBus.Verify(m => m.TryPublishAsync(
+            "account.updated",
+            It.Is<AccountUpdatedEvent>(e => e.ChangedFields.Contains("display_name")),
+            It.IsAny<PublishOptions?>(),
+            It.IsAny<Guid?>(),
+            It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task UpdateProfileAsync_NotFound_ReturnsNotFound()
+    {
+        // Arrange
+        var service = CreateServiceWithConfiguration();
+        var accountId = Guid.NewGuid();
+
+        _mockAccountStore
+            .Setup(s => s.GetWithETagAsync($"account-{accountId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(((AccountModel?)null, (string?)null));
+
+        // Act
+        var (status, response) = await service.UpdateProfileAsync(new UpdateProfileRequest
+        {
+            AccountId = accountId,
+            DisplayName = "Anything"
+        });
+
+        // Assert
+        Assert.Equal(StatusCodes.NotFound, status);
+        Assert.Null(response);
+    }
+
+    [Fact]
+    public async Task UpdateProfileAsync_SoftDeleted_ReturnsNotFound()
+    {
+        // Arrange
+        var service = CreateServiceWithConfiguration();
+        var accountId = Guid.NewGuid();
+
+        _mockAccountStore
+            .Setup(s => s.GetWithETagAsync($"account-{accountId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((new AccountModel
+            {
+                AccountId = accountId,
+                Roles = new List<string> { "user" },
+                CreatedAt = DateTimeOffset.UtcNow,
+                UpdatedAt = DateTimeOffset.UtcNow,
+                DeletedAt = DateTimeOffset.UtcNow
+            }, "etag-0"));
+
+        // Act
+        var (status, response) = await service.UpdateProfileAsync(new UpdateProfileRequest
+        {
+            AccountId = accountId,
+            DisplayName = "Anything"
+        });
+
+        // Assert
+        Assert.Equal(StatusCodes.NotFound, status);
+        Assert.Null(response);
+    }
+
+    [Fact]
+    public async Task UpdateProfileAsync_NoChanges_ReturnsOkWithoutSavingOrPublishing()
+    {
+        // Arrange
+        var service = CreateServiceWithConfiguration();
+        var accountId = Guid.NewGuid();
+        var account = new AccountModel
+        {
+            AccountId = accountId,
+            DisplayName = "Same Name",
+            Roles = new List<string> { "user" },
+            CreatedAt = DateTimeOffset.UtcNow,
+            UpdatedAt = DateTimeOffset.UtcNow
+        };
+
+        _mockAccountStore
+            .Setup(s => s.GetWithETagAsync($"account-{accountId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((account, "etag-0"));
+
+        _mockAuthMethodsStore
+            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<AuthMethodInfo>());
+
+        // Act
+        var (status, response) = await service.UpdateProfileAsync(new UpdateProfileRequest
+        {
+            AccountId = accountId,
+            DisplayName = "Same Name"
+        });
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+
+        // Verify no save and no event
+        _mockAccountStore.Verify(s => s.TrySaveAsync(
+            It.IsAny<string>(),
+            It.IsAny<AccountModel>(),
+            It.IsAny<string>(),
+            It.IsAny<CancellationToken>()), Times.Never);
+
+        _mockMessageBus.Verify(m => m.TryPublishAsync(
+            "account.updated",
+            It.IsAny<AccountUpdatedEvent>(),
+            It.IsAny<PublishOptions?>(),
+            It.IsAny<Guid?>(),
+            It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task UpdateProfileAsync_ConcurrentModification_ReturnsConflict()
+    {
+        // Arrange
+        var service = CreateServiceWithConfiguration();
+        var accountId = Guid.NewGuid();
+        var account = new AccountModel
+        {
+            AccountId = accountId,
+            DisplayName = "Old",
+            Roles = new List<string> { "user" },
+            CreatedAt = DateTimeOffset.UtcNow,
+            UpdatedAt = DateTimeOffset.UtcNow
+        };
+
+        _mockAccountStore
+            .Setup(s => s.GetWithETagAsync($"account-{accountId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((account, "etag-0"));
+
+        _mockAccountStore
+            .Setup(s => s.TrySaveAsync(
+                $"account-{accountId}",
+                It.IsAny<AccountModel>(),
+                "etag-0",
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync((string?)null);
+
+        // Act
+        var (status, response) = await service.UpdateProfileAsync(new UpdateProfileRequest
+        {
+            AccountId = accountId,
+            DisplayName = "New"
+        });
+
+        // Assert
+        Assert.Equal(StatusCodes.Conflict, status);
+        Assert.Null(response);
+    }
+
+    #endregion
+
+    #region UpdateMfa Tests
+
+    [Fact]
+    public async Task UpdateMfaAsync_Success_EnablesMfa()
+    {
+        // Arrange
+        var service = CreateServiceWithConfiguration();
+        var accountId = Guid.NewGuid();
+        var account = new AccountModel
+        {
+            AccountId = accountId,
+            Roles = new List<string> { "user" },
+            MfaEnabled = false,
+            CreatedAt = DateTimeOffset.UtcNow,
+            UpdatedAt = DateTimeOffset.UtcNow
+        };
+
+        _mockAccountStore
+            .Setup(s => s.GetWithETagAsync($"account-{accountId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((account, "etag-0"));
+
+        AccountModel? savedAccount = null;
+        _mockAccountStore
+            .Setup(s => s.TrySaveAsync(
+                $"account-{accountId}",
+                It.IsAny<AccountModel>(),
+                "etag-0",
+                It.IsAny<CancellationToken>()))
+            .Callback<string, AccountModel, string, CancellationToken>(
+                (key, model, etag, ct) => savedAccount = model)
+            .ReturnsAsync("etag-1");
+
+        _mockAuthMethodsStore
+            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<AuthMethodInfo>());
+
+        // Act
+        var status = await service.UpdateMfaAsync(new UpdateMfaRequest
+        {
+            AccountId = accountId,
+            MfaEnabled = true,
+            MfaSecret = "totp-secret",
+            MfaRecoveryCodes = new List<string> { "recovery-1", "recovery-2" }
+        });
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(savedAccount);
+        Assert.True(savedAccount.MfaEnabled);
+        Assert.Equal("totp-secret", savedAccount.MfaSecret);
+        Assert.NotNull(savedAccount.MfaRecoveryCodes);
+        Assert.Equal(2, savedAccount.MfaRecoveryCodes.Count);
+
+        _mockMessageBus.Verify(m => m.TryPublishAsync(
+            "account.updated",
+            It.IsAny<AccountUpdatedEvent>(),
+            It.IsAny<PublishOptions?>(),
+            It.IsAny<Guid?>(),
+            It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task UpdateMfaAsync_AccountNotFound_ReturnsNotFound()
+    {
+        // Arrange
+        var service = CreateServiceWithConfiguration();
+        var accountId = Guid.NewGuid();
+
+        _mockAccountStore
+            .Setup(s => s.GetWithETagAsync($"account-{accountId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(((AccountModel?)null, (string?)null));
+
+        // Act
+        var status = await service.UpdateMfaAsync(new UpdateMfaRequest
+        {
+            AccountId = accountId,
+            MfaEnabled = true
+        });
+
+        // Assert
+        Assert.Equal(StatusCodes.NotFound, status);
+    }
+
+    [Fact]
+    public async Task UpdateMfaAsync_AccountSoftDeleted_ReturnsNotFound()
+    {
+        // Arrange
+        var service = CreateServiceWithConfiguration();
+        var accountId = Guid.NewGuid();
+
+        _mockAccountStore
+            .Setup(s => s.GetWithETagAsync($"account-{accountId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((new AccountModel
+            {
+                AccountId = accountId,
+                Roles = new List<string> { "user" },
+                CreatedAt = DateTimeOffset.UtcNow,
+                UpdatedAt = DateTimeOffset.UtcNow,
+                DeletedAt = DateTimeOffset.UtcNow
+            }, "etag-0"));
+
+        // Act
+        var status = await service.UpdateMfaAsync(new UpdateMfaRequest
+        {
+            AccountId = accountId,
+            MfaEnabled = false
+        });
+
+        // Assert
+        Assert.Equal(StatusCodes.NotFound, status);
+    }
+
+    [Fact]
+    public async Task UpdateMfaAsync_ConcurrentModification_ReturnsConflict()
+    {
+        // Arrange
+        var service = CreateServiceWithConfiguration();
+        var accountId = Guid.NewGuid();
+
+        _mockAccountStore
+            .Setup(s => s.GetWithETagAsync($"account-{accountId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((new AccountModel
+            {
+                AccountId = accountId,
+                Roles = new List<string> { "user" },
+                CreatedAt = DateTimeOffset.UtcNow,
+                UpdatedAt = DateTimeOffset.UtcNow
+            }, "etag-0"));
+
+        _mockAccountStore
+            .Setup(s => s.TrySaveAsync(
+                $"account-{accountId}",
+                It.IsAny<AccountModel>(),
+                "etag-0",
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync((string?)null);
+
+        // Act
+        var status = await service.UpdateMfaAsync(new UpdateMfaRequest
+        {
+            AccountId = accountId,
+            MfaEnabled = true
+        });
+
+        // Assert
+        Assert.Equal(StatusCodes.Conflict, status);
+    }
+
+    #endregion
+
+    #region UpdatePasswordHash Tests (Extended)
+
+    [Fact]
+    public async Task UpdatePasswordHashAsync_AccountNotFound_ReturnsNotFound()
+    {
+        // Arrange
+        var service = CreateServiceWithConfiguration();
+        var accountId = Guid.NewGuid();
+
+        _mockAccountStore
+            .Setup(s => s.GetWithETagAsync($"account-{accountId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(((AccountModel?)null, (string?)null));
+
+        // Act
+        var status = await service.UpdatePasswordHashAsync(new UpdatePasswordRequest
+        {
+            AccountId = accountId,
+            PasswordHash = "new-hash"
+        });
+
+        // Assert
+        Assert.Equal(StatusCodes.NotFound, status);
+    }
+
+    [Fact]
+    public async Task UpdatePasswordHashAsync_AccountSoftDeleted_ReturnsNotFound()
+    {
+        // Arrange
+        var service = CreateServiceWithConfiguration();
+        var accountId = Guid.NewGuid();
+
+        _mockAccountStore
+            .Setup(s => s.GetWithETagAsync($"account-{accountId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((new AccountModel
+            {
+                AccountId = accountId,
+                Roles = new List<string> { "user" },
+                CreatedAt = DateTimeOffset.UtcNow,
+                UpdatedAt = DateTimeOffset.UtcNow,
+                DeletedAt = DateTimeOffset.UtcNow
+            }, "etag-0"));
+
+        // Act
+        var status = await service.UpdatePasswordHashAsync(new UpdatePasswordRequest
+        {
+            AccountId = accountId,
+            PasswordHash = "new-hash"
+        });
+
+        // Assert
+        Assert.Equal(StatusCodes.NotFound, status);
+    }
+
+    [Fact]
+    public async Task UpdatePasswordHashAsync_ConcurrentModification_ReturnsConflict()
+    {
+        // Arrange
+        var service = CreateServiceWithConfiguration();
+        var accountId = Guid.NewGuid();
+
+        _mockAccountStore
+            .Setup(s => s.GetWithETagAsync($"account-{accountId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((new AccountModel
+            {
+                AccountId = accountId,
+                Roles = new List<string> { "user" },
+                PasswordHash = "old-hash",
+                CreatedAt = DateTimeOffset.UtcNow,
+                UpdatedAt = DateTimeOffset.UtcNow
+            }, "etag-0"));
+
+        _mockAccountStore
+            .Setup(s => s.TrySaveAsync(
+                $"account-{accountId}",
+                It.IsAny<AccountModel>(),
+                "etag-0",
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync((string?)null);
+
+        // Act
+        var status = await service.UpdatePasswordHashAsync(new UpdatePasswordRequest
+        {
+            AccountId = accountId,
+            PasswordHash = "new-hash"
+        });
+
+        // Assert
+        Assert.Equal(StatusCodes.Conflict, status);
+    }
+
+    [Fact]
+    public async Task UpdatePasswordHashAsync_Success_UpdatesHashAndTimestamp()
+    {
+        // Arrange
+        var service = CreateServiceWithConfiguration();
+        var accountId = Guid.NewGuid();
+
+        _mockAccountStore
+            .Setup(s => s.GetWithETagAsync($"account-{accountId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((new AccountModel
+            {
+                AccountId = accountId,
+                Roles = new List<string> { "user" },
+                PasswordHash = "old-hash",
+                CreatedAt = DateTimeOffset.UtcNow,
+                UpdatedAt = DateTimeOffset.UtcNow
+            }, "etag-0"));
+
+        AccountModel? savedAccount = null;
+        _mockAccountStore
+            .Setup(s => s.TrySaveAsync(
+                $"account-{accountId}",
+                It.IsAny<AccountModel>(),
+                "etag-0",
+                It.IsAny<CancellationToken>()))
+            .Callback<string, AccountModel, string, CancellationToken>(
+                (key, model, etag, ct) => savedAccount = model)
+            .ReturnsAsync("etag-1");
+
+        _mockAuthMethodsStore
+            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<AuthMethodInfo>());
+
+        // Act
+        var status = await service.UpdatePasswordHashAsync(new UpdatePasswordRequest
+        {
+            AccountId = accountId,
+            PasswordHash = "new-hash-value"
+        });
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(savedAccount);
+        Assert.Equal("new-hash-value", savedAccount.PasswordHash);
+    }
+
+    #endregion
+
+    #region UpdateVerificationStatus Tests (Extended)
+
+    [Fact]
+    public async Task UpdateVerificationStatusAsync_AccountNotFound_ReturnsNotFound()
+    {
+        // Arrange
+        var service = CreateServiceWithConfiguration();
+        var accountId = Guid.NewGuid();
+
+        _mockAccountStore
+            .Setup(s => s.GetWithETagAsync($"account-{accountId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(((AccountModel?)null, (string?)null));
+
+        // Act
+        var status = await service.UpdateVerificationStatusAsync(new UpdateVerificationRequest
+        {
+            AccountId = accountId,
+            EmailVerified = true
+        });
+
+        // Assert
+        Assert.Equal(StatusCodes.NotFound, status);
+    }
+
+    [Fact]
+    public async Task UpdateVerificationStatusAsync_AccountSoftDeleted_ReturnsNotFound()
+    {
+        // Arrange
+        var service = CreateServiceWithConfiguration();
+        var accountId = Guid.NewGuid();
+
+        _mockAccountStore
+            .Setup(s => s.GetWithETagAsync($"account-{accountId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((new AccountModel
+            {
+                AccountId = accountId,
+                Roles = new List<string> { "user" },
+                CreatedAt = DateTimeOffset.UtcNow,
+                UpdatedAt = DateTimeOffset.UtcNow,
+                DeletedAt = DateTimeOffset.UtcNow
+            }, "etag-0"));
+
+        // Act
+        var status = await service.UpdateVerificationStatusAsync(new UpdateVerificationRequest
+        {
+            AccountId = accountId,
+            EmailVerified = true
+        });
+
+        // Assert
+        Assert.Equal(StatusCodes.NotFound, status);
+    }
+
+    [Fact]
+    public async Task UpdateVerificationStatusAsync_ConcurrentModification_ReturnsConflict()
+    {
+        // Arrange
+        var service = CreateServiceWithConfiguration();
+        var accountId = Guid.NewGuid();
+
+        _mockAccountStore
+            .Setup(s => s.GetWithETagAsync($"account-{accountId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((new AccountModel
+            {
+                AccountId = accountId,
+                Roles = new List<string> { "user" },
+                IsVerified = false,
+                CreatedAt = DateTimeOffset.UtcNow,
+                UpdatedAt = DateTimeOffset.UtcNow
+            }, "etag-0"));
+
+        _mockAccountStore
+            .Setup(s => s.TrySaveAsync(
+                $"account-{accountId}",
+                It.IsAny<AccountModel>(),
+                "etag-0",
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync((string?)null);
+
+        // Act
+        var status = await service.UpdateVerificationStatusAsync(new UpdateVerificationRequest
+        {
+            AccountId = accountId,
+            EmailVerified = true
+        });
+
+        // Assert
+        Assert.Equal(StatusCodes.Conflict, status);
+    }
+
+    #endregion
+
+    #region UpdateEmail Tests
+
+    [Fact]
+    public async Task UpdateEmailAsync_Success_ChangesEmailAndResetsVerification()
+    {
+        // Arrange
+        var service = CreateServiceWithConfiguration();
+        var accountId = Guid.NewGuid();
+        var account = new AccountModel
+        {
+            AccountId = accountId,
+            Email = "old@test.local",
+            IsVerified = true,
+            Roles = new List<string> { "user" },
+            CreatedAt = DateTimeOffset.UtcNow,
+            UpdatedAt = DateTimeOffset.UtcNow
+        };
+
+        _mockAccountStore
+            .Setup(s => s.GetWithETagAsync($"account-{accountId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((account, "etag-0"));
+
+        // New email not taken
+        _mockStringStore
+            .Setup(s => s.GetAsync("email-index-new@test.local", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((string?)null);
+
+        AccountModel? savedAccount = null;
+        _mockAccountStore
+            .Setup(s => s.TrySaveAsync(
+                $"account-{accountId}",
+                It.IsAny<AccountModel>(),
+                "etag-0",
+                It.IsAny<CancellationToken>()))
+            .Callback<string, AccountModel, string, CancellationToken>(
+                (key, model, etag, ct) => savedAccount = model)
+            .ReturnsAsync("etag-1");
+
+        _mockAuthMethodsStore
+            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<AuthMethodInfo>());
+
+        // Act
+        var (status, response) = await service.UpdateEmailAsync(new UpdateEmailRequest
+        {
+            AccountId = accountId,
+            NewEmail = "new@test.local"
+        });
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Equal("new@test.local", response.Email);
+        Assert.False(response.EmailVerified); // Verification reset
+
+        Assert.NotNull(savedAccount);
+        Assert.Equal("new@test.local", savedAccount.Email);
+        Assert.False(savedAccount.IsVerified);
+
+        // Verify new email index created
+        _mockStringStore.Verify(s => s.SaveAsync(
+            "email-index-new@test.local",
+            accountId.ToString(),
+            It.IsAny<StateOptions?>(),
+            It.IsAny<CancellationToken>()), Times.Once);
+
+        // Verify old email index deleted
+        _mockStringStore.Verify(s => s.DeleteAsync(
+            "email-index-old@test.local",
+            It.IsAny<CancellationToken>()), Times.Once);
+
+        // Verify event published
+        _mockMessageBus.Verify(m => m.TryPublishAsync(
+            "account.updated",
+            It.Is<AccountUpdatedEvent>(e =>
+                e.ChangedFields.Contains("email") &&
+                e.ChangedFields.Contains("isVerified")),
+            It.IsAny<PublishOptions?>(),
+            It.IsAny<Guid?>(),
+            It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task UpdateEmailAsync_LockFailure_ReturnsConflict()
+    {
+        // Arrange
+        var service = CreateServiceWithConfiguration();
+        var accountId = Guid.NewGuid();
+
+        // Lock fails
+        var failedLock = new Mock<ILockResponse>();
+        failedLock.Setup(r => r.Success).Returns(false);
+        _mockLockProvider
+            .Setup(l => l.LockAsync(
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<int>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(failedLock.Object);
+
+        // Act
+        var (status, response) = await service.UpdateEmailAsync(new UpdateEmailRequest
+        {
+            AccountId = accountId,
+            NewEmail = "new@test.local"
+        });
+
+        // Assert
+        Assert.Equal(StatusCodes.Conflict, status);
+        Assert.Null(response);
+    }
+
+    [Fact]
+    public async Task UpdateEmailAsync_EmailAlreadyTaken_ReturnsConflict()
+    {
+        // Arrange
+        var service = CreateServiceWithConfiguration();
+        var accountId = Guid.NewGuid();
+
+        // Email already taken by another account
+        _mockStringStore
+            .Setup(s => s.GetAsync("email-index-taken@test.local", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Guid.NewGuid().ToString());
+
+        // Act
+        var (status, response) = await service.UpdateEmailAsync(new UpdateEmailRequest
+        {
+            AccountId = accountId,
+            NewEmail = "taken@test.local"
+        });
+
+        // Assert
+        Assert.Equal(StatusCodes.Conflict, status);
+        Assert.Null(response);
+    }
+
+    [Fact]
+    public async Task UpdateEmailAsync_AccountNotFound_ReturnsNotFound()
+    {
+        // Arrange
+        var service = CreateServiceWithConfiguration();
+        var accountId = Guid.NewGuid();
+
+        // New email not taken
+        _mockStringStore
+            .Setup(s => s.GetAsync("email-index-new@test.local", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((string?)null);
+
+        _mockAccountStore
+            .Setup(s => s.GetWithETagAsync($"account-{accountId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(((AccountModel?)null, (string?)null));
+
+        // Act
+        var (status, response) = await service.UpdateEmailAsync(new UpdateEmailRequest
+        {
+            AccountId = accountId,
+            NewEmail = "new@test.local"
+        });
+
+        // Assert
+        Assert.Equal(StatusCodes.NotFound, status);
+        Assert.Null(response);
+    }
+
+    [Fact]
+    public async Task UpdateEmailAsync_AccountSoftDeleted_ReturnsNotFound()
+    {
+        // Arrange
+        var service = CreateServiceWithConfiguration();
+        var accountId = Guid.NewGuid();
+
+        _mockStringStore
+            .Setup(s => s.GetAsync("email-index-new@test.local", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((string?)null);
+
+        _mockAccountStore
+            .Setup(s => s.GetWithETagAsync($"account-{accountId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((new AccountModel
+            {
+                AccountId = accountId,
+                Roles = new List<string> { "user" },
+                CreatedAt = DateTimeOffset.UtcNow,
+                UpdatedAt = DateTimeOffset.UtcNow,
+                DeletedAt = DateTimeOffset.UtcNow
+            }, "etag-0"));
+
+        // Act
+        var (status, response) = await service.UpdateEmailAsync(new UpdateEmailRequest
+        {
+            AccountId = accountId,
+            NewEmail = "new@test.local"
+        });
+
+        // Assert
+        Assert.Equal(StatusCodes.NotFound, status);
+        Assert.Null(response);
+    }
+
+    [Fact]
+    public async Task UpdateEmailAsync_SameEmail_ReturnsOkWithoutChanges()
+    {
+        // Arrange
+        var service = CreateServiceWithConfiguration();
+        var accountId = Guid.NewGuid();
+
+        _mockStringStore
+            .Setup(s => s.GetAsync("email-index-same@test.local", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((string?)null);
+
+        _mockAccountStore
+            .Setup(s => s.GetWithETagAsync($"account-{accountId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((new AccountModel
+            {
+                AccountId = accountId,
+                Email = "same@test.local",
+                IsVerified = true,
+                Roles = new List<string> { "user" },
+                CreatedAt = DateTimeOffset.UtcNow,
+                UpdatedAt = DateTimeOffset.UtcNow
+            }, "etag-0"));
+
+        _mockAuthMethodsStore
+            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<AuthMethodInfo>());
+
+        // Act
+        var (status, response) = await service.UpdateEmailAsync(new UpdateEmailRequest
+        {
+            AccountId = accountId,
+            NewEmail = "Same@Test.Local" // Same email, different case
+        });
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.True(response.EmailVerified); // Verification NOT reset
+
+        // Verify no save and no event
+        _mockAccountStore.Verify(s => s.TrySaveAsync(
+            It.IsAny<string>(),
+            It.IsAny<AccountModel>(),
+            It.IsAny<string>(),
+            It.IsAny<CancellationToken>()), Times.Never);
+
+        _mockMessageBus.Verify(m => m.TryPublishAsync(
+            "account.updated",
+            It.IsAny<AccountUpdatedEvent>(),
+            It.IsAny<PublishOptions?>(),
+            It.IsAny<Guid?>(),
+            It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task UpdateEmailAsync_ConcurrentModification_RollsBackNewIndex()
+    {
+        // Arrange
+        var service = CreateServiceWithConfiguration();
+        var accountId = Guid.NewGuid();
+
+        _mockStringStore
+            .Setup(s => s.GetAsync("email-index-rollback@test.local", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((string?)null);
+
+        _mockAccountStore
+            .Setup(s => s.GetWithETagAsync($"account-{accountId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((new AccountModel
+            {
+                AccountId = accountId,
+                Email = "old@test.local",
+                Roles = new List<string> { "user" },
+                CreatedAt = DateTimeOffset.UtcNow,
+                UpdatedAt = DateTimeOffset.UtcNow
+            }, "etag-0"));
+
+        // Concurrent modification
+        _mockAccountStore
+            .Setup(s => s.TrySaveAsync(
+                $"account-{accountId}",
+                It.IsAny<AccountModel>(),
+                "etag-0",
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync((string?)null);
+
+        // Act
+        var (status, response) = await service.UpdateEmailAsync(new UpdateEmailRequest
+        {
+            AccountId = accountId,
+            NewEmail = "rollback@test.local"
+        });
+
+        // Assert
+        Assert.Equal(StatusCodes.Conflict, status);
+        Assert.Null(response);
+
+        // Verify rollback: the new email index was created then deleted
+        _mockStringStore.Verify(s => s.SaveAsync(
+            "email-index-rollback@test.local",
+            accountId.ToString(),
+            It.IsAny<StateOptions?>(),
+            It.IsAny<CancellationToken>()), Times.Once);
+
+        _mockStringStore.Verify(s => s.DeleteAsync(
+            "email-index-rollback@test.local",
+            It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task UpdateEmailAsync_FromNullEmail_SkipsOldIndexDeletion()
+    {
+        // Arrange
+        var service = CreateServiceWithConfiguration();
+        var accountId = Guid.NewGuid();
+
+        _mockStringStore
+            .Setup(s => s.GetAsync("email-index-first@test.local", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((string?)null);
+
+        _mockAccountStore
+            .Setup(s => s.GetWithETagAsync($"account-{accountId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((new AccountModel
+            {
+                AccountId = accountId,
+                Email = null, // No previous email (OAuth account)
+                Roles = new List<string> { "user" },
+                CreatedAt = DateTimeOffset.UtcNow,
+                UpdatedAt = DateTimeOffset.UtcNow
+            }, "etag-0"));
+
+        _mockAccountStore
+            .Setup(s => s.TrySaveAsync(
+                $"account-{accountId}",
+                It.IsAny<AccountModel>(),
+                "etag-0",
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag-1");
+
+        _mockAuthMethodsStore
+            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<AuthMethodInfo>());
+
+        // Act
+        var (status, response) = await service.UpdateEmailAsync(new UpdateEmailRequest
+        {
+            AccountId = accountId,
+            NewEmail = "first@test.local"
+        });
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+
+        // Verify old email index delete was NOT called (there was no old email)
+        _mockStringStore.Verify(s => s.DeleteAsync(
+            It.Is<string>(k => k.StartsWith("email-index-") && k != "email-index-first@test.local"),
+            It.IsAny<CancellationToken>()), Times.Never);
     }
 
     #endregion

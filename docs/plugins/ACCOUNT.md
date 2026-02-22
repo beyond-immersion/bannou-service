@@ -157,8 +157,7 @@ On Delete: email-index removed (if exists),             │
 
 - **Account merge**: No mechanism exists to merge two accounts (e.g., when a user registers with email then later tries to register with the same OAuth provider under a different email). The data model supports multiple auth methods per account, but there's no merge workflow.
 <!-- AUDIT:NEEDS_DESIGN:2026-01-30:https://github.com/beyond-immersion/bannou-service/issues/137 -->
-- **Audit trail**: Account mutations publish events but don't maintain a per-account change history. An extension could store a changelog for compliance/debugging.
-<!-- AUDIT:NEEDS_DESIGN:2026-01-30:https://github.com/beyond-immersion/bannou-service/issues/138 -->
+- ~~**Audit trail**: Per-account audit storage was rejected (Issue #138 closed -- wrong architectural direction). Account mutations already publish typed lifecycle events per FOUNDATION TENETS. If queryable audit history is needed for compliance, a dedicated cross-service event consumer is the correct pattern.~~
 - ~~**Email change**: There is no endpoint for changing an account's email address.~~: **FIXED** (2026-02-08) - Added `/account/email/update` endpoint with distributed lock, atomic index swap, and IsVerified reset. See Issue #139.
 ## Known Quirks & Caveats
 
@@ -194,6 +193,7 @@ This section tracks active development work on items from the quirks/bugs lists 
 
 ### Completed
 
+- **#151 Nullable Email** (2026-01-30): Made `Account.Email` nullable to honestly represent OAuth/Steam accounts without real emails. Removed synthetic placeholder email generation. Added `authMethods` to lifecycle events for identifying email-less accounts.
 - **#139 Email Change Endpoint** (2026-02-08): Added `/account/email/update` with distributed lock on new email, atomic index swap, IsVerified reset, and event publication.
 - **#332 Production Hardening** (2026-02-08): Applied all 7 fixes for 100K+ scale:
   - BUG-1: Added distributed lock (`account-lock` Redis store) for email uniqueness in `CreateAccountAsync`

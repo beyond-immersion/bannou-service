@@ -66,35 +66,79 @@ Registration is idempotent. Handlers are isolated (one throwing doesn't prevent 
 
 ## Tenet 7: Error Handling (STANDARDIZED)
 
-**Rule**: Wrap all external calls in try-catch, use specific exception types where available.
+**Rule**: Use specific exception types where available. Let unexpected exceptions propagate to the generated controller's catch-all boundary.
 
-### Standard Try-Catch Pattern
+### Generated Controller Exception Boundary (DO NOT DUPLICATE)
+
+The generated controller wraps **every** service method call in a try-catch that handles:
+- `ApiException` → logs warning, returns 503
+- `Exception` → logs error, calls `TryPublishErrorAsync`, records telemetry error, returns 500
 
 ```csharp
+// GENERATED CONTROLLER (auto-generated, do NOT replicate in service code):
 try
 {
-    var result = await _stateStore.GetAsync(key, ct);
-    if (result == null) return (StatusCodes.NotFound, null);
-    return (StatusCodes.OK, result);
+    var (statusCode, result) = await _implementation.GetAccountAsync(body, cancellationToken);
+    return ConvertToActionResult(statusCode, result);
+}
+catch (ApiException ex_)
+{
+    logger_.LogWarning(ex_, "Dependency error in {Endpoint}", "post:account/get");
+    activity_?.SetStatus(ActivityStatusCode.Error, "Dependency error");
+    return StatusCode(503);
+}
+catch (Exception ex_)
+{
+    logger_.LogError(ex_, "Unexpected error in {Endpoint}", "post:account/get");
+    await messageBus_.TryPublishErrorAsync("account", "GetAccount", ...);
+    activity_?.SetStatus(ActivityStatusCode.Error, ex_.Message);
+    return StatusCode(500);
+}
+```
+
+**Service methods do NOT need top-level try-catch blocks.** If a state store, message bus, or lock provider call throws an unexpected exception inside a service method, it propagates to the generated controller which already handles logging, error event publishing, telemetry, and HTTP 500 response. Adding redundant try-catches in service methods would either swallow exceptions the controller should see, or catch-and-rethrow for no benefit.
+
+### When Service-Level Try-Catch IS Required
+
+Service methods need their own try-catch in exactly two situations:
+
+**1. Inter-service calls via generated clients** (e.g., `IItemClient`, `ICharacterClient`):
+```csharp
+// CORRECT: Catch ApiException on inter-service calls to map status codes
+try
+{
+    var (status, character) = await _characterClient.GetCharacterAsync(request, ct);
+    if (status != StatusCodes.OK) return (status, null);
+    // ... use character
 }
 catch (ApiException ex)
 {
-    _logger.LogWarning(ex, "Service call failed with status {Status}", ex.StatusCode);
+    _logger.LogWarning(ex, "Character service call failed with status {Status}", ex.StatusCode);
     return ((StatusCodes)ex.StatusCode, null);
 }
-catch (Exception ex)
+```
+
+**2. Specific recovery logic** (e.g., partial failure in a loop, graceful degradation):
+```csharp
+// CORRECT: Catch around a specific operation where you want to recover, not crash
+foreach (var id in accountIds)
 {
-    _logger.LogError(ex, "Failed operation {Operation}", operationName);
-    await _messageBus.TryPublishErrorAsync(
-        "my-service", operationName, ex.GetType().Name, ex.Message,
-        stack: ex.StackTrace);
-    return (StatusCodes.InternalServerError, null);
+    try
+    {
+        var account = await accountStore.GetAsync(key, ct);
+        results.Add(account);
+    }
+    catch (Exception ex)
+    {
+        _logger.LogError(ex, "Failed to load account {AccountId}", id);
+        failures.Add(new BulkOperationFailure { AccountId = id, Error = ex.Message });
+    }
 }
 ```
 
 ### When ApiException Handling Applies
 
-The `ApiException` catch is ONLY required for **inter-service calls** (generated clients like `IItemClient`, `IServiceNavigator`, `IMeshClient`). NOT required for state store operations, message bus operations, lock provider operations, or local business logic.
+The `ApiException` catch is ONLY required for **inter-service calls** (generated clients like `IItemClient`, `IServiceNavigator`, `IMeshClient`). NOT required for state store operations, message bus operations, lock provider operations, or local business logic. For these, let exceptions propagate to the generated controller.
 
 ### Error Event Publishing
 

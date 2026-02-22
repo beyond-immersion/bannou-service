@@ -1,3 +1,5 @@
+using System.Text.Json.Serialization;
+
 namespace BeyondImmersion.BannouService.Account;
 
 /// <summary>
@@ -28,26 +30,88 @@ public partial class AccountService
 {
     // This partial class declaration exists to signal that the models below
     // are owned by and used exclusively by this service. The models themselves
-    // are defined at namespace level as internal classes.
+    // are defined at namespace level below.
 }
 
 // ============================================================================
 // INTERNAL DATA MODELS
 // ============================================================================
-// Add your internal data models below. Examples:
-//
-// /// <summary>
-// /// Internal storage model for [entity].
-// /// </summary>
-// internal class AccountStorageModel
-// {
-//     public Guid Id { get; set; }
-//     public string Name { get; set; } = string.Empty;
-//     public DateTimeOffset CreatedAt { get; set; }
-// }
-//
-// /// <summary>
-// /// Cache entry for [purpose].
-// /// </summary>
-// internal record AccountCacheEntry(Guid Id, string Data, DateTimeOffset CachedAt);
-// ============================================================================
+
+/// <summary>
+/// Account data model for lib-state storage.
+/// Replaces Entity Framework entities.
+/// </summary>
+public class AccountModel
+{
+    /// <summary>Unique identifier for the account.</summary>
+    public Guid AccountId { get; set; }
+
+    /// <summary>Email address used for login and notifications. Null for OAuth/Steam accounts without email.</summary>
+    public string? Email { get; set; }
+
+    /// <summary>User-visible display name, optional.</summary>
+    public string? DisplayName { get; set; }
+
+    /// <summary>BCrypt hashed password for email/password authentication.</summary>
+    public string? PasswordHash { get; set; }
+
+    /// <summary>Whether the email address has been verified.</summary>
+    public bool IsVerified { get; set; }
+
+    /// <summary>User roles for permission checks (e.g., "admin", "user").</summary>
+    public List<string> Roles { get; set; } = new List<string>();
+
+    /// <summary>Custom metadata key-value pairs for the account.</summary>
+    public Dictionary<string, object>? Metadata { get; set; }
+
+    /// <summary>Whether multi-factor authentication is enabled for this account.</summary>
+    public bool MfaEnabled { get; set; }
+
+    /// <summary>Encrypted TOTP secret (AES-256-GCM ciphertext). Auth service encrypts/decrypts, Account stores opaque ciphertext.</summary>
+    public string? MfaSecret { get; set; }
+
+    /// <summary>BCrypt-hashed single-use recovery codes. Auth service generates/verifies, Account stores opaque hashes.</summary>
+    public List<string>? MfaRecoveryCodes { get; set; }
+
+    /// <summary>
+    /// Unix epoch timestamp for account creation.
+    /// Stored as long to avoid System.Text.Json DateTimeOffset serialization issues.
+    /// </summary>
+    public long CreatedAtUnix { get; set; }
+
+    /// <summary>
+    /// Unix epoch timestamp for last account update.
+    /// Stored as long to avoid System.Text.Json DateTimeOffset serialization issues.
+    /// </summary>
+    public long UpdatedAtUnix { get; set; }
+
+    /// <summary>
+    /// Unix epoch timestamp for soft-deletion, null if not deleted.
+    /// Stored as long to avoid System.Text.Json DateTimeOffset serialization issues.
+    /// </summary>
+    public long? DeletedAtUnix { get; set; }
+
+    /// <summary>Computed property for code convenience - not serialized.</summary>
+    [JsonIgnore]
+    public DateTimeOffset CreatedAt
+    {
+        get => DateTimeOffset.FromUnixTimeSeconds(CreatedAtUnix);
+        set => CreatedAtUnix = value.ToUnixTimeSeconds();
+    }
+
+    /// <summary>Computed property for code convenience - not serialized.</summary>
+    [JsonIgnore]
+    public DateTimeOffset UpdatedAt
+    {
+        get => DateTimeOffset.FromUnixTimeSeconds(UpdatedAtUnix);
+        set => UpdatedAtUnix = value.ToUnixTimeSeconds();
+    }
+
+    /// <summary>Computed property for code convenience - not serialized.</summary>
+    [JsonIgnore]
+    public DateTimeOffset? DeletedAt
+    {
+        get => DeletedAtUnix.HasValue ? DateTimeOffset.FromUnixTimeSeconds(DeletedAtUnix.Value) : null;
+        set => DeletedAtUnix = value?.ToUnixTimeSeconds();
+    }
+}
