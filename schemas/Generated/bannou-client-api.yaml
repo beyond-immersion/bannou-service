@@ -16139,7 +16139,8 @@ components:
           type: object
           nullable: true
           additionalProperties: true
-          description: Game-specific metadata for this license node
+          description: Game-specific metadata for this license node. No Bannou 
+            plugin reads specific keys from this field by convention.
     AddMemberRequest:
       type: object
       description: Request to add a character to a faction
@@ -16524,7 +16525,8 @@ components:
         otherTrackers:
           type: object
           additionalProperties: true
-          description: Configuration for other analytics trackers
+          description: Configuration for other analytics trackers. No Bannou 
+            plugin reads specific keys from this field by convention.
     AnswerPeerRequest:
       type: object
       additionalProperties: false
@@ -18114,7 +18116,8 @@ components:
           type: object
           nullable: true
           additionalProperties: true
-          description: Game-specific metadata for this license node
+          description: Game-specific metadata for this license node. No Bannou 
+            plugin reads specific keys from this field by convention.
     BoardResponse:
       type: object
       description: Board instance with all fields
@@ -20686,7 +20689,6 @@ components:
       - sessionId
       - capabilities
       - version
-      - generatedAt
       properties:
         sessionId:
           type: string
@@ -20709,10 +20711,6 @@ components:
         version:
           type: integer
           description: Capability manifest version (increments on changes)
-        generatedAt:
-          type: string
-          format: date-time
-          description: When this capability manifest was generated
         expiresAt:
           type: string
           format: date-time
@@ -23297,7 +23295,8 @@ components:
           type: object
           additionalProperties: true
           nullable: true
-          description: Custom metadata for the bundle (null if none)
+          description: Custom metadata for the bundle (null if none). No Bannou 
+            plugin reads specific keys from this field by convention.
     CreateBundleResponse:
       description: Response with bundle creation status and estimated size
       type: object
@@ -24291,7 +24290,8 @@ components:
           type: object
           additionalProperties: true
           nullable: true
-          description: Custom metadata for the metabundle
+          description: Custom metadata for the metabundle. No Bannou plugin 
+            reads specific keys from this field by convention.
     CreateMetabundleResponse:
       type: object
       additionalProperties: false
@@ -24903,7 +24903,8 @@ components:
           type: object
           additionalProperties: true
           nullable: true
-          description: Free-form transaction metadata
+          description: Free-form transaction metadata. No Bannou plugin reads 
+            specific keys from this field by convention.
     CreditCurrencyResponse:
       type: object
       description: Result of credit operation
@@ -25272,7 +25273,8 @@ components:
           type: object
           additionalProperties: true
           nullable: true
-          description: Free-form metadata
+          description: Free-form metadata. No Bannou plugin reads specific keys 
+            from this field by convention.
     CustomAffordance:
       type: object
       description: Custom affordance definition for novel scenarios
@@ -25406,7 +25408,8 @@ components:
           type: object
           additionalProperties: true
           nullable: true
-          description: Free-form transaction metadata
+          description: Free-form transaction metadata. No Bannou plugin reads 
+            specific keys from this field by convention.
     DebitCurrencyResponse:
       type: object
       description: Result of debit operation
@@ -26679,7 +26682,8 @@ components:
         minimumRequirements:
           type: object
           additionalProperties: true
-          description: Minimum system requirements for the client
+          description: Minimum system requirements for the client. No Bannou 
+            plugin reads specific keys from this field by convention.
     DownloadsResponse:
       description: Collection of available game client downloads by platform
       type: object
@@ -27418,7 +27422,8 @@ components:
           type: object
           nullable: true
           additionalProperties: true
-          description: Arbitrary custom data for game-specific metadata
+          description: Arbitrary custom data for game-specific metadata. No 
+            Bannou plugin reads specific keys from this field by convention.
     EntryTemplateResponse:
       type: object
       description: Entry template with all fields
@@ -28385,6 +28390,13 @@ components:
           default: false
           description: If true, invoke cleanup callbacks after successful 
             archival
+        deleteSourceDataPolicy:
+          $ref: '#/components/schemas/CleanupPolicy'
+          nullable: true
+          description: |
+            Cleanup policy for source data deletion after archival.
+            Only applies when deleteSourceData is true.
+            If not specified, uses the configured DefaultCleanupPolicy.
         compressionPolicy:
           $ref: '#/components/schemas/CompressionPolicy'
           nullable: true
@@ -28459,19 +28471,17 @@ components:
           description: Idempotency key for the execution
     ExecuteContractResponse:
       type: object
-      description: Response from executing a contract
+      description: Response from executing a contract. HTTP 200 confirms 
+        execution completed.
       additionalProperties: false
       required:
-      - executed
       - alreadyExecuted
       - contractId
       properties:
-        executed:
-          type: boolean
-          description: Whether execution was successful
         alreadyExecuted:
           type: boolean
-          description: True if this was a repeat call (idempotency)
+          description: True if this was a repeat call (idempotency). When false,
+            this is a fresh execution.
         contractId:
           type: string
           format: uuid
@@ -28483,11 +28493,6 @@ components:
           nullable: true
           description: Per-clause distribution outcomes with success/failure 
             details
-        executedAt:
-          type: string
-          format: date-time
-          nullable: true
-          description: When execution occurred
     ExecuteConversionRequest:
       type: object
       description: Request to execute a currency conversion
@@ -34411,7 +34416,8 @@ components:
           type: object
           nullable: true
           additionalProperties: true
-          description: Game-specific metadata for this license node
+          description: Game-specific metadata for this license node. No Bannou 
+            plugin reads specific keys from this field by convention.
         createdAt:
           type: string
           format: date-time
@@ -37477,17 +37483,13 @@ components:
           description: Optional idempotency key for the operation
     LockContractResponse:
       type: object
-      description: Response from locking a contract
+      description: Response from locking a contract. HTTP 200 confirms the lock 
+        was acquired.
       additionalProperties: false
       required:
-      - locked
       - contractId
       - guardianId
-      - lockedAt
       properties:
-        locked:
-          type: boolean
-          description: Whether the contract was locked
         contractId:
           type: string
           format: uuid
@@ -37496,10 +37498,6 @@ components:
           type: string
           format: uuid
           description: Guardian entity ID
-        lockedAt:
-          type: string
-          format: date-time
-          description: When the contract was locked
     LoginRequest:
       description: Request to authenticate a user with email and password 
         credentials
@@ -39217,7 +39215,8 @@ components:
         metadata:
           type: object
           additionalProperties: true
-          description: Custom metadata for the page
+          description: Custom metadata for the page. No Bannou plugin reads 
+            specific keys from this field by convention.
         seo:
           $ref: '#/components/schemas/SEOMetadata'
           description: Search engine optimization settings for the page
@@ -46252,16 +46251,13 @@ components:
             pattern EscrowId, PartyA_EscrowWalletId, etc.)
     SetTemplateValuesResponse:
       type: object
-      description: Response from setting template values
+      description: Response from setting template values. HTTP 200 confirms 
+        values were set.
       additionalProperties: false
       required:
-      - updated
       - contractId
       - valueCount
       properties:
-        updated:
-          type: boolean
-          description: Whether values were updated
         contractId:
           type: string
           format: uuid
@@ -48270,18 +48266,15 @@ components:
           description: Optional idempotency key for the operation
     TransferContractPartyResponse:
       type: object
-      description: Response from transferring a party role
+      description: Response from transferring a party role. HTTP 200 confirms 
+        the transfer succeeded.
       additionalProperties: false
       required:
-      - transferred
       - contractId
       - role
       - fromEntityId
       - toEntityId
       properties:
-        transferred:
-          type: boolean
-          description: Whether the transfer was successful
         contractId:
           type: string
           format: uuid
@@ -48345,7 +48338,8 @@ components:
           type: object
           additionalProperties: true
           nullable: true
-          description: Free-form transaction metadata
+          description: Free-form transaction metadata. No Bannou plugin reads 
+            specific keys from this field by convention.
     TransferCurrencyResponse:
       type: object
       description: Result of transfer operation
@@ -48697,15 +48691,12 @@ components:
           description: Optional idempotency key for the operation
     UnlockContractResponse:
       type: object
-      description: Response from unlocking a contract
+      description: Response from unlocking a contract. HTTP 200 confirms the 
+        contract was unlocked.
       additionalProperties: false
       required:
-      - unlocked
       - contractId
       properties:
-        unlocked:
-          type: boolean
-          description: Whether the contract was unlocked
         contractId:
           type: string
           format: uuid
@@ -49432,7 +49423,8 @@ components:
           type: object
           nullable: true
           additionalProperties: true
-          description: Updated custom data (merged with existing)
+          description: Updated custom data (merged with existing). No Bannou 
+            plugin reads specific keys from this field by convention.
     UpdateEntryTemplateRequest:
       type: object
       description: Request to update mutable fields of an entry template
@@ -49720,7 +49712,8 @@ components:
           type: object
           nullable: true
           additionalProperties: true
-          description: Updated game-specific metadata
+          description: Updated game-specific metadata. No Bannou plugin reads 
+            specific keys from this field by convention.
     UpdateMemberRoleRequest:
       type: object
       description: Request to update a member's role
@@ -50846,19 +50839,16 @@ components:
           description: The territory location that matched (for inclusive) or 
             conflicted (for exclusive)
     ValidateTokenResponse:
-      description: Response from token validation containing validity status and
-        associated account details
+      description: Response from token validation containing associated account 
+        details. HTTP 200 confirms the token is valid; 401 indicates invalid or 
+        expired.
       type: object
       additionalProperties: false
       required:
-      - valid
       - accountId
       - sessionKey
       - remainingTime
       properties:
-        valid:
-          type: boolean
-          description: Whether the token is valid and not expired
         accountId:
           type: string
           format: uuid

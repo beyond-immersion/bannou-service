@@ -207,7 +207,7 @@ Final notification that an asset is ready for use.
 | `assetId` | ID of the asset that is now ready |
 | `contentHash` | SHA256 hash of the asset |
 | `contentType` | MIME content type |
-| `metadata` | Asset metadata |
+| `metadata` | Asset metadata. No Bannou plugin reads specific ke |
 | `size` | File size in bytes |
 | `versionId` | Version ID of this asset |
 
@@ -478,7 +478,7 @@ Generic error notification sent to client.
 
 | Property | Description |
 |----------|-------------|
-| `details` | Additional error details (service-specific) |
+| `details` | Additional error details (service-specific). No Ba |
 | `errorCode` | Machine-readable error code (e.g., "SERVICE_UNAVAI |
 | `message` | Human-readable error message |
 | `recoverable` | Whether the client can retry the operation |
@@ -518,7 +518,7 @@ Sent to relevant players when a game action produces results.
 | `actionId` | ID of the action that produced this result |
 | `actionType` | Type of action performed |
 | `actorId` | Account ID of player who performed the action |
-| `resultData` | Action-specific result data |
+| `resultData` | Action-specific result data. No Bannou plugin read |
 | `sessionId` | ID of the game session |
 | `success` | Whether the action succeeded |
 | `visibleEffects` | Visual/audio effects other players should see |
@@ -616,7 +616,7 @@ Sent when game state changes that all players should see.
 |----------|-------------|
 | `sequenceNumber` | Monotonically increasing sequence for ordering sta |
 | `sessionId` | ID of the game session |
-| `stateDelta` | Partial game state changes |
+| `stateDelta` | Partial game state changes. No Bannou plugin reads |
 | `triggeredBy` | Account ID that triggered the state change |
 | `updateType` | Type of update (game-specific, e.g., "turn_changed |
 

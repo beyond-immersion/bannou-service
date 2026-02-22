@@ -59,15 +59,10 @@ public partial class PermissionController
             "type": "object",
             "additionalProperties": false,
             "required": [
-                "sessionId",
-                "permissions"
+                "permissions",
+                "generatedAt"
             ],
             "properties": {
-                "sessionId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "description": "Session ID that was queried"
-                },
                 "permissions": {
                     "type": "object",
                     "additionalProperties": {
@@ -167,10 +162,12 @@ public partial class PermissionController
                 },
                 "serviceId": {
                     "type": "string",
+                    "minLength": 1,
                     "description": "Target service ID"
                 },
                 "endpoint": {
                     "type": "string",
+                    "minLength": 1,
                     "description": "Endpoint path being accessed (e.g., \"/account/get\")"
                 }
             }
@@ -189,22 +186,17 @@ public partial class PermissionController
             "type": "object",
             "additionalProperties": false,
             "required": [
-                "allowed",
-                "sessionId"
+                "allowed"
             ],
             "properties": {
                 "allowed": {
                     "type": "boolean",
                     "description": "Whether access is permitted"
                 },
-                "sessionId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "description": "Session ID that was validated"
-                },
                 "reason": {
                     "type": "string",
-                    "description": "Reason for denial (if applicable)"
+                    "nullable": true,
+                    "description": "Reason for denial, null when access is allowed"
                 }
             }
         }
@@ -284,6 +276,7 @@ public partial class PermissionController
             "properties": {
                 "serviceId": {
                     "type": "string",
+                    "minLength": 1,
                     "description": "Unique service identifier"
                 },
                 "serviceName": {
@@ -300,7 +293,8 @@ public partial class PermissionController
                 },
                 "version": {
                     "type": "string",
-                    "description": "Service API version for change tracking"
+                    "nullable": true,
+                    "description": "Service API version for change tracking (null if not provided)"
                 }
             }
         },
@@ -335,36 +329,10 @@ public partial class PermissionController
     "$ref": "#/$defs/RegistrationResponse",
     "$defs": {
         "RegistrationResponse": {
-            "description": "Response from registering or updating a service permission matrix",
+            "description": "Empty response. HTTP 200 confirms the registration succeeded.",
             "type": "object",
             "additionalProperties": false,
-            "required": [
-                "serviceId",
-                "affectedSessions"
-            ],
-            "properties": {
-                "serviceId": {
-                    "type": "string",
-                    "description": "Service ID that was registered"
-                },
-                "message": {
-                    "type": "string",
-                    "description": "Success or error message"
-                },
-                "registered": {
-                    "type": "boolean",
-                    "description": "Whether registration was successful"
-                },
-                "affectedSessions": {
-                    "type": "integer",
-                    "description": "Number of sessions that had permissions recompiled"
-                },
-                "recompiledAt": {
-                    "type": "string",
-                    "format": "date-time",
-                    "description": "Timestamp when permissions were recompiled"
-                }
-            }
+            "properties": {}
         }
     }
 }
@@ -448,22 +416,18 @@ public partial class PermissionController
                 },
                 "serviceId": {
                     "type": "string",
+                    "minLength": 1,
                     "description": "Service whose state is changing for this session"
                 },
                 "newState": {
                     "type": "string",
+                    "minLength": 1,
                     "description": "New state value (lobby, in_game, etc.)"
                 },
                 "previousState": {
                     "type": "string",
                     "description": "Previous state value (null for initial state)",
                     "nullable": true
-                },
-                "metadata": {
-                    "type": "object",
-                    "additionalProperties": true,
-                    "nullable": true,
-                    "description": "Optional context data (null if none)"
                 }
             }
         }
@@ -481,19 +445,9 @@ public partial class PermissionController
             "type": "object",
             "additionalProperties": false,
             "required": [
-                "sessionId",
                 "permissionsChanged"
             ],
             "properties": {
-                "sessionId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "description": "Session ID that was updated"
-                },
-                "message": {
-                    "type": "string",
-                    "description": "Success or error message"
-                },
                 "permissionsChanged": {
                     "type": "boolean",
                     "description": "Whether compiled permissions actually changed"
@@ -506,12 +460,8 @@ public partial class PermissionController
                             "type": "string"
                         }
                     },
-                    "description": "Updated ServiceID -> Methods if permissions changed"
-                },
-                "updatedAt": {
-                    "type": "string",
-                    "format": "date-time",
-                    "description": "Timestamp when the session was updated"
+                    "nullable": true,
+                    "description": "Updated ServiceID -> Methods map, null if permissions did not change"
                 }
             }
         }
@@ -596,6 +546,7 @@ public partial class PermissionController
                 },
                 "newRole": {
                     "type": "string",
+                    "minLength": 1,
                     "description": "New role (user, admin, etc.)"
                 },
                 "previousRole": {
@@ -619,19 +570,9 @@ public partial class PermissionController
             "type": "object",
             "additionalProperties": false,
             "required": [
-                "sessionId",
                 "permissionsChanged"
             ],
             "properties": {
-                "sessionId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "description": "Session ID that was updated"
-                },
-                "message": {
-                    "type": "string",
-                    "description": "Success or error message"
-                },
                 "permissionsChanged": {
                     "type": "boolean",
                     "description": "Whether compiled permissions actually changed"
@@ -644,12 +585,8 @@ public partial class PermissionController
                             "type": "string"
                         }
                     },
-                    "description": "Updated ServiceID -> Methods if permissions changed"
-                },
-                "updatedAt": {
-                    "type": "string",
-                    "format": "date-time",
-                    "description": "Timestamp when the session was updated"
+                    "nullable": true,
+                    "description": "Updated ServiceID -> Methods map, null if permissions did not change"
                 }
             }
         }
@@ -760,19 +697,9 @@ public partial class PermissionController
             "type": "object",
             "additionalProperties": false,
             "required": [
-                "sessionId",
                 "permissionsChanged"
             ],
             "properties": {
-                "sessionId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "description": "Session ID that was updated"
-                },
-                "message": {
-                    "type": "string",
-                    "description": "Success or error message"
-                },
                 "permissionsChanged": {
                     "type": "boolean",
                     "description": "Whether compiled permissions actually changed"
@@ -785,12 +712,8 @@ public partial class PermissionController
                             "type": "string"
                         }
                     },
-                    "description": "Updated ServiceID -> Methods if permissions changed"
-                },
-                "updatedAt": {
-                    "type": "string",
-                    "format": "date-time",
-                    "description": "Timestamp when the session was updated"
+                    "nullable": true,
+                    "description": "Updated ServiceID -> Methods map, null if permissions did not change"
                 }
             }
         }
@@ -888,19 +811,16 @@ public partial class PermissionController
             "type": "object",
             "additionalProperties": false,
             "required": [
-                "sessionId",
                 "role",
                 "states",
-                "permissions"
+                "permissions",
+                "version",
+                "lastUpdated"
             ],
             "properties": {
-                "sessionId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "description": "Session ID being queried"
-                },
                 "role": {
                     "type": "string",
+                    "minLength": 1,
                     "description": "Current session role"
                 },
                 "states": {
@@ -920,18 +840,9 @@ public partial class PermissionController
                     },
                     "description": "Map of ServiceID -> List of available methods"
                 },
-                "compiledPermissions": {
-                    "type": "object",
-                    "additionalProperties": {
-                        "type": "array",
-                        "items": {
-                            "type": "string"
-                        }
-                    },
-                    "description": "Map of ServiceID -> List of available methods"
-                },
                 "version": {
                     "type": "integer",
+                    "minimum": 0,
                     "description": "Permission version number"
                 },
                 "lastUpdated": {
@@ -1056,20 +967,25 @@ public partial class PermissionController
             "additionalProperties": false,
             "required": [
                 "serviceId",
+                "serviceName",
+                "version",
                 "registeredAt",
                 "endpointCount"
             ],
             "properties": {
                 "serviceId": {
                     "type": "string",
+                    "minLength": 1,
                     "description": "Unique service identifier"
                 },
                 "serviceName": {
                     "type": "string",
+                    "minLength": 1,
                     "description": "Human-readable service name"
                 },
                 "version": {
                     "type": "string",
+                    "minLength": 1,
                     "description": "Service API version"
                 },
                 "registeredAt": {
@@ -1079,6 +995,7 @@ public partial class PermissionController
                 },
                 "endpointCount": {
                     "type": "integer",
+                    "minimum": 0,
                     "description": "Number of API endpoints registered by this service"
                 }
             }

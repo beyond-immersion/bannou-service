@@ -1741,7 +1741,7 @@ public partial class CreditCurrencyRequest
     public bool BypassEarnCap { get; set; } = false;
 
     /// <summary>
-    /// Free-form transaction metadata
+    /// Free-form transaction metadata. No Bannou plugin reads specific keys from this field by convention.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("metadata")]
     public object? Metadata { get; set; } = default!;
@@ -1861,7 +1861,7 @@ public partial class DebitCurrencyRequest
     public bool? AllowNegative { get; set; } = default!;
 
     /// <summary>
-    /// Free-form transaction metadata
+    /// Free-form transaction metadata. No Bannou plugin reads specific keys from this field by convention.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("metadata")]
     public object? Metadata { get; set; } = default!;
@@ -1959,7 +1959,7 @@ public partial class TransferCurrencyRequest
     public string IdempotencyKey { get; set; } = default!;
 
     /// <summary>
-    /// Free-form transaction metadata
+    /// Free-form transaction metadata. No Bannou plugin reads specific keys from this field by convention.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("metadata")]
     public object? Metadata { get; set; } = default!;
@@ -2264,7 +2264,7 @@ public partial class CurrencyTransactionRecord
     public double? EarnCapAmountLimited { get; set; } = default!;
 
     /// <summary>
-    /// Free-form metadata
+    /// Free-form metadata. No Bannou plugin reads specific keys from this field by convention.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("metadata")]
     public object? Metadata { get; set; } = default!;

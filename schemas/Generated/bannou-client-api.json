@@ -24205,7 +24205,7 @@
             "type": "object",
             "nullable": true,
             "additionalProperties": true,
-            "description": "Game-specific metadata for this license node"
+            "description": "Game-specific metadata for this license node. No Bannou plugin reads specific keys from this field by convention."
           }
         }
       },
@@ -24683,7 +24683,7 @@
           "otherTrackers": {
             "type": "object",
             "additionalProperties": true,
-            "description": "Configuration for other analytics trackers"
+            "description": "Configuration for other analytics trackers. No Bannou plugin reads specific keys from this field by convention."
           }
         }
       },
@@ -26655,7 +26655,7 @@
             "type": "object",
             "nullable": true,
             "additionalProperties": true,
-            "description": "Game-specific metadata for this license node"
+            "description": "Game-specific metadata for this license node. No Bannou plugin reads specific keys from this field by convention."
           }
         }
       },
@@ -29881,8 +29881,7 @@
         "required": [
           "sessionId",
           "capabilities",
-          "version",
-          "generatedAt"
+          "version"
         ],
         "properties": {
           "sessionId": {
@@ -29908,11 +29907,6 @@
           "version": {
             "type": "integer",
             "description": "Capability manifest version (increments on changes)"
-          },
-          "generatedAt": {
-            "type": "string",
-            "format": "date-time",
-            "description": "When this capability manifest was generated"
           },
           "expiresAt": {
             "type": "string",
@@ -33034,7 +33028,7 @@
             "type": "object",
             "additionalProperties": true,
             "nullable": true,
-            "description": "Custom metadata for the bundle (null if none)"
+            "description": "Custom metadata for the bundle (null if none). No Bannou plugin reads specific keys from this field by convention."
           }
         }
       },
@@ -34225,7 +34219,7 @@
             "type": "object",
             "additionalProperties": true,
             "nullable": true,
-            "description": "Custom metadata for the metabundle"
+            "description": "Custom metadata for the metabundle. No Bannou plugin reads specific keys from this field by convention."
           }
         }
       },
@@ -34964,7 +34958,7 @@
             "type": "object",
             "additionalProperties": true,
             "nullable": true,
-            "description": "Free-form transaction metadata"
+            "description": "Free-form transaction metadata. No Bannou plugin reads specific keys from this field by convention."
           }
         }
       },
@@ -35419,7 +35413,7 @@
             "type": "object",
             "additionalProperties": true,
             "nullable": true,
-            "description": "Free-form metadata"
+            "description": "Free-form metadata. No Bannou plugin reads specific keys from this field by convention."
           }
         }
       },
@@ -35578,7 +35572,7 @@
             "type": "object",
             "additionalProperties": true,
             "nullable": true,
-            "description": "Free-form transaction metadata"
+            "description": "Free-form transaction metadata. No Bannou plugin reads specific keys from this field by convention."
           }
         }
       },
@@ -37197,7 +37191,7 @@
           "minimumRequirements": {
             "type": "object",
             "additionalProperties": true,
-            "description": "Minimum system requirements for the client"
+            "description": "Minimum system requirements for the client. No Bannou plugin reads specific keys from this field by convention."
           }
         }
       },
@@ -38118,7 +38112,7 @@
             "type": "object",
             "nullable": true,
             "additionalProperties": true,
-            "description": "Arbitrary custom data for game-specific metadata"
+            "description": "Arbitrary custom data for game-specific metadata. No Bannou plugin reads specific keys from this field by convention."
           }
         }
       },
@@ -39272,6 +39266,11 @@
             "default": false,
             "description": "If true, invoke cleanup callbacks after successful archival"
           },
+          "deleteSourceDataPolicy": {
+            "$ref": "#/components/schemas/CleanupPolicy",
+            "nullable": true,
+            "description": "Cleanup policy for source data deletion after archival.\nOnly applies when deleteSourceData is true.\nIf not specified, uses the configured DefaultCleanupPolicy.\n"
+          },
           "compressionPolicy": {
             "$ref": "#/components/schemas/CompressionPolicy",
             "nullable": true,
@@ -39365,21 +39364,16 @@
       },
       "ExecuteContractResponse": {
         "type": "object",
-        "description": "Response from executing a contract",
+        "description": "Response from executing a contract. HTTP 200 confirms execution completed.",
         "additionalProperties": false,
         "required": [
-          "executed",
           "alreadyExecuted",
           "contractId"
         ],
         "properties": {
-          "executed": {
-            "type": "boolean",
-            "description": "Whether execution was successful"
-          },
           "alreadyExecuted": {
             "type": "boolean",
-            "description": "True if this was a repeat call (idempotency)"
+            "description": "True if this was a repeat call (idempotency). When false, this is a fresh execution."
           },
           "contractId": {
             "type": "string",
@@ -39393,12 +39387,6 @@
             },
             "nullable": true,
             "description": "Per-clause distribution outcomes with success/failure details"
-          },
-          "executedAt": {
-            "type": "string",
-            "format": "date-time",
-            "nullable": true,
-            "description": "When execution occurred"
           }
         }
       },
@@ -46861,7 +46849,7 @@
             "type": "object",
             "nullable": true,
             "additionalProperties": true,
-            "description": "Game-specific metadata for this license node"
+            "description": "Game-specific metadata for this license node. No Bannou plugin reads specific keys from this field by convention."
           },
           "createdAt": {
             "type": "string",
@@ -50851,19 +50839,13 @@
       },
       "LockContractResponse": {
         "type": "object",
-        "description": "Response from locking a contract",
+        "description": "Response from locking a contract. HTTP 200 confirms the lock was acquired.",
         "additionalProperties": false,
         "required": [
-          "locked",
           "contractId",
-          "guardianId",
-          "lockedAt"
+          "guardianId"
         ],
         "properties": {
-          "locked": {
-            "type": "boolean",
-            "description": "Whether the contract was locked"
-          },
           "contractId": {
             "type": "string",
             "format": "uuid",
@@ -50873,11 +50855,6 @@
             "type": "string",
             "format": "uuid",
             "description": "Guardian entity ID"
-          },
-          "lockedAt": {
-            "type": "string",
-            "format": "date-time",
-            "description": "When the contract was locked"
           }
         }
       },
@@ -52991,7 +52968,7 @@
           "metadata": {
             "type": "object",
             "additionalProperties": true,
-            "description": "Custom metadata for the page"
+            "description": "Custom metadata for the page. No Bannou plugin reads specific keys from this field by convention."
           },
           "seo": {
             "$ref": "#/components/schemas/SEOMetadata",
@@ -61761,18 +61738,13 @@
       },
       "SetTemplateValuesResponse": {
         "type": "object",
-        "description": "Response from setting template values",
+        "description": "Response from setting template values. HTTP 200 confirms values were set.",
         "additionalProperties": false,
         "required": [
-          "updated",
           "contractId",
           "valueCount"
         ],
         "properties": {
-          "updated": {
-            "type": "boolean",
-            "description": "Whether values were updated"
-          },
           "contractId": {
             "type": "string",
             "format": "uuid",
@@ -64248,20 +64220,15 @@
       },
       "TransferContractPartyResponse": {
         "type": "object",
-        "description": "Response from transferring a party role",
+        "description": "Response from transferring a party role. HTTP 200 confirms the transfer succeeded.",
         "additionalProperties": false,
         "required": [
-          "transferred",
           "contractId",
           "role",
           "fromEntityId",
           "toEntityId"
         ],
         "properties": {
-          "transferred": {
-            "type": "boolean",
-            "description": "Whether the transfer was successful"
-          },
           "contractId": {
             "type": "string",
             "format": "uuid",
@@ -64340,7 +64307,7 @@
             "type": "object",
             "additionalProperties": true,
             "nullable": true,
-            "description": "Free-form transaction metadata"
+            "description": "Free-form transaction metadata. No Bannou plugin reads specific keys from this field by convention."
           }
         }
       },
@@ -64778,17 +64745,12 @@
       },
       "UnlockContractResponse": {
         "type": "object",
-        "description": "Response from unlocking a contract",
+        "description": "Response from unlocking a contract. HTTP 200 confirms the contract was unlocked.",
         "additionalProperties": false,
         "required": [
-          "unlocked",
           "contractId"
         ],
         "properties": {
-          "unlocked": {
-            "type": "boolean",
-            "description": "Whether the contract was unlocked"
-          },
           "contractId": {
             "type": "string",
             "format": "uuid",
@@ -65702,7 +65664,7 @@
             "type": "object",
             "nullable": true,
             "additionalProperties": true,
-            "description": "Updated custom data (merged with existing)"
+            "description": "Updated custom data (merged with existing). No Bannou plugin reads specific keys from this field by convention."
           }
         }
       },
@@ -66063,7 +66025,7 @@
             "type": "object",
             "nullable": true,
             "additionalProperties": true,
-            "description": "Updated game-specific metadata"
+            "description": "Updated game-specific metadata. No Bannou plugin reads specific keys from this field by convention."
           }
         }
       },
@@ -67477,20 +67439,15 @@
         }
       },
       "ValidateTokenResponse": {
-        "description": "Response from token validation containing validity status and associated account details",
+        "description": "Response from token validation containing associated account details. HTTP 200 confirms the token is valid; 401 indicates invalid or expired.",
         "type": "object",
         "additionalProperties": false,
         "required": [
-          "valid",
           "accountId",
           "sessionKey",
           "remainingTime"
         ],
         "properties": {
-          "valid": {
-            "type": "boolean",
-            "description": "Whether the token is valid and not expired"
-          },
           "accountId": {
             "type": "string",
             "format": "uuid",

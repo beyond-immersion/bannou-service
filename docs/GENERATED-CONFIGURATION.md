@@ -435,8 +435,8 @@ This document lists all configuration options defined in Bannou's configuration 
 | `CONTRACT_MAX_MILESTONES_PER_TEMPLATE` | int | `50` | Maximum number of milestones allowed in a template |
 | `CONTRACT_MAX_PARTIES_PER_CONTRACT` | int | `20` | Maximum number of parties allowed in a single contract |
 | `CONTRACT_MAX_PREBOUND_APIS_PER_MILESTONE` | int | `10` | Maximum number of prebound APIs per milestone |
-| `CONTRACT_MILESTONE_DEADLINE_CHECK_INTERVAL_SECONDS` | int | `300` | Interval between milestone deadline checks in seconds (defau... |
-| `CONTRACT_MILESTONE_DEADLINE_STARTUP_DELAY_SECONDS` | int | `30` | Startup delay before first milestone deadline check in secon... |
+| `CONTRACT_MILESTONE_DEADLINE_CHECK_INTERVAL_SECONDS` | int | `300` | Interval between contract expiration checks in seconds, cove... |
+| `CONTRACT_MILESTONE_DEADLINE_STARTUP_DELAY_SECONDS` | int | `30` | Startup delay before first contract expiration check in seco... |
 | `CONTRACT_PREBOUND_API_BATCH_SIZE` | int | `10` | Number of prebound APIs to execute in parallel |
 | `CONTRACT_PREBOUND_API_TIMEOUT_MS` | int | `30000` | Timeout for individual prebound API calls in milliseconds |
 | `CONTRACT_TERMS_MERGE_MODE` | string | `shallow` | How instance terms merge with template terms (shallow=replac... |
@@ -897,10 +897,10 @@ Final ... |
 
 | Environment Variable | Type | Default | Description |
 |---------------------|------|---------|-------------|
-| `PERMISSION_CACHE_TTL_SECONDS` | int | `0` | In-memory permission cache TTL in seconds. Cached capabiliti... |
 | `PERMISSION_MAX_CONCURRENT_RECOMPILATIONS` | int | `50` | Maximum number of concurrent session recompilations during s... |
 | `PERMISSION_ROLE_HIERARCHY` | string[] | `['anonymous', 'user', 'developer', 'admin']` | Ordered role hierarchy from lowest to highest privilege. Ind... |
-| `PERMISSION_SESSION_DATA_TTL_SECONDS` | int | `86400` | Redis TTL in seconds for session permission data keys (state... |
+| `PERMISSION_SESSION_DATA_TTL_SECONDS` | int | `600` | Redis TTL in seconds for session permission data keys (state... |
+| `PERMISSION_SESSION_LOCK_TIMEOUT_SECONDS` | int | `10` | Timeout in seconds for distributed locks during session stat... |
 
 ### Puppetmaster
 

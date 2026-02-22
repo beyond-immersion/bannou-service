@@ -162,7 +162,7 @@ public partial class PageContent
     public string? Author { get; set; } = default!;
 
     /// <summary>
-    /// Custom metadata for the page
+    /// Custom metadata for the page. No Bannou plugin reads specific keys from this field by convention.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("metadata")]
     public object Metadata { get; set; } = default!;
@@ -279,7 +279,7 @@ public partial class Analytics
     public string? GoogleAnalyticsId { get; set; } = default!;
 
     /// <summary>
-    /// Configuration for other analytics trackers
+    /// Configuration for other analytics trackers. No Bannou plugin reads specific keys from this field by convention.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("otherTrackers")]
     public object OtherTrackers { get; set; } = default!;
@@ -700,7 +700,7 @@ public partial class DownloadInfo
     public string? ReleaseNotes { get; set; } = default!;
 
     /// <summary>
-    /// Minimum system requirements for the client
+    /// Minimum system requirements for the client. No Bannou plugin reads specific keys from this field by convention.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("minimumRequirements")]
     public object MinimumRequirements { get; set; } = default!;

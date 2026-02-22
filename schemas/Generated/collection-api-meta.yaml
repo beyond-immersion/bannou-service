@@ -1018,8 +1018,8 @@ paths:
         \                    \"type\": \"integer\",\n                    \"default\": 0,\n                    \"description\"\
         : \"Kill count for bestiary entries\"\n                },\n                \"customData\": {\n                   \
         \ \"type\": \"object\",\n                    \"nullable\": true,\n                    \"additionalProperties\": true,\n\
-        \                    \"description\": \"Arbitrary custom data for game-specific metadata\"\n                }\n  \
-        \          }\n        }\n    }\n}"
+        \                    \"description\": \"Arbitrary custom data for game-specific metadata. No Bannou plugin reads specific
+        keys from this field by convention.\"\n                }\n            }\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/GrantEntryResponse\"\
         ,\n    \"$defs\": {\n        \"GrantEntryResponse\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Result of a grant operation\",\n            \"additionalProperties\": false,\n            \"required\": [\n  \
@@ -1182,7 +1182,8 @@ paths:
         \                \"default\": 0,\n                    \"description\": \"Kill count for bestiary entries\"\n     \
         \           },\n                \"customData\": {\n                    \"type\": \"object\",\n                   \
         \ \"nullable\": true,\n                    \"additionalProperties\": true,\n                    \"description\": \"\
-        Arbitrary custom data for game-specific metadata\"\n                }\n            }\n        }\n    }\n}"
+        Arbitrary custom data for game-specific metadata. No Bannou plugin reads specific keys from this field by convention.\"\
+        \n                }\n            }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Query unlocked entries with filtering\",\n    \"description\": \"Query
         unlocked entries in a collection with optional filtering by category, tags, and metadata.\",\n    \"tags\": [\n  \
         \      \"Entry\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"queryEntries\"\n}"
@@ -1229,7 +1230,8 @@ paths:
         : \"integer\",\n                    \"nullable\": true,\n                    \"description\": \"Updated discovery
         level\"\n                },\n                \"customData\": {\n                    \"type\": \"object\",\n      \
         \              \"nullable\": true,\n                    \"additionalProperties\": true,\n                    \"description\"\
-        : \"Updated custom data (merged with existing)\"\n                }\n            }\n        }\n    }\n}"
+        : \"Updated custom data (merged with existing). No Bannou plugin reads specific keys from this field by convention.\"\
+        \n                }\n            }\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/UnlockedEntryResponse\"\
         ,\n    \"$defs\": {\n        \"UnlockedEntryResponse\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"An unlocked entry with template info and metadata\",\n            \"additionalProperties\": false,\n         \
@@ -1268,8 +1270,8 @@ paths:
         \                    \"type\": \"integer\",\n                    \"default\": 0,\n                    \"description\"\
         : \"Kill count for bestiary entries\"\n                },\n                \"customData\": {\n                   \
         \ \"type\": \"object\",\n                    \"nullable\": true,\n                    \"additionalProperties\": true,\n\
-        \                    \"description\": \"Arbitrary custom data for game-specific metadata\"\n                }\n  \
-        \          }\n        }\n    }\n}"
+        \                    \"description\": \"Arbitrary custom data for game-specific metadata. No Bannou plugin reads specific
+        keys from this field by convention.\"\n                }\n            }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Update entry instance metadata\",\n    \"description\": \"Update metadata
         for an unlocked entry (play count, kill count, favorites, discovery level, custom data).\",\n    \"tags\": [\n   \
         \     \"Entry\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"updateEntryMetadata\"\n}"
@@ -1758,7 +1760,8 @@ components:
           type: object
           nullable: true
           additionalProperties: true
-          description: Arbitrary custom data for game-specific metadata
+          description: Arbitrary custom data for game-specific metadata. No Bannou plugin reads specific keys from this 
+            field by convention.
     CreateEntryTemplateRequest:
       type: object
       description: Request to create a new entry template
@@ -2450,7 +2453,8 @@ components:
           type: object
           nullable: true
           additionalProperties: true
-          description: Updated custom data (merged with existing)
+          description: Updated custom data (merged with existing). No Bannou plugin reads specific keys from this field 
+            by convention.
     GetCompletionStatsRequest:
       type: object
       description: Request to get completion statistics

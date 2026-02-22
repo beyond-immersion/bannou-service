@@ -12577,7 +12577,7 @@ export interface components {
       prerequisites?: string[] | null;
       /** @description Human-readable description of what this license grants */
       description?: string | null;
-      /** @description Game-specific metadata for this license node */
+      /** @description Game-specific metadata for this license node. No Bannou plugin reads specific keys from this field by convention. */
       metadata?: {
         [key: string]: unknown;
       } | null;
@@ -12808,7 +12808,7 @@ export interface components {
     Analytics: {
       /** @description Google Analytics tracking ID */
       googleAnalyticsId?: string | null;
-      /** @description Configuration for other analytics trackers */
+      /** @description Configuration for other analytics trackers. No Bannou plugin reads specific keys from this field by convention. */
       otherTrackers?: {
         [key: string]: unknown;
       };
@@ -13858,7 +13858,7 @@ export interface components {
       prerequisites?: string[] | null;
       /** @description Human-readable description of what this license grants */
       description?: string | null;
-      /** @description Game-specific metadata for this license node */
+      /** @description Game-specific metadata for this license node. No Bannou plugin reads specific keys from this field by convention. */
       metadata?: {
         [key: string]: unknown;
       } | null;
@@ -15568,11 +15568,6 @@ export interface components {
       version: number;
       /**
        * Format: date-time
-       * @description When this capability manifest was generated
-       */
-      generatedAt: string;
-      /**
-       * Format: date-time
        * @description When these capabilities expire and need refresh
        */
       expiresAt?: string | null;
@@ -17196,7 +17191,7 @@ export interface components {
       assetIds: string[];
       /** @description Compression algorithm to use for the bundle */
       compression?: components['schemas']['CompressionType'];
-      /** @description Custom metadata for the bundle (null if none) */
+      /** @description Custom metadata for the bundle (null if none). No Bannou plugin reads specific keys from this field by convention. */
       metadata?: {
         [key: string]: unknown;
       } | null;
@@ -17820,7 +17815,7 @@ export interface components {
        *     Standalone assets are always included regardless of this filter.
        */
       assetFilter?: string[] | null;
-      /** @description Custom metadata for the metabundle */
+      /** @description Custom metadata for the metabundle. No Bannou plugin reads specific keys from this field by convention. */
       metadata?: {
         [key: string]: unknown;
       } | null;
@@ -18172,7 +18167,7 @@ export interface components {
        * @default false
        */
       bypassEarnCap: boolean;
-      /** @description Free-form transaction metadata */
+      /** @description Free-form transaction metadata. No Bannou plugin reads specific keys from this field by convention. */
       metadata?: {
         [key: string]: unknown;
       } | null;
@@ -18451,7 +18446,7 @@ export interface components {
        * @description Amount limited by earn cap
        */
       earnCapAmountLimited?: number | null;
-      /** @description Free-form metadata */
+      /** @description Free-form metadata. No Bannou plugin reads specific keys from this field by convention. */
       metadata?: {
         [key: string]: unknown;
       } | null;
@@ -18531,7 +18526,7 @@ export interface components {
       idempotencyKey: string;
       /** @description Override negative balance allowance for this transaction */
       allowNegative?: boolean | null;
-      /** @description Free-form transaction metadata */
+      /** @description Free-form transaction metadata. No Bannou plugin reads specific keys from this field by convention. */
       metadata?: {
         [key: string]: unknown;
       } | null;
@@ -19361,7 +19356,7 @@ export interface components {
       checksum: string;
       /** @description Release notes or changelog for this version */
       releaseNotes?: string | null;
-      /** @description Minimum system requirements for the client */
+      /** @description Minimum system requirements for the client. No Bannou plugin reads specific keys from this field by convention. */
       minimumRequirements?: {
         [key: string]: unknown;
       };
@@ -19877,7 +19872,7 @@ export interface components {
        * @default 0
        */
       killCount: number;
-      /** @description Arbitrary custom data for game-specific metadata */
+      /** @description Arbitrary custom data for game-specific metadata. No Bannou plugin reads specific keys from this field by convention. */
       customData?: {
         [key: string]: unknown;
       } | null;
@@ -20543,6 +20538,12 @@ export interface components {
        * @default false
        */
       deleteSourceData: boolean;
+      /**
+       * @description Cleanup policy for source data deletion after archival.
+       *     Only applies when deleteSourceData is true.
+       *     If not specified, uses the configured DefaultCleanupPolicy.
+       */
+      deleteSourceDataPolicy?: components['schemas']['CleanupPolicy'];
       /** @description Override policy (uses default from config if not specified) */
       compressionPolicy?: components['schemas']['CompressionPolicy'];
       /**
@@ -20588,11 +20589,9 @@ export interface components {
       /** @description Idempotency key for the execution */
       idempotencyKey?: string | null;
     };
-    /** @description Response from executing a contract */
+    /** @description Response from executing a contract. HTTP 200 confirms execution completed. */
     ExecuteContractResponse: {
-      /** @description Whether execution was successful */
-      executed: boolean;
-      /** @description True if this was a repeat call (idempotency) */
+      /** @description True if this was a repeat call (idempotency). When false, this is a fresh execution. */
       alreadyExecuted: boolean;
       /**
        * Format: uuid
@@ -20601,11 +20600,6 @@ export interface components {
       contractId: string;
       /** @description Per-clause distribution outcomes with success/failure details */
       distributions?: components['schemas']['ClauseDistributionResult'][] | null;
-      /**
-       * Format: date-time
-       * @description When execution occurred
-       */
-      executedAt?: string | null;
     };
     /** @description Request to execute a currency conversion */
     ExecuteConversionRequest: {
@@ -24640,7 +24634,7 @@ export interface components {
       prerequisites?: string[] | null;
       /** @description Human-readable description of what this license grants */
       description?: string | null;
-      /** @description Game-specific metadata for this license node */
+      /** @description Game-specific metadata for this license node. No Bannou plugin reads specific keys from this field by convention. */
       metadata?: {
         [key: string]: unknown;
       } | null;
@@ -26622,10 +26616,8 @@ export interface components {
       /** @description Optional idempotency key for the operation */
       idempotencyKey?: string | null;
     };
-    /** @description Response from locking a contract */
+    /** @description Response from locking a contract. HTTP 200 confirms the lock was acquired. */
     LockContractResponse: {
-      /** @description Whether the contract was locked */
-      locked: boolean;
       /**
        * Format: uuid
        * @description Contract instance ID
@@ -26636,11 +26628,6 @@ export interface components {
        * @description Guardian entity ID
        */
       guardianId: string;
-      /**
-       * Format: date-time
-       * @description When the contract was locked
-       */
-      lockedAt: string;
     };
     /** @description Request to authenticate a user with email and password credentials */
     LoginRequest: {
@@ -27717,7 +27704,7 @@ export interface components {
       lastModified: string;
       /** @description Name or identifier of the page author */
       author?: string | null;
-      /** @description Custom metadata for the page */
+      /** @description Custom metadata for the page. No Bannou plugin reads specific keys from this field by convention. */
       metadata?: {
         [key: string]: unknown;
       };
@@ -32213,10 +32200,8 @@ export interface components {
         [key: string]: string;
       };
     };
-    /** @description Response from setting template values */
+    /** @description Response from setting template values. HTTP 200 confirms values were set. */
     SetTemplateValuesResponse: {
-      /** @description Whether values were updated */
-      updated: boolean;
       /**
        * Format: uuid
        * @description Contract instance ID
@@ -33513,10 +33498,8 @@ export interface components {
       /** @description Optional idempotency key for the operation */
       idempotencyKey?: string | null;
     };
-    /** @description Response from transferring a party role */
+    /** @description Response from transferring a party role. HTTP 200 confirms the transfer succeeded. */
     TransferContractPartyResponse: {
-      /** @description Whether the transfer was successful */
-      transferred: boolean;
       /**
        * Format: uuid
        * @description Contract instance ID
@@ -33568,7 +33551,7 @@ export interface components {
       referenceId?: string | null;
       /** @description Unique key to prevent duplicate processing */
       idempotencyKey: string;
-      /** @description Free-form transaction metadata */
+      /** @description Free-form transaction metadata. No Bannou plugin reads specific keys from this field by convention. */
       metadata?: {
         [key: string]: unknown;
       } | null;
@@ -33810,10 +33793,8 @@ export interface components {
       /** @description Optional idempotency key for the operation */
       idempotencyKey?: string | null;
     };
-    /** @description Response from unlocking a contract */
+    /** @description Response from unlocking a contract. HTTP 200 confirms the contract was unlocked. */
     UnlockContractResponse: {
-      /** @description Whether the contract was unlocked */
-      unlocked: boolean;
       /**
        * Format: uuid
        * @description Contract instance ID
@@ -34240,7 +34221,7 @@ export interface components {
       favorited?: boolean | null;
       /** @description Updated discovery level */
       discoveryLevel?: number | null;
-      /** @description Updated custom data (merged with existing) */
+      /** @description Updated custom data (merged with existing). No Bannou plugin reads specific keys from this field by convention. */
       customData?: {
         [key: string]: unknown;
       } | null;
@@ -34400,7 +34381,7 @@ export interface components {
       prerequisites?: string[] | null;
       /** @description Updated description */
       description?: string | null;
-      /** @description Updated game-specific metadata */
+      /** @description Updated game-specific metadata. No Bannou plugin reads specific keys from this field by convention. */
       metadata?: {
         [key: string]: unknown;
       } | null;
@@ -35049,10 +35030,8 @@ export interface components {
        */
       matchedTerritoryId?: string | null;
     };
-    /** @description Response from token validation containing validity status and associated account details */
+    /** @description Response from token validation containing associated account details. HTTP 200 confirms the token is valid; 401 indicates invalid or expired. */
     ValidateTokenResponse: {
-      /** @description Whether the token is valid and not expired */
-      valid: boolean;
       /**
        * Format: uuid
        * @description Unique identifier for the account associated with the token

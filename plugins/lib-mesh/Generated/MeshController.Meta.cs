@@ -61,16 +61,11 @@ public partial class MeshController
             "description": "Response containing endpoints for a service",
             "additionalProperties": false,
             "required": [
-                "appId",
                 "endpoints",
                 "healthyCount",
                 "totalCount"
             ],
             "properties": {
-                "appId": {
-                    "type": "string",
-                    "description": "The app-id that was queried"
-                },
                 "endpoints": {
                     "type": "array",
                     "items": {
@@ -763,17 +758,9 @@ public partial class MeshController
     "$defs": {
         "DeregisterEndpointResponse": {
             "type": "object",
-            "description": "Response after deregistering an endpoint",
+            "description": "Empty response. HTTP 200 confirms the endpoint was deregistered.",
             "additionalProperties": false,
-            "required": [
-                "message"
-            ],
-            "properties": {
-                "message": {
-                    "type": "string",
-                    "description": "Confirmation message describing the deregistration result"
-                }
-            }
+            "properties": {}
         }
     }
 }

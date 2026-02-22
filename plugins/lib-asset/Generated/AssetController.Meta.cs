@@ -1324,7 +1324,7 @@ public partial class AssetController
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Custom metadata for the bundle (null if none)"
+                    "description": "Custom metadata for the bundle (null if none). No Bannou plugin reads specific keys from this field by convention."
                 }
             }
         },
@@ -1893,13 +1893,13 @@ public partial class AssetController
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Custom metadata for the metabundle"
+                    "description": "Custom metadata for the metabundle. No Bannou plugin reads specific keys from this field by convention."
                 }
             }
         },
         "GameRealm": {
             "type": "string",
-            "description": "Realm stub name (lowercase string identifier) that this asset belongs to.\nUse the realm's stub_name property (e.g., \"realm-1\", \"realm-2\") from the Realm service.\nUse \"shared\" for assets that are available across all realms.\n"
+            "description": "Realm stub name (lowercase string identifier) that this asset belongs to.\nUse the realm's stub_name property (e.g., \"realm-1\", \"realm-2\") from the Realm service.\ nUse \"shared\" for assets that are available across all realms.\n"
         }
     }
 }

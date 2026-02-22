@@ -932,20 +932,15 @@ public partial class AuthController
     "$ref": "#/$defs/ValidateTokenResponse",
     "$defs": {
         "ValidateTokenResponse": {
-            "description": "Response from token validation containing validity status and associated account details",
+            "description": "Response from token validation containing associated account details. HTTP 200 confirms the token is valid; 401 indicates invalid or expired.",
             "type": "object",
             "additionalProperties": false,
             "required": [
-                "valid",
                 "accountId",
                 "sessionKey",
                 "remainingTime"
             ],
             "properties": {
-                "valid": {
-                    "type": "boolean",
-                    "description": "Whether the token is valid and not expired"
-                },
                 "accountId": {
                     "type": "string",
                     "format": "uuid",
@@ -1416,8 +1411,7 @@ public partial class AuthController
             "additionalProperties": false,
             "required": [
                 "revokedTokens",
-                "revokedAccounts",
-                "failedPushCount"
+                "revokedAccounts"
             ],
             "properties": {
                 "revokedTokens": {
@@ -1433,15 +1427,6 @@ public partial class AuthController
                         "$ref": "#/$defs/RevokedAccountEntry"
                     },
                     "description": "Account-level revocations (all tokens before timestamp)"
-                },
-                "failedPushCount": {
-                    "type": "integer",
-                    "description": "Number of pending failed pushes awaiting retry"
-                },
-                "totalTokenCount": {
-                    "type": "integer",
-                    "nullable": true,
-                    "description": "Total revoked tokens in store (may be null if count unavailable)"
                 }
             }
         },

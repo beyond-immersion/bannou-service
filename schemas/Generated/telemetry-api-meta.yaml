@@ -48,16 +48,15 @@ paths:
         ,\n            \"properties\": {}\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/TelemetryHealthResponse\"\
         ,\n    \"$defs\": {\n        \"TelemetryHealthResponse\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
-        : false,\n            \"description\": \"Response containing telemetry exporter health status\",\n            \"required\"\
-        : [\n                \"healthy\",\n                \"tracingEnabled\",\n                \"metricsEnabled\"\n     \
-        \       ],\n            \"properties\": {\n                \"healthy\": {\n                    \"type\": \"boolean\"\
-        ,\n                    \"description\": \"Overall health status of telemetry subsystem\"\n                },\n   \
-        \             \"tracingEnabled\": {\n                    \"type\": \"boolean\",\n                    \"description\"\
-        : \"Whether distributed tracing export is enabled\"\n                },\n                \"metricsEnabled\": {\n \
-        \                   \"type\": \"boolean\",\n                    \"description\": \"Whether metrics export is enabled\"\
-        \n                },\n                \"otlpEndpoint\": {\n                    \"type\": \"string\",\n           \
-        \         \"nullable\": true,\n                    \"description\": \"Configured OTLP endpoint (null if telemetry
-        is disabled)\"\n                }\n            }\n        }\n    }\n}"
+        : false,\n            \"description\": \"Response containing telemetry exporter health status. HTTP 200 confirms the
+        subsystem is healthy.\",\n            \"required\": [\n                \"tracingEnabled\",\n                \"metricsEnabled\"\
+        \n            ],\n            \"properties\": {\n                \"tracingEnabled\": {\n                    \"type\"\
+        : \"boolean\",\n                    \"description\": \"Whether distributed tracing export is enabled\"\n         \
+        \       },\n                \"metricsEnabled\": {\n                    \"type\": \"boolean\",\n                  \
+        \  \"description\": \"Whether metrics export is enabled\"\n                },\n                \"otlpEndpoint\": {\n\
+        \                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Configured OTLP endpoint (null if telemetry is disabled)\"\n                }\n            }\n        }\n    }\n\
+        }"
       x-endpoint-info-json: "{\n    \"summary\": \"Check telemetry exporter health\",\n    \"description\": \"Returns the
         health status of telemetry exporters and current configuration state.\",\n    \"tags\": [\n        \"Telemetry\"\n\
         \    ],\n    \"deprecated\": false,\n    \"operationId\": \"health\"\n}"
@@ -123,15 +122,11 @@ components:
     TelemetryHealthResponse:
       type: object
       additionalProperties: false
-      description: Response containing telemetry exporter health status
+      description: Response containing telemetry exporter health status. HTTP 200 confirms the subsystem is healthy.
       required:
-      - healthy
       - tracingEnabled
       - metricsEnabled
       properties:
-        healthy:
-          type: boolean
-          description: Overall health status of telemetry subsystem
         tracingEnabled:
           type: boolean
           description: Whether distributed tracing export is enabled

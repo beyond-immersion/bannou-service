@@ -9317,19 +9317,13 @@ public partial class ContractController
     "$defs": {
         "LockContractResponse": {
             "type": "object",
-            "description": "Response from locking a contract",
+            "description": "Response from locking a contract. HTTP 200 confirms the lock was acquired.",
             "additionalProperties": false,
             "required": [
-                "locked",
                 "contractId",
-                "guardianId",
-                "lockedAt"
+                "guardianId"
             ],
             "properties": {
-                "locked": {
-                    "type": "boolean",
-                    "description": "Whether the contract was locked"
-                },
                 "contractId": {
                     "type": "string",
                     "format": "uuid",
@@ -9339,11 +9333,6 @@ public partial class ContractController
                     "type": "string",
                     "format": "uuid",
                     "description": "Guardian entity ID"
-                },
-                "lockedAt": {
-                    "type": "string",
-                    "format": "date-time",
-                    "description": "When the contract was locked"
                 }
             }
         }
@@ -9456,17 +9445,12 @@ public partial class ContractController
     "$defs": {
         "UnlockContractResponse": {
             "type": "object",
-            "description": "Response from unlocking a contract",
+            "description": "Response from unlocking a contract. HTTP 200 confirms the contract was unlocked.",
             "additionalProperties": false,
             "required": [
-                "unlocked",
                 "contractId"
             ],
             "properties": {
-                "unlocked": {
-                    "type": "boolean",
-                    "description": "Whether the contract was unlocked"
-                },
                 "contractId": {
                     "type": "string",
                     "format": "uuid",
@@ -9605,20 +9589,15 @@ public partial class ContractController
     "$defs": {
         "TransferContractPartyResponse": {
             "type": "object",
-            "description": "Response from transferring a party role",
+            "description": "Response from transferring a party role. HTTP 200 confirms the transfer succeeded.",
             "additionalProperties": false,
             "required": [
-                "transferred",
                 "contractId",
                 "role",
                 "fromEntityId",
                 "toEntityId"
             ],
             "properties": {
-                "transferred": {
-                    "type": "boolean",
-                    "description": "Whether the transfer was successful"
-                },
                 "contractId": {
                     "type": "string",
                     "format": "uuid",
@@ -9793,17 +9772,12 @@ public partial class ContractController
     "$defs": {
         "RegisterClauseTypeResponse": {
             "type": "object",
-            "description": "Response from registering a clause type",
+            "description": "Response from registering a clause type. HTTP 200 confirms registration succeeded.",
             "additionalProperties": false,
             "required": [
-                "registered",
                 "typeCode"
             ],
             "properties": {
-                "registered": {
-                    "type": "boolean",
-                    "description": "Whether the type was registered"
-                },
                 "typeCode": {
                     "type": "string",
                     "description": "The registered type code"
@@ -10074,18 +10048,13 @@ public partial class ContractController
     "$defs": {
         "SetTemplateValuesResponse": {
             "type": "object",
-            "description": "Response from setting template values",
+            "description": "Response from setting template values. HTTP 200 confirms values were set.",
             "additionalProperties": false,
             "required": [
-                "updated",
                 "contractId",
                 "valueCount"
             ],
             "properties": {
-                "updated": {
-                    "type": "boolean",
-                    "description": "Whether values were updated"
-                },
                 "contractId": {
                     "type": "string",
                     "format": "uuid",
@@ -10390,21 +10359,16 @@ public partial class ContractController
     "$defs": {
         "ExecuteContractResponse": {
             "type": "object",
-            "description": "Response from executing a contract",
+            "description": "Response from executing a contract. HTTP 200 confirms execution completed.",
             "additionalProperties": false,
             "required": [
-                "executed",
                 "alreadyExecuted",
                 "contractId"
             ],
             "properties": {
-                "executed": {
-                    "type": "boolean",
-                    "description": "Whether execution was successful"
-                },
                 "alreadyExecuted": {
                     "type": "boolean",
-                    "description": "True if this was a repeat call (idempotency)"
+                    "description": "True if this was a repeat call (idempotency). When false, this is a fresh execution."
                 },
                 "contractId": {
                     "type": "string",
@@ -10418,12 +10382,6 @@ public partial class ContractController
                     },
                     "nullable": true,
                     "description": "Per-clause distribution outcomes with success/failure details"
-                },
-                "executedAt": {
-                    "type": "string",
-                    "format": "date-time",
-                    "nullable": true,
-                    "description": "When execution occurred"
                 }
             }
         },

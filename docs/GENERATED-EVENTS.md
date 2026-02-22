@@ -222,6 +222,7 @@ This document lists all events defined in Bannou's event schemas.
 | `ContractMilestoneCompletedEvent` | Custom | `contract-milestone-completed` | Event published when a milestone is completed |
 | `ContractMilestoneFailedEvent` | Custom | `contract-milestone-failed` | Event published when a milestone fails |
 | `ContractPartyTransferredEvent` | Custom | `contract-party-transferred` | Event published when a party role is transferred t... |
+| `ContractPaymentDueEvent` | Custom | `contract-payment-due` | Event published when a contract payment is due bas... |
 | `ContractPreboundApiExecutedEvent` | Custom | `contract-prebound-api-executed` | Event published when a prebound API is executed |
 | `ContractPreboundApiFailedEvent` | Custom | `contract-prebound-api-failed` | Event published when a prebound API call fails |
 | `ContractPreboundApiValidationFailedEvent` | Custom | `contract-prebound-api-validation-failed` | Event published when a prebound API response fails... |
@@ -507,7 +508,7 @@ This document lists all events defined in Bannou's event schemas.
 | `ResourceCleanupCallbackFailedEvent` | Custom | `resource-cleanup-callback-failed` | Published when a cleanup callback fails during res... |
 | `ResourceCompressCallbackFailedEvent` | Custom | `resource-compress-callback-failed` | Published when a compression callback fails. |
 | `ResourceCompressedEvent` | Custom | `resource-compressed` | Published when compression completes successfully. |
-| `ResourceDecompressedEvent` | Custom | `resource-decompressed` | Published when decompression completes successfull... |
+| `ResourceDecompressedEvent` | Custom | `resource-decompressed` | Published when decompression completes with at lea... |
 | `ResourceGracePeriodStartedEvent` | Custom | `resource-grace-period-started` | Published when a resource's reference count reache... |
 | `ResourceSnapshotCreatedEvent` | Lifecycle (Created) | `resource-snapshot.created` | Published when an ephemeral snapshot of a living r... |
 

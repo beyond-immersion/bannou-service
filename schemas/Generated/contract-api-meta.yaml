@@ -3519,16 +3519,13 @@ paths:
         \    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/LockContractResponse\"\
         ,\n    \"$defs\": {\n        \"LockContractResponse\": {\n            \"type\": \"object\",\n            \"description\"\
-        : \"Response from locking a contract\",\n            \"additionalProperties\": false,\n            \"required\": [\n\
-        \                \"locked\",\n                \"contractId\",\n                \"guardianId\",\n                \"\
-        lockedAt\"\n            ],\n            \"properties\": {\n                \"locked\": {\n                    \"type\"\
-        : \"boolean\",\n                    \"description\": \"Whether the contract was locked\"\n                },\n   \
-        \             \"contractId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\"\
-        ,\n                    \"description\": \"Contract instance ID\"\n                },\n                \"guardianId\"\
-        : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
-        description\": \"Guardian entity ID\"\n                },\n                \"lockedAt\": {\n                    \"\
-        type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"When the
-        contract was locked\"\n                }\n            }\n        }\n    }\n}"
+        : \"Response from locking a contract. HTTP 200 confirms the lock was acquired.\",\n            \"additionalProperties\"\
+        : false,\n            \"required\": [\n                \"contractId\",\n                \"guardianId\"\n         \
+        \   ],\n            \"properties\": {\n                \"contractId\": {\n                    \"type\": \"string\"\
+        ,\n                    \"format\": \"uuid\",\n                    \"description\": \"Contract instance ID\"\n    \
+        \            },\n                \"guardianId\": {\n                    \"type\": \"string\",\n                  \
+        \  \"format\": \"uuid\",\n                    \"description\": \"Guardian entity ID\"\n                }\n       \
+        \     }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Lock contract under guardian custody\",\n    \"description\": \"Locks a
         contract under guardian custody (e.g., escrow). A locked contract\\ncannot be modified, terminated, or have parties
         transferred except by the\\nguardian. Requires the contract template to have `transferable: true`.\\n\",\n    \"tags\"\
@@ -3577,12 +3574,11 @@ paths:
         : \"Optional idempotency key for the operation\"\n                }\n            }\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/UnlockContractResponse\"\
         ,\n    \"$defs\": {\n        \"UnlockContractResponse\": {\n            \"type\": \"object\",\n            \"description\"\
-        : \"Response from unlocking a contract\",\n            \"additionalProperties\": false,\n            \"required\"\
-        : [\n                \"unlocked\",\n                \"contractId\"\n            ],\n            \"properties\": {\n\
-        \                \"unlocked\": {\n                    \"type\": \"boolean\",\n                    \"description\"\
-        : \"Whether the contract was unlocked\"\n                },\n                \"contractId\": {\n                 \
-        \   \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Contract
-        instance ID\"\n                }\n            }\n        }\n    }\n}"
+        : \"Response from unlocking a contract. HTTP 200 confirms the contract was unlocked.\",\n            \"additionalProperties\"\
+        : false,\n            \"required\": [\n                \"contractId\"\n            ],\n            \"properties\"\
+        : {\n                \"contractId\": {\n                    \"type\": \"string\",\n                    \"format\"\
+        : \"uuid\",\n                    \"description\": \"Contract instance ID\"\n                }\n            }\n   \
+        \     }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Unlock contract from guardian custody\",\n    \"description\": \"Unlocks
         a contract from guardian custody. Only the current guardian can\\nunlock a contract. Called on escrow refund to restore
         contract to original state.\\n\",\n    \"tags\": [\n        \"Guardian\"\n    ],\n    \"deprecated\": false,\n   \
@@ -3642,18 +3638,17 @@ paths:
         key for the operation\"\n                }\n            }\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/TransferContractPartyResponse\"\
         ,\n    \"$defs\": {\n        \"TransferContractPartyResponse\": {\n            \"type\": \"object\",\n           \
-        \ \"description\": \"Response from transferring a party role\",\n            \"additionalProperties\": false,\n  \
-        \          \"required\": [\n                \"transferred\",\n                \"contractId\",\n                \"\
-        role\",\n                \"fromEntityId\",\n                \"toEntityId\"\n            ],\n            \"properties\"\
-        : {\n                \"transferred\": {\n                    \"type\": \"boolean\",\n                    \"description\"\
-        : \"Whether the transfer was successful\"\n                },\n                \"contractId\": {\n               \
-        \     \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Contract
-        instance ID\"\n                },\n                \"role\": {\n                    \"type\": \"string\",\n      \
-        \              \"description\": \"Role that was transferred\"\n                },\n                \"fromEntityId\"\
-        : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
-        description\": \"Previous party entity ID\"\n                },\n                \"toEntityId\": {\n             \
-        \       \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"\
-        New party entity ID\"\n                }\n            }\n        }\n    }\n}"
+        \ \"description\": \"Response from transferring a party role. HTTP 200 confirms the transfer succeeded.\",\n     \
+        \       \"additionalProperties\": false,\n            \"required\": [\n                \"contractId\",\n         \
+        \       \"role\",\n                \"fromEntityId\",\n                \"toEntityId\"\n            ],\n           \
+        \ \"properties\": {\n                \"contractId\": {\n                    \"type\": \"string\",\n              \
+        \      \"format\": \"uuid\",\n                    \"description\": \"Contract instance ID\"\n                },\n\
+        \                \"role\": {\n                    \"type\": \"string\",\n                    \"description\": \"Role
+        that was transferred\"\n                },\n                \"fromEntityId\": {\n                    \"type\": \"\
+        string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Previous party entity
+        ID\"\n                },\n                \"toEntityId\": {\n                    \"type\": \"string\",\n         \
+        \           \"format\": \"uuid\",\n                    \"description\": \"New party entity ID\"\n                }\n\
+        \            }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Transfer party role to new entity\",\n    \"description\": \"Transfers
         a party role to a new entity. Used by escrow to reassign contract\\nroles on release (e.g., transfer landlord role
         to new property owner).\\nContract must be locked and caller must be the guardian.\\n\",\n    \"tags\": [\n      \
@@ -3718,12 +3713,11 @@ paths:
         field by convention.\"\n                }\n            }\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/RegisterClauseTypeResponse\"\
         ,\n    \"$defs\": {\n        \"RegisterClauseTypeResponse\": {\n            \"type\": \"object\",\n            \"\
-        description\": \"Response from registering a clause type\",\n            \"additionalProperties\": false,\n      \
-        \      \"required\": [\n                \"registered\",\n                \"typeCode\"\n            ],\n          \
-        \  \"properties\": {\n                \"registered\": {\n                    \"type\": \"boolean\",\n            \
-        \        \"description\": \"Whether the type was registered\"\n                },\n                \"typeCode\": {\n\
-        \                    \"type\": \"string\",\n                    \"description\": \"The registered type code\"\n  \
-        \              }\n            }\n        }\n    }\n}"
+        description\": \"Response from registering a clause type. HTTP 200 confirms registration succeeded.\",\n         \
+        \   \"additionalProperties\": false,\n            \"required\": [\n                \"typeCode\"\n            ],\n\
+        \            \"properties\": {\n                \"typeCode\": {\n                    \"type\": \"string\",\n     \
+        \               \"description\": \"The registered type code\"\n                }\n            }\n        }\n    }\n\
+        }"
       x-endpoint-info-json: "{\n    \"summary\": \"Register a new clause type\",\n    \"description\": \"Registers a new clause
         type with validation and/or execution handlers.\\nClause types are registered globally (plugin-level, admin operation)
         and\\nreferenced by contract templates via typeCode. Built-in types\\n(asset_requirement, currency_transfer, item_transfer)
@@ -3832,14 +3826,12 @@ paths:
         etc.)\"\n                }\n            }\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/SetTemplateValuesResponse\"\
         ,\n    \"$defs\": {\n        \"SetTemplateValuesResponse\": {\n            \"type\": \"object\",\n            \"description\"\
-        : \"Response from setting template values\",\n            \"additionalProperties\": false,\n            \"required\"\
-        : [\n                \"updated\",\n                \"contractId\",\n                \"valueCount\"\n            ],\n\
-        \            \"properties\": {\n                \"updated\": {\n                    \"type\": \"boolean\",\n     \
-        \               \"description\": \"Whether values were updated\"\n                },\n                \"contractId\"\
-        : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
-        description\": \"Contract instance ID\"\n                },\n                \"valueCount\": {\n                 \
-        \   \"type\": \"integer\",\n                    \"description\": \"Number of template values set\"\n             \
-        \   }\n            }\n        }\n    }\n}"
+        : \"Response from setting template values. HTTP 200 confirms values were set.\",\n            \"additionalProperties\"\
+        : false,\n            \"required\": [\n                \"contractId\",\n                \"valueCount\"\n         \
+        \   ],\n            \"properties\": {\n                \"contractId\": {\n                    \"type\": \"string\"\
+        ,\n                    \"format\": \"uuid\",\n                    \"description\": \"Contract instance ID\"\n    \
+        \            },\n                \"valueCount\": {\n                    \"type\": \"integer\",\n                 \
+        \   \"description\": \"Number of template values set\"\n                }\n            }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Set template values on contract instance\",\n    \"description\": \"Sets
         template values on a contract instance. Called by escrow when binding\\na contract to an escrow agreement. Template
         values are used for variable\\nsubstitution in clause handlers (e.g., wallet IDs, container IDs).\\n\",\n    \"tags\"\
@@ -3966,35 +3958,32 @@ paths:
         \     }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ExecuteContractResponse\"\
         ,\n    \"$defs\": {\n        \"ExecuteContractResponse\": {\n            \"type\": \"object\",\n            \"description\"\
-        : \"Response from executing a contract\",\n            \"additionalProperties\": false,\n            \"required\"\
-        : [\n                \"executed\",\n                \"alreadyExecuted\",\n                \"contractId\"\n       \
-        \     ],\n            \"properties\": {\n                \"executed\": {\n                    \"type\": \"boolean\"\
-        ,\n                    \"description\": \"Whether execution was successful\"\n                },\n               \
-        \ \"alreadyExecuted\": {\n                    \"type\": \"boolean\",\n                    \"description\": \"True
-        if this was a repeat call (idempotency)\"\n                },\n                \"contractId\": {\n               \
-        \     \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Contract
-        instance ID\"\n                },\n                \"distributions\": {\n                    \"type\": \"array\",\n\
-        \                    \"items\": {\n                        \"$ref\": \"#/$defs/ClauseDistributionResult\"\n      \
-        \              },\n                    \"nullable\": true,\n                    \"description\": \"Per-clause distribution
-        outcomes with success/failure details\"\n                },\n                \"executedAt\": {\n                 \
-        \   \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"nullable\": true,\n\
-        \                    \"description\": \"When execution occurred\"\n                }\n            }\n        },\n\
-        \        \"ClauseDistributionResult\": {\n            \"type\": \"object\",\n            \"description\": \"Per-clause
-        distribution outcome during contract execution; excludes wallet/container IDs so consumers correlate via clauseId\"\
-        ,\n            \"additionalProperties\": false,\n            \"required\": [\n                \"clauseId\",\n    \
-        \            \"clauseType\",\n                \"assetType\",\n                \"amount\",\n                \"succeeded\"\
-        \n            ],\n            \"properties\": {\n                \"clauseId\": {\n                    \"type\": \"\
-        string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"The clause that was executed\"\
-        \n                },\n                \"clauseType\": {\n                    \"type\": \"string\",\n             \
-        \       \"description\": \"Type of clause (e.g., currency_transfer, item_transfer, fee)\"\n                },\n  \
-        \              \"assetType\": {\n                    \"type\": \"string\",\n                    \"description\": \"\
-        Descriptive type of asset involved (e.g. \\\"currency\\\", \\\"item\\\") providing human-readable context\"\n    \
-        \            },\n                \"amount\": {\n                    \"type\": \"number\",\n                    \"\
-        description\": \"Quantity transferred (currency amount, item count, etc.)\"\n                },\n                \"\
-        succeeded\": {\n                    \"type\": \"boolean\",\n                    \"description\": \"Whether this clause
-        executed successfully\"\n                },\n                \"failureReason\": {\n                    \"type\": \"\
-        string\",\n                    \"nullable\": true,\n                    \"description\": \"If succeeded is false,
-        describes what went wrong\"\n                }\n            }\n        }\n    }\n}"
+        : \"Response from executing a contract. HTTP 200 confirms execution completed.\",\n            \"additionalProperties\"\
+        : false,\n            \"required\": [\n                \"alreadyExecuted\",\n                \"contractId\"\n    \
+        \        ],\n            \"properties\": {\n                \"alreadyExecuted\": {\n                    \"type\":
+        \"boolean\",\n                    \"description\": \"True if this was a repeat call (idempotency). When false, this
+        is a fresh execution.\"\n                },\n                \"contractId\": {\n                    \"type\": \"string\"\
+        ,\n                    \"format\": \"uuid\",\n                    \"description\": \"Contract instance ID\"\n    \
+        \            },\n                \"distributions\": {\n                    \"type\": \"array\",\n                \
+        \    \"items\": {\n                        \"$ref\": \"#/$defs/ClauseDistributionResult\"\n                    },\n\
+        \                    \"nullable\": true,\n                    \"description\": \"Per-clause distribution outcomes
+        with success/failure details\"\n                }\n            }\n        },\n        \"ClauseDistributionResult\"\
+        : {\n            \"type\": \"object\",\n            \"description\": \"Per-clause distribution outcome during contract
+        execution; excludes wallet/container IDs so consumers correlate via clauseId\",\n            \"additionalProperties\"\
+        : false,\n            \"required\": [\n                \"clauseId\",\n                \"clauseType\",\n          \
+        \      \"assetType\",\n                \"amount\",\n                \"succeeded\"\n            ],\n            \"\
+        properties\": {\n                \"clauseId\": {\n                    \"type\": \"string\",\n                    \"\
+        format\": \"uuid\",\n                    \"description\": \"The clause that was executed\"\n                },\n \
+        \               \"clauseType\": {\n                    \"type\": \"string\",\n                    \"description\"\
+        : \"Type of clause (e.g., currency_transfer, item_transfer, fee)\"\n                },\n                \"assetType\"\
+        : {\n                    \"type\": \"string\",\n                    \"description\": \"Descriptive type of asset involved
+        (e.g. \\\"currency\\\", \\\"item\\\") providing human-readable context\"\n                },\n                \"amount\"\
+        : {\n                    \"type\": \"number\",\n                    \"description\": \"Quantity transferred (currency
+        amount, item count, etc.)\"\n                },\n                \"succeeded\": {\n                    \"type\": \"\
+        boolean\",\n                    \"description\": \"Whether this clause executed successfully\"\n                },\n\
+        \                \"failureReason\": {\n                    \"type\": \"string\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"If succeeded is false, describes what went wrong\"\n             \
+        \   }\n            }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Execute all contract clauses (idempotent)\",\n    \"description\": \"Executes
         all contract distribution clauses - distribute assets per clauses,\\ncollect fees, mark contract as executed. This
         is idempotent - calling twice\\nreturns the same result without re-executing. Contract must be in fulfilled\\nstatus
@@ -5544,17 +5533,12 @@ components:
           description: Optional idempotency key for the operation
     LockContractResponse:
       type: object
-      description: Response from locking a contract
+      description: Response from locking a contract. HTTP 200 confirms the lock was acquired.
       additionalProperties: false
       required:
-      - locked
       - contractId
       - guardianId
-      - lockedAt
       properties:
-        locked:
-          type: boolean
-          description: Whether the contract was locked
         contractId:
           type: string
           format: uuid
@@ -5563,10 +5547,6 @@ components:
           type: string
           format: uuid
           description: Guardian entity ID
-        lockedAt:
-          type: string
-          format: date-time
-          description: When the contract was locked
     UnlockContractRequest:
       type: object
       description: Request to unlock a contract from guardian custody
@@ -5595,15 +5575,11 @@ components:
           description: Optional idempotency key for the operation
     UnlockContractResponse:
       type: object
-      description: Response from unlocking a contract
+      description: Response from unlocking a contract. HTTP 200 confirms the contract was unlocked.
       additionalProperties: false
       required:
-      - unlocked
       - contractId
       properties:
-        unlocked:
-          type: boolean
-          description: Whether the contract was unlocked
         contractId:
           type: string
           format: uuid
@@ -5654,18 +5630,14 @@ components:
           description: Optional idempotency key for the operation
     TransferContractPartyResponse:
       type: object
-      description: Response from transferring a party role
+      description: Response from transferring a party role. HTTP 200 confirms the transfer succeeded.
       additionalProperties: false
       required:
-      - transferred
       - contractId
       - role
       - fromEntityId
       - toEntityId
       properties:
-        transferred:
-          type: boolean
-          description: Whether the transfer was successful
         contractId:
           type: string
           format: uuid
@@ -5743,15 +5715,11 @@ components:
           description: Handler called during execute
     RegisterClauseTypeResponse:
       type: object
-      description: Response from registering a clause type
+      description: Response from registering a clause type. HTTP 200 confirms registration succeeded.
       additionalProperties: false
       required:
-      - registered
       - typeCode
       properties:
-        registered:
-          type: boolean
-          description: Whether the type was registered
         typeCode:
           type: string
           description: The registered type code
@@ -5830,16 +5798,12 @@ components:
             etc.)
     SetTemplateValuesResponse:
       type: object
-      description: Response from setting template values
+      description: Response from setting template values. HTTP 200 confirms values were set.
       additionalProperties: false
       required:
-      - updated
       - contractId
       - valueCount
       properties:
-        updated:
-          type: boolean
-          description: Whether values were updated
         contractId:
           type: string
           format: uuid
@@ -5988,19 +5952,15 @@ components:
           description: If succeeded is false, describes what went wrong
     ExecuteContractResponse:
       type: object
-      description: Response from executing a contract
+      description: Response from executing a contract. HTTP 200 confirms execution completed.
       additionalProperties: false
       required:
-      - executed
       - alreadyExecuted
       - contractId
       properties:
-        executed:
-          type: boolean
-          description: Whether execution was successful
         alreadyExecuted:
           type: boolean
-          description: True if this was a repeat call (idempotency)
+          description: True if this was a repeat call (idempotency). When false, this is a fresh execution.
         contractId:
           type: string
           format: uuid
@@ -6011,11 +5971,6 @@ components:
             $ref: '#/components/schemas/ClauseDistributionResult'
           nullable: true
           description: Per-clause distribution outcomes with success/failure details
-        executedAt:
-          type: string
-          format: date-time
-          nullable: true
-          description: When execution occurred
 x-service-registration:
   serviceId: "contract"
   serviceName: "Contract Service"

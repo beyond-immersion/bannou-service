@@ -193,7 +193,7 @@ public partial class WebsiteController
                 "metadata": {
                     "type": "object",
                     "additionalProperties": true,
-                    "description": "Custom metadata for the page"
+                    "description": "Custom metadata for the page. No Bannou plugin reads specific keys from this field by convention."
                 },
                 "seo": {
                     "$ref": "#/$defs/SEOMetadata",
@@ -511,7 +511,7 @@ public partial class WebsiteController
                 "minimumRequirements": {
                     "type": "object",
                     "additionalProperties": true,
-                    "description": "Minimum system requirements for the client"
+                    "description": "Minimum system requirements for the client. No Bannou plugin reads specific keys from this field by convention."
                 }
             }
         },
@@ -1013,7 +1013,7 @@ public partial class WebsiteController
                 "metadata": {
                     "type": "object",
                     "additionalProperties": true,
-                    "description": "Custom metadata for the page"
+                    "description": "Custom metadata for the page. No Bannou plugin reads specific keys from this field by convention."
                 },
                 "seo": {
                     "$ref": "#/$defs/SEOMetadata",
@@ -1128,7 +1128,7 @@ public partial class WebsiteController
                 "metadata": {
                     "type": "object",
                     "additionalProperties": true,
-                    "description": "Custom metadata for the page"
+                    "description": "Custom metadata for the page. No Bannou plugin reads specific keys from this field by convention."
                 },
                 "seo": {
                     "$ref": "#/$defs/SEOMetadata",
@@ -1299,7 +1299,7 @@ public partial class WebsiteController
                 "metadata": {
                     "type": "object",
                     "additionalProperties": true,
-                    "description": "Custom metadata for the page"
+                    "description": "Custom metadata for the page. No Bannou plugin reads specific keys from this field by convention."
                 },
                 "seo": {
                     "$ref": "#/$defs/SEOMetadata",
@@ -1414,7 +1414,7 @@ public partial class WebsiteController
                 "metadata": {
                     "type": "object",
                     "additionalProperties": true,
-                    "description": "Custom metadata for the page"
+                    "description": "Custom metadata for the page. No Bannou plugin reads specific keys from this field by convention."
                 },
                 "seo": {
                     "$ref": "#/$defs/SEOMetadata",
@@ -1672,7 +1672,7 @@ public partial class WebsiteController
                 "otherTrackers": {
                     "type": "object",
                     "additionalProperties": true,
-                    "description": "Configuration for other analytics trackers"
+                    "description": "Configuration for other analytics trackers. No Bannou plugin reads specific keys from this field by convention."
                 }
             }
         },
@@ -1845,7 +1845,7 @@ public partial class WebsiteController
                 "otherTrackers": {
                     "type": "object",
                     "additionalProperties": true,
-                    "description": "Configuration for other analytics trackers"
+                    "description": "Configuration for other analytics trackers. No Bannou plugin reads specific keys from this field by convention."
                 }
             }
         },
@@ -1962,7 +1962,7 @@ public partial class WebsiteController
                 "otherTrackers": {
                     "type": "object",
                     "additionalProperties": true,
-                    "description": "Configuration for other analytics trackers"
+                    "description": "Configuration for other analytics trackers. No Bannou plugin reads specific keys from this field by convention."
                 }
             }
         },

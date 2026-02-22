@@ -247,8 +247,7 @@ public partial class ConnectController
             "required": [
                 "sessionId",
                 "capabilities",
-                "version",
-                "generatedAt"
+                "version"
             ],
             "properties": {
                 "sessionId": {
@@ -268,17 +267,12 @@ public partial class ConnectController
                     "items": {
                         "$ref": "#/$defs/ClientShortcut"
                     },
-                    "description": "Pre-bound API calls available for this session.\nShortcuts are invoked like normal capabilities but Connect injects\ na pre-bound payload instead of using the client's payload.\n",
+                    "description": "Pre-bound API calls available for this session.\ nShortcuts are invoked like normal capabilities but Connect injects\na pre-bound payload instead of using the client's payload.\n",
                     "nullable": true
                 },
                 "version": {
                     "type": "integer",
                     "description": "Capability manifest version (increments on changes)"
-                },
-                "generatedAt": {
-                    "type": "string",
-                    "format": "date-time",
-                    "description": "When this capability manifest was generated"
                 },
                 "expiresAt": {
                     "type": "string",
@@ -342,7 +336,7 @@ public partial class ConnectController
         },
         "ClientShortcut": {
             "type": "object",
-            "description": "Session shortcut information sent to clients in the capability manifest.\nShortcuts appear as invocable capabilities but Connect injects a pre-bound\npayload when the shortcut GUID is used, replacing any client-provided payload.\n",
+            "description": "Session shortcut information sent to clients in the capability manifest.\nShortcuts appear as invocable capabilities but Connect injects a pre-bound\ npayload when the shortcut GUID is used, replacing any client-provided payload.\n",
             "additionalProperties": false,
             "required": [
                 "guid",
@@ -700,7 +694,6 @@ public partial class ConnectController
                 "method",
                 "path",
                 "data",
-                "generatedAt",
                 "schemaVersion"
             ],
             "properties": {
@@ -723,12 +716,7 @@ public partial class ConnectController
                 "data": {
                     "type": "object",
                     "additionalProperties": true,
-                    "description": "Metadata payload whose structure varies by metaType (endpoint-info returns\nsummary/tags/operationId, request-schema and response-schema return JSON Schema\nobjects, full-schema returns all three combined). Uses additionalProperties because\nthis proxies opaque JSON from internal meta endpoints whose schemas are defined by\neach service's controller (client-opaque pass-through per FOUNDATION TENETS).\n"
-                },
-                "generatedAt": {
-                    "type": "string",
-                    "format": "date-time",
-                    "description": "When this response was generated (UTC)"
+                    "description": "Metadata payload whose structure varies by metaType (endpoint-info returns\nsummary/tags/operationId, request-schema and response-schema return JSON Schema\ nobjects, full-schema returns all three combined). Uses additionalProperties because\nthis proxies opaque JSON from internal meta endpoints whose schemas are defined by\neach service's controller (client-opaque pass-through per FOUNDATION TENETS).\n"
                 },
                 "schemaVersion": {
                     "type": "string",
@@ -831,8 +819,7 @@ public partial class ConnectController
             "additionalProperties": false,
             "required": [
                 "accountId",
-                "sessionIds",
-                "retrievedAt"
+                "sessionIds"
             ],
             "properties": {
                 "accountId": {
@@ -847,15 +834,6 @@ public partial class ConnectController
                         "format": "uuid"
                     },
                     "description": "List of active WebSocket session IDs for this account"
-                },
-                "count": {
-                    "type": "integer",
-                    "description": "Number of active sessions"
-                },
-                "retrievedAt": {
-                    "type": "string",
-                    "format": "date-time",
-                    "description": "When this session list was retrieved"
                 }
             }
         }

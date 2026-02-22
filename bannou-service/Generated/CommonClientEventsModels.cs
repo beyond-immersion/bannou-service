@@ -205,7 +205,7 @@ public partial class SystemErrorEvent : BaseClientEvent
     public string Message { get; set; } = default!;
 
     /// <summary>
-    /// Additional error details (service-specific)
+    /// Additional error details (service-specific). No Bannou plugin reads specific keys from this field by convention.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("details")]
     public object? Details { get; set; } = default!;

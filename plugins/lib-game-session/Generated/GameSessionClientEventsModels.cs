@@ -347,7 +347,7 @@ public partial class GameStateUpdatedEvent : BaseClientEvent
     public string UpdateType { get; set; } = default!;
 
     /// <summary>
-    /// Partial game state changes
+    /// Partial game state changes. No Bannou plugin reads specific keys from this field by convention.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("stateDelta")]
     public object? StateDelta { get; set; } = default!;
@@ -421,7 +421,7 @@ public partial class GameActionResultEvent : BaseClientEvent
     public bool Success { get; set; } = default!;
 
     /// <summary>
-    /// Action-specific result data
+    /// Action-specific result data. No Bannou plugin reads specific keys from this field by convention.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("resultData")]
     public object? ResultData { get; set; } = default!;
@@ -465,7 +465,7 @@ public partial class PlayerInfo
     public PlayerRole Role { get; set; } = default!;
 
     /// <summary>
-    /// Game-specific character data
+    /// Game-specific character data. No Bannou plugin reads specific keys from this field by convention.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("characterData")]
     public object? CharacterData { get; set; } = default!;
@@ -500,7 +500,7 @@ public partial class VisibleEffect
     public Position? Position { get; set; } = default!;
 
     /// <summary>
-    /// Effect-specific parameters
+    /// Effect-specific parameters. No Bannou plugin reads specific keys from this field by convention.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("effectData")]
     public object? EffectData { get; set; } = default!;

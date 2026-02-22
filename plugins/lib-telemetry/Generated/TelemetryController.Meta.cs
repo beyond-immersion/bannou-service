@@ -40,17 +40,12 @@ public partial class TelemetryController
         "TelemetryHealthResponse": {
             "type": "object",
             "additionalProperties": false,
-            "description": "Response containing telemetry exporter health status",
+            "description": "Response containing telemetry exporter health status. HTTP 200 confirms the subsystem is healthy.",
             "required": [
-                "healthy",
                 "tracingEnabled",
                 "metricsEnabled"
             ],
             "properties": {
-                "healthy": {
-                    "type": "boolean",
-                    "description": "Overall health status of telemetry subsystem"
-                },
                 "tracingEnabled": {
                     "type": "boolean",
                     "description": "Whether distributed tracing export is enabled"

@@ -1458,6 +1458,11 @@ public partial class ResourceController
                     "default": false,
                     "description": "If true, invoke cleanup callbacks after successful archival"
                 },
+                "deleteSourceDataPolicy": {
+                    "$ref": "#/$defs/CleanupPolicy",
+                    "nullable": true,
+                    "description": "Cleanup policy for source data deletion after archival.\nOnly applies when deleteSourceData is true.\nIf not specified, uses the configured DefaultCleanupPolicy.\n"
+                },
                 "compressionPolicy": {
                     "$ref": "#/$defs/CompressionPolicy",
                     "nullable": true,
@@ -1469,6 +1474,14 @@ public partial class ResourceController
                     "description": "If true, return what would be compressed without executing"
                 }
             }
+        },
+        "CleanupPolicy": {
+            "type": "string",
+            "enum": [
+                "BEST_EFFORT",
+                "ALL_REQUIRED"
+            ],
+            "description": "Policy for cleanup callback execution.\nBEST_EFFORT: Proceed with deletion even if some callbacks fail\nALL_REQUIRED: Abort deletion if any callback fails\n"
         },
         "CompressionPolicy": {
             "type": "string",
@@ -2912,7 +2925,7 @@ public partial class ResourceController
                         "type": "string"
                     },
                     "nullable": true,
-                    "description": "Optional key-value metadata"
+                    "description": "Client-only key-value metadata provided by the seeded resource provider.\nUsed for client display hints and debugging context (e.g., source assembly,\nfile origin). NOT a cross-service data contract per FOUNDATION TENETS \u2014\nplugins MUST NOT read metadata keys from other providers by convention.\n"
                 }
             }
         }

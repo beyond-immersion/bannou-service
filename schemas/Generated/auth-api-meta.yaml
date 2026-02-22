@@ -445,24 +445,23 @@ paths:
       x-request-schema-json: '{}'
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ValidateTokenResponse\"\
         ,\n    \"$defs\": {\n        \"ValidateTokenResponse\": {\n            \"description\": \"Response from token validation
-        containing validity status and associated account details\",\n            \"type\": \"object\",\n            \"additionalProperties\"\
-        : false,\n            \"required\": [\n                \"valid\",\n                \"accountId\",\n              \
-        \  \"sessionKey\",\n                \"remainingTime\"\n            ],\n            \"properties\": {\n           \
-        \     \"valid\": {\n                    \"type\": \"boolean\",\n                    \"description\": \"Whether the
-        token is valid and not expired\"\n                },\n                \"accountId\": {\n                    \"type\"\
-        : \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Unique identifier
-        for the account associated with the token\"\n                },\n                \"sessionKey\": {\n             \
-        \       \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"\
-        Internal session key used by Connect service for WebSocket connection tracking and service routing\"\n           \
-        \     },\n                \"roles\": {\n                    \"type\": \"array\",\n                    \"items\": {\n\
-        \                        \"type\": \"string\"\n                    },\n                    \"nullable\": true,\n \
-        \                   \"description\": \"List of roles assigned to the authenticated user\"\n                },\n  \
-        \              \"authorizations\": {\n                    \"type\": \"array\",\n                    \"items\": {\n\
-        \                        \"type\": \"string\"\n                    },\n                    \"nullable\": true,\n \
-        \                   \"description\": \"Authorization strings from active subscriptions.\\nFormat: \\\"{stubName}:{state}\\\
-        \" (e.g., \\\"my-game:authorized\\\")\\n\"\n                },\n                \"remainingTime\": {\n           \
-        \         \"type\": \"integer\",\n                    \"description\": \"Seconds until expiration\"\n            \
-        \    }\n            }\n        }\n    }\n}"
+        containing associated account details. HTTP 200 confirms the token is valid; 401 indicates invalid or expired.\",\n\
+        \            \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"required\": [\n  \
+        \              \"accountId\",\n                \"sessionKey\",\n                \"remainingTime\"\n            ],\n\
+        \            \"properties\": {\n                \"accountId\": {\n                    \"type\": \"string\",\n    \
+        \                \"format\": \"uuid\",\n                    \"description\": \"Unique identifier for the account associated
+        with the token\"\n                },\n                \"sessionKey\": {\n                    \"type\": \"string\"\
+        ,\n                    \"format\": \"uuid\",\n                    \"description\": \"Internal session key used by
+        Connect service for WebSocket connection tracking and service routing\"\n                },\n                \"roles\"\
+        : {\n                    \"type\": \"array\",\n                    \"items\": {\n                        \"type\"\
+        : \"string\"\n                    },\n                    \"nullable\": true,\n                    \"description\"\
+        : \"List of roles assigned to the authenticated user\"\n                },\n                \"authorizations\": {\n\
+        \                    \"type\": \"array\",\n                    \"items\": {\n                        \"type\": \"\
+        string\"\n                    },\n                    \"nullable\": true,\n                    \"description\": \"\
+        Authorization strings from active subscriptions.\\nFormat: \\\"{stubName}:{state}\\\" (e.g., \\\"my-game:authorized\\\
+        \")\\n\"\n                },\n                \"remainingTime\": {\n                    \"type\": \"integer\",\n \
+        \                   \"description\": \"Seconds until expiration\"\n                }\n            }\n        }\n \
+        \   }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Validate access token\",\n    \"description\": \"\",\n    \"tags\": [\n\
         \        \"Tokens\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"validateToken\"\n}"
   /auth/logout:
@@ -638,42 +637,38 @@ paths:
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/RevocationListResponse\"\
         ,\n    \"$defs\": {\n        \"RevocationListResponse\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Current revocation list with token and account level entries\",\n            \"additionalProperties\": false,\n\
-        \            \"required\": [\n                \"revokedTokens\",\n                \"revokedAccounts\",\n         \
-        \       \"failedPushCount\"\n            ],\n            \"properties\": {\n                \"revokedTokens\": {\n\
-        \                    \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\": \"\
-        #/$defs/RevokedTokenEntry\"\n                    },\n                    \"description\": \"Token-level revocations
-        (individual JTIs)\"\n                },\n                \"revokedAccounts\": {\n                    \"type\": \"\
-        array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/RevokedAccountEntry\"\n  \
-        \                  },\n                    \"description\": \"Account-level revocations (all tokens before timestamp)\"\
-        \n                },\n                \"failedPushCount\": {\n                    \"type\": \"integer\",\n       \
-        \             \"description\": \"Number of pending failed pushes awaiting retry\"\n                },\n          \
-        \      \"totalTokenCount\": {\n                    \"type\": \"integer\",\n                    \"nullable\": true,\n\
-        \                    \"description\": \"Total revoked tokens in store (may be null if count unavailable)\"\n     \
-        \           }\n            }\n        },\n        \"RevokedTokenEntry\": {\n            \"type\": \"object\",\n  \
-        \          \"description\": \"A single revoked token entry with expiration tracking\",\n            \"additionalProperties\"\
-        : false,\n            \"required\": [\n                \"jti\",\n                \"accountId\",\n                \"\
-        revokedAt\",\n                \"expiresAt\",\n                \"reason\"\n            ],\n            \"properties\"\
-        : {\n                \"jti\": {\n                    \"type\": \"string\",\n                    \"description\": \"\
-        JWT unique identifier (jti claim)\"\n                },\n                \"accountId\": {\n                    \"\
-        type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Account that
-        owned the token\"\n                },\n                \"revokedAt\": {\n                    \"type\": \"string\"\
-        ,\n                    \"format\": \"date-time\",\n                    \"description\": \"When the token was revoked\"\
-        \n                },\n                \"expiresAt\": {\n                    \"type\": \"string\",\n              \
-        \      \"format\": \"date-time\",\n                    \"description\": \"When the revocation entry expires (matches
-        original JWT expiry)\"\n                },\n                \"reason\": {\n                    \"type\": \"string\"\
-        ,\n                    \"description\": \"Revocation reason for audit trail\"\n                }\n            }\n\
-        \        },\n        \"RevokedAccountEntry\": {\n            \"type\": \"object\",\n            \"description\": \"\
-        Account-level revocation entry that invalidates all tokens issued before a timestamp\",\n            \"additionalProperties\"\
-        : false,\n            \"required\": [\n                \"accountId\",\n                \"issuedBefore\",\n       \
-        \         \"revokedAt\",\n                \"reason\"\n            ],\n            \"properties\": {\n            \
-        \    \"accountId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n    \
-        \                \"description\": \"Account ID whose tokens are revoked\"\n                },\n                \"\
-        issuedBefore\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n   \
-        \                 \"description\": \"Reject tokens issued before this timestamp\"\n                },\n          \
-        \      \"revokedAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\"\
-        ,\n                    \"description\": \"When the revocation was created\"\n                },\n                \"\
-        reason\": {\n                    \"type\": \"string\",\n                    \"description\": \"Revocation reason for
-        audit trail\"\n                }\n            }\n        }\n    }\n}"
+        \            \"required\": [\n                \"revokedTokens\",\n                \"revokedAccounts\"\n          \
+        \  ],\n            \"properties\": {\n                \"revokedTokens\": {\n                    \"type\": \"array\"\
+        ,\n                    \"items\": {\n                        \"$ref\": \"#/$defs/RevokedTokenEntry\"\n           \
+        \         },\n                    \"description\": \"Token-level revocations (individual JTIs)\"\n               \
+        \ },\n                \"revokedAccounts\": {\n                    \"type\": \"array\",\n                    \"items\"\
+        : {\n                        \"$ref\": \"#/$defs/RevokedAccountEntry\"\n                    },\n                 \
+        \   \"description\": \"Account-level revocations (all tokens before timestamp)\"\n                }\n            }\n\
+        \        },\n        \"RevokedTokenEntry\": {\n            \"type\": \"object\",\n            \"description\": \"\
+        A single revoked token entry with expiration tracking\",\n            \"additionalProperties\": false,\n         \
+        \   \"required\": [\n                \"jti\",\n                \"accountId\",\n                \"revokedAt\",\n  \
+        \              \"expiresAt\",\n                \"reason\"\n            ],\n            \"properties\": {\n       \
+        \         \"jti\": {\n                    \"type\": \"string\",\n                    \"description\": \"JWT unique
+        identifier (jti claim)\"\n                },\n                \"accountId\": {\n                    \"type\": \"string\"\
+        ,\n                    \"format\": \"uuid\",\n                    \"description\": \"Account that owned the token\"\
+        \n                },\n                \"revokedAt\": {\n                    \"type\": \"string\",\n              \
+        \      \"format\": \"date-time\",\n                    \"description\": \"When the token was revoked\"\n         \
+        \       },\n                \"expiresAt\": {\n                    \"type\": \"string\",\n                    \"format\"\
+        : \"date-time\",\n                    \"description\": \"When the revocation entry expires (matches original JWT expiry)\"\
+        \n                },\n                \"reason\": {\n                    \"type\": \"string\",\n                 \
+        \   \"description\": \"Revocation reason for audit trail\"\n                }\n            }\n        },\n       \
+        \ \"RevokedAccountEntry\": {\n            \"type\": \"object\",\n            \"description\": \"Account-level revocation
+        entry that invalidates all tokens issued before a timestamp\",\n            \"additionalProperties\": false,\n   \
+        \         \"required\": [\n                \"accountId\",\n                \"issuedBefore\",\n                \"revokedAt\"\
+        ,\n                \"reason\"\n            ],\n            \"properties\": {\n                \"accountId\": {\n \
+        \                   \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
+        : \"Account ID whose tokens are revoked\"\n                },\n                \"issuedBefore\": {\n             \
+        \       \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
+        : \"Reject tokens issued before this timestamp\"\n                },\n                \"revokedAt\": {\n         \
+        \           \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
+        : \"When the revocation was created\"\n                },\n                \"reason\": {\n                    \"type\"\
+        : \"string\",\n                    \"description\": \"Revocation reason for audit trail\"\n                }\n   \
+        \         }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Get current token revocation list\",\n    \"description\": \"Returns the
         current list of revoked tokens and accounts for edge provider synchronization\\nand administrative monitoring. Includes
         token-level revocations (by JTI) and account-level\\nrevocations (all tokens issued before a timestamp).\\n\",\n \
@@ -1295,18 +1290,15 @@ components:
           type: string
           description: Refresh token issued during authentication to obtain a new access token
     ValidateTokenResponse:
-      description: Response from token validation containing validity status and associated account details
+      description: Response from token validation containing associated account details. HTTP 200 confirms the token is 
+        valid; 401 indicates invalid or expired.
       type: object
       additionalProperties: false
       required:
-      - valid
       - accountId
       - sessionKey
       - remainingTime
       properties:
-        valid:
-          type: boolean
-          description: Whether the token is valid and not expired
         accountId:
           type: string
           format: uuid
@@ -1636,7 +1628,6 @@ components:
       required:
       - revokedTokens
       - revokedAccounts
-      - failedPushCount
       properties:
         revokedTokens:
           type: array
@@ -1648,13 +1639,6 @@ components:
           items:
             $ref: '#/components/schemas/RevokedAccountEntry'
           description: Account-level revocations (all tokens before timestamp)
-        failedPushCount:
-          type: integer
-          description: Number of pending failed pushes awaiting retry
-        totalTokenCount:
-          type: integer
-          nullable: true
-          description: Total revoked tokens in store (may be null if count unavailable)
     RevokedTokenEntry:
       type: object
       description: A single revoked token entry with expiration tracking

@@ -93,7 +93,7 @@ public partial class ServiceHeartbeatEvent : BaseServiceEvent
     public System.Collections.Generic.ICollection<string>? Issues { get; set; } = default!;
 
     /// <summary>
-    /// Additional instance-level metadata
+    /// Additional instance-level metadata. No Bannou plugin reads specific keys from this field by convention.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("metadata")]
     public object? Metadata { get; set; } = default!;
@@ -139,7 +139,7 @@ public partial class ServiceStatus
     public string? Version { get; set; } = default!;
 
     /// <summary>
-    /// Service-specific metadata from OnHeartbeat callback
+    /// Service-specific metadata from OnHeartbeat callback. No Bannou plugin reads specific keys from this field by convention.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("metadata")]
     public object? Metadata { get; set; } = default!;
@@ -413,7 +413,7 @@ public partial class SessionConnectedEvent : BaseServiceEvent
     public System.Guid? PeerGuid { get; set; } = default!;
 
     /// <summary>
-    /// Optional client metadata (version, platform, etc.)
+    /// Optional client metadata (version, platform, etc.). No Bannou plugin reads specific keys from this field by convention.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("clientInfo")]
     public object? ClientInfo { get; set; } = default!;
@@ -539,7 +539,7 @@ public partial class SessionReconnectedEvent : BaseServiceEvent
     public System.Guid? PeerGuid { get; set; } = default!;
 
     /// <summary>
-    /// Optional context from the reconnection (client info, etc.)
+    /// Optional context from the reconnection (client info, etc.). No Bannou plugin reads specific keys from this field by convention.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("reconnectionContext")]
     public object? ReconnectionContext { get; set; } = default!;
