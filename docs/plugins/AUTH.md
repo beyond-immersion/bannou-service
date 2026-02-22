@@ -3,7 +3,6 @@
 > **Plugin**: lib-auth
 > **Schema**: schemas/auth-api.yaml
 > **Version**: 4.0.0
-> **Layer**: AppFoundation
 > **State Store**: auth-statestore (Redis)
 
 ## Overview
@@ -277,14 +276,11 @@ account.deleted event ──► SessionService.InvalidateAllSessionsForAccountAs
 ### Audit Event Consumers
 <!-- AUDIT:NEEDS_DESIGN:2026-01-30:https://github.com/beyond-immersion/bannou-service/issues/142 -->
 
-Auth publishes 6 audit event types (login successful/failed, registration, OAuth, Steam, password reset) but no service subscribes to them. Note: per-email rate limiting is already implemented directly in Auth via Redis counters (`MaxLoginAttempts`/`LoginLockoutMinutes`), so this is NOT about basic brute force protection (that exists). The remaining gap is Analytics (L4) consuming these events for IP-level cross-account correlation, anomaly detection, and admin alerting.
+Auth publishes 10 audit event types (login successful/failed, registration, OAuth, Steam, password reset, MFA enabled/disabled/verified/failed) but no service subscribes to them. Note: per-email rate limiting is already implemented directly in Auth via Redis counters (`MaxLoginAttempts`/`LoginLockoutMinutes`), so this is NOT about basic brute force protection (that exists). The remaining gap is Analytics (L4) consuming these events for IP-level cross-account correlation, anomaly detection, and admin alerting.
 
 ## Potential Extensions
 
-- ~~**Multi-factor authentication**~~: **IMPLEMENTED** (2026-02-08) - TOTP-based MFA with 5 new endpoints (setup, enable, disable, admin-disable, verify), AES-256-GCM encrypted secrets, BCrypt-hashed recovery codes, Redis-backed challenge tokens, and 4 MFA event types. See "Multi-Factor Authentication" in API Endpoints above.
-<!-- AUDIT:CLOSED:2026-02-08:https://github.com/beyond-immersion/bannou-service/issues/149 -->
-- **Additional edge revocation providers (when needed)**: Fastly and AWS Lambda@Edge providers were proposed (#160) but closed as premature - no deployment target selected yet. The `IEdgeRevocationProvider` interface is already extensible; adding a provider is a single class implementing `PushTokenRevocationAsync`/`PushAccountRevocationAsync`/`RemoveExpiredEntriesAsync`. Revisit when production CDN/edge infrastructure is chosen.
-<!-- AUDIT:CLOSED:2026-02-08:https://github.com/beyond-immersion/bannou-service/issues/160 -->
+None identified.
 
 ## Known Quirks & Caveats
 
@@ -314,26 +310,12 @@ No bugs identified.
 
 ### Design Considerations (Requires Planning)
 
-1. ~~**Logout and TerminateSession do not push edge revocations**~~: **FIXED** (2026-02-08) - Both `LogoutAsync` and `TerminateSessionAsync` now collect JTIs from session data before deletion and push token revocations to edge providers (CloudFlare, OpenResty) when `EdgeRevocationEnabled=true`. Follows the same best-effort pattern as `InvalidateAllSessionsForAccountAsync`: edge revocation failures are logged as warnings but never block session invalidation or event publishing.
-
-2. ~~**Email change propagation**~~: **IMPLEMENTED** (2026-02-22) - `HandleAccountUpdatedAsync` now handles both "roles" and "email" in `changedFields`. Email propagation updates `SessionDataModel.Email` across all active sessions via `PropagateEmailChangeAsync`, preserving remaining TTL. No `session.updated` event is published for email changes since email doesn't affect permissions/capabilities. Session key lookups use atomic Redis Set operations (`ICacheableStateStore.GetSetAsync`). Remaining Account-side work (the email change endpoint itself, security notification to old email) is tracked separately.
-<!-- AUDIT:CLOSED:2026-02-22:https://github.com/beyond-immersion/bannou-service/issues/444 -->
-
-3. **Account merge session handling** (Auth-side impact of Account #137): Account merge is a complex cross-service operation (40+ services reference accounts). Auth's specific responsibility: handle a new `account.merged` event by invalidating all sessions for the source account (same as `account.deleted` path) and optionally refreshing target account sessions with merged roles/authorizations. The merge itself is an Account-layer orchestration problem; Auth's handler is straightforward. Low priority - post-launch compliance feature.
+1. **Account merge session handling** (Auth-side impact of Account #137): Account merge is a complex cross-service operation (40+ services reference accounts). Auth's specific responsibility: handle a new `account.merged` event by invalidating all sessions for the source account (same as `account.deleted` path) and optionally refreshing target account sessions with merged roles/authorizations. The merge itself is an Account-layer orchestration problem; Auth's handler is straightforward. Low priority - post-launch compliance feature.
 <!-- AUDIT:NEEDS_DESIGN:2026-02-08:https://github.com/beyond-immersion/bannou-service/issues/137 -->
-
-4. **Per-account audit trail** (Auth-side impact of Account #138): Auth already publishes 6 typed audit events covering all authentication activities. A future audit trail store (likely MySQL-backed, following Currency's `TransactionRecord` pattern) would consume these events. Zero Auth-side code changes needed - the events are well-typed and contain all necessary fields (accountId, IP, provider, timestamp). This is purely a consumer-side feature, likely owned by Analytics (L4) or a dedicated audit service.
-<!-- AUDIT:NEEDS_DESIGN:2026-02-08:https://github.com/beyond-immersion/bannou-service/issues/138 -->
 
 ## Work Tracking
 
 This section tracks active development work on items from the quirks/bugs lists above. Items here are managed by the `/audit-plugin` workflow.
-
-### Completed
-
-- **Edge revocation on logout/terminate** (2026-02-08): `LogoutAsync` and `TerminateSessionAsync` now push token revocations to edge providers, matching the existing behavior in `InvalidateAllSessionsForAccountAsync`.
-- **Multi-factor authentication** (2026-02-08): Full TOTP-based MFA implementation with 5 endpoints, AES-256-GCM encrypted secrets, BCrypt-hashed recovery codes, Redis-backed challenge tokens, and 4 MFA audit events. Issue #149.
-- **L3 hardening** (2026-02-22): Schema NRT compliance (inline enums extracted, nullable annotations, validation bounds/patterns on all config properties). T30 telemetry spans on all 48 async methods across 7 helper services. T25 Provider enum threaded through call chain (eliminated `Enum.Parse`). T9 atomic session indexing via Redis Set operations (`ICacheableStateStore.AddToSetAsync`/`RemoveFromSetAsync`/`GetSetAsync`), replacing read-modify-write `List<string>` pattern. Email change propagation implemented. 168 tests, 0 warnings. Issue #444.
 
 ### Evaluated & Closed
 

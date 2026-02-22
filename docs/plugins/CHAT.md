@@ -3,8 +3,6 @@
 > **Plugin**: lib-chat
 > **Schema**: schemas/chat-api.yaml
 > **Version**: 1.0.0
-> **Layer**: AppFoundation
-> **Endpoints**: 30
 > **State Store**: chat-rooms (MySQL), chat-rooms-cache (Redis), chat-messages (MySQL), chat-messages-ephemeral (Redis), chat-participants (Redis), chat-room-types (MySQL), chat-bans (MySQL)
 
 ---
@@ -100,13 +98,13 @@ The Chat service (L1 AppFoundation) provides universal typed message channel pri
 | `chat-room.created` | `ChatRoomCreatedEvent` | Room created |
 | `chat-room.updated` | `ChatRoomUpdatedEvent` | Room updated |
 | `chat-room.deleted` | `ChatRoomDeletedEvent` | Room deleted (manual, idle cleanup, or contract action) |
-| `chat.participant.joined` | `ChatParticipantJoinedEvent` | Participant joins room |
-| `chat.participant.left` | `ChatParticipantLeftEvent` | Participant leaves room |
-| `chat.participant.kicked` | `ChatParticipantKickedEvent` | Participant kicked by moderator |
-| `chat.participant.banned` | `ChatParticipantBannedEvent` | Participant banned |
-| `chat.participant.muted` | `ChatParticipantMutedEvent` | Participant muted |
-| `chat.message.sent` | `ChatMessageSentEvent` | Message sent (metadata only, no text content for privacy) |
-| `chat.message.deleted` | `ChatMessageDeletedEvent` | Message deleted |
+| `chat-participant.joined` | `ChatParticipantJoinedEvent` | Participant joins room |
+| `chat-participant.left` | `ChatParticipantLeftEvent` | Participant leaves room |
+| `chat-participant.kicked` | `ChatParticipantKickedEvent` | Participant kicked by moderator |
+| `chat-participant.banned` | `ChatParticipantBannedEvent` | Participant banned |
+| `chat-participant.muted` | `ChatParticipantMutedEvent` | Participant muted |
+| `chat-message.sent` | `ChatMessageSentEvent` | Message sent (metadata only, no text content for privacy) |
+| `chat-message.deleted` | `ChatMessageDeletedEvent` | Message deleted |
 | `chat.room.locked` | `ChatRoomLockedEvent` | Room locked (contract-triggered) |
 | `chat.room.archived` | `ChatRoomArchivedEvent` | Room archived via Resource service |
 
@@ -183,7 +181,7 @@ The Chat service (L1 AppFoundation) provides universal typed message channel pri
 | `IEntitySessionRegistry` | Room-level entity session management and typing event fan-out |
 | `IDistributedLockProvider` | Distributed locks for room type, room, and participant mutations |
 | `ILogger<ChatService>` | Structured logging |
-| `ChatServiceConfiguration` | Typed configuration access (27 properties) |
+| `ChatServiceConfiguration` | Typed configuration access (29 properties) |
 | `IEventConsumer` | Event consumer registration for 4 contract lifecycle events |
 | `IContractClient` | Contract instance validation on room creation |
 | `IResourceClient` | Room archival via `ExecuteCompressAsync` |
@@ -209,7 +207,7 @@ Standard CRUD for room type definitions. `RegisterRoomType` enforces uniqueness 
 
 ### Participant Management (7 endpoints)
 
-`JoinRoom` checks ban status, capacity, and assigns role (Owner for first joiner, Member otherwise). Sets `in_room` permission state on join. `LeaveRoom` includes owner promotion logic: if the leaving participant is Owner, promotes first Moderator, or oldest member (by `JoinedAt`) if no moderators exist. `KickParticipant` enforces role hierarchy (Owner can kick anyone, Moderator can kick Members only). `MuteParticipant` stores optional `MutedUntil` timestamp for timed mutes. `UnbanParticipant` directly deletes the ban record.
+`JoinRoom` checks ban status, capacity, and assigns the requested role (defaults to Member if not specified). Sets `in_room` permission state on join. `LeaveRoom` includes owner promotion logic: if the leaving participant is Owner, promotes first Moderator, or oldest member (by `JoinedAt`) if no moderators exist. `KickParticipant` enforces role hierarchy (Owner can kick anyone, Moderator can kick Members only). `MuteParticipant` stores optional `MutedUntil` timestamp for timed mutes. `UnbanParticipant` directly deletes the ban record.
 
 ### Message Operations (7 endpoints)
 
@@ -289,11 +287,7 @@ None. All 30 API endpoints are fully implemented with complete business logic, v
 
 3. **Message reactions**: Allow participants to add emoji reactions to messages, stored as a separate model linked by message ID.
 
-4. ~~**Room-level message retention worker**~~: **IMPLEMENTED** (2026-02-22) - `MessageRetentionWorker` background service periodically deletes persistent messages older than the room type's `RetentionDays` threshold. Uses distributed lock for multi-instance safety. Configurable via `MessageRetentionCleanupIntervalMinutes`, `MessageRetentionStartupDelaySeconds`, `MessageRetentionBatchSize`, and `MessageRetentionLockExpirySeconds`.
-
-5. ~~**Ban expiry worker**~~: **IMPLEMENTED** (2026-02-22) - `BanExpiryWorker` background service periodically scans for and deletes expired time-limited bans. Configurable via `BanExpiryIntervalMinutes`, `BanExpiryStartupDelaySeconds`, `BanExpiryBatchSize`, and `BanExpiryLockExpirySeconds`.
-
-6. **Lexicon room type for NPC communication**: A custom `lexicon` room type where messages are structured as Lexicon entry combinations rather than free text. NPCs would communicate in the same ontological building blocks they think in, with discovery-level validation gating vocabulary per character. Location-scoped social rooms would enable ambient social perception for NPC cognition. See [CHARACTER-COMMUNICATION.md](../guides/CHARACTER-COMMUNICATION.md) for the full architectural design.
+4. **Lexicon room type for NPC communication**: A custom `lexicon` room type where messages are structured as Lexicon entry combinations rather than free text. NPCs would communicate in the same ontological building blocks they think in, with discovery-level validation gating vocabulary per character. Location-scoped social rooms would enable ambient social perception for NPC cognition. See [CHARACTER-COMMUNICATION.md](../guides/CHARACTER-COMMUNICATION.md) for the full architectural design.
 
 ---
 
@@ -335,20 +329,13 @@ None. All 30 API endpoints are fully implemented with complete business logic, v
 
 ### Design Considerations (Requires Planning)
 
-1. ~~**Contract event room query limited to 100**~~: **FIXED** (2026-02-22) - `FindRoomsByContractIdAsync` now paginates through all rooms using configurable `ContractRoomQueryBatchSize` (default 100) with a `MaxContractRoomQueryResults` safety cap (default 1000) that logs a warning when reached.
+1. **AdminGetStats has O(N) participant counting**: Queries up to 1000 rooms, then performs individual `HashCount` calls for each room to sum total participants. Could become slow with many active rooms. Consider maintaining a running total or using a dedicated counter.
 
-2. ~~**SendMessageBatch silently skips validation failures**~~: **FIXED** (2026-02-22) - Batch response now includes per-message failure tracking via `failed` array with index and error details. Storage failures are also caught per-item and reported.
-
-3. **AdminGetStats has O(N) participant counting**: Queries up to 1000 rooms, then performs individual `HashCount` calls for each room to sum total participants. Could become slow with many active rooms. Consider maintaining a running total or using a dedicated counter.
-
-4. **Rate limit counters and typing sorted set share store with participant hashes**: Rate limit keys (`rate:{roomId}:{sessionId}`) and the typing sorted set (`typing:active`) use the same `chat-participants` Redis store as participant hashes. While key prefixes prevent collision, the store mixes three different data patterns (hashes, atomic counters, sorted set).
+2. **Rate limit counters and typing sorted set share store with participant hashes**: Rate limit keys (`rate:{roomId}:{sessionId}`) and the typing sorted set (`typing:active`) use the same `chat-participants` Redis store as participant hashes. While key prefixes prevent collision, the store mixes three different data patterns (hashes, atomic counters, sorted set).
 
 ---
 
 ## Work Tracking
 
 ### Completed
-- **2026-02-22**: Issue #446 - Paginated `FindRoomsByContractIdAsync` with configurable batch size and safety cap
-- **2026-02-22**: Issue #447 - Added `BanExpiryWorker` background service for periodic expired ban cleanup
-- **2026-02-22**: Issue #448 - Added `MessageRetentionWorker` background service for periodic expired persistent message cleanup
 - **2026-02-22**: Fixed `IdleRoomCleanupWorker` T9 violation - added distributed lock for multi-instance safety
