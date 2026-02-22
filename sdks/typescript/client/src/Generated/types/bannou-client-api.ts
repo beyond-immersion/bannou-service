@@ -12199,8 +12199,8 @@ export interface components {
       /** @description List of roles assigned to the account */
       roles: string[];
       /** @description List of authentication methods linked to the account */
-      authMethods?: components['schemas']['AuthMethodInfo'][];
-      /** @description Custom metadata associated with the account */
+      authMethods: components['schemas']['AuthMethodInfo'][];
+      /** @description Client-only metadata. No Bannou plugin reads specific keys from this field by convention. */
       metadata?: {
         [key: string]: unknown;
       } | null;
@@ -13238,6 +13238,11 @@ export interface components {
       /** @description List of roles assigned to the authenticated user */
       roles?: string[] | null;
     };
+    /**
+     * @description Authentication mechanism type (oauth = browser redirect, ticket = game client token)
+     * @enum {string}
+     */
+    AuthType: 'oauth' | 'ticket';
     /** @description Request to checkout for authoring */
     AuthoringCheckoutRequest: {
       /**
@@ -19096,11 +19101,8 @@ export interface components {
     };
     /** @description Information about the client device used for authentication or session tracking */
     DeviceInfo: {
-      /**
-       * @description Category of the device
-       * @enum {string|null}
-       */
-      deviceType?: 'desktop' | 'mobile' | 'tablet' | 'console' | null;
+      /** @description Category of the device */
+      deviceType?: components['schemas']['DeviceType'] | null;
       /** @description Operating system or platform name */
       platform?: string | null;
       /** @description Browser name and version if applicable */
@@ -19108,6 +19110,11 @@ export interface components {
       /** @description Version of the client application */
       appVersion?: string | null;
     };
+    /**
+     * @description Category of client device used for authentication or session tracking
+     * @enum {string}
+     */
+    DeviceType: 'desktop' | 'mobile' | 'tablet' | 'console';
     /** @description Request to discard checkout */
     DiscardRequest: {
       /**
@@ -28454,11 +28461,8 @@ export interface components {
        * @example Discord
        */
       displayName: string;
-      /**
-       * @description Authentication mechanism (oauth = browser redirect, ticket = game client token)
-       * @enum {string}
-       */
-      authType: 'oauth' | 'ticket';
+      /** @description Authentication mechanism (oauth = browser redirect, ticket = game client token) */
+      authType: components['schemas']['AuthType'];
       /**
        * Format: uri
        * @description URL to initiate OAuth authentication (null for ticket-based auth like Steam)
@@ -34500,7 +34504,7 @@ export interface components {
       accountId: string;
       /** @description New display name for the account */
       displayName?: string | null;
-      /** @description Updated custom metadata for the account */
+      /** @description Client-only metadata. No Bannou plugin reads specific keys from this field by convention. */
       metadata?: {
         [key: string]: unknown;
       } | null;
@@ -35071,7 +35075,7 @@ export interface components {
        */
       authorizations?: string[] | null;
       /** @description Seconds until expiration */
-      remainingTime?: number;
+      remainingTime: number;
     };
     /** @description A single condition to check against an API response */
     ValidationCondition: {

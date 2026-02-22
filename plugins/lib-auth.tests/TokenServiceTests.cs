@@ -57,12 +57,15 @@ public class TokenServiceTests
         _mockStateStoreFactory.Setup(f => f.GetStore<string>(STATE_STORE))
             .Returns(_mockStringStore.Object);
 
+        var telemetryProvider = new NullTelemetryProvider();
+
         _service = new TokenService(
             _mockStateStoreFactory.Object,
             _mockSessionService.Object,
             _configuration,
             _appConfiguration,
             _mockMessageBus.Object,
+            telemetryProvider,
             _mockLogger.Object);
     }
 
@@ -284,12 +287,14 @@ public class TokenServiceTests
             JwtIssuer = "test-issuer",
             JwtAudience = "test-audience"
         };
+        var telemetryProvider = new NullTelemetryProvider();
         var serviceWithEmptySecret = new TokenService(
             _mockStateStoreFactory.Object,
             _mockSessionService.Object,
             _configuration,
             emptySecretConfig,
             _mockMessageBus.Object,
+            telemetryProvider,
             _mockLogger.Object);
         var account = CreateTestAccount();
 

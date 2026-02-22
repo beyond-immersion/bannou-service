@@ -32,6 +32,7 @@ public class OpenrestyEdgeProvider : IEdgeRevocationProvider
 {
     private readonly AuthServiceConfiguration _configuration;
     private readonly IStateStoreFactory _stateStoreFactory;
+    private readonly ITelemetryProvider _telemetryProvider;
     private readonly ILogger<OpenrestyEdgeProvider> _logger;
 
     /// <summary>
@@ -39,14 +40,17 @@ public class OpenrestyEdgeProvider : IEdgeRevocationProvider
     /// </summary>
     /// <param name="configuration">Auth service configuration.</param>
     /// <param name="stateStoreFactory">State store factory for Redis access.</param>
+    /// <param name="telemetryProvider">Telemetry provider for span instrumentation.</param>
     /// <param name="logger">Logger instance.</param>
     public OpenrestyEdgeProvider(
         AuthServiceConfiguration configuration,
         IStateStoreFactory stateStoreFactory,
+        ITelemetryProvider telemetryProvider,
         ILogger<OpenrestyEdgeProvider> logger)
     {
         _configuration = configuration;
         _stateStoreFactory = stateStoreFactory;
+        _telemetryProvider = telemetryProvider;
         _logger = logger;
     }
 
@@ -59,6 +63,7 @@ public class OpenrestyEdgeProvider : IEdgeRevocationProvider
     /// <inheritdoc/>
     public async Task<bool> PushTokenRevocationAsync(string jti, Guid accountId, TimeSpan ttl, CancellationToken ct = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.auth", "OpenrestyEdgeProvider.PushTokenRevocation");
         if (!IsEnabled)
         {
             return true;
@@ -92,6 +97,7 @@ public class OpenrestyEdgeProvider : IEdgeRevocationProvider
     /// <inheritdoc/>
     public async Task<bool> PushAccountRevocationAsync(Guid accountId, DateTimeOffset issuedBefore, CancellationToken ct = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.auth", "OpenrestyEdgeProvider.PushAccountRevocation");
         if (!IsEnabled)
         {
             return true;
@@ -122,6 +128,7 @@ public class OpenrestyEdgeProvider : IEdgeRevocationProvider
     /// <inheritdoc/>
     public async Task<int> PushBatchAsync(IReadOnlyList<FailedEdgePushEntry> entries, CancellationToken ct = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.auth", "OpenrestyEdgeProvider.PushBatch");
         if (!IsEnabled || entries.Count == 0)
         {
             return entries.Count;

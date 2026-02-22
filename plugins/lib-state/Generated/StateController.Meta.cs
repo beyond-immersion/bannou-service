@@ -61,7 +61,7 @@ public partial class StateController
             "properties": {
                 "value": {
                     "type": "object",
-                    "additionalProperties": false,
+                    "additionalProperties": true,
                     "nullable": true,
                     "description": "The stored value (null if not found)"
                 },
@@ -161,7 +161,7 @@ public partial class StateController
                 },
                 "value": {
                     "type": "object",
-                    "additionalProperties": false,
+                    "additionalProperties": true,
                     "description": "Value to store"
                 },
                 "options": {
@@ -205,6 +205,9 @@ public partial class StateController
             "description": "Response from a save operation containing the new ETag",
             "type": "object",
             "additionalProperties": false,
+            "required": [
+                "etag"
+            ],
             "properties": {
                 "etag": {
                     "type": "string",
@@ -495,6 +498,9 @@ public partial class StateController
             "description": "Specifies a field and direction for sorting query results",
             "type": "object",
             "additionalProperties": false,
+            "required": [
+                "field"
+            ],
             "properties": {
                 "field": {
                     "type": "string",
@@ -526,12 +532,18 @@ public partial class StateController
             "description": "Response containing paginated query results with total count information",
             "type": "object",
             "additionalProperties": false,
+            "required": [
+                "results",
+                "totalCount",
+                "page",
+                "pageSize"
+            ],
             "properties": {
                 "results": {
                     "type": "array",
                     "items": {
                         "type": "object",
-                        "additionalProperties": false
+                        "additionalProperties": true
                     },
                     "description": "Query results"
                 },
@@ -659,6 +671,9 @@ public partial class StateController
             "description": "Response containing the results of a bulk get operation for multiple keys",
             "type": "object",
             "additionalProperties": false,
+            "required": [
+                "items"
+            ],
             "properties": {
                 "items": {
                     "type": "array",
@@ -673,6 +688,10 @@ public partial class StateController
             "description": "A single item result from a bulk get operation including the key, value, ETag, and found status",
             "type": "object",
             "additionalProperties": false,
+            "required": [
+                "key",
+                "found"
+            ],
             "properties": {
                 "key": {
                     "type": "string",
@@ -682,7 +701,7 @@ public partial class StateController
                 },
                 "value": {
                     "type": "object",
-                    "additionalProperties": false,
+                    "additionalProperties": true,
                     "nullable": true,
                     "description": "The value (null if not found)"
                 },
@@ -1226,6 +1245,9 @@ public partial class StateController
             "description": "Response containing the list of configured state stores",
             "type": "object",
             "additionalProperties": false,
+            "required": [
+                "stores"
+            ],
             "properties": {
                 "stores": {
                     "type": "array",
@@ -1240,6 +1262,10 @@ public partial class StateController
             "description": "Information about a configured state store including its name, backend type, and optional key count",
             "type": "object",
             "additionalProperties": false,
+            "required": [
+                "name",
+                "backend"
+            ],
             "properties": {
                 "name": {
                     "type": "string",

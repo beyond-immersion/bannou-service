@@ -45,7 +45,7 @@ All keys use the `auth` prefix and have explicit TTLs since the data is ephemera
 | Key Pattern | Data Type | TTL | Purpose |
 |-------------|-----------|-----|---------|
 | `session:{sessionKey}` | `SessionDataModel` | JwtExpirationMinutes * 60 | Active session data (accountId, email, roles, authorizations, expiry, jti) |
-| `account-sessions:{accountId}` | `List<string>` | JwtExpirationMinutes * 60 + 300 | Index of session keys for an account (lazy-cleaned on read) |
+| `account-sessions:{accountId}` | `Set<string>` (Redis Set) | JwtExpirationMinutes * 60 + 300 | Index of session keys for an account (atomic SADD/SREM via `ICacheableStateStore`, lazy-cleaned on read) |
 | `session-id-index:{sessionId}` | `string` (sessionKey) | JwtExpirationMinutes * 60 | Reverse lookup: human-facing session ID to internal session key |
 | `refresh_token:{token}` | `string` (accountId) | SessionTokenTtlDays in seconds | Maps refresh token to account ID |
 | `oauth-link:{provider}:{providerId}` | `string` (accountId) | **None** | Maps OAuth provider identity to account (cleaned up on account deletion) |
@@ -91,7 +91,7 @@ All keys use the `auth` prefix and have explicit TTLs since the data is ephemera
 | Topic | Handler | Action |
 |-------|---------|--------|
 | `account.deleted` | `HandleAccountDeletedAsync` | Invalidates all sessions, cleans up OAuth links via reverse index, pushes edge revocations if enabled, and publishes `session.invalidated` |
-| `account.updated` | `HandleAccountUpdatedAsync` | If `changedFields` contains "roles", propagates new roles to all active sessions and publishes `session.updated` per session |
+| `account.updated` | `HandleAccountUpdatedAsync` | If `changedFields` contains "roles", propagates new roles to all active sessions and publishes `session.updated` per session. If `changedFields` contains "email", propagates new email to all active sessions (no `session.updated` event since email doesn't affect permissions). |
 
 ## Configuration
 
@@ -294,7 +294,7 @@ No bugs identified.
 
 ### Intentional Quirks
 
-1. **Account-sessions index lazy cleanup**: Expired sessions are only removed from the account index when someone calls `GetAccountSessionsAsync`. Active accounts accumulate stale entries until explicitly listed.
+1. **Account-sessions index lazy cleanup**: The account-sessions index uses Redis Sets for atomic add/remove operations (no read-modify-write races), but expired sessions are only removed from the set when someone calls `GetAccountSessionsAsync`. Active accounts accumulate stale entries until explicitly listed.
 
 2. **Password reset always returns 200**: By design for email enumeration prevention. No way for legitimate users to know if the reset email was sent.
 
@@ -316,8 +316,8 @@ No bugs identified.
 
 1. ~~**Logout and TerminateSession do not push edge revocations**~~: **FIXED** (2026-02-08) - Both `LogoutAsync` and `TerminateSessionAsync` now collect JTIs from session data before deletion and push token revocations to edge providers (CloudFlare, OpenResty) when `EdgeRevocationEnabled=true`. Follows the same best-effort pattern as `InvalidateAllSessionsForAccountAsync`: edge revocation failures are logged as warnings but never block session invalidation or event publishing.
 
-2. **Email change propagation** (Auth-side impact of Account #139): When Account adds an email change endpoint, Auth must propagate the new email to active sessions. The existing `HandleAccountUpdatedAsync` handler already watches `changedFields` - it currently only handles `"roles"` but should also handle `"email"` to update `SessionDataModel.Email` across active sessions. Additional Auth-side requirements: distributed lock per account (T9) during propagation, security notification email to the old address via `IEmailService`, and `session.updated` event publishing so Connect/Permission refresh their caches.
-<!-- AUDIT:READY:2026-02-08:https://github.com/beyond-immersion/bannou-service/issues/139 -->
+2. ~~**Email change propagation**~~: **IMPLEMENTED** (2026-02-22) - `HandleAccountUpdatedAsync` now handles both "roles" and "email" in `changedFields`. Email propagation updates `SessionDataModel.Email` across all active sessions via `PropagateEmailChangeAsync`, preserving remaining TTL. No `session.updated` event is published for email changes since email doesn't affect permissions/capabilities. Session key lookups use atomic Redis Set operations (`ICacheableStateStore.GetSetAsync`). Remaining Account-side work (the email change endpoint itself, security notification to old email) is tracked separately.
+<!-- AUDIT:CLOSED:2026-02-22:https://github.com/beyond-immersion/bannou-service/issues/444 -->
 
 3. **Account merge session handling** (Auth-side impact of Account #137): Account merge is a complex cross-service operation (40+ services reference accounts). Auth's specific responsibility: handle a new `account.merged` event by invalidating all sessions for the source account (same as `account.deleted` path) and optionally refreshing target account sessions with merged roles/authorizations. The merge itself is an Account-layer orchestration problem; Auth's handler is straightforward. Low priority - post-launch compliance feature.
 <!-- AUDIT:NEEDS_DESIGN:2026-02-08:https://github.com/beyond-immersion/bannou-service/issues/137 -->
@@ -333,6 +333,7 @@ This section tracks active development work on items from the quirks/bugs lists 
 
 - **Edge revocation on logout/terminate** (2026-02-08): `LogoutAsync` and `TerminateSessionAsync` now push token revocations to edge providers, matching the existing behavior in `InvalidateAllSessionsForAccountAsync`.
 - **Multi-factor authentication** (2026-02-08): Full TOTP-based MFA implementation with 5 endpoints, AES-256-GCM encrypted secrets, BCrypt-hashed recovery codes, Redis-backed challenge tokens, and 4 MFA audit events. Issue #149.
+- **L3 hardening** (2026-02-22): Schema NRT compliance (inline enums extracted, nullable annotations, validation bounds/patterns on all config properties). T30 telemetry spans on all 48 async methods across 7 helper services. T25 Provider enum threaded through call chain (eliminated `Enum.Parse`). T9 atomic session indexing via Redis Set operations (`ICacheableStateStore.AddToSetAsync`/`RemoveFromSetAsync`/`GetSetAsync`), replacing read-modify-write `List<string>` pattern. Email change propagation implemented. 168 tests, 0 warnings. Issue #444.
 
 ### Evaluated & Closed
 

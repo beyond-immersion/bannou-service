@@ -28,7 +28,6 @@ public class AuthServiceEventsTests
     private readonly Mock<IStateStoreFactory> _mockStateStoreFactory;
     private readonly Mock<IStateStore<AuthService.PasswordResetData>> _mockPasswordResetStore;
     private readonly Mock<IStateStore<SessionDataModel>> _mockSessionStore;
-    private readonly Mock<IStateStore<List<string>>> _mockListStore;
     private readonly Mock<IMessageBus> _mockMessageBus;
     private readonly Mock<ITokenService> _mockTokenService;
     private readonly Mock<ISessionService> _mockSessionService;
@@ -72,7 +71,6 @@ public class AuthServiceEventsTests
         _mockStateStoreFactory = new Mock<IStateStoreFactory>();
         _mockPasswordResetStore = new Mock<IStateStore<AuthService.PasswordResetData>>();
         _mockSessionStore = new Mock<IStateStore<SessionDataModel>>();
-        _mockListStore = new Mock<IStateStore<List<string>>>();
         _mockMessageBus = new Mock<IMessageBus>();
         _mockTokenService = new Mock<ITokenService>();
         _mockSessionService = new Mock<ISessionService>();
@@ -91,8 +89,6 @@ public class AuthServiceEventsTests
             .Returns(_mockPasswordResetStore.Object);
         _mockStateStoreFactory.Setup(f => f.GetStore<SessionDataModel>(It.IsAny<string>()))
             .Returns(_mockSessionStore.Object);
-        _mockStateStoreFactory.Setup(f => f.GetStore<List<string>>(It.IsAny<string>()))
-            .Returns(_mockListStore.Object);
         _mockStateStoreFactory.Setup(f => f.GetCacheableStoreAsync<SessionDataModel>(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(_mockCacheableStore.Object);
 
@@ -100,8 +96,6 @@ public class AuthServiceEventsTests
         _mockPasswordResetStore.Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<AuthService.PasswordResetData>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync("etag");
         _mockSessionStore.Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<SessionDataModel>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync("etag");
-        _mockListStore.Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<List<string>>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync("etag");
 
         // Setup default behavior for message bus
@@ -186,7 +180,8 @@ public class AuthServiceEventsTests
 
     /// <summary>
     /// Verifies that HandleAccountUpdatedAsync propagates role changes when the changedFields
-    /// list includes "roles". Should load session keys, update each session, and publish events.
+    /// list includes "roles". Should load session keys via SessionService, update each session,
+    /// and publish events.
     /// </summary>
     [Fact]
     public async Task HandleAccountUpdatedAsync_PropagatesRoleChanges_WhenRolesChanged()
@@ -208,9 +203,9 @@ public class AuthServiceEventsTests
             CreatedAt = DateTimeOffset.UtcNow.AddDays(-15)
         };
 
-        // Mock the list store to return session keys for the account
-        _mockListStore.Setup(s => s.GetAsync(
-            $"account-sessions:{accountId}",
+        // Mock SessionService to return session keys for the account
+        _mockSessionService.Setup(s => s.GetSessionKeysForAccountAsync(
+            accountId,
             It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<string> { sessionKey });
 
@@ -271,11 +266,12 @@ public class AuthServiceEventsTests
     }
 
     /// <summary>
-    /// Verifies that HandleAccountUpdatedAsync does NOT propagate role changes when the
-    /// changedFields list does not include "roles". No session lookups or updates should occur.
+    /// Verifies that HandleAccountUpdatedAsync skips all propagation when the
+    /// changedFields list does not include "roles" or "email".
+    /// No session lookups or updates should occur.
     /// </summary>
     [Fact]
-    public async Task HandleAccountUpdatedAsync_SkipsRolePropagation_WhenRolesNotChanged()
+    public async Task HandleAccountUpdatedAsync_SkipsPropagation_WhenNoRelevantFieldsChanged()
     {
         // Arrange
         var accountId = Guid.NewGuid();
@@ -285,7 +281,7 @@ public class AuthServiceEventsTests
             Email = "user@example.com",
             DisplayName = "SomeUser",
             EmailVerified = true,
-            ChangedFields = new List<string> { "displayName", "email" },
+            ChangedFields = new List<string> { "displayName" },
             Roles = new List<string> { "user" },
             CreatedAt = DateTimeOffset.UtcNow.AddDays(-10)
         };
@@ -295,9 +291,9 @@ public class AuthServiceEventsTests
         // Act
         await service.HandleAccountUpdatedAsync(evt);
 
-        // Assert - verify no session lookups occurred (role propagation was skipped)
-        _mockListStore.Verify(s => s.GetAsync(
-            It.IsAny<string>(),
+        // Assert - verify no session lookups occurred (no propagation needed)
+        _mockSessionService.Verify(s => s.GetSessionKeysForAccountAsync(
+            It.IsAny<Guid>(),
             It.IsAny<CancellationToken>()),
             Times.Never);
 
@@ -313,6 +309,78 @@ public class AuthServiceEventsTests
             It.IsAny<CancellationToken>()),
             Times.Never);
 
+        _mockSessionService.Verify(s => s.PublishSessionUpdatedEventAsync(
+            It.IsAny<Guid>(),
+            It.IsAny<Guid>(),
+            It.IsAny<List<string>>(),
+            It.IsAny<List<string>>(),
+            It.IsAny<SessionUpdatedEventReason>(),
+            It.IsAny<CancellationToken>()),
+            Times.Never);
+    }
+
+    /// <summary>
+    /// Verifies that HandleAccountUpdatedAsync propagates email changes when the
+    /// changedFields list includes "email". Should update the Email field in sessions
+    /// without publishing session.updated events (email doesn't affect permissions).
+    /// </summary>
+    [Fact]
+    public async Task HandleAccountUpdatedAsync_PropagatesEmailChange_WhenEmailChanged()
+    {
+        // Arrange
+        var accountId = Guid.NewGuid();
+        var sessionKey = "session-key-abc";
+        var sessionId = Guid.NewGuid();
+        var newEmail = "newemail@example.com";
+
+        var evt = new AccountUpdatedEvent
+        {
+            AccountId = accountId,
+            Email = newEmail,
+            DisplayName = "SomeUser",
+            EmailVerified = true,
+            ChangedFields = new List<string> { "email" },
+            Roles = new List<string> { "user" },
+            CreatedAt = DateTimeOffset.UtcNow.AddDays(-10)
+        };
+
+        // Mock SessionService to return session keys for the account
+        _mockSessionService.Setup(s => s.GetSessionKeysForAccountAsync(
+            accountId,
+            It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<string> { sessionKey });
+
+        // Mock the session store to return existing session data
+        var sessionData = new SessionDataModel
+        {
+            AccountId = accountId,
+            SessionId = sessionId,
+            Email = "oldemail@example.com",
+            DisplayName = "SomeUser",
+            Roles = new List<string> { "user" },
+            Authorizations = new List<string> { "read" },
+            ExpiresAt = DateTimeOffset.UtcNow.AddHours(1)
+        };
+
+        _mockSessionStore.Setup(s => s.GetAsync(
+            $"session:{sessionKey}",
+            It.IsAny<CancellationToken>()))
+            .ReturnsAsync(sessionData);
+
+        var service = CreateAuthService();
+
+        // Act
+        await service.HandleAccountUpdatedAsync(evt);
+
+        // Assert - verify session was saved with updated email
+        _mockSessionStore.Verify(s => s.SaveAsync(
+            $"session:{sessionKey}",
+            It.Is<SessionDataModel>(sd => sd.Email == newEmail),
+            It.IsAny<StateOptions?>(),
+            It.IsAny<CancellationToken>()),
+            Times.Once);
+
+        // Assert - email changes should NOT trigger session.updated events
         _mockSessionService.Verify(s => s.PublishSessionUpdatedEventAsync(
             It.IsAny<Guid>(),
             It.IsAny<Guid>(),
@@ -348,9 +416,9 @@ public class AuthServiceEventsTests
             CreatedAt = DateTimeOffset.UtcNow.AddDays(-5)
         };
 
-        // Mock the list store to return session keys for the account
-        _mockListStore.Setup(s => s.GetAsync(
-            $"account-sessions:{accountId}",
+        // Mock SessionService to return session keys for the account
+        _mockSessionService.Setup(s => s.GetSessionKeysForAccountAsync(
+            accountId,
             It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<string> { sessionKey });
 

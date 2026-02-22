@@ -1156,7 +1156,6 @@ paths:
       - Authentication
       x-permissions:
       - role: anonymous
-        states: {}
       requestBody:
         required: true
         content:
@@ -1182,7 +1181,6 @@ paths:
       - Authentication
       x-permissions:
       - role: anonymous
-        states: {}
       requestBody:
         required: true
         content:
@@ -1214,7 +1212,6 @@ paths:
       - OAuth
       x-permissions:
       - role: anonymous
-        states: {}
       parameters:
       - name: provider
         in: path
@@ -1234,7 +1231,7 @@ paths:
       responses:
         '302':
           description: Redirect to OAuth provider
-      x-manual-implementation: true
+      x-controller-only: true
   /auth/oauth/{provider}/callback:
     post:
       summary: Complete OAuth2 flow (browser redirect callback)
@@ -1249,7 +1246,6 @@ paths:
       - OAuth
       x-permissions:
       - role: anonymous
-        states: {}
       parameters:
       - name: provider
         in: path
@@ -1281,7 +1277,6 @@ paths:
       - Steam
       x-permissions:
       - role: anonymous
-        states: {}
       requestBody:
         required: true
         content:
@@ -1307,7 +1302,6 @@ paths:
       - Tokens
       x-permissions:
       - role: user
-        states: {}
       parameters:
       - name: jwt
         in: header
@@ -1337,7 +1331,6 @@ paths:
       - Tokens
       x-permissions:
       - role: user
-        states: {}
       parameters:
       - name: jwt
         in: header
@@ -1365,7 +1358,6 @@ paths:
       - Authentication
       x-permissions:
       - role: user
-        states: {}
       parameters:
       - name: jwt
         in: header
@@ -1390,7 +1382,6 @@ paths:
       - Sessions
       x-permissions:
       - role: user
-        states: {}
       parameters:
       - name: jwt
         in: header
@@ -1414,7 +1405,6 @@ paths:
       - Sessions
       x-permissions:
       - role: user
-        states: {}
       parameters:
       - name: jwt
         in: header
@@ -1442,7 +1432,6 @@ paths:
       - Password
       x-permissions:
       - role: anonymous
-        states: {}
       requestBody:
         required: true
         content:
@@ -1460,7 +1449,6 @@ paths:
       - Password
       x-permissions:
       - role: anonymous
-        states: {}
       requestBody:
         required: true
         content:
@@ -1482,7 +1470,6 @@ paths:
       - Authentication
       x-permissions:
       - role: anonymous
-        states: {}
       responses:
         '200':
           description: List of available providers
@@ -1502,7 +1489,6 @@ paths:
       - MFA
       x-permissions:
       - role: user
-        states: {}
       parameters:
       - name: jwt
         in: header
@@ -1532,7 +1518,6 @@ paths:
       - MFA
       x-permissions:
       - role: user
-        states: {}
       parameters:
       - name: jwt
         in: header
@@ -1566,7 +1551,6 @@ paths:
       - MFA
       x-permissions:
       - role: user
-        states: {}
       parameters:
       - name: jwt
         in: header
@@ -1601,7 +1585,6 @@ paths:
       - MFA
       x-permissions:
       - role: anonymous
-        states: {}
       requestBody:
         required: true
         content:
@@ -15521,6 +15504,7 @@ components:
       - createdAt
       - emailVerified
       - roles
+      - authMethods
       properties:
         accountId:
           type: string
@@ -15566,7 +15550,8 @@ components:
           type: object
           additionalProperties: true
           nullable: true
-          description: Custom metadata associated with the account
+          description: Client-only metadata. No Bannou plugin reads specific 
+            keys from this field by convention.
         mfaEnabled:
           type: boolean
           default: false
@@ -17130,7 +17115,8 @@ components:
           nullable: true
           description: Unique identifier for the authentication method
         provider:
-          $ref: '#/components/schemas/AuthProvider'
+          allOf:
+          - $ref: '#/components/schemas/AuthProvider'
           description: Authentication provider type
         externalId:
           type: string
@@ -17189,6 +17175,13 @@ components:
             type: string
           nullable: true
           description: List of roles assigned to the authenticated user
+    AuthType:
+      type: string
+      enum:
+      - oauth
+      - ticket
+      description: Authentication mechanism type (oauth = browser redirect, 
+        ticket = game client token)
     AuthoringCheckoutRequest:
       type: object
       description: Request to checkout for authoring
@@ -26233,12 +26226,8 @@ components:
       additionalProperties: false
       properties:
         deviceType:
-          type: string
-          enum:
-          - desktop
-          - mobile
-          - tablet
-          - console
+          allOf:
+          - $ref: '#/components/schemas/DeviceType'
           nullable: true
           description: Category of the device
         platform:
@@ -26253,6 +26242,15 @@ components:
           type: string
           nullable: true
           description: Version of the client application
+    DeviceType:
+      type: string
+      enum:
+      - desktop
+      - mobile
+      - tablet
+      - console
+      description: Category of client device used for authentication or session 
+        tracking
     DiscardRequest:
       type: object
       description: Request to discard checkout
@@ -37474,6 +37472,8 @@ components:
         password:
           type: string
           format: password
+          minLength: 1
+          maxLength: 128
           description: User password for authentication
         rememberMe:
           type: boolean
@@ -37915,6 +37915,7 @@ components:
         recoveryCode:
           type: string
           nullable: true
+          pattern: '^[a-z0-9]{4}-[a-z0-9]{4}$'
           description: Single-use recovery code (format xxxx-xxxx)
     MfaEnableRequest:
       type: object
@@ -37978,6 +37979,7 @@ components:
         recoveryCode:
           type: string
           nullable: true
+          pattern: '^[a-z0-9]{4}-[a-z0-9]{4}$'
           description: Single-use recovery code (format xxxx-xxxx)
     MidiEvent:
       x-sdk-type: BeyondImmersion.Bannou.MusicTheory.Output.MidiEvent
@@ -39489,6 +39491,7 @@ components:
           type: string
           format: password
           minLength: 8
+          maxLength: 128
           description: New password to set for the account
     PasswordResetRequest:
       description: Request to initiate a password reset by sending a reset link 
@@ -40320,10 +40323,7 @@ components:
           example: "Discord"
           description: Human-readable name for the provider
         authType:
-          type: string
-          enum:
-          - oauth
-          - ticket
+          $ref: '#/components/schemas/AuthType'
           description: Authentication mechanism (oauth = browser redirect, 
             ticket = game client token)
         authUrl:
@@ -42496,6 +42496,7 @@ components:
           type: string
           description: Password for the account (will be hashed)
           minLength: 8
+          maxLength: 128
           format: password
           example: "SecurePassword123!"
         email:
@@ -47139,6 +47140,7 @@ components:
           type: string
           pattern: '^[0-9A-Fa-f]+$'
           minLength: 16
+          maxLength: 2048
           description: |
             Hex-encoded Steam Session Ticket from ISteamUser::GetAuthTicketForWebApi().
             Client converts ticket bytes to hex string: BitConverter.ToString(ticketData).Replace("-", "")
@@ -49738,6 +49740,7 @@ components:
           description: ID of the account to update
         passwordHash:
           type: string
+          maxLength: 255
           description: New pre-hashed password from Auth service
     UpdatePhaseConfigRequest:
       type: object
@@ -49798,7 +49801,8 @@ components:
           type: object
           additionalProperties: true
           nullable: true
-          description: Updated custom metadata for the account
+          description: Client-only metadata. No Bannou plugin reads specific 
+            keys from this field by convention.
     UpdateQuestDefinitionRequest:
       type: object
       description: Request to update quest definition metadata
@@ -50767,6 +50771,7 @@ components:
       - valid
       - accountId
       - sessionKey
+      - remainingTime
       properties:
         valid:
           type: boolean

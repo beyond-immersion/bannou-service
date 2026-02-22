@@ -1,3 +1,5 @@
+using BeyondImmersion.Bannou.Core;
+using BeyondImmersion.BannouService.ClientEvents;
 using BeyondImmersion.BannouService.Messaging;
 using BeyondImmersion.BannouService.Providers;
 using BeyondImmersion.BannouService.Services;
@@ -26,6 +28,7 @@ public class EntitySessionRegistry : IEntitySessionRegistry
 {
     private readonly IStateStoreFactory _stateStoreFactory;
     private readonly IMessageBus _messageBus;
+    private readonly IClientEventPublisher _clientEventPublisher;
     private readonly ConnectServiceConfiguration _configuration;
     private readonly ILogger<EntitySessionRegistry> _logger;
 
@@ -43,21 +46,25 @@ public class EntitySessionRegistry : IEntitySessionRegistry
     /// </summary>
     /// <param name="stateStoreFactory">State store factory for Redis access.</param>
     /// <param name="messageBus">Message bus for error event publication.</param>
+    /// <param name="clientEventPublisher">Client event publisher for WebSocket push delivery.</param>
     /// <param name="configuration">Connect service configuration (provides SessionTtlSeconds).</param>
     /// <param name="logger">Logger instance.</param>
     public EntitySessionRegistry(
         IStateStoreFactory stateStoreFactory,
         IMessageBus messageBus,
+        IClientEventPublisher clientEventPublisher,
         ConnectServiceConfiguration configuration,
         ILogger<EntitySessionRegistry> logger)
     {
         ArgumentNullException.ThrowIfNull(stateStoreFactory, nameof(stateStoreFactory));
         ArgumentNullException.ThrowIfNull(messageBus, nameof(messageBus));
+        ArgumentNullException.ThrowIfNull(clientEventPublisher, nameof(clientEventPublisher));
         ArgumentNullException.ThrowIfNull(configuration, nameof(configuration));
         ArgumentNullException.ThrowIfNull(logger, nameof(logger));
 
         _stateStoreFactory = stateStoreFactory;
         _messageBus = messageBus;
+        _clientEventPublisher = clientEventPublisher;
         _configuration = configuration;
         _logger = logger;
     }
@@ -224,6 +231,44 @@ public class EntitySessionRegistry : IEntitySessionRegistry
                 stack: ex.StackTrace);
             // Return empty set on error -- callers degrade gracefully
             return new HashSet<string>();
+        }
+    }
+
+    /// <inheritdoc />
+    public async Task<int> PublishToEntitySessionsAsync<TEvent>(string entityType, Guid entityId, TEvent eventData, CancellationToken ct = default)
+        where TEvent : BaseClientEvent
+    {
+        try
+        {
+            var forwardKey = BuildForwardKey(entityType, entityId);
+            var cacheStore = _stateStoreFactory.GetCacheableStore<string>(StateStoreDefinitions.Connect);
+
+            var sessions = await cacheStore.GetSetAsync<string>(forwardKey, ct);
+            if (sessions.Count == 0)
+            {
+                return 0;
+            }
+
+            var published = await _clientEventPublisher.PublishToSessionsAsync(sessions, eventData, ct);
+
+            _logger.LogDebug("Published {EventName} to {Published}/{Total} sessions for entity {EntityType}:{EntityId}",
+                eventData.EventName, published, sessions.Count, entityType, entityId);
+
+            return published;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to publish {EventName} to sessions for entity {EntityType}:{EntityId}",
+                eventData.EventName, entityType, entityId);
+            await _messageBus.TryPublishErrorAsync(
+                "connect",
+                "EntitySessionRegistry.PublishToEntitySessions",
+                ex.GetType().Name,
+                ex.Message,
+                dependency: "messaging",
+                details: new { entityType, entityId, eventName = eventData.EventName },
+                stack: ex.StackTrace);
+            return 0;
         }
     }
 

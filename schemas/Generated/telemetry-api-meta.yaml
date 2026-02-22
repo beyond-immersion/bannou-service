@@ -92,21 +92,24 @@ paths:
         : false,\n            \"description\": \"Response containing detailed telemetry configuration and status\",\n    \
         \        \"required\": [\n                \"tracingEnabled\",\n                \"metricsEnabled\",\n             \
         \   \"samplingRatio\",\n                \"serviceName\",\n                \"serviceNamespace\",\n                \"\
-        deploymentEnvironment\",\n                \"otlpProtocol\"\n            ],\n            \"properties\": {\n      \
-        \          \"tracingEnabled\": {\n                    \"type\": \"boolean\",\n                    \"description\"\
-        : \"Whether distributed tracing export is enabled\"\n                },\n                \"metricsEnabled\": {\n \
-        \                   \"type\": \"boolean\",\n                    \"description\": \"Whether metrics export is enabled\"\
-        \n                },\n                \"samplingRatio\": {\n                    \"type\": \"number\",\n          \
-        \          \"format\": \"double\",\n                    \"description\": \"Current trace sampling ratio (0.0-1.0)\"\
-        \n                },\n                \"serviceName\": {\n                    \"type\": \"string\",\n            \
-        \        \"description\": \"Service name used for telemetry identification\"\n                },\n               \
-        \ \"serviceNamespace\": {\n                    \"type\": \"string\",\n                    \"description\": \"Service
-        namespace for telemetry grouping\"\n                },\n                \"deploymentEnvironment\": {\n           \
-        \         \"type\": \"string\",\n                    \"description\": \"Current deployment environment\"\n       \
-        \         },\n                \"otlpEndpoint\": {\n                    \"type\": \"string\",\n                   \
-        \ \"nullable\": true,\n                    \"description\": \"Configured OTLP endpoint\"\n                },\n   \
-        \             \"otlpProtocol\": {\n                    \"type\": \"string\",\n                    \"description\"\
-        : \"OTLP transport protocol (grpc or http)\"\n                }\n            }\n        }\n    }\n}"
+        deploymentEnvironment\",\n                \"otlpEndpoint\",\n                \"otlpProtocol\"\n            ],\n  \
+        \          \"properties\": {\n                \"tracingEnabled\": {\n                    \"type\": \"boolean\",\n\
+        \                    \"description\": \"Whether distributed tracing export is enabled\"\n                },\n    \
+        \            \"metricsEnabled\": {\n                    \"type\": \"boolean\",\n                    \"description\"\
+        : \"Whether metrics export is enabled\"\n                },\n                \"samplingRatio\": {\n              \
+        \      \"type\": \"number\",\n                    \"format\": \"double\",\n                    \"description\": \"\
+        Current trace sampling ratio (0.0-1.0)\"\n                },\n                \"serviceName\": {\n               \
+        \     \"type\": \"string\",\n                    \"description\": \"Service name used for telemetry identification
+        (resolved from config or effective app-id)\"\n                },\n                \"serviceNamespace\": {\n      \
+        \              \"type\": \"string\",\n                    \"description\": \"Service namespace for telemetry grouping\"\
+        \n                },\n                \"deploymentEnvironment\": {\n                    \"type\": \"string\",\n  \
+        \                  \"description\": \"Current deployment environment\"\n                },\n                \"otlpEndpoint\"\
+        : {\n                    \"type\": \"string\",\n                    \"description\": \"Configured OTLP endpoint (always
+        set, defaults to http://localhost:4317)\"\n                },\n                \"otlpProtocol\": {\n             \
+        \       \"$ref\": \"#/$defs/OtlpProtocol\",\n                    \"description\": \"OTLP transport protocol (grpc
+        or http)\"\n                }\n            }\n        },\n        \"OtlpProtocol\": {\n            \"type\": \"string\"\
+        ,\n            \"enum\": [\n                \"grpc\",\n                \"http\"\n            ],\n            \"description\"\
+        : \"OTLP transport protocol\"\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Get telemetry status and configuration\",\n    \"description\": \"Returns
         detailed telemetry status including active exporters, sampling configuration, and service identity.\",\n    \"tags\"\
         : [\n        \"Telemetry\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"status\"\n}"
@@ -155,6 +158,7 @@ components:
       - serviceName
       - serviceNamespace
       - deploymentEnvironment
+      - otlpEndpoint
       - otlpProtocol
       properties:
         tracingEnabled:
@@ -169,7 +173,7 @@ components:
           description: Current trace sampling ratio (0.0-1.0)
         serviceName:
           type: string
-          description: Service name used for telemetry identification
+          description: Service name used for telemetry identification (resolved from config or effective app-id)
         serviceNamespace:
           type: string
           description: Service namespace for telemetry grouping
@@ -178,8 +182,13 @@ components:
           description: Current deployment environment
         otlpEndpoint:
           type: string
-          nullable: true
-          description: Configured OTLP endpoint
+          description: Configured OTLP endpoint (always set, defaults to http://localhost:4317)
         otlpProtocol:
-          type: string
+          $ref: '#/components/schemas/OtlpProtocol'
           description: OTLP transport protocol (grpc or http)
+    OtlpProtocol:
+      type: string
+      enum:
+      - grpc
+      - http
+      description: OTLP transport protocol

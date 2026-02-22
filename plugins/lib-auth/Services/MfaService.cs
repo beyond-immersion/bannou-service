@@ -16,6 +16,7 @@ public class MfaService : IMfaService
 {
     private readonly IStateStoreFactory _stateStoreFactory;
     private readonly AuthServiceConfiguration _configuration;
+    private readonly ITelemetryProvider _telemetryProvider;
     private readonly ILogger<MfaService> _logger;
 
     private const string MFA_CHALLENGE_KEY_PREFIX = "mfa-challenge-";
@@ -30,14 +31,17 @@ public class MfaService : IMfaService
     /// </summary>
     /// <param name="stateStoreFactory">State store factory for Redis-backed token storage.</param>
     /// <param name="configuration">Auth service configuration containing MFA settings.</param>
+    /// <param name="telemetryProvider">Telemetry provider for span instrumentation.</param>
     /// <param name="logger">Logger instance.</param>
     public MfaService(
         IStateStoreFactory stateStoreFactory,
         AuthServiceConfiguration configuration,
+        ITelemetryProvider telemetryProvider,
         ILogger<MfaService> logger)
     {
         _stateStoreFactory = stateStoreFactory;
         _configuration = configuration;
+        _telemetryProvider = telemetryProvider;
         _logger = logger;
     }
 
@@ -155,6 +159,7 @@ public class MfaService : IMfaService
     /// <inheritdoc/>
     public async Task<string> CreateMfaChallengeAsync(Guid accountId, CancellationToken ct)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.auth", "MfaService.CreateMfaChallenge");
         var token = GenerateSecureToken();
         var challengeData = new MfaChallengeData
         {
@@ -173,6 +178,7 @@ public class MfaService : IMfaService
     /// <inheritdoc/>
     public async Task<Guid?> ConsumeMfaChallengeAsync(string token, CancellationToken ct)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.auth", "MfaService.ConsumeMfaChallenge");
         var store = _stateStoreFactory.GetStore<MfaChallengeData>(StateStoreDefinitions.Auth);
         var key = $"{MFA_CHALLENGE_KEY_PREFIX}{token}";
 
@@ -200,6 +206,7 @@ public class MfaService : IMfaService
     /// <inheritdoc/>
     public async Task<string> CreateMfaSetupAsync(Guid accountId, string encryptedSecret, List<string> hashedRecoveryCodes, CancellationToken ct)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.auth", "MfaService.CreateMfaSetup");
         var token = GenerateSecureToken();
         var setupData = new MfaSetupData
         {
@@ -220,6 +227,7 @@ public class MfaService : IMfaService
     /// <inheritdoc/>
     public async Task<MfaSetupData?> ConsumeMfaSetupAsync(string token, CancellationToken ct)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.auth", "MfaService.ConsumeMfaSetup");
         var store = _stateStoreFactory.GetStore<MfaSetupData>(StateStoreDefinitions.Auth);
         var key = $"{MFA_SETUP_KEY_PREFIX}{token}";
 

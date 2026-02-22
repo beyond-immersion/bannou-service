@@ -1,4 +1,4 @@
-openapi: 3.0.0
+openapi: 3.0.3
 info:
   title: Bannou Auth Service API
   description: |
@@ -32,7 +32,6 @@ paths:
       - Authentication
       x-permissions:
       - role: anonymous
-        states: {}
       requestBody:
         required: true
         content:
@@ -57,24 +56,27 @@ paths:
         \   \"properties\": {\n                \"email\": {\n                    \"type\": \"string\",\n                 \
         \   \"format\": \"email\",\n                    \"maxLength\": 254,\n                    \"description\": \"Email
         address for authentication\"\n                },\n                \"password\": {\n                    \"type\": \"\
-        string\",\n                    \"format\": \"password\",\n                    \"description\": \"User password for
-        authentication\"\n                },\n                \"rememberMe\": {\n                    \"type\": \"boolean\"\
-        ,\n                    \"default\": false,\n                    \"description\": \"Whether to extend the session duration
-        for persistent login\"\n                },\n                \"deviceInfo\": {\n                    \"$ref\": \"#/$defs/DeviceInfo\"\
-        ,\n                    \"nullable\": true,\n                    \"description\": \"Information about the client device
+        string\",\n                    \"format\": \"password\",\n                    \"minLength\": 1,\n                \
+        \    \"maxLength\": 128,\n                    \"description\": \"User password for authentication\"\n            \
+        \    },\n                \"rememberMe\": {\n                    \"type\": \"boolean\",\n                    \"default\"\
+        : false,\n                    \"description\": \"Whether to extend the session duration for persistent login\"\n \
+        \               },\n                \"deviceInfo\": {\n                    \"$ref\": \"#/$defs/DeviceInfo\",\n   \
+        \                 \"nullable\": true,\n                    \"description\": \"Information about the client device
         (optional)\"\n                }\n            }\n        },\n        \"DeviceInfo\": {\n            \"description\"\
         : \"Information about the client device used for authentication or session tracking\",\n            \"type\": \"object\"\
         ,\n            \"additionalProperties\": false,\n            \"properties\": {\n                \"deviceType\": {\n\
-        \                    \"type\": \"string\",\n                    \"enum\": [\n                        \"desktop\",\n\
-        \                        \"mobile\",\n                        \"tablet\",\n                        \"console\"\n \
-        \                   ],\n                    \"nullable\": true,\n                    \"description\": \"Category of
-        the device\"\n                },\n                \"platform\": {\n                    \"type\": \"string\",\n   \
-        \                 \"nullable\": true,\n                    \"description\": \"Operating system or platform name\"\n\
-        \                },\n                \"browser\": {\n                    \"type\": \"string\",\n                 \
-        \   \"nullable\": true,\n                    \"description\": \"Browser name and version if applicable\"\n       \
-        \         },\n                \"appVersion\": {\n                    \"type\": \"string\",\n                    \"\
-        nullable\": true,\n                    \"description\": \"Version of the client application\"\n                }\n\
-        \            }\n        }\n    }\n}"
+        \                    \"allOf\": [\n                        {\n                            \"$ref\": \"#/$defs/DeviceType\"\
+        \n                        }\n                    ],\n                    \"nullable\": true,\n                   \
+        \ \"description\": \"Category of the device\"\n                },\n                \"platform\": {\n             \
+        \       \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Operating
+        system or platform name\"\n                },\n                \"browser\": {\n                    \"type\": \"string\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"Browser name and version if applicable\"\
+        \n                },\n                \"appVersion\": {\n                    \"type\": \"string\",\n             \
+        \       \"nullable\": true,\n                    \"description\": \"Version of the client application\"\n        \
+        \        }\n            }\n        },\n        \"DeviceType\": {\n            \"type\": \"string\",\n            \"\
+        enum\": [\n                \"desktop\",\n                \"mobile\",\n                \"tablet\",\n              \
+        \  \"console\"\n            ],\n            \"description\": \"Category of client device used for authentication or
+        session tracking\"\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/LoginResponse\"\
         ,\n    \"$defs\": {\n        \"LoginResponse\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Response from email/password login. May contain full tokens (no MFA) or a challenge token (MFA required).\",\n\
@@ -109,7 +111,6 @@ paths:
       - Authentication
       x-permissions:
       - role: anonymous
-        states: {}
       requestBody:
         required: true
         content:
@@ -136,10 +137,11 @@ paths:
         \              \"maxLength\": 32,\n                    \"pattern\": \"^[a-zA-Z0-9_]+$\",\n                    \"example\"\
         : \"gameuser123\"\n                },\n                \"password\": {\n                    \"type\": \"string\",\n\
         \                    \"description\": \"Password for the account (will be hashed)\",\n                    \"minLength\"\
-        : 8,\n                    \"format\": \"password\",\n                    \"example\": \"SecurePassword123!\"\n   \
-        \             },\n                \"email\": {\n                    \"type\": \"string\",\n                    \"\
-        format\": \"email\",\n                    \"description\": \"Email address for account recovery and notifications\"\
-        ,\n                    \"example\": \"user@example.com\"\n                }\n            }\n        }\n    }\n}"
+        : 8,\n                    \"maxLength\": 128,\n                    \"format\": \"password\",\n                   \
+        \ \"example\": \"SecurePassword123!\"\n                },\n                \"email\": {\n                    \"type\"\
+        : \"string\",\n                    \"format\": \"email\",\n                    \"description\": \"Email address for
+        account recovery and notifications\",\n                    \"example\": \"user@example.com\"\n                }\n\
+        \            }\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/RegisterResponse\"\
         ,\n    \"$defs\": {\n        \"RegisterResponse\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Response from successful user registration\",\n            \"additionalProperties\": false,\n            \"required\"\
@@ -170,7 +172,6 @@ paths:
       - OAuth
       x-permissions:
       - role: anonymous
-        states: {}
       parameters:
       - name: provider
         in: path
@@ -190,7 +191,7 @@ paths:
       responses:
         '302':
           description: Redirect to OAuth provider
-      x-manual-implementation: true
+      x-controller-only: true
       x-request-schema-json: '{}'
       x-response-schema-json: '{}'
       x-endpoint-info-json: "{\n    \"summary\": \"Initialize OAuth2 flow (browser redirect)\",\n    \"description\": \"Browser-facing
@@ -212,7 +213,6 @@ paths:
       - OAuth
       x-permissions:
       - role: anonymous
-        states: {}
       parameters:
       - name: provider
         in: path
@@ -244,16 +244,19 @@ paths:
         \        \"description\": \"Information about the client device (optional)\"\n                }\n            }\n \
         \       },\n        \"DeviceInfo\": {\n            \"description\": \"Information about the client device used for
         authentication or session tracking\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n\
-        \            \"properties\": {\n                \"deviceType\": {\n                    \"type\": \"string\",\n   \
-        \                 \"enum\": [\n                        \"desktop\",\n                        \"mobile\",\n       \
-        \                 \"tablet\",\n                        \"console\"\n                    ],\n                    \"\
-        nullable\": true,\n                    \"description\": \"Category of the device\"\n                },\n         \
-        \       \"platform\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n    \
-        \                \"description\": \"Operating system or platform name\"\n                },\n                \"browser\"\
-        : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Browser name and version if applicable\"\n                },\n                \"appVersion\": {\n            \
-        \        \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Version
-        of the client application\"\n                }\n            }\n        }\n    }\n}"
+        \            \"properties\": {\n                \"deviceType\": {\n                    \"allOf\": [\n            \
+        \            {\n                            \"$ref\": \"#/$defs/DeviceType\"\n                        }\n        \
+        \            ],\n                    \"nullable\": true,\n                    \"description\": \"Category of the device\"\
+        \n                },\n                \"platform\": {\n                    \"type\": \"string\",\n               \
+        \     \"nullable\": true,\n                    \"description\": \"Operating system or platform name\"\n          \
+        \      },\n                \"browser\": {\n                    \"type\": \"string\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Browser name and version if applicable\"\n                },\n   \
+        \             \"appVersion\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n\
+        \                    \"description\": \"Version of the client application\"\n                }\n            }\n  \
+        \      },\n        \"DeviceType\": {\n            \"type\": \"string\",\n            \"enum\": [\n               \
+        \ \"desktop\",\n                \"mobile\",\n                \"tablet\",\n                \"console\"\n          \
+        \  ],\n            \"description\": \"Category of client device used for authentication or session tracking\"\n  \
+        \      }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/AuthResponse\"\
         ,\n    \"$defs\": {\n        \"AuthResponse\": {\n            \"description\": \"Successful authentication response
         containing tokens and session information\",\n            \"type\": \"object\",\n            \"additionalProperties\"\
@@ -289,7 +292,6 @@ paths:
       - Steam
       x-permissions:
       - role: anonymous
-        states: {}
       requestBody:
         required: true
         content:
@@ -314,23 +316,26 @@ paths:
         SteamID).\\n\",\n            \"additionalProperties\": false,\n            \"required\": [\n                \"ticket\"\
         \n            ],\n            \"properties\": {\n                \"ticket\": {\n                    \"type\": \"string\"\
         ,\n                    \"pattern\": \"^[0-9A-Fa-f]+$\",\n                    \"minLength\": 16,\n                \
-        \    \"description\": \"Hex-encoded Steam Session Ticket from ISteamUser::GetAuthTicketForWebApi().\\nClient converts
-        ticket bytes to hex string: BitConverter.ToString(ticketData).Replace(\\\"-\\\", \\\"\\\")\\n\",\n               \
-        \     \"example\": \"140000006A7B3C8E...\"\n                },\n                \"deviceInfo\": {\n              \
-        \      \"$ref\": \"#/$defs/DeviceInfo\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Information about the client device (optional)\"\n                }\n            }\n        },\n        \"DeviceInfo\"\
-        : {\n            \"description\": \"Information about the client device used for authentication or session tracking\"\
-        ,\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"properties\": {\n\
-        \                \"deviceType\": {\n                    \"type\": \"string\",\n                    \"enum\": [\n \
-        \                       \"desktop\",\n                        \"mobile\",\n                        \"tablet\",\n \
-        \                       \"console\"\n                    ],\n                    \"nullable\": true,\n           \
-        \         \"description\": \"Category of the device\"\n                },\n                \"platform\": {\n     \
-        \               \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Operating system or platform name\"\n                },\n                \"browser\": {\n                    \"\
-        type\": \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Browser name
-        and version if applicable\"\n                },\n                \"appVersion\": {\n                    \"type\":
-        \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Version of the client
-        application\"\n                }\n            }\n        }\n    }\n}"
+        \    \"maxLength\": 2048,\n                    \"description\": \"Hex-encoded Steam Session Ticket from ISteamUser::GetAuthTicketForWebApi().\\
+        nClient converts ticket bytes to hex string: BitConverter.ToString(ticketData).Replace(\\\"-\\\", \\\"\\\")\\n\",\n\
+        \                    \"example\": \"140000006A7B3C8E...\"\n                },\n                \"deviceInfo\": {\n\
+        \                    \"$ref\": \"#/$defs/DeviceInfo\",\n                    \"nullable\": true,\n                \
+        \    \"description\": \"Information about the client device (optional)\"\n                }\n            }\n     \
+        \   },\n        \"DeviceInfo\": {\n            \"description\": \"Information about the client device used for authentication
+        or session tracking\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n        \
+        \    \"properties\": {\n                \"deviceType\": {\n                    \"allOf\": [\n                    \
+        \    {\n                            \"$ref\": \"#/$defs/DeviceType\"\n                        }\n                \
+        \    ],\n                    \"nullable\": true,\n                    \"description\": \"Category of the device\"\n\
+        \                },\n                \"platform\": {\n                    \"type\": \"string\",\n                \
+        \    \"nullable\": true,\n                    \"description\": \"Operating system or platform name\"\n           \
+        \     },\n                \"browser\": {\n                    \"type\": \"string\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Browser name and version if applicable\"\n                },\n   \
+        \             \"appVersion\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n\
+        \                    \"description\": \"Version of the client application\"\n                }\n            }\n  \
+        \      },\n        \"DeviceType\": {\n            \"type\": \"string\",\n            \"enum\": [\n               \
+        \ \"desktop\",\n                \"mobile\",\n                \"tablet\",\n                \"console\"\n          \
+        \  ],\n            \"description\": \"Category of client device used for authentication or session tracking\"\n  \
+        \      }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/AuthResponse\"\
         ,\n    \"$defs\": {\n        \"AuthResponse\": {\n            \"description\": \"Successful authentication response
         containing tokens and session information\",\n            \"type\": \"object\",\n            \"additionalProperties\"\
@@ -362,7 +367,6 @@ paths:
       - Tokens
       x-permissions:
       - role: user
-        states: {}
       parameters:
       - name: jwt
         in: header
@@ -419,7 +423,6 @@ paths:
       - Tokens
       x-permissions:
       - role: user
-        states: {}
       parameters:
       - name: jwt
         in: header
@@ -444,21 +447,22 @@ paths:
         ,\n    \"$defs\": {\n        \"ValidateTokenResponse\": {\n            \"description\": \"Response from token validation
         containing validity status and associated account details\",\n            \"type\": \"object\",\n            \"additionalProperties\"\
         : false,\n            \"required\": [\n                \"valid\",\n                \"accountId\",\n              \
-        \  \"sessionKey\"\n            ],\n            \"properties\": {\n                \"valid\": {\n                 \
-        \   \"type\": \"boolean\",\n                    \"description\": \"Whether the token is valid and not expired\"\n\
-        \                },\n                \"accountId\": {\n                    \"type\": \"string\",\n               \
-        \     \"format\": \"uuid\",\n                    \"description\": \"Unique identifier for the account associated with
-        the token\"\n                },\n                \"sessionKey\": {\n                    \"type\": \"string\",\n  \
-        \                  \"format\": \"uuid\",\n                    \"description\": \"Internal session key used by Connect
-        service for WebSocket connection tracking and service routing\"\n                },\n                \"roles\": {\n\
-        \                    \"type\": \"array\",\n                    \"items\": {\n                        \"type\": \"\
-        string\"\n                    },\n                    \"nullable\": true,\n                    \"description\": \"\
-        List of roles assigned to the authenticated user\"\n                },\n                \"authorizations\": {\n  \
-        \                  \"type\": \"array\",\n                    \"items\": {\n                        \"type\": \"string\"\
-        \n                    },\n                    \"nullable\": true,\n                    \"description\": \"Authorization
-        strings from active subscriptions.\\nFormat: \\\"{stubName}:{state}\\\" (e.g., \\\"my-game:authorized\\\")\\n\"\n\
-        \                },\n                \"remainingTime\": {\n                    \"type\": \"integer\",\n          \
-        \          \"description\": \"Seconds until expiration\"\n                }\n            }\n        }\n    }\n}"
+        \  \"sessionKey\",\n                \"remainingTime\"\n            ],\n            \"properties\": {\n           \
+        \     \"valid\": {\n                    \"type\": \"boolean\",\n                    \"description\": \"Whether the
+        token is valid and not expired\"\n                },\n                \"accountId\": {\n                    \"type\"\
+        : \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Unique identifier
+        for the account associated with the token\"\n                },\n                \"sessionKey\": {\n             \
+        \       \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"\
+        Internal session key used by Connect service for WebSocket connection tracking and service routing\"\n           \
+        \     },\n                \"roles\": {\n                    \"type\": \"array\",\n                    \"items\": {\n\
+        \                        \"type\": \"string\"\n                    },\n                    \"nullable\": true,\n \
+        \                   \"description\": \"List of roles assigned to the authenticated user\"\n                },\n  \
+        \              \"authorizations\": {\n                    \"type\": \"array\",\n                    \"items\": {\n\
+        \                        \"type\": \"string\"\n                    },\n                    \"nullable\": true,\n \
+        \                   \"description\": \"Authorization strings from active subscriptions.\\nFormat: \\\"{stubName}:{state}\\\
+        \" (e.g., \\\"my-game:authorized\\\")\\n\"\n                },\n                \"remainingTime\": {\n           \
+        \         \"type\": \"integer\",\n                    \"description\": \"Seconds until expiration\"\n            \
+        \    }\n            }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Validate access token\",\n    \"description\": \"\",\n    \"tags\": [\n\
         \        \"Tokens\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"validateToken\"\n}"
   /auth/logout:
@@ -469,7 +473,6 @@ paths:
       - Authentication
       x-permissions:
       - role: user
-        states: {}
       parameters:
       - name: jwt
         in: header
@@ -503,7 +506,6 @@ paths:
       - Sessions
       x-permissions:
       - role: user
-        states: {}
       parameters:
       - name: jwt
         in: header
@@ -545,16 +547,18 @@ paths:
         the IP address\"\n                }\n            }\n        },\n        \"DeviceInfo\": {\n            \"description\"\
         : \"Information about the client device used for authentication or session tracking\",\n            \"type\": \"object\"\
         ,\n            \"additionalProperties\": false,\n            \"properties\": {\n                \"deviceType\": {\n\
-        \                    \"type\": \"string\",\n                    \"enum\": [\n                        \"desktop\",\n\
-        \                        \"mobile\",\n                        \"tablet\",\n                        \"console\"\n \
-        \                   ],\n                    \"nullable\": true,\n                    \"description\": \"Category of
-        the device\"\n                },\n                \"platform\": {\n                    \"type\": \"string\",\n   \
-        \                 \"nullable\": true,\n                    \"description\": \"Operating system or platform name\"\n\
-        \                },\n                \"browser\": {\n                    \"type\": \"string\",\n                 \
-        \   \"nullable\": true,\n                    \"description\": \"Browser name and version if applicable\"\n       \
-        \         },\n                \"appVersion\": {\n                    \"type\": \"string\",\n                    \"\
-        nullable\": true,\n                    \"description\": \"Version of the client application\"\n                }\n\
-        \            }\n        }\n    }\n}"
+        \                    \"allOf\": [\n                        {\n                            \"$ref\": \"#/$defs/DeviceType\"\
+        \n                        }\n                    ],\n                    \"nullable\": true,\n                   \
+        \ \"description\": \"Category of the device\"\n                },\n                \"platform\": {\n             \
+        \       \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Operating
+        system or platform name\"\n                },\n                \"browser\": {\n                    \"type\": \"string\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"Browser name and version if applicable\"\
+        \n                },\n                \"appVersion\": {\n                    \"type\": \"string\",\n             \
+        \       \"nullable\": true,\n                    \"description\": \"Version of the client application\"\n        \
+        \        }\n            }\n        },\n        \"DeviceType\": {\n            \"type\": \"string\",\n            \"\
+        enum\": [\n                \"desktop\",\n                \"mobile\",\n                \"tablet\",\n              \
+        \  \"console\"\n            ],\n            \"description\": \"Category of client device used for authentication or
+        session tracking\"\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Get active sessions for account\",\n    \"description\": \"\",\n    \"\
         tags\": [\n        \"Sessions\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"getSessions\"\n}"
   /auth/sessions/terminate:
@@ -565,7 +569,6 @@ paths:
       - Sessions
       x-permissions:
       - role: user
-        states: {}
       parameters:
       - name: jwt
         in: header
@@ -606,7 +609,6 @@ paths:
       - Token Management
       x-permissions:
       - role: admin
-        states: {}
       requestBody:
         required: true
         content:
@@ -685,7 +687,6 @@ paths:
       - Password
       x-permissions:
       - role: anonymous
-        states: {}
       requestBody:
         required: true
         content:
@@ -713,7 +714,6 @@ paths:
       - Password
       x-permissions:
       - role: anonymous
-        states: {}
       requestBody:
         required: true
         content:
@@ -730,8 +730,8 @@ paths:
         \            \"properties\": {\n                \"token\": {\n                    \"type\": \"string\",\n        \
         \            \"description\": \"Password reset token received via email\"\n                },\n                \"\
         newPassword\": {\n                    \"type\": \"string\",\n                    \"format\": \"password\",\n     \
-        \               \"minLength\": 8,\n                    \"description\": \"New password to set for the account\"\n\
-        \                }\n            }\n        }\n    }\n}"
+        \               \"minLength\": 8,\n                    \"maxLength\": 128,\n                    \"description\": \"\
+        New password to set for the account\"\n                }\n            }\n        }\n    }\n}"
       x-response-schema-json: '{}'
       x-endpoint-info-json: "{\n    \"summary\": \"Confirm password reset with token\",\n    \"description\": \"\",\n    \"\
         tags\": [\n        \"Password\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"confirmPasswordReset\"\
@@ -748,7 +748,6 @@ paths:
       - Authentication
       x-permissions:
       - role: anonymous
-        states: {}
       responses:
         '200':
           description: List of available providers
@@ -771,13 +770,14 @@ paths:
         identifier for the provider (matches Provider enum for OAuth)\"\n                },\n                \"displayName\"\
         : {\n                    \"type\": \"string\",\n                    \"example\": \"Discord\",\n                  \
         \  \"description\": \"Human-readable name for the provider\"\n                },\n                \"authType\": {\n\
-        \                    \"type\": \"string\",\n                    \"enum\": [\n                        \"oauth\",\n\
-        \                        \"ticket\"\n                    ],\n                    \"description\": \"Authentication
-        mechanism (oauth = browser redirect, ticket = game client token)\"\n                },\n                \"authUrl\"\
-        : {\n                    \"type\": \"string\",\n                    \"format\": \"uri\",\n                    \"nullable\"\
+        \                    \"$ref\": \"#/$defs/AuthType\",\n                    \"description\": \"Authentication mechanism
+        (oauth = browser redirect, ticket = game client token)\"\n                },\n                \"authUrl\": {\n   \
+        \                 \"type\": \"string\",\n                    \"format\": \"uri\",\n                    \"nullable\"\
         : true,\n                    \"example\": \"https://discord.com/oauth2/authorize\",\n                    \"description\"\
         : \"URL to initiate OAuth authentication (null for ticket-based auth like Steam)\"\n                }\n          \
-        \  }\n        }\n    }\n}"
+        \  }\n        },\n        \"AuthType\": {\n            \"type\": \"string\",\n            \"enum\": [\n          \
+        \      \"oauth\",\n                \"ticket\"\n            ],\n            \"description\": \"Authentication mechanism
+        type (oauth = browser redirect, ticket = game client token)\"\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"List available authentication providers\",\n    \"description\": \"Returns
         a list of available OAuth and authentication providers based on server configuration.\\nProviders are only listed
         if their client credentials are configured.\\nSteam authentication uses session tickets, not OAuth, but is included
@@ -795,7 +795,6 @@ paths:
       - MFA
       x-permissions:
       - role: user
-        states: {}
       parameters:
       - name: jwt
         in: header
@@ -841,7 +840,6 @@ paths:
       - MFA
       x-permissions:
       - role: user
-        states: {}
       parameters:
       - name: jwt
         in: header
@@ -889,7 +887,6 @@ paths:
       - MFA
       x-permissions:
       - role: user
-        states: {}
       parameters:
       - name: jwt
         in: header
@@ -918,8 +915,9 @@ paths:
         ,\n                    \"nullable\": true,\n                    \"minLength\": 6,\n                    \"maxLength\"\
         : 6,\n                    \"pattern\": \"^\\\\d{6}$\",\n                    \"description\": \"Current 6-digit TOTP
         code from authenticator app\"\n                },\n                \"recoveryCode\": {\n                    \"type\"\
-        : \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Single-use recovery
-        code (format xxxx-xxxx)\"\n                }\n            }\n        }\n    }\n}"
+        : \"string\",\n                    \"nullable\": true,\n                    \"pattern\": \"^[a-z0-9]{4}-[a-z0-9]{4}$\"\
+        ,\n                    \"description\": \"Single-use recovery code (format xxxx-xxxx)\"\n                }\n     \
+        \       }\n        }\n    }\n}"
       x-response-schema-json: '{}'
       x-endpoint-info-json: "{\n    \"summary\": \"Disable MFA for current account\",\n    \"description\": \"Disables MFA
         for the authenticated account. Requires a valid TOTP code or\\nrecovery code to prevent unauthorized disable. Clears
@@ -936,7 +934,6 @@ paths:
       - MFA
       x-permissions:
       - role: admin
-        states: {}
       requestBody:
         required: true
         content:
@@ -975,7 +972,6 @@ paths:
       - MFA
       x-permissions:
       - role: anonymous
-        states: {}
       requestBody:
         required: true
         content:
@@ -1003,8 +999,8 @@ paths:
         : true,\n                    \"minLength\": 6,\n                    \"maxLength\": 6,\n                    \"pattern\"\
         : \"^\\\\d{6}$\",\n                    \"description\": \"6-digit TOTP code from authenticator app\"\n           \
         \     },\n                \"recoveryCode\": {\n                    \"type\": \"string\",\n                    \"nullable\"\
-        : true,\n                    \"description\": \"Single-use recovery code (format xxxx-xxxx)\"\n                }\n\
-        \            }\n        }\n    }\n}"
+        : true,\n                    \"pattern\": \"^[a-z0-9]{4}-[a-z0-9]{4}$\",\n                    \"description\": \"\
+        Single-use recovery code (format xxxx-xxxx)\"\n                }\n            }\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/AuthResponse\"\
         ,\n    \"$defs\": {\n        \"AuthResponse\": {\n            \"description\": \"Successful authentication response
         containing tokens and session information\",\n            \"type\": \"object\",\n            \"additionalProperties\"\
@@ -1052,6 +1048,64 @@ components:
       - ses
       description: Email delivery provider type (none=console logging, sendgrid=SendGrid API, smtp=SMTP via MailKit, 
         ses=AWS SES v2)
+    DeviceType:
+      type: string
+      enum:
+      - desktop
+      - mobile
+      - tablet
+      - console
+      description: Category of client device used for authentication or session tracking
+    AuthType:
+      type: string
+      enum:
+      - oauth
+      - ticket
+      description: Authentication mechanism type (oauth = browser redirect, ticket = game client token)
+    SessionInvalidatedEventReason:
+      type: string
+      enum:
+      - Logout
+      - AccountDeleted
+      - SecurityRevocation
+      - AdminAction
+      - SessionExpired
+      description: Reason for session invalidation
+    SessionUpdatedEventReason:
+      type: string
+      enum:
+      - RoleChanged
+      - AuthorizationChanged
+      - SubscriptionChanged
+      description: Reason for session update
+    AuthLoginFailedReason:
+      type: string
+      enum:
+      - InvalidCredentials
+      - AccountDisabled
+      - AccountLocked
+      - AccountNotFound
+      - RateLimited
+      description: Reason why the login attempt failed
+    MfaDisabledBy:
+      type: string
+      enum:
+      - Self
+      - Admin
+      description: Who triggered the MFA disable action
+    MfaVerificationMethod:
+      type: string
+      enum:
+      - Totp
+      - RecoveryCode
+      description: Method used for MFA verification
+    MfaFailedReason:
+      type: string
+      enum:
+      - InvalidCode
+      - ExpiredChallenge
+      - NoRecoveryCodesRemaining
+      description: Reason for MFA verification failure
     InitOAuthResponse:
       type: object
       description: Response containing the OAuth authorization URL for redirect
@@ -1090,6 +1144,8 @@ components:
         password:
           type: string
           format: password
+          minLength: 1
+          maxLength: 128
           description: User password for authentication
         rememberMe:
           type: boolean
@@ -1119,6 +1175,7 @@ components:
           type: string
           description: Password for the account (will be hashed)
           minLength: 8
+          maxLength: 128
           format: password
           example: "SecurePassword123!"
         email:
@@ -1218,6 +1275,7 @@ components:
           type: string
           pattern: '^[0-9A-Fa-f]+$'
           minLength: 16
+          maxLength: 2048
           description: |
             Hex-encoded Steam Session Ticket from ISteamUser::GetAuthTicketForWebApi().
             Client converts ticket bytes to hex string: BitConverter.ToString(ticketData).Replace("-", "")
@@ -1244,6 +1302,7 @@ components:
       - valid
       - accountId
       - sessionKey
+      - remainingTime
       properties:
         valid:
           type: boolean
@@ -1334,12 +1393,8 @@ components:
       additionalProperties: false
       properties:
         deviceType:
-          type: string
-          enum:
-          - desktop
-          - mobile
-          - tablet
-          - console
+          allOf:
+          - $ref: '#/components/schemas/DeviceType'
           nullable: true
           description: Category of the device
         platform:
@@ -1381,6 +1436,7 @@ components:
           type: string
           format: password
           minLength: 8
+          maxLength: 128
           description: New password to set for the account
     LoginResponse:
       type: object
@@ -1477,6 +1533,7 @@ components:
         recoveryCode:
           type: string
           nullable: true
+          pattern: '^[a-z0-9]{4}-[a-z0-9]{4}$'
           description: Single-use recovery code (format xxxx-xxxx)
     AdminDisableMfaRequest:
       type: object
@@ -1513,6 +1570,7 @@ components:
         recoveryCode:
           type: string
           nullable: true
+          pattern: '^[a-z0-9]{4}-[a-z0-9]{4}$'
           description: Single-use recovery code (format xxxx-xxxx)
     ProvidersResponse:
       type: object
@@ -1544,10 +1602,7 @@ components:
           example: "Discord"
           description: Human-readable name for the provider
         authType:
-          type: string
-          enum:
-          - oauth
-          - ticket
+          $ref: '#/components/schemas/AuthType'
           description: Authentication mechanism (oauth = browser redirect, ticket = game client token)
         authUrl:
           type: string

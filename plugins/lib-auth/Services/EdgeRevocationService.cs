@@ -28,6 +28,7 @@ public class EdgeRevocationService : IEdgeRevocationService
     private readonly IStateStoreFactory _stateStoreFactory;
     private readonly IEnumerable<IEdgeRevocationProvider> _providers;
     private readonly IMessageBus _messageBus;
+    private readonly ITelemetryProvider _telemetryProvider;
     private readonly ILogger<EdgeRevocationService> _logger;
     private readonly AuthServiceConfiguration _configuration;
 
@@ -37,18 +38,21 @@ public class EdgeRevocationService : IEdgeRevocationService
     /// <param name="stateStoreFactory">Factory for accessing state stores.</param>
     /// <param name="providers">Collection of edge revocation providers.</param>
     /// <param name="messageBus">Message bus for error event publishing.</param>
+    /// <param name="telemetryProvider">Telemetry provider for span instrumentation.</param>
     /// <param name="configuration">Auth service configuration.</param>
     /// <param name="logger">Logger instance.</param>
     public EdgeRevocationService(
         IStateStoreFactory stateStoreFactory,
         IEnumerable<IEdgeRevocationProvider> providers,
         IMessageBus messageBus,
+        ITelemetryProvider telemetryProvider,
         AuthServiceConfiguration configuration,
         ILogger<EdgeRevocationService> logger)
     {
         _stateStoreFactory = stateStoreFactory;
         _providers = providers;
         _messageBus = messageBus;
+        _telemetryProvider = telemetryProvider;
         _configuration = configuration;
         _logger = logger;
     }
@@ -59,6 +63,7 @@ public class EdgeRevocationService : IEdgeRevocationService
     /// <inheritdoc/>
     public async Task RevokeTokenAsync(string jti, Guid accountId, TimeSpan ttl, string reason, CancellationToken ct = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.auth", "EdgeRevocationService.RevokeToken");
         if (!IsEnabled)
         {
             return;
@@ -95,6 +100,7 @@ public class EdgeRevocationService : IEdgeRevocationService
     /// <inheritdoc/>
     public async Task RevokeAccountAsync(Guid accountId, DateTimeOffset issuedBefore, string reason, CancellationToken ct = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.auth", "EdgeRevocationService.RevokeAccount");
         if (!IsEnabled)
         {
             return;
@@ -133,6 +139,7 @@ public class EdgeRevocationService : IEdgeRevocationService
     public async Task<(List<RevokedTokenEntry> tokens, List<RevokedAccountEntry> accounts, int failedCount, int? totalTokenCount)> GetRevocationListAsync(
         bool includeTokens, bool includeAccounts, int limit, CancellationToken ct = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.auth", "EdgeRevocationService.GetRevocationList");
         var tokens = new List<RevokedTokenEntry>();
         var accounts = new List<RevokedAccountEntry>();
         int? totalTokenCount = null;
@@ -209,6 +216,7 @@ public class EdgeRevocationService : IEdgeRevocationService
     /// </summary>
     private async Task PushToProvidersAsync(string type, string? jti, Guid accountId, int? ttlSeconds, long? issuedBeforeUnix, CancellationToken ct)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.auth", "EdgeRevocationService.PushToProviders");
         var enabledProviders = _providers.Where(p => p.IsEnabled).ToList();
         if (enabledProviders.Count == 0)
         {
@@ -269,6 +277,7 @@ public class EdgeRevocationService : IEdgeRevocationService
     /// </summary>
     private async Task AddToFailedPushesAsync(string type, string? jti, Guid accountId, int? ttlSeconds, long? issuedBeforeUnix, string providerId, CancellationToken ct)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.auth", "EdgeRevocationService.AddToFailedPushes");
         var entry = new FailedEdgePushEntry
         {
             Type = type,
@@ -297,6 +306,7 @@ public class EdgeRevocationService : IEdgeRevocationService
     /// </summary>
     private async Task RetryFailedPushesAsync(CancellationToken ct)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.auth", "EdgeRevocationService.RetryFailedPushes");
         var indexStore = _stateStoreFactory.GetStore<List<string>>(StateStoreDefinitions.EdgeRevocation);
         var failedIndex = await indexStore.GetAsync("failed-push-index", ct);
 
@@ -394,6 +404,7 @@ public class EdgeRevocationService : IEdgeRevocationService
     /// </summary>
     private async Task AddToIndexAsync(IStateStore<List<string>> indexStore, string indexKey, string item, CancellationToken ct)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.auth", "EdgeRevocationService.AddToIndex");
         var index = await indexStore.GetAsync(indexKey, ct) ?? new List<string>();
         if (!index.Contains(item))
         {
@@ -407,6 +418,7 @@ public class EdgeRevocationService : IEdgeRevocationService
     /// </summary>
     private async Task RemoveFromIndexAsync(IStateStore<List<string>> indexStore, string indexKey, string item, CancellationToken ct)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.auth", "EdgeRevocationService.RemoveFromIndex");
         var index = await indexStore.GetAsync(indexKey, ct);
         if (index != null && index.Remove(item))
         {

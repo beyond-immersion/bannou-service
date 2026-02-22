@@ -22,6 +22,8 @@ x-service-configuration:
       description: JWT token expiration time in minutes
       env: AUTH_JWT_EXPIRATION_MINUTES
       default: 60
+      minimum: 1
+      maximum: 1440
 
     # Connect Service URL
     ConnectUrl:
@@ -200,6 +202,8 @@ x-service-configuration:
       description: Password reset token expiration time in minutes
       env: AUTH_PASSWORD_RESET_TOKEN_TTL_MINUTES
       default: 30
+      minimum: 1
+      maximum: 1440
     PasswordResetBaseUrl:
       type: string
       nullable: true  # NRT: Optional config MUST be nullable
@@ -229,6 +233,8 @@ x-service-configuration:
       description: BCrypt work factor for password hashing. Higher values are more secure but slower. Existing hashes at lower factors continue to validate.
       env: AUTH_BCRYPT_WORK_FACTOR
       default: 12
+      minimum: 4
+      maximum: 20
 
     # Session Configuration
     SessionTokenTtlDays:
@@ -236,6 +242,8 @@ x-service-configuration:
       description: Session token TTL in days for persistent sessions
       env: AUTH_SESSION_TOKEN_TTL_DAYS
       default: 7
+      minimum: 1
+      maximum: 365
 
     # Edge Revocation - Master Switch
     EdgeRevocationEnabled:
@@ -297,6 +305,7 @@ x-service-configuration:
       type: string
       nullable: true  # NRT: Optional - validated at runtime when MFA operations are attempted
       env: AUTH_MFA_ENCRYPTION_KEY
+      minLength: 32
       description: AES-256-GCM encryption key for TOTP secrets at rest. Required when MFA is used. Must be at least 32 characters. Throws InvalidOperationException at runtime if null when MFA setup is attempted.
 
     MfaIssuerName:

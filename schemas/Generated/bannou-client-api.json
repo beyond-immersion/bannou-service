@@ -1685,8 +1685,7 @@
         ],
         "x-permissions": [
           {
-            "role": "anonymous",
-            "states": {}
+            "role": "anonymous"
           }
         ],
         "requestBody": {
@@ -1728,8 +1727,7 @@
         ],
         "x-permissions": [
           {
-            "role": "anonymous",
-            "states": {}
+            "role": "anonymous"
           }
         ],
         "requestBody": {
@@ -1772,8 +1770,7 @@
         ],
         "x-permissions": [
           {
-            "role": "anonymous",
-            "states": {}
+            "role": "anonymous"
           }
         ],
         "parameters": [
@@ -1807,7 +1804,7 @@
             "description": "Redirect to OAuth provider"
           }
         },
-        "x-manual-implementation": true
+        "x-controller-only": true
       }
     },
     "/auth/oauth/{provider}/callback": {
@@ -1820,8 +1817,7 @@
         ],
         "x-permissions": [
           {
-            "role": "anonymous",
-            "states": {}
+            "role": "anonymous"
           }
         ],
         "parameters": [
@@ -1868,8 +1864,7 @@
         ],
         "x-permissions": [
           {
-            "role": "anonymous",
-            "states": {}
+            "role": "anonymous"
           }
         ],
         "requestBody": {
@@ -1911,8 +1906,7 @@
         ],
         "x-permissions": [
           {
-            "role": "user",
-            "states": {}
+            "role": "user"
           }
         ],
         "parameters": [
@@ -1960,8 +1954,7 @@
         ],
         "x-permissions": [
           {
-            "role": "user",
-            "states": {}
+            "role": "user"
           }
         ],
         "parameters": [
@@ -2005,8 +1998,7 @@
         ],
         "x-permissions": [
           {
-            "role": "user",
-            "states": {}
+            "role": "user"
           }
         ],
         "parameters": [
@@ -2046,8 +2038,7 @@
         ],
         "x-permissions": [
           {
-            "role": "user",
-            "states": {}
+            "role": "user"
           }
         ],
         "parameters": [
@@ -2085,8 +2076,7 @@
         ],
         "x-permissions": [
           {
-            "role": "user",
-            "states": {}
+            "role": "user"
           }
         ],
         "parameters": [
@@ -2130,8 +2120,7 @@
         ],
         "x-permissions": [
           {
-            "role": "anonymous",
-            "states": {}
+            "role": "anonymous"
           }
         ],
         "requestBody": {
@@ -2160,8 +2149,7 @@
         ],
         "x-permissions": [
           {
-            "role": "anonymous",
-            "states": {}
+            "role": "anonymous"
           }
         ],
         "requestBody": {
@@ -2191,8 +2179,7 @@
         ],
         "x-permissions": [
           {
-            "role": "anonymous",
-            "states": {}
+            "role": "anonymous"
           }
         ],
         "responses": {
@@ -2219,8 +2206,7 @@
         ],
         "x-permissions": [
           {
-            "role": "user",
-            "states": {}
+            "role": "user"
           }
         ],
         "parameters": [
@@ -2262,8 +2248,7 @@
         ],
         "x-permissions": [
           {
-            "role": "user",
-            "states": {}
+            "role": "user"
           }
         ],
         "parameters": [
@@ -2311,8 +2296,7 @@
         ],
         "x-permissions": [
           {
-            "role": "user",
-            "states": {}
+            "role": "user"
           }
         ],
         "parameters": [
@@ -2360,8 +2344,7 @@
         ],
         "x-permissions": [
           {
-            "role": "anonymous",
-            "states": {}
+            "role": "anonymous"
           }
         ],
         "requestBody": {
@@ -23437,7 +23420,8 @@
           "accountId",
           "createdAt",
           "emailVerified",
-          "roles"
+          "roles",
+          "authMethods"
         ],
         "properties": {
           "accountId": {
@@ -23494,7 +23478,7 @@
             "type": "object",
             "additionalProperties": true,
             "nullable": true,
-            "description": "Custom metadata associated with the account"
+            "description": "Client-only metadata. No Bannou plugin reads specific keys from this field by convention."
           },
           "mfaEnabled": {
             "type": "boolean",
@@ -25426,7 +25410,11 @@
             "description": "Unique identifier for the authentication method"
           },
           "provider": {
-            "$ref": "#/components/schemas/AuthProvider",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AuthProvider"
+              }
+            ],
             "description": "Authentication provider type"
           },
           "externalId": {
@@ -25500,6 +25488,14 @@
             "description": "List of roles assigned to the authenticated user"
           }
         }
+      },
+      "AuthType": {
+        "type": "string",
+        "enum": [
+          "oauth",
+          "ticket"
+        ],
+        "description": "Authentication mechanism type (oauth = browser redirect, ticket = game client token)"
       },
       "AuthoringCheckoutRequest": {
         "type": "object",
@@ -36630,12 +36626,10 @@
         "additionalProperties": false,
         "properties": {
           "deviceType": {
-            "type": "string",
-            "enum": [
-              "desktop",
-              "mobile",
-              "tablet",
-              "console"
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/DeviceType"
+              }
             ],
             "nullable": true,
             "description": "Category of the device"
@@ -36656,6 +36650,16 @@
             "description": "Version of the client application"
           }
         }
+      },
+      "DeviceType": {
+        "type": "string",
+        "enum": [
+          "desktop",
+          "mobile",
+          "tablet",
+          "console"
+        ],
+        "description": "Category of client device used for authentication or session tracking"
       },
       "DiscardRequest": {
         "type": "object",
@@ -50841,6 +50845,8 @@
           "password": {
             "type": "string",
             "format": "password",
+            "minLength": 1,
+            "maxLength": 128,
             "description": "User password for authentication"
           },
           "rememberMe": {
@@ -51381,6 +51387,7 @@
           "recoveryCode": {
             "type": "string",
             "nullable": true,
+            "pattern": "^[a-z0-9]{4}-[a-z0-9]{4}$",
             "description": "Single-use recovery code (format xxxx-xxxx)"
           }
         }
@@ -51457,6 +51464,7 @@
           "recoveryCode": {
             "type": "string",
             "nullable": true,
+            "pattern": "^[a-z0-9]{4}-[a-z0-9]{4}$",
             "description": "Single-use recovery code (format xxxx-xxxx)"
           }
         }
@@ -53342,6 +53350,7 @@
             "type": "string",
             "format": "password",
             "minLength": 8,
+            "maxLength": 128,
             "description": "New password to set for the account"
           }
         }
@@ -54372,11 +54381,7 @@
             "description": "Human-readable name for the provider"
           },
           "authType": {
-            "type": "string",
-            "enum": [
-              "oauth",
-              "ticket"
-            ],
+            "$ref": "#/components/schemas/AuthType",
             "description": "Authentication mechanism (oauth = browser redirect, ticket = game client token)"
           },
           "authUrl": {
@@ -57121,6 +57126,7 @@
             "type": "string",
             "description": "Password for the account (will be hashed)",
             "minLength": 8,
+            "maxLength": 128,
             "format": "password",
             "example": "SecurePassword123!"
           },
@@ -62817,6 +62823,7 @@
             "type": "string",
             "pattern": "^[0-9A-Fa-f]+$",
             "minLength": 16,
+            "maxLength": 2048,
             "description": "Hex-encoded Steam Session Ticket from ISteamUser::GetAuthTicketForWebApi().\nClient converts ticket bytes to hex string: BitConverter.ToString(ticketData).Replace(\"-\", \"\")\n",
             "example": "140000006A7B3C8E..."
           },
@@ -66084,6 +66091,7 @@
           },
           "passwordHash": {
             "type": "string",
+            "maxLength": 255,
             "description": "New pre-hashed password from Auth service"
           }
         }
@@ -66161,7 +66169,7 @@
             "type": "object",
             "additionalProperties": true,
             "nullable": true,
-            "description": "Updated custom metadata for the account"
+            "description": "Client-only metadata. No Bannou plugin reads specific keys from this field by convention."
           }
         }
       },
@@ -67374,7 +67382,8 @@
         "required": [
           "valid",
           "accountId",
-          "sessionKey"
+          "sessionKey",
+          "remainingTime"
         ],
         "properties": {
           "valid": {

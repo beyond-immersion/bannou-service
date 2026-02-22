@@ -20,6 +20,7 @@ public class OpenrestyEdgeProviderTests
     private readonly Mock<IStateStore<TokenRevocationEntry>> _mockTokenStore;
     private readonly Mock<IStateStore<AccountRevocationEntry>> _mockAccountStore;
     private readonly Mock<ILogger<OpenrestyEdgeProvider>> _mockLogger;
+    private readonly NullTelemetryProvider _telemetryProvider;
     private readonly AuthServiceConfiguration _configuration;
     private readonly OpenrestyEdgeProvider _provider;
 
@@ -29,6 +30,7 @@ public class OpenrestyEdgeProviderTests
         _mockTokenStore = new Mock<IStateStore<TokenRevocationEntry>>();
         _mockAccountStore = new Mock<IStateStore<AccountRevocationEntry>>();
         _mockLogger = new Mock<ILogger<OpenrestyEdgeProvider>>();
+        _telemetryProvider = new NullTelemetryProvider();
 
         _configuration = new AuthServiceConfiguration
         {
@@ -44,6 +46,7 @@ public class OpenrestyEdgeProviderTests
         _provider = new OpenrestyEdgeProvider(
             _configuration,
             _mockStateStoreFactory.Object,
+            _telemetryProvider,
             _mockLogger.Object);
     }
 
@@ -78,7 +81,7 @@ public class OpenrestyEdgeProviderTests
     {
         // Arrange
         var config = new AuthServiceConfiguration { OpenrestyEdgeEnabled = false };
-        var provider = new OpenrestyEdgeProvider(config, _mockStateStoreFactory.Object, _mockLogger.Object);
+        var provider = new OpenrestyEdgeProvider(config, _mockStateStoreFactory.Object, _telemetryProvider, _mockLogger.Object);
 
         // Act
         var result = provider.IsEnabled;
@@ -96,7 +99,7 @@ public class OpenrestyEdgeProviderTests
     {
         // Arrange
         var config = new AuthServiceConfiguration { OpenrestyEdgeEnabled = false };
-        var provider = new OpenrestyEdgeProvider(config, _mockStateStoreFactory.Object, _mockLogger.Object);
+        var provider = new OpenrestyEdgeProvider(config, _mockStateStoreFactory.Object, _telemetryProvider, _mockLogger.Object);
 
         // Act
         var result = await provider.PushTokenRevocationAsync("test-jti", Guid.NewGuid(), TimeSpan.FromMinutes(60));
@@ -170,7 +173,7 @@ public class OpenrestyEdgeProviderTests
     {
         // Arrange
         var config = new AuthServiceConfiguration { OpenrestyEdgeEnabled = false };
-        var provider = new OpenrestyEdgeProvider(config, _mockStateStoreFactory.Object, _mockLogger.Object);
+        var provider = new OpenrestyEdgeProvider(config, _mockStateStoreFactory.Object, _telemetryProvider, _mockLogger.Object);
 
         // Act
         var result = await provider.PushAccountRevocationAsync(Guid.NewGuid(), DateTimeOffset.UtcNow);
@@ -229,7 +232,7 @@ public class OpenrestyEdgeProviderTests
     {
         // Arrange
         var config = new AuthServiceConfiguration { OpenrestyEdgeEnabled = false };
-        var provider = new OpenrestyEdgeProvider(config, _mockStateStoreFactory.Object, _mockLogger.Object);
+        var provider = new OpenrestyEdgeProvider(config, _mockStateStoreFactory.Object, _telemetryProvider, _mockLogger.Object);
         var entries = new List<FailedEdgePushEntry>
         {
             new FailedEdgePushEntry { Type = "token", Jti = "jti-1", TtlSeconds = 3600 },

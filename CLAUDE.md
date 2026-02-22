@@ -51,6 +51,38 @@ These commands can destroy work in progress, hide changes, or cause data loss. C
 
 ---
 
+## ⛔ UNEXPECTED CONSEQUENCES = HARD STOP ⛔
+
+**If a change you made produces unexpected errors, unexpected behavior, or unexpected side effects: STOP IMMEDIATELY. Do not attempt to work around it. Do not layer fixes on top of a surprise. Present the unexpected result to the user and ask for directions.**
+
+**The trigger is simple**: You made a change. You expected outcome X. You got outcome Y instead. **STOP.**
+
+**What "stop" means**:
+1. Do NOT attempt to "fix" the unexpected consequence
+2. Do NOT add workarounds, aliases, shims, or compatibility layers
+3. Do NOT continue down the current path hoping the next fix will resolve it
+4. DO explain: what you changed, what you expected, what actually happened, and what the options are
+5. DO wait for explicit direction before proceeding
+
+**Why this rule exists**: An agent moved 6 enum definitions between schema files (a seemingly correct schema-first fix). Code generation produced duplicate types across two namespaces — an unexpected consequence. Instead of stopping, the agent spent multiple build-fix-rebuild cycles layering increasingly complex C# `using` alias workarounds, each failing in a new way (file-level aliases lost to parent namespace resolution, namespace-scoped aliases triggered CS0576 conflicts, namespace alias prefixes required touching 16+ call sites). Every "fix" made the situation worse and harder to revert. **One hard stop at the first unexpected build failure would have saved all of that.**
+
+**The compound damage pattern**:
+- Workaround #1 seems small and reasonable
+- Workaround #1 creates a new problem requiring workaround #2
+- Each layer makes reverting harder and understanding the state more difficult
+- By workaround #3+ you are debugging your workarounds, not the original problem
+- **The first workaround is already one too many without user approval**
+
+**This applies to**:
+- Build failures from schema/generation changes you didn't predict
+- Runtime behavior that differs from what you expected
+- Test failures that don't match your mental model
+- Any situation where reality diverged from your expectation
+
+**Principle**: Surprises mean your mental model is wrong. When your model is wrong, more actions based on that model make things worse, not better. Stop, report, and let the human recalibrate.
+
+---
+
 ## ⛔ CODE GENERATION SCRIPTS ARE FROZEN ⛔
 
 **The `scripts/` directory contains the code generation pipeline. These scripts are NEVER to be modified by an agent without EXPLICIT user instructions to change code generation behavior.**

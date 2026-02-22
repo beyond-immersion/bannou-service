@@ -141,6 +141,7 @@ components:
           description: Configured OTLP endpoint (always set, defaults to http://localhost:4317)
         otlpProtocol:
           $ref: '#/components/schemas/OtlpProtocol'
+          description: OTLP transport protocol (grpc or http)
 
     OtlpProtocol:
       type: string

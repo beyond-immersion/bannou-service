@@ -344,7 +344,7 @@ public partial class AuthService : IAuthService
 
         // Publish audit event for successful OAuth login
         var providerId = userInfo.ProviderId ?? throw new InvalidOperationException($"OAuth user info missing ProviderId after successful exchange for provider {provider}");
-        await PublishOAuthLoginSuccessfulEventAsync(account.AccountId, provider.ToString().ToLower(), providerId, sessionId, isNewAccount);
+        await PublishOAuthLoginSuccessfulEventAsync(account.AccountId, provider, providerId, sessionId, isNewAccount);
 
         return (StatusCodes.OK, new AuthResponse
         {
@@ -957,7 +957,7 @@ public partial class AuthService : IAuthService
             {
                 Name = "discord",
                 DisplayName = "Discord",
-                AuthType = ProviderInfoAuthType.Oauth,
+                AuthType = AuthType.Oauth,
                 AuthUrl = new Uri($"/auth/oauth/discord/init", UriKind.Relative)
             });
         }
@@ -969,7 +969,7 @@ public partial class AuthService : IAuthService
             {
                 Name = "google",
                 DisplayName = "Google",
-                AuthType = ProviderInfoAuthType.Oauth,
+                AuthType = AuthType.Oauth,
                 AuthUrl = new Uri($"/auth/oauth/google/init", UriKind.Relative)
             });
         }
@@ -981,7 +981,7 @@ public partial class AuthService : IAuthService
             {
                 Name = "twitch",
                 DisplayName = "Twitch",
-                AuthType = ProviderInfoAuthType.Oauth,
+                AuthType = AuthType.Oauth,
                 AuthUrl = new Uri($"/auth/oauth/twitch/init", UriKind.Relative)
             });
         }
@@ -993,7 +993,7 @@ public partial class AuthService : IAuthService
             {
                 Name = "steam",
                 DisplayName = "Steam",
-                AuthType = ProviderInfoAuthType.Ticket,
+                AuthType = AuthType.Ticket,
                 AuthUrl = null // Steam uses session tickets from game client, not browser redirect
             });
         }
@@ -1496,12 +1496,10 @@ public partial class AuthService : IAuthService
         _logger.LogInformation("Propagating role changes for account {AccountId}: {Roles}",
             accountId, string.Join(", ", newRoles));
 
-        var sessionIndexStore = _stateStoreFactory.GetStore<List<string>>(StateStoreDefinitions.Auth);
+        var sessionKeys = await _sessionService.GetSessionKeysForAccountAsync(accountId, cancellationToken);
         var sessionStore = _stateStoreFactory.GetStore<SessionDataModel>(StateStoreDefinitions.Auth);
 
-        var sessionKeys = await sessionIndexStore.GetAsync($"account-sessions:{accountId}", cancellationToken);
-
-        if (sessionKeys == null || !sessionKeys.Any())
+        if (sessionKeys.Count == 0)
         {
             _logger.LogDebug("No sessions found for account {AccountId} to propagate role changes", accountId);
             return;
@@ -1548,6 +1546,62 @@ public partial class AuthService : IAuthService
 
         _logger.LogInformation("Propagated role changes to {Count} sessions for account {AccountId}",
             sessionKeys.Count, accountId);
+    }
+
+    /// <summary>
+    /// Propagates email changes to all active sessions for an account.
+    /// Updates the Email field in session data without publishing session.updated events
+    /// (email changes do not affect permissions/capabilities).
+    /// </summary>
+    /// <param name="accountId">The account whose sessions should be updated.</param>
+    /// <param name="newEmail">The new email address (null if email was removed).</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    public async Task PropagateEmailChangeAsync(Guid accountId, string? newEmail, CancellationToken cancellationToken)
+    {
+        _logger.LogInformation("Propagating email change for account {AccountId}", accountId);
+
+        var sessionKeys = await _sessionService.GetSessionKeysForAccountAsync(accountId, cancellationToken);
+        var sessionStore = _stateStoreFactory.GetStore<SessionDataModel>(StateStoreDefinitions.Auth);
+
+        if (sessionKeys.Count == 0)
+        {
+            _logger.LogDebug("No sessions found for account {AccountId} to propagate email change", accountId);
+            return;
+        }
+
+        var updatedCount = 0;
+        foreach (var sessionKey in sessionKeys)
+        {
+            try
+            {
+                var session = await sessionStore.GetAsync($"session:{sessionKey}", cancellationToken);
+
+                if (session != null)
+                {
+                    // Preserve remaining TTL so sessions still expire on schedule
+                    var remainingSeconds = (int)(session.ExpiresAt - DateTimeOffset.UtcNow).TotalSeconds;
+                    if (remainingSeconds <= 0)
+                    {
+                        _logger.LogDebug("Session {SessionKey} already expired, skipping email update", sessionKey);
+                        continue;
+                    }
+
+                    session.Email = newEmail;
+                    await sessionStore.SaveAsync($"session:{sessionKey}", session,
+                        new StateOptions { Ttl = remainingSeconds }, cancellationToken);
+
+                    updatedCount++;
+                    _logger.LogDebug("Updated email for session {SessionKey}", sessionKey);
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Failed to update email for session {SessionKey}", sessionKey);
+            }
+        }
+
+        _logger.LogInformation("Propagated email change to {Count} sessions for account {AccountId}",
+            updatedCount, accountId);
     }
 
     #endregion
@@ -1669,7 +1723,7 @@ public partial class AuthService : IAuthService
     /// <summary>
     /// Publish AuthOAuthLoginSuccessfulEvent for OAuth provider analytics.
     /// </summary>
-    private async Task PublishOAuthLoginSuccessfulEventAsync(Guid accountId, string provider, string providerUserId, Guid sessionId, bool isNewAccount)
+    private async Task PublishOAuthLoginSuccessfulEventAsync(Guid accountId, Provider provider, string providerUserId, Guid sessionId, bool isNewAccount)
     {
         try
         {
@@ -1678,7 +1732,7 @@ public partial class AuthService : IAuthService
                 EventId = Guid.NewGuid(),
                 Timestamp = DateTimeOffset.UtcNow,
                 AccountId = accountId,
-                Provider = Enum.Parse<Provider>(provider, ignoreCase: true),
+                Provider = provider,
                 ProviderUserId = providerUserId,
                 SessionId = sessionId,
                 IsNewAccount = isNewAccount

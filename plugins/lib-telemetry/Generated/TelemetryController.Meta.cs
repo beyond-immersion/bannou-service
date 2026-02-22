@@ -157,6 +157,7 @@ public partial class TelemetryController
                 "serviceName",
                 "serviceNamespace",
                 "deploymentEnvironment",
+                "otlpEndpoint",
                 "otlpProtocol"
             ],
             "properties": {
@@ -175,7 +176,7 @@ public partial class TelemetryController
                 },
                 "serviceName": {
                     "type": "string",
-                    "description": "Service name used for telemetry identification"
+                    "description": "Service name used for telemetry identification (resolved from config or effective app-id)"
                 },
                 "serviceNamespace": {
                     "type": "string",
@@ -187,14 +188,21 @@ public partial class TelemetryController
                 },
                 "otlpEndpoint": {
                     "type": "string",
-                    "nullable": true,
-                    "description": "Configured OTLP endpoint"
+                    "description": "Configured OTLP endpoint (always set, defaults to http://localhost:4317)"
                 },
                 "otlpProtocol": {
-                    "type": "string",
+                    "$ref": "#/$defs/OtlpProtocol",
                     "description": "OTLP transport protocol (grpc or http)"
                 }
             }
+        },
+        "OtlpProtocol": {
+            "type": "string",
+            "enum": [
+                "grpc",
+                "http"
+            ],
+            "description": "OTLP transport protocol"
         }
     }
 }

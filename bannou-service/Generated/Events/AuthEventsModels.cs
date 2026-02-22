@@ -70,32 +70,6 @@ public partial class SessionInvalidatedEvent : BaseServiceEvent
 }
 
 /// <summary>
-/// Reason for session invalidation
-/// </summary>
-#pragma warning disable CS1591 // Enum members cannot have XML documentation
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum SessionInvalidatedEventReason
-{
-
-    [System.Runtime.Serialization.EnumMember(Value = @"Logout")]
-    Logout = 0,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"AccountDeleted")]
-    AccountDeleted = 1,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"SecurityRevocation")]
-    SecurityRevocation = 2,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"AdminAction")]
-    AdminAction = 3,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"SessionExpired")]
-    SessionExpired = 4,
-
-}
-#pragma warning restore CS1591
-
-/// <summary>
 /// Published when a session's roles or authorizations change.
 /// <br/>Permission service subscribes to update capability compilation.
 /// <br/>
@@ -146,26 +120,6 @@ public partial class SessionUpdatedEvent : BaseServiceEvent
     public SessionUpdatedEventReason Reason { get; set; } = default!;
 
 }
-
-/// <summary>
-/// Reason for session update
-/// </summary>
-#pragma warning disable CS1591 // Enum members cannot have XML documentation
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum SessionUpdatedEventReason
-{
-
-    [System.Runtime.Serialization.EnumMember(Value = @"RoleChanged")]
-    RoleChanged = 0,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"AuthorizationChanged")]
-    AuthorizationChanged = 1,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"SubscriptionChanged")]
-    SubscriptionChanged = 2,
-
-}
-#pragma warning restore CS1591
 
 /// <summary>
 /// Published when a user successfully authenticates with username/password
@@ -255,32 +209,6 @@ public partial class AuthLoginFailedEvent : BaseServiceEvent
     public string? UserAgent { get; set; } = default!;
 
 }
-
-/// <summary>
-/// Reason why the login attempt failed
-/// </summary>
-#pragma warning disable CS1591 // Enum members cannot have XML documentation
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum AuthLoginFailedReason
-{
-
-    [System.Runtime.Serialization.EnumMember(Value = @"InvalidCredentials")]
-    InvalidCredentials = 0,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"AccountDisabled")]
-    AccountDisabled = 1,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"AccountLocked")]
-    AccountLocked = 2,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"AccountNotFound")]
-    AccountNotFound = 3,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"RateLimited")]
-    RateLimited = 4,
-
-}
-#pragma warning restore CS1591
 
 /// <summary>
 /// Published when a new user successfully registers
@@ -501,23 +429,6 @@ public partial class AuthMfaDisabledEvent : BaseServiceEvent
 }
 
 /// <summary>
-/// Who triggered the MFA disable action
-/// </summary>
-#pragma warning disable CS1591 // Enum members cannot have XML documentation
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum MfaDisabledBy
-{
-
-    [System.Runtime.Serialization.EnumMember(Value = @"Self")]
-    Self = 0,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"Admin")]
-    Admin = 1,
-
-}
-#pragma warning restore CS1591
-
-/// <summary>
 /// Published when MFA verification succeeds during login
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
@@ -558,23 +469,6 @@ public partial class AuthMfaVerifiedEvent : BaseServiceEvent
 }
 
 /// <summary>
-/// Method used for MFA verification
-/// </summary>
-#pragma warning disable CS1591 // Enum members cannot have XML documentation
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum MfaVerificationMethod
-{
-
-    [System.Runtime.Serialization.EnumMember(Value = @"Totp")]
-    Totp = 0,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"RecoveryCode")]
-    RecoveryCode = 1,
-
-}
-#pragma warning restore CS1591
-
-/// <summary>
 /// Published when MFA verification fails during login
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
@@ -608,26 +502,6 @@ public partial class AuthMfaFailedEvent : BaseServiceEvent
     public MfaFailedReason Reason { get; set; } = default!;
 
 }
-
-/// <summary>
-/// Reason for MFA verification failure
-/// </summary>
-#pragma warning disable CS1591 // Enum members cannot have XML documentation
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum MfaFailedReason
-{
-
-    [System.Runtime.Serialization.EnumMember(Value = @"InvalidCode")]
-    InvalidCode = 0,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"ExpiredChallenge")]
-    ExpiredChallenge = 1,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"NoRecoveryCodesRemaining")]
-    NoRecoveryCodesRemaining = 2,
-
-}
-#pragma warning restore CS1591
 
 
 

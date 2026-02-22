@@ -47,7 +47,7 @@ This is **NOT** a code investigation tool. It reports the state depicted in each
 | [Mesh](#mesh-status) | L0 | 97% | 0 | L3-hardened. IMeshInstanceIdentifier canonical identity, dead fields removed, no extensions remaining. |
 | [Telemetry](#telemetry-status) | L0 | 98% | 0 | L3-hardened. Self-instrumentation, schema fixes, null safety, tail-based sampling. 58 tests, 0 warnings. Only speculative extensions remain. |
 | [Account](#account-status) | L1 | 95% | 0 | L3-hardened. Schema NRT, telemetry spans, lock safety, null coercion fixes. 111 tests, 0 warnings. |
-| [Auth](#auth-status) | L1 | 88% | 0 | Core complete with MFA. Remaining items are downstream integration. |
+| [Auth](#auth-status) | L1 | 95% | 0 | L3-hardened. Schema NRT, telemetry spans, atomic session indexing, email propagation. 168 tests, 0 warnings. |
 | [Chat](#chat-status) | L1 | 90% | 0 | All 28 endpoints complete. Dual storage, rate limiting, moderation. Design considerations remain. |
 | [Connect](#connect-status) | L1 | 92% | 0 | Production-ready gateway. Zero-copy routing, reconnection, shortcuts. Multi-instance broadcast pending. |
 | [Contract](#contract-status) | L1 | 82% | 0 | Full FSM + consent flows. 4 stubs remain (expiration job, payment schedules). L1→L2 violation. |
@@ -252,9 +252,9 @@ gh issue list --search "Account:" --state open
 
 **Layer**: L1 AppFoundation | **Deep Dive**: [AUTH.md](plugins/AUTH.md)
 
-### Production Readiness: 88%
+### Production Readiness: 95%
 
-Full authentication suite: email/password, OAuth (Discord/Google/Twitch), Steam tickets, JWT tokens, session management, password reset, login rate limiting, TOTP-based MFA with recovery codes, edge token revocation (CloudFlare/OpenResty). 46 configuration properties covering all auth flows. All session lifecycle events published. No bugs. Remaining work is downstream integration: audit event consumers (Analytics), email change propagation (when Account adds it), and account merge session handling.
+L3-hardened. Full authentication suite: email/password, OAuth (Discord/Google/Twitch), Steam tickets, JWT tokens, session management, password reset, login rate limiting, TOTP-based MFA with recovery codes, edge token revocation (CloudFlare/OpenResty). 46 configuration properties with full NRT compliance, validation bounds, and patterns. Schema inline enums extracted to named types. T30 telemetry spans on all 48 async methods across 7 helper services. T25 Provider enum properly threaded (no `Enum.Parse`). T9 atomic session indexing via Redis Set operations (eliminated read-modify-write races). Email change propagation implemented. 168 tests, 0 warnings. Remaining work is downstream integration: audit event consumers (Analytics L4) and account merge session handling (post-launch).
 
 ### Bug Count: 0
 
@@ -269,8 +269,7 @@ No known bugs.
 | # | Enhancement | Description | Issue |
 |---|-------------|-------------|-------|
 | 1 | **Audit event consumers** | Auth publishes 6 audit event types (login success/fail, registration, OAuth, Steam, password reset) but no service subscribes to them. Per-email rate limiting already exists via Redis counters -- the gap is Analytics (L4) consuming events for IP-level cross-account correlation, anomaly detection, and admin alerting. | [#142](https://github.com/beyond-immersion/bannou-service/issues/142) |
-| 2 | **Email change propagation** | When Account adds email change, Auth must propagate new email to active sessions. Handler exists (`HandleAccountUpdatedAsync`) but only watches for `"roles"` changes, not `"email"`. Needs: distributed lock per account, security notification to old email, `session.updated` event. Deep dive marks this as READY. | Auth-side of [#139](https://github.com/beyond-immersion/bannou-service/issues/139) (Account-side closed) |
-| 3 | **Account merge session handling** | When account merge is implemented, Auth needs to handle a new `account.merged` event: invalidate all sessions for the source account and optionally refresh target account sessions with merged roles. Auth's handler is straightforward; the merge itself is Account-layer orchestration. Low priority -- post-launch. | Auth-side of [#137](https://github.com/beyond-immersion/bannou-service/issues/137) |
+| 2 | **Account merge session handling** | When account merge is implemented, Auth needs to handle a new `account.merged` event: invalidate all sessions for the source account and optionally refresh target account sessions with merged roles. Auth's handler is straightforward; the merge itself is Account-layer orchestration. Low priority -- post-launch. | Auth-side of [#137](https://github.com/beyond-immersion/bannou-service/issues/137) |
 
 ### GH Issues
 
