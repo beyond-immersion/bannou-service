@@ -48,10 +48,10 @@ This is **NOT** a code investigation tool. It reports the state depicted in each
 | [Telemetry](#telemetry-status) | L0 | 98% | 0 | L3-hardened. Self-instrumentation, schema fixes, null safety, tail-based sampling. 58 tests, 0 warnings. Only speculative extensions remain. |
 | [Account](#account-status) | L1 | 95% | 0 | L3-hardened. Schema NRT, telemetry spans, lock safety, null coercion fixes. 111 tests, 0 warnings. |
 | [Auth](#auth-status) | L1 | 95% | 0 | L3-hardened. Schema NRT, telemetry spans, atomic session indexing, email propagation. 168 tests, 0 warnings. |
-| [Chat](#chat-status) | L1 | 90% | 0 | All 28 endpoints complete. Dual storage, rate limiting, moderation. Design considerations remain. |
-| [Connect](#connect-status) | L1 | 92% | 0 | Production-ready gateway. Zero-copy routing, reconnection, shortcuts. Multi-instance broadcast pending. |
-| [Contract](#contract-status) | L1 | 98% | 0 | L3-hardened. Hierarchy violation removed, schema NRT/T25/T26/T29 fixed, telemetry spans added, contract expiration implemented, TemplateName denormalized, payment schedule enforcement added. 0 stubs remain. |
-| [Permission](#permission-status) | L1 | 93% | 0 | Feature-complete RBAC. Real-time capability push. Only session cache invalidation remains. |
+| [Chat](#chat-status) | L1 | 97% | 0 | L3-hardened. All 30 endpoints, 4 background workers, dual storage, rate limiting, moderation. 0 bugs, 0 stubs. |
+| [Connect](#connect-status) | L1 | 93% | 1 | L3-hardened gateway. Zero-copy routing, reconnection, multi-node broadcast. 1 orphaned config property. |
+| [Contract](#contract-status) | L1 | 98% | 0 | L3-hardened. All 25 endpoints, 0 stubs. Expiration, payment schedules, clause execution all done. Only extensions remain. |
+| [Permission](#permission-status) | L1 | 95% | 0 | L3-hardened RBAC. Heartbeat-driven session TTL, distributed locks, in-memory cache removed. 27 tests. Feature-complete. |
 | [Resource](#resource-status) | L1 | 93% | 0 | Feature-complete lifecycle management. Reference tracking, cleanup, compression all done. |
 | [Actor](#actor-status) | L2 | 65% | 0 | Solid core architecture. Auto-scale stubbed, many production features TODO. |
 | [Character](#character-status) | L2 | 90% | 0 | All 12 endpoints done. Smart field tracking, resource compression. Only batch ops pending. |
@@ -173,7 +173,7 @@ No known bugs.
 
 | # | Enhancement | Description | Issue |
 |---|-------------|-------------|-------|
-| 1 | **Prometheus metrics** | Publish/subscribe rates, retry buffer depth, channel pool utilization, and retry counts are not exposed as metrics. Would come from a RabbitMQ sidecar exporter, not from lib-messaging code. | No issue |
+| 1 | **Observable gauge metrics** | Retry buffer depth, per-attempt retry counts, and channel pool utilization not exposed as metrics. Requires `ObservableGauge` support in `ITelemetryProvider`. | [#453](https://github.com/beyond-immersion/bannou-service/issues/453) |
 | 2 | *(No further enhancements identified)* | | |
 | 3 | | | |
 
@@ -270,6 +270,7 @@ No known bugs.
 |---|-------------|-------------|-------|
 | 1 | **Audit event consumers** | Auth publishes 6 audit event types (login success/fail, registration, OAuth, Steam, password reset) but no service subscribes to them. Per-email rate limiting already exists via Redis counters -- the gap is Analytics (L4) consuming events for IP-level cross-account correlation, anomaly detection, and admin alerting. | [#142](https://github.com/beyond-immersion/bannou-service/issues/142) |
 | 2 | **Account merge session handling** | When account merge is implemented, Auth needs to handle a new `account.merged` event: invalidate all sessions for the source account and optionally refresh target account sessions with merged roles. Auth's handler is straightforward; the merge itself is Account-layer orchestration. Low priority -- post-launch. | Auth-side of [#137](https://github.com/beyond-immersion/bannou-service/issues/137) |
+| 3 | **Device capture for session info** | `DeviceInfo` on session records always returns "Unknown" placeholders. User-Agent parsing or client-provided device metadata needed for meaningful session listing. | [#449](https://github.com/beyond-immersion/bannou-service/issues/449) |
 
 ### GH Issues
 
@@ -301,7 +302,7 @@ No known bugs.
 |---|-------------|-------------|-------|
 | 1 | **Managed platform exporters** | Datadog, Azure Application Insights, AWS X-Ray, Elastic APM exporters beyond base OTLP. | [#183](https://github.com/beyond-immersion/bannou-service/issues/183) |
 | 2 | **Enhanced Grafana dashboards + SLO alerting** | Per-service dashboards, SLO alerting rules, error monitoring, automated provisioning. | [#185](https://github.com/beyond-immersion/bannou-service/issues/185) |
-| 3 | ~~**OTEL Collector tail-based sampling**~~ | **DONE.** 100% error/high-latency retention, 10% probabilistic default. | [#186](https://github.com/beyond-immersion/bannou-service/issues/186) |
+| 3 | **Metric aggregation views** | Custom histogram bucket boundaries optimized for Bannou latency distributions. | [#457](https://github.com/beyond-immersion/bannou-service/issues/457) |
 
 ### GH Issues
 
@@ -317,43 +318,7 @@ gh issue list --search "Telemetry:" --state open
 
 ### Production Readiness: 97%
 
-All 28 API endpoints complete with no stubs and no bugs. Covers room type management, room lifecycle with contract governance, participant moderation (join/leave/kick/ban/mute with role hierarchy), message operations (send/batch/history/search/pin/delete) with dual storage (ephemeral Redis TTL and persistent MySQL), rate limiting via atomic Redis counters, idle room cleanup background worker, typing indicators with sorted-set-backed expiry, 14 service events, 12 client events, and 14 configuration properties. Hardened with: telemetry spans on all async helpers and event handlers, distributed lock on room type registration, Regex timeout protection, schema validation keywords on all request fields, T16-compliant event topic naming, `required` string properties replacing `string.Empty` defaults, error event publication on startup failures, and ServiceHierarchyValidator test coverage. Remaining tracked items: contract event room query limited to 100 (#446), silent batch message validation failures (#445), missing ban expiry worker (#447), and missing message retention worker (#448).
-
-### Bug Count: 1
-
-| # | Bug | Description | Issue |
-|---|-----|-------------|-------|
-| 1 | **Contract room query page limit** | `FindRoomsByContractIdAsync` hardcodes page size of 100; contracts governing 100+ rooms will have incomplete lifecycle actions. | [#446](https://github.com/beyond-immersion/bannou-service/issues/446) |
-
-### Top 3 Bugs
-
-| # | Bug | Description | Issue |
-|---|-----|-------------|-------|
-| 1 | **Contract room query page limit** | `FindRoomsByContractIdAsync` hardcodes page size of 100. | [#446](https://github.com/beyond-immersion/bannou-service/issues/446) |
-
-### Top 3 Enhancements
-
-| # | Enhancement | Description | Issue |
-|---|-------------|-------------|-------|
-| 1 | **Ban expiry background worker** | Background service to auto-expire time-limited bans. Currently ban records persist indefinitely regardless of `ExpiresAt`. | [#447](https://github.com/beyond-immersion/bannou-service/issues/447) |
-| 2 | **Message retention cleanup worker** | Background service enforcing room type `RetentionDays` by periodically deleting old persistent messages. | [#448](https://github.com/beyond-immersion/bannou-service/issues/448) |
-| 3 | **SendMessageBatch per-message error reporting** | Batch endpoint silently swallows per-message failures. Should return per-message status codes. | [#445](https://github.com/beyond-immersion/bannou-service/issues/445) |
-
-### GH Issues
-
-```bash
-gh issue list --search "Chat:" --state open
-```
-
----
-
-## Connect {#connect-status}
-
-**Layer**: L1 AppFoundation | **Deep Dive**: [CONNECT.md](plugins/CONNECT.md)
-
-### Production Readiness: 92%
-
-Production-ready with all core functionality implemented and no stubs remaining. WebSocket connection lifecycle, zero-copy binary routing, reconnection windows, session shortcuts, client-to-client routing, three connection modes, per-session RabbitMQ subscriptions, and all 21 configuration properties are fully wired. All previous stubs (encrypted flag, compressed flag, heartbeat, high-priority flag) have been resolved. Only two design considerations remain around single-instance limitations (broadcast and P2P routing), which are multi-instance deployment optimizations rather than functional gaps.
+All 30 API endpoints complete with no stubs and no bugs. Covers room type management, room lifecycle with contract governance, participant moderation (join/leave/kick/ban/mute with role hierarchy), message operations (send/batch/history/search/pin/delete) with dual storage (ephemeral Redis TTL and persistent MySQL), rate limiting via atomic Redis counters, typing indicators with sorted-set-backed expiry, 14 service events, 12 client events, 7 state stores (4 MySQL, 3 Redis), and 4 background workers (idle room cleanup, typing expiry, ban expiry, message retention). Hardened with: telemetry spans on all async helpers and event handlers, distributed lock on room type registration and idle room cleanup (T9), Regex timeout protection, schema validation keywords on all request fields, T16-compliant event topic naming, `required` string properties replacing `string.Empty` defaults, error event publication on startup failures, and ServiceHierarchyValidator test coverage. Two design considerations remain: O(N) participant counting in AdminGetStats (#455) and mixed data patterns in the participants Redis store (#456).
 
 ### Bug Count: 0
 
@@ -367,9 +332,45 @@ No known bugs.
 
 | # | Enhancement | Description | Issue |
 |---|-------------|-------------|-------|
-| 1 | **Multi-instance broadcast** | Current broadcast only reaches clients on the same Connect instance. Extend via RabbitMQ fanout exchange to broadcast across all instances. | [#181](https://github.com/beyond-immersion/bannou-service/issues/181) |
-| 2 | **Single-instance P2P limitation** | Peer-to-peer routing only works when both clients are on the same Connect instance. Requires cross-instance peer registry in Redis. | [#346](https://github.com/beyond-immersion/bannou-service/issues/346) |
-| 3 | **ServiceRequestContext thread-static concern** | Uses thread-static SessionId set/clear pattern that could be incorrect if async continuations run on different threads. Potential correctness issue under load. | No issue |
+| 1 | **Message edit support** | Edit messages with version history tracking. | [#450](https://github.com/beyond-immersion/bannou-service/issues/450) |
+| 2 | **Threaded replies** | Reply-to-message support via `replyToMessageId` field. | [#451](https://github.com/beyond-immersion/bannou-service/issues/451) |
+| 3 | **Message reactions** | Emoji reactions per message with aggregated counts. | [#452](https://github.com/beyond-immersion/bannou-service/issues/452) |
+
+### GH Issues
+
+```bash
+gh issue list --search "Chat:" --state open
+```
+
+---
+
+## Connect {#connect-status}
+
+**Layer**: L1 AppFoundation | **Deep Dive**: [CONNECT.md](plugins/CONNECT.md)
+
+### Production Readiness: 93%
+
+L3-hardened. WebSocket connection lifecycle, zero-copy binary routing, reconnection windows, session shortcuts, client-to-client routing, three connection modes, per-session RabbitMQ subscriptions, and multi-node broadcast mesh (`InterNodeBroadcastManager`). Major L3 hardening pass (2026-02-22): fixed T9 thread safety (ConcurrentDictionary/ConcurrentQueue in ConnectionState), T26 Guid.Empty sentinels, T5 anonymous objects, T21 dead config wired (MaxChannelNumber), T7 bare catch blocks, T23 sync-over-async (.Wait()), T24 IDisposable/ClientWebSocket leak, T30 telemetry spans, XML docs. Schema consolidated (connect-shortcuts.yaml merged), enums extracted, format:uuid added, validation constraints added, T29 descriptions fixed. One bug remains: orphaned `CompanionRoomMode` config property (defined in schema but never referenced in code).
+
+### Bug Count: 1
+
+| # | Bug | Description | Issue |
+|---|-----|-------------|-------|
+| 1 | **Orphaned CompanionRoomMode config** | `CompanionRoomMode` is defined in the configuration schema and generated config class but never referenced in service code. T21 violation (dead config). | No issue |
+
+### Top 3 Bugs
+
+| # | Bug | Description | Issue |
+|---|-----|-------------|-------|
+| 1 | **Orphaned CompanionRoomMode config** | Defined in schema but never referenced in code. | No issue |
+
+### Top 3 Enhancements
+
+| # | Enhancement | Description | Issue |
+|---|-------------|-------------|-------|
+| 1 | **Cross-instance P2P routing** | Peer-to-peer routing only works when both clients are on the same Connect instance. Requires cross-instance peer registry in Redis. | [#346](https://github.com/beyond-immersion/bannou-service/issues/346) |
+| 2 | *(No further enhancements identified)* | Multi-instance broadcast was implemented via `InterNodeBroadcastManager`. | |
+| 3 | | | |
 
 ### GH Issues
 
@@ -399,8 +400,9 @@ No known bugs.
 
 | # | Enhancement | Description | Issue |
 |---|-------------|-------------|-------|
-| 1 | **Per-milestone onApiFailure flag** | Currently prebound API failures are always non-blocking. Adding per-milestone configuration for whether failure should block milestone completion would require schema changes. | [#246](https://github.com/beyond-immersion/bannou-service/issues/246) |
-| 2 | **Generic clause handler request/response mapping** | RequestMapping/ResponseMapping fields stored but unused — clause execution hardcodes per asset type. Would enable fully generic clause types. | No issue |
+| 1 | **Clause type handler chaining** | Validate before executing -- currently clause execution is fire-and-forget with no pre-validation step. | [#458](https://github.com/beyond-immersion/bannou-service/issues/458) |
+| 2 | **Template inheritance** | Templates extending other templates for shared clause/milestone patterns. | [#459](https://github.com/beyond-immersion/bannou-service/issues/459) |
+| 3 | **Per-milestone onApiFailure flag** | Currently prebound API failures are always non-blocking. Adding per-milestone configuration for whether failure should block milestone completion. | [#246](https://github.com/beyond-immersion/bannou-service/issues/246) |
 
 ### GH Issues
 
@@ -414,9 +416,9 @@ gh issue list --search "Contract:" --state open
 
 **Layer**: L1 AppFoundation | **Deep Dive**: [PERMISSION.md](plugins/PERMISSION.md)
 
-### Production Readiness: 93%
+### Production Readiness: 95%
 
-Feature-complete with no stubs and no active bugs. All 8 endpoints are fully implemented with proper multi-dimensional permission matrix compilation, role hierarchy, session state management, idempotent service registration, and real-time capability push to WebSocket clients via RabbitMQ. Previous bugs (inconsistent default role, static ROLE_ORDER, hardcoded states array) have all been fixed. The only remaining tracked item is a design consideration around in-memory cache not being invalidated on session disconnect.
+L3-hardened and feature-complete. All 8 endpoints are fully implemented with multi-dimensional permission matrix compilation, configurable role hierarchy, session state management, idempotent service registration, and real-time capability push to WebSocket clients via RabbitMQ. Major hardening pass (2026-02-22): fixed 14 schema NRT violations, removed T8 filler properties, moved inline enums to API schema, removed dead metadata field, added validation keywords, added `SessionLockTimeoutSeconds` config. Code fixes: added distributed locks for session state/role updates (T9), completed RoleHierarchy migration from hardcoded ROLE_ORDER (T21), added telemetry spans throughout (T30), removed duplicate try-catch (T7), fixed sentinel values (T26), extracted magic strings to constants (T13). Session cache invalidation implemented (#392): `ISessionActivityListener` DI listener pattern with heartbeat-driven TTL refresh, in-memory cache removed entirely, `SessionDataTtlSeconds` reduced from 86400 to 600. 27 unit tests, all passing. No bugs, no stubs, no extensions remaining.
 
 ### Bug Count: 0
 
@@ -430,8 +432,8 @@ No known bugs.
 
 | # | Enhancement | Description | Issue |
 |---|-------------|-------------|-------|
-| 1 | **Session cache invalidation on disconnect** | In-memory cache entries remain after disconnect until recompilation overwrites them. Planned via `ISessionActivityListener` DI interface with heartbeat-driven TTL refresh. | [#392](https://github.com/beyond-immersion/bannou-service/issues/392) |
-| 2 | *(No further enhancements identified)* | | |
+| 1 | *(No enhancements identified)* | Service is feature-complete for its scope. Session cache invalidation (#392) was implemented via `ISessionActivityListener`. | |
+| 2 | | | |
 | 3 | | | |
 
 ### GH Issues

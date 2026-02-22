@@ -77,27 +77,6 @@ public partial class ContractService : IContractService
     }
 
     /// <summary>
-    /// Safely extracts a GUID from a proposed action object.
-    /// Handles JsonElement objects from JSON deserialization.
-    /// </summary>
-    /// <param name="proposedAction">The proposed action object.</param>
-    /// <param name="key">The property key to look up.</param>
-    /// <returns>The parsed GUID, or null if not found or parsing fails.</returns>
-    private static Guid? GetProposedActionGuid(object? proposedAction, string key)
-    {
-        if (proposedAction is System.Text.Json.JsonElement element && element.ValueKind == System.Text.Json.JsonValueKind.Object)
-        {
-            if (element.TryGetProperty(key, out var prop) &&
-                prop.ValueKind == System.Text.Json.JsonValueKind.String &&
-                Guid.TryParse(prop.GetString(), out var guid))
-            {
-                return guid;
-            }
-        }
-        return null;
-    }
-
-    /// <summary>
     /// Initializes a new instance of the ContractService.
     /// </summary>
     public ContractService(
