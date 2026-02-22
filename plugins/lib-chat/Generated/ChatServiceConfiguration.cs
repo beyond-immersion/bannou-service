@@ -148,6 +148,34 @@ public class ChatServiceConfiguration : IServiceConfiguration
     public int IdleRoomCleanupStartupDelaySeconds { get; set; } = 30;
 
     /// <summary>
+    /// How often the background worker checks for expired bans
+    /// Environment variable: CHAT_BAN_EXPIRY_INTERVAL_MINUTES
+    /// </summary>
+    [ConfigRange(Minimum = 5, Maximum = 1440)]
+    public int BanExpiryIntervalMinutes { get; set; } = 60;
+
+    /// <summary>
+    /// Initial delay before the ban expiry worker begins its first cycle
+    /// Environment variable: CHAT_BAN_EXPIRY_STARTUP_DELAY_SECONDS
+    /// </summary>
+    [ConfigRange(Minimum = 5, Maximum = 300)]
+    public int BanExpiryStartupDelaySeconds { get; set; } = 30;
+
+    /// <summary>
+    /// Maximum expired ban records processed per worker cycle
+    /// Environment variable: CHAT_BAN_EXPIRY_BATCH_SIZE
+    /// </summary>
+    [ConfigRange(Minimum = 10, Maximum = 10000)]
+    public int BanExpiryBatchSize { get; set; } = 1000;
+
+    /// <summary>
+    /// Distributed lock expiry for ban expiry batch cycle
+    /// Environment variable: CHAT_BAN_EXPIRY_LOCK_EXPIRY_SECONDS
+    /// </summary>
+    [ConfigRange(Minimum = 30, Maximum = 600)]
+    public int BanExpiryLockExpirySeconds { get; set; } = 120;
+
+    /// <summary>
     /// Seconds of inactivity before typing indicator auto-expires
     /// Environment variable: CHAT_TYPING_TIMEOUT_SECONDS
     /// </summary>

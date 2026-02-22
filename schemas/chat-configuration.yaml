@@ -118,6 +118,38 @@ x-service-configuration:
       maximum: 300
       description: Initial delay before the idle room cleanup worker begins its first cycle
 
+    BanExpiryIntervalMinutes:
+      type: integer
+      env: CHAT_BAN_EXPIRY_INTERVAL_MINUTES
+      default: 60
+      minimum: 5
+      maximum: 1440
+      description: How often the background worker checks for expired bans
+
+    BanExpiryStartupDelaySeconds:
+      type: integer
+      env: CHAT_BAN_EXPIRY_STARTUP_DELAY_SECONDS
+      default: 30
+      minimum: 5
+      maximum: 300
+      description: Initial delay before the ban expiry worker begins its first cycle
+
+    BanExpiryBatchSize:
+      type: integer
+      env: CHAT_BAN_EXPIRY_BATCH_SIZE
+      default: 1000
+      minimum: 10
+      maximum: 10000
+      description: Maximum expired ban records processed per worker cycle
+
+    BanExpiryLockExpirySeconds:
+      type: integer
+      env: CHAT_BAN_EXPIRY_LOCK_EXPIRY_SECONDS
+      default: 120
+      minimum: 30
+      maximum: 600
+      description: Distributed lock expiry for ban expiry batch cycle
+
     TypingTimeoutSeconds:
       type: integer
       env: CHAT_TYPING_TIMEOUT_SECONDS

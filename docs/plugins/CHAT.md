@@ -159,6 +159,10 @@ The Chat service (L1 AppFoundation) provides universal typed message channel pri
 | `TypingTimeoutSeconds` | `CHAT_TYPING_TIMEOUT_SECONDS` | 5 | Seconds of inactivity before typing indicator auto-expires |
 | `TypingWorkerIntervalMilliseconds` | `CHAT_TYPING_WORKER_INTERVAL_MILLISECONDS` | 1000 | How often the typing expiry worker checks for stale typing entries |
 | `TypingWorkerBatchSize` | `CHAT_TYPING_WORKER_BATCH_SIZE` | 100 | Maximum expired entries processed per worker cycle |
+| `BanExpiryIntervalMinutes` | `CHAT_BAN_EXPIRY_INTERVAL_MINUTES` | 60 | How often the ban expiry worker checks for expired bans |
+| `BanExpiryStartupDelaySeconds` | `CHAT_BAN_EXPIRY_STARTUP_DELAY_SECONDS` | 30 | Initial delay before ban expiry worker begins first cycle |
+| `BanExpiryBatchSize` | `CHAT_BAN_EXPIRY_BATCH_SIZE` | 1000 | Maximum expired ban records processed per worker cycle |
+| `BanExpiryLockExpirySeconds` | `CHAT_BAN_EXPIRY_LOCK_EXPIRY_SECONDS` | 120 | Distributed lock expiry for ban expiry batch cycle |
 | `ServerSalt` | `CHAT_SERVER_SALT` | (dev default) | Server salt for session shortcut GUID generation |
 
 ---
@@ -180,6 +184,7 @@ The Chat service (L1 AppFoundation) provides universal typed message channel pri
 | `IStateStoreFactory` | Access to all 7 state stores |
 | `IdleRoomCleanupWorker` | Background hosted service for periodic idle room cleanup |
 | `TypingExpiryWorker` | Background hosted service for typing indicator timeout enforcement |
+| `BanExpiryWorker` | Background hosted service for periodic expired ban cleanup |
 | `ITelemetryProvider` | Telemetry span instrumentation for async helpers |
 
 ---
@@ -278,7 +283,7 @@ None. All 30 API endpoints are fully implemented with complete business logic, v
 
 4. **Room-level message retention worker**: Background service that enforces room type `RetentionDays` by periodically deleting messages older than the threshold.
 
-5. **Ban expiry worker**: Background service that auto-removes expired bans, rather than relying on check-at-join-time lazy evaluation.
+5. ~~**Ban expiry worker**~~: **IMPLEMENTED** (2026-02-22) - `BanExpiryWorker` background service periodically scans for and deletes expired time-limited bans. Configurable via `BanExpiryIntervalMinutes`, `BanExpiryStartupDelaySeconds`, `BanExpiryBatchSize`, and `BanExpiryLockExpirySeconds`.
 
 6. **Lexicon room type for NPC communication**: A custom `lexicon` room type where messages are structured as Lexicon entry combinations rather than free text. NPCs would communicate in the same ontological building blocks they think in, with discovery-level validation gating vocabulary per character. Location-scoped social rooms would enable ambient social perception for NPC cognition. See [CHARACTER-COMMUNICATION.md](../guides/CHARACTER-COMMUNICATION.md) for the full architectural design.
 
@@ -334,4 +339,5 @@ None. All 30 API endpoints are fully implemented with complete business logic, v
 
 ## Work Tracking
 
-*(No active work items)*
+### Completed
+- **2026-02-22**: Issue #447 - Added `BanExpiryWorker` background service for periodic expired ban cleanup
