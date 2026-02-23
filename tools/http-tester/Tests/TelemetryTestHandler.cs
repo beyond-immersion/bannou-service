@@ -17,7 +17,7 @@ public class TelemetryTestHandler : BaseHttpTestHandler
     [
         // Health Check Tests
         new ServiceTest(TestHealthEndpoint, "Health", "Telemetry", "Test telemetry health endpoint returns status"),
-        new ServiceTest(TestHealthReturnsHealthyFlag, "HealthyFlag", "Telemetry", "Verify health response includes healthy flag"),
+        new ServiceTest(TestHealthReturnsHealthyFlag, "HealthyFlag", "Telemetry", "Verify health response includes tracing/metrics flags"),
         new ServiceTest(TestHealthReturnsTelemetryFlags, "TelemetryFlags", "Telemetry", "Verify health response includes tracing/metrics flags"),
 
         // Status Tests
@@ -34,7 +34,7 @@ public class TelemetryTestHandler : BaseHttpTestHandler
 
             var response = await telemetryClient.HealthAsync(new TelemetryHealthRequest());
 
-            return TestResult.Successful($"Health endpoint OK - Healthy: {response.Healthy}");
+            return TestResult.Successful($"Health endpoint OK - TracingEnabled: {response.TracingEnabled}, MetricsEnabled: {response.MetricsEnabled}");
         }, "Health endpoint");
 
     private static async Task<TestResult> TestHealthReturnsHealthyFlag(ITestClient client, string[] args) =>
@@ -44,8 +44,8 @@ public class TelemetryTestHandler : BaseHttpTestHandler
 
             var response = await telemetryClient.HealthAsync(new TelemetryHealthRequest());
 
-            // The healthy flag should be present (true or false is valid)
-            return TestResult.Successful($"Healthy flag present: {response.Healthy}");
+            // The tracing/metrics flags should be present (true or false is valid)
+            return TestResult.Successful($"Telemetry flags present: TracingEnabled={response.TracingEnabled}, MetricsEnabled={response.MetricsEnabled}");
         }, "Healthy flag");
 
     private static async Task<TestResult> TestHealthReturnsTelemetryFlags(ITestClient client, string[] args) =>
@@ -94,8 +94,8 @@ public class TelemetryTestHandler : BaseHttpTestHandler
 
             var response = await telemetryClient.StatusAsync(new TelemetryStatusRequest());
 
-            if (string.IsNullOrEmpty(response.OtlpProtocol))
-                return TestResult.Failed("OtlpProtocol is empty or null");
+            if (response.OtlpProtocol == default)
+                return TestResult.Failed("OtlpProtocol is not set");
 
             // OtlpEndpoint may be null if telemetry is disabled, that's valid
             var endpointInfo = response.OtlpEndpoint ?? "(not configured)";

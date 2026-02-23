@@ -459,12 +459,12 @@ public class LoginTestHandler : IServiceTestHandler
         if (validateResponse.StatusCode == System.Net.HttpStatusCode.OK)
         {
             var validateResult = BannouJson.Deserialize<ValidateTokenResponse>(validateBody);
-            if (validateResult?.Valid != true)
+            if (validateResult == null || validateResult.RemainingTime <= 0)
             {
-                Console.WriteLine($"❌ Token validation returned valid={validateResult?.Valid} (expected true)");
+                Console.WriteLine($"❌ Token validation returned RemainingTime={validateResult?.RemainingTime} (expected > 0)");
                 return false;
             }
-            Console.WriteLine($"✅ Token validation returned valid={validateResult.Valid}");
+            Console.WriteLine($"✅ Token validation returned RemainingTime={validateResult.RemainingTime}s");
             return true;
         }
 

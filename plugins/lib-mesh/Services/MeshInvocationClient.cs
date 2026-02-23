@@ -451,16 +451,19 @@ public sealed class MeshInvocationClient : IMeshInvocationClient, IDisposable
     }
 
     /// <summary>
-    /// Determines if an HTTP status code represents a transient error eligible for retry.
-    /// Only server errors and specific timeout/throttle codes are retried.
+    /// Determines if an HTTP status code represents a transient infrastructure error eligible for retry.
+    /// Only gateway/proxy errors are retried (502, 503, 504) — these indicate the request likely
+    /// never reached the target service or the service was temporarily unavailable.
+    /// 500 (Internal Server Error) is NOT retried because the service received and processed the
+    /// request — retrying a deterministic bug wastes time and risks duplicate side effects.
+    /// 408/429 are NOT retried because they are application-level responses, not infrastructure failures.
+    /// Connection failures and timeouts are handled separately via HttpRequestException and
+    /// OperationCanceledException catch blocks.
     /// </summary>
     private static bool IsTransientError(HttpStatusCode statusCode)
     {
         return statusCode switch
         {
-            HttpStatusCode.RequestTimeout => true,          // 408
-            HttpStatusCode.TooManyRequests => true,         // 429
-            HttpStatusCode.InternalServerError => true,     // 500
             HttpStatusCode.BadGateway => true,              // 502
             HttpStatusCode.ServiceUnavailable => true,      // 503
             HttpStatusCode.GatewayTimeout => true,          // 504

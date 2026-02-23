@@ -287,6 +287,9 @@ public class Program
             // Register NullTelemetryProvider (http-tester doesn't need telemetry)
             serviceCollection.AddSingleton<ITelemetryProvider, NullTelemetryProvider>();
 
+            // Register MeshInstanceIdentifier for error event sourcing
+            serviceCollection.AddSingleton<IMeshInstanceIdentifier>(new DefaultMeshInstanceIdentifier());
+
             // Register MeshInvocationClient using factory pattern (same as MeshServicePlugin)
             serviceCollection.AddSingleton<IMeshInvocationClient>(sp =>
             {
@@ -297,7 +300,8 @@ public class Program
                 var config = sp.GetRequiredService<MeshServiceConfiguration>();
                 var logger = sp.GetRequiredService<ILogger<MeshInvocationClient>>();
                 var telemetryProvider = sp.GetRequiredService<ITelemetryProvider>();
-                return new MeshInvocationClient(stateManager, stateStoreFactory, messageBus, messageSubscriber, config, logger, telemetryProvider);
+                var instanceIdentifier = sp.GetRequiredService<IMeshInstanceIdentifier>();
+                return new MeshInvocationClient(stateManager, stateStoreFactory, messageBus, messageSubscriber, config, logger, telemetryProvider, instanceIdentifier);
             });
 
             // Add Bannou service client infrastructure (IServiceAppMappingResolver, IEventConsumer)

@@ -64,9 +64,6 @@ public class ConnectTestHandler : BaseHttpTestHandler
                 if (response.Version < 0)
                     return TestResult.Failed($"Invalid version: {response.Version}");
 
-                if (response.GeneratedAt == default)
-                    return TestResult.Failed("GeneratedAt timestamp is not set");
-
                 return TestResult.Successful(
                     $"Client capabilities retrieved: {response.Capabilities.Count} capabilities, " +
                     $"version={response.Version}, sessionId={response.SessionId}");
@@ -102,9 +99,6 @@ public class ConnectTestHandler : BaseHttpTestHandler
 
                 if (response.Capabilities == null)
                     issues.Add("Capabilities is null");
-
-                if (response.GeneratedAt == default)
-                    issues.Add("GeneratedAt is default");
 
                 // Check each capability has required fields (if any exist)
                 if (response.Capabilities?.Count > 0)
@@ -147,7 +141,7 @@ public class ConnectTestHandler : BaseHttpTestHandler
                 SessionId = testSessionId,
                 TargetService = "account",
                 TargetEndpoint = "/account",
-                Method = InternalProxyRequestMethod.GET,
+                Method = HttpMethodType.GET,
                 Headers = new Dictionary<string, string>
                 {
                     { "Content-Type", "application/json" }
@@ -188,7 +182,7 @@ public class ConnectTestHandler : BaseHttpTestHandler
                 SessionId = testSessionId,
                 TargetService = $"nonexistent-service-{Guid.NewGuid():N}",
                 TargetEndpoint = "/any/endpoint",
-                Method = InternalProxyRequestMethod.GET
+                Method = HttpMethodType.GET
             };
 
             try
@@ -226,7 +220,7 @@ public class ConnectTestHandler : BaseHttpTestHandler
                 SessionId = Guid.Empty, // Empty session ID
                 TargetService = "account",
                 TargetEndpoint = "/account",
-                Method = InternalProxyRequestMethod.GET
+                Method = HttpMethodType.GET
             };
 
             try
@@ -262,10 +256,10 @@ public class ConnectTestHandler : BaseHttpTestHandler
 
             var methods = new[]
             {
-                InternalProxyRequestMethod.GET,
-                InternalProxyRequestMethod.POST,
-                InternalProxyRequestMethod.PUT,
-                InternalProxyRequestMethod.DELETE
+                HttpMethodType.GET,
+                HttpMethodType.POST,
+                HttpMethodType.PUT,
+                HttpMethodType.DELETE
             };
 
             var successCount = 0;
@@ -284,7 +278,7 @@ public class ConnectTestHandler : BaseHttpTestHandler
                     };
 
                     // Add body for methods that support it
-                    if (method == InternalProxyRequestMethod.POST || method == InternalProxyRequestMethod.PUT)
+                    if (method == HttpMethodType.POST || method == HttpMethodType.PUT)
                     {
                         proxyRequest.Body = new { test = "data" };
                     }
@@ -332,7 +326,7 @@ public class ConnectTestHandler : BaseHttpTestHandler
                 SessionId = testSessionId,
                 TargetService = "account",
                 TargetEndpoint = "/account",
-                Method = InternalProxyRequestMethod.POST,
+                Method = HttpMethodType.POST,
                 Body = new
                 {
                     email = $"test-{Guid.NewGuid():N}@example.com",
@@ -370,7 +364,7 @@ public class ConnectTestHandler : BaseHttpTestHandler
                 SessionId = testSessionId,
                 TargetService = "account",
                 TargetEndpoint = "/account",
-                Method = InternalProxyRequestMethod.GET,
+                Method = HttpMethodType.GET,
                 Headers = new Dictionary<string, string>
                 {
                     { "X-Custom-Header", "test-value" },
@@ -408,7 +402,7 @@ public class ConnectTestHandler : BaseHttpTestHandler
                 SessionId = testSessionId,
                 TargetService = "account",
                 TargetEndpoint = "", // Empty endpoint
-                Method = InternalProxyRequestMethod.GET
+                Method = HttpMethodType.GET
             };
 
             try
@@ -447,7 +441,7 @@ public class ConnectTestHandler : BaseHttpTestHandler
                 SessionId = testSessionId,
                 TargetService = "account",
                 TargetEndpoint = "/account",
-                Method = InternalProxyRequestMethod.GET,
+                Method = HttpMethodType.GET,
                 QueryParameters = new Dictionary<string, string>
                 {
                     { "page", "1" },
@@ -512,15 +506,12 @@ public class ConnectTestHandler : BaseHttpTestHandler
             // This is what Connect service calls internally when validating WebSocket upgrade
             var validation = await ((IServiceClient<AuthClient>)authClient).WithAuthorization(token).ValidateTokenAsync();
 
-            if (!validation.Valid)
-                return TestResult.Failed($"Token validation failed for WebSocket upgrade simulation. Valid={validation.Valid}, SessionId={validation.SessionKey}, RemainingTime={validation.RemainingTime}");
+            if (validation.RemainingTime <= 0)
+                return TestResult.Failed($"Token validation failed for WebSocket upgrade simulation. RemainingTime={validation.RemainingTime}, SessionId={validation.SessionKey}");
 
             // Verify we have the data Connect needs
             if (validation.SessionKey == Guid.Empty)
                 return TestResult.Failed("SessionId is empty - Connect needs this for session tracking");
-
-            if (validation.RemainingTime <= 0)
-                return TestResult.Failed($"RemainingTime is {validation.RemainingTime} - session appears expired (ExpiresAtUnix deserialization issue?)");
 
             return TestResult.Successful($"Token validation for WebSocket ready. SessionId: {validation.SessionKey}, RemainingTime: {validation.RemainingTime}s, Roles: {validation.Roles?.Count ?? 0}");
         }, "Token validation for WebSocket");
@@ -552,17 +543,14 @@ public class ConnectTestHandler : BaseHttpTestHandler
             // Check all required fields for Connect service
             var issues = new List<string>();
 
-            if (!validation.Valid)
-                issues.Add("Valid=false");
+            if (validation.RemainingTime <= 0)
+                issues.Add($"RemainingTime={validation.RemainingTime} (should be positive)");
 
             if (validation.AccountId == Guid.Empty)
                 issues.Add("AccountId is empty GUID");
 
             if (validation.SessionKey == Guid.Empty)
                 issues.Add("SessionId is empty");
-
-            if (validation.RemainingTime <= 0)
-                issues.Add($"RemainingTime={validation.RemainingTime} (should be positive - ExpiresAtUnix issue?)");
 
             if (validation.Roles == null)
                 issues.Add("Roles is null");
@@ -601,21 +589,21 @@ public class ConnectTestHandler : BaseHttpTestHandler
             var token = loginResponse.AccessToken;
 
             // Perform 10 sequential validations
-            var results = new List<(bool Valid, int RemainingTime)>();
+            var results = new List<(bool TokenValid, int RemainingTime)>();
             for (var i = 0; i < 10; i++)
             {
                 var validation = await ((IServiceClient<AuthClient>)authClient).WithAuthorization(token).ValidateTokenAsync();
-                results.Add((validation.Valid, validation.RemainingTime));
+                results.Add((validation.RemainingTime > 0, validation.RemainingTime));
 
                 // Small delay between validations
                 if (i < 9) await Task.Delay(100);
             }
 
             // Check all validations succeeded
-            var failures = results.Where(r => !r.Valid).ToList();
+            var failures = results.Where(r => !r.TokenValid).ToList();
             if (failures.Count > 0)
             {
-                var failedIndices = results.Select((r, i) => (r, i)).Where(x => !x.r.Valid).Select(x => x.i);
+                var failedIndices = results.Select((r, i) => (r, i)).Where(x => !x.r.TokenValid).Select(x => x.i);
                 return TestResult.Failed($"Validations failed at indices: {string.Join(", ", failedIndices)}");
             }
 
@@ -657,8 +645,8 @@ public class ConnectTestHandler : BaseHttpTestHandler
 
             // Validate initial session
             var validation1 = await ((IServiceClient<AuthClient>)authClient).WithAuthorization(token1).ValidateTokenAsync();
-            if (!validation1.Valid || validation1.RemainingTime <= 0)
-                return TestResult.Failed($"Initial validation failed: Valid={validation1.Valid}, RT={validation1.RemainingTime}");
+            if (validation1.RemainingTime <= 0)
+                return TestResult.Failed($"Initial validation failed: RT={validation1.RemainingTime}");
 
             // Perform "other operations" - like the auth tests do
             // 1. Create another session (login again)
@@ -673,21 +661,16 @@ public class ConnectTestHandler : BaseHttpTestHandler
             // Now validate the ORIGINAL session - this is what WebSocket tests do
             var validation2 = await ((IServiceClient<AuthClient>)authClient).WithAuthorization(token1).ValidateTokenAsync();
 
-            if (!validation2.Valid)
-            {
-                return TestResult.Failed($"Original session became invalid after other operations! Valid={validation2.Valid}, RT={validation2.RemainingTime}");
-            }
-
             if (validation2.RemainingTime <= 0)
             {
-                return TestResult.Failed($"Original session RemainingTime is {validation2.RemainingTime} after other operations (ExpiresAtUnix=0 bug?)");
+                return TestResult.Failed($"Original session became invalid after other operations! RT={validation2.RemainingTime}");
             }
 
             // Also validate second session is still valid
             var validation3 = await ((IServiceClient<AuthClient>)authClient).WithAuthorization(loginResponse2.AccessToken).ValidateTokenAsync();
-            if (!validation3.Valid || validation3.RemainingTime <= 0)
+            if (validation3.RemainingTime <= 0)
             {
-                return TestResult.Failed($"Second session invalid after logout of third: Valid={validation3.Valid}, RT={validation3.RemainingTime}");
+                return TestResult.Failed($"Second session invalid after logout of third: RT={validation3.RemainingTime}");
             }
 
             return TestResult.Successful($"Original session remains valid after other operations. Session1 RT: {validation2.RemainingTime}s, Session2 RT: {validation3.RemainingTime}s");

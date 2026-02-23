@@ -575,9 +575,21 @@ public partial class ActorService : IActorService
                 return (StatusCodes.Conflict, null);
             }
 
-            using var startCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-            startCts.CancelAfter(TimeSpan.FromSeconds(_configuration.ActorOperationTimeoutSeconds));
-            await runner.StartAsync(startCts.Token);
+            try
+            {
+                using var startCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+                startCts.CancelAfter(TimeSpan.FromSeconds(_configuration.ActorOperationTimeoutSeconds));
+                await runner.StartAsync(startCts.Token);
+            }
+            catch
+            {
+                // StartAsync failed (e.g. behavior document not found) — remove
+                // the stale registry entry so the actor ID is not permanently blocked.
+                _actorRegistry.TryRemove(actorId, out _);
+                await runner.DisposeAsync();
+                throw;
+            }
+
             nodeId = _configuration.LocalModeNodeId;
             nodeAppId = _configuration.LocalModeAppId;
             startedAt = runner.StartedAt;

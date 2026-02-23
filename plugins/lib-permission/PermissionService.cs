@@ -631,7 +631,7 @@ public partial class PermissionService : IPermissionService, IPermissionRegistry
 
         try
         {
-            if (sessionStates == null || sessionStates.Count == 0)
+            if (sessionStates == null)
             {
                 _logger.LogDebug("No session states provided for {SessionId}, skipping recompilation", sessionId);
                 return (false, null);

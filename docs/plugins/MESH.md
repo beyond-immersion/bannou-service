@@ -185,9 +185,9 @@ Service Invocation Flow (MeshInvocationClient)
        │
        └──► Send HTTP Request
             │
-            ├── Success (2xx, 4xx) → RecordSuccess → return response
+            ├── Success (2xx) or Application Error (4xx, 500) → RecordSuccess → return response
             │
-            └── Transient Error (408, 429, 5xx) or HttpRequestException
+            └── Infrastructure Error (502, 503, 504) or HttpRequestException
                  │
                  ├── Retries remaining? → invalidate cache, exponential backoff, retry
                  │

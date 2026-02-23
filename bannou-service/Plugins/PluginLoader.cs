@@ -652,6 +652,9 @@ public class PluginLoader
                 ((IServiceConfiguration)config).Validate();
                 return config;
             });
+            // Register as IServiceConfiguration too - MeshServicePlugin resolves this interface
+            // to read ForceServiceId for IMeshInstanceIdentifier
+            services.AddSingleton<IServiceConfiguration>(sp => sp.GetRequiredService<AppConfiguration>());
             _logger.LogInformation("Registered global configuration: AppConfiguration (Singleton with BuildConfiguration factory)");
         }
 

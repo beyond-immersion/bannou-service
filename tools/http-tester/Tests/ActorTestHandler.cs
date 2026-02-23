@@ -87,7 +87,7 @@ public class ActorTestHandler : BaseHttpTestHandler
             var response = await actorClient.CreateActorTemplateAsync(new CreateActorTemplateRequest
             {
                 Category = category,
-                BehaviorRef = "asset://behaviors/test-behavior",
+                BehaviorRef = "seeded:object_base",
                 TickIntervalMs = 500,
                 AutoSaveIntervalSeconds = 30
             });
@@ -117,7 +117,7 @@ public class ActorTestHandler : BaseHttpTestHandler
             var created = await actorClient.CreateActorTemplateAsync(new CreateActorTemplateRequest
             {
                 Category = category,
-                BehaviorRef = "asset://behaviors/test"
+                BehaviorRef = "seeded:object_base"
             });
 
             // Get by ID
@@ -148,7 +148,7 @@ public class ActorTestHandler : BaseHttpTestHandler
             var created = await actorClient.CreateActorTemplateAsync(new CreateActorTemplateRequest
             {
                 Category = category,
-                BehaviorRef = "asset://behaviors/test"
+                BehaviorRef = "seeded:object_base"
             });
 
             // Get by category
@@ -180,13 +180,13 @@ public class ActorTestHandler : BaseHttpTestHandler
             var created1 = await actorClient.CreateActorTemplateAsync(new CreateActorTemplateRequest
             {
                 Category = category1,
-                BehaviorRef = "asset://behaviors/test"
+                BehaviorRef = "seeded:object_base"
             });
 
             var created2 = await actorClient.CreateActorTemplateAsync(new CreateActorTemplateRequest
             {
                 Category = category2,
-                BehaviorRef = "asset://behaviors/test"
+                BehaviorRef = "seeded:object_base"
             });
 
             // List templates
@@ -215,7 +215,7 @@ public class ActorTestHandler : BaseHttpTestHandler
             var created = await actorClient.CreateActorTemplateAsync(new CreateActorTemplateRequest
             {
                 Category = category,
-                BehaviorRef = "asset://behaviors/original",
+                BehaviorRef = "seeded:creature_base",
                 TickIntervalMs = 1000
             });
 
@@ -223,11 +223,11 @@ public class ActorTestHandler : BaseHttpTestHandler
             var updated = await actorClient.UpdateActorTemplateAsync(new UpdateActorTemplateRequest
             {
                 TemplateId = created.TemplateId,
-                BehaviorRef = "asset://behaviors/updated",
+                BehaviorRef = "seeded:humanoid_base",
                 TickIntervalMs = 500
             });
 
-            if (updated.BehaviorRef != "asset://behaviors/updated")
+            if (updated.BehaviorRef != "seeded:humanoid_base")
                 return TestResult.Failed($"BehaviorRef not updated: {updated.BehaviorRef}");
 
             if (updated.TickIntervalMs != 500)
@@ -249,7 +249,7 @@ public class ActorTestHandler : BaseHttpTestHandler
             var created = await actorClient.CreateActorTemplateAsync(new CreateActorTemplateRequest
             {
                 Category = category,
-                BehaviorRef = "asset://behaviors/test"
+                BehaviorRef = "seeded:object_base"
             });
 
             // Delete template
@@ -258,10 +258,7 @@ public class ActorTestHandler : BaseHttpTestHandler
                 TemplateId = created.TemplateId
             });
 
-            if (!response.Deleted)
-                return TestResult.Failed("Template deletion returned false");
-
-            return TestResult.Successful("Template deleted successfully");
+            return TestResult.Successful($"Template deleted successfully (stopped {response.StoppedActorCount} actors)");
         }, "DeleteTemplate");
 
     #endregion
@@ -277,7 +274,7 @@ public class ActorTestHandler : BaseHttpTestHandler
                 await actorClient.CreateActorTemplateAsync(new CreateActorTemplateRequest
                 {
                     Category = "", // Empty category
-                    BehaviorRef = "asset://behaviors/test"
+                    BehaviorRef = "seeded:object_base"
                 });
             },
             400,
@@ -328,7 +325,7 @@ public class ActorTestHandler : BaseHttpTestHandler
             var template = await actorClient.CreateActorTemplateAsync(new CreateActorTemplateRequest
             {
                 Category = category,
-                BehaviorRef = "asset://behaviors/test",
+                BehaviorRef = "seeded:object_base",
                 TickIntervalMs = 1000
             });
 
@@ -365,7 +362,7 @@ public class ActorTestHandler : BaseHttpTestHandler
             var template = await actorClient.CreateActorTemplateAsync(new CreateActorTemplateRequest
             {
                 Category = category,
-                BehaviorRef = "asset://behaviors/test"
+                BehaviorRef = "seeded:object_base"
             });
 
             await actorClient.SpawnActorAsync(new SpawnActorRequest
@@ -404,7 +401,7 @@ public class ActorTestHandler : BaseHttpTestHandler
             var template = await actorClient.CreateActorTemplateAsync(new CreateActorTemplateRequest
             {
                 Category = category,
-                BehaviorRef = "asset://behaviors/test"
+                BehaviorRef = "seeded:object_base"
             });
 
             await actorClient.SpawnActorAsync(new SpawnActorRequest
@@ -450,7 +447,7 @@ public class ActorTestHandler : BaseHttpTestHandler
             var template = await actorClient.CreateActorTemplateAsync(new CreateActorTemplateRequest
             {
                 Category = category,
-                BehaviorRef = "asset://behaviors/test"
+                BehaviorRef = "seeded:object_base"
             });
 
             await actorClient.SpawnActorAsync(new SpawnActorRequest
@@ -466,9 +463,6 @@ public class ActorTestHandler : BaseHttpTestHandler
                 ActorId = actorId,
                 Graceful = true
             });
-
-            if (!response.Stopped)
-                return TestResult.Failed("Stop returned false");
 
             if (response.FinalStatus != ActorStatus.Stopped)
                 return TestResult.Failed($"Unexpected final status: {response.FinalStatus}");
@@ -542,7 +536,7 @@ public class ActorTestHandler : BaseHttpTestHandler
             var template = await actorClient.CreateActorTemplateAsync(new CreateActorTemplateRequest
             {
                 Category = category,
-                BehaviorRef = "asset://behaviors/test",
+                BehaviorRef = "seeded:object_base",
                 TickIntervalMs = 100,
                 AutoSaveIntervalSeconds = 0 // Disable auto-save for test
             });
@@ -586,8 +580,8 @@ public class ActorTestHandler : BaseHttpTestHandler
                 Graceful = true
             });
 
-            if (!stopped.Stopped)
-                return TestResult.Failed("Failed to stop actor");
+            if (stopped.FinalStatus != ActorStatus.Stopped)
+                return TestResult.Failed($"Failed to stop actor, final status: {stopped.FinalStatus}");
 
             // 6. Delete template
             var deleted = await actorClient.DeleteActorTemplateAsync(new DeleteActorTemplateRequest
@@ -595,8 +589,7 @@ public class ActorTestHandler : BaseHttpTestHandler
                 TemplateId = template.TemplateId
             });
 
-            if (!deleted.Deleted)
-                return TestResult.Failed("Failed to delete template");
+            // 200 OK means deletion succeeded; StoppedActorCount tells us how many actors were cleaned up
 
             return TestResult.Successful("Full lifecycle: create template -> spawn -> get -> list -> stop -> delete");
         }, "FullLifecycleFlow");
@@ -619,7 +612,7 @@ public class ActorTestHandler : BaseHttpTestHandler
             var template = await actorClient.CreateActorTemplateAsync(new CreateActorTemplateRequest
             {
                 Category = category,
-                BehaviorRef = "asset://behaviors/test",
+                BehaviorRef = "seeded:object_base",
                 TickIntervalMs = 1000,
                 AutoSpawn = new AutoSpawnConfig
                 {
@@ -668,7 +661,7 @@ public class ActorTestHandler : BaseHttpTestHandler
             var template = await actorClient.CreateActorTemplateAsync(new CreateActorTemplateRequest
             {
                 Category = category,
-                BehaviorRef = "asset://behaviors/test",
+                BehaviorRef = "seeded:object_base",
                 TickIntervalMs = 1000
             });
 
@@ -696,8 +689,8 @@ public class ActorTestHandler : BaseHttpTestHandler
                 }
             });
 
-            if (!response.Queued)
-                return TestResult.Failed("Perception not queued");
+            if (response.QueueDepth < 0)
+                return TestResult.Failed($"Unexpected queue depth: {response.QueueDepth}");
 
             // Cleanup
             await actorClient.StopActorAsync(new StopActorRequest { ActorId = actorId, Graceful = false });
@@ -742,7 +735,7 @@ public class ActorTestHandler : BaseHttpTestHandler
             var template = await actorClient.CreateActorTemplateAsync(new CreateActorTemplateRequest
             {
                 Category = category,
-                BehaviorRef = "asset://behaviors/event-brain",
+                BehaviorRef = "seeded:encounter_coordinator_base",
                 TickIntervalMs = 1000
             });
 
@@ -787,7 +780,7 @@ public class ActorTestHandler : BaseHttpTestHandler
             var template = await actorClient.CreateActorTemplateAsync(new CreateActorTemplateRequest
             {
                 Category = category,
-                BehaviorRef = "asset://behaviors/event-brain",
+                BehaviorRef = "seeded:encounter_coordinator_base",
                 TickIntervalMs = 1000
             });
 
@@ -817,11 +810,8 @@ public class ActorTestHandler : BaseHttpTestHandler
                 ActorId = actorId
             });
 
-            if (!response.HasActiveEncounter)
-                return TestResult.Failed("Expected active encounter but none found");
-
             if (response.Encounter == null)
-                return TestResult.Failed("Encounter object is null");
+                return TestResult.Failed("Expected active encounter but none found");
 
             if (response.Encounter.EncounterId != encounterId)
                 return TestResult.Failed($"Encounter ID mismatch: expected {encounterId}, got {response.Encounter.EncounterId}");
@@ -849,7 +839,7 @@ public class ActorTestHandler : BaseHttpTestHandler
             var template = await actorClient.CreateActorTemplateAsync(new CreateActorTemplateRequest
             {
                 Category = category,
-                BehaviorRef = "asset://behaviors/event-brain",
+                BehaviorRef = "seeded:encounter_coordinator_base",
                 TickIntervalMs = 1000
             });
 
@@ -902,7 +892,7 @@ public class ActorTestHandler : BaseHttpTestHandler
             var template = await actorClient.CreateActorTemplateAsync(new CreateActorTemplateRequest
             {
                 Category = category,
-                BehaviorRef = "asset://behaviors/event-brain",
+                BehaviorRef = "seeded:encounter_coordinator_base",
                 TickIntervalMs = 1000
             });
 
@@ -939,7 +929,7 @@ public class ActorTestHandler : BaseHttpTestHandler
 
             // Verify no active encounter
             var getResponse = await actorClient.GetEncounterAsync(new GetEncounterRequest { ActorId = actorId });
-            if (getResponse.HasActiveEncounter)
+            if (getResponse.Encounter != null)
                 return TestResult.Failed("Encounter still active after ending");
 
             // Cleanup
@@ -961,7 +951,7 @@ public class ActorTestHandler : BaseHttpTestHandler
             var template = await actorClient.CreateActorTemplateAsync(new CreateActorTemplateRequest
             {
                 Category = category,
-                BehaviorRef = "asset://behaviors/event-brain",
+                BehaviorRef = "seeded:encounter_coordinator_base",
                 TickIntervalMs = 100
             });
 
@@ -976,7 +966,7 @@ public class ActorTestHandler : BaseHttpTestHandler
 
             // 2. Verify no active encounter initially
             var initial = await actorClient.GetEncounterAsync(new GetEncounterRequest { ActorId = actorId });
-            if (initial.HasActiveEncounter)
+            if (initial.Encounter != null)
                 return TestResult.Failed("Unexpected active encounter on fresh actor");
 
             // 3. Start encounter (void return - throws on failure)
@@ -992,7 +982,7 @@ public class ActorTestHandler : BaseHttpTestHandler
 
             // 4. Verify encounter started
             var afterStart = await actorClient.GetEncounterAsync(new GetEncounterRequest { ActorId = actorId });
-            if (!afterStart.HasActiveEncounter)
+            if (afterStart.Encounter == null)
                 return TestResult.Failed("No active encounter after starting");
 
             // 5. Update phase: initializing -> executing
@@ -1018,7 +1008,7 @@ public class ActorTestHandler : BaseHttpTestHandler
 
             // 8. Verify encounter ended
             var afterEnd = await actorClient.GetEncounterAsync(new GetEncounterRequest { ActorId = actorId });
-            if (afterEnd.HasActiveEncounter)
+            if (afterEnd.Encounter != null)
                 return TestResult.Failed("Encounter still active after ending");
 
             // Cleanup
