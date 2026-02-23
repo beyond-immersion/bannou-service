@@ -48,10 +48,8 @@ namespace BeyondImmersion.BannouService.Contract;
 /// </para>
 /// </remarks>
 [ServiceConfiguration(typeof(ContractService))]
-public class ContractServiceConfiguration : IServiceConfiguration
+public class ContractServiceConfiguration : BaseServiceConfiguration
 {
-    /// <inheritdoc />
-    public Guid? ForceServiceId { get; set; }
 
     /// <summary>
     /// Default enforcement mode for contracts

@@ -48,10 +48,8 @@ namespace BeyondImmersion.BannouService.Seed;
 /// </para>
 /// </remarks>
 [ServiceConfiguration(typeof(SeedService))]
-public class SeedServiceConfiguration : IServiceConfiguration
+public class SeedServiceConfiguration : BaseServiceConfiguration
 {
-    /// <inheritdoc />
-    public Guid? ForceServiceId { get; set; }
 
     /// <summary>
     /// Debounce interval in milliseconds before recomputing capability manifest after growth changes

@@ -48,10 +48,8 @@ namespace BeyondImmersion.BannouService.Location;
 /// </para>
 /// </remarks>
 [ServiceConfiguration(typeof(LocationService))]
-public class LocationServiceConfiguration : IServiceConfiguration
+public class LocationServiceConfiguration : BaseServiceConfiguration
 {
-    /// <inheritdoc />
-    public Guid? ForceServiceId { get; set; }
 
     /// <summary>
     /// Maximum depth to traverse when walking ancestor chain (prevents infinite loops from corrupted data)

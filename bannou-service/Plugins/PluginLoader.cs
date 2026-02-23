@@ -215,7 +215,7 @@ public class PluginLoader
     /// Resolution order:
     /// 1. Required infrastructure (state, messaging, mesh) → ALWAYS enabled
     /// 2. {SERVICE}_SERVICE_ENABLED env var explicitly set → use that value (true/false)
-    /// 3. SERVICES_ENABLED=false (master kill switch) → disabled
+    /// 3. BANNOU_SERVICES_ENABLED=false (master kill switch) → disabled
     /// 4. Layer enabled (from AppConfiguration) → use layer setting (all default true)
     /// </summary>
     /// <param name="serviceName">Name of the service (e.g., "auth", "account")</param>
@@ -248,16 +248,11 @@ public class PluginLoader
             return isEnabled;
         }
 
-        // 3. Master kill switch: SERVICES_ENABLED=false disables everything
-        var servicesEnabledEnv = Environment.GetEnvironmentVariable("SERVICES_ENABLED");
-        var masterEnabled = string.IsNullOrWhiteSpace(servicesEnabledEnv)
-            ? Program.Configuration.ServicesEnabled
-            : string.Equals(servicesEnabledEnv, "true", StringComparison.OrdinalIgnoreCase);
-
-        if (!masterEnabled)
+        // 3. Master kill switch: BANNOU_SERVICES_ENABLED=false disables everything
+        if (!Program.Configuration.ServicesEnabled)
         {
             _logger.LogDebug(
-                "Service {ServiceName} disabled: SERVICES_ENABLED=false (master kill switch)",
+                "Service {ServiceName} disabled: BANNOU_SERVICES_ENABLED=false (master kill switch)",
                 serviceName);
             return false;
         }

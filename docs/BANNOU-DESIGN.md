@@ -32,10 +32,10 @@ Bannou's monoservice pattern provides both benefits:
 
 ```bash
 # Development: Everything runs locally
-SERVICES_ENABLED=true
+BANNOU_SERVICES_ENABLED=true
 
 # Production: Only specific services on this node
-SERVICES_ENABLED=false
+BANNOU_SERVICES_ENABLED=false
 ACCOUNT_SERVICE_ENABLED=true
 AUTH_SERVICE_ENABLED=true
 ```
@@ -260,7 +260,7 @@ This manifest updates in real-time as:
 
 The same binary supports multiple deployment patterns via **layer-level enablement controls**. Five layer flags (`BANNOU_ENABLE_APP_FOUNDATION`, `BANNOU_ENABLE_GAME_FOUNDATION`, `BANNOU_ENABLE_APP_FEATURES`, `BANNOU_ENABLE_GAME_FEATURES`, `BANNOU_ENABLE_EXTENSIONS`) all default to `true`. Individual services can be overridden with `{SERVICE}_SERVICE_ENABLED=true/false`.
 
-Resolution order: infrastructure always on → individual override → master kill switch (`SERVICES_ENABLED=false`) → layer control.
+Resolution order: infrastructure always on → individual override → master kill switch (`BANNOU_SERVICES_ENABLED=false`) → layer control.
 
 ### Local Development
 All services, single process (defaults — no env vars needed):
@@ -272,7 +272,7 @@ docker-compose up
 ### Testing Configurations
 Minimal services for specific test scenarios:
 ```bash
-SERVICES_ENABLED=false
+BANNOU_SERVICES_ENABLED=false
 TESTING_SERVICE_ENABLED=true
 AUTH_SERVICE_ENABLED=true
 ```

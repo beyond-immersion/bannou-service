@@ -48,10 +48,8 @@ namespace BeyondImmersion.BannouService.Chat;
 /// </para>
 /// </remarks>
 [ServiceConfiguration(typeof(ChatService))]
-public class ChatServiceConfiguration : IServiceConfiguration
+public class ChatServiceConfiguration : BaseServiceConfiguration
 {
-    /// <inheritdoc />
-    public Guid? ForceServiceId { get; set; }
 
     /// <summary>
     /// Maximum custom room types per game service

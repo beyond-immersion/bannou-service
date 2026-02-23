@@ -48,10 +48,8 @@ namespace BeyondImmersion.BannouService.Voice;
 /// </para>
 /// </remarks>
 [ServiceConfiguration(typeof(VoiceService))]
-public class VoiceServiceConfiguration : IServiceConfiguration
+public class VoiceServiceConfiguration : BaseServiceConfiguration
 {
-    /// <inheritdoc />
-    public Guid? ForceServiceId { get; set; }
 
     /// <summary>
     /// Enable scaled tier voice communication (SIP-based)

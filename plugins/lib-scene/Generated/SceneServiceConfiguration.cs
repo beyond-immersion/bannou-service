@@ -48,10 +48,8 @@ namespace BeyondImmersion.BannouService.Scene;
 /// </para>
 /// </remarks>
 [ServiceConfiguration(typeof(SceneService))]
-public class SceneServiceConfiguration : IServiceConfiguration
+public class SceneServiceConfiguration : BaseServiceConfiguration
 {
-    /// <inheritdoc />
-    public Guid? ForceServiceId { get; set; }
 
     /// <summary>
     /// Default lock TTL for checkout operations in minutes

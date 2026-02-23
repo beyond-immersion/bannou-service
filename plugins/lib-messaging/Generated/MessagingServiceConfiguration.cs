@@ -48,10 +48,8 @@ namespace BeyondImmersion.BannouService.Messaging;
 /// </para>
 /// </remarks>
 [ServiceConfiguration(typeof(MessagingService))]
-public class MessagingServiceConfiguration : IServiceConfiguration
+public class MessagingServiceConfiguration : BaseServiceConfiguration
 {
-    /// <inheritdoc />
-    public Guid? ForceServiceId { get; set; }
 
     /// <summary>
     /// Use in-memory messaging instead of RabbitMQ. Messages are NOT persisted. ONLY for testing/minimal infrastructure.

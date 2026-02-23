@@ -407,7 +407,7 @@ public interface IBannouService
     /// Returns whether the configuration indicates the service should be disabled.
     /// Mirrors PluginLoader.IsServiceEnabled resolution order (inverted):
     /// 1. {SERVICE}_SERVICE_ENABLED env var explicitly set → use that value
-    /// 2. SERVICES_ENABLED=false (master kill switch) → disabled
+    /// 2. BANNOU_SERVICES_ENABLED=false (master kill switch) → disabled
     /// 3. Layer enabled (from AppConfiguration) → use layer setting (all default true)
     /// </summary>
     public static bool IsDisabled(string? serviceName)
@@ -421,13 +421,8 @@ public interface IBannouService
         if (!string.IsNullOrWhiteSpace(enabledEnv))
             return !string.Equals(enabledEnv, "true", StringComparison.OrdinalIgnoreCase);
 
-        // 2. Master kill switch
-        var servicesEnabledEnv = Environment.GetEnvironmentVariable("SERVICES_ENABLED");
-        var masterEnabled = string.IsNullOrWhiteSpace(servicesEnabledEnv)
-            ? Program.Configuration.ServicesEnabled
-            : string.Equals(servicesEnabledEnv, "true", StringComparison.OrdinalIgnoreCase);
-
-        if (!masterEnabled)
+        // 2. Master kill switch: BANNOU_SERVICES_ENABLED=false
+        if (!Program.Configuration.ServicesEnabled)
             return true; // disabled
 
         // 3. Layer check — look up layer from registered service info

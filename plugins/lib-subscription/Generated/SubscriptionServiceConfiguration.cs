@@ -48,10 +48,8 @@ namespace BeyondImmersion.BannouService.Subscription;
 /// </para>
 /// </remarks>
 [ServiceConfiguration(typeof(SubscriptionService))]
-public class SubscriptionServiceConfiguration : IServiceConfiguration
+public class SubscriptionServiceConfiguration : BaseServiceConfiguration
 {
-    /// <inheritdoc />
-    public Guid? ForceServiceId { get; set; }
 
     /// <summary>
     /// Interval in minutes between subscription expiration checks

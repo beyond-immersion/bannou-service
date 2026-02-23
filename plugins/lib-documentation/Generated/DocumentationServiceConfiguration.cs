@@ -48,10 +48,8 @@ namespace BeyondImmersion.BannouService.Documentation;
 /// </para>
 /// </remarks>
 [ServiceConfiguration(typeof(DocumentationService))]
-public class DocumentationServiceConfiguration : IServiceConfiguration
+public class DocumentationServiceConfiguration : BaseServiceConfiguration
 {
-    /// <inheritdoc />
-    public Guid? ForceServiceId { get; set; }
 
     /// <summary>
     /// Delay in seconds before search index rebuild starts (allows services to initialize)

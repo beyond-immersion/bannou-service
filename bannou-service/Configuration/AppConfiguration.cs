@@ -57,7 +57,7 @@ public class AppConfiguration : BaseServiceConfiguration
     /// <summary>
     /// Master kill switch for all services. When false, all services are disabled unless
     /// individually overridden with {SERVICE}_SERVICE_ENABLED=true.
-    /// Environment variable: SERVICES_ENABLED (not BANNOU_ prefixed for backward compatibility)
+    /// Environment variable: BANNOU_SERVICES_ENABLED
     /// </summary>
     public bool ServicesEnabled { get; set; } = true;
 

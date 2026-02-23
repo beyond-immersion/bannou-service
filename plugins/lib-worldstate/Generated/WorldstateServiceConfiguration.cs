@@ -48,10 +48,8 @@ namespace BeyondImmersion.BannouService.Worldstate;
 /// </para>
 /// </remarks>
 [ServiceConfiguration(typeof(WorldstateService))]
-public class WorldstateServiceConfiguration : IServiceConfiguration
+public class WorldstateServiceConfiguration : BaseServiceConfiguration
 {
-    /// <inheritdoc />
-    public Guid? ForceServiceId { get; set; }
 
     /// <summary>
     /// Real-time seconds between clock advancement ticks. At 24:1 ratio, 5 seconds = 120 game-seconds = 2 game-minutes.

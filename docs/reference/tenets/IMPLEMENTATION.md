@@ -437,7 +437,7 @@ var maxResults = Math.Min(body.Limit, _configuration.MaxResultsPerQuery);
 
 Document with code comments explaining the exception:
 
-1. **Assembly Loading Control**: `SERVICES_ENABLED`, `*_SERVICE_ENABLED/DISABLED` in `PluginLoader.cs`/`IBannouService.cs` (required before DI container available)
+1. **Assembly Loading Control**: `*_SERVICE_ENABLED` in `PluginLoader.cs`/`IBannouService.cs` (required before DI container available; master kill switch `BANNOU_SERVICES_ENABLED` reads from `Program.Configuration`)
 2. **Test Harness Control**: `DAEMON_MODE`, `PLUGIN` in test projects
 3. **Orchestrator Environment Forwarding**: `Environment.GetEnvironmentVariables()` in `OrchestratorService.cs` (forwards config to deployed containers via strict whitelist)
 4. **Integration Test Runners**: `BANNOU_HTTP_ENDPOINT`, `BANNOU_APP_ID` in `http-tester/`/`edge-tester/` (standalone harnesses without DI access, use `AppConstants.ENV_*`)

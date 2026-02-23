@@ -2073,7 +2073,7 @@ public class OrchestratorProcessingPoolTests
             Image = null,
             Environment = new Dictionary<string, string>
             {
-                ["SERVICES_ENABLED"] = "false",
+                ["BANNOU_SERVICES_ENABLED"] = "false",
                 [$"{serviceName.ToUpperInvariant()}_SERVICE_ENABLED"] = "true"
             },
             MinInstances = 1,

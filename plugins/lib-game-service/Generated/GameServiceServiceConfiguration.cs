@@ -48,9 +48,7 @@ namespace BeyondImmersion.BannouService.GameService;
 /// </para>
 /// </remarks>
 [ServiceConfiguration(typeof(GameServiceService))]
-public class GameServiceServiceConfiguration : IServiceConfiguration
+public class GameServiceServiceConfiguration : BaseServiceConfiguration
 {
-    /// <inheritdoc />
-    public Guid? ForceServiceId { get; set; }
 
 }

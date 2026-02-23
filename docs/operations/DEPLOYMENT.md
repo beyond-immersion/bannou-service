@@ -159,7 +159,7 @@ Located in `provisioning/orchestrator/presets/`:
 | `actor-pools.yaml` | processing | Actor pool configuration for distributed NPC behavior execution |
 | `asset-processing.yaml` | processing | Asset processing pool for distributed heavy processing (textures, models, audio) |
 
-> **Note**: For local development, use `SERVICES_ENABLED=true` (all services). Presets are primarily for distributed deployments and testing specific topologies.
+> **Note**: For local development, use `BANNOU_SERVICES_ENABLED=true` (all services). Presets are primarily for distributed deployments and testing specific topologies.
 
 ## Production Deployment Patterns
 
@@ -168,7 +168,7 @@ Located in `provisioning/orchestrator/presets/`:
 All services on one machine:
 
 ```bash
-SERVICES_ENABLED=true
+BANNOU_SERVICES_ENABLED=true
 ```
 
 Simplest deployment, suitable for small scale or development.
@@ -179,17 +179,17 @@ Group related services on dedicated nodes:
 
 ```bash
 # Auth Node
-SERVICES_ENABLED=false
+BANNOU_SERVICES_ENABLED=false
 AUTH_SERVICE_ENABLED=true
 ACCOUNT_SERVICE_ENABLED=true
 
 # Game Session Node
-SERVICES_ENABLED=false
+BANNOU_SERVICES_ENABLED=false
 GAME_SESSION_SERVICE_ENABLED=true
 CONNECT_SERVICE_ENABLED=true
 
 # NPC Processing Node
-SERVICES_ENABLED=false
+BANNOU_SERVICES_ENABLED=false
 BEHAVIOR_SERVICE_ENABLED=true
 CHARACTER_SERVICE_ENABLED=true
 ```
@@ -354,7 +354,7 @@ Key environment variables for deployment:
 
 ```bash
 # Service selection
-SERVICES_ENABLED=true|false
+BANNOU_SERVICES_ENABLED=true|false
 {SERVICE}_SERVICE_ENABLED=true|false
 
 # JWT settings (BANNOU_ for main app validation, AUTH_ for token generation)

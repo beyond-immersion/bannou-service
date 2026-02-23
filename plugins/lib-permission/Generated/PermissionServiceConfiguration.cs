@@ -48,10 +48,8 @@ namespace BeyondImmersion.BannouService.Permission;
 /// </para>
 /// </remarks>
 [ServiceConfiguration(typeof(PermissionService))]
-public class PermissionServiceConfiguration : IServiceConfiguration
+public class PermissionServiceConfiguration : BaseServiceConfiguration
 {
-    /// <inheritdoc />
-    public Guid? ForceServiceId { get; set; }
 
     /// <summary>
     /// Maximum number of concurrent session recompilations during service registration (bounds parallel Redis operations)

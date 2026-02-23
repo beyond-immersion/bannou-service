@@ -48,10 +48,8 @@ namespace BeyondImmersion.BannouService.Actor;
 /// </para>
 /// </remarks>
 [ServiceConfiguration(typeof(ActorService))]
-public class ActorServiceConfiguration : IServiceConfiguration
+public class ActorServiceConfiguration : BaseServiceConfiguration
 {
-    /// <inheritdoc />
-    public Guid? ForceServiceId { get; set; }
 
     /// <summary>
     /// Actor deployment mode: bannou (local dev), pool-per-type, shared-pool, or auto-scale

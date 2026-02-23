@@ -48,10 +48,8 @@ namespace BeyondImmersion.BannouService.Divine;
 /// </para>
 /// </remarks>
 [ServiceConfiguration(typeof(DivineService))]
-public class DivineServiceConfiguration : IServiceConfiguration
+public class DivineServiceConfiguration : BaseServiceConfiguration
 {
-    /// <inheritdoc />
-    public Guid? ForceServiceId { get; set; }
 
     /// <summary>
     /// Currency code used for divinity economy within each game service

@@ -194,10 +194,10 @@ BANNOU_SERVICE_DOMAIN=your-domain.example.com
 
 ```bash
 # All services (default for development)
-SERVICES_ENABLED=true
+BANNOU_SERVICES_ENABLED=true
 
 # Selective loading (production)
-SERVICES_ENABLED=false
+BANNOU_SERVICES_ENABLED=false
 AUTH_SERVICE_ENABLED=true
 ACCOUNT_SERVICE_ENABLED=true
 CONNECT_SERVICE_ENABLED=true

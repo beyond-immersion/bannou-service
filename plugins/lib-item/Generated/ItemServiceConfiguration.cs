@@ -48,10 +48,8 @@ namespace BeyondImmersion.BannouService.Item;
 /// </para>
 /// </remarks>
 [ServiceConfiguration(typeof(ItemService))]
-public class ItemServiceConfiguration : IServiceConfiguration
+public class ItemServiceConfiguration : BaseServiceConfiguration
 {
-    /// <inheritdoc />
-    public Guid? ForceServiceId { get; set; }
 
     /// <summary>
     /// Default max stack size for new templates when not specified

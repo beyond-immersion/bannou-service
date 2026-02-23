@@ -48,10 +48,8 @@ namespace BeyondImmersion.BannouService.Storyline;
 /// </para>
 /// </remarks>
 [ServiceConfiguration(typeof(StorylineService))]
-public class StorylineServiceConfiguration : IServiceConfiguration
+public class StorylineServiceConfiguration : BaseServiceConfiguration
 {
-    /// <inheritdoc />
-    public Guid? ForceServiceId { get; set; }
 
     /// <summary>
     /// TTL in seconds for cached composed plans.

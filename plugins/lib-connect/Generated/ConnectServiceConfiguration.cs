@@ -48,10 +48,8 @@ namespace BeyondImmersion.BannouService.Connect;
 /// </para>
 /// </remarks>
 [ServiceConfiguration(typeof(ConnectService))]
-public class ConnectServiceConfiguration : IServiceConfiguration
+public class ConnectServiceConfiguration : BaseServiceConfiguration
 {
-    /// <inheritdoc />
-    public Guid? ForceServiceId { get; set; }
 
     /// <summary>
     /// Maximum number of concurrent WebSocket connections

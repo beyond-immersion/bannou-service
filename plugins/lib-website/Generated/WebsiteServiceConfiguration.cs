@@ -48,9 +48,7 @@ namespace BeyondImmersion.BannouService.Website;
 /// </para>
 /// </remarks>
 [ServiceConfiguration(typeof(WebsiteService))]
-public class WebsiteServiceConfiguration : IServiceConfiguration
+public class WebsiteServiceConfiguration : BaseServiceConfiguration
 {
-    /// <inheritdoc />
-    public Guid? ForceServiceId { get; set; }
 
 }

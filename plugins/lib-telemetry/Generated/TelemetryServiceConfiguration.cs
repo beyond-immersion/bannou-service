@@ -48,10 +48,8 @@ namespace BeyondImmersion.BannouService.Telemetry;
 /// </para>
 /// </remarks>
 [ServiceConfiguration(typeof(TelemetryService))]
-public class TelemetryServiceConfiguration : IServiceConfiguration
+public class TelemetryServiceConfiguration : BaseServiceConfiguration
 {
-    /// <inheritdoc />
-    public Guid? ForceServiceId { get; set; }
 
     /// <summary>
     /// OTLP exporter endpoint (gRPC or HTTP)

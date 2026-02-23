@@ -48,10 +48,8 @@ namespace BeyondImmersion.BannouService.Resource;
 /// </para>
 /// </remarks>
 [ServiceConfiguration(typeof(ResourceService))]
-public class ResourceServiceConfiguration : IServiceConfiguration
+public class ResourceServiceConfiguration : BaseServiceConfiguration
 {
-    /// <inheritdoc />
-    public Guid? ForceServiceId { get; set; }
 
     /// <summary>
     /// Default grace period in seconds before cleanup eligible (7 days default)

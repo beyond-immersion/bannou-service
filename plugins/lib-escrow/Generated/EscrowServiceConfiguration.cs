@@ -48,10 +48,8 @@ namespace BeyondImmersion.BannouService.Escrow;
 /// </para>
 /// </remarks>
 [ServiceConfiguration(typeof(EscrowService))]
-public class EscrowServiceConfiguration : IServiceConfiguration
+public class EscrowServiceConfiguration : BaseServiceConfiguration
 {
-    /// <inheritdoc />
-    public Guid? ForceServiceId { get; set; }
 
     /// <summary>
     /// Default escrow expiration if not specified (ISO 8601 duration)

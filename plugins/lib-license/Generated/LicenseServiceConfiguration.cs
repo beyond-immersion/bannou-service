@@ -48,10 +48,8 @@ namespace BeyondImmersion.BannouService.License;
 /// </para>
 /// </remarks>
 [ServiceConfiguration(typeof(LicenseService))]
-public class LicenseServiceConfiguration : IServiceConfiguration
+public class LicenseServiceConfiguration : BaseServiceConfiguration
 {
-    /// <inheritdoc />
-    public Guid? ForceServiceId { get; set; }
 
     /// <summary>
     /// Maximum number of active boards a single owner entity can have

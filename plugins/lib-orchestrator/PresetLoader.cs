@@ -165,7 +165,7 @@ public class PresetLoader
                 // Translate layer and service lists to environment variables.
                 // Two modes:
                 // 1. layers: [AppFoundation, GameFoundation] → BANNOU_ENABLE_* env vars per layer
-                // 2. services: [auth, account] (without layers) → SERVICES_ENABLED=false + per-service enables (backward compat)
+                // 2. services: [auth, account] (without layers) → BANNOU_SERVICES_ENABLED=false + per-service enables
                 // Both can be combined: layers set the base, services add individual overrides.
                 if (node.Layers != null && node.Layers.Count > 0)
                 {
@@ -195,10 +195,10 @@ public class PresetLoader
                 // Individual service overrides (works with or without layers)
                 if (node.Services != null && node.Services.Count > 0)
                 {
-                    // When NO layers specified, use legacy SERVICES_ENABLED=false pattern for backward compat
-                    if ((node.Layers == null || node.Layers.Count == 0) && !mergedEnv.ContainsKey("SERVICES_ENABLED"))
+                    // When NO layers specified, use BANNOU_SERVICES_ENABLED=false + per-service enables
+                    if ((node.Layers == null || node.Layers.Count == 0) && !mergedEnv.ContainsKey("BANNOU_SERVICES_ENABLED"))
                     {
-                        mergedEnv["SERVICES_ENABLED"] = "false";
+                        mergedEnv["BANNOU_SERVICES_ENABLED"] = "false";
                     }
 
                     // Enable each individually listed service

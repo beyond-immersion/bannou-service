@@ -1360,7 +1360,7 @@ components:
             Individual services to enable on this node.
             When used with 'layers', these act as overrides for services
             outside the enabled layers.
-            When used without 'layers', uses legacy SERVICES_ENABLED=false
+            When used without 'layers', uses BANNOU_SERVICES_ENABLED=false
             with per-service {SERVICE}_SERVICE_ENABLED=true pattern.
         replicas:
           type: integer

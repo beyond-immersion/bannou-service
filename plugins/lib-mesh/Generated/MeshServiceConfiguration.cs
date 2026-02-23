@@ -48,10 +48,8 @@ namespace BeyondImmersion.BannouService.Mesh;
 /// </para>
 /// </remarks>
 [ServiceConfiguration(typeof(MeshService))]
-public class MeshServiceConfiguration : IServiceConfiguration
+public class MeshServiceConfiguration : BaseServiceConfiguration
 {
-    /// <inheritdoc />
-    public Guid? ForceServiceId { get; set; }
 
     /// <summary>
     /// Explicit mesh node identity override. When set, this value is used as the mesh instance ID instead of generating a random one. Useful for stable node identities in orchestrated deployments. Falls back to --force-service-id CLI argument, then random GUID.

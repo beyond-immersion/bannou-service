@@ -328,7 +328,7 @@ All layers default to **enabled**. To restrict a deployment, set unwanted layers
 **Resolution order** (in PluginLoader.IsServiceEnabled):
 1. Required infrastructure (state, messaging, mesh) → ALWAYS enabled
 2. `{SERVICE}_SERVICE_ENABLED` env var explicitly set → use that value
-3. `SERVICES_ENABLED=false` (master kill switch) → disabled
+3. `BANNOU_SERVICES_ENABLED=false` (master kill switch) → disabled
 4. Layer enabled → use `BANNOU_ENABLE_{LAYER}` setting (all default true)
 
 ```bash
@@ -360,9 +360,9 @@ BANNOU_ENABLE_GAME_FEATURES=false
 ORCHESTRATOR_SERVICE_ENABLED=true    # Individual L3 override
 
 # Infrastructure test - master kill switch with individual override
-SERVICES_ENABLED=false
+BANNOU_SERVICES_ENABLED=false
 TESTING_SERVICE_ENABLED=true
-# Result: Only testing service (backward compatible pattern)
+# Result: Only testing service
 ```
 
 **Enforcement Rules**:

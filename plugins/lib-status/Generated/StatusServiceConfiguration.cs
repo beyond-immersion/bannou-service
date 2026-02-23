@@ -48,10 +48,8 @@ namespace BeyondImmersion.BannouService.Status;
 /// </para>
 /// </remarks>
 [ServiceConfiguration(typeof(StatusService))]
-public class StatusServiceConfiguration : IServiceConfiguration
+public class StatusServiceConfiguration : BaseServiceConfiguration
 {
-    /// <inheritdoc />
-    public Guid? ForceServiceId { get; set; }
 
     /// <summary>
     /// Maximum concurrent active statuses per entity

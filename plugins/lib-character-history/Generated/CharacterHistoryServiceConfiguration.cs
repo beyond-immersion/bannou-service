@@ -48,10 +48,8 @@ namespace BeyondImmersion.BannouService.CharacterHistory;
 /// </para>
 /// </remarks>
 [ServiceConfiguration(typeof(CharacterHistoryService))]
-public class CharacterHistoryServiceConfiguration : IServiceConfiguration
+public class CharacterHistoryServiceConfiguration : BaseServiceConfiguration
 {
-    /// <inheritdoc />
-    public Guid? ForceServiceId { get; set; }
 
     /// <summary>
     /// TTL in seconds for backstory cache entries. Backstory data is nearly immutable, so longer TTLs are appropriate.

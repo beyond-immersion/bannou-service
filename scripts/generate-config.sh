@@ -338,10 +338,8 @@ public enum {enum_type['name']}
 /// </para>
 /// </remarks>
 [ServiceConfiguration(typeof({service_pascal}Service))]
-public class {service_pascal}ServiceConfiguration : IServiceConfiguration
+public class {service_pascal}ServiceConfiguration : BaseServiceConfiguration
 {{
-    /// <inheritdoc />
-    public Guid? ForceServiceId {{ get; set; }}
 ''')
 
     for prop in config_properties:

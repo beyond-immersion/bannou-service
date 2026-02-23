@@ -18,22 +18,22 @@ Each of Bannou's 48 services is compiled into an independent .NET assembly (DLL)
 
 ```bash
 # Development: load everything
-SERVICES_ENABLED=true
+BANNOU_SERVICES_ENABLED=true
 
 # Production node 1: auth cluster
-SERVICES_ENABLED=false
+BANNOU_SERVICES_ENABLED=false
 ACCOUNT_SERVICE_ENABLED=true
 AUTH_SERVICE_ENABLED=true
 
 # Production node 2: game foundation
-SERVICES_ENABLED=false
+BANNOU_SERVICES_ENABLED=false
 CHARACTER_SERVICE_ENABLED=true
 REALM_SERVICE_ENABLED=true
 SPECIES_SERVICE_ENABLED=true
 LOCATION_SERVICE_ENABLED=true
 
 # Production node 3: NPC brains
-SERVICES_ENABLED=false
+BANNOU_SERVICES_ENABLED=false
 ACTOR_SERVICE_ENABLED=true
 BEHAVIOR_SERVICE_ENABLED=true
 ```
@@ -100,7 +100,7 @@ The service code is identical in both cases. The `authClient.ValidateTokenAsync(
 
 ```bash
 # .env file
-SERVICES_ENABLED=true
+BANNOU_SERVICES_ENABLED=true
 REDIS_CONNECTION_STRING=redis:6379
 RABBITMQ_CONNECTION_STRING=amqp://guest:guest@rabbitmq:5672
 ```
@@ -113,7 +113,7 @@ A developer can set breakpoints in any service, trace a request from the WebSock
 
 ```bash
 # Testing specific services
-SERVICES_ENABLED=false
+BANNOU_SERVICES_ENABLED=false
 TESTING_SERVICE_ENABLED=true
 AUTH_SERVICE_ENABLED=true
 ACCOUNT_SERVICE_ENABLED=true
@@ -125,18 +125,18 @@ Only the services needed for the test scenario are loaded. The test binary start
 
 ```bash
 # Auth nodes (multiple instances behind load balancer)
-SERVICES_ENABLED=false
+BANNOU_SERVICES_ENABLED=false
 AUTH_SERVICE_ENABLED=true
 ACCOUNT_SERVICE_ENABLED=true
 
 # Game foundation nodes
-SERVICES_ENABLED=false
+BANNOU_SERVICES_ENABLED=false
 CHARACTER_SERVICE_ENABLED=true
 REALM_SERVICE_ENABLED=true
 # ... etc
 
 # NPC processing pool (auto-scaled)
-SERVICES_ENABLED=false
+BANNOU_SERVICES_ENABLED=false
 ACTOR_SERVICE_ENABLED=true
 ```
 
@@ -174,7 +174,7 @@ In development, the Orchestrator is just another service running in the same pro
 
 ## The Practical Upshot
 
-A game studio evaluating Bannou starts with `SERVICES_ENABLED=true` and a single Docker Compose file. Everything works. As the game grows:
+A game studio evaluating Bannou starts with `BANNOU_SERVICES_ENABLED=true` and a single Docker Compose file. Everything works. As the game grows:
 
 - They move auth to dedicated nodes for security isolation -- change environment variables
 - They scale NPC processing to a worker pool -- configure the Orchestrator

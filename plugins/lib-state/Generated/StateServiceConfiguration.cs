@@ -48,10 +48,8 @@ namespace BeyondImmersion.BannouService.State;
 /// </para>
 /// </remarks>
 [ServiceConfiguration(typeof(StateService))]
-public class StateServiceConfiguration : IServiceConfiguration
+public class StateServiceConfiguration : BaseServiceConfiguration
 {
-    /// <inheritdoc />
-    public Guid? ForceServiceId { get; set; }
 
     /// <summary>
     /// Use in-memory storage instead of Redis/MySQL. Data is NOT persisted. ONLY for testing/minimal infrastructure. Mutually exclusive with UseSqlite.
