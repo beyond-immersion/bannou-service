@@ -851,33 +851,6 @@ public partial class CharacterPerceptionEvent : BaseServiceEvent
 
 }
 
-/// <summary>
-/// Position in world coordinates (meters, Y-up, right-handed)
-/// </summary>
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class Position3D
-{
-
-    /// <summary>
-    /// X coordinate in world space (meters)
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("x")]
-    public float X { get; set; } = default!;
-
-    /// <summary>
-    /// Y coordinate (up axis) in world space (meters)
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("y")]
-    public float Y { get; set; } = default!;
-
-    /// <summary>
-    /// Z coordinate in world space (meters)
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("z")]
-    public float Z { get; set; } = default!;
-
-}
-
 
 
 #pragma warning restore  108

@@ -3,6 +3,7 @@
 > **Plugin**: lib-connect
 > **Schema**: schemas/connect-api.yaml
 > **Version**: 2.0.0
+> **Layer**: AppFoundation
 > **State Store**: connect-statestore (Redis)
 
 ---

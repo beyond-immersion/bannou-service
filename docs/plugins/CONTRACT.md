@@ -3,6 +3,7 @@
 > **Plugin**: lib-contract
 > **Schema**: schemas/contract-api.yaml
 > **Version**: 1.0.0
+> **Layer**: AppFoundation
 > **State Store**: contract-statestore (Redis)
 
 ---
