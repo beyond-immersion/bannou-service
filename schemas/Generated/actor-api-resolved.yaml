@@ -14,13 +14,13 @@ info:
     Edits without stating the applicable rule are FORBIDDEN.
   # Resource reference tracking (see SCHEMA-RULES.md "x-references")
   x-references:
-    - target: character
-      sourceType: actor
-      field: characterId
-      onDelete: cascade
-      cleanup:
-        endpoint: /actor/cleanup-by-character
-        payloadTemplate: '{"characterId": "{{resourceId}}"}'
+  - target: character
+    sourceType: actor
+    field: characterId
+    onDelete: cascade
+    cleanup:
+      endpoint: /actor/cleanup-by-character
+      payloadTemplate: '{"characterId": "{{resourceId}}"}'
 servers:
 - url: http://localhost:5012
 
@@ -1039,7 +1039,7 @@ components:
           description: ID of the entity causing this perception
         sourceType:
           allOf:
-            - $ref: '#/components/schemas/PerceptionSourceType'
+          - $ref: '#/components/schemas/PerceptionSourceType'
           nullable: true
           description: Type of source (character, npc, object, environment, coordinator, scheduled, message)
         data:
@@ -1150,7 +1150,7 @@ components:
           description: Relative direction (north, south, east, west, above, below, etc.)
         position:
           allOf:
-          - $ref: 'common-api.yaml#/components/schemas/Position3D'
+          - $ref: '#/components/schemas/Position3D'
           nullable: true
           description: Optional absolute position
 
@@ -1505,7 +1505,7 @@ components:
             Null for untargeted actions like movement or taunts.
         position:
           allOf:
-          - $ref: 'common-api.yaml#/components/schemas/Position3D'
+          - $ref: '#/components/schemas/Position3D'
           nullable: true
           description: Target position for movement or placement actions
         durationMs:
@@ -1785,3 +1785,27 @@ components:
           description: >-
             Game-specific encounter state data passed to ABML behavior scope.
             No Bannou plugin reads specific keys from this field by convention.
+    Position3D:
+      type: object
+      additionalProperties: false
+      description: Position in world coordinates (meters, Y-up, right-handed)
+      required:
+      - x
+      - y
+      - z
+      properties:
+        x:
+          type: number
+          format: float
+          description: X coordinate in world space (meters)
+        y:
+          type: number
+          format: float
+          description: Y coordinate (up axis) in world space (meters)
+        z:
+          type: number
+          format: float
+          description: Z coordinate in world space (meters)
+
+x-inlined-types:
+- Position3D

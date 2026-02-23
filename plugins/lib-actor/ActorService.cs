@@ -436,7 +436,6 @@ public partial class ActorService : IActorService
 
         return (StatusCodes.OK, new DeleteActorTemplateResponse
         {
-            Deleted = true,
             StoppedActorCount = stoppedCount
         });
     }
@@ -531,14 +530,14 @@ public partial class ActorService : IActorService
         }
 
         // Check for duplicate (local registry - only in bannou mode)
-        if (_configuration.DeploymentMode == DeploymentMode.Bannou && _actorRegistry.TryGet(actorId, out _))
+        if (_configuration.DeploymentMode == ActorDeploymentMode.Bannou && _actorRegistry.TryGet(actorId, out _))
         {
             _logger.LogWarning("Actor {ActorId} already exists", actorId);
             return (StatusCodes.Conflict, null);
         }
 
         // Check pool assignment for non-bannou modes
-        if (_configuration.DeploymentMode != DeploymentMode.Bannou)
+        if (_configuration.DeploymentMode != ActorDeploymentMode.Bannou)
         {
             var existingAssignment = await _poolManager.GetActorAssignmentAsync(actorId, cancellationToken);
             if (existingAssignment != null)
@@ -552,7 +551,7 @@ public partial class ActorService : IActorService
         string nodeAppId;
         DateTimeOffset startedAt = DateTimeOffset.UtcNow;
 
-        if (_configuration.DeploymentMode == DeploymentMode.Bannou)
+        if (_configuration.DeploymentMode == ActorDeploymentMode.Bannou)
         {
             // Bannou mode: run locally
             var runner = _actorRunnerFactory.Create(
@@ -631,9 +630,9 @@ public partial class ActorService : IActorService
             Timestamp = DateTimeOffset.UtcNow,
             ActorId = actorId,
             TemplateId = body.TemplateId,
-            CharacterId = body.CharacterId ?? Guid.Empty,
+            CharacterId = body.CharacterId,
             NodeId = nodeId,
-            Status = _configuration.DeploymentMode == DeploymentMode.Bannou ? ActorStatus.Running : ActorStatus.Pending,
+            Status = _configuration.DeploymentMode == ActorDeploymentMode.Bannou ? ActorStatus.Running : ActorStatus.Pending,
             StartedAt = startedAt
         };
         await _messageBus.TryPublishAsync("actor-instance.created", evt, cancellationToken: cancellationToken);
@@ -656,7 +655,7 @@ public partial class ActorService : IActorService
             RealmId = realmId.Value,
             NodeId = nodeId,
             NodeAppId = nodeAppId,
-            Status = _configuration.DeploymentMode == DeploymentMode.Bannou ? ActorStatus.Running : ActorStatus.Pending,
+            Status = _configuration.DeploymentMode == ActorDeploymentMode.Bannou ? ActorStatus.Running : ActorStatus.Pending,
             StartedAt = startedAt,
             LoopIterations = 0
         });
@@ -688,9 +687,10 @@ public partial class ActorService : IActorService
                 response.RealmId, characterId.Value);
             return response.RealmId;
         }
-        catch (Exception ex)
+        catch (ApiException ex)
         {
-            _logger.LogError(ex, "Error looking up character {CharacterId} for realm resolution", characterId.Value);
+            _logger.LogWarning(ex, "Character service call failed for realm resolution of {CharacterId} with status {Status}",
+                characterId.Value, ex.StatusCode);
             return null;
         }
     }
@@ -713,12 +713,12 @@ public partial class ActorService : IActorService
         if (_actorRegistry.TryGet(body.ActorId, out var runner) && runner != null)
         {
             return (StatusCodes.OK, runner.GetStateSnapshot().ToResponse(
-                nodeId: _configuration.DeploymentMode == DeploymentMode.Bannou ? _configuration.LocalModeNodeId : null,
-                nodeAppId: _configuration.DeploymentMode == DeploymentMode.Bannou ? _configuration.LocalModeAppId : null));
+                nodeId: _configuration.DeploymentMode == ActorDeploymentMode.Bannou ? _configuration.LocalModeNodeId : null,
+                nodeAppId: _configuration.DeploymentMode == ActorDeploymentMode.Bannou ? _configuration.LocalModeAppId : null));
         }
 
         // In pool mode, check if actor is assigned to a pool node
-        if (_configuration.DeploymentMode != DeploymentMode.Bannou)
+        if (_configuration.DeploymentMode != ActorDeploymentMode.Bannou)
         {
             var assignment = await _poolManager.GetActorAssignmentAsync(body.ActorId, cancellationToken);
             if (assignment != null)
@@ -870,7 +870,7 @@ public partial class ActorService : IActorService
                 var currentCount = _actorRegistry.GetByTemplateId(template.TemplateId).Count();
 
                 // In pool mode, also count assigned actors
-                if (_configuration.DeploymentMode != DeploymentMode.Bannou)
+                if (_configuration.DeploymentMode != ActorDeploymentMode.Bannou)
                 {
                     var assignments = await _poolManager.GetAssignmentsByTemplateAsync(
                         template.TemplateId.ToString(), cancellationToken);
@@ -902,7 +902,7 @@ public partial class ActorService : IActorService
     {
         _logger.LogInformation("Stopping actor {ActorId} (graceful: {Graceful})", body.ActorId, body.Graceful);
 
-        if (_configuration.DeploymentMode == DeploymentMode.Bannou)
+        if (_configuration.DeploymentMode == ActorDeploymentMode.Bannou)
         {
             // Bannou mode: stop locally
             if (!_actorRegistry.TryGet(body.ActorId, out var runner) || runner == null)
@@ -928,7 +928,7 @@ public partial class ActorService : IActorService
                 Timestamp = DateTimeOffset.UtcNow,
                 ActorId = body.ActorId,
                 TemplateId = runner.TemplateId,
-                CharacterId = runner.CharacterId ?? Guid.Empty,
+                CharacterId = runner.CharacterId,
                 NodeId = _configuration.LocalModeNodeId,
                 Status = runner.Status,
                 StartedAt = runner.StartedAt,
@@ -942,7 +942,6 @@ public partial class ActorService : IActorService
 
             return (StatusCodes.OK, new StopActorResponse
             {
-                Stopped = true,
                 FinalStatus = runner.Status
             });
         }
@@ -979,7 +978,6 @@ public partial class ActorService : IActorService
 
             return (StatusCodes.OK, new StopActorResponse
             {
-                Stopped = true,
                 FinalStatus = ActorStatus.Stopping
             });
         }
@@ -996,7 +994,7 @@ public partial class ActorService : IActorService
     {
         _logger.LogInformation("Binding actor {ActorId} to character {CharacterId}", body.ActorId, body.CharacterId);
 
-        if (_configuration.DeploymentMode == DeploymentMode.Bannou)
+        if (_configuration.DeploymentMode == ActorDeploymentMode.Bannou)
         {
             // Bannou mode: bind locally
             if (!_actorRegistry.TryGet(body.ActorId, out var runner) || runner == null)
@@ -1026,7 +1024,7 @@ public partial class ActorService : IActorService
                 CharacterId = runner.CharacterId,
                 RealmId = runner.RealmId,
                 NodeId = _configuration.LocalModeNodeId,
-                NodeAppId = _configuration.PoolNodeAppId ?? "bannou",
+                NodeAppId = _configuration.PoolNodeAppId ?? _configuration.LocalModeAppId,
                 Status = runner.Status,
                 StartedAt = runner.StartedAt,
                 LoopIterations = runner.LoopIterations
@@ -1099,7 +1097,7 @@ public partial class ActorService : IActorService
 
         var cleanedUpActorIds = new List<string>();
 
-        if (_configuration.DeploymentMode == DeploymentMode.Bannou)
+        if (_configuration.DeploymentMode == ActorDeploymentMode.Bannou)
         {
             // Bannou mode: find and stop all local actors with this character
             var actorsToStop = _actorRegistry.GetAllRunners()
@@ -1160,8 +1158,7 @@ public partial class ActorService : IActorService
         return (StatusCodes.OK, new CleanupByCharacterResponse
         {
             ActorsCleanedUp = cleanedUpActorIds.Count,
-            ActorIds = cleanedUpActorIds,
-            Success = true
+            ActorIds = cleanedUpActorIds
         });
     }
 
@@ -1176,7 +1173,7 @@ public partial class ActorService : IActorService
             body.Category, body.NodeId, body.Status);
 
         // In pool mode with nodeId filter, query pool assignments directly
-        if (_configuration.DeploymentMode != DeploymentMode.Bannou && !string.IsNullOrWhiteSpace(body.NodeId))
+        if (_configuration.DeploymentMode != ActorDeploymentMode.Bannou && !string.IsNullOrWhiteSpace(body.NodeId))
         {
             return await ListActorsFromPoolAsync(body, cancellationToken);
         }
@@ -1219,8 +1216,8 @@ public partial class ActorService : IActorService
             .Skip(body.Offset)
             .Take(body.Limit)
             .Select(r => r.GetStateSnapshot().ToResponse(
-                nodeId: _configuration.DeploymentMode == DeploymentMode.Bannou ? _configuration.LocalModeNodeId : null,
-                nodeAppId: _configuration.DeploymentMode == DeploymentMode.Bannou ? _configuration.LocalModeAppId : null))
+                nodeId: _configuration.DeploymentMode == ActorDeploymentMode.Bannou ? _configuration.LocalModeNodeId : null,
+                nodeAppId: _configuration.DeploymentMode == ActorDeploymentMode.Bannou ? _configuration.LocalModeAppId : null))
             .ToList();
 
         return (StatusCodes.OK, new ListActorsResponse
@@ -1293,7 +1290,7 @@ public partial class ActorService : IActorService
     /// <summary>
     /// Injects a perception into an actor's perception queue for testing.
     /// </summary>
-    public Task<(StatusCodes, InjectPerceptionResponse?)> InjectPerceptionAsync(
+    public async Task<(StatusCodes, InjectPerceptionResponse?)> InjectPerceptionAsync(
         InjectPerceptionRequest body,
         CancellationToken cancellationToken)
     {
@@ -1301,18 +1298,18 @@ public partial class ActorService : IActorService
 
         if (!_actorRegistry.TryGet(body.ActorId, out var runner) || runner == null)
         {
-            return Task.FromResult<(StatusCodes, InjectPerceptionResponse?)>((StatusCodes.NotFound, null));
+            return (StatusCodes.NotFound, null);
         }
 
         var queued = runner.InjectPerception(body.Perception);
 
         _logger.LogDebug("Perception injected into actor {ActorId} (queued: {Queued})", body.ActorId, queued);
 
-        return Task.FromResult<(StatusCodes, InjectPerceptionResponse?)>((StatusCodes.OK, new InjectPerceptionResponse
+        await Task.CompletedTask;
+        return (StatusCodes.OK, new InjectPerceptionResponse
         {
-            Queued = queued,
             QueueDepth = runner.PerceptionQueueDepth
-        }));
+        });
     }
 
     #endregion
@@ -1337,7 +1334,7 @@ public partial class ActorService : IActorService
         if (!_actorRegistry.TryGet(body.ActorId, out var runner) || runner == null)
         {
             // In pool mode, actor might be on another node
-            if (_configuration.DeploymentMode != DeploymentMode.Bannou)
+            if (_configuration.DeploymentMode != ActorDeploymentMode.Bannou)
             {
                 var assignment = await _poolManager.GetActorAssignmentAsync(body.ActorId, cancellationToken);
                 if (assignment != null)
@@ -1532,7 +1529,7 @@ public partial class ActorService : IActorService
     /// <summary>
     /// Starts an encounter managed by an Event Brain actor.
     /// </summary>
-    public async Task<StatusCodes> StartEncounterAsync(
+    public async Task<(StatusCodes, StartEncounterResponse?)> StartEncounterAsync(
         StartEncounterRequest body,
         CancellationToken cancellationToken)
     {
@@ -1544,19 +1541,19 @@ public partial class ActorService : IActorService
         // If actor is on a remote node, forward the request
         if (remoteNodeId != null)
         {
-            await InvokeRemoteNoResponseAsync(
+            var remoteResponse = await InvokeRemoteAsync<StartEncounterRequest, StartEncounterResponse>(
                 remoteNodeId,
                 "actor/encounter/start",
                 body,
                 cancellationToken);
-            return StatusCodes.OK;
+            return (StatusCodes.OK, remoteResponse);
         }
 
         // Actor not found anywhere
         if (localRunner == null)
         {
             _logger.LogDebug("Actor {ActorId} not found for encounter start", body.ActorId);
-            return StatusCodes.NotFound;
+            return (StatusCodes.NotFound, null);
         }
 
         var runner = localRunner;
@@ -1587,13 +1584,22 @@ public partial class ActorService : IActorService
         if (!success)
         {
             _logger.LogDebug("Actor {ActorId} already has an active encounter", body.ActorId);
-            return StatusCodes.Conflict;
+            return (StatusCodes.Conflict, null);
         }
 
         _logger.LogInformation("Started encounter {EncounterId} on actor {ActorId} with {Count} participants",
             body.EncounterId, body.ActorId, body.Participants.Count);
 
-        return StatusCodes.OK;
+        var response = new StartEncounterResponse
+        {
+            ActorId = body.ActorId,
+            EncounterId = body.EncounterId,
+            EncounterType = body.EncounterType,
+            ParticipantCount = body.Participants.Count,
+            StartedAt = DateTimeOffset.UtcNow
+        };
+
+        return (StatusCodes.OK, response);
     }
 
     /// <summary>
@@ -1754,7 +1760,6 @@ public partial class ActorService : IActorService
             return (StatusCodes.OK, new GetEncounterResponse
             {
                 ActorId = body.ActorId,
-                HasActiveEncounter = false,
                 Encounter = null
             });
         }
@@ -1762,7 +1767,6 @@ public partial class ActorService : IActorService
         return (StatusCodes.OK, new GetEncounterResponse
         {
             ActorId = body.ActorId,
-            HasActiveEncounter = true,
             Encounter = new EncounterState
             {
                 EncounterId = encounterData.EncounterId,

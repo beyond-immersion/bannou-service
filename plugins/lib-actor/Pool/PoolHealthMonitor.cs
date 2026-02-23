@@ -57,7 +57,7 @@ public sealed class PoolHealthMonitor : BackgroundService
     {
         // Only run in control plane mode (non-bannou deployment)
         // Pool nodes don't need to monitor other nodes - the control plane does
-        if (_configuration.DeploymentMode == DeploymentMode.Bannou)
+        if (_configuration.DeploymentMode == ActorDeploymentMode.Bannou)
         {
             _logger.LogDebug("Pool health monitor disabled in bannou mode (local actors only)");
             return;

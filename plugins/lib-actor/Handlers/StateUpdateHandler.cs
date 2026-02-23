@@ -57,7 +57,7 @@ public sealed class StateUpdateHandler : IActionHandler
         => action is DomainAction da && da.Name == ACTION_NAME;
 
     /// <inheritdoc/>
-    public ValueTask<ActionResult> ExecuteAsync(
+    public async ValueTask<ActionResult> ExecuteAsync(
         ActionNode action,
         AbmlExecutionContext context,
         CancellationToken ct)
@@ -82,7 +82,8 @@ public sealed class StateUpdateHandler : IActionHandler
         // Execute the update
         ExecuteUpdate(scope, path, operation, value);
 
-        return ValueTask.FromResult(ActionResult.Continue);
+        await Task.CompletedTask;
+        return ActionResult.Continue;
     }
 
     /// <summary>

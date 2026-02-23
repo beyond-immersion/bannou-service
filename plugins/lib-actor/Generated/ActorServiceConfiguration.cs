@@ -32,20 +32,6 @@ using BeyondImmersion.BannouService.Configuration;
 
 namespace BeyondImmersion.BannouService.Actor;
 
-
-#pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
-/// <summary>
-/// Actor deployment mode: bannou (local dev), pool-per-type, shared-pool, or auto-scale
-/// </summary>
-public enum DeploymentMode
-{
-    Bannou,
-    PoolPerType,
-    SharedPool,
-    AutoScale,
-}
-#pragma warning restore CS1591
-
 /// <summary>
 /// Configuration class for Actor service.
 /// Properties are automatically bound from environment variables.
@@ -71,7 +57,7 @@ public class ActorServiceConfiguration : IServiceConfiguration
     /// Actor deployment mode: bannou (local dev), pool-per-type, shared-pool, or auto-scale
     /// Environment variable: ACTOR_DEPLOYMENT_MODE
     /// </summary>
-    public DeploymentMode DeploymentMode { get; set; } = DeploymentMode.Bannou;
+    public ActorDeploymentMode DeploymentMode { get; set; } = ActorDeploymentMode.Bannou;
 
     /// <summary>
     /// If set, this instance runs as a pool node (not control plane). Unique identifier for this node.
@@ -95,6 +81,7 @@ public class ActorServiceConfiguration : IServiceConfiguration
     /// Maximum actors this pool node can run. Overrides DefaultActorsPerNode when set.
     /// Environment variable: ACTOR_POOL_NODE_CAPACITY
     /// </summary>
+    [ConfigRange(Minimum = 1)]
     public int PoolNodeCapacity { get; set; } = 100;
 
     /// <summary>
@@ -107,66 +94,77 @@ public class ActorServiceConfiguration : IServiceConfiguration
     /// Minimum pool nodes to maintain (auto-scale mode)
     /// Environment variable: ACTOR_MIN_POOL_NODES
     /// </summary>
+    [ConfigRange(Minimum = 0)]
     public int MinPoolNodes { get; set; } = 1;
 
     /// <summary>
     /// Maximum pool nodes allowed (auto-scale mode)
     /// Environment variable: ACTOR_MAX_POOL_NODES
     /// </summary>
+    [ConfigRange(Minimum = 1)]
     public int MaxPoolNodes { get; set; } = 10;
 
     /// <summary>
     /// Default capacity per pool node
     /// Environment variable: ACTOR_DEFAULT_ACTORS_PER_NODE
     /// </summary>
+    [ConfigRange(Minimum = 1)]
     public int DefaultActorsPerNode { get; set; } = 100;
 
     /// <summary>
-    /// Pool node heartbeat frequency
+    /// Pool node heartbeat frequency in seconds
     /// Environment variable: ACTOR_HEARTBEAT_INTERVAL_SECONDS
     /// </summary>
+    [ConfigRange(Minimum = 1)]
     public int HeartbeatIntervalSeconds { get; set; } = 10;
 
     /// <summary>
     /// Mark node unhealthy after this many seconds without heartbeat
     /// Environment variable: ACTOR_HEARTBEAT_TIMEOUT_SECONDS
     /// </summary>
+    [ConfigRange(Minimum = 1)]
     public int HeartbeatTimeoutSeconds { get; set; } = 30;
 
     /// <summary>
     /// Default behavior loop interval in milliseconds
     /// Environment variable: ACTOR_DEFAULT_TICK_INTERVAL_MS
     /// </summary>
+    [ConfigRange(Minimum = 1)]
     public int DefaultTickIntervalMs { get; set; } = 100;
 
     /// <summary>
-    /// Default interval for periodic state saves (0 to disable)
+    /// Default interval in seconds for periodic state saves
     /// Environment variable: ACTOR_DEFAULT_AUTOSAVE_INTERVAL_SECONDS
     /// </summary>
+    [ConfigRange(Minimum = 1)]
     public int DefaultAutoSaveIntervalSeconds { get; set; } = 60;
 
     /// <summary>
     /// Max perceptions queued per actor before dropping oldest
     /// Environment variable: ACTOR_PERCEPTION_QUEUE_SIZE
     /// </summary>
+    [ConfigRange(Minimum = 1)]
     public int PerceptionQueueSize { get; set; } = 100;
 
     /// <summary>
     /// Threshold for triggering GOAP replanning when goal relevance drops below this value
     /// Environment variable: ACTOR_GOAP_REPLAN_THRESHOLD
     /// </summary>
+    [ConfigRange(Minimum = 0, Maximum = 1)]
     public double GoapReplanThreshold { get; set; } = 0.3;
 
     /// <summary>
     /// Maximum depth for GOAP planning search
     /// Environment variable: ACTOR_GOAP_MAX_PLAN_DEPTH
     /// </summary>
+    [ConfigRange(Minimum = 1)]
     public int GoapMaxPlanDepth { get; set; } = 10;
 
     /// <summary>
     /// Maximum time allowed for GOAP planning in milliseconds
     /// Environment variable: ACTOR_GOAP_PLAN_TIMEOUT_MS
     /// </summary>
+    [ConfigRange(Minimum = 1)]
     public int GoapPlanTimeoutMs { get; set; } = 50;
 
     /// <summary>
@@ -185,90 +183,105 @@ public class ActorServiceConfiguration : IServiceConfiguration
     /// Minimum urgency for perception to be processed (0.0-1.0)
     /// Environment variable: ACTOR_PERCEPTION_FILTER_THRESHOLD
     /// </summary>
+    [ConfigRange(Minimum = 0, Maximum = 1)]
     public double PerceptionFilterThreshold { get; set; } = 0.1;
 
     /// <summary>
     /// Minimum urgency for perception to become a memory (0.0-1.0)
     /// Environment variable: ACTOR_PERCEPTION_MEMORY_THRESHOLD
     /// </summary>
+    [ConfigRange(Minimum = 0, Maximum = 1)]
     public double PerceptionMemoryThreshold { get; set; } = 0.7;
 
     /// <summary>
     /// Expiration time in minutes for short-term memories from high-urgency perceptions
     /// Environment variable: ACTOR_SHORT_TERM_MEMORY_MINUTES
     /// </summary>
+    [ConfigRange(Minimum = 1)]
     public int ShortTermMemoryMinutes { get; set; } = 5;
 
     /// <summary>
     /// Default expiration time in minutes for actor memories
     /// Environment variable: ACTOR_DEFAULT_MEMORY_EXPIRATION_MINUTES
     /// </summary>
+    [ConfigRange(Minimum = 1)]
     public int DefaultMemoryExpirationMinutes { get; set; } = 60;
 
     /// <summary>
     /// Delay in seconds before pool health monitor starts checking (allows initial registrations)
     /// Environment variable: ACTOR_POOL_HEALTH_MONITOR_STARTUP_DELAY_SECONDS
     /// </summary>
+    [ConfigRange(Minimum = 0)]
     public int PoolHealthMonitorStartupDelaySeconds { get; set; } = 5;
 
     /// <summary>
     /// Interval in seconds between pool health check operations
     /// Environment variable: ACTOR_POOL_HEALTH_CHECK_INTERVAL_SECONDS
     /// </summary>
+    [ConfigRange(Minimum = 1)]
     public int PoolHealthCheckIntervalSeconds { get; set; } = 15;
 
     /// <summary>
     /// Interval in milliseconds for checking scheduled events
     /// Environment variable: ACTOR_SCHEDULED_EVENT_CHECK_INTERVAL_MS
     /// </summary>
+    [ConfigRange(Minimum = 1)]
     public int ScheduledEventCheckIntervalMilliseconds { get; set; } = 100;
 
     /// <summary>
     /// Timeout in seconds for individual actor operations
     /// Environment variable: ACTOR_OPERATION_TIMEOUT_SECONDS
     /// </summary>
+    [ConfigRange(Minimum = 1)]
     public int ActorOperationTimeoutSeconds { get; set; } = 5;
 
     /// <summary>
     /// Timeout in seconds for graceful actor stop operations
     /// Environment variable: ACTOR_STOP_TIMEOUT_SECONDS
     /// </summary>
+    [ConfigRange(Minimum = 1)]
     public int ActorStopTimeoutSeconds { get; set; } = 5;
 
     /// <summary>
     /// Delay in milliseconds before retrying after behavior loop error
     /// Environment variable: ACTOR_ERROR_RETRY_DELAY_MS
     /// </summary>
+    [ConfigRange(Minimum = 0)]
     public int ErrorRetryDelayMs { get; set; } = 1000;
 
     /// <summary>
     /// Base delay in milliseconds between state persistence retry attempts (multiplied by attempt number)
     /// Environment variable: ACTOR_STATE_PERSISTENCE_RETRY_DELAY_MS
     /// </summary>
+    [ConfigRange(Minimum = 0)]
     public int StatePersistenceRetryDelayMs { get; set; } = 50;
 
     /// <summary>
     /// Default urgency value for scheduled event perceptions (0.0-1.0)
     /// Environment variable: ACTOR_SCHEDULED_EVENT_DEFAULT_URGENCY
     /// </summary>
+    [ConfigRange(Minimum = 0, Maximum = 1)]
     public double ScheduledEventDefaultUrgency { get; set; } = 0.7;
 
     /// <summary>
     /// Default urgency for Event Brain instruction perceptions (0.0-1.0)
     /// Environment variable: ACTOR_EVENT_BRAIN_DEFAULT_URGENCY
     /// </summary>
+    [ConfigRange(Minimum = 0, Maximum = 1)]
     public double EventBrainDefaultUrgency { get; set; } = 0.8;
 
     /// <summary>
     /// Default max age in milliseconds for cached query options
     /// Environment variable: ACTOR_QUERY_OPTIONS_DEFAULT_MAX_AGE_MS
     /// </summary>
+    [ConfigRange(Minimum = 0)]
     public int QueryOptionsDefaultMaxAgeMs { get; set; } = 5000;
 
     /// <summary>
     /// Maximum retry attempts for memory store operations
     /// Environment variable: ACTOR_MEMORY_STORE_MAX_RETRIES
     /// </summary>
+    [ConfigRange(Minimum = 0)]
     public int MemoryStoreMaxRetries { get; set; } = 3;
 
 }

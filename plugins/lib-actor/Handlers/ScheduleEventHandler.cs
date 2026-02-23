@@ -69,7 +69,7 @@ public sealed class ScheduleEventHandler : IActionHandler
         => action is DomainAction da && da.Name == ACTION_NAME;
 
     /// <inheritdoc/>
-    public ValueTask<ActionResult> ExecuteAsync(
+    public async ValueTask<ActionResult> ExecuteAsync(
         ActionNode action,
         AbmlExecutionContext context,
         CancellationToken ct)
@@ -152,7 +152,8 @@ public sealed class ScheduleEventHandler : IActionHandler
         _logger.LogDebug("Scheduled event {EventType} for character {TargetCharacterId} from actor {ActorId} in {DelayMs}ms",
             eventType, targetCharacterId?.ToString() ?? "(self)", actorId, delayMs);
 
-        return ValueTask.FromResult(ActionResult.Continue);
+        await Task.CompletedTask;
+        return ActionResult.Continue;
     }
 
     private static Dictionary<string, object?> ConvertToDictionary(object? data)
@@ -331,7 +332,7 @@ public sealed class ScheduledEventManager : IScheduledEventManager, IDisposable
                 EventId = Guid.NewGuid(),
                 Timestamp = DateTimeOffset.UtcNow,
                 CharacterId = evt.TargetCharacterId.Value,
-                SourceAppId = "bannou", // Scheduled events come from Bannou
+                SourceAppId = _config.LocalModeAppId, // Scheduled events come from Bannou per IMPLEMENTATION TENETS (no hardcoded tunables)
                 Perception = new PerceptionData
                 {
                     PerceptionType = evt.EventType,

@@ -290,7 +290,9 @@ Tenets are organized into categories based on when they're needed:
 | Defined cache store not used | T21 | Implement cache read-through or remove store |
 | Secondary fallback for defaulted config property | T21 | Remove fallback; if null, throw (infrastructure failure) |
 | Non-async Task-returning method | T23 | Add `async` keyword and `await Task.CompletedTask` if no other await exists |
+| Non-async ValueTask-returning method | T23 | Add `async` keyword; return value directly instead of `ValueTask.FromResult` |
 | `Task.FromResult` without async | T23 | Use `async` method with `await Task.CompletedTask` |
+| `ValueTask.FromResult` without async | T23 | Use `async` method with `await Task.CompletedTask` |
 | `.Result` or `.Wait()` on Task | T23 | Use await instead |
 | Manual `.Dispose()` in method scope | T24 | Use `using` statement instead |
 | try/finally for disposal | T24 | Use `using` statement instead |

@@ -59,14 +59,15 @@ public sealed class FallbackBehaviorProvider : IBehaviorDocumentProvider
     /// provider exists to log when no other provider can serve a behavior, enabling
     /// operators to diagnose missing behavior configurations.
     /// </remarks>
-    public Task<AbmlDocument?> GetDocumentAsync(string behaviorRef, CancellationToken ct)
+    public async Task<AbmlDocument?> GetDocumentAsync(string behaviorRef, CancellationToken ct)
     {
         _logger.LogWarning(
             "No provider could load behavior {BehaviorRef}. " +
             "Ensure the behavior exists in asset storage or is registered as a seeded behavior.",
             behaviorRef);
 
-        return Task.FromResult<AbmlDocument?>(null);
+        await Task.CompletedTask;
+        return null;
     }
 
     /// <inheritdoc />

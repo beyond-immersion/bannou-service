@@ -99,7 +99,7 @@ public sealed class SeededBehaviorProvider : IBehaviorDocumentProvider
     }
 
     /// <inheritdoc />
-    public Task<AbmlDocument?> GetDocumentAsync(string behaviorRef, CancellationToken ct)
+    public async Task<AbmlDocument?> GetDocumentAsync(string behaviorRef, CancellationToken ct)
     {
         var identifier = ExtractIdentifier(behaviorRef);
 
@@ -107,7 +107,7 @@ public sealed class SeededBehaviorProvider : IBehaviorDocumentProvider
         if (_cache.TryGetValue(identifier, out var cached))
         {
             _logger.LogDebug("Seeded behavior cache hit: {Identifier}", identifier);
-            return Task.FromResult<AbmlDocument?>(cached);
+            return cached;
         }
 
         // Load from embedded resource
@@ -118,12 +118,12 @@ public sealed class SeededBehaviorProvider : IBehaviorDocumentProvider
         if (stream == null)
         {
             _logger.LogDebug("No embedded resource found for seeded behavior {Identifier}", identifier);
-            return Task.FromResult<AbmlDocument?>(null);
+            return null;
         }
 
         // Read and parse YAML
         using var reader = new StreamReader(stream, Encoding.UTF8);
-        var yaml = reader.ReadToEnd();
+        var yaml = await reader.ReadToEndAsync(ct);
 
         var result = _parser.Parse(yaml);
         if (!result.IsSuccess || result.Value == null)
@@ -132,14 +132,14 @@ public sealed class SeededBehaviorProvider : IBehaviorDocumentProvider
                 "Failed to parse seeded behavior {Identifier}: {Errors}",
                 identifier,
                 string.Join(", ", result.Errors.Select(e => e.Message)));
-            return Task.FromResult<AbmlDocument?>(null);
+            return null;
         }
 
         // Cache the parsed document
         _cache.TryAdd(identifier, result.Value);
         _logger.LogDebug("Loaded seeded behavior {Identifier}", identifier);
 
-        return Task.FromResult<AbmlDocument?>(result.Value);
+        return result.Value;
     }
 
     /// <inheritdoc />

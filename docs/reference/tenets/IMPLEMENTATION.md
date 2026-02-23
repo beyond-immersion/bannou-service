@@ -456,7 +456,7 @@ Environment.GetEnvironmentVariable("...");  // Use config class
 
 ## Tenet 23: Async Method Pattern (MANDATORY)
 
-**Rule**: All methods returning `Task` or `Task<T>` MUST use `async` and contain at least one `await`. Non-async Task-returning methods have different exception handling, incomplete stack traces, and broken `using` semantics.
+**Rule**: All methods returning `Task`, `Task<T>`, `ValueTask`, or `ValueTask<T>` MUST use `async` and contain at least one `await`. Non-async methods returning these types have different exception handling (synchronous throw vs captured in task), incomplete stack traces, and broken `using` semantics. This applies equally to `ValueTask` variants — `ValueTask.FromResult` in a non-async method has the same problems as `Task.FromResult`.
 
 ```csharp
 // CORRECT
@@ -471,6 +471,23 @@ public Task<AccountResponse> GetAccountAsync(Guid accountId)
 {
     var account = _stateStore.GetAsync($"account:{accountId}").Result; // BLOCKS!
     return Task.FromResult(MapToResponse(account));
+}
+
+// WRONG: Exceptions thrown before the return propagate synchronously
+public ValueTask<ActionResult> ExecuteAsync(ActionNode action, CancellationToken ct)
+{
+    var param = GetParam(action) ?? throw new InvalidOperationException("missing"); // Synchronous throw!
+    DoWork(param);
+    return ValueTask.FromResult(ActionResult.Continue);
+}
+
+// CORRECT: async ensures exceptions are captured in the ValueTask
+public async ValueTask<ActionResult> ExecuteAsync(ActionNode action, CancellationToken ct)
+{
+    var param = GetParam(action) ?? throw new InvalidOperationException("missing"); // Captured in ValueTask
+    DoWork(param);
+    await Task.CompletedTask;
+    return ActionResult.Continue;
 }
 ```
 

@@ -124,7 +124,7 @@ public sealed class EmitPerceptionHandler : IActionHandler
             EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,
             CharacterId = targetCharacterId,
-            SourceAppId = "bannou", // Event Brain runs within Bannou
+            SourceAppId = _config.LocalModeAppId, // Event Brain runs within Bannou per IMPLEMENTATION TENETS (no hardcoded tunables)
             Perception = new PerceptionData
             {
                 PerceptionType = perceptionType,

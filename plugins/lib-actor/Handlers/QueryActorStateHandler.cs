@@ -57,7 +57,7 @@ public sealed class QueryActorStateHandler : IActionHandler
         => action is DomainAction da && da.Name == ACTION_NAME;
 
     /// <inheritdoc/>
-    public ValueTask<ActionResult> ExecuteAsync(
+    public async ValueTask<ActionResult> ExecuteAsync(
         ActionNode action,
         AbmlExecutionContext context,
         CancellationToken ct)
@@ -100,7 +100,8 @@ public sealed class QueryActorStateHandler : IActionHandler
         {
             _logger.LogWarning("Actor {ActorId} not found in local registry", actorId);
             scope.SetValue(resultVariable, null);
-            return ValueTask.FromResult(ActionResult.Continue);
+            await Task.CompletedTask;
+            return ActionResult.Continue;
         }
 
         // Get state snapshot
@@ -134,7 +135,8 @@ public sealed class QueryActorStateHandler : IActionHandler
 
         _logger.LogDebug("Retrieved state for actor {ActorId}", actorId);
 
-        return ValueTask.FromResult(ActionResult.Continue);
+        await Task.CompletedTask;
+        return ActionResult.Continue;
     }
 
     /// <summary>

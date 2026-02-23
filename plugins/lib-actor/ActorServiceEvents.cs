@@ -79,7 +79,7 @@ public partial class ActorService
     /// <param name="evt">The registration event.</param>
     public async Task HandlePoolNodeRegisteredAsync(PoolNodeRegisteredEvent evt)
     {
-        if (_configuration.DeploymentMode == DeploymentMode.Bannou)
+        if (_configuration.DeploymentMode == ActorDeploymentMode.Bannou)
         {
             _logger.LogDebug("Ignoring pool-node.registered event (not in control plane mode)");
             return;
@@ -117,7 +117,7 @@ public partial class ActorService
     /// <param name="evt">The heartbeat event.</param>
     public async Task HandlePoolNodeHeartbeatAsync(PoolNodeHeartbeatEvent evt)
     {
-        if (_configuration.DeploymentMode == DeploymentMode.Bannou)
+        if (_configuration.DeploymentMode == ActorDeploymentMode.Bannou)
         {
             _logger.LogDebug("Ignoring pool-node.heartbeat event (not in control plane mode)");
             return;
@@ -151,7 +151,7 @@ public partial class ActorService
     /// <param name="evt">The draining event.</param>
     public async Task HandlePoolNodeDrainingAsync(PoolNodeDrainingEvent evt)
     {
-        if (_configuration.DeploymentMode == DeploymentMode.Bannou)
+        if (_configuration.DeploymentMode == ActorDeploymentMode.Bannou)
         {
             _logger.LogDebug("Ignoring pool-node.draining event (not in control plane mode)");
             return;
@@ -185,7 +185,7 @@ public partial class ActorService
     /// <param name="evt">The status changed event.</param>
     public async Task HandleActorStatusChangedAsync(ActorStatusChangedEvent evt)
     {
-        if (_configuration.DeploymentMode == DeploymentMode.Bannou)
+        if (_configuration.DeploymentMode == ActorDeploymentMode.Bannou)
         {
             _logger.LogDebug("Ignoring actor.instance.status-changed event (not in control plane mode)");
             return;
@@ -219,7 +219,7 @@ public partial class ActorService
     /// <param name="evt">The completed event.</param>
     public async Task HandleActorCompletedAsync(ActorCompletedEvent evt)
     {
-        if (_configuration.DeploymentMode == DeploymentMode.Bannou)
+        if (_configuration.DeploymentMode == ActorDeploymentMode.Bannou)
         {
             _logger.LogDebug("Ignoring actor.instance.completed event (not in control plane mode)");
             return;

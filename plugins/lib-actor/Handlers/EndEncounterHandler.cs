@@ -54,7 +54,7 @@ public sealed class EndEncounterHandler : IActionHandler
         => action is DomainAction da && da.Name == ACTION_NAME;
 
     /// <inheritdoc/>
-    public ValueTask<ActionResult> ExecuteAsync(
+    public async ValueTask<ActionResult> ExecuteAsync(
         ActionNode action,
         AbmlExecutionContext context,
         CancellationToken ct)
@@ -74,7 +74,7 @@ public sealed class EndEncounterHandler : IActionHandler
         {
             _logger.LogWarning("Cannot end encounter: actor ID not found in scope");
             SetResult(scope, resultVariable, false);
-            return ValueTask.FromResult(ActionResult.Continue);
+            return ActionResult.Continue;
         }
 
         // Find actor in local registry
@@ -82,7 +82,7 @@ public sealed class EndEncounterHandler : IActionHandler
         {
             _logger.LogWarning("Cannot end encounter: actor {ActorId} not found in registry", actorId);
             SetResult(scope, resultVariable, false);
-            return ValueTask.FromResult(ActionResult.Continue);
+            return ActionResult.Continue;
         }
 
         // End the encounter
@@ -98,7 +98,8 @@ public sealed class EndEncounterHandler : IActionHandler
         }
 
         SetResult(scope, resultVariable, success);
-        return ValueTask.FromResult(ActionResult.Continue);
+        await Task.CompletedTask;
+        return ActionResult.Continue;
     }
 
     /// <summary>

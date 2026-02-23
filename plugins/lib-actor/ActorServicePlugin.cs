@@ -29,7 +29,6 @@ public class ActorServicePlugin : BaseBannouPlugin
     /// <inheritdoc/>
     public override string DisplayName => "Actor Service";
 
-    private IActorService? _service;
     private IServiceProvider? _serviceProvider;
 
     /// <summary>
@@ -146,14 +145,14 @@ public class ActorServicePlugin : BaseBannouPlugin
 
         try
         {
-            // Get service instance from DI container with proper scope handling
-            // Note: CreateScope() is required for Scoped services to avoid "Cannot resolve scoped service from root provider" error
+            // Resolve scoped service within a scope — do NOT store the reference beyond scope lifetime.
+            // IActorService is Scoped; storing it in a field causes use-after-dispose.
             var serviceProvider = _serviceProvider ?? throw new InvalidOperationException("ServiceProvider not available during OnStartAsync");
             using var scope = serviceProvider.CreateScope();
-            _service = scope.ServiceProvider.GetRequiredService<IActorService>();
+            var service = scope.ServiceProvider.GetRequiredService<IActorService>();
 
             // Call existing IBannouService.OnStartAsync if the service implements it
-            if (_service is IBannouService bannouService)
+            if (service is IBannouService bannouService)
             {
                 Logger?.LogDebug("Calling IBannouService.OnStartAsync for Actor service");
                 await bannouService.OnStartAsync(CancellationToken.None);
@@ -175,16 +174,18 @@ public class ActorServicePlugin : BaseBannouPlugin
     /// </summary>
     protected override async Task OnRunningAsync()
     {
-        if (_service == null) return;
+        var serviceProvider = _serviceProvider ?? throw new InvalidOperationException("ServiceProvider not available during OnRunningAsync");
 
         Logger?.LogDebug("Actor service running");
 
-        var serviceProvider = _serviceProvider ?? throw new InvalidOperationException("ServiceProvider not available during OnRunningAsync");
-
         try
         {
+            // Resolve scoped service within a scope for the running phase lifecycle call
+            using var runningScope = serviceProvider.CreateScope();
+            var service = runningScope.ServiceProvider.GetRequiredService<IActorService>();
+
             // Call existing IBannouService.OnRunningAsync if the service implements it
-            if (_service is IBannouService bannouService)
+            if (service is IBannouService bannouService)
             {
                 Logger?.LogDebug("Calling IBannouService.OnRunningAsync for Actor service");
                 await bannouService.OnRunningAsync(CancellationToken.None);
@@ -216,13 +217,11 @@ public class ActorServicePlugin : BaseBannouPlugin
     /// </summary>
     protected override async Task OnShutdownAsync()
     {
-        if (_service == null) return;
-
         Logger?.LogInformation("Shutting down Actor service");
 
         try
         {
-            // Stop all running actors
+            // Stop all running actors via the singleton registry (not scoped service)
             var serviceProvider = _serviceProvider ?? throw new InvalidOperationException("ServiceProvider not available during OnShutdownAsync");
             var registry = serviceProvider.GetRequiredService<IActorRegistry>();
             var actors = registry.GetAllRunners().ToList();
@@ -242,8 +241,12 @@ public class ActorServicePlugin : BaseBannouPlugin
                 }
             }
 
+            // Resolve scoped service for shutdown lifecycle call
+            using var scope = serviceProvider.CreateScope();
+            var service = scope.ServiceProvider.GetRequiredService<IActorService>();
+
             // Call existing IBannouService.OnShutdownAsync if the service implements it
-            if (_service is IBannouService bannouService)
+            if (service is IBannouService bannouService)
             {
                 Logger?.LogDebug("Calling IBannouService.OnShutdownAsync for Actor service");
                 await bannouService.OnShutdownAsync();

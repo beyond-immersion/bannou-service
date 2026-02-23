@@ -241,7 +241,7 @@ public sealed class ActorPoolManager : IActorPoolManager
         // Map category to pool type
         // In shared-pool mode, all categories go to "shared" pool
         // In pool-per-type mode, category maps directly to pool type
-        var poolType = _configuration.DeploymentMode == DeploymentMode.SharedPool ? "shared" : category;
+        var poolType = _configuration.DeploymentMode == ActorDeploymentMode.SharedPool ? "shared" : category;
 
         var nodes = await ListNodesByTypeAsync(poolType, ct);
         var healthyNodes = nodes.Where(n => n.HasCapacity).ToList();
@@ -286,14 +286,8 @@ public sealed class ActorPoolManager : IActorPoolManager
         // Update actor index
         await UpdateActorIndexAsync(assignment.ActorId, assignment.NodeId, add: true, ct);
 
-        // Increment node load
-        var nodeStore = _stateStoreFactory.GetStore<PoolNodeState>(POOL_NODES_STORE);
-        var node = await nodeStore.GetAsync(assignment.NodeId, ct);
-        if (node != null)
-        {
-            node.CurrentLoad++;
-            await nodeStore.SaveAsync(assignment.NodeId, node, cancellationToken: ct);
-        }
+        // Increment node load with optimistic concurrency per IMPLEMENTATION TENETS
+        await UpdateNodeLoadAsync(assignment.NodeId, increment: 1, ct);
 
         _logger.LogDebug(
             "Recorded actor {ActorId} assignment to node {NodeId}",
@@ -322,14 +316,8 @@ public sealed class ActorPoolManager : IActorPoolManager
             return false;
         }
 
-        // Decrement node load
-        var nodeStore = _stateStoreFactory.GetStore<PoolNodeState>(POOL_NODES_STORE);
-        var node = await nodeStore.GetAsync(assignment.NodeId, ct);
-        if (node != null)
-        {
-            node.CurrentLoad = Math.Max(0, node.CurrentLoad - 1);
-            await nodeStore.SaveAsync(assignment.NodeId, node, cancellationToken: ct);
-        }
+        // Decrement node load with optimistic concurrency per IMPLEMENTATION TENETS
+        await UpdateNodeLoadAsync(assignment.NodeId, increment: -1, ct);
 
         await store.DeleteAsync(actorId, ct);
 
@@ -576,6 +564,47 @@ public sealed class ActorPoolManager : IActorPoolManager
 
     #endregion
 
+    #region Node Load Management
+
+    /// <summary>
+    /// Atomically updates a node's current load using optimistic concurrency.
+    /// </summary>
+    private async Task UpdateNodeLoadAsync(string nodeId, int increment, CancellationToken ct)
+    {
+        var nodeStore = _stateStoreFactory.GetStore<PoolNodeState>(POOL_NODES_STORE);
+
+        const int maxRetries = 3;
+        for (int attempt = 1; attempt <= maxRetries; attempt++)
+        {
+            var (node, etag) = await nodeStore.GetWithETagAsync(nodeId, ct);
+            if (node == null)
+            {
+                return; // Node not found
+            }
+
+            node.CurrentLoad = Math.Max(0, node.CurrentLoad + increment);
+
+            // GetWithETagAsync returns non-null etag for existing records;
+            // coalesce satisfies compiler's nullable analysis (will never execute)
+            var result = await nodeStore.TrySaveAsync(nodeId, node, etag ?? string.Empty, ct);
+            if (result != null)
+            {
+                return; // Successfully saved
+            }
+
+            if (attempt < maxRetries)
+            {
+                _logger.LogDebug("Node load conflict for {NodeId}, retrying (attempt {Attempt}/{Max})", nodeId, attempt, maxRetries);
+            }
+            else
+            {
+                _logger.LogWarning("Node load update failed after {MaxRetries} attempts for node {NodeId}", maxRetries, nodeId);
+            }
+        }
+    }
+
+    #endregion
+
     #region Index Management
 
     /// <summary>
@@ -598,19 +627,40 @@ public sealed class ActorPoolManager : IActorPoolManager
     private async Task UpdateNodeIndexAsync(string nodeId, bool add, CancellationToken ct)
     {
         var store = _stateStoreFactory.GetStore<PoolNodeIndex>(POOL_NODES_STORE);
-        var index = await GetNodeIndexAsync(ct);
 
-        if (add)
+        // Optimistic concurrency: retry on conflict per IMPLEMENTATION TENETS
+        const int maxRetries = 3;
+        for (int attempt = 1; attempt <= maxRetries; attempt++)
         {
-            index.NodeIds.Add(nodeId);
-        }
-        else
-        {
-            index.NodeIds.Remove(nodeId);
-        }
+            var (index, etag) = await store.GetWithETagAsync(NODE_INDEX_KEY, ct);
+            index ??= new PoolNodeIndex();
 
-        index.LastUpdated = DateTimeOffset.UtcNow;
-        await store.SaveAsync(NODE_INDEX_KEY, index, cancellationToken: ct);
+            if (add)
+            {
+                index.NodeIds.Add(nodeId);
+            }
+            else
+            {
+                index.NodeIds.Remove(nodeId);
+            }
+
+            index.LastUpdated = DateTimeOffset.UtcNow;
+
+            var result = await store.TrySaveAsync(NODE_INDEX_KEY, index, etag ?? string.Empty, ct);
+            if (result != null)
+            {
+                return; // Successfully saved
+            }
+
+            if (attempt < maxRetries)
+            {
+                _logger.LogDebug("Node index conflict, retrying (attempt {Attempt}/{Max})", attempt, maxRetries);
+            }
+            else
+            {
+                _logger.LogWarning("Node index update failed after {MaxRetries} attempts for node {NodeId}", maxRetries, nodeId);
+            }
+        }
     }
 
     /// <summary>
@@ -633,29 +683,50 @@ public sealed class ActorPoolManager : IActorPoolManager
     private async Task UpdateActorIndexAsync(string actorId, string nodeId, bool add, CancellationToken ct)
     {
         var store = _stateStoreFactory.GetStore<ActorIndex>(ACTOR_ASSIGNMENTS_STORE);
-        var index = await GetActorIndexAsync(ct);
 
-        if (!index.ActorsByNode.TryGetValue(nodeId, out var actorIds))
+        // Optimistic concurrency: retry on conflict per IMPLEMENTATION TENETS
+        const int maxRetries = 3;
+        for (int attempt = 1; attempt <= maxRetries; attempt++)
         {
-            actorIds = new HashSet<string>();
-            index.ActorsByNode[nodeId] = actorIds;
-        }
+            var (index, etag) = await store.GetWithETagAsync(ACTOR_INDEX_KEY, ct);
+            index ??= new ActorIndex();
 
-        if (add)
-        {
-            actorIds.Add(actorId);
-        }
-        else
-        {
-            actorIds.Remove(actorId);
-            if (actorIds.Count == 0)
+            if (!index.ActorsByNode.TryGetValue(nodeId, out var actorIds))
             {
-                index.ActorsByNode.Remove(nodeId);
+                actorIds = new HashSet<string>();
+                index.ActorsByNode[nodeId] = actorIds;
+            }
+
+            if (add)
+            {
+                actorIds.Add(actorId);
+            }
+            else
+            {
+                actorIds.Remove(actorId);
+                if (actorIds.Count == 0)
+                {
+                    index.ActorsByNode.Remove(nodeId);
+                }
+            }
+
+            index.LastUpdated = DateTimeOffset.UtcNow;
+
+            var result = await store.TrySaveAsync(ACTOR_INDEX_KEY, index, etag ?? string.Empty, ct);
+            if (result != null)
+            {
+                return; // Successfully saved
+            }
+
+            if (attempt < maxRetries)
+            {
+                _logger.LogDebug("Actor index conflict, retrying (attempt {Attempt}/{Max})", attempt, maxRetries);
+            }
+            else
+            {
+                _logger.LogWarning("Actor index update failed after {MaxRetries} attempts for actor {ActorId}", maxRetries, actorId);
             }
         }
-
-        index.LastUpdated = DateTimeOffset.UtcNow;
-        await store.SaveAsync(ACTOR_INDEX_KEY, index, cancellationToken: ct);
     }
 
     #endregion

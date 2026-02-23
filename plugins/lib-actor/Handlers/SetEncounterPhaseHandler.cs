@@ -58,7 +58,7 @@ public sealed class SetEncounterPhaseHandler : IActionHandler
         => action is DomainAction da && da.Name == ACTION_NAME;
 
     /// <inheritdoc/>
-    public ValueTask<ActionResult> ExecuteAsync(
+    public async ValueTask<ActionResult> ExecuteAsync(
         ActionNode action,
         AbmlExecutionContext context,
         CancellationToken ct)
@@ -85,7 +85,7 @@ public sealed class SetEncounterPhaseHandler : IActionHandler
         {
             _logger.LogWarning("Cannot set encounter phase: actor ID not found in scope");
             SetResult(scope, resultVariable, false);
-            return ValueTask.FromResult(ActionResult.Continue);
+            return ActionResult.Continue;
         }
 
         // Find actor in local registry
@@ -93,7 +93,7 @@ public sealed class SetEncounterPhaseHandler : IActionHandler
         {
             _logger.LogWarning("Cannot set encounter phase: actor {ActorId} not found in registry", actorId);
             SetResult(scope, resultVariable, false);
-            return ValueTask.FromResult(ActionResult.Continue);
+            return ActionResult.Continue;
         }
 
         // Set the encounter phase
@@ -110,7 +110,8 @@ public sealed class SetEncounterPhaseHandler : IActionHandler
         }
 
         SetResult(scope, resultVariable, success);
-        return ValueTask.FromResult(ActionResult.Continue);
+        await Task.CompletedTask;
+        return ActionResult.Continue;
     }
 
     /// <summary>
