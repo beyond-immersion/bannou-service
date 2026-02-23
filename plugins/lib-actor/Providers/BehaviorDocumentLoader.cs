@@ -6,6 +6,7 @@
 
 using BeyondImmersion.Bannou.BehaviorCompiler.Documents;
 using BeyondImmersion.BannouService.Providers;
+using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.Logging;
 
 namespace BeyondImmersion.BannouService.Actor.Providers;
@@ -32,6 +33,7 @@ public sealed class BehaviorDocumentLoader : IBehaviorDocumentLoader
 {
     private readonly IReadOnlyList<IBehaviorDocumentProvider> _providers;
     private readonly ILogger<BehaviorDocumentLoader> _logger;
+    private readonly ITelemetryProvider _telemetryProvider;
 
     /// <summary>
     /// Creates a new behavior document loader.
@@ -40,13 +42,15 @@ public sealed class BehaviorDocumentLoader : IBehaviorDocumentLoader
     /// <param name="logger">Logger instance.</param>
     public BehaviorDocumentLoader(
         IEnumerable<IBehaviorDocumentProvider> providers,
-        ILogger<BehaviorDocumentLoader> logger)
+        ILogger<BehaviorDocumentLoader> logger,
+        ITelemetryProvider telemetryProvider)
     {
         // Sort providers by priority descending (highest priority first)
         _providers = providers
             .OrderByDescending(p => p.Priority)
             .ToList();
         _logger = logger;
+        _telemetryProvider = telemetryProvider;
 
         _logger.LogDebug(
             "Initialized behavior document loader with {Count} providers: {Providers}",
@@ -72,6 +76,7 @@ public sealed class BehaviorDocumentLoader : IBehaviorDocumentLoader
     /// </remarks>
     public async Task<AbmlDocument?> GetDocumentAsync(string behaviorRef, CancellationToken ct = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.actor", "BehaviorDocumentLoader.GetDocument");
         if (string.IsNullOrWhiteSpace(behaviorRef))
         {
             _logger.LogWarning("Attempted to load behavior with null or empty reference");

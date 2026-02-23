@@ -12445,9 +12445,9 @@ export interface components {
       lastHeartbeat?: string | null;
       /**
        * Format: int64
-       * @description Number of behavior loop iterations executed
+       * @description Number of behavior loop iterations executed. Null when the actor is running on a remote pool node and the iteration count is not locally available.
        */
-      loopIterations: number;
+      loopIterations?: number | null;
     };
     /**
      * @description Size classification affecting cover requirements and passage width
@@ -12488,7 +12488,7 @@ export interface components {
        *     pipeline resolution. When null, falls back to ABML metadata, then category default.
        */
       cognitionTemplateId?: string | null;
-      /** @description Static template-level cognition overrides (polymorphic JSON). Deserialized internally to CognitionOverrides type with discriminated subtypes. */
+      /** @description Static template-level cognition overrides (polymorphic JSON). Deserialized internally to CognitionOverrides type with discriminated subtypes. No Bannou plugin reads specific keys from this field by convention. */
       cognitionOverrides?: {
         [key: string]: unknown;
       } | null;
@@ -13392,20 +13392,6 @@ export interface components {
       /** @description Type of the related entity (if any) */
       relatedEntityType?: string | null;
     };
-    /** @description Single backstory element */
-    BackstoryElementSnapshot: {
-      /** @description Type of backstory element (ORIGIN, TRAUMA, GOAL, etc.) */
-      elementType: string;
-      /** @description Machine-readable key (homeland, past_job, etc.) */
-      key: string;
-      /** @description Machine-readable value (northlands, blacksmith, etc.) */
-      value: string;
-      /**
-       * Format: float
-       * @description How strongly this affects behavior (0.0 to 1.0)
-       */
-      strength: number;
-    };
     /**
      * @description Types of backstory elements. Each type represents a different aspect
      *     of the character's background that influences behavior.
@@ -13441,10 +13427,12 @@ export interface components {
        */
       updatedAt?: string | null;
     };
-    /** @description Snapshot of backstory for enriched response */
+    /** @description Snapshot of a backstory element */
     BackstorySnapshot: {
-      /** @description List of backstory elements */
-      elements: components['schemas']['BackstoryElementSnapshot'][];
+      /** @description Backstory element type (e.g., TRAUMA, GOAL) */
+      elementType: string;
+      /** @description Backstory element key */
+      key: string;
     };
     /** @description A single balance query */
     BalanceQuery: {
@@ -14733,15 +14721,15 @@ export interface components {
        */
       personalitySummary?: string | null;
       /**
-       * @description Key backstory elements as text.
+       * @description Key backstory elements as text. Null when compression did not include backstory data.
        *     Example: ["Trained by the Knights Guild", "Born in the Northlands"]
        */
-      keyBackstoryPoints?: string[];
+      keyBackstoryPoints?: string[] | null;
       /**
-       * @description Significant life events as text.
+       * @description Significant life events as text. Null when compression did not include history data.
        *     Example: ["Fought in the Battle of Stormgate (Hero)", "Survived the Great Flood"]
        */
-      majorLifeEvents?: string[];
+      majorLifeEvents?: string[] | null;
       /**
        * @description Text summary of family relationships.
        *     Example: "Father of 3, married to Elena, orphaned at young age"
@@ -14795,7 +14783,7 @@ export interface components {
        * Format: date-time
        * @description Real-world creation timestamp
        */
-      createdAt?: string;
+      createdAt: string;
       /**
        * Format: date-time
        * @description Real-world last update timestamp
@@ -14909,9 +14897,9 @@ export interface components {
       /** @description Number of results per page */
       pageSize: number;
       /** @description Whether there are more results after this page */
-      hasNextPage?: boolean;
+      hasNextPage: boolean;
       /** @description Whether there are results before this page */
-      hasPreviousPage?: boolean;
+      hasPreviousPage: boolean;
     };
     /** @description A character's membership in a faction with faction details */
     CharacterMembershipEntry: {
@@ -15389,9 +15377,7 @@ export interface components {
       /** @description Number of actors that were stopped and cleaned up */
       actorsCleanedUp: number;
       /** @description IDs of actors that were cleaned up */
-      actorIds?: string[];
-      /** @description Whether cleanup completed successfully */
-      success: boolean;
+      actorIds: string[];
     };
     /** @description Request to end all relationships referencing a deleted entity during cascading resource cleanup */
     CleanupByEntityRequest: {
@@ -15809,27 +15795,6 @@ export interface components {
        * @description When these preferences were last modified
        */
       updatedAt?: string | null;
-    };
-    /** @description Snapshot of combat preferences for enriched response */
-    CombatPreferencesSnapshot: {
-      /** @description Combat style (DEFENSIVE, BALANCED, AGGRESSIVE, BERSERKER, TACTICAL) */
-      style: string;
-      /** @description Preferred engagement distance (MELEE, CLOSE, MEDIUM, RANGED) */
-      preferredRange: string;
-      /** @description Role in group combat (FRONTLINE, SUPPORT, FLANKER, LEADER, SOLO) */
-      groupRole: string;
-      /**
-       * Format: float
-       * @description Willingness to take risky actions (0.0 to 1.0)
-       */
-      riskTolerance: number;
-      /**
-       * Format: float
-       * @description Health percentage at which retreat is considered (0.0 to 1.0)
-       */
-      retreatThreshold: number;
-      /** @description Whether to prioritize ally protection */
-      protectAllies: boolean;
     };
     /**
      * @description Overall approach to combat situations. Affects target selection,
@@ -17071,7 +17036,7 @@ export interface components {
        *     Examples: "humanoid-cognition-base", "creature-cognition-base", "object-cognition-base"
        */
       cognitionTemplateId?: string | null;
-      /** @description Static template-level cognition overrides (polymorphic JSON). Deserialized internally to CognitionOverrides type with discriminated subtypes. Applied as the first layer in the three-layer override composition (template, instance, ABML metadata). Structure defined by ICognitionOverride interface hierarchy in bannou-service/Behavior/. */
+      /** @description Static template-level cognition overrides (polymorphic JSON). Deserialized internally to CognitionOverrides type with discriminated subtypes. Applied as the first layer in the three-layer override composition (template, instance, ABML metadata). Structure defined by ICognitionOverride interface hierarchy in bannou-service/Behavior/. No Bannou plugin reads specific keys from this field by convention. */
       cognitionOverrides?: {
         [key: string]: unknown;
       } | null;
@@ -18736,8 +18701,6 @@ export interface components {
     };
     /** @description Response confirming template deletion */
     DeleteActorTemplateResponse: {
-      /** @description Whether the template was successfully deleted */
-      deleted: boolean;
       /** @description Number of running actors that were stopped */
       stoppedActorCount: number;
     };
@@ -19700,14 +19663,8 @@ export interface components {
        * @description Real-world last update timestamp
        */
       updatedAt?: string | null;
-      /** @description Personality traits (included if includePersonality=true) */
-      personality?: components['schemas']['PersonalitySnapshot'];
-      /** @description Backstory elements (included if includeBackstory=true) */
-      backstory?: components['schemas']['BackstorySnapshot'];
       /** @description Family relationships (included if includeFamilyTree=true) */
       familyTree?: components['schemas']['FamilyTreeResponse'];
-      /** @description Combat preferences (included if includeCombatPreferences=true) */
-      combatPreferences?: components['schemas']['CombatPreferencesSnapshot'];
     };
     /** @description Request to enter the garden */
     EnterGardenRequest: {
@@ -20937,20 +20894,20 @@ export interface components {
       /** @description Specific relationship type (MOTHER, FATHER, SON, DAUGHTER, etc.) */
       relationshipType: string;
       /** @description Whether the related character is alive */
-      isAlive?: boolean;
+      isAlive: boolean;
     };
     /** @description Family relationships for a character */
     FamilyTreeResponse: {
       /** @description Parent relationships (biological and adoptive) */
-      parents?: components['schemas']['FamilyMember'][];
+      parents: components['schemas']['FamilyMember'][];
       /** @description Child relationships */
-      children?: components['schemas']['FamilyMember'][];
+      children: components['schemas']['FamilyMember'][];
       /** @description Sibling relationships (including half-siblings) */
-      siblings?: components['schemas']['FamilyMember'][];
+      siblings: components['schemas']['FamilyMember'][];
       /** @description Spousal relationships (spouse, husband, wife) */
-      spouses?: components['schemas']['FamilyMember'][];
+      spouses: components['schemas']['FamilyMember'][];
       /** @description Previous incarnations (if reincarnation tracked) */
-      pastLives?: components['schemas']['PastLifeReference'][];
+      pastLives: components['schemas']['PastLifeReference'][];
     };
     /** @description Result from a contract finalizer API call */
     FinalizerResult: {
@@ -22041,25 +21998,10 @@ export interface components {
        */
       characterId: string;
       /**
-       * @description Include personality traits from character-personality service
-       * @default false
-       */
-      includePersonality: boolean;
-      /**
-       * @description Include backstory elements from character-history service
-       * @default false
-       */
-      includeBackstory: boolean;
-      /**
        * @description Include family relationships from relationship service
        * @default false
        */
       includeFamilyTree: boolean;
-      /**
-       * @description Include combat preferences from character-personality service
-       * @default false
-       */
-      includeCombatPreferences: boolean;
     };
     /** @description Request to query an entity's current location */
     GetEntityLocationRequest: {
@@ -23712,17 +23654,17 @@ export interface components {
     /** @description Information about a hazard in range. Core properties are schema-defined; additionalProperties allows game-specific hazard data. No Bannou plugin reads specific extension keys by convention. */
     HazardInfo: {
       /** @description Type of hazard (fire, poison, radiation, deep_water, etc.) */
-      hazardType?: string;
+      hazardType: string;
       /**
        * Format: float
        * @description Distance to hazard edge
        */
-      distance?: number;
+      distance: number;
       /**
        * Format: float
        * @description Hazard severity (0-1)
        */
-      severity?: number;
+      severity: number;
       /** @description Direction to hazard center */
       direction?: string | null;
     } & {
@@ -23980,8 +23922,6 @@ export interface components {
     };
     /** @description Response confirming perception injection */
     InjectPerceptionResponse: {
-      /** @description Whether the perception was successfully queued */
-      queued: boolean;
       /** @description Current depth of the perception queue */
       queueDepth: number;
     };
@@ -27418,16 +27358,16 @@ export interface components {
        * Format: uuid
        * @description Unique identifier of the object
        */
-      objectId?: string;
+      objectId: string;
       /** @description Type of object (boulder_cluster, tree, building, etc.) */
-      objectType?: string;
+      objectType: string;
       /**
        * Format: float
        * @description Distance from character in game units
        */
-      distance?: number;
+      distance: number;
       /** @description Relative direction (north, south, east, west, above, below, etc.) */
-      direction?: string;
+      direction: string;
       /** @description Optional absolute position */
       position?: components['schemas']['Position3D'] | null;
     } & {
@@ -28046,15 +27986,6 @@ export interface components {
        * @description When this personality was last modified
        */
       updatedAt?: string | null;
-    };
-    /** @description Snapshot of personality traits for enriched response */
-    PersonalitySnapshot: {
-      /** @description Trait values keyed by trait name (OPENNESS, AGREEABLENESS, etc.) */
-      traits: {
-        [key: string]: number;
-      };
-      /** @description Personality version number (increments on evolution) */
-      version: number;
     };
     /** @description Response containing a perspective */
     PerspectiveResponse: {
@@ -32610,6 +32541,25 @@ export interface components {
         [key: string]: unknown;
       } | null;
     };
+    /** @description Response after starting an encounter */
+    StartEncounterResponse: {
+      /** @description ID of the Event Brain actor managing the encounter */
+      actorId: string;
+      /**
+       * Format: uuid
+       * @description Unique identifier for the started encounter
+       */
+      encounterId: string;
+      /** @description Type of encounter that was started */
+      encounterType: string;
+      /** @description Number of participants in the encounter */
+      participantCount: number;
+      /**
+       * Format: date-time
+       * @description Timestamp when the encounter was started
+       */
+      startedAt: string;
+    };
     /** @description Request to start a regional watcher */
     StartWatcherRequest: {
       /**
@@ -32846,8 +32796,6 @@ export interface components {
     };
     /** @description Response confirming actor stop operation */
     StopActorResponse: {
-      /** @description Whether the actor was successfully stopped */
-      stopped: boolean;
       /** @description Final status of the actor after stopping */
       finalStatus: components['schemas']['ActorStatus'];
     };
@@ -34024,7 +33972,7 @@ export interface components {
        *     for actors created from this template.
        */
       cognitionTemplateId?: string | null;
-      /** @description Updated cognition overrides (polymorphic JSON). Deserialized internally to CognitionOverrides type with discriminated subtypes. */
+      /** @description Updated cognition overrides (polymorphic JSON). Deserialized internally to CognitionOverrides type with discriminated subtypes. No Bannou plugin reads specific keys from this field by convention. */
       cognitionOverrides?: {
         [key: string]: unknown;
       } | null;
@@ -36081,7 +36029,9 @@ export interface operations {
         headers: {
           [name: string]: unknown;
         };
-        content?: never;
+        content: {
+          'application/json': components['schemas']['StartEncounterResponse'];
+        };
       };
     };
   };

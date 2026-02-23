@@ -34,6 +34,7 @@ public partial class CharacterService : ICharacterService
     private readonly IRelationshipClient _relationshipClient;
     private readonly IContractClient _contractClient;
     private readonly IResourceClient _resourceClient;
+    private readonly ITelemetryProvider _telemetryProvider;
 
     // Key prefixes for realm-partitioned storage
     private const string CHARACTER_KEY_PREFIX = "character:";
@@ -67,7 +68,8 @@ public partial class CharacterService : ICharacterService
         IRelationshipClient relationshipClient,
         IContractClient contractClient,
         IEventConsumer eventConsumer,
-        IResourceClient resourceClient)
+        IResourceClient resourceClient,
+        ITelemetryProvider telemetryProvider)
     {
         _stateStoreFactory = stateStoreFactory;
         _messageBus = messageBus;
@@ -79,6 +81,7 @@ public partial class CharacterService : ICharacterService
         _relationshipClient = relationshipClient;
         _contractClient = contractClient;
         _resourceClient = resourceClient ?? throw new ArgumentNullException(nameof(resourceClient));
+        _telemetryProvider = telemetryProvider;
 
         // Register event handlers via partial class (CharacterServiceEvents.cs)
         ((IBannouService)this).RegisterEventConsumers(eventConsumer);
@@ -365,7 +368,7 @@ public partial class CharacterService : ICharacterService
         await PublishCharacterRealmLeftEventAsync(
             body.CharacterId,
             realmId,
-            "deletion");
+            CharacterRealmLeftReason.Deletion);
 
         // Publish character deleted event
         await PublishCharacterDeletedEventAsync(character);
@@ -499,7 +502,7 @@ public partial class CharacterService : ICharacterService
         await PublishCharacterRealmLeftEventAsync(
             body.CharacterId,
             previousRealmId,
-            "transfer");
+            CharacterRealmLeftReason.Transfer);
 
         // Publish realm joined event for new realm
         await PublishCharacterRealmJoinedEventAsync(body.CharacterId, body.TargetRealmId, previousRealmId);
@@ -516,11 +519,8 @@ public partial class CharacterService : ICharacterService
     #region Enriched Character & Compression Operations
 
     /// <summary>
-    /// Gets a character with optional enriched data (family tree).
-    /// NOTE: Per SERVICE_HIERARCHY, Character (L2) cannot depend on L4 services like
-    /// CharacterPersonality or CharacterHistory. Personality, backstory, and combat
-    /// preferences are not included in this response. For fully enriched character data,
-    /// callers should aggregate from L4 services directly or use a future L4 aggregator service.
+    /// Gets a character with optional enriched data from L2 services (family tree from Relationship).
+    /// For L4 data (personality, backstory, combat preferences), callers should query those services directly.
     /// </summary>
     public async Task<(StatusCodes, EnrichedCharacterResponse?)> GetEnrichedCharacterAsync(
         GetEnrichedCharacterRequest body,
@@ -549,18 +549,6 @@ public partial class CharacterService : ICharacterService
             CreatedAt = character.CreatedAt,
             UpdatedAt = character.UpdatedAt
         };
-
-        // NOTE: Personality, CombatPreferences, and Backstory are NOT included.
-        // Per SERVICE_HIERARCHY, Character (L2) cannot depend on CharacterPersonality or
-        // CharacterHistory (L4). Callers needing this data should call those services directly.
-        if (body.IncludePersonality || body.IncludeCombatPreferences || body.IncludeBackstory)
-        {
-            _logger.LogDebug(
-                "Enrichment flags for personality/combat/backstory were set for character {CharacterId}, " +
-                "but these are not included per SERVICE_HIERARCHY (L2 cannot depend on L4). " +
-                "Callers should aggregate from L4 services directly.",
-                body.CharacterId);
-        }
 
         // Fetch family tree if requested (uses Relationship service - L2, allowed)
         if (body.IncludeFamilyTree)
@@ -617,7 +605,8 @@ public partial class CharacterService : ICharacterService
 
         // NOTE: Per SERVICE_HIERARCHY, we cannot call CharacterPersonality or CharacterHistory (L4).
         // Personality summary and backstory/history summaries are NOT included.
-        // L4 services should subscribe to character.compressed event to handle their own cleanup.
+        // Full hierarchical compression (including L4 data) is handled by the Resource service
+        // via /resource/compress/execute. L4 services provide compression callbacks, not event subscriptions.
         string? familySummary = await GenerateFamilySummaryAsync(body.CharacterId, cancellationToken);
 
         var archive = new CharacterArchive
@@ -630,8 +619,8 @@ public partial class CharacterService : ICharacterService
             DeathDate = character.DeathDate.Value,
             CompressedAt = DateTimeOffset.UtcNow,
             PersonalitySummary = null, // L4 data not available per SERVICE_HIERARCHY
-            KeyBackstoryPoints = new List<string>(), // L4 data not available per SERVICE_HIERARCHY
-            MajorLifeEvents = new List<string>(), // L4 data not available per SERVICE_HIERARCHY
+            KeyBackstoryPoints = null, // L4 data not available per SERVICE_HIERARCHY; null = not archived
+            MajorLifeEvents = null, // L4 data not available per SERVICE_HIERARCHY; null = not archived
             FamilySummary = familySummary // From Relationships (L2), allowed
         };
 
@@ -641,13 +630,13 @@ public partial class CharacterService : ICharacterService
             .SaveAsync(archiveKey, MapToArchiveModel(archive), cancellationToken: cancellationToken);
 
         // NOTE: deleteSourceData flag cannot delete L4 service data per SERVICE_HIERARCHY.
-        // L4 services should subscribe to character.compressed event to handle their own cleanup.
+        // Full hierarchical deletion uses /resource/cleanup/execute with cascade callbacks.
         if (body.DeleteSourceData)
         {
             _logger.LogDebug(
-                "DeleteSourceData=true for character {CharacterId}, but Character (L2) cannot call " +
-                "CharacterPersonality or CharacterHistory (L4) to delete their data per SERVICE_HIERARCHY. " +
-                "L4 services should subscribe to character.compressed event.",
+                "DeleteSourceData=true for character {CharacterId}, but this legacy endpoint cannot " +
+                "delete L4 service data per SERVICE_HIERARCHY. Use /resource/compress/execute for " +
+                "full hierarchical compression with L4 cleanup callbacks.",
                 body.CharacterId);
         }
 
@@ -879,7 +868,7 @@ public partial class CharacterService : ICharacterService
         var (initialData, initialEtag) = await refCountStore.GetWithETagAsync(refCountKey, cancellationToken);
         var refData = initialData ?? new RefCountData { CharacterId = body.CharacterId };
 
-        const int maxRetries = 3;
+        var maxRetries = _configuration.RefCountUpdateMaxRetries;
         for (var retry = 0; retry < maxRetries; retry++)
         {
             if (retry > 0)
@@ -908,6 +897,8 @@ public partial class CharacterService : ICharacterService
                 break; // No changes needed
             }
 
+            // initialEtag is null on first save (no prior value); empty string signals
+            // "create new" to TrySaveAsync (will never execute when etag exists)
             var savedEtag = await refCountStore.TrySaveAsync(refCountKey, refData, initialEtag ?? string.Empty, cancellationToken);
             if (savedEtag != null)
             {
@@ -950,6 +941,7 @@ public partial class CharacterService : ICharacterService
     /// </summary>
     private async Task<FamilyTreeResponse?> BuildFamilyTreeAsync(Guid characterId, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.character", "CharacterService.BuildFamilyTreeAsync");
         try
         {
             var result = await _relationshipClient.ListRelationshipsByEntityAsync(
@@ -1111,6 +1103,7 @@ public partial class CharacterService : ICharacterService
         List<Guid> typeIds,
         CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.character", "CharacterService.BuildTypeCodeLookupAsync");
         var typeCodeLookup = new Dictionary<Guid, string>();
 
         if (typeIds.Count == 0)
@@ -1154,6 +1147,7 @@ public partial class CharacterService : ICharacterService
         List<Guid> characterIds,
         CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.character", "CharacterService.BulkLoadCharactersAsync");
         var result = new Dictionary<Guid, CharacterModel>();
 
         if (characterIds.Count == 0)
@@ -1210,6 +1204,7 @@ public partial class CharacterService : ICharacterService
     /// </summary>
     private async Task<string?> GenerateFamilySummaryAsync(Guid characterId, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.character", "CharacterService.GenerateFamilySummaryAsync");
         var familyTree = await BuildFamilyTreeAsync(characterId, cancellationToken);
         if (familyTree == null)
             return null;
@@ -1251,8 +1246,8 @@ public partial class CharacterService : ICharacterService
             DeathDateUnix = archive.DeathDate.ToUnixTimeSeconds(),
             CompressedAtUnix = archive.CompressedAt.ToUnixTimeSeconds(),
             PersonalitySummary = archive.PersonalitySummary,
-            KeyBackstoryPoints = archive.KeyBackstoryPoints.ToList(),
-            MajorLifeEvents = archive.MajorLifeEvents.ToList(),
+            KeyBackstoryPoints = archive.KeyBackstoryPoints?.ToList(),
+            MajorLifeEvents = archive.MajorLifeEvents?.ToList(),
             FamilySummary = archive.FamilySummary
         };
     }
@@ -1347,6 +1342,7 @@ public partial class CharacterService : ICharacterService
 
     private async Task<CharacterModel?> FindCharacterByIdAsync(string characterId, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.character", "CharacterService.FindCharacterByIdAsync");
         // Use global character index to find realm for character ID lookup
         // Global index is maintained by AddCharacterToRealmIndexAsync/RemoveCharacterFromRealmIndexAsync
         var globalIndexKey = $"character-global-index:{characterId}";
@@ -1372,6 +1368,7 @@ public partial class CharacterService : ICharacterService
         int pageSize,
         CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.character", "CharacterService.GetCharactersByRealmInternalAsync");
         var jsonStore = _stateStoreFactory.GetJsonQueryableStore<CharacterModel>(StateStoreDefinitions.Character);
         var offset = (page - 1) * pageSize;
 
@@ -1449,6 +1446,7 @@ public partial class CharacterService : ICharacterService
 
     private async Task AddCharacterToRealmIndexAsync(string realmId, string characterId, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.character", "CharacterService.AddCharacterToRealmIndexAsync");
         var realmIndexKey = BuildRealmIndexKey(realmId);
         var store = _stateStoreFactory.GetStore<List<string>>(StateStoreDefinitions.Character);
 
@@ -1497,6 +1495,7 @@ public partial class CharacterService : ICharacterService
 
     private async Task RemoveCharacterFromRealmIndexAsync(string realmId, string characterId, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.character", "CharacterService.RemoveCharacterFromRealmIndexAsync");
         var realmIndexKey = BuildRealmIndexKey(realmId);
         var store = _stateStoreFactory.GetStore<List<string>>(StateStoreDefinitions.Character);
 
@@ -1561,6 +1560,7 @@ public partial class CharacterService : ICharacterService
     /// </summary>
     private async Task PublishCharacterCreatedEventAsync(CharacterModel character)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.character", "CharacterService.PublishCharacterCreatedEventAsync");
         var eventModel = new CharacterCreatedEvent
         {
             EventId = Guid.NewGuid(),
@@ -1570,7 +1570,10 @@ public partial class CharacterService : ICharacterService
             RealmId = character.RealmId,
             SpeciesId = character.SpeciesId,
             BirthDate = character.BirthDate,
-            DeathDate = character.DeathDate
+            DeathDate = character.DeathDate,
+            Status = character.Status,
+            CreatedAt = character.CreatedAt,
+            UpdatedAt = character.UpdatedAt
         };
 
         await _messageBus.TryPublishAsync(CHARACTER_CREATED_TOPIC, eventModel);
@@ -1582,6 +1585,7 @@ public partial class CharacterService : ICharacterService
     /// </summary>
     private async Task PublishCharacterUpdatedEventAsync(CharacterModel character, IEnumerable<string> changedFields)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.character", "CharacterService.PublishCharacterUpdatedEventAsync");
         var eventModel = new CharacterUpdatedEvent
         {
             EventId = Guid.NewGuid(),
@@ -1607,6 +1611,7 @@ public partial class CharacterService : ICharacterService
     /// </summary>
     private async Task PublishCharacterDeletedEventAsync(CharacterModel character, string? deletedReason = null)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.character", "CharacterService.PublishCharacterDeletedEventAsync");
         var eventModel = new CharacterDeletedEvent
         {
             EventId = Guid.NewGuid(),
@@ -1632,9 +1637,10 @@ public partial class CharacterService : ICharacterService
     /// </summary>
     private async Task PublishCharacterRealmJoinedEventAsync(Guid characterId, Guid realmId, Guid? previousRealmId)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.character", "CharacterService.PublishCharacterRealmJoinedEventAsync");
         var eventModel = new CharacterRealmJoinedEvent
         {
-            EventId = Guid.NewGuid().ToString(),
+            EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,
             CharacterId = characterId,
             RealmId = realmId,
@@ -1648,11 +1654,12 @@ public partial class CharacterService : ICharacterService
     /// <summary>
     /// Publishes character realm left event. TryPublishAsync handles buffering, retry, and error logging.
     /// </summary>
-    private async Task PublishCharacterRealmLeftEventAsync(Guid characterId, Guid realmId, string reason)
+    private async Task PublishCharacterRealmLeftEventAsync(Guid characterId, Guid realmId, CharacterRealmLeftReason reason)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.character", "CharacterService.PublishCharacterRealmLeftEventAsync");
         var eventModel = new CharacterRealmLeftEvent
         {
-            EventId = Guid.NewGuid().ToString(),
+            EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,
             CharacterId = characterId,
             RealmId = realmId,

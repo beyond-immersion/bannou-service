@@ -27,6 +27,7 @@ public sealed class ActorPoolManager : IActorPoolManager
     private readonly IStateStoreFactory _stateStoreFactory;
     private readonly ILogger<ActorPoolManager> _logger;
     private readonly ActorServiceConfiguration _configuration;
+    private readonly ITelemetryProvider _telemetryProvider;
 
     private static readonly string POOL_NODES_STORE = StateStoreDefinitions.ActorPoolNodes;
     private static readonly string ACTOR_ASSIGNMENTS_STORE = StateStoreDefinitions.ActorAssignments;
@@ -39,11 +40,13 @@ public sealed class ActorPoolManager : IActorPoolManager
     public ActorPoolManager(
         IStateStoreFactory stateStoreFactory,
         ILogger<ActorPoolManager> logger,
-        ActorServiceConfiguration configuration)
+        ActorServiceConfiguration configuration,
+        ITelemetryProvider telemetryProvider)
     {
         _stateStoreFactory = stateStoreFactory;
         _logger = logger;
         _configuration = configuration;
+        _telemetryProvider = telemetryProvider;
     }
 
     #region Pool Node Management
@@ -51,6 +54,7 @@ public sealed class ActorPoolManager : IActorPoolManager
     /// <inheritdoc/>
     public async Task<bool> RegisterNodeAsync(PoolNodeRegisteredEvent registration, CancellationToken ct = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.actor", "ActorPoolManager.RegisterNode");
 
         var nodeId = registration.NodeId;
         var store = _stateStoreFactory.GetStore<PoolNodeState>(POOL_NODES_STORE);
@@ -89,6 +93,7 @@ public sealed class ActorPoolManager : IActorPoolManager
     /// <inheritdoc/>
     public async Task UpdateNodeHeartbeatAsync(PoolNodeHeartbeatEvent heartbeat, CancellationToken ct = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.actor", "ActorPoolManager.UpdateNodeHeartbeat");
 
         var store = _stateStoreFactory.GetStore<PoolNodeState>(POOL_NODES_STORE);
         var state = await store.GetAsync(heartbeat.NodeId, ct);
@@ -135,6 +140,7 @@ public sealed class ActorPoolManager : IActorPoolManager
     /// <inheritdoc/>
     public async Task<int> DrainNodeAsync(string nodeId, int remainingActors, CancellationToken ct = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.actor", "ActorPoolManager.DrainNode");
         ArgumentException.ThrowIfNullOrWhiteSpace(nodeId);
 
         var store = _stateStoreFactory.GetStore<PoolNodeState>(POOL_NODES_STORE);
@@ -161,6 +167,7 @@ public sealed class ActorPoolManager : IActorPoolManager
     /// <inheritdoc/>
     public async Task<int> RemoveNodeAsync(string nodeId, string reason, CancellationToken ct = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.actor", "ActorPoolManager.RemoveNode");
         ArgumentException.ThrowIfNullOrWhiteSpace(nodeId);
 
         var nodeStore = _stateStoreFactory.GetStore<PoolNodeState>(POOL_NODES_STORE);
@@ -192,6 +199,7 @@ public sealed class ActorPoolManager : IActorPoolManager
     /// <inheritdoc/>
     public async Task<PoolNodeState?> GetNodeAsync(string nodeId, CancellationToken ct = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.actor", "ActorPoolManager.GetNode");
         ArgumentException.ThrowIfNullOrWhiteSpace(nodeId);
 
         var store = _stateStoreFactory.GetStore<PoolNodeState>(POOL_NODES_STORE);
@@ -201,6 +209,7 @@ public sealed class ActorPoolManager : IActorPoolManager
     /// <inheritdoc/>
     public async Task<IReadOnlyList<PoolNodeState>> ListNodesAsync(CancellationToken ct = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.actor", "ActorPoolManager.ListNodes");
         var index = await GetNodeIndexAsync(ct);
         if (index.NodeIds.Count == 0)
         {
@@ -225,6 +234,7 @@ public sealed class ActorPoolManager : IActorPoolManager
     /// <inheritdoc/>
     public async Task<IReadOnlyList<PoolNodeState>> ListNodesByTypeAsync(string poolType, CancellationToken ct = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.actor", "ActorPoolManager.ListNodesByType");
         var allNodes = await ListNodesAsync(ct);
         return allNodes.Where(n => n.PoolType.Equals(poolType, StringComparison.OrdinalIgnoreCase)).ToList();
     }
@@ -236,6 +246,7 @@ public sealed class ActorPoolManager : IActorPoolManager
     /// <inheritdoc/>
     public async Task<PoolNodeState?> AcquireNodeForActorAsync(string category, int estimatedLoad = 1, CancellationToken ct = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.actor", "ActorPoolManager.AcquireNodeForActor");
         ArgumentException.ThrowIfNullOrWhiteSpace(category);
 
         // Map category to pool type
@@ -277,6 +288,7 @@ public sealed class ActorPoolManager : IActorPoolManager
     /// <inheritdoc/>
     public async Task RecordActorAssignmentAsync(ActorAssignment assignment, CancellationToken ct = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.actor", "ActorPoolManager.RecordActorAssignment");
 
         var store = _stateStoreFactory.GetStore<ActorAssignment>(ACTOR_ASSIGNMENTS_STORE);
         assignment.AssignedAt = DateTimeOffset.UtcNow;
@@ -297,6 +309,7 @@ public sealed class ActorPoolManager : IActorPoolManager
     /// <inheritdoc/>
     public async Task<ActorAssignment?> GetActorAssignmentAsync(string actorId, CancellationToken ct = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.actor", "ActorPoolManager.GetActorAssignment");
         ArgumentException.ThrowIfNullOrWhiteSpace(actorId);
 
         var store = _stateStoreFactory.GetStore<ActorAssignment>(ACTOR_ASSIGNMENTS_STORE);
@@ -306,6 +319,7 @@ public sealed class ActorPoolManager : IActorPoolManager
     /// <inheritdoc/>
     public async Task<bool> RemoveActorAssignmentAsync(string actorId, CancellationToken ct = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.actor", "ActorPoolManager.RemoveActorAssignment");
         ArgumentException.ThrowIfNullOrWhiteSpace(actorId);
 
         var store = _stateStoreFactory.GetStore<ActorAssignment>(ACTOR_ASSIGNMENTS_STORE);
@@ -333,6 +347,7 @@ public sealed class ActorPoolManager : IActorPoolManager
     /// <inheritdoc/>
     public async Task<IReadOnlyList<ActorAssignment>> ListActorsByNodeAsync(string nodeId, CancellationToken ct = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.actor", "ActorPoolManager.ListActorsByNode");
         ArgumentException.ThrowIfNullOrWhiteSpace(nodeId);
 
         // Use index to get actor IDs for this node
@@ -360,6 +375,7 @@ public sealed class ActorPoolManager : IActorPoolManager
     /// <inheritdoc/>
     public async Task UpdateActorStatusAsync(string actorId, ActorStatus newStatus, CancellationToken ct = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.actor", "ActorPoolManager.UpdateActorStatus");
         ArgumentException.ThrowIfNullOrWhiteSpace(actorId);
 
         var store = _stateStoreFactory.GetStore<ActorAssignment>(ACTOR_ASSIGNMENTS_STORE);
@@ -411,6 +427,7 @@ public sealed class ActorPoolManager : IActorPoolManager
     /// <inheritdoc/>
     public async Task UpdateActorCharacterAsync(string actorId, Guid characterId, CancellationToken ct = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.actor", "ActorPoolManager.UpdateActorCharacter");
         ArgumentException.ThrowIfNullOrWhiteSpace(actorId);
 
         var store = _stateStoreFactory.GetStore<ActorAssignment>(ACTOR_ASSIGNMENTS_STORE);
@@ -456,6 +473,7 @@ public sealed class ActorPoolManager : IActorPoolManager
     /// <inheritdoc/>
     public async Task<IReadOnlyList<ActorAssignment>> GetAssignmentsByTemplateAsync(string templateId, CancellationToken ct = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.actor", "ActorPoolManager.GetAssignmentsByTemplate");
         ArgumentException.ThrowIfNullOrWhiteSpace(templateId);
 
         if (!Guid.TryParse(templateId, out var parsedTemplateId))
@@ -490,6 +508,8 @@ public sealed class ActorPoolManager : IActorPoolManager
     /// <inheritdoc/>
     public async Task<IReadOnlyList<ActorAssignment>> GetActorAssignmentsByCharacterAsync(Guid characterId, CancellationToken ct = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.actor", "ActorPoolManager.GetActorAssignmentsByCharacter");
+
         // Get all actor IDs from the index
         var index = await GetActorIndexAsync(ct);
         var allActorIds = index.ActorsByNode.Values.SelectMany(ids => ids).ToList();
@@ -521,6 +541,7 @@ public sealed class ActorPoolManager : IActorPoolManager
     /// <inheritdoc/>
     public async Task<PoolCapacitySummary> GetCapacitySummaryAsync(CancellationToken ct = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.actor", "ActorPoolManager.GetCapacitySummary");
         var nodes = await ListNodesAsync(ct);
 
         var summary = new PoolCapacitySummary
@@ -554,6 +575,7 @@ public sealed class ActorPoolManager : IActorPoolManager
     /// <inheritdoc/>
     public async Task<IReadOnlyList<PoolNodeState>> GetUnhealthyNodesAsync(TimeSpan heartbeatTimeout, CancellationToken ct = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.actor", "ActorPoolManager.GetUnhealthyNodes");
         var nodes = await ListNodesAsync(ct);
         var cutoff = DateTimeOffset.UtcNow - heartbeatTimeout;
 
@@ -571,6 +593,7 @@ public sealed class ActorPoolManager : IActorPoolManager
     /// </summary>
     private async Task UpdateNodeLoadAsync(string nodeId, int increment, CancellationToken ct)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.actor", "ActorPoolManager.UpdateNodeLoad");
         var nodeStore = _stateStoreFactory.GetStore<PoolNodeState>(POOL_NODES_STORE);
 
         const int maxRetries = 3;
@@ -619,6 +642,7 @@ public sealed class ActorPoolManager : IActorPoolManager
 
     private async Task<PoolNodeIndex> GetNodeIndexAsync(CancellationToken ct)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.actor", "ActorPoolManager.GetNodeIndex");
         var store = _stateStoreFactory.GetStore<PoolNodeIndex>(POOL_NODES_STORE);
         var index = await store.GetAsync(NODE_INDEX_KEY, ct);
         return index ?? new PoolNodeIndex();
@@ -626,6 +650,7 @@ public sealed class ActorPoolManager : IActorPoolManager
 
     private async Task UpdateNodeIndexAsync(string nodeId, bool add, CancellationToken ct)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.actor", "ActorPoolManager.UpdateNodeIndex");
         var store = _stateStoreFactory.GetStore<PoolNodeIndex>(POOL_NODES_STORE);
 
         // Optimistic concurrency: retry on conflict per IMPLEMENTATION TENETS
@@ -675,6 +700,7 @@ public sealed class ActorPoolManager : IActorPoolManager
 
     private async Task<ActorIndex> GetActorIndexAsync(CancellationToken ct)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.actor", "ActorPoolManager.GetActorIndex");
         var store = _stateStoreFactory.GetStore<ActorIndex>(ACTOR_ASSIGNMENTS_STORE);
         var index = await store.GetAsync(ACTOR_INDEX_KEY, ct);
         return index ?? new ActorIndex();
@@ -682,6 +708,7 @@ public sealed class ActorPoolManager : IActorPoolManager
 
     private async Task UpdateActorIndexAsync(string actorId, string nodeId, bool add, CancellationToken ct)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.actor", "ActorPoolManager.UpdateActorIndex");
         var store = _stateStoreFactory.GetStore<ActorIndex>(ACTOR_ASSIGNMENTS_STORE);
 
         // Optimistic concurrency: retry on conflict per IMPLEMENTATION TENETS

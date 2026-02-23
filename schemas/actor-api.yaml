@@ -774,7 +774,6 @@ components:
       - category
       - status
       - startedAt
-      - loopIterations
       properties:
         actorId:
           type: string
@@ -819,7 +818,11 @@ components:
         loopIterations:
           type: integer
           format: int64
-          description: Number of behavior loop iterations executed
+          nullable: true
+          description: >-
+            Number of behavior loop iterations executed. Null when the actor is
+            running on a remote pool node and the iteration count is not locally
+            available.
 
     ActorStatus:
       type: string

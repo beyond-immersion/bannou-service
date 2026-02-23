@@ -30,6 +30,7 @@ public class ActorServicePlugin : BaseBannouPlugin
     public override string DisplayName => "Actor Service";
 
     private IServiceProvider? _serviceProvider;
+    private ITelemetryProvider? _telemetryProvider;
 
     /// <summary>
     /// Configure services for dependency injection - mimics existing [BannouService] registration.
@@ -132,6 +133,7 @@ public class ActorServicePlugin : BaseBannouPlugin
 
         // Store service provider for lifecycle management
         _serviceProvider = app.Services;
+        _telemetryProvider = app.Services.GetService<ITelemetryProvider>();
 
         Logger?.LogInformation("Actor service application pipeline configured");
     }
@@ -141,6 +143,7 @@ public class ActorServicePlugin : BaseBannouPlugin
     /// </summary>
     protected override async Task<bool> OnStartAsync()
     {
+        using var activity = _telemetryProvider?.StartActivity("bannou.actor", "ActorServicePlugin.OnStart");
         Logger?.LogInformation("Starting Actor service");
 
         try
@@ -174,6 +177,7 @@ public class ActorServicePlugin : BaseBannouPlugin
     /// </summary>
     protected override async Task OnRunningAsync()
     {
+        using var activity = _telemetryProvider?.StartActivity("bannou.actor", "ActorServicePlugin.OnRunning");
         var serviceProvider = _serviceProvider ?? throw new InvalidOperationException("ServiceProvider not available during OnRunningAsync");
 
         Logger?.LogDebug("Actor service running");
@@ -217,6 +221,7 @@ public class ActorServicePlugin : BaseBannouPlugin
     /// </summary>
     protected override async Task OnShutdownAsync()
     {
+        using var activity = _telemetryProvider?.StartActivity("bannou.actor", "ActorServicePlugin.OnShutdown");
         Logger?.LogInformation("Shutting down Actor service");
 
         try

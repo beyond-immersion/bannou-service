@@ -39,6 +39,7 @@ public sealed class ActorRunner : IActorRunner
     private readonly IDocumentExecutor _executor;
     private readonly IExpressionEvaluator _expressionEvaluator;
     private readonly ICognitionBuilder _cognitionBuilder;
+    private readonly ITelemetryProvider _telemetryProvider;
 
     private AbmlDocument? _behavior;
     private ICognitionPipeline? _cognitionPipeline;
@@ -153,6 +154,7 @@ public sealed class ActorRunner : IActorRunner
     /// <param name="expressionEvaluator">Expression evaluator for options evaluation.</param>
     /// <param name="cognitionBuilder">Cognition pipeline builder for template-driven cognition.</param>
     /// <param name="logger">Logger instance.</param>
+    /// <param name="telemetryProvider">Telemetry provider for distributed tracing spans.</param>
     /// <param name="initialState">Initial state snapshot, or null for fresh actor.</param>
     public ActorRunner(
         string actorId,
@@ -170,6 +172,7 @@ public sealed class ActorRunner : IActorRunner
         IExpressionEvaluator expressionEvaluator,
         ICognitionBuilder cognitionBuilder,
         ILogger<ActorRunner> logger,
+        ITelemetryProvider telemetryProvider,
         object? initialState)
     {
         ActorId = actorId;
@@ -187,6 +190,7 @@ public sealed class ActorRunner : IActorRunner
         _expressionEvaluator = expressionEvaluator;
         _cognitionBuilder = cognitionBuilder;
         _logger = logger;
+        _telemetryProvider = telemetryProvider;
 
         // Create bounded perception queue with DropOldest behavior
         _perceptionQueue = Channel.CreateBounded<PerceptionData>(
@@ -209,6 +213,7 @@ public sealed class ActorRunner : IActorRunner
     /// <inheritdoc/>
     public async Task StartAsync(CancellationToken cancellationToken = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.actor", "ActorRunner.Start");
         if (_disposed)
             throw new ObjectDisposedException(nameof(ActorRunner));
 
@@ -293,6 +298,7 @@ public sealed class ActorRunner : IActorRunner
     /// <inheritdoc/>
     public async Task StopAsync(bool graceful = true, CancellationToken cancellationToken = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.actor", "ActorRunner.Stop");
         if (_disposed)
             return;
 
@@ -350,6 +356,7 @@ public sealed class ActorRunner : IActorRunner
     /// <inheritdoc/>
     public async Task BindCharacterAsync(Guid characterId, CancellationToken cancellationToken = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.actor", "ActorRunner.BindCharacter");
         if (_disposed)
             throw new ObjectDisposedException(nameof(ActorRunner));
 
@@ -540,6 +547,7 @@ public sealed class ActorRunner : IActorRunner
     /// <inheritdoc/>
     public async ValueTask DisposeAsync()
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.actor", "ActorRunner.Dispose");
         if (_disposed)
             return;
 
@@ -576,6 +584,7 @@ public sealed class ActorRunner : IActorRunner
     /// </summary>
     private async Task RunBehaviorLoopAsync(CancellationToken ct)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.actor", "ActorRunner.RunBehaviorLoop");
         var tickInterval = TimeSpan.FromMilliseconds(_template.TickIntervalMs > 0
             ? _template.TickIntervalMs
             : _config.DefaultTickIntervalMs);
@@ -684,6 +693,7 @@ public sealed class ActorRunner : IActorRunner
     private async Task<CognitionResult?> ExecuteCognitionPhaseAsync(
         ICognitionPipeline pipeline, CancellationToken ct)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.actor", "ActorRunner.ExecuteCognitionPhase");
         // 1. Drain perception queue into a list for batch processing
         var perceptions = new List<object>();
         while (_perceptionQueue.Reader.TryRead(out var perception))
@@ -793,6 +803,7 @@ public sealed class ActorRunner : IActorRunner
     /// </summary>
     private async Task ProcessPerceptionsAsync(CancellationToken ct)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.actor", "ActorRunner.ProcessPerceptions");
         var processedCount = 0;
 
         while (_perceptionQueue.Reader.TryRead(out var perception))
@@ -830,8 +841,7 @@ public sealed class ActorRunner : IActorRunner
             _logger.LogDebug("Actor {ActorId} processed {Count} perceptions", ActorId, processedCount);
         }
 
-        // Yield to honor async contract per IMPLEMENTATION TENETS
-        await Task.Yield();
+        await Task.CompletedTask;
     }
 
     /// <summary>
@@ -853,6 +863,7 @@ public sealed class ActorRunner : IActorRunner
     /// <param name="ct">Cancellation token.</param>
     private async Task ExecuteBehaviorTickAsync(CognitionResult? cognitionResult, CancellationToken ct)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.actor", "ActorRunner.ExecuteBehaviorTick");
         // 1. Re-initialize behavior after hot-reload invalidation.
         // Initial load happens eagerly in StartAsync. This path only triggers when
         // InvalidateCachedBehavior() sets _behavior = null for hot-reload.
@@ -959,6 +970,7 @@ public sealed class ActorRunner : IActorRunner
     /// </summary>
     private async Task<VariableScope> CreateExecutionScopeAsync(CancellationToken ct)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.actor", "ActorRunner.CreateExecutionScope");
         var scope = new VariableScope();
 
         // Agent identity
@@ -1250,6 +1262,7 @@ public sealed class ActorRunner : IActorRunner
     /// </summary>
     private async Task PublishStateUpdateIfNeededAsync(CancellationToken ct)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.actor", "ActorRunner.PublishStateUpdateIfNeeded");
         if (!_state.HasPendingChanges || CharacterId == null)
             return;
 
@@ -1305,6 +1318,7 @@ public sealed class ActorRunner : IActorRunner
     /// </summary>
     private async Task PersistStateAsync(CancellationToken ct)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.actor", "ActorRunner.PersistState");
         var snapshot = GetStateSnapshot();
 
         for (int attempt = 0; attempt <= _config.MemoryStoreMaxRetries; attempt++)
@@ -1442,6 +1456,7 @@ public sealed class ActorRunner : IActorRunner
     /// </exception>
     private async Task InitializeBehaviorAsync(CancellationToken ct)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.actor", "ActorRunner.InitializeBehavior");
         if (string.IsNullOrWhiteSpace(_template.BehaviorRef))
         {
             _logger.LogDebug("Actor {ActorId} has no behavior reference, running without behavior", ActorId);
@@ -1559,6 +1574,7 @@ public sealed class ActorRunner : IActorRunner
     /// </summary>
     private async Task SetupPerceptionSubscriptionAsync(CancellationToken ct)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.actor", "ActorRunner.SetupPerceptionSubscription");
         if (!CharacterId.HasValue)
             return;
 
@@ -1612,6 +1628,7 @@ public sealed class ActorRunner : IActorRunner
     /// </summary>
     private async Task HandlePerceptionEventAsync(CharacterPerceptionEvent evt, CancellationToken ct)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.actor", "ActorRunner.HandlePerceptionEvent");
         // Track source app-id for routing state updates back to the game server
         _lastSourceAppId = evt.SourceAppId;
 
@@ -1631,7 +1648,6 @@ public sealed class ActorRunner : IActorRunner
         _logger.LogDebug("Actor {ActorId} received perception from {SourceAppId} (type: {Type})",
             ActorId, evt.SourceAppId, perception.PerceptionType);
 
-        // Yield to honor async contract per IMPLEMENTATION TENETS
-        await Task.Yield();
+        await Task.CompletedTask;
     }
 }

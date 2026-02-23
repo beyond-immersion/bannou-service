@@ -312,7 +312,7 @@ public partial class ActorCompletedEvent : BaseServiceEvent
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public ActorCompletedEventExitReason ExitReason { get; set; } = default!;
+    public ActorExitReason ExitReason { get; set; } = default!;
 
     /// <summary>
     /// Additional context about the exit
@@ -851,25 +851,32 @@ public partial class CharacterPerceptionEvent : BaseServiceEvent
 
 }
 
-#pragma warning disable CS1591 // Enum members cannot have XML documentation
+/// <summary>
+/// Position in world coordinates (meters, Y-up, right-handed)
+/// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum ActorCompletedEventExitReason
+public partial class Position3D
 {
 
-    [System.Runtime.Serialization.EnumMember(Value = @"behavior_complete")]
-    Behavior_complete = 0,
+    /// <summary>
+    /// X coordinate in world space (meters)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("x")]
+    public float X { get; set; } = default!;
 
-    [System.Runtime.Serialization.EnumMember(Value = @"error")]
-    Error = 1,
+    /// <summary>
+    /// Y coordinate (up axis) in world space (meters)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("y")]
+    public float Y { get; set; } = default!;
 
-    [System.Runtime.Serialization.EnumMember(Value = @"timeout")]
-    Timeout = 2,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"external_stop")]
-    External_stop = 3,
+    /// <summary>
+    /// Z coordinate in world space (meters)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("z")]
+    public float Z { get; set; } = default!;
 
 }
-#pragma warning restore CS1591
 
 
 

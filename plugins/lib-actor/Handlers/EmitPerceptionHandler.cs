@@ -43,6 +43,7 @@ public sealed class EmitPerceptionHandler : IActionHandler
     private readonly IMessageBus _messageBus;
     private readonly ILogger<EmitPerceptionHandler> _logger;
     private readonly ActorServiceConfiguration _config;
+    private readonly ITelemetryProvider _telemetryProvider;
 
     /// <summary>
     /// Creates a new emit perception handler.
@@ -50,14 +51,17 @@ public sealed class EmitPerceptionHandler : IActionHandler
     /// <param name="messageBus">Message bus for publishing events.</param>
     /// <param name="logger">Logger instance.</param>
     /// <param name="config">Actor service configuration.</param>
+    /// <param name="telemetryProvider">Telemetry provider for span instrumentation.</param>
     public EmitPerceptionHandler(
         IMessageBus messageBus,
         ILogger<EmitPerceptionHandler> logger,
-        ActorServiceConfiguration config)
+        ActorServiceConfiguration config,
+        ITelemetryProvider telemetryProvider)
     {
         _messageBus = messageBus;
         _logger = logger;
         _config = config;
+        _telemetryProvider = telemetryProvider;
     }
 
     /// <inheritdoc/>
@@ -70,6 +74,7 @@ public sealed class EmitPerceptionHandler : IActionHandler
         AbmlExecutionContext context,
         CancellationToken ct)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.actor", "EmitPerceptionHandler.Execute");
         var domainAction = (DomainAction)action;
         var scope = context.CallStack.Current?.Scope ?? context.RootScope;
 

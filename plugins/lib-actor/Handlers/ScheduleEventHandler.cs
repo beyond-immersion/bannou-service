@@ -50,18 +50,22 @@ public sealed class ScheduleEventHandler : IActionHandler
     private const string ACTION_NAME = "schedule_event";
     private readonly IScheduledEventManager _scheduledEventManager;
     private readonly ILogger<ScheduleEventHandler> _logger;
+    private readonly ITelemetryProvider _telemetryProvider;
 
     /// <summary>
     /// Creates a new schedule event handler.
     /// </summary>
     /// <param name="scheduledEventManager">Manager for scheduled events.</param>
     /// <param name="logger">Logger instance.</param>
+    /// <param name="telemetryProvider">Telemetry provider for span instrumentation.</param>
     public ScheduleEventHandler(
         IScheduledEventManager scheduledEventManager,
-        ILogger<ScheduleEventHandler> logger)
+        ILogger<ScheduleEventHandler> logger,
+        ITelemetryProvider telemetryProvider)
     {
         _scheduledEventManager = scheduledEventManager;
         _logger = logger;
+        _telemetryProvider = telemetryProvider;
     }
 
     /// <inheritdoc/>
@@ -74,6 +78,7 @@ public sealed class ScheduleEventHandler : IActionHandler
         AbmlExecutionContext context,
         CancellationToken ct)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.actor", "ScheduleEventHandler.Execute");
         var domainAction = (DomainAction)action;
         var scope = context.CallStack.Current?.Scope ?? context.RootScope;
 
@@ -251,6 +256,7 @@ public sealed class ScheduledEventManager : IScheduledEventManager, IDisposable
     private readonly IMessageBus _messageBus;
     private readonly ILogger<ScheduledEventManager> _logger;
     private readonly ActorServiceConfiguration _config;
+    private readonly ITelemetryProvider _telemetryProvider;
     private readonly ConcurrentDictionary<Guid, ScheduledEvent> _pendingEvents = new();
     private readonly Timer _timer;
     private bool _disposed;
@@ -261,14 +267,17 @@ public sealed class ScheduledEventManager : IScheduledEventManager, IDisposable
     /// <param name="messageBus">Message bus for publishing events.</param>
     /// <param name="logger">Logger instance.</param>
     /// <param name="configuration">Actor service configuration.</param>
+    /// <param name="telemetryProvider">Telemetry provider for span instrumentation.</param>
     public ScheduledEventManager(
         IMessageBus messageBus,
         ILogger<ScheduledEventManager> logger,
-        ActorServiceConfiguration configuration)
+        ActorServiceConfiguration configuration,
+        ITelemetryProvider telemetryProvider)
     {
         _messageBus = messageBus;
         _logger = logger;
         _config = configuration;
+        _telemetryProvider = telemetryProvider;
 
         var checkInterval = TimeSpan.FromMilliseconds(configuration.ScheduledEventCheckIntervalMilliseconds);
         _timer = new Timer(CheckEvents, null, checkInterval, checkInterval);
@@ -299,6 +308,8 @@ public sealed class ScheduledEventManager : IScheduledEventManager, IDisposable
 
     private void CheckEvents(object? state)
     {
+        if (_disposed) return;
+
         var now = DateTimeOffset.UtcNow;
 
         foreach (var kvp in _pendingEvents)
@@ -315,6 +326,7 @@ public sealed class ScheduledEventManager : IScheduledEventManager, IDisposable
 
     private async Task FireEventAsync(ScheduledEvent evt)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.actor", "ScheduledEventManager.FireEvent");
         try
         {
             if (!evt.TargetCharacterId.HasValue)
@@ -361,8 +373,9 @@ public sealed class ScheduledEventManager : IScheduledEventManager, IDisposable
     {
         if (!_disposed)
         {
-            _timer.Dispose();
             _disposed = true;
+            _timer.Change(Timeout.Infinite, Timeout.Infinite);
+            _timer.Dispose();
         }
     }
 }

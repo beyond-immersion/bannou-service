@@ -7,6 +7,7 @@ using BeyondImmersion.Bannou.BehaviorCompiler.Documents.Actions;
 using BeyondImmersion.Bannou.BehaviorExpressions.Expressions;
 using BeyondImmersion.BannouService.Abml.Execution;
 using BeyondImmersion.BannouService.Actor.Runtime;
+using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.Logging;
 using AbmlExecutionContext = BeyondImmersion.BannouService.Abml.Execution.ExecutionContext;
 
@@ -39,18 +40,22 @@ public sealed class SetEncounterPhaseHandler : IActionHandler
     private const string ACTION_NAME = "set_encounter_phase";
     private readonly IActorRegistry _actorRegistry;
     private readonly ILogger<SetEncounterPhaseHandler> _logger;
+    private readonly ITelemetryProvider _telemetryProvider;
 
     /// <summary>
     /// Creates a new set encounter phase handler.
     /// </summary>
     /// <param name="actorRegistry">Actor registry for finding the executing actor.</param>
     /// <param name="logger">Logger instance.</param>
+    /// <param name="telemetryProvider">Telemetry provider for span instrumentation.</param>
     public SetEncounterPhaseHandler(
         IActorRegistry actorRegistry,
-        ILogger<SetEncounterPhaseHandler> logger)
+        ILogger<SetEncounterPhaseHandler> logger,
+        ITelemetryProvider telemetryProvider)
     {
         _actorRegistry = actorRegistry;
         _logger = logger;
+        _telemetryProvider = telemetryProvider;
     }
 
     /// <inheritdoc/>
@@ -63,6 +68,7 @@ public sealed class SetEncounterPhaseHandler : IActionHandler
         AbmlExecutionContext context,
         CancellationToken ct)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.actor", "SetEncounterPhaseHandler.Execute");
         var domainAction = (DomainAction)action;
         var scope = context.CallStack.Current?.Scope ?? context.RootScope;
 

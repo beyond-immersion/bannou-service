@@ -407,12 +407,10 @@ public class CharacterTestHandler : BaseHttpTestHandler
                 Status = CharacterStatus.Alive
             });
 
-            // Get enriched character (with options to include cross-service data)
+            // Get enriched character with family tree
             var response = await characterClient.GetEnrichedCharacterAsync(new GetEnrichedCharacterRequest
             {
                 CharacterId = createResponse.CharacterId,
-                IncludePersonality = true,
-                IncludeBackstory = true,
                 IncludeFamilyTree = false
             });
 

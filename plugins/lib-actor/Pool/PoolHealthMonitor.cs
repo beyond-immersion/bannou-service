@@ -26,6 +26,7 @@ public sealed class PoolHealthMonitor : BackgroundService
     private readonly IMessageBus _messageBus;
     private readonly ILogger<PoolHealthMonitor> _logger;
     private readonly ActorServiceConfiguration _configuration;
+    private readonly ITelemetryProvider _telemetryProvider;
 
     /// <summary>
     /// Check interval for scanning heartbeats.
@@ -44,17 +45,20 @@ public sealed class PoolHealthMonitor : BackgroundService
         IActorPoolManager poolManager,
         IMessageBus messageBus,
         ILogger<PoolHealthMonitor> logger,
-        ActorServiceConfiguration configuration)
+        ActorServiceConfiguration configuration,
+        ITelemetryProvider telemetryProvider)
     {
         _poolManager = poolManager;
         _messageBus = messageBus;
         _logger = logger;
         _configuration = configuration;
+        _telemetryProvider = telemetryProvider;
     }
 
     /// <inheritdoc/>
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.actor", "PoolHealthMonitor.Execute");
         // Only run in control plane mode (non-bannou deployment)
         // Pool nodes don't need to monitor other nodes - the control plane does
         if (_configuration.DeploymentMode == ActorDeploymentMode.Bannou)
@@ -115,6 +119,7 @@ public sealed class PoolHealthMonitor : BackgroundService
     /// </summary>
     private async Task CheckPoolHealthAsync(CancellationToken ct)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.actor", "PoolHealthMonitor.CheckPoolHealth");
         var unhealthyNodes = await _poolManager.GetUnhealthyNodesAsync(HeartbeatTimeout, ct);
 
         foreach (var node in unhealthyNodes)

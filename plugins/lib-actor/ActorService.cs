@@ -54,6 +54,7 @@ public partial class ActorService : IActorService
     private readonly IMeshInvocationClient _meshClient;
     private readonly IResourceClient _resourceClient;
     private readonly ICharacterClient _characterClient;
+    private readonly ITelemetryProvider _telemetryProvider;
 
     // State store names use StateStoreDefinitions constants per IMPLEMENTATION TENETS
     private const string ALL_TEMPLATES_KEY = "_all_template_ids";
@@ -82,6 +83,7 @@ public partial class ActorService : IActorService
     /// <param name="meshClient">Mesh client for invoking methods on remote nodes.</param>
     /// <param name="resourceClient">Resource client for reference tracking (L1 hard dependency).</param>
     /// <param name="characterClient">Character client for realm lookup on spawn (L2 same-layer dependency).</param>
+    /// <param name="telemetryProvider">Telemetry provider for span instrumentation.</param>
     public ActorService(
         IMessageBus messageBus,
         IStateStoreFactory stateStoreFactory,
@@ -94,7 +96,8 @@ public partial class ActorService : IActorService
         IActorPoolManager poolManager,
         IMeshInvocationClient meshClient,
         IResourceClient resourceClient,
-        ICharacterClient characterClient)
+        ICharacterClient characterClient,
+        ITelemetryProvider telemetryProvider)
     {
         _messageBus = messageBus;
         _stateStoreFactory = stateStoreFactory;
@@ -108,6 +111,7 @@ public partial class ActorService : IActorService
         _meshClient = meshClient;
         _resourceClient = resourceClient;
         _characterClient = characterClient;
+        _telemetryProvider = telemetryProvider;
 
         // Register event handlers via partial class (ActorServiceEvents.cs)
         RegisterEventConsumers(_eventConsumer);
@@ -398,6 +402,7 @@ public partial class ActorService : IActorService
                 try
                 {
                     await actor.StopAsync(graceful: true, cancellationToken);
+                    await actor.DisposeAsync();
                     _actorRegistry.TryRemove(actor.ActorId, out _);
                     stoppedCount++;
                 }
@@ -457,6 +462,7 @@ public partial class ActorService : IActorService
         Guid templateId,
         CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.actor", "ActorService.UpdateTemplateIndex");
         var indexStore = _stateStoreFactory.GetStore<List<string>>(StateStoreDefinitions.ActorTemplates);
 
         for (int attempt = 1; attempt <= TemplateIndexMaxRetries; attempt++)
@@ -657,7 +663,7 @@ public partial class ActorService : IActorService
             NodeAppId = nodeAppId,
             Status = _configuration.DeploymentMode == ActorDeploymentMode.Bannou ? ActorStatus.Running : ActorStatus.Pending,
             StartedAt = startedAt,
-            LoopIterations = 0
+            LoopIterations = null
         });
     }
 
@@ -667,6 +673,7 @@ public partial class ActorService : IActorService
     /// </summary>
     private async Task<Guid?> ResolveRealmIdAsync(Guid? providedRealmId, Guid? characterId, CancellationToken ct)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.actor", "ActorService.ResolveRealmId");
         if (providedRealmId.HasValue)
         {
             return providedRealmId.Value;
@@ -735,7 +742,7 @@ public partial class ActorService : IActorService
                     NodeAppId = assignment.NodeAppId,
                     Status = assignment.Status,
                     StartedAt = assignment.StartedAt ?? assignment.AssignedAt,
-                    LoopIterations = 0
+                    LoopIterations = null
                 });
             }
         }
@@ -785,6 +792,7 @@ public partial class ActorService : IActorService
         string actorId,
         CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.actor", "ActorService.FindAutoSpawnTemplate");
         var templateStore = _stateStoreFactory.GetStore<ActorTemplateData>(StateStoreDefinitions.ActorTemplates);
         var indexStore = _stateStoreFactory.GetStore<List<string>>(StateStoreDefinitions.ActorTemplates);
 
@@ -919,6 +927,7 @@ public partial class ActorService : IActorService
             using var stopCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
             stopCts.CancelAfter(TimeSpan.FromSeconds(_configuration.ActorOperationTimeoutSeconds));
             await runner.StopAsync(body.Graceful, stopCts.Token);
+            await runner.DisposeAsync();
             _actorRegistry.TryRemove(body.ActorId, out _);
 
             // Publish stopped event
@@ -935,8 +944,6 @@ public partial class ActorService : IActorService
                 DeletedReason = body.Graceful ? "graceful_stop" : "forced_stop"
             };
             await _messageBus.TryPublishAsync("actor-instance.deleted", evt, cancellationToken: cancellationToken);
-
-            await runner.DisposeAsync();
 
             _logger.LogInformation("Stopped actor {ActorId}", body.ActorId);
 
@@ -1080,7 +1087,7 @@ public partial class ActorService : IActorService
                 NodeAppId = assignment.NodeAppId,
                 Status = assignment.Status,
                 StartedAt = assignment.StartedAt ?? assignment.AssignedAt,
-                LoopIterations = 0
+                LoopIterations = null
             });
         }
     }
@@ -1235,6 +1242,7 @@ public partial class ActorService : IActorService
         ListActorsRequest body,
         CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.actor", "ActorService.ListActorsFromPool");
         // NodeId is verified non-null by caller; extract to satisfy NRT analysis
         var nodeId = body.NodeId ?? throw new InvalidOperationException("NodeId must be set before calling ListActorsFromPoolAsync");
         var assignments = await _poolManager.ListActorsByNodeAsync(nodeId, cancellationToken);
@@ -1272,7 +1280,7 @@ public partial class ActorService : IActorService
                 NodeAppId = a.NodeAppId,
                 Status = a.Status,
                 StartedAt = a.StartedAt ?? a.AssignedAt,
-                LoopIterations = 0
+                LoopIterations = null
             })
             .ToList();
 
@@ -1791,6 +1799,7 @@ public partial class ActorService : IActorService
         string actorId,
         CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.actor", "ActorService.FindActor");
         // First check local registry
         if (_actorRegistry.TryGet(actorId, out var localRunner))
         {
@@ -1822,6 +1831,7 @@ public partial class ActorService : IActorService
         where TRequest : class
         where TResponse : class
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.actor", "ActorService.InvokeRemote");
         _logger.LogDebug("Forwarding {Endpoint} to remote node {NodeId}", endpoint, nodeId);
         try
         {
@@ -1863,6 +1873,7 @@ public partial class ActorService : IActorService
         CancellationToken cancellationToken)
         where TRequest : class
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.actor", "ActorService.InvokeRemoteNoResponse");
         _logger.LogDebug("Forwarding {Endpoint} to remote node {NodeId} (no response)", endpoint, nodeId);
         try
         {

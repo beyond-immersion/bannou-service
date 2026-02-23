@@ -480,19 +480,22 @@ gh issue list --search "Resource:" --state open
 
 **Layer**: L2 GameFoundation | **Deep Dive**: [ACTOR.md](plugins/ACTOR.md)
 
-### Production Readiness: 65%
+### Production Readiness: 90%
 
-Core architecture is solid and functional: template CRUD, actor spawn/stop/get lifecycle, behavior loop with perception processing, ABML document execution with hot-reload, GOAP planning integration, bounded perception queues with urgency filtering, encounter management, pool mode with command topics and health monitoring, Variable Provider Factory pattern (personality/combat/backstory/encounters/quest), behavior document provider chain (Puppetmaster dynamic + seeded + fallback), periodic state persistence, character state update publishing. 30+ configuration properties all wired. No bugs, no implementation gaps.
+L3-hardened. Core architecture is solid and functional: template CRUD, actor spawn/stop/get lifecycle, behavior loop with two-phase tick execution (cognition pipeline + ABML behavior), ABML document execution with hot-reload, GOAP planning integration, bounded perception queues with urgency filtering, encounter management, pool mode with command topics and health monitoring, Variable Provider Factory pattern (personality/combat/backstory/encounters/quest), behavior document provider chain (Puppetmaster dynamic + seeded + fallback), dynamic character binding (event brain → character brain without relaunch), periodic state persistence, character state update publishing. 30+ configuration properties all wired with validation keywords. Schema NRT compliance verified. T30 telemetry spans on ~80 async methods across 22 files. All T8 filler booleans removed from responses. Inline enums consolidated to shared types. ETag retry loops on all index operations. All disposal and lifecycle patterns correct. No implementation gaps.
 
-However, significant production features remain unimplemented: auto-scale deployment mode is declared but stubbed, session-bound actors are stubbed, and 5 extensions (memory decay, cross-node encounters, behavior versioning, actor migration, Phase 2 variable providers) are open. The pool node capacity model is self-reported with no external validation.
+Two known bugs (T29 violations: `cognitionOverrides` and `initialState` use `additionalProperties: true` but are deserialized to typed objects — both tracked with open issues). Significant production features remain unimplemented: auto-scale deployment mode is declared but stubbed, session-bound actors are stubbed, and 5 extensions (memory decay, cross-node encounters, behavior versioning, actor migration, Phase 2 variable providers) are open. The pool node capacity model is self-reported with no external validation.
 
-### Bug Count: 0
+### Bug Count: 2
 
-No known bugs.
+Two T29 violations with open design issues.
 
 ### Top 3 Bugs
 
-*(None)*
+| # | Bug | Description | Issue |
+|---|-----|-------------|-------|
+| 1 | **T29: `cognitionOverrides` metadata bag** | Defined as `additionalProperties: true` but deserialized to typed `CognitionOverrides` with 5 discriminated subtypes. Should be a typed schema with `oneOf`/discriminator pattern. | [#462](https://github.com/beyond-immersion/bannou-service/issues/462) |
+| 2 | **T29: `initialState` metadata bag** | Defined as `additionalProperties: true` but cast to `ActorStateSnapshot` with structured fields. Should define typed schema subset. | [#463](https://github.com/beyond-immersion/bannou-service/issues/463) |
 
 ### Top 3 Enhancements
 
@@ -514,9 +517,9 @@ gh issue list --search "Actor:" --state open
 
 **Layer**: L2 GameFoundation | **Deep Dive**: [CHARACTER.md](plugins/CHARACTER.md)
 
-### Production Readiness: 90%
+### Production Readiness: 97%
 
-All 12 endpoints are fully implemented with no stubs. CRUD operations include smart field tracking, realm-partitioned storage with MySQL JSON queries, enriched retrieval with family tree data (from lib-relationship), and centralized compression via the Resource service. Distributed locking, optimistic concurrency, and lifecycle events are all wired. The only remaining work is two potential extensions (batch compression and automated purge background service), neither of which blocks production use.
+L3-hardened. All 12 endpoints fully implemented with no stubs. Schema NRT compliance verified (3 critical, 7 major fixes applied). Event types properly located in events schema with uuid format and enum reason. Telemetry spans on all 13 async helpers. Configuration validation keywords on all properties. RefCountUpdateMaxRetries extracted from hardcoded constant to config. Post-review: fixed missing fields in CharacterCreatedEvent, corrected null vs empty list in CompressCharacterAsync, fixed referenceTypes description, removed L4-owned snapshot types from L2 schema (T29/T2). CRUD operations include smart field tracking, realm-partitioned storage with MySQL JSON queries, enriched retrieval with family tree data (from lib-relationship), and centralized compression via the Resource service. Distributed locking, optimistic concurrency, and lifecycle events all wired. Remaining: 2 design-phase extensions and 1 design consideration (batch ref unregistration).
 
 ### Bug Count: 0
 
@@ -530,9 +533,9 @@ No known bugs.
 
 | # | Enhancement | Description | Issue |
 |---|-------------|-------------|-------|
-| 1 | **Character purge background service** | Automated purge of characters eligible for cleanup (zero references past grace period). Config removed for T21 compliance; needs redesign when operational need arises. | [#263](https://github.com/beyond-immersion/bannou-service/issues/263) |
-| 2 | **Batch compression** | Compress multiple dead characters in one operation via a batch variant of `/resource/compress/execute`. | [#253](https://github.com/beyond-immersion/bannou-service/issues/253) |
-| 3 | *(No further enhancements identified)* | | |
+| 1 | **Delete flow O(N) reference unregistration** | When a character is deleted, cleanup callbacks fire on 4 L4 services, each publishing individual `resource.reference.unregistered` events. For characters with rich data, this creates O(N) message bus traffic. A batch unregistration endpoint in lib-resource would reduce this to a single operation. | [#351](https://github.com/beyond-immersion/bannou-service/issues/351) |
+| 2 | **Character purge background service** | Automated purge of characters eligible for cleanup (zero references past grace period). Config removed for T21 compliance; needs redesign when operational need arises. | [#263](https://github.com/beyond-immersion/bannou-service/issues/263) |
+| 3 | **Batch compression** | Compress multiple dead characters in one operation via a batch variant of `/resource/compress/execute`. | [#253](https://github.com/beyond-immersion/bannou-service/issues/253) |
 
 ### GH Issues
 

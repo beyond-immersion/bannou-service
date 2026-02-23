@@ -6,6 +6,7 @@
 using BeyondImmersion.Bannou.BehaviorCompiler.Documents;
 using BeyondImmersion.Bannou.BehaviorCompiler.Parser;
 using BeyondImmersion.BannouService.Providers;
+using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.Logging;
 using System.Collections.Concurrent;
 using System.Reflection;
@@ -42,6 +43,7 @@ public sealed class SeededBehaviorProvider : IBehaviorDocumentProvider
     private const string SeededPrefix = "seeded:";
 
     private readonly ILogger<SeededBehaviorProvider> _logger;
+    private readonly ITelemetryProvider _telemetryProvider;
     private readonly DocumentParser _parser = new();
     private readonly ConcurrentDictionary<string, AbmlDocument> _cache = new();
     private readonly Lazy<IReadOnlyList<string>> _availableIdentifiers;
@@ -50,9 +52,13 @@ public sealed class SeededBehaviorProvider : IBehaviorDocumentProvider
     /// Creates a new seeded behavior provider.
     /// </summary>
     /// <param name="logger">Logger instance.</param>
-    public SeededBehaviorProvider(ILogger<SeededBehaviorProvider> logger)
+    /// <param name="telemetryProvider">Telemetry provider for span instrumentation.</param>
+    public SeededBehaviorProvider(
+        ILogger<SeededBehaviorProvider> logger,
+        ITelemetryProvider telemetryProvider)
     {
         _logger = logger;
+        _telemetryProvider = telemetryProvider;
         _availableIdentifiers = new Lazy<IReadOnlyList<string>>(DiscoverEmbeddedBehaviors);
 
         // Log available seeded behaviors on construction (for debugging)
@@ -101,6 +107,7 @@ public sealed class SeededBehaviorProvider : IBehaviorDocumentProvider
     /// <inheritdoc />
     public async Task<AbmlDocument?> GetDocumentAsync(string behaviorRef, CancellationToken ct)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.actor", "SeededBehaviorProvider.GetDocument");
         var identifier = ExtractIdentifier(behaviorRef);
 
         // Check cache first

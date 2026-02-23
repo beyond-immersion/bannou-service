@@ -21,6 +21,8 @@ components:
       - name
       - realmId
       - speciesId
+      - birthDate
+      - status
       - createdAt
       properties:
         eventName:
@@ -45,8 +47,7 @@ components:
         birthDate: &id005
           type: string
           format: date-time
-          nullable: true
-          description: In-game birth date of the character
+          description: In-game birth date of the character (required on creation, always present)
         deathDate: &id006
           type: string
           format: date-time
@@ -55,8 +56,7 @@ components:
         status: &id007
           allOf:
           - $ref: '../character-api.yaml#/components/schemas/CharacterStatus'
-          nullable: true
-          description: Current status of the character (e.g., active, inactive, deceased)
+          description: Current lifecycle status of the character (alive, dead, dormant)
         createdAt: &id008
           type: string
           format: date-time
@@ -85,6 +85,8 @@ components:
       - name
       - realmId
       - speciesId
+      - birthDate
+      - status
       - createdAt
       - changedFields
       properties:
@@ -125,6 +127,8 @@ components:
       - name
       - realmId
       - speciesId
+      - birthDate
+      - status
       - createdAt
       properties:
         eventName:

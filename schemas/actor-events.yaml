@@ -70,6 +70,9 @@ info:
     - topic: actor.pool-node.draining
       event: PoolNodeDrainingEvent
       description: Published when a pool node begins graceful shutdown
+    - topic: actor.pool-node.unhealthy
+      event: PoolNodeUnhealthyEvent
+      description: Published by PoolHealthMonitor when a pool node exceeds the heartbeat timeout
 
   x-event-subscriptions:
     - topic: session.disconnected

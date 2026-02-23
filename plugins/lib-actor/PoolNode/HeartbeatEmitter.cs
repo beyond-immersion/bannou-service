@@ -19,12 +19,13 @@ namespace BeyondImmersion.BannouService.Actor.PoolNode;
 /// Each pool node has a unique NodeId, so duplicate heartbeats from same node are expected.
 /// </para>
 /// </remarks>
-public sealed class HeartbeatEmitter : IDisposable
+public sealed class HeartbeatEmitter : IAsyncDisposable
 {
     private readonly IMessageBus _messageBus;
     private readonly IActorRegistry _actorRegistry;
     private readonly ActorServiceConfiguration _configuration;
     private readonly ILogger<HeartbeatEmitter> _logger;
+    private readonly ITelemetryProvider _telemetryProvider;
     private readonly CancellationTokenSource _cts = new();
     private Task? _heartbeatTask;
     private bool _disposed;
@@ -41,12 +42,14 @@ public sealed class HeartbeatEmitter : IDisposable
         IMessageBus messageBus,
         IActorRegistry actorRegistry,
         ActorServiceConfiguration configuration,
-        ILogger<HeartbeatEmitter> logger)
+        ILogger<HeartbeatEmitter> logger,
+        ITelemetryProvider telemetryProvider)
     {
         _messageBus = messageBus;
         _actorRegistry = actorRegistry;
         _configuration = configuration;
         _logger = logger;
+        _telemetryProvider = telemetryProvider;
     }
 
     /// <summary>
@@ -84,6 +87,7 @@ public sealed class HeartbeatEmitter : IDisposable
     /// </summary>
     public async Task StopAsync()
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.actor", "HeartbeatEmitter.Stop");
         if (_heartbeatTask == null)
         {
             return;
@@ -107,6 +111,7 @@ public sealed class HeartbeatEmitter : IDisposable
 
     private async Task EmitHeartbeatsAsync(CancellationToken ct)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.actor", "HeartbeatEmitter.EmitHeartbeats");
         while (!ct.IsCancellationRequested)
         {
             try
@@ -135,6 +140,7 @@ public sealed class HeartbeatEmitter : IDisposable
 
     private async Task EmitHeartbeatAsync(CancellationToken ct)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.actor", "HeartbeatEmitter.EmitHeartbeat");
         // Start() validates PoolNodeId/PoolNodeAppId, so these are guaranteed non-null here
         var nodeId = _configuration.PoolNodeId ?? throw new InvalidOperationException("PoolNodeId not configured");
         var appId = _configuration.PoolNodeAppId ?? throw new InvalidOperationException("PoolNodeAppId not configured");
@@ -161,15 +167,16 @@ public sealed class HeartbeatEmitter : IDisposable
     }
 
     /// <inheritdoc/>
-    public void Dispose()
+    public async ValueTask DisposeAsync()
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.actor", "HeartbeatEmitter.Dispose");
         if (_disposed)
         {
             return;
         }
 
         _disposed = true;
-        _cts.Cancel();
+        await StopAsync();
         _cts.Dispose();
     }
 }

@@ -128,7 +128,11 @@ public partial class CharacterController
                     "description": "In-game death timestamp"
                 },
                 "status": {
-                    "$ref": "#/$defs/CharacterStatus",
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/CharacterStatus"
+                        }
+                    ],
                     "description": "Current lifecycle status of the character"
                 },
                 "createdAt": {
@@ -287,7 +291,11 @@ public partial class CharacterController
                     "description": "In-game death timestamp"
                 },
                 "status": {
-                    "$ref": "#/$defs/CharacterStatus",
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/CharacterStatus"
+                        }
+                    ],
                     "description": "Current lifecycle status of the character"
                 },
                 "createdAt": {
@@ -483,7 +491,11 @@ public partial class CharacterController
                     "description": "In-game death timestamp"
                 },
                 "status": {
-                    "$ref": "#/$defs/CharacterStatus",
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/CharacterStatus"
+                        }
+                    ],
                     "description": "Current lifecycle status of the character"
                 },
                 "createdAt": {
@@ -726,7 +738,9 @@ public partial class CharacterController
                 "characters",
                 "totalCount",
                 "page",
-                "pageSize"
+                "pageSize",
+                "hasNextPage",
+                "hasPreviousPage"
             ],
             "properties": {
                 "characters": {
@@ -803,7 +817,11 @@ public partial class CharacterController
                     "description": "In-game death timestamp"
                 },
                 "status": {
-                    "$ref": "#/$defs/CharacterStatus",
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/CharacterStatus"
+                        }
+                    ],
                     "description": "Current lifecycle status of the character"
                 },
                 "createdAt": {
@@ -906,25 +924,10 @@ public partial class CharacterController
                     "format": "uuid",
                     "description": "ID of the character to retrieve"
                 },
-                "includePersonality": {
-                    "type": "boolean",
-                    "default": false,
-                    "description": "Include personality traits from character-personality service"
-                },
-                "includeBackstory": {
-                    "type": "boolean",
-                    "default": false,
-                    "description": "Include backstory elements from character-history service"
-                },
                 "includeFamilyTree": {
                     "type": "boolean",
                     "default": false,
                     "description": "Include family relationships from relationship service"
-                },
-                "includeCombatPreferences": {
-                    "type": "boolean",
-                    "default": false,
-                    "description": "Include combat preferences from character-personality service"
                 }
             }
         }
@@ -982,7 +985,11 @@ public partial class CharacterController
                     "description": "In-game death timestamp"
                 },
                 "status": {
-                    "$ref": "#/$defs/CharacterStatus",
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/CharacterStatus"
+                        }
+                    ],
                     "description": "Current lifecycle status of the character"
                 },
                 "createdAt": {
@@ -996,25 +1003,10 @@ public partial class CharacterController
                     "nullable": true,
                     "description": "Real-world last update timestamp"
                 },
-                "personality": {
-                    "$ref": "#/$defs/PersonalitySnapshot",
-                    "nullable": true,
-                    "description": "Personality traits (included if includePersonality=true)"
-                },
-                "backstory": {
-                    "$ref": "#/$defs/BackstorySnapshot",
-                    "nullable": true,
-                    "description": "Backstory elements (included if includeBackstory=true)"
-                },
                 "familyTree": {
                     "$ref": "#/$defs/FamilyTreeResponse",
                     "nullable": true,
                     "description": "Family relationships (included if includeFamilyTree=true)"
-                },
-                "combatPreferences": {
-                    "$ref": "#/$defs/CombatPreferencesSnapshot",
-                    "nullable": true,
-                    "description": "Combat preferences (included if includeCombatPreferences=true)"
                 }
             }
         },
@@ -1027,80 +1019,17 @@ public partial class CharacterController
                 "dormant"
             ]
         },
-        "PersonalitySnapshot": {
-            "description": "Snapshot of personality traits for enriched response",
-            "type": "object",
-            "additionalProperties": false,
-            "required": [
-                "traits",
-                "version"
-            ],
-            "properties": {
-                "traits": {
-                    "type": "object",
-                    "additionalProperties": {
-                        "type": "number",
-                        "format": "float"
-                    },
-                    "description": "Trait values keyed by trait name (OPENNESS, AGREEABLENESS, etc.)"
-                },
-                "version": {
-                    "type": "integer",
-                    "description": "Personality version number (increments on evolution)"
-                }
-            }
-        },
-        "BackstorySnapshot": {
-            "description": "Snapshot of backstory for enriched response",
-            "type": "object",
-            "additionalProperties": false,
-            "required": [
-                "elements"
-            ],
-            "properties": {
-                "elements": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/$defs/BackstoryElementSnapshot"
-                    },
-                    "description": "List of backstory elements"
-                }
-            }
-        },
-        "BackstoryElementSnapshot": {
-            "description": "Single backstory element",
-            "type": "object",
-            "additionalProperties": false,
-            "required": [
-                "elementType",
-                "key",
-                "value",
-                "strength"
-            ],
-            "properties": {
-                "elementType": {
-                    "type": "string",
-                    "description": "Type of backstory element (ORIGIN, TRAUMA, GOAL, etc.)"
-                },
-                "key": {
-                    "type": "string",
-                    "description": "Machine-readable key (homeland, past_job, etc.)"
-                },
-                "value": {
-                    "type": "string",
-                    "description": "Machine-readable value (northlands, blacksmith, etc.)"
-                },
-                "strength": {
-                    "type": "number",
-                    "format": "float",
-                    "description": "How strongly this affects behavior (0.0 to 1.0)"
-                }
-            }
-        },
         "FamilyTreeResponse": {
             "description": "Family relationships for a character",
             "type": "object",
             "additionalProperties": false,
+            "required": [
+                "parents",
+                "children",
+                "siblings",
+                "spouses",
+                "pastLives"
+            ],
             "properties": {
                 "parents": {
                     "type": "array",
@@ -1145,7 +1074,8 @@ public partial class CharacterController
             "additionalProperties": false,
             "required": [
                 "characterId",
-                "relationshipType"
+                "relationshipType",
+                "isAlive"
             ],
             "properties": {
                 "characterId": {
@@ -1191,47 +1121,6 @@ public partial class CharacterController
                     "format": "date-time",
                     "nullable": true,
                     "description": "When the past life ended"
-                }
-            }
-        },
-        "CombatPreferencesSnapshot": {
-            "description": "Snapshot of combat preferences for enriched response",
-            "type": "object",
-            "additionalProperties": false,
-            "required": [
-                "style",
-                "preferredRange",
-                "groupRole",
-                "riskTolerance",
-                "retreatThreshold",
-                "protectAllies"
-            ],
-            "properties": {
-                "style": {
-                    "type": "string",
-                    "description": "Combat style (DEFENSIVE, BALANCED, AGGRESSIVE, BERSERKER, TACTICAL)"
-                },
-                "preferredRange": {
-                    "type": "string",
-                    "description": "Preferred engagement distance (MELEE, CLOSE, MEDIUM, RANGED)"
-                },
-                "groupRole": {
-                    "type": "string",
-                    "description": "Role in group combat (FRONTLINE, SUPPORT, FLANKER, LEADER, SOLO)"
-                },
-                "riskTolerance": {
-                    "type": "number",
-                    "format": "float",
-                    "description": "Willingness to take risky actions (0.0 to 1.0)"
-                },
-                "retreatThreshold": {
-                    "type": "number",
-                    "format": "float",
-                    "description": "Health percentage at which retreat is considered (0.0 to 1.0)"
-                },
-                "protectAllies": {
-                    "type": "boolean",
-                    "description": "Whether to prioritize ally protection"
                 }
             }
         }
@@ -1384,17 +1273,19 @@ public partial class CharacterController
                 },
                 "keyBackstoryPoints": {
                     "type": "array",
+                    "nullable": true,
                     "items": {
                         "type": "string"
                     },
-                    "description": "Key backstory elements as text.\nExample: [\"Trained by the Knights Guild\", \"Born in the Northlands\"]\n"
+                    "description": "Key backstory elements as text. Null when compression did not include backstory data.\ nExample: [\"Trained by the Knights Guild\", \"Born in the Northlands\"]\n"
                 },
                 "majorLifeEvents": {
                     "type": "array",
+                    "nullable": true,
                     "items": {
                         "type": "string"
                     },
-                    "description": "Significant life events as text.\nExample: [\"Fought in the Battle of Stormgate (Hero)\", \"Survived the Great Flood\"]\n"
+                    "description": "Significant life events as text. Null when compression did not include history data.\ nExample: [\"Fought in the Battle of Stormgate (Hero)\", \"Survived the Great Flood\"]\n"
                 },
                 "familySummary": {
                     "type": "string",
@@ -1547,17 +1438,19 @@ public partial class CharacterController
                 },
                 "keyBackstoryPoints": {
                     "type": "array",
+                    "nullable": true,
                     "items": {
                         "type": "string"
                     },
-                    "description": "Key backstory elements as text.\nExample: [\"Trained by the Knights Guild\", \"Born in the Northlands\"]\n"
+                    "description": "Key backstory elements as text. Null when compression did not include backstory data.\ nExample: [\"Trained by the Knights Guild\", \"Born in the Northlands\"]\n"
                 },
                 "majorLifeEvents": {
                     "type": "array",
+                    "nullable": true,
                     "items": {
                         "type": "string"
                     },
-                    "description": "Significant life events as text.\nExample: [\"Fought in the Battle of Stormgate (Hero)\", \"Survived the Great Flood\"]\n"
+                    "description": "Significant life events as text. Null when compression did not include history data.\ nExample: [\"Fought in the Battle of Stormgate (Hero)\", \"Survived the Great Flood\"]\n"
                 },
                 "familySummary": {
                     "type": "string",
@@ -1662,6 +1555,8 @@ public partial class CharacterController
             "required": [
                 "characterId",
                 "referenceCount",
+                "referenceTypes",
+                "isCompressed",
                 "isEligibleForCleanup"
             ],
             "properties": {
@@ -1679,7 +1574,7 @@ public partial class CharacterController
                     "items": {
                         "type": "string"
                     },
-                    "description": "Types of references found (FAMILY, PAST_LIFE, HISTORY, MEMORY)"
+                    "description": "Types of references found. L2 sources use constants (RELATIONSHIP, CONTRACT). L4 sources are reported by lib-resource using their registered source type strings (e.g., actor, encounter).\n"
                 },
                 "isCompressed": {
                     "type": "boolean",
@@ -1831,7 +1726,9 @@ public partial class CharacterController
                 "characters",
                 "totalCount",
                 "page",
-                "pageSize"
+                "pageSize",
+                "hasNextPage",
+                "hasPreviousPage"
             ],
             "properties": {
                 "characters": {
@@ -1908,7 +1805,11 @@ public partial class CharacterController
                     "description": "In-game death timestamp"
                 },
                 "status": {
-                    "$ref": "#/$defs/CharacterStatus",
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/CharacterStatus"
+                        }
+                    ],
                     "description": "Current lifecycle status of the character"
                 },
                 "createdAt": {
@@ -2073,7 +1974,11 @@ public partial class CharacterController
                     "description": "In-game death timestamp"
                 },
                 "status": {
-                    "$ref": "#/$defs/CharacterStatus",
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/CharacterStatus"
+                        }
+                    ],
                     "description": "Current lifecycle status of the character"
                 },
                 "createdAt": {
@@ -2204,7 +2109,8 @@ public partial class CharacterController
                 "speciesId",
                 "birthDate",
                 "deathDate",
-                "status"
+                "status",
+                "createdAt"
             ],
             "properties": {
                 "characterId": {
@@ -2237,7 +2143,11 @@ public partial class CharacterController
                     "description": "In-game death timestamp (required for compression)"
                 },
                 "status": {
-                    "$ref": "#/$defs/CharacterStatus",
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/CharacterStatus"
+                        }
+                    ],
                     "description": "Current lifecycle status (must be dead for compression)"
                 },
                 "familySummary": {

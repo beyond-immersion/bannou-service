@@ -30,9 +30,9 @@ Compliant properties include one of these phrases in their description:
 | Metric | Count |
 |--------|-------|
 | Total metadata bag properties | 165 |
-| Compliant (has marker) | 141 |
-| Non-compliant (missing marker) | 24 |
-| Compliance rate | 85% |
+| Compliant (has marker) | 144 |
+| Non-compliant (missing marker) | 21 |
+| Compliance rate | 87% |
 
 ## Properties by Service
 
@@ -98,9 +98,9 @@ Compliant properties include one of these phrases in their description:
 
 | Schema Type | Property | Schema File | Compliant | Description |
 |-------------|----------|-------------|-----------|-------------|
-| `ActorTemplateResponse` | `cognitionOverrides` | `actor-api.yaml` | **N** | Static template-level cognition overrides (polymorphic JSON). Deserialized in... |
+| `ActorTemplateResponse` | `cognitionOverrides` | `actor-api.yaml` | Y | Static template-level cognition overrides (polymorphic JSON). Deserialized in... |
 | `ActorTemplateResponse` | `configuration` | `actor-api.yaml` | Y | Game-specific configuration passed to ABML behavior execution scope. No Banno... |
-| `CreateActorTemplateRequest` | `cognitionOverrides` | `actor-api.yaml` | **N** | Static template-level cognition overrides (polymorphic JSON). Deserialized in... |
+| `CreateActorTemplateRequest` | `cognitionOverrides` | `actor-api.yaml` | Y | Static template-level cognition overrides (polymorphic JSON). Deserialized in... |
 | `CreateActorTemplateRequest` | `configuration` | `actor-api.yaml` | Y | Game-specific configuration passed to ABML behavior execution scope. No Banno... |
 | `EncounterState` | `data` | `actor-api.yaml` | Y | Game-specific encounter state data passed to ABML behavior scope. No Bannou p... |
 | `OptionsQueryContext` | `customContext` | `actor-api.yaml` | Y | Game-specific context data passed through to ABML behavior scope. No Bannou p... |
@@ -108,7 +108,7 @@ Compliant properties include one of these phrases in their description:
 | `SpawnActorRequest` | `configurationOverrides` | `actor-api.yaml` | Y | Game-specific configuration overrides merged with template defaults. No Banno... |
 | `SpawnActorRequest` | `initialState` | `actor-api.yaml` | Y | Initial actor state snapshot. Deserialized internally to ActorStateSnapshot. ... |
 | `StartEncounterRequest` | `initialData` | `actor-api.yaml` | Y | Game-specific encounter initialization data passed to ABML behavior scope. No... |
-| `UpdateActorTemplateRequest` | `cognitionOverrides` | `actor-api.yaml` | **N** | Updated cognition overrides (polymorphic JSON). Deserialized internally to Co... |
+| `UpdateActorTemplateRequest` | `cognitionOverrides` | `actor-api.yaml` | Y | Updated cognition overrides (polymorphic JSON). Deserialized internally to Co... |
 | `UpdateActorTemplateRequest` | `configuration` | `actor-api.yaml` | Y | Updated game-specific configuration for ABML behavior execution scope. No Ban... |
 | `SendMessageCommand` | `payload` | `actor-events.yaml` | Y | Game-specific message payload passed to ABML behavior scope. No Bannou plugin... |
 | `SpawnActorCommand` | `configuration` | `actor-events.yaml` | Y | Game-specific configuration for ABML behavior execution scope. No Bannou plug... |
@@ -440,9 +440,6 @@ or is it being misused as a cross-service data contract?
 |---------|-------------|----------|-------------|-------------|
 | Achievement | `CreateAchievementDefinitionRequest` | `metadata` | `achievement-api.yaml` | Additional achievement-specific metadata |
 | Achievement | `AchievementDefinitionResponse` | `metadata` | `achievement-api.yaml` | Additional metadata |
-| Actor | `CreateActorTemplateRequest` | `cognitionOverrides` | `actor-api.yaml` | Static template-level cognition overrides (polymorphic JSON). Deserialized in... |
-| Actor | `ActorTemplateResponse` | `cognitionOverrides` | `actor-api.yaml` | Static template-level cognition overrides (polymorphic JSON). Deserialized in... |
-| Actor | `UpdateActorTemplateRequest` | `cognitionOverrides` | `actor-api.yaml` | Updated cognition overrides (polymorphic JSON). Deserialized internally to Co... |
 | Analytics | `IngestEventRequest` | `metadata` | `analytics-api.yaml` | Additional event-specific data |
 | Behavior | `CharacterContext` | `worldState` | `behavior-api.yaml` | Relevant world state information |
 | Behavior | `GoapPlanRequest` | `worldState` | `behavior-api.yaml` | Current world state as key-value pairs |

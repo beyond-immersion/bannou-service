@@ -5,6 +5,7 @@
 
 using BeyondImmersion.Bannou.BehaviorCompiler.Documents;
 using BeyondImmersion.BannouService.Providers;
+using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.Logging;
 
 namespace BeyondImmersion.BannouService.Actor.Providers;
@@ -30,14 +31,19 @@ namespace BeyondImmersion.BannouService.Actor.Providers;
 public sealed class FallbackBehaviorProvider : IBehaviorDocumentProvider
 {
     private readonly ILogger<FallbackBehaviorProvider> _logger;
+    private readonly ITelemetryProvider _telemetryProvider;
 
     /// <summary>
     /// Creates a new fallback behavior provider.
     /// </summary>
     /// <param name="logger">Logger instance.</param>
-    public FallbackBehaviorProvider(ILogger<FallbackBehaviorProvider> logger)
+    /// <param name="telemetryProvider">Telemetry provider for span instrumentation.</param>
+    public FallbackBehaviorProvider(
+        ILogger<FallbackBehaviorProvider> logger,
+        ITelemetryProvider telemetryProvider)
     {
         _logger = logger;
+        _telemetryProvider = telemetryProvider;
     }
 
     /// <inheritdoc />
@@ -61,6 +67,7 @@ public sealed class FallbackBehaviorProvider : IBehaviorDocumentProvider
     /// </remarks>
     public async Task<AbmlDocument?> GetDocumentAsync(string behaviorRef, CancellationToken ct)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.actor", "FallbackBehaviorProvider.GetDocument");
         _logger.LogWarning(
             "No provider could load behavior {BehaviorRef}. " +
             "Ensure the behavior exists in asset storage or is registered as a seeded behavior.",

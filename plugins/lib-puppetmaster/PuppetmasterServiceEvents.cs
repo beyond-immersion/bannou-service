@@ -212,14 +212,7 @@ public partial class PuppetmasterService
                 }
             };
 
-            var response = await actorClient.InjectPerceptionAsync(request, ct);
-
-            if (!response.Queued)
-            {
-                _logger.LogDebug(
-                    "Perception not queued for actor {ActorId} (queue may be full)",
-                    actorId);
-            }
+            await actorClient.InjectPerceptionAsync(request, ct);
         }
         catch (Exception ex)
         {

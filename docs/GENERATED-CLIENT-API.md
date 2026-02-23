@@ -192,7 +192,7 @@ Distributed actor management and execution for NPC brains, event coordinators, a
 | `ListActorsAsync` | `ListActorsRequest` | `ListActorsResponse` | List actors with optional filters |
 | `InjectperceptionAsync` | `InjectPerceptionRequest` | `InjectPerceptionResponse` | Inject a perception event into an actor's queue (testing) |
 | `QueryoptionsAsync` | `QueryOptionsRequest` | `QueryOptionsResponse` | Query an actor for its available options |
-| `StartencounterEventAsync` | `StartEncounterRequest` | *(fire-and-forget)* | Start an encounter managed by an Event Brain actor |
+| `StartencounterAsync` | `StartEncounterRequest` | `StartEncounterResponse` | Start an encounter managed by an Event Brain actor |
 | `UpdateEncounterphaseAsync` | `UpdateEncounterPhaseRequest` | `UpdateEncounterPhaseResponse` | Update the phase of an active encounter |
 | `EndencounterAsync` | `EndEncounterRequest` | `EndEncounterResponse` | End an active encounter |
 | `GetEncounterAsync` | `GetEncounterRequest` | `GetEncounterResponse` | Get the current encounter state for an actor |

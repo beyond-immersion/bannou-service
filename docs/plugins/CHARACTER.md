@@ -53,7 +53,10 @@ The Character service (L2 GameFoundation) manages game world characters for Arca
 | lib-character-personality | Registers `x-references` cleanup callback (`/character-personality/cleanup-by-character`); cleanup invoked via lib-resource when character deleted |
 | lib-actor | Registers `x-references` cleanup callback (`/actor/cleanup-by-character`); cleanup invoked via lib-resource when character deleted |
 | lib-species | Calls `ICharacterClient` to check character references during species deprecation |
+| lib-realm | Calls `ICharacterClient` to check character references during realm deprecation |
 | lib-quest | Calls `ICharacterClient` to validate character existence when accepting quests |
+| lib-obligation | Calls `ICharacterClient` for character data retrieval during obligation tracking |
+| lib-license | Calls `ICharacterClient` for character owner validation on license board operations |
 
 ---
 
@@ -101,6 +104,7 @@ This plugin does not consume external events.
 | `MaxPageSize` | `CHARACTER_MAX_PAGE_SIZE` | `100` | Maximum page size for list operations |
 | `DefaultPageSize` | `CHARACTER_DEFAULT_PAGE_SIZE` | `20` | Default page size when not specified |
 | `RealmIndexUpdateMaxRetries` | `CHARACTER_REALM_INDEX_UPDATE_MAX_RETRIES` | `3` | Optimistic concurrency retry limit for realm index |
+| `RefCountUpdateMaxRetries` | `CHARACTER_REF_COUNT_UPDATE_MAX_RETRIES` | `3` | Optimistic concurrency retry limit for refcount tracking |
 | `LockTimeoutSeconds` | `CHARACTER_LOCK_TIMEOUT_SECONDS` | `30` | Timeout in seconds for distributed lock acquisition |
 | `CleanupGracePeriodDays` | `CHARACTER_CLEANUP_GRACE_PERIOD_DAYS` | `30` | Days at zero references before cleanup eligible |
 
@@ -120,6 +124,7 @@ This plugin does not consume external events.
 | `IRelationshipClient` | Scoped | Family tree, reference counting, and type code lookup |
 | `IContractClient` | Scoped | Contract reference counting (L1 - allowed) |
 | `IResourceClient` | Scoped | L4 reference counting via event-driven pattern |
+| `ITelemetryProvider` | Singleton | Telemetry span instrumentation for async helpers |
 | `IEventConsumer` | Scoped | Event registration (no handlers defined) |
 
 Service lifetime is **Scoped** (per-request).
@@ -143,16 +148,13 @@ Service lifetime is **Scoped** (per-request).
 
 ### Enriched Character (`/character/get-enriched`)
 
-Per SERVICE_HIERARCHY, Character (L2) can only enrich with data from L2 or lower services. The following flags are available:
+Per SERVICE_HIERARCHY, Character (L2) can only enrich with data from L2 or lower services. The only enrichment flag is:
 
 | Flag | Source Service | Status |
 |------|---------------|--------|
-| `includePersonality` | CharacterPersonality (L4) | **NOT INCLUDED** - callers should call L4 directly |
-| `includeCombatPreferences` | CharacterPersonality (L4) | **NOT INCLUDED** - callers should call L4 directly |
-| `includeBackstory` | CharacterHistory (L4) | **NOT INCLUDED** - callers should call L4 directly |
 | `includeFamilyTree` | Relationship (L2) | ✅ Included |
 
-If L4 enrichment flags are set, the service logs a debug message explaining the SERVICE_HIERARCHY constraint but does not fail.
+For L4 data (personality, backstory, combat preferences), callers should query CharacterPersonality and CharacterHistory directly.
 
 **Family tree categorization** uses string-based type code matching:
 - Parents: PARENT, MOTHER, FATHER, STEP_PARENT
@@ -269,7 +271,7 @@ None currently tracked.
 
 ### Bugs (Fix Immediately)
 
-1. ~~**ApiException wrapped in InvalidOperationException in validation helpers**~~: **FIXED** (2026-02-09) - `ValidateRealmAsync` and `ValidateSpeciesAsync` were catching all non-404 exceptions (including `ApiException`) and wrapping them in `InvalidOperationException`. This caused dependency failures (e.g., RealmService returning 500) to be misclassified as internal errors, emitting unnecessary error events and returning 500 instead of 503 (ServiceUnavailable). Fixed by using `catch (Exception ex) when (ex is not ApiException)` to let `ApiException` propagate naturally to the caller's `catch (ApiException)` block.
+1. ~~**MapToArchiveModel loses null semantics for L4 fields**~~: **FIXED** (2026-02-23) - Made `CharacterArchiveModel.KeyBackstoryPoints` and `MajorLifeEvents` nullable (`List<string>?`) and removed `?? new()` coalescing in `MapToArchiveModel`. Null now round-trips correctly through storage, preserving the null vs empty list semantic distinction (null = "compression did not include this data", empty = "included but no entries").
 
 ### Intentional Quirks (Documented Behavior)
 
@@ -283,7 +285,9 @@ None currently tracked.
 
 ### Design Considerations (Requires Planning)
 
-None currently tracked.
+1. **Delete flow O(N) reference unregistration**: When Character is deleted, cleanup callbacks fire on 4 L4 services (CharacterPersonality, CharacterHistory, CharacterEncounter, Actor). Each entity deletion in those services publishes an individual `resource.reference.unregistered` event. For characters with rich data (hundreds of encounters, many history entries), this creates O(N) message bus traffic. A batch unregistration endpoint in lib-resource would reduce this to a single operation.
+<!-- AUDIT:TRACKED:2026-02-23:https://github.com/beyond-immersion/bannou-service/issues/351 -->
+
 
 ---
 
@@ -298,6 +302,8 @@ No active work items.
 ### Historical
 
 See git history for full changelog. Key milestones:
+- **2026-02-23**: Fixed MapToArchiveModel null semantics bug — `KeyBackstoryPoints` and `MajorLifeEvents` now preserve null through storage round-trip
+- **2026-02-23**: L3 hardening pass — schema NRT compliance (3 critical, 7 major fixes), event types moved to events schema with proper uuid format and enum reason, telemetry spans on all 13 async helpers, config validation keywords, RefCountUpdateMaxRetries config property, misleading comments fixed. Post-review fixes: missing fields in CharacterCreatedEvent, CompressCharacterAsync null vs empty list, referenceTypes description corrected. Removed L4-owned snapshot types from L2 schema (PersonalitySnapshot, BackstorySnapshot, CombatPreferencesSnapshot) per T29/T2
 - **2026-02-09**: Fixed ApiException wrapping in validation helpers (T7 compliance)
 - **2026-02-07**: Server-side MySQL JSON queries, plural `spouses`, removed dead config, schema extensions
 - **2026-02-03**: Centralized compression via Resource service (L1), delete flow with `ExecuteCleanupAsync`

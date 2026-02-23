@@ -34,7 +34,7 @@ public sealed class EventBrainHandlerTests
         var messageBus = new Mock<IMessageBus>();
         var logger = new Mock<ILogger<EmitPerceptionHandler>>();
         var config = new ActorServiceConfiguration();
-        var handler = new EmitPerceptionHandler(messageBus.Object, logger.Object, config);
+        var handler = new EmitPerceptionHandler(messageBus.Object, logger.Object, config, new Mock<ITelemetryProvider>().Object);
 
         var targetCharacterId = Guid.NewGuid();
         var action = new DomainAction("emit_perception", new Dictionary<string, object?>
@@ -58,7 +58,7 @@ public sealed class EventBrainHandlerTests
         var messageBus = new Mock<IMessageBus>();
         var logger = new Mock<ILogger<EmitPerceptionHandler>>();
         var config = new ActorServiceConfiguration();
-        var handler = new EmitPerceptionHandler(messageBus.Object, logger.Object, config);
+        var handler = new EmitPerceptionHandler(messageBus.Object, logger.Object, config, new Mock<ITelemetryProvider>().Object);
 
         var action = new DomainAction("other_action", new Dictionary<string, object?>());
 
@@ -82,7 +82,7 @@ public sealed class EventBrainHandlerTests
 
         var logger = new Mock<ILogger<EmitPerceptionHandler>>();
         var config = new ActorServiceConfiguration();
-        var handler = new EmitPerceptionHandler(messageBus.Object, logger.Object, config);
+        var handler = new EmitPerceptionHandler(messageBus.Object, logger.Object, config, new Mock<ITelemetryProvider>().Object);
 
         var targetCharacterId = Guid.Parse("00000000-0000-0000-0000-000000000123");
         var (context, scope) = CreateExecutionContext();
@@ -118,7 +118,7 @@ public sealed class EventBrainHandlerTests
         var messageBus = new Mock<IMessageBus>();
         var logger = new Mock<ILogger<EmitPerceptionHandler>>();
         var config = new ActorServiceConfiguration();
-        var handler = new EmitPerceptionHandler(messageBus.Object, logger.Object, config);
+        var handler = new EmitPerceptionHandler(messageBus.Object, logger.Object, config, new Mock<ITelemetryProvider>().Object);
 
         var (context, _) = CreateExecutionContext();
         var action = new DomainAction("emit_perception", new Dictionary<string, object?>
@@ -141,7 +141,7 @@ public sealed class EventBrainHandlerTests
     {
         // Arrange
         var logger = new Mock<ILogger<StateUpdateHandler>>();
-        var handler = new StateUpdateHandler(logger.Object);
+        var handler = new StateUpdateHandler(logger.Object, new Mock<ITelemetryProvider>().Object);
 
         var action = new DomainAction("state_update", new Dictionary<string, object?>
         {
@@ -162,7 +162,7 @@ public sealed class EventBrainHandlerTests
     {
         // Arrange
         var logger = new Mock<ILogger<StateUpdateHandler>>();
-        var handler = new StateUpdateHandler(logger.Object);
+        var handler = new StateUpdateHandler(logger.Object, new Mock<ITelemetryProvider>().Object);
 
         var (context, scope) = CreateExecutionContext();
         var action = new DomainAction("state_update", new Dictionary<string, object?>
@@ -186,7 +186,7 @@ public sealed class EventBrainHandlerTests
     {
         // Arrange
         var logger = new Mock<ILogger<StateUpdateHandler>>();
-        var handler = new StateUpdateHandler(logger.Object);
+        var handler = new StateUpdateHandler(logger.Object, new Mock<ITelemetryProvider>().Object);
 
         var (context, scope) = CreateExecutionContext();
         scope.SetValue("my_list", new List<object?> { "item1" });
@@ -215,7 +215,7 @@ public sealed class EventBrainHandlerTests
     {
         // Arrange
         var logger = new Mock<ILogger<StateUpdateHandler>>();
-        var handler = new StateUpdateHandler(logger.Object);
+        var handler = new StateUpdateHandler(logger.Object, new Mock<ITelemetryProvider>().Object);
 
         var (context, scope) = CreateExecutionContext();
 
@@ -243,7 +243,7 @@ public sealed class EventBrainHandlerTests
     {
         // Arrange
         var logger = new Mock<ILogger<StateUpdateHandler>>();
-        var handler = new StateUpdateHandler(logger.Object);
+        var handler = new StateUpdateHandler(logger.Object, new Mock<ITelemetryProvider>().Object);
 
         var (context, _) = CreateExecutionContext();
         var action = new DomainAction("state_update", new Dictionary<string, object?>
@@ -267,7 +267,7 @@ public sealed class EventBrainHandlerTests
         // Arrange
         var scheduledEventManager = new Mock<IScheduledEventManager>();
         var logger = new Mock<ILogger<ScheduleEventHandler>>();
-        var handler = new ScheduleEventHandler(scheduledEventManager.Object, logger.Object);
+        var handler = new ScheduleEventHandler(scheduledEventManager.Object, logger.Object, new Mock<ITelemetryProvider>().Object);
 
         var action = new DomainAction("schedule_event", new Dictionary<string, object?>
         {
@@ -292,7 +292,7 @@ public sealed class EventBrainHandlerTests
             .Callback<ScheduledEvent>(e => capturedEvent = e);
 
         var logger = new Mock<ILogger<ScheduleEventHandler>>();
-        var handler = new ScheduleEventHandler(scheduledEventManager.Object, logger.Object);
+        var handler = new ScheduleEventHandler(scheduledEventManager.Object, logger.Object, new Mock<ITelemetryProvider>().Object);
 
         var characterId = Guid.Parse("00000000-0000-0000-0000-000000000456");
         var (context, scope) = CreateExecutionContext();
@@ -327,7 +327,7 @@ public sealed class EventBrainHandlerTests
         // Arrange
         var scheduledEventManager = new Mock<IScheduledEventManager>();
         var logger = new Mock<ILogger<ScheduleEventHandler>>();
-        var handler = new ScheduleEventHandler(scheduledEventManager.Object, logger.Object);
+        var handler = new ScheduleEventHandler(scheduledEventManager.Object, logger.Object, new Mock<ITelemetryProvider>().Object);
 
         var (context, _) = CreateExecutionContext();
         var action = new DomainAction("schedule_event", new Dictionary<string, object?>
@@ -350,7 +350,7 @@ public sealed class EventBrainHandlerTests
         // Arrange
         var actorRegistry = new Mock<IActorRegistry>();
         var logger = new Mock<ILogger<QueryActorStateHandler>>();
-        var handler = new QueryActorStateHandler(actorRegistry.Object, logger.Object);
+        var handler = new QueryActorStateHandler(actorRegistry.Object, logger.Object, new Mock<ITelemetryProvider>().Object);
 
         var action = new DomainAction("query_actor_state", new Dictionary<string, object?>
         {
@@ -373,7 +373,7 @@ public sealed class EventBrainHandlerTests
             .Returns(false);
 
         var logger = new Mock<ILogger<QueryActorStateHandler>>();
-        var handler = new QueryActorStateHandler(actorRegistry.Object, logger.Object);
+        var handler = new QueryActorStateHandler(actorRegistry.Object, logger.Object, new Mock<ITelemetryProvider>().Object);
 
         var (context, scope) = CreateExecutionContext();
         var action = new DomainAction("query_actor_state", new Dictionary<string, object?>
@@ -397,7 +397,7 @@ public sealed class EventBrainHandlerTests
         // Arrange
         var actorRegistry = new Mock<IActorRegistry>();
         var logger = new Mock<ILogger<QueryActorStateHandler>>();
-        var handler = new QueryActorStateHandler(actorRegistry.Object, logger.Object);
+        var handler = new QueryActorStateHandler(actorRegistry.Object, logger.Object, new Mock<ITelemetryProvider>().Object);
 
         var (context, _) = CreateExecutionContext();
         var action = new DomainAction("query_actor_state", new Dictionary<string, object?>
@@ -421,7 +421,7 @@ public sealed class EventBrainHandlerTests
         var actorClient = new Mock<IActorClient>();
         var logger = new Mock<ILogger<QueryOptionsHandler>>();
         var config = new ActorServiceConfiguration();
-        var handler = new QueryOptionsHandler(actorClient.Object, logger.Object, config);
+        var handler = new QueryOptionsHandler(actorClient.Object, logger.Object, config, new Mock<ITelemetryProvider>().Object);
 
         var action = new DomainAction("query_options", new Dictionary<string, object?>
         {
@@ -460,7 +460,7 @@ public sealed class EventBrainHandlerTests
 
         var logger = new Mock<ILogger<QueryOptionsHandler>>();
         var config = new ActorServiceConfiguration();
-        var handler = new QueryOptionsHandler(actorClient.Object, logger.Object, config);
+        var handler = new QueryOptionsHandler(actorClient.Object, logger.Object, config, new Mock<ITelemetryProvider>().Object);
 
         var (context, scope) = CreateExecutionContext();
         var action = new DomainAction("query_options", new Dictionary<string, object?>
@@ -486,7 +486,7 @@ public sealed class EventBrainHandlerTests
         var actorClient = new Mock<IActorClient>();
         var logger = new Mock<ILogger<QueryOptionsHandler>>();
         var config = new ActorServiceConfiguration();
-        var handler = new QueryOptionsHandler(actorClient.Object, logger.Object, config);
+        var handler = new QueryOptionsHandler(actorClient.Object, logger.Object, config, new Mock<ITelemetryProvider>().Object);
 
         var (context, _) = CreateExecutionContext();
         var action = new DomainAction("query_options", new Dictionary<string, object?>
@@ -509,7 +509,7 @@ public sealed class EventBrainHandlerTests
         // Arrange
         var actorRegistry = new Mock<IActorRegistry>();
         var logger = new Mock<ILogger<SetEncounterPhaseHandler>>();
-        var handler = new SetEncounterPhaseHandler(actorRegistry.Object, logger.Object);
+        var handler = new SetEncounterPhaseHandler(actorRegistry.Object, logger.Object, new Mock<ITelemetryProvider>().Object);
 
         var action = new DomainAction("set_encounter_phase", new Dictionary<string, object?>
         {
@@ -529,7 +529,7 @@ public sealed class EventBrainHandlerTests
         // Arrange
         var actorRegistry = new Mock<IActorRegistry>();
         var logger = new Mock<ILogger<SetEncounterPhaseHandler>>();
-        var handler = new SetEncounterPhaseHandler(actorRegistry.Object, logger.Object);
+        var handler = new SetEncounterPhaseHandler(actorRegistry.Object, logger.Object, new Mock<ITelemetryProvider>().Object);
 
         var action = new DomainAction("other_action", new Dictionary<string, object?>());
 
@@ -553,7 +553,7 @@ public sealed class EventBrainHandlerTests
             .Returns(true);
 
         var logger = new Mock<ILogger<SetEncounterPhaseHandler>>();
-        var handler = new SetEncounterPhaseHandler(actorRegistry.Object, logger.Object);
+        var handler = new SetEncounterPhaseHandler(actorRegistry.Object, logger.Object, new Mock<ITelemetryProvider>().Object);
 
         var (context, scope) = CreateExecutionContext();
         scope.SetValue("agent", new Dictionary<string, object?> { ["id"] = "test-actor" });
@@ -586,7 +586,7 @@ public sealed class EventBrainHandlerTests
             .Returns(true);
 
         var logger = new Mock<ILogger<SetEncounterPhaseHandler>>();
-        var handler = new SetEncounterPhaseHandler(actorRegistry.Object, logger.Object);
+        var handler = new SetEncounterPhaseHandler(actorRegistry.Object, logger.Object, new Mock<ITelemetryProvider>().Object);
 
         var (context, scope) = CreateExecutionContext();
         scope.SetValue("agent", new Dictionary<string, object?> { ["id"] = "test-actor" });
@@ -611,7 +611,7 @@ public sealed class EventBrainHandlerTests
         // Arrange
         var actorRegistry = new Mock<IActorRegistry>();
         var logger = new Mock<ILogger<SetEncounterPhaseHandler>>();
-        var handler = new SetEncounterPhaseHandler(actorRegistry.Object, logger.Object);
+        var handler = new SetEncounterPhaseHandler(actorRegistry.Object, logger.Object, new Mock<ITelemetryProvider>().Object);
 
         var (context, scope) = CreateExecutionContext();
         scope.SetValue("agent", new Dictionary<string, object?> { ["id"] = "test-actor" });
@@ -633,7 +633,7 @@ public sealed class EventBrainHandlerTests
         // Arrange
         var actorRegistry = new Mock<IActorRegistry>();
         var logger = new Mock<ILogger<EndEncounterHandler>>();
-        var handler = new EndEncounterHandler(actorRegistry.Object, logger.Object);
+        var handler = new EndEncounterHandler(actorRegistry.Object, logger.Object, new Mock<ITelemetryProvider>().Object);
 
         var action = new DomainAction("end_encounter", new Dictionary<string, object?>());
 
@@ -650,7 +650,7 @@ public sealed class EventBrainHandlerTests
         // Arrange
         var actorRegistry = new Mock<IActorRegistry>();
         var logger = new Mock<ILogger<EndEncounterHandler>>();
-        var handler = new EndEncounterHandler(actorRegistry.Object, logger.Object);
+        var handler = new EndEncounterHandler(actorRegistry.Object, logger.Object, new Mock<ITelemetryProvider>().Object);
 
         var action = new DomainAction("other_action", new Dictionary<string, object?>());
 
@@ -674,7 +674,7 @@ public sealed class EventBrainHandlerTests
             .Returns(true);
 
         var logger = new Mock<ILogger<EndEncounterHandler>>();
-        var handler = new EndEncounterHandler(actorRegistry.Object, logger.Object);
+        var handler = new EndEncounterHandler(actorRegistry.Object, logger.Object, new Mock<ITelemetryProvider>().Object);
 
         var (context, scope) = CreateExecutionContext();
         scope.SetValue("agent", new Dictionary<string, object?> { ["id"] = "test-actor" });
@@ -706,7 +706,7 @@ public sealed class EventBrainHandlerTests
             .Returns(true);
 
         var logger = new Mock<ILogger<EndEncounterHandler>>();
-        var handler = new EndEncounterHandler(actorRegistry.Object, logger.Object);
+        var handler = new EndEncounterHandler(actorRegistry.Object, logger.Object, new Mock<ITelemetryProvider>().Object);
 
         var (context, scope) = CreateExecutionContext();
         scope.SetValue("agent", new Dictionary<string, object?> { ["id"] = "test-actor" });
@@ -737,7 +737,7 @@ public sealed class EventBrainHandlerTests
             .Returns(true);
 
         var logger = new Mock<ILogger<EndEncounterHandler>>();
-        var handler = new EndEncounterHandler(actorRegistry.Object, logger.Object);
+        var handler = new EndEncounterHandler(actorRegistry.Object, logger.Object, new Mock<ITelemetryProvider>().Object);
 
         var (context, scope) = CreateExecutionContext();
         scope.SetValue("agent", new Dictionary<string, object?> { ["id"] = "test-actor" });

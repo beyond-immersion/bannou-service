@@ -110,6 +110,7 @@ public class ActorRunnerCognitionTests
         }
 
         var loggerMock = new Mock<ILogger<ActorRunner>>();
+        var telemetryProviderMock = new Mock<ITelemetryProvider>();
 
         var runner = new ActorRunner(
             $"actor-{Guid.NewGuid()}",
@@ -127,6 +128,7 @@ public class ActorRunnerCognitionTests
             expressionEvaluatorMock.Object,
             cognitionBuilderMock.Object,
             loggerMock.Object,
+            telemetryProviderMock.Object,
             null);
 
         return (runner, cognitionBuilderMock, executorMock);
@@ -353,6 +355,7 @@ public class ActorRunnerCognitionTests
             new Mock<IExpressionEvaluator>().Object,
             cognitionBuilderMock.Object,
             new Mock<ILogger<ActorRunner>>().Object,
+            new Mock<ITelemetryProvider>().Object,
             initialState);
 
         // Act

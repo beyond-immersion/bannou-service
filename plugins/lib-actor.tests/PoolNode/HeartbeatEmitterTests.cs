@@ -18,6 +18,7 @@ public class HeartbeatEmitterTests
     private readonly Mock<IMessageBus> _messageBusMock;
     private readonly Mock<IActorRegistry> _actorRegistryMock;
     private readonly Mock<ILogger<HeartbeatEmitter>> _loggerMock;
+    private readonly Mock<ITelemetryProvider> _telemetryProviderMock;
     private readonly ActorServiceConfiguration _configuration;
 
     public HeartbeatEmitterTests()
@@ -25,6 +26,7 @@ public class HeartbeatEmitterTests
         _messageBusMock = new Mock<IMessageBus>();
         _actorRegistryMock = new Mock<IActorRegistry>();
         _loggerMock = new Mock<ILogger<HeartbeatEmitter>>();
+        _telemetryProviderMock = new Mock<ITelemetryProvider>();
 
         _configuration = new ActorServiceConfiguration
         {
@@ -41,16 +43,17 @@ public class HeartbeatEmitterTests
             _messageBusMock.Object,
             _actorRegistryMock.Object,
             config ?? _configuration,
-            _loggerMock.Object);
+            _loggerMock.Object,
+            _telemetryProviderMock.Object);
     }
 
     #region Constructor Tests
 
     [Fact]
-    public void ConstructorIsValid()
+    public async Task ConstructorIsValid()
     {
         ServiceConstructorValidator.ValidateServiceConstructor<HeartbeatEmitter>();
-        using var emitter = CreateEmitter();
+        await using var emitter = CreateEmitter();
         Assert.NotNull(emitter);
     }
 
@@ -69,21 +72,21 @@ public class HeartbeatEmitterTests
 
         // Assert - stop on unstarted emitter is a no-op
         Assert.Null(exception);
-        emitter.Dispose();
+        await emitter.DisposeAsync();
     }
 
     [Fact]
-    public void Dispose_MultipleTimes_NoException()
+    public async Task DisposeAsync_MultipleTimes_NoException()
     {
         // Arrange
         var emitter = CreateEmitter();
 
-        // Act - IDisposable contract requires multiple Dispose calls to be safe
-        emitter.Dispose();
-        var exception = Record.Exception(() =>
+        // Act - IAsyncDisposable contract requires multiple DisposeAsync calls to be safe
+        await emitter.DisposeAsync();
+        var exception = await Record.ExceptionAsync(async () =>
         {
-            emitter.Dispose();
-            emitter.Dispose();
+            await emitter.DisposeAsync();
+            await emitter.DisposeAsync();
         });
 
         // Assert
@@ -130,7 +133,7 @@ public class HeartbeatEmitterTests
         emitter.Start();
         await Task.Delay(2500);
         await emitter.StopAsync();
-        emitter.Dispose();
+        await emitter.DisposeAsync();
 
         // Assert - should have continued after exception
         Assert.True(callCount >= 2, $"Expected at least 2 calls but got {callCount}");
@@ -168,7 +171,7 @@ public class HeartbeatEmitterTests
         emitter.Start();
         await Task.Delay(1500);
         await emitter.StopAsync();
-        emitter.Dispose();
+        await emitter.DisposeAsync();
 
         var afterStop = DateTimeOffset.UtcNow;
 
@@ -211,7 +214,7 @@ public class HeartbeatEmitterTests
         emitter.Start();
         await Task.Delay(1500);
         await emitter.StopAsync();
-        emitter.Dispose();
+        await emitter.DisposeAsync();
 
         // Assert - verify actor count is included
         Assert.NotNull(capturedEvent);

@@ -6,6 +6,7 @@
 using BeyondImmersion.Bannou.BehaviorCompiler.Documents.Actions;
 using BeyondImmersion.BannouService.Abml.Execution;
 using BeyondImmersion.BannouService.Actor.Runtime;
+using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.Logging;
 using AbmlExecutionContext = BeyondImmersion.BannouService.Abml.Execution.ExecutionContext;
 
@@ -38,18 +39,22 @@ public sealed class QueryActorStateHandler : IActionHandler
     private const string ACTION_NAME = "query_actor_state";
     private readonly IActorRegistry _actorRegistry;
     private readonly ILogger<QueryActorStateHandler> _logger;
+    private readonly ITelemetryProvider _telemetryProvider;
 
     /// <summary>
     /// Creates a new query actor state handler.
     /// </summary>
     /// <param name="actorRegistry">Actor registry for local state access.</param>
     /// <param name="logger">Logger instance.</param>
+    /// <param name="telemetryProvider">Telemetry provider for span instrumentation.</param>
     public QueryActorStateHandler(
         IActorRegistry actorRegistry,
-        ILogger<QueryActorStateHandler> logger)
+        ILogger<QueryActorStateHandler> logger,
+        ITelemetryProvider telemetryProvider)
     {
         _actorRegistry = actorRegistry;
         _logger = logger;
+        _telemetryProvider = telemetryProvider;
     }
 
     /// <inheritdoc/>
@@ -62,6 +67,7 @@ public sealed class QueryActorStateHandler : IActionHandler
         AbmlExecutionContext context,
         CancellationToken ct)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.actor", "QueryActorStateHandler.Execute");
         var domainAction = (DomainAction)action;
         var scope = context.CallStack.Current?.Scope ?? context.RootScope;
 

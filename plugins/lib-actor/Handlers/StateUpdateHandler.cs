@@ -6,6 +6,7 @@
 using BeyondImmersion.Bannou.BehaviorCompiler.Documents.Actions;
 using BeyondImmersion.Bannou.BehaviorExpressions.Expressions;
 using BeyondImmersion.BannouService.Abml.Execution;
+using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.Logging;
 using AbmlExecutionContext = BeyondImmersion.BannouService.Abml.Execution.ExecutionContext;
 
@@ -42,14 +43,19 @@ public sealed class StateUpdateHandler : IActionHandler
 {
     private const string ACTION_NAME = "state_update";
     private readonly ILogger<StateUpdateHandler> _logger;
+    private readonly ITelemetryProvider _telemetryProvider;
 
     /// <summary>
     /// Creates a new state update handler.
     /// </summary>
     /// <param name="logger">Logger instance.</param>
-    public StateUpdateHandler(ILogger<StateUpdateHandler> logger)
+    /// <param name="telemetryProvider">Telemetry provider for span instrumentation.</param>
+    public StateUpdateHandler(
+        ILogger<StateUpdateHandler> logger,
+        ITelemetryProvider telemetryProvider)
     {
         _logger = logger;
+        _telemetryProvider = telemetryProvider;
     }
 
     /// <inheritdoc/>
@@ -62,6 +68,7 @@ public sealed class StateUpdateHandler : IActionHandler
         AbmlExecutionContext context,
         CancellationToken ct)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.actor", "StateUpdateHandler.Execute");
         var domainAction = (DomainAction)action;
         var scope = context.CallStack.Current?.Scope ?? context.RootScope;
 

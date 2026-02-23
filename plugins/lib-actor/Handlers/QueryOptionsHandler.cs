@@ -7,6 +7,7 @@ using BeyondImmersion.Bannou.BehaviorCompiler.Documents.Actions;
 using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.BannouService.Abml.Execution;
 using BeyondImmersion.BannouService.Actor;
+using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.Logging;
 using AbmlExecutionContext = BeyondImmersion.BannouService.Abml.Execution.ExecutionContext;
 
@@ -38,6 +39,7 @@ public sealed class QueryOptionsHandler : IActionHandler
     private readonly IActorClient _actorClient;
     private readonly ILogger<QueryOptionsHandler> _logger;
     private readonly ActorServiceConfiguration _config;
+    private readonly ITelemetryProvider _telemetryProvider;
 
     /// <summary>
     /// Creates a new query options handler.
@@ -45,14 +47,17 @@ public sealed class QueryOptionsHandler : IActionHandler
     /// <param name="actorClient">Actor client for service calls.</param>
     /// <param name="logger">Logger instance.</param>
     /// <param name="config">Actor service configuration.</param>
+    /// <param name="telemetryProvider">Telemetry provider for span instrumentation.</param>
     public QueryOptionsHandler(
         IActorClient actorClient,
         ILogger<QueryOptionsHandler> logger,
-        ActorServiceConfiguration config)
+        ActorServiceConfiguration config,
+        ITelemetryProvider telemetryProvider)
     {
         _actorClient = actorClient;
         _logger = logger;
         _config = config;
+        _telemetryProvider = telemetryProvider;
     }
 
     /// <inheritdoc/>
@@ -65,6 +70,7 @@ public sealed class QueryOptionsHandler : IActionHandler
         AbmlExecutionContext context,
         CancellationToken ct)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.actor", "QueryOptionsHandler.Execute");
         var domainAction = (DomainAction)action;
         var scope = context.CallStack.Current?.Scope ?? context.RootScope;
 

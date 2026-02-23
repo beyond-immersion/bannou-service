@@ -25,6 +25,7 @@ public class ActorRunnerFactory : IActorRunnerFactory
     private readonly IDocumentExecutorFactory _executorFactory;
     private readonly IExpressionEvaluator _expressionEvaluator;
     private readonly ICognitionBuilder _cognitionBuilder;
+    private readonly ITelemetryProvider _telemetryProvider;
 
     /// <summary>
     /// Creates a new actor runner factory.
@@ -40,6 +41,7 @@ public class ActorRunnerFactory : IActorRunnerFactory
     /// <param name="executorFactory">Document executor factory for behavior execution.</param>
     /// <param name="expressionEvaluator">Expression evaluator for options evaluation.</param>
     /// <param name="cognitionBuilder">Cognition pipeline builder for template-driven cognition.</param>
+    /// <param name="telemetryProvider">Telemetry provider for span instrumentation.</param>
     public ActorRunnerFactory(
         IMessageBus messageBus,
         IMessageSubscriber messageSubscriber,
@@ -51,7 +53,8 @@ public class ActorRunnerFactory : IActorRunnerFactory
         IEnumerable<IVariableProviderFactory> providerFactories,
         IDocumentExecutorFactory executorFactory,
         IExpressionEvaluator expressionEvaluator,
-        ICognitionBuilder cognitionBuilder)
+        ICognitionBuilder cognitionBuilder,
+        ITelemetryProvider telemetryProvider)
     {
         _messageBus = messageBus;
         _messageSubscriber = messageSubscriber;
@@ -64,6 +67,7 @@ public class ActorRunnerFactory : IActorRunnerFactory
         _executorFactory = executorFactory;
         _expressionEvaluator = expressionEvaluator;
         _cognitionBuilder = cognitionBuilder;
+        _telemetryProvider = telemetryProvider;
     }
 
     /// <inheritdoc/>
@@ -107,6 +111,7 @@ public class ActorRunnerFactory : IActorRunnerFactory
             _expressionEvaluator,
             _cognitionBuilder,
             logger,
+            _telemetryProvider,
             initialState);
     }
 

@@ -119,6 +119,7 @@ public class ActorRunnerTests
             .ReturnsAsync(ExecutionResult.Success());
 
         var loggerMock = new Mock<ILogger<ActorRunner>>();
+        var telemetryProviderMock = new Mock<ITelemetryProvider>();
 
         var runner = new ActorRunner(
             actorId ?? $"actor-{Guid.NewGuid()}",
@@ -136,6 +137,7 @@ public class ActorRunnerTests
             expressionEvaluatorMock.Object,
             cognitionBuilderMock.Object,
             loggerMock.Object,
+            telemetryProviderMock.Object,
             initialState);
 
         return (runner, messageBusMock);

@@ -514,6 +514,10 @@ paths:
       responses:
         '200':
           description: Encounter started successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StartEncounterResponse'
   /actor/encounter/update-phase:
     post:
       operationId: UpdateEncounterPhase
@@ -15887,7 +15891,6 @@ components:
       - category
       - status
       - startedAt
-      - loopIterations
       properties:
         actorId:
           type: string
@@ -15932,7 +15935,11 @@ components:
         loopIterations:
           type: integer
           format: int64
-          description: Number of behavior loop iterations executed
+          nullable: true
+          description: >-
+            Number of behavior loop iterations executed. Null when the actor is
+            running on a remote pool node and the iteration count is not locally
+            available.
     ActorSize:
       type: string
       description: Size classification affecting cover requirements and passage 
@@ -16013,6 +16020,7 @@ components:
             Static template-level cognition overrides (polymorphic JSON).
             Deserialized internally to CognitionOverrides type with discriminated
             subtypes.
+            No Bannou plugin reads specific keys from this field by convention.
         createdAt:
           type: string
           format: date-time
@@ -17395,29 +17403,6 @@ components:
           type: string
           nullable: true
           description: Type of the related entity (if any)
-    BackstoryElementSnapshot:
-      description: Single backstory element
-      type: object
-      additionalProperties: false
-      required:
-      - elementType
-      - key
-      - value
-      - strength
-      properties:
-        elementType:
-          type: string
-          description: Type of backstory element (ORIGIN, TRAUMA, GOAL, etc.)
-        key:
-          type: string
-          description: Machine-readable key (homeland, past_job, etc.)
-        value:
-          type: string
-          description: Machine-readable value (northlands, blacksmith, etc.)
-        strength:
-          type: number
-          format: float
-          description: How strongly this affects behavior (0.0 to 1.0)
     BackstoryElementType:
       type: string
       description: |
@@ -17461,17 +17446,19 @@ components:
           nullable: true
           description: When this backstory was last modified
     BackstorySnapshot:
-      description: Snapshot of backstory for enriched response
       type: object
       additionalProperties: false
+      description: Snapshot of a backstory element
       required:
-      - elements
+      - elementType
+      - key
       properties:
-        elements:
-          type: array
-          items:
-            $ref: '#/components/schemas/BackstoryElementSnapshot'
-          description: List of backstory elements
+        elementType:
+          type: string
+          description: Backstory element type (e.g., TRAUMA, GOAL)
+        key:
+          type: string
+          description: Backstory element key
     BalanceQuery:
       type: object
       description: A single balance query
@@ -17819,6 +17806,7 @@ components:
       properties:
         actorId:
           type: string
+          minLength: 1
           description: ID of the actor to bind
         characterId:
           type: string
@@ -19404,17 +19392,19 @@ components:
             Example: "Brave and loyal, somewhat hot-tempered with a strong sense of justice"
         keyBackstoryPoints:
           type: array
+          nullable: true
           items:
             type: string
           description: |
-            Key backstory elements as text.
+            Key backstory elements as text. Null when compression did not include backstory data.
             Example: ["Trained by the Knights Guild", "Born in the Northlands"]
         majorLifeEvents:
           type: array
+          nullable: true
           items:
             type: string
           description: |
-            Significant life events as text.
+            Significant life events as text. Null when compression did not include history data.
             Example: ["Fought in the Battle of Stormgate (Hero)", "Survived the Great Flood"]
         familySummary:
           type: string
@@ -19443,6 +19433,7 @@ components:
       - birthDate
       - deathDate
       - status
+      - createdAt
       properties:
         characterId:
           type: string
@@ -19468,7 +19459,8 @@ components:
           format: date-time
           description: In-game death timestamp (required for compression)
         status:
-          $ref: '#/components/schemas/CharacterStatus'
+          allOf:
+          - $ref: '#/components/schemas/CharacterStatus'
           description: Current lifecycle status (must be dead for compression)
         familySummary:
           type: string
@@ -19627,6 +19619,8 @@ components:
       - totalCount
       - page
       - pageSize
+      - hasNextPage
+      - hasPreviousPage
       properties:
         characters:
           type: array
@@ -19747,7 +19741,8 @@ components:
           nullable: true
           description: In-game death timestamp
         status:
-          $ref: '#/components/schemas/CharacterStatus'
+          allOf:
+          - $ref: '#/components/schemas/CharacterStatus'
           description: Current lifecycle status of the character
         createdAt:
           type: string
@@ -20393,7 +20388,7 @@ components:
       description: Response from character cleanup operation
       required:
       - actorsCleanedUp
-      - success
+      - actorIds
       properties:
         actorsCleanedUp:
           type: integer
@@ -20403,9 +20398,6 @@ components:
           items:
             type: string
           description: IDs of actors that were cleaned up
-        success:
-          type: boolean
-          description: Whether cleanup completed successfully
     CleanupByEntityRequest:
       description: Request to end all relationships referencing a deleted entity
         during cascading resource cleanup
@@ -21072,42 +21064,6 @@ components:
           format: date-time
           nullable: true
           description: When these preferences were last modified
-    CombatPreferencesSnapshot:
-      description: Snapshot of combat preferences for enriched response
-      type: object
-      additionalProperties: false
-      required:
-      - style
-      - preferredRange
-      - groupRole
-      - riskTolerance
-      - retreatThreshold
-      - protectAllies
-      properties:
-        style:
-          type: string
-          description: Combat style (DEFENSIVE, BALANCED, AGGRESSIVE, BERSERKER,
-            TACTICAL)
-        preferredRange:
-          type: string
-          description: Preferred engagement distance (MELEE, CLOSE, MEDIUM, 
-            RANGED)
-        groupRole:
-          type: string
-          description: Role in group combat (FRONTLINE, SUPPORT, FLANKER, 
-            LEADER, SOLO)
-        riskTolerance:
-          type: number
-          format: float
-          description: Willingness to take risky actions (0.0 to 1.0)
-        retreatThreshold:
-          type: number
-          format: float
-          description: Health percentage at which retreat is considered (0.0 to 
-            1.0)
-        protectAllies:
-          type: boolean
-          description: Whether to prioritize ally protection
     CombatStyle:
       type: string
       description: |
@@ -23055,10 +23011,12 @@ components:
       properties:
         category:
           type: string
+          minLength: 1
           description: Category identifier (e.g., "npc-brain", "world-admin", 
             "cron-cleanup")
         behaviorRef:
           type: string
+          minLength: 1
           description: Reference to behavior in lib-assets (e.g., 
             "asset://behaviors/npc-brain-v1")
         configuration:
@@ -23103,6 +23061,7 @@ components:
             Applied as the first layer in the three-layer override composition
             (template, instance, ABML metadata). Structure defined by ICognitionOverride
             interface hierarchy in bannou-service/Behavior/.
+            No Bannou plugin reads specific keys from this field by convention.
     CreateArchiveRequest:
       description: Request to create a point-in-time snapshot of namespace 
         documentation
@@ -25714,12 +25673,8 @@ components:
       additionalProperties: false
       description: Response confirming template deletion
       required:
-      - deleted
       - stoppedActorCount
       properties:
-        deleted:
-          type: boolean
-          description: Whether the template was successfully deleted
         stoppedActorCount:
           type: integer
           description: Number of running actors that were stopped
@@ -27122,6 +27077,7 @@ components:
       properties:
         actorId:
           type: string
+          minLength: 1
           description: ID of the Event Brain actor managing the encounter
     EndEncounterResponse:
       type: object
@@ -27190,7 +27146,8 @@ components:
           nullable: true
           description: In-game death timestamp
         status:
-          $ref: '#/components/schemas/CharacterStatus'
+          allOf:
+          - $ref: '#/components/schemas/CharacterStatus'
           description: Current lifecycle status of the character
         createdAt:
           type: string
@@ -27201,23 +27158,10 @@ components:
           format: date-time
           nullable: true
           description: Real-world last update timestamp
-        personality:
-          $ref: '#/components/schemas/PersonalitySnapshot'
-          nullable: true
-          description: Personality traits (included if includePersonality=true)
-        backstory:
-          $ref: '#/components/schemas/BackstorySnapshot'
-          nullable: true
-          description: Backstory elements (included if includeBackstory=true)
         familyTree:
           $ref: '#/components/schemas/FamilyTreeResponse'
           nullable: true
           description: Family relationships (included if includeFamilyTree=true)
-        combatPreferences:
-          $ref: '#/components/schemas/CombatPreferencesSnapshot'
-          nullable: true
-          description: Combat preferences (included if 
-            includeCombatPreferences=true)
     EnterGardenRequest:
       type: object
       description: Request to enter the garden
@@ -28971,6 +28915,7 @@ components:
       required:
       - characterId
       - relationshipType
+      - isAlive
       properties:
         characterId:
           type: string
@@ -28991,6 +28936,12 @@ components:
       description: Family relationships for a character
       type: object
       additionalProperties: false
+      required:
+      - parents
+      - children
+      - siblings
+      - spouses
+      - pastLives
       properties:
         parents:
           type: array
@@ -30653,24 +30604,10 @@ components:
           type: string
           format: uuid
           description: ID of the character to retrieve
-        includePersonality:
-          type: boolean
-          default: false
-          description: Include personality traits from character-personality 
-            service
-        includeBackstory:
-          type: boolean
-          default: false
-          description: Include backstory elements from character-history service
         includeFamilyTree:
           type: boolean
           default: false
           description: Include family relationships from relationship service
-        includeCombatPreferences:
-          type: boolean
-          default: false
-          description: Include combat preferences from character-personality 
-            service
     GetEntityLocationRequest:
       description: Request to query an entity's current location
       type: object
@@ -33074,6 +33011,10 @@ components:
         Information about a hazard in range.
         Core properties are schema-defined; additionalProperties allows game-specific
         hazard data. No Bannou plugin reads specific extension keys by convention.
+      required:
+      - hazardType
+      - distance
+      - severity
       properties:
         hazardType:
           type: string
@@ -33439,6 +33380,7 @@ components:
       properties:
         actorId:
           type: string
+          minLength: 1
           description: Target actor to inject perception into
         perception:
           description: Perception data to inject
@@ -33448,12 +33390,8 @@ components:
       additionalProperties: false
       description: Response confirming perception injection
       required:
-      - queued
       - queueDepth
       properties:
-        queued:
-          type: boolean
-          description: Whether the perception was successfully queued
         queueDepth:
           type: integer
           description: Current depth of the perception queue
@@ -38757,6 +38695,11 @@ components:
         Information about a nearby object perceived by the character.
         Core properties are schema-defined; additionalProperties allows game-specific
         object data. No Bannou plugin reads specific extension keys by convention.
+      required:
+      - objectId
+      - objectType
+      - distance
+      - direction
       properties:
         objectId:
           type: string
@@ -39618,11 +39561,13 @@ components:
       properties:
         perceptionType:
           type: string
+          minLength: 1
           description: |
             Perception type. Common values: visual, auditory, tactile, olfactory,
             proprioceptive, spatial. Use "spatial" for schema-less spatial data in 'data' field.
         sourceId:
           type: string
+          minLength: 1
           description: ID of the entity causing this perception
         sourceType:
           allOf:
@@ -39721,24 +39666,6 @@ components:
           format: date-time
           nullable: true
           description: When this personality was last modified
-    PersonalitySnapshot:
-      description: Snapshot of personality traits for enriched response
-      type: object
-      additionalProperties: false
-      required:
-      - traits
-      - version
-      properties:
-        traits:
-          type: object
-          additionalProperties:
-            type: number
-            format: float
-          description: Trait values keyed by trait name (OPENNESS, 
-            AGREEABLENESS, etc.)
-        version:
-          type: integer
-          description: Personality version number (increments on evolution)
     PerspectiveResponse:
       type: object
       description: Response containing a perspective
@@ -46863,6 +46790,7 @@ components:
       properties:
         actorId:
           type: string
+          minLength: 1
           description: ID of the Event Brain actor that will manage this 
             encounter
         encounterId:
@@ -46871,6 +46799,7 @@ components:
           description: Unique identifier for this encounter
         encounterType:
           type: string
+          minLength: 1
           description: Type of encounter (e.g., "combat", "conversation", 
             "choreography")
         participants:
@@ -46886,6 +46815,34 @@ components:
           description: >-
             Game-specific encounter initialization data passed to ABML behavior scope.
             No Bannou plugin reads specific keys from this field by convention.
+    StartEncounterResponse:
+      type: object
+      additionalProperties: false
+      description: Response after starting an encounter
+      required:
+      - actorId
+      - encounterId
+      - encounterType
+      - participantCount
+      - startedAt
+      properties:
+        actorId:
+          type: string
+          description: ID of the Event Brain actor managing the encounter
+        encounterId:
+          type: string
+          format: uuid
+          description: Unique identifier for the started encounter
+        encounterType:
+          type: string
+          description: Type of encounter that was started
+        participantCount:
+          type: integer
+          description: Number of participants in the encounter
+        startedAt:
+          type: string
+          format: date-time
+          description: Timestamp when the encounter was started
     StartWatcherRequest:
       type: object
       additionalProperties: false
@@ -47225,6 +47182,7 @@ components:
       properties:
         actorId:
           type: string
+          minLength: 1
           description: ID of the actor to stop
         graceful:
           type: boolean
@@ -47235,12 +47193,8 @@ components:
       additionalProperties: false
       description: Response confirming actor stop operation
       required:
-      - stopped
       - finalStatus
       properties:
-        stopped:
-          type: boolean
-          description: Whether the actor was successfully stopped
         finalStatus:
           description: Final status of the actor after stopping
           $ref: '#/components/schemas/ActorStatus'
@@ -49046,6 +49000,7 @@ components:
             Updated cognition overrides (polymorphic JSON).
             Deserialized internally to CognitionOverrides type with discriminated
             subtypes.
+            No Bannou plugin reads specific keys from this field by convention.
     UpdateBoardTemplateRequest:
       type: object
       description: Request to update mutable fields of a board template
@@ -49366,9 +49321,11 @@ components:
       properties:
         actorId:
           type: string
+          minLength: 1
           description: ID of the Event Brain actor managing the encounter
         phase:
           type: string
+          minLength: 1
           description: New phase name for the encounter
     UpdateEncounterPhaseResponse:
       type: object

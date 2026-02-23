@@ -778,7 +778,14 @@
         },
         "responses": {
           "200": {
-            "description": "Encounter started successfully"
+            "description": "Encounter started successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StartEncounterResponse"
+                }
+              }
+            }
           }
         }
       }
@@ -23899,8 +23906,7 @@
           "templateId",
           "category",
           "status",
-          "startedAt",
-          "loopIterations"
+          "startedAt"
         ],
         "properties": {
           "actorId": {
@@ -23956,7 +23962,8 @@
           "loopIterations": {
             "type": "integer",
             "format": "int64",
-            "description": "Number of behavior loop iterations executed"
+            "nullable": true,
+            "description": "Number of behavior loop iterations executed. Null when the actor is running on a remote pool node and the iteration count is not locally available."
           }
         }
       },
@@ -24045,7 +24052,7 @@
             "type": "object",
             "additionalProperties": true,
             "nullable": true,
-            "description": "Static template-level cognition overrides (polymorphic JSON). Deserialized internally to CognitionOverrides type with discriminated subtypes."
+            "description": "Static template-level cognition overrides (polymorphic JSON). Deserialized internally to CognitionOverrides type with discriminated subtypes. No Bannou plugin reads specific keys from this field by convention."
           },
           "createdAt": {
             "type": "string",
@@ -25749,36 +25756,6 @@
           }
         }
       },
-      "BackstoryElementSnapshot": {
-        "description": "Single backstory element",
-        "type": "object",
-        "additionalProperties": false,
-        "required": [
-          "elementType",
-          "key",
-          "value",
-          "strength"
-        ],
-        "properties": {
-          "elementType": {
-            "type": "string",
-            "description": "Type of backstory element (ORIGIN, TRAUMA, GOAL, etc.)"
-          },
-          "key": {
-            "type": "string",
-            "description": "Machine-readable key (homeland, past_job, etc.)"
-          },
-          "value": {
-            "type": "string",
-            "description": "Machine-readable value (northlands, blacksmith, etc.)"
-          },
-          "strength": {
-            "type": "number",
-            "format": "float",
-            "description": "How strongly this affects behavior (0.0 to 1.0)"
-          }
-        }
-      },
       "BackstoryElementType": {
         "type": "string",
         "description": "Types of backstory elements. Each type represents a different aspect\nof the character's background that influences behavior.\n",
@@ -25830,19 +25807,21 @@
         }
       },
       "BackstorySnapshot": {
-        "description": "Snapshot of backstory for enriched response",
         "type": "object",
         "additionalProperties": false,
+        "description": "Snapshot of a backstory element",
         "required": [
-          "elements"
+          "elementType",
+          "key"
         ],
         "properties": {
-          "elements": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/BackstoryElementSnapshot"
-            },
-            "description": "List of backstory elements"
+          "elementType": {
+            "type": "string",
+            "description": "Backstory element type (e.g., TRAUMA, GOAL)"
+          },
+          "key": {
+            "type": "string",
+            "description": "Backstory element key"
           }
         }
       },
@@ -26290,6 +26269,7 @@
         "properties": {
           "actorId": {
             "type": "string",
+            "minLength": 1,
             "description": "ID of the actor to bind"
           },
           "characterId": {
@@ -28266,17 +28246,19 @@
           },
           "keyBackstoryPoints": {
             "type": "array",
+            "nullable": true,
             "items": {
               "type": "string"
             },
-            "description": "Key backstory elements as text.\nExample: [\"Trained by the Knights Guild\", \"Born in the Northlands\"]\n"
+            "description": "Key backstory elements as text. Null when compression did not include backstory data.\nExample: [\"Trained by the Knights Guild\", \"Born in the Northlands\"]\n"
           },
           "majorLifeEvents": {
             "type": "array",
+            "nullable": true,
             "items": {
               "type": "string"
             },
-            "description": "Significant life events as text.\nExample: [\"Fought in the Battle of Stormgate (Hero)\", \"Survived the Great Flood\"]\n"
+            "description": "Significant life events as text. Null when compression did not include history data.\nExample: [\"Fought in the Battle of Stormgate (Hero)\", \"Survived the Great Flood\"]\n"
           },
           "familySummary": {
             "type": "string",
@@ -28302,7 +28284,8 @@
           "speciesId",
           "birthDate",
           "deathDate",
-          "status"
+          "status",
+          "createdAt"
         ],
         "properties": {
           "characterId": {
@@ -28335,7 +28318,11 @@
             "description": "In-game death timestamp (required for compression)"
           },
           "status": {
-            "$ref": "#/components/schemas/CharacterStatus",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CharacterStatus"
+              }
+            ],
             "description": "Current lifecycle status (must be dead for compression)"
           },
           "familySummary": {
@@ -28528,7 +28515,9 @@
           "characters",
           "totalCount",
           "page",
-          "pageSize"
+          "pageSize",
+          "hasNextPage",
+          "hasPreviousPage"
         ],
         "properties": {
           "characters": {
@@ -28682,7 +28671,11 @@
             "description": "In-game death timestamp"
           },
           "status": {
-            "$ref": "#/components/schemas/CharacterStatus",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CharacterStatus"
+              }
+            ],
             "description": "Current lifecycle status of the character"
           },
           "createdAt": {
@@ -29508,7 +29501,7 @@
         "description": "Response from character cleanup operation",
         "required": [
           "actorsCleanedUp",
-          "success"
+          "actorIds"
         ],
         "properties": {
           "actorsCleanedUp": {
@@ -29521,10 +29514,6 @@
               "type": "string"
             },
             "description": "IDs of actors that were cleaned up"
-          },
-          "success": {
-            "type": "boolean",
-            "description": "Whether cleanup completed successfully"
           }
         }
       },
@@ -30314,47 +30303,6 @@
             "format": "date-time",
             "nullable": true,
             "description": "When these preferences were last modified"
-          }
-        }
-      },
-      "CombatPreferencesSnapshot": {
-        "description": "Snapshot of combat preferences for enriched response",
-        "type": "object",
-        "additionalProperties": false,
-        "required": [
-          "style",
-          "preferredRange",
-          "groupRole",
-          "riskTolerance",
-          "retreatThreshold",
-          "protectAllies"
-        ],
-        "properties": {
-          "style": {
-            "type": "string",
-            "description": "Combat style (DEFENSIVE, BALANCED, AGGRESSIVE, BERSERKER, TACTICAL)"
-          },
-          "preferredRange": {
-            "type": "string",
-            "description": "Preferred engagement distance (MELEE, CLOSE, MEDIUM, RANGED)"
-          },
-          "groupRole": {
-            "type": "string",
-            "description": "Role in group combat (FRONTLINE, SUPPORT, FLANKER, LEADER, SOLO)"
-          },
-          "riskTolerance": {
-            "type": "number",
-            "format": "float",
-            "description": "Willingness to take risky actions (0.0 to 1.0)"
-          },
-          "retreatThreshold": {
-            "type": "number",
-            "format": "float",
-            "description": "Health percentage at which retreat is considered (0.0 to 1.0)"
-          },
-          "protectAllies": {
-            "type": "boolean",
-            "description": "Whether to prioritize ally protection"
           }
         }
       },
@@ -32757,10 +32705,12 @@
         "properties": {
           "category": {
             "type": "string",
+            "minLength": 1,
             "description": "Category identifier (e.g., \"npc-brain\", \"world-admin\", \"cron-cleanup\")"
           },
           "behaviorRef": {
             "type": "string",
+            "minLength": 1,
             "description": "Reference to behavior in lib-assets (e.g., \"asset://behaviors/npc-brain-v1\")"
           },
           "configuration": {
@@ -32798,7 +32748,7 @@
             "type": "object",
             "additionalProperties": true,
             "nullable": true,
-            "description": "Static template-level cognition overrides (polymorphic JSON). Deserialized internally to CognitionOverrides type with discriminated subtypes. Applied as the first layer in the three-layer override composition (template, instance, ABML metadata). Structure defined by ICognitionOverride interface hierarchy in bannou-service/Behavior/."
+            "description": "Static template-level cognition overrides (polymorphic JSON). Deserialized internally to CognitionOverrides type with discriminated subtypes. Applied as the first layer in the three-layer override composition (template, instance, ABML metadata). Structure defined by ICognitionOverride interface hierarchy in bannou-service/Behavior/. No Bannou plugin reads specific keys from this field by convention."
           }
         }
       },
@@ -35951,14 +35901,9 @@
         "additionalProperties": false,
         "description": "Response confirming template deletion",
         "required": [
-          "deleted",
           "stoppedActorCount"
         ],
         "properties": {
-          "deleted": {
-            "type": "boolean",
-            "description": "Whether the template was successfully deleted"
-          },
           "stoppedActorCount": {
             "type": "integer",
             "description": "Number of running actors that were stopped"
@@ -37744,6 +37689,7 @@
         "properties": {
           "actorId": {
             "type": "string",
+            "minLength": 1,
             "description": "ID of the Event Brain actor managing the encounter"
           }
         }
@@ -37828,7 +37774,11 @@
             "description": "In-game death timestamp"
           },
           "status": {
-            "$ref": "#/components/schemas/CharacterStatus",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CharacterStatus"
+              }
+            ],
             "description": "Current lifecycle status of the character"
           },
           "createdAt": {
@@ -37842,25 +37792,10 @@
             "nullable": true,
             "description": "Real-world last update timestamp"
           },
-          "personality": {
-            "$ref": "#/components/schemas/PersonalitySnapshot",
-            "nullable": true,
-            "description": "Personality traits (included if includePersonality=true)"
-          },
-          "backstory": {
-            "$ref": "#/components/schemas/BackstorySnapshot",
-            "nullable": true,
-            "description": "Backstory elements (included if includeBackstory=true)"
-          },
           "familyTree": {
             "$ref": "#/components/schemas/FamilyTreeResponse",
             "nullable": true,
             "description": "Family relationships (included if includeFamilyTree=true)"
-          },
-          "combatPreferences": {
-            "$ref": "#/components/schemas/CombatPreferencesSnapshot",
-            "nullable": true,
-            "description": "Combat preferences (included if includeCombatPreferences=true)"
           }
         }
       },
@@ -39968,7 +39903,8 @@
         "additionalProperties": false,
         "required": [
           "characterId",
-          "relationshipType"
+          "relationshipType",
+          "isAlive"
         ],
         "properties": {
           "characterId": {
@@ -39995,6 +39931,13 @@
         "description": "Family relationships for a character",
         "type": "object",
         "additionalProperties": false,
+        "required": [
+          "parents",
+          "children",
+          "siblings",
+          "spouses",
+          "pastLives"
+        ],
         "properties": {
           "parents": {
             "type": "array",
@@ -42113,25 +42056,10 @@
             "format": "uuid",
             "description": "ID of the character to retrieve"
           },
-          "includePersonality": {
-            "type": "boolean",
-            "default": false,
-            "description": "Include personality traits from character-personality service"
-          },
-          "includeBackstory": {
-            "type": "boolean",
-            "default": false,
-            "description": "Include backstory elements from character-history service"
-          },
           "includeFamilyTree": {
             "type": "boolean",
             "default": false,
             "description": "Include family relationships from relationship service"
-          },
-          "includeCombatPreferences": {
-            "type": "boolean",
-            "default": false,
-            "description": "Include combat preferences from character-personality service"
           }
         }
       },
@@ -45196,6 +45124,11 @@
         "type": "object",
         "additionalProperties": true,
         "description": "Information about a hazard in range. Core properties are schema-defined; additionalProperties allows game-specific hazard data. No Bannou plugin reads specific extension keys by convention.",
+        "required": [
+          "hazardType",
+          "distance",
+          "severity"
+        ],
         "properties": {
           "hazardType": {
             "type": "string",
@@ -45643,6 +45576,7 @@
         "properties": {
           "actorId": {
             "type": "string",
+            "minLength": 1,
             "description": "Target actor to inject perception into"
           },
           "perception": {
@@ -45656,14 +45590,9 @@
         "additionalProperties": false,
         "description": "Response confirming perception injection",
         "required": [
-          "queued",
           "queueDepth"
         ],
         "properties": {
-          "queued": {
-            "type": "boolean",
-            "description": "Whether the perception was successfully queued"
-          },
           "queueDepth": {
             "type": "integer",
             "description": "Current depth of the perception queue"
@@ -52401,6 +52330,12 @@
         "type": "object",
         "additionalProperties": true,
         "description": "Information about a nearby object perceived by the character. Core properties are schema-defined; additionalProperties allows game-specific object data. No Bannou plugin reads specific extension keys by convention.",
+        "required": [
+          "objectId",
+          "objectType",
+          "distance",
+          "direction"
+        ],
         "properties": {
           "objectId": {
             "type": "string",
@@ -53477,10 +53412,12 @@
         "properties": {
           "perceptionType": {
             "type": "string",
+            "minLength": 1,
             "description": "Perception type. Common values: visual, auditory, tactile, olfactory,\nproprioceptive, spatial. Use \"spatial\" for schema-less spatial data in 'data' field.\n"
           },
           "sourceId": {
             "type": "string",
+            "minLength": 1,
             "description": "ID of the entity causing this perception"
           },
           "sourceType": {
@@ -53588,29 +53525,6 @@
             "format": "date-time",
             "nullable": true,
             "description": "When this personality was last modified"
-          }
-        }
-      },
-      "PersonalitySnapshot": {
-        "description": "Snapshot of personality traits for enriched response",
-        "type": "object",
-        "additionalProperties": false,
-        "required": [
-          "traits",
-          "version"
-        ],
-        "properties": {
-          "traits": {
-            "type": "object",
-            "additionalProperties": {
-              "type": "number",
-              "format": "float"
-            },
-            "description": "Trait values keyed by trait name (OPENNESS, AGREEABLENESS, etc.)"
-          },
-          "version": {
-            "type": "integer",
-            "description": "Personality version number (increments on evolution)"
           }
         }
       },
@@ -62480,6 +62394,7 @@
         "properties": {
           "actorId": {
             "type": "string",
+            "minLength": 1,
             "description": "ID of the Event Brain actor that will manage this encounter"
           },
           "encounterId": {
@@ -62489,6 +62404,7 @@
           },
           "encounterType": {
             "type": "string",
+            "minLength": 1,
             "description": "Type of encounter (e.g., \"combat\", \"conversation\", \"choreography\")"
           },
           "participants": {
@@ -62504,6 +62420,42 @@
             "additionalProperties": true,
             "nullable": true,
             "description": "Game-specific encounter initialization data passed to ABML behavior scope. No Bannou plugin reads specific keys from this field by convention."
+          }
+        }
+      },
+      "StartEncounterResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "description": "Response after starting an encounter",
+        "required": [
+          "actorId",
+          "encounterId",
+          "encounterType",
+          "participantCount",
+          "startedAt"
+        ],
+        "properties": {
+          "actorId": {
+            "type": "string",
+            "description": "ID of the Event Brain actor managing the encounter"
+          },
+          "encounterId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Unique identifier for the started encounter"
+          },
+          "encounterType": {
+            "type": "string",
+            "description": "Type of encounter that was started"
+          },
+          "participantCount": {
+            "type": "integer",
+            "description": "Number of participants in the encounter"
+          },
+          "startedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Timestamp when the encounter was started"
           }
         }
       },
@@ -62904,6 +62856,7 @@
         "properties": {
           "actorId": {
             "type": "string",
+            "minLength": 1,
             "description": "ID of the actor to stop"
           },
           "graceful": {
@@ -62918,14 +62871,9 @@
         "additionalProperties": false,
         "description": "Response confirming actor stop operation",
         "required": [
-          "stopped",
           "finalStatus"
         ],
         "properties": {
-          "stopped": {
-            "type": "boolean",
-            "description": "Whether the actor was successfully stopped"
-          },
           "finalStatus": {
             "description": "Final status of the actor after stopping",
             "$ref": "#/components/schemas/ActorStatus"
@@ -65187,7 +65135,7 @@
             "type": "object",
             "additionalProperties": true,
             "nullable": true,
-            "description": "Updated cognition overrides (polymorphic JSON). Deserialized internally to CognitionOverrides type with discriminated subtypes."
+            "description": "Updated cognition overrides (polymorphic JSON). Deserialized internally to CognitionOverrides type with discriminated subtypes. No Bannou plugin reads specific keys from this field by convention."
           }
         }
       },
@@ -65590,10 +65538,12 @@
         "properties": {
           "actorId": {
             "type": "string",
+            "minLength": 1,
             "description": "ID of the Event Brain actor managing the encounter"
           },
           "phase": {
             "type": "string",
+            "minLength": 1,
             "description": "New phase name for the encounter"
           }
         }

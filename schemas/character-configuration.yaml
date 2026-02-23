@@ -17,28 +17,45 @@ x-service-configuration:
     # Pagination Configuration
     MaxPageSize:
       type: integer
+      minimum: 1
+      maximum: 10000
       description: Maximum page size for list queries
       env: CHARACTER_MAX_PAGE_SIZE
       default: 100
     DefaultPageSize:
       type: integer
+      minimum: 1
+      maximum: 1000
       description: Default page size when not specified
       env: CHARACTER_DEFAULT_PAGE_SIZE
       default: 20
     # Concurrency Configuration
     RealmIndexUpdateMaxRetries:
       type: integer
+      minimum: 1
+      maximum: 10
       description: Maximum retry attempts when updating realm character index (optimistic concurrency)
       env: CHARACTER_REALM_INDEX_UPDATE_MAX_RETRIES
       default: 3
+    RefCountUpdateMaxRetries:
+      type: integer
+      minimum: 1
+      maximum: 10
+      description: Maximum retry attempts when updating reference count data (optimistic concurrency)
+      env: CHARACTER_REF_COUNT_UPDATE_MAX_RETRIES
+      default: 3
     LockTimeoutSeconds:
       type: integer
+      minimum: 1
+      maximum: 300
       description: Timeout in seconds for acquiring distributed locks during character updates and compression
       env: CHARACTER_LOCK_TIMEOUT_SECONDS
       default: 30
     # Cleanup Configuration
     CleanupGracePeriodDays:
       type: integer
+      minimum: 1
+      maximum: 365
       description: Grace period in days before cleanup of dead character references (default 30 days)
       env: CHARACTER_CLEANUP_GRACE_PERIOD_DAYS
       default: 30
