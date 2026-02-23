@@ -3,8 +3,12 @@
 # This validates the core multi-node routing architecture
 #
 # Topology:
-# - Main node (already running): connect, permission, game-session (generic), behavior, orchestrator, etc.
-# - bannou-auth (deployed by this preset): account, auth, game-session (test-game only)
+# - Main node (already running): all services (connect in External mode, game-session generic, etc.)
+# - bannou-auth (deployed by this preset): full L1 stack + game-session (test-game only)
+#
+# All L1 (AppFoundation) services are included per SERVICE-HIERARCHY.md:
+# L1 is "Required for ANY deployment" — DI listeners, shared state, and
+# co-location assumptions between L1 services require the full L1 layer.
 #
 # NOTE: The main node is NOT included here - orchestrator never deploys itself.
 # Presets only define ADDITIONAL nodes to deploy alongside the main orchestrator node.
@@ -20,6 +24,8 @@
 # - game-session -> bannou-auth (for test-game only; main node handles "generic")
 #
 # The ServiceAppMappingResolver receives these events and routes accordingly.
+# Other L1 services (connect, permission, chat, contract, resource) run on both
+# nodes but the main node handles all routing for them.
 #
 # Game Session Partitioning:
 # The bannou-auth node runs game-session with GAME_SESSION_SUPPORTED_GAME_SERVICES=test-game,
@@ -35,12 +41,14 @@ category: testing
 
 topology:
   nodes:
-    # Auth node - handles authentication services and test-game lobbies
+    # Auth node - full L1 stack plus test-game lobbies
     # Deployed as a SEPARATE container from the main orchestrator node
     - name: bannou-auth
+      layers:
+        # All L1 (AppFoundation) services - required for any deployment
+        - AppFoundation
       services:
-        - account
-        - auth
+        # L2 service override for game session partitioning test
         - game-session
       replicas: 1
       environment:

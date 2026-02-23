@@ -25,6 +25,21 @@
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Orchestrator;
 
+#pragma warning disable 108 // Disable "CS0108 '{derivedDto}.ToJson()' hides inherited member '{dtoBase}.ToJson()'. Use the new keyword if hiding was intended."
+#pragma warning disable 114 // Disable "CS0114 '{derivedDto}.RaisePropertyChanged(String)' hides inherited member 'dtoBase.RaisePropertyChanged(String)'. To make the current member override that implementation, add the override keyword. Otherwise add the new keyword."
+#pragma warning disable 472 // Disable "CS0472 The result of the expression is always 'false' since a value of type 'Int32' is never equal to 'null' of type 'Int32?'
+#pragma warning disable 612 // Disable "CS0612 '...' is obsolete"
+#pragma warning disable 649 // Disable "CS0649 Field is never assigned to, and will always have its default value null"
+#pragma warning disable 1573 // Disable "CS1573 Parameter '...' has no matching param tag in the XML comment for ...
+#pragma warning disable 1591 // Disable "CS1591 Missing XML comment for publicly visible type or member ..."
+#pragma warning disable 8073 // Disable "CS8073 The result of the expression is always 'false' since a value of type 'T' is never equal to 'null' of type 'T?'"
+#pragma warning disable 3016 // Disable "CS3016 Arrays as attribute arguments is not CLS-compliant"
+#pragma warning disable 8600 // Disable "CS8600 Converting null literal or possible null value to non-nullable type"
+#pragma warning disable 8602 // Disable "CS8602 Dereference of a possibly null reference"
+#pragma warning disable 8603 // Disable "CS8603 Possible null reference return"
+#pragma warning disable 8604 // Disable "CS8604 Possible null reference argument for parameter"
+#pragma warning disable 8625 // Disable "CS8625 Cannot convert null literal to non-nullable reference type"
+#pragma warning disable 8765 // Disable "CS8765 Nullability of type of parameter doesn't match overridden member (possibly because of nullability attributes)."
 
 namespace BeyondImmersion.BannouService.Orchestrator;
 
@@ -135,7 +150,7 @@ public partial class ServiceRoutingResponse
     [System.Text.Json.Serialization.JsonPropertyName("defaultAppId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string DefaultAppId { get; set; } = AppConstants.DEFAULT_APP_NAME;
+    public string DefaultAppId { get; set; } = "bannou";
 
     /// <summary>
     /// When this routing information was generated
@@ -987,15 +1002,26 @@ public partial class TopologyNode
     public string Name { get; set; } = default!;
 
     /// <summary>
-    /// Services enabled on this node.
-    /// <br/>Uses {SERVICE}_SERVICE_ENABLED=true pattern.
-    /// <br/>Example: ["account", "auth", "permission"]
+    /// Service layers to enable on this node. Listed layers are enabled,
+    /// <br/>unlisted layers are disabled. When omitted, layer enablement is
+    /// <br/>inherited from the container's environment.
+    /// <br/>Individual services in the 'services' list override layer settings.
+    /// <br/>
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("layers")]
+    // TODO(system.text.json): Add string enum item converter
+    public System.Collections.Generic.ICollection<Layers> Layers { get; set; } = default!;
+
+    /// <summary>
+    /// Individual services to enable on this node.
+    /// <br/>When used with 'layers', these act as overrides for services
+    /// <br/>outside the enabled layers.
+    /// <br/>When used without 'layers', uses legacy SERVICES_ENABLED=false
+    /// <br/>with per-service {SERVICE}_SERVICE_ENABLED=true pattern.
     /// <br/>
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("services")]
-    [System.ComponentModel.DataAnnotations.Required]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Collections.Generic.ICollection<string> Services { get; set; } = new System.Collections.ObjectModel.Collection<string>();
+    public System.Collections.Generic.ICollection<string> Services { get; set; } = default!;
 
     /// <summary>
     /// Number of replicas for this node
@@ -2917,6 +2943,29 @@ public enum DeploymentPresetCategory
 
     [System.Runtime.Serialization.EnumMember(Value = @"custom")]
     Custom = 3,
+
+}
+#pragma warning restore CS1591
+
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public enum Layers
+{
+
+    [System.Runtime.Serialization.EnumMember(Value = @"AppFoundation")]
+    AppFoundation = 0,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"GameFoundation")]
+    GameFoundation = 1,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"AppFeatures")]
+    AppFeatures = 2,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"GameFeatures")]
+    GameFeatures = 3,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"Extensions")]
+    Extensions = 4,
 
 }
 #pragma warning restore CS1591

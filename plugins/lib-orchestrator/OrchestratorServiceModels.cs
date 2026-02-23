@@ -157,7 +157,18 @@ public class PresetNode
     public string Name { get; set; } = string.Empty;
 
     /// <summary>
-    /// Services enabled on this node.
+    /// Service layers to enable on this node.
+    /// When specified, listed layers are enabled and unlisted layers are disabled.
+    /// Individual services in the 'services' list override layer settings.
+    /// Valid values: AppFoundation, GameFoundation, AppFeatures, GameFeatures, Extensions.
+    /// </summary>
+    public List<string>? Layers { get; set; }
+
+    /// <summary>
+    /// Individual services to enable on this node (overrides layer settings).
+    /// When used with 'layers', these act as additional overrides for services
+    /// outside the enabled layers. When used without 'layers', falls back to
+    /// SERVICES_ENABLED=false with per-service enables for backward compatibility.
     /// </summary>
     public List<string>? Services { get; set; }
 

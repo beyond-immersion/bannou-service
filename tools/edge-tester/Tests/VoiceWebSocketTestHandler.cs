@@ -21,7 +21,7 @@ namespace BeyondImmersion.EdgeTester.Tests;
 ///
 /// Voice Tests Requirements:
 /// - Set VOICE_TESTS_ENABLED=true to run voice tests (default: disabled)
-/// - Voice plugin must be enabled (VOICE_SERVICE_DISABLED must NOT be true)
+/// - Voice plugin must be enabled (VOICE_SERVICE_ENABLED must NOT be false)
 /// - For scaled tier tests, Kamailio + RTPEngine infrastructure is required
 /// - Use: make test-voice-scaled to run voice tests with full infrastructure
 /// </summary>

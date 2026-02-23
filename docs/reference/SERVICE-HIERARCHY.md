@@ -92,7 +92,7 @@ These are infrastructure plugins that load before all other plugins and provide 
 - Every plugin implicitly depends on Layer 0
 - Layer 0 components have no dependencies on any service layer
 - **Required** components (state, messaging, mesh) are always available - startup fails if missing
-- **Optional** component (telemetry) can be disabled via `TELEMETRY_SERVICE_DISABLED=true`
+- **Optional** component (telemetry) can be disabled via `TELEMETRY_SERVICE_ENABLED=false`
 
 **Use Case**: "I want to build HTTP API-based cloud services with Dapr-like communication primitives."
 
@@ -323,34 +323,53 @@ This ensures that when a service's constructor runs, all lower-layer services ar
 
 ## Deployment Modes
 
-The layer system enables meaningful deployment presets:
+All layers default to **enabled**. To restrict a deployment, set unwanted layers to `false`. Individual `{SERVICE}_SERVICE_ENABLED=true/false` overrides always take precedence over layer settings.
+
+**Resolution order** (in PluginLoader.IsServiceEnabled):
+1. Required infrastructure (state, messaging, mesh) → ALWAYS enabled
+2. `{SERVICE}_SERVICE_ENABLED` env var explicitly set → use that value
+3. `SERVICES_ENABLED=false` (master kill switch) → disabled
+4. Layer enabled → use `BANNOU_ENABLE_{LAYER}` setting (all default true)
 
 ```bash
-# Minimal cloud service (non-game)
-BANNOU_ENABLE_APP_FOUNDATION=true   # L1
-BANNOU_ENABLE_APP_FEATURES=true     # L3
-# Result: L0 infra + account, auth, connect, permission, contract + asset, orchestrator, etc.
-# No game concepts - useful for any real-time cloud service
+# Full game deployment (default - no configuration needed)
+# All layers are true by default.
 
-# Minimal game backend (foundations only)
-BANNOU_ENABLE_APP_FOUNDATION=true   # L1
-BANNOU_ENABLE_GAME_FOUNDATION=true  # L2
-# Result: L1 + realm, character, species, location, currency, item, etc.
-# Core game entities without optional features
+# Minimal cloud service (non-game) - disable game layers
+BANNOU_ENABLE_GAME_FOUNDATION=false  # No L2
+BANNOU_ENABLE_GAME_FEATURES=false    # No L4
+# Result: L0 infra + L1 (account, auth, connect, etc.) + L3 (asset, orchestrator, etc.)
 
-# Full game deployment
-BANNOU_ENABLE_APP_FOUNDATION=true   # L1
-BANNOU_ENABLE_GAME_FOUNDATION=true  # L2
-BANNOU_ENABLE_APP_FEATURES=true     # L3
-BANNOU_ENABLE_GAME_FEATURES=true    # L4
-# Result: Everything enabled
+# Minimal game backend (foundations only) - disable optional layers
+BANNOU_ENABLE_APP_FEATURES=false     # No L3
+BANNOU_ENABLE_GAME_FEATURES=false    # No L4
+# Result: L0 + L1 + L2 (realm, character, species, location, currency, item, etc.)
+
+# Auth node (orchestrator preset) - L1 only with one L2 override
+BANNOU_ENABLE_GAME_FOUNDATION=false
+BANNOU_ENABLE_APP_FEATURES=false
+BANNOU_ENABLE_GAME_FEATURES=false
+GAME_SESSION_SERVICE_ENABLED=true    # Individual L2 override
+# Result: All L1 + game-session only
+
+# Orchestrator-only node - disable everything, enable one service
+BANNOU_ENABLE_APP_FOUNDATION=false
+BANNOU_ENABLE_GAME_FOUNDATION=false
+BANNOU_ENABLE_APP_FEATURES=false
+BANNOU_ENABLE_GAME_FEATURES=false
+ORCHESTRATOR_SERVICE_ENABLED=true    # Individual L3 override
+
+# Infrastructure test - master kill switch with individual override
+SERVICES_ENABLED=false
+TESTING_SERVICE_ENABLED=true
+# Result: Only testing service (backward compatible pattern)
 ```
 
 **Enforcement Rules**:
 - `GAME_FOUNDATION=true` requires `APP_FOUNDATION=true`
 - `GAME_FEATURES=true` requires `APP_FOUNDATION=true` AND `GAME_FOUNDATION=true`
 - `APP_FEATURES=true` requires `APP_FOUNDATION=true` (L2 optional)
-- Individual plugin ENVs (`{SERVICE}_ENABLED`) still work for fine-grained control
+- Individual `{SERVICE}_SERVICE_ENABLED=true/false` overrides layer settings for fine-grained control
 
 ---
 

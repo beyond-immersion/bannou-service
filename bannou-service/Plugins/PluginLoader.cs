@@ -132,7 +132,8 @@ public class PluginLoader
 
                     // Determine if this plugin's service should be enabled
                     var serviceName = plugin.PluginName;
-                    if (IsServiceEnabled(serviceName))
+                    var layer = GetServiceLayer(plugin);
+                    if (IsServiceEnabled(serviceName, layer))
                     {
                         _enabledPlugins.Add(plugin);
                         _logger.LogDebug("Service {ServiceName} is enabled", serviceName);
@@ -210,22 +211,22 @@ public class PluginLoader
     }
 
     /// <summary>
-    /// Check if a service should be enabled based on SERVICES_ENABLED and {SERVICE}_SERVICE_DISABLED/ENABLED environment variables.
-    /// Two modes:
-    /// - SERVICES_ENABLED=true: All services enabled by default, use {SERVICE}_SERVICE_DISABLED to disable individual services
-    /// - SERVICES_ENABLED=false: All services disabled by default, use {SERVICE}_SERVICE_ENABLED to enable individual services
-    ///
-    /// IMPORTANT: Required infrastructure plugins (messaging, state, mesh) are ALWAYS enabled.
-    /// These cannot be disabled via environment variables as they provide core functionality.
+    /// Check if a service should be enabled based on layer-level controls and individual overrides.
+    /// Resolution order:
+    /// 1. Required infrastructure (state, messaging, mesh) → ALWAYS enabled
+    /// 2. {SERVICE}_SERVICE_ENABLED env var explicitly set → use that value (true/false)
+    /// 3. SERVICES_ENABLED=false (master kill switch) → disabled
+    /// 4. Layer enabled (from AppConfiguration) → use layer setting (all default true)
     /// </summary>
     /// <param name="serviceName">Name of the service (e.g., "auth", "account")</param>
+    /// <param name="layer">The service hierarchy layer this service belongs to</param>
     /// <returns>True if service should be enabled, false if disabled</returns>
-    private bool IsServiceEnabled(string serviceName)
+    private bool IsServiceEnabled(string serviceName, ServiceLayer layer)
     {
         if (string.IsNullOrWhiteSpace(serviceName))
             return Program.Configuration.ServicesEnabled;
 
-        // Required infrastructure plugins are ALWAYS enabled - they cannot be disabled
+        // 1. Required infrastructure plugins are ALWAYS enabled - they cannot be disabled
         if (RequiredInfrastructurePlugins.Contains(serviceName))
         {
             _logger.LogInformation(
@@ -234,39 +235,57 @@ public class PluginLoader
             return true;
         }
 
-        // Check SERVICES_ENABLED environment variable directly
-        var servicesEnabledEnv = Environment.GetEnvironmentVariable("SERVICES_ENABLED");
-        var globalServicesEnabled = string.IsNullOrWhiteSpace(servicesEnabledEnv) ?
-            Program.Configuration.ServicesEnabled : // Default fallback
-            string.Equals(servicesEnabledEnv, "true", StringComparison.OrdinalIgnoreCase);
-
-        // Get service name from BannouServiceAttribute for ENV prefix
-        // Hyphens replaced with underscores to match orchestrator and configuration conventions
+        // 2. Individual override via {SERVICE}_SERVICE_ENABLED (always checked, no dual-mode)
         var serviceNameUpper = serviceName.ToUpper().Replace("-", "_");
-
-        if (globalServicesEnabled)
+        var enabledEnv = Environment.GetEnvironmentVariable($"{serviceNameUpper}_SERVICE_ENABLED");
+        if (!string.IsNullOrWhiteSpace(enabledEnv))
         {
-            // Mode 1: Services enabled by default, check for X_SERVICE_DISABLED to disable individual
-            var disabledEnv = Environment.GetEnvironmentVariable($"{serviceNameUpper}_SERVICE_DISABLED");
-            var isDisabled = string.Equals(disabledEnv, "true", StringComparison.OrdinalIgnoreCase);
-
-            _logger.LogDebug("Service {ServiceName} enabled: {IsEnabled} (SERVICES_ENABLED=true, {ServiceName}_SERVICE_DISABLED={DisabledValue})",
-                serviceName, !isDisabled, serviceNameUpper, disabledEnv ?? "null");
-
-            return !isDisabled;
-        }
-        else
-        {
-            // Mode 2: Services disabled by default, check for X_SERVICE_ENABLED to enable individual
-            var enabledEnv = Environment.GetEnvironmentVariable($"{serviceNameUpper}_SERVICE_ENABLED");
             var isEnabled = string.Equals(enabledEnv, "true", StringComparison.OrdinalIgnoreCase);
-
-            _logger.LogDebug("Service {ServiceName} enabled: {IsEnabled} (SERVICES_ENABLED=false, {ServiceName}_SERVICE_ENABLED={EnabledValue})",
-                serviceName, isEnabled, serviceNameUpper, enabledEnv ?? "null");
-
+            _logger.LogDebug(
+                "Service {ServiceName} {Status} via {EnvVar}={EnvValue} (individual override)",
+                serviceName, isEnabled ? "enabled" : "disabled",
+                $"{serviceNameUpper}_SERVICE_ENABLED", enabledEnv);
             return isEnabled;
         }
+
+        // 3. Master kill switch: SERVICES_ENABLED=false disables everything
+        var servicesEnabledEnv = Environment.GetEnvironmentVariable("SERVICES_ENABLED");
+        var masterEnabled = string.IsNullOrWhiteSpace(servicesEnabledEnv)
+            ? Program.Configuration.ServicesEnabled
+            : string.Equals(servicesEnabledEnv, "true", StringComparison.OrdinalIgnoreCase);
+
+        if (!masterEnabled)
+        {
+            _logger.LogDebug(
+                "Service {ServiceName} disabled: SERVICES_ENABLED=false (master kill switch)",
+                serviceName);
+            return false;
+        }
+
+        // 4. Layer-level control
+        var layerEnabled = IsLayerEnabled(layer);
+        _logger.LogDebug(
+            "Service {ServiceName} {Status}: layer {Layer} is {LayerStatus}",
+            serviceName, layerEnabled ? "enabled" : "disabled",
+            layer, layerEnabled ? "enabled" : "disabled");
+        return layerEnabled;
     }
+
+    /// <summary>
+    /// Check if a service hierarchy layer is enabled via AppConfiguration.
+    /// Infrastructure (L0) is always enabled. All other layers default to true.
+    /// Environment variables: BANNOU_ENABLE_APP_FOUNDATION, BANNOU_ENABLE_GAME_FOUNDATION, etc.
+    /// </summary>
+    private static bool IsLayerEnabled(ServiceLayer layer) => layer switch
+    {
+        ServiceLayer.Infrastructure => true,
+        ServiceLayer.AppFoundation => Program.Configuration.EnableAppFoundation,
+        ServiceLayer.GameFoundation => Program.Configuration.EnableGameFoundation,
+        ServiceLayer.AppFeatures => Program.Configuration.EnableAppFeatures,
+        ServiceLayer.GameFeatures => Program.Configuration.EnableGameFeatures,
+        ServiceLayer.Extensions => Program.Configuration.EnableExtensions,
+        _ => true
+    };
 
     /// <summary>
     /// Populate the static set of valid environment variable prefixes based on discovered plugins.

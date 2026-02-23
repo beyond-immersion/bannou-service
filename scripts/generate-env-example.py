@@ -329,7 +329,7 @@ def generate_env_example(config_by_service: dict) -> str:
         "ORCHESTRATOR_SERVICE_ENABLED=true",
         "BEHAVIOR_SERVICE_ENABLED=true",
         "ACTOR_SERVICE_ENABLED=true",
-        "# Add {SERVICE}_SERVICE_DISABLED=true to explicitly disable a service",
+        "# Add {SERVICE}_SERVICE_ENABLED=false to explicitly disable a service",
         "",
     ])
 

@@ -3,7 +3,12 @@
 #
 # Topology:
 # - Main node (already running): all services in External mode (default)
-# - bannou-relayed (deployed by this preset): Connect only in Relayed mode
+# - bannou-relayed (deployed by this preset): Full L1 stack with Connect in Relayed mode
+#
+# All L1 (AppFoundation) services are included per SERVICE-HIERARCHY.md:
+# L1 is "Required for ANY deployment" — DI listeners, shared state, and
+# co-location assumptions between L1 services (e.g., Permission's
+# ISessionActivityListener for Connect) require the full L1 layer.
 #
 # When deployed, new WebSocket connections can be routed to this node,
 # enabling peer-to-peer message routing between connected clients.
@@ -19,10 +24,11 @@ category: testing
 
 topology:
   nodes:
-    # Relayed Connect node - handles peer-to-peer WebSocket routing
+    # Relayed Connect node - full L1 stack with peer-to-peer WebSocket routing
     - name: bannou-relayed
-      services:
-        - connect
+      layers:
+        # All L1 (AppFoundation) services - required for any deployment
+        - AppFoundation
       replicas: 1
       environment:
         # Enable Relayed mode for peer-to-peer routing

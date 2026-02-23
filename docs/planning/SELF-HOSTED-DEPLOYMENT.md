@@ -66,19 +66,22 @@ For multiplayer, the same server accepts remote connections:
 
 ```bash
 # server.env -- self-hosted single-player configuration
-SERVICES_ENABLED=true
 STATE_USE_SQLITE=true
 STATE_SQLITE_DATA_PATH=./data
 BANNOU_HEARTBEAT_ENABLED=false
 BANNOU_HTTP_WEB_HOST_PORT=5012
 
-# Disable services not needed for the specific game
-TELEMETRY_SERVICE_DISABLED=true
-ORCHESTRATOR_SERVICE_DISABLED=true
-WEBSITE_SERVICE_DISABLED=true
-DOCUMENTATION_SERVICE_DISABLED=true
-VOICE_SERVICE_DISABLED=true
-BROADCAST_SERVICE_DISABLED=true
+# Disable optional layers not needed for the specific game
+BANNOU_ENABLE_APP_FEATURES=false
+BANNOU_ENABLE_GAME_FEATURES=false
+
+# Or keep layers enabled and disable individual services
+TELEMETRY_SERVICE_ENABLED=false
+ORCHESTRATOR_SERVICE_ENABLED=false
+WEBSITE_SERVICE_ENABLED=false
+DOCUMENTATION_SERVICE_ENABLED=false
+VOICE_SERVICE_ENABLED=false
+BROADCAST_SERVICE_ENABLED=false
 # ... etc based on game requirements
 ```
 
@@ -100,12 +103,12 @@ With `BANNOU_HEARTBEAT_ENABLED=false`, no Orchestrator connectivity is required.
 
 ### Selective Plugin Loading
 
-PluginLoader already supports fine-grained service selection:
+PluginLoader already supports fine-grained service selection via layer controls and individual overrides:
 
 ```bash
-# Enable everything, then disable what you don't need
-SERVICES_ENABLED=true
-VOICE_SERVICE_DISABLED=true
+# Enable foundations only (disable optional feature layers)
+BANNOU_ENABLE_APP_FEATURES=false
+BANNOU_ENABLE_GAME_FEATURES=false
 
 # Or disable everything, then enable what you need
 SERVICES_ENABLED=false
@@ -115,6 +118,9 @@ MESH_SERVICE_ENABLED=true
 INVENTORY_SERVICE_ENABLED=true
 WORKSHOP_SERVICE_ENABLED=true
 # ...
+
+# Or enable a layer with individual exclusions
+VOICE_SERVICE_ENABLED=false
 ```
 
 A Factorio-style game might need ~15 plugins out of 45+, reducing memory footprint significantly.
